@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { 
   CheckCircle, 
@@ -13,6 +13,10 @@ import {
 
 export const CustomPatchesSection = () => {
   const { patchCards = [], protectedNavigate } = useAppState();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
 
   const defaultPatchCards = [
     {

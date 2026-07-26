@@ -7,10 +7,11 @@ import { HeroSection } from './components/public/HeroSection';
 import { CustomerSewOutsSection } from './components/public/CustomerSewOutsSection';
 import { PricingCalculator } from './components/public/PricingCalculator';
 import { CustomPatchesSection } from './components/public/CustomPatchesSection';
-import { PortfolioSlider } from './components/public/PortfolioSlider';
+import { PortfolioPage } from './components/public/PortfolioPage';
 import { MerchandiseStore } from './components/public/MerchandiseStore';
 import { StorePage } from './components/public/StorePage';
 import { VectorArtPage } from './components/public/VectorArtPage';
+import { EmbroideryDigitizingPage } from './components/public/EmbroideryDigitizingPage';
 import { CoreServicesOrderSection } from './components/public/CoreServicesOrderSection';
 import { WhyChooseUs } from './components/public/WhyChooseUs';
 import { TestimonialsFAQ } from './components/public/TestimonialsFAQ';
@@ -150,8 +151,6 @@ const PublicView = ({ scrollTo }) => {
       <HeroSection />
       <CoreServicesOrderSection />
       <CustomerSewOutsSection />
-      <PricingCalculator />
-      <CustomPatchesSection />
       <WhyChooseUs />
       <TestimonialsFAQ />
     </>
@@ -179,11 +178,11 @@ const MainContent = () => {
           <Route path="/login" element={<PublicView />} />
           <Route path="/signup" element={<PublicView />} />
           <Route path="/services" element={<PublicView scrollTo="services" />} />
-          <Route path="/embroidery-digitizing" element={<PublicView scrollTo="services" />} />
-          <Route path="/patches" element={<PublicView scrollTo="custom-patches" />} />
-          <Route path="/custom-patches" element={<PublicView scrollTo="custom-patches" />} />
+          <Route path="/embroidery-digitizing" element={<EmbroideryDigitizingPage />} />
+          <Route path="/patches" element={<CustomPatchesSection />} />
+          <Route path="/custom-patches" element={<CustomPatchesSection />} />
           <Route path="/vector-art" element={<VectorArtPage />} />
-          <Route path="/portfolio" element={<PublicView scrollTo="portfolio" />} />
+          <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/calculator" element={<PublicView scrollTo="calculator" />} />
           <Route path="/pricing" element={<PublicView scrollTo="calculator" />} />
           <Route path="/store" element={<StorePage />} />

@@ -130,6 +130,22 @@ export const HeaderNav = () => {
         {/* Public Navigation Links (Desktop) */}
         {currentView === 'public' && (
           <nav className="desktop-only" style={{ alignItems: 'center', gap: '1.75rem' }}>
+            {/* Home Link */}
+            <button 
+              onClick={handleGoHome}
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                color: location.pathname === '/' ? 'var(--orange-600)' : 'var(--navy-800)', 
+                fontWeight: location.pathname === '/' ? 800 : 600, 
+                fontSize: '0.925rem', 
+                cursor: 'pointer', 
+                padding: 0 
+              }}
+            >
+              Home
+            </button>
+
             {/* Services Dropdown Item */}
             <div 
               ref={servicesDropdownRef}
@@ -249,13 +265,57 @@ export const HeaderNav = () => {
                     >
                       Vector Tracing & Redraw
                     </button>
+
+                    {/* Option 3: Custom Patches */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentView('public');
+                        navigate('/custom-patches');
+                        setIsServicesOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '0.55rem 0.85rem',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        color: 'var(--navy-900)',
+                        fontSize: '0.875rem',
+                        fontWeight: 700,
+                        transition: 'all 0.18s ease'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = '#fff7ed';
+                        e.currentTarget.style.color = 'var(--orange-600)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--navy-900)';
+                      }}
+                    >
+                      Custom Patches
+                    </button>
                   </div>
                 </div>
               )}
             </div>
             <button 
-              onClick={() => handleNavClick('portfolio')}
-              style={{ background: 'none', border: 'none', color: 'var(--navy-800)', fontWeight: 600, fontSize: '0.925rem', cursor: 'pointer', padding: 0 }}
+              onClick={() => {
+                setCurrentView('public');
+                navigate('/portfolio');
+              }}
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                color: location.pathname === '/portfolio' ? 'var(--orange-600)' : 'var(--navy-800)', 
+                fontWeight: location.pathname === '/portfolio' ? 800 : 600, 
+                fontSize: '0.925rem', 
+                cursor: 'pointer', 
+                padding: 0 
+              }}
             >
               Portfolio
             </button>
@@ -264,12 +324,6 @@ export const HeaderNav = () => {
               style={{ background: 'none', border: 'none', color: 'var(--navy-800)', fontWeight: 600, fontSize: '0.925rem', cursor: 'pointer', padding: 0 }}
             >
               Pricing
-            </button>
-            <button 
-              onClick={() => handleNavClick('custom-patches')}
-              style={{ background: 'none', border: 'none', color: 'var(--navy-800)', fontWeight: 600, fontSize: '0.925rem', cursor: 'pointer', padding: 0 }}
-            >
-              Custom Patches
             </button>
             <button 
               onClick={handleGoStore}
@@ -288,7 +342,7 @@ export const HeaderNav = () => {
                 boxShadow: '0 2px 8px rgba(255, 122, 0, 0.15)'
               }}
             >
-              <ShoppingBag size={15} /> Custom Apparel & Patch Shop
+              <ShoppingBag size={15} /> Store
             </button>
           </nav>
         )}
@@ -461,6 +515,17 @@ export const HeaderNav = () => {
             animation: 'fadeIn 0.2s ease-out'
           }}
         >
+          <button
+            type="button"
+            onClick={() => {
+              handleGoHome();
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
+          >
+            Home
+          </button>
+
           <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>
             Digital Studio Services
           </div>
@@ -487,6 +552,17 @@ export const HeaderNav = () => {
             Vector Tracing & Redraw
           </button>
 
+          <button
+            type="button"
+            onClick={() => {
+              navigate('/portfolio');
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
+          >
+            Portfolio Showcase
+          </button>
+
           <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.6rem', marginBottom: '0.2rem' }}>
             Custom Shop (Physical Shipping)
           </div>
@@ -499,7 +575,7 @@ export const HeaderNav = () => {
             }}
             style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
           >
-            Physical Custom Patches
+            Custom Patches
           </button>
 
           <button
@@ -510,7 +586,7 @@ export const HeaderNav = () => {
             }}
             style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '0.95rem', color: 'var(--orange-600)', padding: '0.4rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
           >
-            <ShoppingBag size={16} /> Custom Apparel & Patch Shop
+            <ShoppingBag size={16} /> Store
           </button>
 
           <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '0.85rem', marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>

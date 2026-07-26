@@ -1,24 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { playNotificationSound } from '../../utils/audioNotification';
-import { 
-  MessageSquare, 
-  X, 
-  Send, 
-  Paperclip, 
-  User, 
-  Zap, 
-  Clock, 
-  CheckCheck, 
-  Sparkles, 
-  ShieldCheck, 
+import {
+  MessageSquare,
+  X,
+  Send,
+  Paperclip,
+  User,
+  Zap,
+  Clock,
+  CheckCheck,
+  Sparkles,
+  ShieldCheck,
   Minimize2,
   Maximize2
 } from 'lucide-react';
 
 export const ClientLiveChatWidget = () => {
   const { authUser, currentUser, showToast } = useAppState();
-  
+
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messageInput, setMessageInput] = useState('');
@@ -57,7 +57,7 @@ export const ClientLiveChatWidget = () => {
         try {
           setChats(JSON.parse(e.newValue));
           playNotificationSound('receive');
-        } catch (_) {}
+        } catch (_) { }
       }
     };
 
@@ -70,15 +70,15 @@ export const ClientLiveChatWidget = () => {
   }, []);
 
   // Find or create current client's chat thread
-  let clientThread = chats.find(c => (c.clientEmail || '').toLowerCase().trim() === clientEmail) || {
+  let clientThread = chats.find(c => c.clientEmail === clientEmail) || chats[0] || {
     id: `chat-${clientEmail}`,
-    clientName: cleanName,
-    clientCompany: clientCompany,
+    clientName: activeUser.name,
+    clientCompany: activeUser.company,
     clientEmail: clientEmail,
-    avatar: avatarUrl,
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
     status: 'online',
-    orderId: '#Support',
-    orderTitle: 'Live Support Inquiry',
+    orderId: '#3839',
+    orderTitle: 'Logo Digitizing & Support',
     unreadCount: 0,
     messages: []
   };
@@ -105,34 +105,26 @@ export const ClientLiveChatWidget = () => {
     const newMsg = {
       id: 'msg-client-' + Date.now(),
       sender: 'client',
-      senderName: cleanName,
+      senderName: activeUser.name,
       text: messageInput.trim() || (attachedFile ? `Attached file: ${attachedFile.name}` : ''),
       attachment: attachedFile ? attachedFile.name : null,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
     let updatedChats = [...chats];
-    const threadIdx = updatedChats.findIndex(c => (c.clientEmail || '').toLowerCase().trim() === clientEmail);
+    const threadIdx = updatedChats.findIndex(c => c.clientEmail === clientEmail);
 
     if (threadIdx >= 0) {
       updatedChats[threadIdx] = {
-        ...updatedChats[threadIdx],
-        clientName: cleanName,
-        clientCompany: clientCompany,
-        clientEmail: clientEmail,
-        avatar: avatarUrl,
+       ...updatedChats[threadIdx],
         unreadCount: (updatedChats[threadIdx].unreadCount || 0) + 1,
-        messages: [...(updatedChats[threadIdx].messages || []), newMsg]
+        messages: [...updatedChats[threadIdx].messages, newMsg]
       };
     } else {
       const newThread = {
-        ...clientThread,
-        clientName: cleanName,
-        clientCompany: clientCompany,
-        clientEmail: clientEmail,
-        avatar: avatarUrl,
+      ...clientThread,
         unreadCount: 1,
-        messages: [newMsg]
+        messages: [...clientThread.messages, newMsg]
       };
       updatedChats = [newThread, ...updatedChats];
     }
@@ -141,7 +133,7 @@ export const ClientLiveChatWidget = () => {
     try {
       localStorage.setItem('bdigi_admin_chats', JSON.stringify(updatedChats));
       window.dispatchEvent(new CustomEvent('bdigi_chat_update', { detail: updatedChats }));
-    } catch (_) {}
+    } catch (_) { }
 
     setMessageInput('');
     setAttachedFile(null);
@@ -235,7 +227,7 @@ export const ClientLiveChatWidget = () => {
             alignItems: 'center',
             cursor: 'pointer'
           }}>
-            <div 
+            <div
               onClick={() => setIsMinimized(!isMinimized)}
               style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flex: 1 }}
             >
@@ -277,15 +269,15 @@ export const ClientLiveChatWidget = () => {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setIsMinimized(!isMinimized)}
                 style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.2rem' }}
               >
                 {isMinimized ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setIsOpen(false)}
                 style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.2rem' }}
               >
@@ -297,7 +289,7 @@ export const ClientLiveChatWidget = () => {
           {!isMinimized && (
             <>
               {/* Messages Feed Container */}
-              <div 
+              <div
                 ref={chatFeedRef}
                 style={{
                   flex: 1,
@@ -415,11 +407,11 @@ export const ClientLiveChatWidget = () => {
                 )}
 
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    onChange={handleFileAttach} 
-                    style={{ display: 'none' }} 
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileAttach}
+                    style={{ display: 'none' }}
                   />
 
                   <button
@@ -443,8 +435,8 @@ export const ClientLiveChatWidget = () => {
                     <Paperclip size={16} />
                   </button>
 
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="form-control"
                     placeholder="Type message..."
                     value={messageInput}

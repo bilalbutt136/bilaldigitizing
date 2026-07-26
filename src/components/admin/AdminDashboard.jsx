@@ -57,6 +57,43 @@ export const AdminDashboard = () => {
   const [discountCode, setDiscountCode] = useState('EMB2026');
   const [discountPercent, setDiscountPercent] = useState('15% OFF');
 
+  const [localStoreOrders, setLocalStoreOrders] = useState([]);
+
+  React.useEffect(() => {
+    const loadStoreOrders = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem('store_orders') || '[]');
+        setLocalStoreOrders(stored);
+      } catch (_) {}
+    };
+
+    loadStoreOrders();
+    window.addEventListener('focus', loadStoreOrders);
+    window.addEventListener('store_orders_updated', loadStoreOrders);
+
+    return () => {
+      window.removeEventListener('focus', loadStoreOrders);
+      window.removeEventListener('store_orders_updated', loadStoreOrders);
+    };
+  }, []);
+
+  const storeOrdersCount = React.useMemo(() => {
+    const stateOrders = orders.filter(o => 
+      o.category === 'merchandise' || 
+      o.serviceCategory === 'Merchandise & Store' || 
+      o.serviceCategory === 'merchandise' || 
+      o.serviceType === 'Merchandise & Store' || 
+      o.details?.itemTitle || 
+      (o.title || '').toLowerCase().includes('shirt') || 
+      (o.title || '').toLowerCase().includes('patch') || 
+      (o.title || '').toLowerCase().includes('cap')
+    );
+    const map = new Map();
+    stateOrders.forEach(o => map.set(o.id, o));
+    localStoreOrders.forEach(o => map.set(o.id, o));
+    return map.size;
+  }, [orders, localStoreOrders]);
+
   const isMasterAdmin = isAuthenticated && authUser?.email?.toLowerCase().trim() === 'shahidbutt59191@gmail.com';
 
   if (!isMasterAdmin) {
@@ -97,43 +134,6 @@ export const AdminDashboard = () => {
     updateSiteSettings({ ...siteSettings, metaPixelId });
     showToast('System configuration & integration settings saved!', 'success');
   };
-
-  const [localStoreOrders, setLocalStoreOrders] = useState([]);
-
-  React.useEffect(() => {
-    const loadStoreOrders = () => {
-      try {
-        const stored = JSON.parse(localStorage.getItem('store_orders') || '[]');
-        setLocalStoreOrders(stored);
-      } catch (_) {}
-    };
-
-    loadStoreOrders();
-    window.addEventListener('focus', loadStoreOrders);
-    window.addEventListener('store_orders_updated', loadStoreOrders);
-
-    return () => {
-      window.removeEventListener('focus', loadStoreOrders);
-      window.removeEventListener('store_orders_updated', loadStoreOrders);
-    };
-  }, []);
-
-  const storeOrdersCount = React.useMemo(() => {
-    const stateOrders = orders.filter(o => 
-      o.category === 'merchandise' || 
-      o.serviceCategory === 'Merchandise & Store' || 
-      o.serviceCategory === 'merchandise' || 
-      o.serviceType === 'Merchandise & Store' || 
-      o.details?.itemTitle || 
-      (o.title || '').toLowerCase().includes('shirt') || 
-      (o.title || '').toLowerCase().includes('patch') || 
-      (o.title || '').toLowerCase().includes('cap')
-    );
-    const map = new Map();
-    stateOrders.forEach(o => map.set(o.id, o));
-    localStoreOrders.forEach(o => map.set(o.id, o));
-    return map.size;
-  }, [orders, localStoreOrders]);
 
   // Streamlined Essential Sidebar Menu Sections
   const menuSections = [

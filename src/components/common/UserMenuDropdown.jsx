@@ -29,21 +29,12 @@ export const UserMenuDropdown = () => {
     showToast
   } = useAppState();
 
-  if (!isAuthenticated) return null;
-
   const [isOpen, setIsOpen] = useState(false);
   const [themeMode, setThemeMode] = useState(() => {
     return localStorage.getItem('bdigi_theme') || 'light';
   });
 
   const dropdownRef = useRef(null);
-
-  const activeUser = authUser || currentUser || {
-    name: 'Sarah Jenkins',
-    email: 'sarah@apexapparel.com',
-    company: 'Apex Athletics Apparel',
-    role: 'customer'
-  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -64,6 +55,15 @@ export const UserMenuDropdown = () => {
       document.body.classList.remove('dark-mode');
     }
   }, []);
+
+  if (!isAuthenticated) return null;
+
+  const activeUser = authUser || currentUser || {
+    name: 'Sarah Jenkins',
+    email: 'sarah@apexapparel.com',
+    company: 'Apex Athletics Apparel',
+    role: 'customer'
+  };
 
   const toggleTheme = () => {
     const nextTheme = themeMode === 'light' ? 'dark' : 'light';
