@@ -193,6 +193,16 @@ export const CoreServicesOrderSection = () => {
           </p>
         </div>
 
+        {/* Category Header Badges */}
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <div style={{ background: '#0f172a', border: '1px solid var(--orange-500)', color: 'var(--orange-400)', padding: '0.4rem 1rem', borderRadius: '9999px', fontSize: '0.8rem', fontWeight: 800 }}>
+            📁 Digital Studio Services (Instant File Download)
+          </div>
+          <div style={{ background: '#0f172a', border: '1px solid rgba(255, 122, 0, 0.4)', color: '#ffffff', padding: '0.4rem 1rem', borderRadius: '9999px', fontSize: '0.8rem', fontWeight: 800 }}>
+            🛍️ Physical Custom Apparel & Patch Shop (Worldwide Shipping)
+          </div>
+        </div>
+
         {/* 5 Core Services Selector Tabs */}
         <div style={{
           display: 'grid',
@@ -219,7 +229,7 @@ export const CoreServicesOrderSection = () => {
           >
             <Layers size={24} style={{ color: activeService === 'digitizing' ? 'var(--orange-400)' : '#94a3b8' }} />
             <span style={{ fontWeight: 800, fontSize: '0.925rem' }}>Embroidery Digitizing</span>
-            <span style={{ fontSize: '0.73rem', color: 'var(--orange-400)', fontWeight: 700 }}>From $10.00</span>
+            <span style={{ fontSize: '0.73rem', color: 'var(--orange-400)', fontWeight: 700 }}>Digital File Download</span>
           </button>
 
           <button
@@ -241,7 +251,7 @@ export const CoreServicesOrderSection = () => {
           >
             <PenTool size={24} style={{ color: activeService === 'vector' ? 'var(--orange-400)' : '#94a3b8' }} />
             <span style={{ fontWeight: 800, fontSize: '0.925rem' }}>Vector Tracing</span>
-            <span style={{ fontSize: '0.73rem', color: 'var(--orange-400)', fontWeight: 700 }}>From $15.00</span>
+            <span style={{ fontSize: '0.73rem', color: 'var(--orange-400)', fontWeight: 700 }}>Digital Vector Files</span>
           </button>
 
           <button
@@ -262,8 +272,8 @@ export const CoreServicesOrderSection = () => {
             }}
           >
             <Tag size={24} style={{ color: activeService === 'patches' ? 'var(--orange-400)' : '#94a3b8' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.925rem' }}>Custom Patches</span>
-            <span style={{ fontSize: '0.73rem', color: 'var(--orange-400)', fontWeight: 700 }}>From $1.50 / patch</span>
+            <span style={{ fontWeight: 800, fontSize: '0.925rem' }}>Physical Custom Patches</span>
+            <span style={{ fontSize: '0.73rem', color: '#10b981', fontWeight: 700 }}>Physical Shipping</span>
           </button>
 
           <button
@@ -285,7 +295,7 @@ export const CoreServicesOrderSection = () => {
           >
             <Shirt size={24} style={{ color: activeService === 'tshirts' ? 'var(--orange-400)' : '#94a3b8' }} />
             <span style={{ fontWeight: 800, fontSize: '0.925rem' }}>Custom T-Shirts</span>
-            <span style={{ fontSize: '0.73rem', color: 'var(--orange-400)', fontWeight: 700 }}>From $14.00 / shirt</span>
+            <span style={{ fontSize: '0.73rem', color: '#10b981', fontWeight: 700 }}>Physical Shipping</span>
           </button>
 
           <button
@@ -307,7 +317,7 @@ export const CoreServicesOrderSection = () => {
           >
             <HardHat size={24} style={{ color: activeService === 'caps' ? 'var(--orange-400)' : '#94a3b8' }} />
             <span style={{ fontWeight: 800, fontSize: '0.925rem' }}>Caps & 3D Puff Hats</span>
-            <span style={{ fontSize: '0.73rem', color: 'var(--orange-400)', fontWeight: 700 }}>From $12.00 / cap</span>
+            <span style={{ fontSize: '0.73rem', color: '#10b981', fontWeight: 700 }}>Physical Shipping</span>
           </button>
         </div>
 
