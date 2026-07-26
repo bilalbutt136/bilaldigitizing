@@ -25,13 +25,14 @@ const iconMap = {
 
 export const ServicesGrid = () => {
   const { servicesList = [], protectedNavigate } = useAppState();
+  const displayServices = (servicesList && servicesList.length > 0) ? servicesList : SERVICES;
 
   return (
     <section id="services" style={{ padding: '5.5rem 0', background: 'var(--navy-100)' }}>
       <div className="container">
         
         {/* Section Header */}
-        <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 3.5rem' }}>
+        <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -39,7 +40,7 @@ export const ServicesGrid = () => {
             background: 'var(--orange-50)',
             border: '1px solid var(--orange-200)',
             color: 'var(--orange-700)',
-            fontWeight: 700,
+            fontWeight: 800,
             fontSize: '0.85rem',
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
@@ -47,15 +48,15 @@ export const ServicesGrid = () => {
             borderRadius: '9999px',
             marginBottom: '0.75rem'
           }}>
-            <Sparkles size={16} /> Specialized Studio Capabilities
+            <Sparkles size={16} /> 5 Core Specialized Studio Services
           </div>
 
           <h2 style={{ fontSize: '2.5rem', color: 'var(--navy-900)', marginBottom: '0.75rem', fontWeight: 800 }}>
-            Comprehensive Embroidery & Vector Services
+            Comprehensive Embroidery, Vector & Physical Apparel Fulfillment
           </h2>
 
           <p style={{ color: 'var(--text-muted)', fontSize: '1.075rem', lineHeight: 1.6 }}>
-            Hand-digitized by master pathing engineers and machine-tested for commercial multi-needle machines, single-head units, and high-speed workshop runs.
+            Hand-digitized by master pathing engineers and machine-tested for commercial multi-needle machines, single-head units, physical custom patch runs, and custom embroidered apparel.
           </p>
         </div>
 
@@ -65,13 +66,12 @@ export const ServicesGrid = () => {
           gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))',
           gap: '1.75rem'
         }}>
-          {servicesList.map((srv, idx) => {
-            const IconComponent = iconMap[srv.icon] || Shirt;
-            const isFeatured = idx === 0 || idx === 1;
+          {displayServices.map((srv, idx) => {
+            const IconComponent = iconMap[srv.icon] || Layers;
 
             return (
               <div 
-                key={srv.id}
+                key={srv.id || idx}
                 className="card"
                 style={{
                   padding: '2.25rem 2rem',
@@ -146,9 +146,16 @@ export const ServicesGrid = () => {
                   <button 
                     className="btn btn-primary-orange"
                     style={{ width: '100%', justifyContent: 'space-between', fontWeight: 700 }}
-                    onClick={() => protectedNavigate('customer', true)}
+                    onClick={() => {
+                      const el = document.getElementById('order-builder');
+                      if (el) {
+                        el.scrollIntoView({ behavior: 'smooth' });
+                      } else {
+                        protectedNavigate('customer', true);
+                      }
+                    }}
                   >
-                    Order {srv.title.split(' ')[0]} <ArrowRight size={16} />
+                    Configure {srv.title.split(' ')[0]} <ArrowRight size={16} />
                   </button>
                 </div>
               </div>

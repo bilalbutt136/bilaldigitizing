@@ -179,58 +179,54 @@ export const PORTFOLIO_SAMPLES = [
 
 export const SERVICES = [
   {
-    id: 'left-chest',
-    title: 'Left Chest & Polo Digitizing',
+    id: 'embroidery-digitizing',
+    title: 'Embroidery Digitizing',
     price: 'Starting $10.00',
-    stitches: 'Up to 10k Stitches',
-    time: '12 - 24 Hours',
-    icon: 'Shirt',
-    desc: 'Perfect stitch density and underlay for polo shirts, corporate fleece, and dress shirts without puckering.'
-  },
-  {
-    id: 'cap-3d-puff',
-    title: 'Cap & 3D Puff Embroidery',
-    price: 'Starting $12.00',
-    stitches: 'Center-Out Pathing',
-    time: '12 - 24 Hours',
-    icon: 'HardHat',
-    desc: 'Specialized curve distortion compensation, bottom-up pathing, and heavy foam capped ends for 3D raised caps.'
-  },
-  {
-    id: 'jacket-back',
-    title: 'Jacket Back & Large Crests',
-    price: 'From $1.50 / 1k Stitches',
-    stitches: '25,000 - 90,000+',
-    time: '12 - 24 Hours',
+    stitches: 'DST, PES, EMB, EXP Files',
+    time: '8 - 12 Hours',
     icon: 'Layers',
-    desc: 'Intricate detail mapping for leather jackets, denim backs, and club crests with balanced thread tensions.'
+    route: '/embroidery-digitizing',
+    desc: 'Commercial machine-ready files for polos, jackets, caps, and left chest logos with zero thread breaks.'
   },
   {
-    id: 'vector-conversion',
-    title: 'Vector Artwork Conversion',
+    id: 'vector-tracing',
+    title: 'Vector Tracing & Redrawing',
     price: 'Starting $15.00',
-    stitches: 'Unlimited Resolution',
+    stitches: 'AI, EPS, SVG, PDF, CDR',
     time: '6 - 12 Hours',
     icon: 'PenTool',
-    desc: 'Convert blurry images into ultra-crisp vector files (.AI, .EPS, .SVG, .PDF) ready for screen printing or vinyl.'
+    route: '/vector-art',
+    desc: 'Transform pixelated JPEGs, PNGs, and sketches into 100% hand-drawn scalable vector files for printing & embroidery.'
   },
   {
-    id: 'applique-patches',
-    title: 'Applique & Woven Patches',
-    price: 'Starting $14.00',
-    stitches: 'Cut-Line Included',
-    time: '12 - 24 Hours',
+    id: 'custom-patches',
+    title: 'Physical Custom Patches',
+    price: 'Starting $1.50 / patch',
+    stitches: 'Iron-On, Velcro & Sew-On',
+    time: '3 - 5 Days + Express Ship',
     icon: 'Tag',
-    desc: 'Precise fabric placement lines, tack-down stitches, and satin border edge locks for custom patches.'
+    route: '/custom-patches',
+    desc: 'High-density embroidered, leather, and PVC custom patches with merrowed borders and physical worldwide shipping.'
   },
   {
-    id: 'color-separation',
-    title: 'Screen Print Separation',
-    price: 'Starting $20.00',
-    stitches: 'Spot / CMYK Color',
-    time: '12 - 24 Hours',
-    icon: 'Palette',
-    desc: 'Professional spot color and simulated process color separations with registration marks for printers.'
+    id: 'custom-tshirts',
+    title: 'Custom T-Shirts (Logo Stitchout)',
+    price: 'Starting $14.00 / shirt',
+    stitches: 'Premium Cotton + Stitchout',
+    time: '2 - 4 Days Shipping',
+    icon: 'Shirt',
+    route: '/custom-tshirts',
+    desc: 'Quality cotton & tri-blend apparel embroidered with your custom corporate logo or artwork in S-3XL sizes.'
+  },
+  {
+    id: 'custom-caps-3d',
+    title: 'Custom Caps & 3D Puff Hats',
+    price: 'Starting $12.00 / cap',
+    stitches: '3D Foam Raised Embroidery',
+    time: '2 - 4 Days Shipping',
+    icon: 'HardHat',
+    route: '/custom-caps',
+    desc: 'Structured snapbacks, dad hats, and beanies embroidered with heavy 3D raised foam logo pathing.'
   }
 ];
 

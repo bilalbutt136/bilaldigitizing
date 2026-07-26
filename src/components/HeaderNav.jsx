@@ -187,10 +187,6 @@ export const HeaderNav = () => {
                         setCurrentView('public');
                         navigate('/embroidery-digitizing');
                         setIsServicesOpen(false);
-                        setTimeout(() => {
-                          const el = document.getElementById('services');
-                          if (el) el.scrollIntoView({ behavior: 'smooth' });
-                        }, 120);
                       }}
                       style={{
                         width: '100%',
@@ -208,67 +204,22 @@ export const HeaderNav = () => {
                       onMouseOver={(e) => {
                         e.currentTarget.style.background = '#fff7ed';
                         e.currentTarget.style.color = 'var(--orange-600)';
-                        e.currentTarget.style.transform = 'translateX(3px)';
                       }}
                       onMouseOut={(e) => {
                         e.currentTarget.style.background = 'transparent';
                         e.currentTarget.style.color = 'var(--navy-900)';
-                        e.currentTarget.style.transform = 'none';
                       }}
                     >
                       Embroidery Digitizing
                     </button>
 
-                    {/* Option 2: Patches */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCurrentView('public');
-                        navigate('/custom-patches');
-                        setIsServicesOpen(false);
-                        setTimeout(() => {
-                          const el = document.getElementById('custom-patches');
-                          if (el) el.scrollIntoView({ behavior: 'smooth' });
-                        }, 120);
-                      }}
-                      style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '0.55rem 0.85rem',
-                        background: 'transparent',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        color: 'var(--navy-900)',
-                        fontSize: '0.875rem',
-                        fontWeight: 700,
-                        transition: 'all 0.18s ease'
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = '#fff7ed';
-                        e.currentTarget.style.color = 'var(--orange-600)';
-                        e.currentTarget.style.transform = 'translateX(3px)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--navy-900)';
-                        e.currentTarget.style.transform = 'none';
-                      }}
-                    >
-                      Patches
-                    </button>
-
-                    {/* Option 3: Vector Art */}
+                    {/* Option 2: Vector Tracing */}
                     <button
                       type="button"
                       onClick={() => {
                         setCurrentView('public');
                         navigate('/vector-art');
                         setIsServicesOpen(false);
-                        setTimeout(() => {
-                          const el = document.getElementById('services');
-                          if (el) el.scrollIntoView({ behavior: 'smooth' });
-                        }, 120);
                       }}
                       style={{
                         width: '100%',
@@ -286,15 +237,114 @@ export const HeaderNav = () => {
                       onMouseOver={(e) => {
                         e.currentTarget.style.background = '#fff7ed';
                         e.currentTarget.style.color = 'var(--orange-600)';
-                        e.currentTarget.style.transform = 'translateX(3px)';
                       }}
                       onMouseOut={(e) => {
                         e.currentTarget.style.background = 'transparent';
                         e.currentTarget.style.color = 'var(--navy-900)';
-                        e.currentTarget.style.transform = 'none';
                       }}
                     >
-                      Vector Art
+                      Vector Tracing & Redraw
+                    </button>
+
+                    {/* Option 3: Physical Custom Patches */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentView('public');
+                        navigate('/custom-patches');
+                        setIsServicesOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '0.55rem 0.85rem',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        color: 'var(--navy-900)',
+                        fontSize: '0.875rem',
+                        fontWeight: 700,
+                        transition: 'all 0.18s ease'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = '#fff7ed';
+                        e.currentTarget.style.color = 'var(--orange-600)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--navy-900)';
+                      }}
+                    >
+                      Physical Custom Patches
+                    </button>
+
+                    {/* Option 4: Custom T-Shirts */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentView('public');
+                        const el = document.getElementById('order-builder');
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        setIsServicesOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '0.55rem 0.85rem',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        color: 'var(--navy-900)',
+                        fontSize: '0.875rem',
+                        fontWeight: 700,
+                        transition: 'all 0.18s ease'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = '#fff7ed';
+                        e.currentTarget.style.color = 'var(--orange-600)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--navy-900)';
+                      }}
+                    >
+                      Custom T-Shirts (Stitchout)
+                    </button>
+
+                    {/* Option 5: Custom Caps & 3D Puff Hats */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentView('public');
+                        const el = document.getElementById('order-builder');
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        setIsServicesOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '0.55rem 0.85rem',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        color: 'var(--navy-900)',
+                        fontSize: '0.875rem',
+                        fontWeight: 700,
+                        transition: 'all 0.18s ease'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = '#fff7ed';
+                        e.currentTarget.style.color = 'var(--orange-600)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--navy-900)';
+                      }}
+                    >
+                      Custom Caps & 3D Puff Hats
                     </button>
                   </div>
                 </div>
@@ -525,23 +575,47 @@ export const HeaderNav = () => {
           <button
             type="button"
             onClick={() => {
-              navigate('/custom-patches');
-              setIsMobileMenuOpen(false);
-            }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
-          >
-            Patches
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
               navigate('/vector-art');
               setIsMobileMenuOpen(false);
             }}
             style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
           >
-            Vector Art
+            Vector Tracing & Redraw
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              navigate('/custom-patches');
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
+          >
+            Physical Custom Patches
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const el = document.getElementById('order-builder');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
+          >
+            Custom T-Shirts
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const el = document.getElementById('order-builder');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
+          >
+            Caps & 3D Puff Hats
           </button>
 
           <button

@@ -11,6 +11,7 @@ import { PortfolioSlider } from './components/public/PortfolioSlider';
 import { MerchandiseStore } from './components/public/MerchandiseStore';
 import { StorePage } from './components/public/StorePage';
 import { VectorArtPage } from './components/public/VectorArtPage';
+import { CoreServicesOrderSection } from './components/public/CoreServicesOrderSection';
 import { WhyChooseUs } from './components/public/WhyChooseUs';
 import { TestimonialsFAQ } from './components/public/TestimonialsFAQ';
 import { Footer } from './components/public/Footer';
@@ -147,6 +148,7 @@ const PublicView = ({ scrollTo }) => {
   return (
     <>
       <HeroSection />
+      <CoreServicesOrderSection />
       <CustomerSewOutsSection />
       <PricingCalculator />
       <CustomPatchesSection />
