@@ -404,3 +404,105 @@ h1, h2, h3, h4, h5, h6 {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ==========================================================================
+   MOBILE & TABLET RESPONSIVENESS SYSTEM
+   ========================================================================== */
+
+html, body {
+  overflow-x: hidden !important;
+  max-width: 100vw;
+  scroll-behavior: smooth;
+}
+
+/* Touch Targets & Input Controls */
+button, input, select, textarea, a {
+  touch-action: manipulation;
+}
+
+.desktop-only {
+  display: flex !important;
+}
+
+.mobile-only {
+  display: none !important;
+}
+
+/* Responsive Table Scroll Container */
+.table-responsive {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 992px) {
+  .container {
+    padding-left: 1.25rem !important;
+    padding-right: 1.25rem !important;
+  }
+
+  .grid-responsive-2col {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: flex !important;
+  }
+
+  .container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  h1, .hero-title {
+    font-size: 2.1rem !important;
+    line-height: 1.2 !important;
+  }
+
+  h2 {
+    font-size: 1.65rem !important;
+  }
+
+  h3 {
+    font-size: 1.3rem !important;
+  }
+
+  .btn-sm {
+    padding: 0.55rem 0.85rem !important;
+    font-size: 0.85rem !important;
+    min-height: 38px;
+  }
+
+  .btn-md, .btn-lg {
+    padding: 0.65rem 1.15rem !important;
+    font-size: 0.925rem !important;
+    min-height: 44px;
+  }
+
+  .mobile-relative-sticky {
+    position: relative !important;
+    top: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  h1, .hero-title {
+    font-size: 1.75rem !important;
+  }
+
+  h2 {
+    font-size: 1.45rem !important;
+  }
+}

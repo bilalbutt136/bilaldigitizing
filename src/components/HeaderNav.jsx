@@ -18,7 +18,9 @@ import {
   ChevronDown,
   Sparkles,
   Zap,
-  Layers
+  Layers,
+  Menu,
+  X
 } from 'lucide-react';
 import { UserMenuDropdown } from './common/UserMenuDropdown';
 
@@ -39,6 +41,7 @@ export const HeaderNav = () => {
   } = useAppState();
 
   const [isServicesOpen, setIsServicesOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const servicesDropdownRef = useRef(null);
 
   useEffect(() => {
@@ -124,9 +127,9 @@ export const HeaderNav = () => {
           </div>
         </div>
 
-        {/* Public Navigation Links */}
+        {/* Public Navigation Links (Desktop) */}
         {currentView === 'public' && (
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '1.75rem' }}>
+          <nav className="desktop-only" style={{ alignItems: 'center', gap: '1.75rem' }}>
             {/* Services Dropdown Item */}
             <div 
               ref={servicesDropdownRef}
@@ -357,8 +360,28 @@ export const HeaderNav = () => {
           display: 'flex', 
           alignItems: 'center', 
           gap: '0.6rem',
-          marginRight: !isAuthenticated ? '1.25rem' : '0'
+          marginRight: !isAuthenticated ? '0.5rem' : '0'
         }}>
+          
+          {/* Mobile Hamburger Toggle Button */}
+          <button
+            type="button"
+            className="mobile-only"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            style={{
+              background: '#f1f5f9',
+              border: '1px solid var(--border-color)',
+              color: 'var(--navy-900)',
+              padding: '0.45rem',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            aria-label="Toggle Navigation Menu"
+          >
+            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
           
           {/* Primary Order Now Button - Hidden on Admin, Customer Portal View & Admin Routes */}
           {currentView !== 'admin' && currentView !== 'customer' && !location.pathname.includes('admin') && (
@@ -469,6 +492,136 @@ export const HeaderNav = () => {
           )}
         </div>
       </div>
+
+      {/* Mobile Slide-Down Navigation Drawer */}
+      {isMobileMenuOpen && (
+        <div 
+          className="mobile-only"
+          style={{
+            flexDirection: 'column',
+            background: '#ffffff',
+            borderTop: '1px solid var(--border-color)',
+            padding: '1.25rem 1.5rem',
+            gap: '0.85rem',
+            boxShadow: '0 12px 24px rgba(0,0,0,0.1)',
+            animation: 'fadeIn 0.2s ease-out'
+          }}
+        >
+          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>
+            Services & Pages
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              navigate('/embroidery-digitizing');
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
+          >
+            Embroidery Digitizing
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              navigate('/custom-patches');
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
+          >
+            Patches
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              navigate('/vector-art');
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
+          >
+            Vector Art
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              handleNavClick('portfolio');
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
+          >
+            Portfolio
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              handleNavClick('pricing');
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
+          >
+            Pricing & Rates
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              handleGoStore();
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '0.95rem', color: 'var(--orange-600)', padding: '0.4rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+          >
+            <ShoppingBag size={16} /> Merchandise Store
+          </button>
+
+          <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '0.85rem', marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            {!isAuthenticated ? (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <button
+                  className="btn btn-outline btn-md"
+                  onClick={() => {
+                    setAuthModalMode('signup');
+                    setIsAuthModalOpen(true);
+                    setIsMobileMenuOpen(false);
+                    navigate('/signup');
+                  }}
+                  style={{ fontWeight: 700, justifyContent: 'center' }}
+                >
+                  <UserCheck size={16} /> Sign Up
+                </button>
+
+                <button
+                  className="btn btn-primary-orange btn-md"
+                  onClick={() => {
+                    setAuthModalMode('login');
+                    setIsAuthModalOpen(true);
+                    setIsMobileMenuOpen(false);
+                    navigate('/login');
+                  }}
+                  style={{ fontWeight: 800, justifyContent: 'center' }}
+                >
+                  <LogIn size={16} /> Sign In
+                </button>
+              </div>
+            ) : (
+              <button
+                className="btn btn-primary-orange btn-md"
+                onClick={() => {
+                  protectedNavigate('customer', true);
+                  setIsMobileMenuOpen(false);
+                  navigate('/client-portal');
+                }}
+                style={{ fontWeight: 800, justifyContent: 'center' }}
+              >
+                <User size={16} /> Go to Client Dashboard
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 };

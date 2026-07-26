@@ -62,7 +62,7 @@ export const ServicesGrid = () => {
         {/* Services Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))',
           gap: '1.75rem'
         }}>
           {servicesList.map((srv, idx) => {

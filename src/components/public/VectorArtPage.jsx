@@ -263,12 +263,15 @@ export const VectorArtPage = () => {
 
       {/* 2. Order Form Container */}
       <div className="container" style={{ marginTop: '2.5rem' }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 360px',
-          gap: '2rem',
-          alignItems: 'start'
-        }}>
+        <div 
+          className="grid-responsive-2col"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '2rem',
+            alignItems: 'start'
+          }}
+        >
           
           {/* Main Order Form */}
           <form onSubmit={handleSubmitOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
