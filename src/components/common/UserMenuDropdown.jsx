@@ -200,6 +200,35 @@ export const UserMenuDropdown = () => {
           {/* Menu Options List */}
           <div style={{ padding: '0.5rem 0' }}>
             
+            {/* Client Dashboard Overview Option */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                protectedNavigate('customer', false);
+                navigate('/client-portal');
+              }}
+              style={{
+                width: '100%',
+                padding: '0.65rem 1rem',
+                border: 'none',
+                background: 'transparent',
+                textAlign: 'left',
+                fontSize: '0.875rem',
+                fontWeight: 700,
+                color: 'var(--navy-900)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.65rem',
+                cursor: 'pointer',
+                transition: 'background 0.15s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              <User size={16} style={{ color: 'var(--orange-500)' }} /> Client Dashboard
+            </button>
+
             {/* Account Settings Option */}
             <button
               type="button"

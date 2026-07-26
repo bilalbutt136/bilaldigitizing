@@ -56,6 +56,13 @@ export const AdminDashboard = () => {
   const [boltUrl, setBoltUrl] = useState('https://www.boltpayouts.xyz/pay/boltpayouts');
   const [discountCode, setDiscountCode] = useState('EMB2026');
   const [discountPercent, setDiscountPercent] = useState('15% OFF');
+  const [adminEmail, setAdminEmail] = useState(siteSettings.adminEmail || 'shahidbutt59191@gmail.com');
+
+  React.useEffect(() => {
+    if (siteSettings?.adminEmail) {
+      setAdminEmail(siteSettings.adminEmail);
+    }
+  }, [siteSettings?.adminEmail]);
 
   const [localStoreOrders, setLocalStoreOrders] = useState([]);
 
@@ -94,7 +101,11 @@ export const AdminDashboard = () => {
     return map.size;
   }, [orders, localStoreOrders]);
 
-  const isMasterAdmin = isAuthenticated && authUser?.email?.toLowerCase().trim() === 'shahidbutt59191@gmail.com';
+  const configuredAdminEmail = (siteSettings?.adminEmail || 'shahidbutt59191@gmail.com').toLowerCase().trim();
+  const isMasterAdmin = isAuthenticated && (
+    authUser?.email?.toLowerCase().trim() === configuredAdminEmail ||
+    authUser?.email?.toLowerCase().trim() === 'shahidbutt59191@gmail.com'
+  );
 
   if (!isMasterAdmin) {
     return (
@@ -103,7 +114,7 @@ export const AdminDashboard = () => {
           <AlertCircle size={48} style={{ color: '#dc2626', marginBottom: '1rem' }} />
           <h3 style={{ color: '#991b1b', fontSize: '1.35rem', marginBottom: '0.5rem' }}>System Access Restricted</h3>
           <p style={{ fontSize: '0.9rem', color: 'var(--navy-900)', lineHeight: 1.6, marginBottom: '1.75rem' }}>
-            The Operations Desk is strictly restricted to Master Administrator <strong>shahidbutt59191@gmail.com</strong>.
+            The Operations Desk is strictly restricted to Master Administrator <strong>{configuredAdminEmail}</strong>.
           </p>
           <button 
             className="btn btn-primary-orange btn-lg"
@@ -131,8 +142,18 @@ export const AdminDashboard = () => {
 
   const handleSaveSettings = (e) => {
     e.preventDefault();
-    updateSiteSettings({ ...siteSettings, metaPixelId });
-    showToast('System configuration & integration settings saved!', 'success');
+    const cleanEmail = (adminEmail || '').toLowerCase().trim();
+    if (!cleanEmail) {
+      showToast('Please enter a valid Master Admin Email address', 'warning');
+      return;
+    }
+
+    updateSiteSettings({ 
+      ...siteSettings, 
+      adminEmail: cleanEmail, 
+      metaPixelId 
+    });
+    showToast(`Master Admin Authorization email updated to "${cleanEmail}" and saved!`, 'success');
   };
 
   // Streamlined Essential Sidebar Menu Sections
@@ -526,8 +547,19 @@ export const AdminDashboard = () => {
 
                 <form onSubmit={handleSaveSettings} style={{ maxWidth: '520px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label style={{ fontSize: '0.825rem', fontWeight: 800 }}>Master Admin Authorization</label>
-                    <input type="text" disabled className="form-control" value="shahidbutt59191@gmail.com" />
+                    <label style={{ fontSize: '0.825rem', fontWeight: 800 }}>Master Admin Authorization Email</label>
+                    <input 
+                      type="email" 
+                      className="form-control" 
+                      value={adminEmail} 
+                      onChange={(e) => setAdminEmail(e.target.value)}
+                      placeholder="e.g. shahidbutt59191@gmail.com"
+                      required
+                      style={{ fontWeight: 700, color: 'var(--navy-900)', background: '#ffffff' }}
+                    />
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.35rem', lineHeight: 1.4 }}>
+                      Users logging in with this email address will automatically receive Master Administrator access to the Operations Desk.
+                    </div>
                   </div>
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label style={{ fontSize: '0.825rem', fontWeight: 800 }}>Database Real-Time Channels</label>

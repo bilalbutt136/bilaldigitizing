@@ -39,6 +39,7 @@ const UrlSyncHandler = () => {
     setAuthModalMode,
     isAuthenticated,
     authUser,
+    siteSettings = {},
     depositFunds
   } = useAppState();
 
@@ -106,7 +107,11 @@ const UrlSyncHandler = () => {
 
     // 5. Admin Portal routes
     if (rawPath === '/admin-portal' || rawPath === '/admin') {
-      const isMasterAdmin = isAuthenticated && authUser?.email?.toLowerCase().trim() === 'shahidbutt59191@gmail.com';
+      const configuredAdmin = (siteSettings?.adminEmail || 'shahidbutt59191@gmail.com').toLowerCase().trim();
+      const isMasterAdmin = isAuthenticated && (
+        authUser?.email?.toLowerCase().trim() === configuredAdmin ||
+        authUser?.email?.toLowerCase().trim() === 'shahidbutt59191@gmail.com'
+      );
       if (!isMasterAdmin) {
         if (isAuthenticated) {
           navigate('/client-portal', { replace: true });

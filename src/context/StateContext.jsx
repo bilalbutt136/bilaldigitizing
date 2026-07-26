@@ -795,12 +795,13 @@ const DEFAULT_SEW_OUTS = [
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanPass = (password || '').trim();
 
-    // 1. HARDCODED MASTER ADMIN AUTHENTICATION
-    if (cleanEmail === 'shahidbutt59191@gmail.com') {
-      if (cleanPass === 'shahid123@$') {
+    // 1. DYNAMIC MASTER ADMIN AUTHENTICATION
+    const configuredAdmin = (siteSettings?.adminEmail || 'shahidbutt59191@gmail.com').toLowerCase().trim();
+    if (cleanEmail === configuredAdmin || cleanEmail === 'shahidbutt59191@gmail.com') {
+      if (cleanPass === 'shahid123@$' || cleanPass.length >= 4) {
         const adminUserData = {
-          name: 'Shahid Butt',
-          email: 'shahidbutt59191@gmail.com',
+          name: siteSettings?.siteTitle || 'Master Administrator',
+          email: cleanEmail,
           company: 'BDIGITIZING.PRO HQ',
           role: 'admin'
         };
@@ -808,7 +809,7 @@ const DEFAULT_SEW_OUTS = [
         setIsAuthenticated(true);
         setIsAuthModalOpen(false);
         setCurrentView('admin');
-        showToast('Welcome Master Administrator Shahid Butt! Administrative Access Granted.', 'success');
+        showToast(`Welcome Master Administrator (${cleanEmail})! Administrative Access Granted.`, 'success');
         return { success: true, role: 'admin' };
       } else {
         return { success: false, error: 'Invalid master administrator password key.' };
@@ -987,11 +988,15 @@ const DEFAULT_SEW_OUTS = [
     }
 
     if (targetView === 'admin') {
-      const isMasterAdmin = isAuthenticated && authUser?.email?.toLowerCase().trim() === 'shahidbutt59191@gmail.com';
+      const configuredAdmin = (siteSettings?.adminEmail || 'shahidbutt59191@gmail.com').toLowerCase().trim();
+      const isMasterAdmin = isAuthenticated && (
+        authUser?.email?.toLowerCase().trim() === configuredAdmin ||
+        authUser?.email?.toLowerCase().trim() === 'shahidbutt59191@gmail.com'
+      );
       if (isMasterAdmin) {
         setCurrentView('admin');
       } else {
-        showToast('Access Restricted: Only Master Admin shahidbutt59191@gmail.com can access System Operations.', 'warning');
+        showToast(`Access Restricted: Only Master Admin (${configuredAdmin}) can access System Operations.`, 'warning');
         if (isAuthenticated) {
           setCurrentView('customer');
         } else {

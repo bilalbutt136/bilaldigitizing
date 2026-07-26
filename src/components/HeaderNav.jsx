@@ -99,10 +99,10 @@ export const HeaderNav = () => {
       {/* Main Brand Navbar */}
 
       {/* 2. Main Brand Navbar */}
-      <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1.5rem 0.85rem 0.75rem', width: '100%' }}>
         {/* Brand Logo */}
         <div 
-          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', marginLeft: 0 }}
           onClick={handleGoHome}
         >
           <div style={{
@@ -478,7 +478,7 @@ export const HeaderNav = () => {
                     padding: '0.35rem 0.85rem'
                   }}
                   onClick={() => {
-                    protectedNavigate('customer', true);
+                    protectedNavigate('customer', false);
                     navigate('/client-portal');
                   }}
                 >
@@ -622,7 +622,7 @@ export const HeaderNav = () => {
               <button
                 className="btn btn-primary-orange btn-md"
                 onClick={() => {
-                  protectedNavigate('customer', true);
+                  protectedNavigate('customer', false);
                   setIsMobileMenuOpen(false);
                   navigate('/client-portal');
                 }}
