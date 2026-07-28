@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../../context/StateContext';
+import { CoreServicesOrderSection } from './CoreServicesOrderSection';
 import { 
   Layers, 
   CheckCircle, 
@@ -12,18 +13,18 @@ import {
   ArrowRight, 
   UploadCloud, 
   ShieldCheck, 
-  FileCode, 
   CheckCircle2, 
   HelpCircle,
   Scissors,
   Flame,
   Award
 } from 'lucide-react';
-import { MACHINE_FORMATS } from '../../data/mockData';
 
 export const EmbroideryDigitizingPage = () => {
   const navigate = useNavigate();
   const { pricing = {}, pricingCards = [], protectedNavigate, setIsOrderWizardOpen } = useAppState();
+
+  const [selectedTier, setSelectedTier] = useState('standard');
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -35,15 +36,16 @@ export const EmbroideryDigitizingPage = () => {
     {
       id: 'pcard-basic',
       category: 'embroidery',
+      tierKey: 'basic',
       title: 'Basic Digitizing',
-      subTitle: 'Ideal for simple left chest / small logos',
+      subTitle: 'Ideal for simple left chest / small logos up to 4"',
       icon: Zap,
       discountTag: 'ESSENTIAL',
       strikePrice: '$10.00',
       rate: `$5.00`,
       unit: '/ design',
       delivery: '8 - 12 Hours Express Delivery',
-      btnText: 'Order 1 Design',
+      btnText: 'Order Basic ($5.00)',
       badge: 'ESSENTIAL',
       popular: false,
       features: [
@@ -57,15 +59,16 @@ export const EmbroideryDigitizingPage = () => {
     {
       id: 'pcard-standard',
       category: 'embroidery',
+      tierKey: 'standard',
       title: 'Standard Digitizing',
-      subTitle: 'Ideal for standard left chest & caps',
+      subTitle: 'Ideal for standard left chest, caps & sleeves',
       icon: Trophy,
       discountTag: 'MOST POPULAR',
       strikePrice: '$18.00',
       rate: `$10.00`,
       unit: '/ design',
       delivery: '8 - 12 Hours Express Available',
-      btnText: 'Order 1 Design',
+      btnText: 'Order Standard ($10.00)',
       badge: 'MOST POPULAR',
       popular: true,
       features: [
@@ -79,20 +82,21 @@ export const EmbroideryDigitizingPage = () => {
     {
       id: 'pcard-premium',
       category: 'embroidery',
+      tierKey: 'premium',
       title: 'Premium Digitizing',
-      subTitle: 'Ideal for Jacket Backs & Large Crests',
+      subTitle: 'Ideal for Jacket Backs & Large Crests (Full Back)',
       icon: Sparkles,
       discountTag: 'VIP & COMPLEX',
       strikePrice: '$35.00',
       rate: `$20.00`,
       unit: '/ design',
       delivery: '12 - 24 Hours Priority Delivery',
-      btnText: 'Order 1 Design',
+      btnText: 'Order Premium ($20.00)',
       badge: 'VIP & COMPLEX',
       popular: false,
       features: [
         'Jacket back high stitch count verification',
-        '3D Puff Cap density pathing',
+        'Complex 3D Puff & multi-layer pathing',
         '24/7 Priority studio support',
         'Free machine simulation sew-out proof',
         '100% Free Unlimited Revisions'
@@ -100,15 +104,20 @@ export const EmbroideryDigitizingPage = () => {
     }
   ];
 
-  const cardsToRender = (pricingCards && pricingCards.length > 0) ? pricingCards : defaultCards;
+  const cardsToRender = defaultCards;
 
-  const handleStartOrder = () => {
+  const handleSelectTier = (tierKey = 'standard') => {
+    setSelectedTier(tierKey);
     const el = document.getElementById('digitizing-order-section');
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
     } else {
       setIsOrderWizardOpen(true);
     }
+  };
+
+  const handleStartOrder = () => {
+    handleSelectTier('standard');
   };
 
   return (
@@ -229,31 +238,36 @@ export const EmbroideryDigitizingPage = () => {
             margin: '0 auto'
           }}>
             {cardsToRender.map((cat, idx) => {
+              const isSelected = selectedTier === cat.tierKey;
               const isPopular = cat.popular || cat.badge === 'MOST POPULAR';
               const IconComp = cat.icon || (idx === 0 ? Zap : idx === 1 ? Trophy : Sparkles);
 
               return (
                 <div
                   key={cat.id || idx}
+                  onClick={() => handleSelectTier(cat.tierKey || 'standard')}
                   style={{
-                    background: isPopular ? 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)' : '#0f172a',
-                    border: isPopular ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.12)',
+                    background: isSelected ? 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)' : '#0f172a',
+                    border: isSelected ? '3px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.12)',
                     borderRadius: '16px',
                     padding: '2.5rem 1.85rem 2rem',
                     position: 'relative',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    boxShadow: isPopular ? '0 12px 35px rgba(255, 122, 0, 0.2)' : 'none'
+                    boxShadow: isSelected ? '0 14px 40px rgba(255, 122, 0, 0.3)' : 'none',
+                    transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+                    transition: 'all 0.25s ease',
+                    cursor: 'pointer'
                   }}
                 >
-                  {isPopular && (
+                  {isSelected && (
                     <div style={{
                       position: 'absolute',
                       top: '-14px',
                       left: '50%',
                       transform: 'translateX(-50%)',
-                      background: 'var(--orange-500)',
+                      background: 'linear-gradient(135deg, var(--orange-500), #e66e00)',
                       color: '#ffffff',
                       fontWeight: 800,
                       fontSize: '0.75rem',
@@ -261,9 +275,12 @@ export const EmbroideryDigitizingPage = () => {
                       padding: '0.3rem 0.95rem',
                       borderRadius: '9999px',
                       textTransform: 'uppercase',
-                      boxShadow: '0 4px 12px rgba(255, 122, 0, 0.4)'
+                      boxShadow: '0 4px 14px rgba(255, 122, 0, 0.45)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem'
                     }}>
-                      ⭐ Most Popular
+                      ⭐ {isPopular ? 'MOST POPULAR & SELECTED' : 'SELECTED PACKAGE'}
                     </div>
                   )}
 
@@ -316,18 +333,21 @@ export const EmbroideryDigitizingPage = () => {
 
                   <div>
                     <button
-                      className={isPopular ? "btn btn-primary-orange" : "btn btn-outline"}
+                      className={isSelected ? "btn btn-primary-orange" : "btn btn-outline"}
                       style={{
                         width: '100%',
                         justifyContent: 'center',
                         fontWeight: 800,
                         padding: '0.85rem',
-                        color: isPopular ? '#ffffff' : '#ffffff',
-                        borderColor: isPopular ? 'transparent' : 'rgba(255,255,255,0.25)'
+                        color: isSelected ? '#ffffff' : '#ffffff',
+                        borderColor: isSelected ? 'transparent' : 'rgba(255,255,255,0.25)'
                       }}
-                      onClick={handleStartOrder}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectTier(cat.tierKey || 'standard');
+                      }}
                     >
-                      {cat.btnText || 'Order 1 Design'} <ArrowRight size={17} />
+                      {isSelected ? `✓ Selected (${cat.rate})` : cat.btnText} <ArrowRight size={17} />
                     </button>
                   </div>
 
@@ -337,73 +357,16 @@ export const EmbroideryDigitizingPage = () => {
           </div>
 
           <div style={{ textAlign: 'center', marginTop: '2.5rem', color: '#94a3b8', fontSize: '0.9rem' }}>
-            📌 <em>Prices are flat rates per design with zero hidden charges. Mixing services? Add to order list and checkout once.</em>
-          </div>
-
-        </div>
-      </section>
-
-      {/* Machine File Formats Grid */}
-      <section style={{ padding: '4.5rem 0', background: '#0f172a', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
-        <div className="container">
-          
-          <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3rem' }}>
-            <h2 style={{ fontSize: '2.2rem', color: '#ffffff', fontWeight: 800, marginBottom: '0.75rem' }}>
-              Supported Commercial Machine Formats
-            </h2>
-            <p style={{ color: '#94a3b8', fontSize: '1rem' }}>
-              We provide stitch files engineered specifically for your commercial or single-head embroidery machine brand.
-            </p>
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-            gap: '1.25rem',
-            maxWidth: '1000px',
-            margin: '0 auto'
-          }}>
-            {MACHINE_FORMATS.map((fmt, idx) => (
-              <div 
-                key={idx}
-                style={{
-                  background: '#1e293b',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '12px',
-                  padding: '1.25rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.85rem'
-                }}
-              >
-                <div style={{ background: 'rgba(255,122,0,0.15)', color: 'var(--orange-400)', padding: '0.6rem', borderRadius: '8px' }}>
-                  <FileCode size={22} />
-                </div>
-                <div>
-                  <div style={{ fontWeight: 800, color: '#ffffff', fontSize: '1rem' }}>{fmt.ext}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{fmt.brand}</div>
-                </div>
-              </div>
-            ))}
+            📌 <em>Prices are flat rates per design with zero hidden charges. Need multiple designs? Select bulk quantities below for instant volume discounts.</em>
           </div>
 
         </div>
       </section>
 
       {/* Interactive Order Builder Mount */}
-      <section id="digitizing-order-section" style={{ padding: '5rem 0', background: 'var(--navy-950)' }}>
+      <section id="digitizing-order-section" style={{ padding: '3rem 0', background: 'var(--navy-950)' }}>
         <div className="container">
-          <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 2.5rem' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(255, 122, 0, 0.15)', color: 'var(--orange-400)', padding: '0.35rem 0.85rem', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.75rem' }}>
-              <UploadCloud size={16} /> Instant Online Order Submission
-            </div>
-            <h2 style={{ fontSize: '2.25rem', color: '#ffffff', fontWeight: 800, marginBottom: '0.5rem' }}>
-              Submit Your Embroidery Digitizing Order
-            </h2>
-            <p style={{ color: '#94a3b8', fontSize: '1rem' }}>
-              Upload your logo artwork below to receive an instant live quote and submit your order directly to our studio engineers.
-            </p>
-          </div>
+          <CoreServicesOrderSection defaultService="digitizing" hideTabs={true} initialTier={selectedTier} />
         </div>
       </section>
 

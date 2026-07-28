@@ -19,9 +19,22 @@ import {
   FileCheck
 } from 'lucide-react';
 
+import { useLocation } from 'react-router-dom';
+
 export const MerchandiseStore = () => {
   const { storeProducts = [], openStoreOrderModal } = useAppState();
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const initialCategory = searchParams.get('category') || 'all';
+
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+
+  React.useEffect(() => {
+    const cat = new URLSearchParams(location.search).get('category');
+    if (cat) {
+      setSelectedCategory(cat);
+    }
+  }, [location.search]);
 
   const allProducts = (storeProducts && storeProducts.length > 0) ? storeProducts : [];
 

@@ -45,6 +45,7 @@ export const OrderWizardModal = () => {
   
   const [isDragOver, setIsDragOver] = useState(false);
 
+  const [selectedPlacements, setSelectedPlacements] = useState(['left_chest']);
   const [placementType, setPlacementType] = useState('Left Chest / Polo');
   const [serviceCategory, setServiceCategory] = useState('Left Chest Digitizing');
   const [width, setWidth] = useState(3.5);
@@ -56,6 +57,47 @@ export const OrderWizardModal = () => {
   const [notes, setNotes] = useState('');
   const [paymentOption, setPaymentOption] = useState('bolt'); // 'bolt' | 'wallet' | 'card'
 
+  const PLACEMENT_OPTIONS = [
+    { id: 'left_chest', label: 'Left Chest / Polo', desc: 'Standard logo up to 4.0"', isJacketBack: false },
+    { id: 'cap_front', label: 'Cap / Hat Front', desc: 'Center-out pathing', isJacketBack: false },
+    { id: 'sleeve_cuff', label: 'Sleeve / Cuff / Visor', desc: 'Small side emblem', isJacketBack: false },
+    { id: 'full_front', label: 'Full Front / Chest', desc: 'Chest crest logo up to 8.0"', isJacketBack: false },
+    { id: 'jacket_back', label: 'Jacket Back / Full Back', desc: 'Large crest (9"-12"+ high stitch count)', isJacketBack: true }
+  ];
+
+  const togglePlacement = (placementId) => {
+    setSelectedPlacements(prev => {
+      if (prev.includes(placementId)) {
+        if (prev.length === 1) return prev;
+        return prev.filter(p => p !== placementId);
+      } else {
+        return [...prev, placementId];
+      }
+    });
+  };
+
+  // Quantity & Bulk Multi-Package State
+  const [selectedPackageTier, setSelectedPackageTier] = useState('basic'); // 'basic' | 'standard' | 'premium' | 'bulk_combination'
+  const [singleQuantity, setSingleQuantity] = useState(1);
+  const [singleQuantityInput, setSingleQuantityInput] = useState('1');
+  const [bulkBasicQty, setBulkBasicQty] = useState(1);
+  const [bulkStandardQty, setBulkStandardQty] = useState(1);
+  const [bulkPremiumQty, setBulkPremiumQty] = useState(0);
+
+  React.useEffect(() => {
+    setSingleQuantityInput(String(singleQuantity));
+  }, [singleQuantity]);
+
+  const totalWizardQty = selectedPackageTier === 'bulk_combination' 
+    ? (bulkBasicQty + bulkStandardQty + bulkPremiumQty) 
+    : singleQuantity;
+
+  React.useEffect(() => {
+    if (totalWizardQty > 1 && isRush) {
+      setIsRush(false);
+    }
+  }, [totalWizardQty, isRush]);
+
   if (!isOrderWizardOpen) return null;
 
   const toggleFormat = (fmtId) => {
@@ -64,30 +106,42 @@ export const OrderWizardModal = () => {
     );
   };
 
-  // Dynamic Price Calculation
+  // Dynamic Price Calculation with Multi-Placement handling
   const calculatePrice = () => {
-    if (type === 'vector') {
-      const isComplex = serviceCategory.toLowerCase().includes('complex');
-      const base = isComplex 
-        ? (parseFloat(pricing?.vectorComplexRate) || 25.00) 
-        : (parseFloat(pricing?.vectorSimpleRate) || 15.00);
-      const rush = isRush ? (parseFloat(pricing?.rushSurcharge) || 10.00) : 0;
-      return (base + rush).toFixed(2);
+    const basicRate = parseFloat(pricing?.minOrderFee) || 5.00;
+    const standardRate = parseFloat(pricing?.vectorSimpleRate || 10.00);
+    const premiumRate = parseFloat(pricing?.vectorComplexRate || 20.00);
+
+    let baseTotal = 0;
+
+    if (selectedPackageTier === 'bulk_combination') {
+      baseTotal = (bulkBasicQty * basicRate) + (bulkStandardQty * standardRate) + (bulkPremiumQty * premiumRate);
+      if (baseTotal === 0) {
+        baseTotal = singleQuantity * basicRate;
+      }
+    } else {
+      let baseTierRate = basicRate;
+      if (selectedPackageTier === 'standard') baseTierRate = standardRate;
+      if (selectedPackageTier === 'premium') baseTierRate = premiumRate;
+
+      let perDesignTotalRate = 0;
+      if (type === 'vector') {
+        const isComplex = serviceCategory.toLowerCase().includes('complex') || selectedPackageTier === 'premium';
+        perDesignTotalRate = isComplex ? premiumRate : standardRate;
+      } else {
+        perDesignTotalRate = selectedPlacements.reduce((sum, pId) => {
+          const isJacket = pId === 'jacket_back';
+          const rate = isJacket ? 20.00 : baseTierRate;
+          return sum + rate;
+        }, 0);
+      }
+
+      baseTotal = singleQuantity * perDesignTotalRate;
     }
 
-    const area = width * height;
-    let baseStitches = Math.round(area * 1100);
-    if (placementType.includes('Cap') || fabricType.includes('Cap')) baseStitches += 1500;
-    if (placementType.includes('Jacket') || fabricType.includes('Jacket')) baseStitches += 4000;
-
-    const thousandUnits = Math.ceil(baseStitches / 1000);
-    let calculatedStitchPrice = thousandUnits * (parseFloat(pricing?.ratePerThousandStitches) || 1.50);
-
-    let base = Math.max((parseFloat(pricing?.minOrderFee) || 10.00), calculatedStitchPrice);
-    if (placementType.includes('Cap') || fabricType.includes('Cap')) base += (parseFloat(pricing?.cap3dPuffSurcharge) || 5.00);
-
-    const rush = isRush ? (parseFloat(pricing?.rushSurcharge) || 10.00) : 0;
-    return (base + rush).toFixed(2);
+    const allowRush = totalWizardQty === 1;
+    const rush = (isRush && allowRush) ? (parseFloat(pricing?.rushSurcharge) || 10.00) : 0;
+    return (baseTotal + rush).toFixed(2);
   };
 
   const calculatedTotal = calculatePrice();
@@ -352,7 +406,7 @@ export const OrderWizardModal = () => {
               </div>
 
               {/* Placement Selection */}
-              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
                 <label>Placement / Garment Target</label>
                 <select 
                   className="form-control"
@@ -368,6 +422,191 @@ export const OrderWizardModal = () => {
                 </select>
               </div>
 
+              {/* Package Tier Cards Display */}
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label>Select Pricing Package Tier *</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem', marginTop: '0.35rem' }}>
+                  <div
+                    onClick={() => setSelectedPackageTier('basic')}
+                    style={{
+                      border: selectedPackageTier === 'basic' ? '2px solid var(--orange-500)' : '1px solid var(--border-color)',
+                      background: selectedPackageTier === 'basic' ? 'var(--orange-50)' : '#ffffff',
+                      padding: '0.85rem',
+                      borderRadius: 'var(--radius-sm)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase' }}>⚡ BASIC</div>
+                    <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.15rem 0' }}>$10.00</div>
+                    <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', lineHeight: 1.25 }}>Left Chest / Simple Logo up to 4"</div>
+                  </div>
+
+                  <div
+                    onClick={() => setSelectedPackageTier('standard')}
+                    style={{
+                      border: selectedPackageTier === 'standard' ? '2px solid var(--orange-500)' : '1px solid var(--border-color)',
+                      background: selectedPackageTier === 'standard' ? 'var(--orange-50)' : '#ffffff',
+                      padding: '0.85rem',
+                      borderRadius: 'var(--radius-sm)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase' }}>🏆 STANDARD</div>
+                    <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.15rem 0' }}>$15.00</div>
+                    <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', lineHeight: 1.25 }}>Medium Detail / Cap / Sleeve Logo</div>
+                  </div>
+
+                  <div
+                    onClick={() => setSelectedPackageTier('premium')}
+                    style={{
+                      border: selectedPackageTier === 'premium' ? '2px solid var(--orange-500)' : '1px solid var(--border-color)',
+                      background: selectedPackageTier === 'premium' ? 'var(--orange-50)' : '#ffffff',
+                      padding: '0.85rem',
+                      borderRadius: 'var(--radius-sm)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase' }}>✨ PREMIUM</div>
+                    <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.15rem 0' }}>$25.00</div>
+                    <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', lineHeight: 1.25 }}>Jacket Back / Complex 3D Puff</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Single Quantity vs Multi-Package Quantity Controls */}
+              {selectedPackageTier !== 'bulk_combination' ? (
+                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                  <label>Order Quantity (Dropdown Preset & Manual Entry)</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.75rem', alignItems: 'center' }}>
+                    <select
+                      className="form-control"
+                      value={[1, 2, 3, 5, 10, 15, 25, 50].includes(singleQuantity) ? singleQuantity : 'custom'}
+                      onChange={(e) => {
+                        if (e.target.value !== 'custom') {
+                          setSingleQuantity(parseInt(e.target.value) || 1);
+                        }
+                      }}
+                      style={{ fontWeight: 700 }}
+                    >
+                      <option value="1">1 Design (Single Order)</option>
+                      <option value="2">2 Designs (Package)</option>
+                      <option value="3">3 Designs (Package)</option>
+                      <option value="5">5 Designs (Bulk Batch)</option>
+                      <option value="10">10 Designs (Bulk Batch)</option>
+                      <option value="15">15 Designs (Bulk Batch)</option>
+                      <option value="25">25 Designs (Shop Tier)</option>
+                      <option value="50">50 Designs (Volume Tier)</option>
+                      <option value="custom">Custom Quantity...</option>
+                    </select>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => setSingleQuantity(Math.max(1, singleQuantity - 1))}
+                        style={{ width: '36px', height: '38px', background: '#f1f5f9', border: '1px solid var(--border-color)', color: 'var(--navy-900)', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}
+                      >
+                        -
+                      </button>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={singleQuantityInput}
+                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => {
+                          const rawVal = e.target.value;
+                          if (rawVal === '') {
+                            setSingleQuantityInput('');
+                            return;
+                          }
+                          const cleanVal = rawVal.replace(/\D/g, '');
+                          if (cleanVal === '') {
+                            setSingleQuantityInput('');
+                            return;
+                          }
+                          const parsed = parseInt(cleanVal, 10);
+                          setSingleQuantityInput(String(parsed));
+                          if (parsed > 0) {
+                            setSingleQuantity(parsed);
+                          }
+                        }}
+                        onBlur={() => {
+                          if (!singleQuantityInput || parseInt(singleQuantityInput, 10) < 1) {
+                            setSingleQuantity(1);
+                            setSingleQuantityInput('1');
+                          }
+                        }}
+                        className="form-control"
+                        style={{ textAlign: 'center', fontWeight: 800, padding: '0.4rem 0.5rem' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setSingleQuantity(singleQuantity + 1)}
+                        style={{ width: '36px', height: '38px', background: '#f1f5f9', border: '1px solid var(--border-color)', color: 'var(--navy-900)', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  background: '#f8fafc',
+                  border: '1.5px solid var(--orange-300)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '1.25rem',
+                  marginBottom: '1.5rem'
+                }}>
+                  <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--navy-900)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Zap size={16} style={{ color: 'var(--orange-500)' }} /> Bulk Multi-Package Quantity Selection
+                  </div>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.85rem' }}>
+                    <div>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 800 }}>Basic ($10/ea)</label>
+                      <select
+                        className="form-control"
+                        value={bulkBasicQty}
+                        onChange={(e) => setBulkBasicQty(parseInt(e.target.value) || 0)}
+                      >
+                        {[0, 1, 2, 3, 4, 5, 10, 15, 20, 25, 50].map(q => (
+                          <option key={q} value={q}>{q} Designs</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 800 }}>Standard ($15/ea)</label>
+                      <select
+                        className="form-control"
+                        value={bulkStandardQty}
+                        onChange={(e) => setBulkStandardQty(parseInt(e.target.value) || 0)}
+                      >
+                        {[0, 1, 2, 3, 4, 5, 10, 15, 20, 25, 50].map(q => (
+                          <option key={q} value={q}>{q} Designs</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 800 }}>Premium ($25/ea)</label>
+                      <select
+                        className="form-control"
+                        value={bulkPremiumQty}
+                        onChange={(e) => setBulkPremiumQty(parseInt(e.target.value) || 0)}
+                      >
+                        {[0, 1, 2, 3, 4, 5, 10, 15, 20, 25, 50].map(q => (
+                          <option key={q} value={q}>{q} Designs</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Native Drag & Drop Multiple File Selector */}
               <div className="form-group">
                 <label>Upload Artwork Files (Select Multiple .PNG, .JPG, .AI, .CDR, .PDF, .DST)</label>
@@ -378,8 +617,11 @@ export const OrderWizardModal = () => {
                   style={{
                     border: `2px dashed ${isDragOver ? 'var(--orange-500)' : 'var(--orange-600)'}`,
                     borderRadius: 'var(--radius-md)',
-                    padding: '2rem 1.5rem',
-                    textAlign: 'center',
+                    padding: '0.85rem 1.25rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.85rem',
                     background: isDragOver ? 'var(--orange-50)' : 'var(--navy-100)',
                     cursor: 'pointer',
                     position: 'relative',
@@ -400,12 +642,14 @@ export const OrderWizardModal = () => {
                       height: '100%'
                     }}
                   />
-                  <UploadCloud size={42} style={{ color: isDragOver ? 'var(--orange-500)' : 'var(--orange-600)', marginBottom: '0.5rem' }} />
-                  <div style={{ fontWeight: 700, color: 'var(--navy-900)', fontSize: '1rem' }}>
-                    Drag & Drop multiple files or click to select any file format
-                  </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-                    Universal Upload Support: PNG, JPG, PDF, AI, EPS, CDR, DST, EMB, PES, EXP, ZIP & all formats
+                  <UploadCloud size={24} style={{ color: isDragOver ? 'var(--orange-500)' : 'var(--orange-600)', flexShrink: 0 }} />
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.875rem' }}>
+                      Drag & Drop multiple files or click to browse
+                    </div>
+                    <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>
+                      Supports PNG, JPG, PDF, AI, EPS, CDR, DST, EMB, PES, EXP, ZIP & all formats
+                    </div>
                   </div>
                 </div>
               </div>
@@ -602,31 +846,49 @@ export const OrderWizardModal = () => {
                 </div>
               </div>
 
-              {/* Rush Order Switch */}
-              <div style={{
-                background: isRush ? '#ffe4e6' : 'var(--bg-main)',
-                border: `1px solid ${isRush ? '#f43f5e' : 'var(--border-color)'}`,
-                padding: '0.85rem 1rem',
-                borderRadius: 'var(--radius-sm)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '1.5rem'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Zap size={18} style={{ color: 'var(--orange-500)' }} />
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Rush Express Delivery (4-8 Hours)</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>+ ${pricing.rushSurcharge.toFixed(2)} Priority Digitizing Surcharge</div>
+              {/* Super Rush Switch (Displayed ONLY when order quantity === 1) */}
+              {totalWizardQty === 1 ? (
+                <div style={{
+                  background: isRush ? '#fff7ed' : 'var(--bg-main)',
+                  border: `1.5px solid ${isRush ? 'var(--orange-500)' : 'var(--border-color)'}`,
+                  padding: '0.85rem 1rem',
+                  borderRadius: 'var(--radius-sm)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '1.5rem',
+                  boxShadow: isRush ? '0 4px 14px rgba(249, 115, 22, 0.15)' : 'none'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Zap size={18} style={{ color: 'var(--orange-500)' }} />
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--navy-900)' }}>
+                        ⚡ Super Rush (2-4 Hrs / Express) Turnaround
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        + ${(parseFloat(pricing?.rushSurcharge) || 10.00).toFixed(2)} Priority Express Surcharge
+                      </div>
+                    </div>
                   </div>
+                  <input 
+                    type="checkbox" 
+                    checked={isRush} 
+                    onChange={(e) => setIsRush(e.target.checked)} 
+                    style={{ width: 18, height: 18, accentColor: 'var(--orange-500)', cursor: 'pointer' }}
+                  />
                 </div>
-                <input 
-                  type="checkbox" 
-                  checked={isRush} 
-                  onChange={(e) => setIsRush(e.target.checked)} 
-                  style={{ width: 18, height: 18, cursor: 'pointer' }}
-                />
-              </div>
+              ) : (
+                <div style={{
+                  fontSize: '0.78rem',
+                  color: 'var(--text-muted)',
+                  background: 'var(--navy-100)',
+                  padding: '0.65rem 0.85rem',
+                  borderRadius: 'var(--radius-sm)',
+                  marginBottom: '1.5rem'
+                }}>
+                  📌 <em>Super Rush (2-4 Hrs) is available for single-design orders. Bulk orders ({totalWizardQty} designs) are processed under standard studio turnaround.</em>
+                </div>
+              )}
 
               {/* Total Summary Price Box */}
               <div style={{

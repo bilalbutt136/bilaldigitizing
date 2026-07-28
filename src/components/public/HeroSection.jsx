@@ -154,8 +154,12 @@ export const HeroSection = () => {
                 <Upload size={20} /> Upload Your Design <ArrowRight size={18} />
               </button>
 
-              <a 
-                href="#pricing" 
+              <button 
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById('order-builder');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
                 className="btn btn-outline btn-lg"
                 style={{ 
                   color: '#ffffff', 
@@ -163,11 +167,12 @@ export const HeroSection = () => {
                   padding: '1.05rem 1.75rem', 
                   fontSize: '1rem',
                   fontWeight: 700,
-                  backdropFilter: 'blur(4px)'
+                  backdropFilter: 'blur(4px)',
+                  cursor: 'pointer'
                 }}
               >
                 <Tag size={19} /> View Pricing Rates
-              </a>
+              </button>
             </div>
 
           </div>

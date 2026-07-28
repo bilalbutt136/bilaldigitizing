@@ -341,60 +341,83 @@ export const StoreOrderModal = () => {
           }}>
             <div>
               <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>
-                Order Quantity (Min. {minQty} pcs):
+                Order Quantity (Dropdown & Manual Entry - Min. {minQty} pcs):
               </label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <button
-                  type="button"
-                  onClick={() => setQuantity(prev => Math.max(minQty, prev - 1))}
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-color)',
-                    background: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer'
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                {/* Quantity Dropdown Preset */}
+                <select
+                  className="form-control"
+                  value={[minQty, minQty * 2, minQty * 5, minQty * 10, minQty * 25, 50, 100].includes(quantity) ? quantity : 'custom'}
+                  onChange={(e) => {
+                    if (e.target.value !== 'custom') {
+                      setQuantity(parseInt(e.target.value) || minQty);
+                    }
                   }}
+                  style={{ width: 'auto', minWidth: '140px', fontWeight: 700 }}
                 >
-                  <Minus size={16} />
-                </button>
-                
-                <input 
-                  type="number"
-                  min={minQty}
-                  value={quantity}
-                  onChange={(e) => setQuantity(Math.max(minQty, parseInt(e.target.value) || minQty))}
-                  style={{
-                    width: '70px',
-                    height: '36px',
-                    textAlign: 'center',
-                    fontWeight: 800,
-                    fontSize: '1rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-color)'
-                  }}
-                />
+                  <option value={minQty}>{minQty} pcs (Minimum Tier)</option>
+                  <option value={minQty * 2}>{minQty * 2} pcs (Double Batch)</option>
+                  <option value={minQty * 5}>{minQty * 5} pcs (Standard Bulk)</option>
+                  <option value={minQty * 10}>{minQty * 10} pcs (Shop Batch)</option>
+                  <option value={50}>50 pcs (Volume Batch)</option>
+                  <option value={100}>100 pcs (Commercial Wholesale)</option>
+                  <option value="custom">Custom Quantity...</option>
+                </select>
 
-                <button
-                  type="button"
-                  onClick={() => setQuantity(prev => prev + 1)}
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-color)',
-                    background: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <Plus size={16} />
-                </button>
+                {/* Manual Number Input with Increments */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(prev => Math.max(minQty, prev - 1))}
+                    style={{
+                      width: '36px',
+                      height: '38px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-color)',
+                      background: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Minus size={16} />
+                  </button>
+                  
+                  <input 
+                    type="number"
+                    min={minQty}
+                    value={quantity}
+                    onChange={(e) => setQuantity(Math.max(minQty, parseInt(e.target.value) || minQty))}
+                    style={{
+                      width: '65px',
+                      height: '38px',
+                      textAlign: 'center',
+                      fontWeight: 800,
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-color)',
+                      background: '#ffffff'
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(prev => prev + 1)}
+                    style={{
+                      width: '36px',
+                      height: '38px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-color)',
+                      background: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
               </div>
             </div>
 

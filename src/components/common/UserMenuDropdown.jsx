@@ -112,25 +112,26 @@ export const UserMenuDropdown = () => {
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '0.55rem',
+          justifyContent: 'center',
           background: isOpen ? '#fff7ed' : '#ffffff',
-          border: isOpen ? '1.5px solid var(--orange-500)' : '1.5px solid var(--border-color)',
-          padding: '0.3rem 0.75rem',
-          borderRadius: '9999px',
+          border: isOpen ? '2px solid var(--orange-500)' : '1.5px solid var(--border-color)',
+          padding: '2px',
+          borderRadius: '50%',
           cursor: 'pointer',
           boxShadow: 'var(--shadow-sm)',
           transition: 'all 0.2s ease'
         }}
+        title={`${cleanName} (${activeUser?.company || 'Verified Client'})`}
       >
         {/* User Initials Avatar */}
         <div style={{
-          width: '30px',
-          height: '30px',
+          width: '36px',
+          height: '36px',
           borderRadius: '50%',
           background: 'linear-gradient(135deg, var(--navy-900) 0%, var(--orange-600) 100%)',
           color: '#ffffff',
           fontWeight: 800,
-          fontSize: '0.78rem',
+          fontSize: '0.85rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -139,18 +140,6 @@ export const UserMenuDropdown = () => {
         }}>
           {initials}
         </div>
-
-        {/* User Name & Company */}
-        <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)', lineHeight: 1.15 }}>
-            {cleanName || 'Sarah Jenkins'}
-          </span>
-          <span style={{ fontSize: '0.675rem', color: 'var(--orange-600)', fontWeight: 800, lineHeight: 1.15, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
-            {activeUser?.company || 'Apex Athletics'}
-          </span>
-        </div>
-
-        <ChevronDown size={13} style={{ color: 'var(--navy-600)', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
       </button>
 
       {/* Dropdown Menu Popup Box */}

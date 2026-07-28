@@ -977,7 +977,12 @@ const DEFAULT_SEW_OUTS = [
     if (targetView === 'customer') {
       if (isAuthenticated) {
         setCurrentView('customer');
-        if (triggerOrderWizard) setIsOrderWizardOpen(true);
+        if (triggerOrderWizard) {
+          setTimeout(() => {
+            const el = document.getElementById('order-builder') || document.getElementById('pricing');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+          }, 120);
+        }
       } else {
         setAuthModalTarget('customer');
         setAuthModalMode('login');

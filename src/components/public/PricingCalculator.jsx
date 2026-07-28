@@ -9,8 +9,22 @@ import {
   Clock
 } from 'lucide-react';
 
+import { useLocation } from 'react-router-dom';
+
 export const PricingCalculator = () => {
   const { pricing = {}, pricingCards = [], protectedNavigate } = useAppState();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const initialCategory = searchParams.get('cat') || searchParams.get('service') || 'all';
+
+  const [activeCategory, setActiveCategory] = React.useState(initialCategory);
+
+  React.useEffect(() => {
+    const cat = new URLSearchParams(location.search).get('cat') || new URLSearchParams(location.search).get('service');
+    if (cat) {
+      setActiveCategory(cat);
+    }
+  }, [location.search]);
 
   const minFee = pricing.minOrderFee !== undefined ? parseFloat(pricing.minOrderFee).toFixed(2) : '10.00';
   const patchesFee = pricing.customPatchesStartingRate !== undefined ? parseFloat(pricing.customPatchesStartingRate).toFixed(2) : '1.50';
@@ -80,14 +94,17 @@ export const PricingCalculator = () => {
     }
   ];
 
-  const cardsToRender = (pricingCards && pricingCards.length > 0) ? pricingCards : defaultCards;
+  const allCards = (pricingCards && pricingCards.length > 0) ? pricingCards : defaultCards;
+  const cardsToRender = activeCategory === 'all'
+    ? allCards
+    : allCards.filter(c => (c.category || '').toLowerCase() === activeCategory.toLowerCase() || (c.title || '').toLowerCase().includes(activeCategory.toLowerCase()));
 
   return (
     <section id="pricing" style={{ padding: '5.5rem 0', background: 'var(--navy-950)', color: '#ffffff' }}>
       <div className="container">
 
         {/* Header */}
-        <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 3.5rem' }}>
+        <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 2.5rem' }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -107,7 +124,7 @@ export const PricingCalculator = () => {
           </div>
 
           <h2 style={{ fontSize: '2.5rem', color: '#ffffff', marginBottom: '0.85rem', fontWeight: 800 }}>
-            Embroidery Digitizing Services
+            Embroidery & Vector Pricing Studio
           </h2>
 
           <p style={{ color: '#94a3b8', fontSize: '1.05rem', lineHeight: 1.65, marginBottom: '1.5rem' }}>
@@ -123,7 +140,8 @@ export const PricingCalculator = () => {
             gap: '1.5rem',
             fontSize: '0.925rem',
             fontWeight: 700,
-            color: '#e2e8f0'
+            color: '#e2e8f0',
+            marginBottom: '2rem'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <CheckCircle size={17} style={{ color: '#10b981' }} /> Accurate Stitching
@@ -134,6 +152,42 @@ export const PricingCalculator = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <CheckCircle size={17} style={{ color: '#10b981' }} /> All Embroidery File Formats
             </div>
+          </div>
+
+          {/* Category Filter Pills */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '0.65rem',
+            flexWrap: 'wrap'
+          }}>
+            {[
+              { id: 'all', label: 'All Pricing Tiers' },
+              { id: 'embroidery', label: 'Embroidery Digitizing' },
+              { id: 'vector', label: 'Vector Tracing' },
+              { id: 'patches', label: 'Custom Patches' },
+              { id: 'store', label: 'Apparel & Caps' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveCategory(tab.id)}
+                style={{
+                  background: activeCategory === tab.id ? '#ff7a00' : 'rgba(255, 255, 255, 0.08)',
+                  color: '#ffffff',
+                  border: activeCategory === tab.id ? '1px solid #ff7a00' : '1px solid rgba(255, 255, 255, 0.15)',
+                  fontWeight: activeCategory === tab.id ? 800 : 600,
+                  fontSize: '0.875rem',
+                  padding: '0.5rem 1.15rem',
+                  borderRadius: '9999px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
 

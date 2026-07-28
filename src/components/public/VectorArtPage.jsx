@@ -38,9 +38,21 @@ export const VectorArtPage = () => {
   const [serviceCategory, setServiceCategory] = useState('Simple Vector Redraw'); // 'Simple Vector Redraw' | 'Complex Vector Redraw'
   const [colorMode, setColorMode] = useState('Spot Colors (Pantone/Solid)');
   const [requestedFormats, setRequestedFormats] = useState(['ai', 'eps', 'svg', 'pdf']);
+  const [quantity, setQuantity] = useState(1);
+  const [quantityInput, setQuantityInput] = useState('1');
   const [isRush, setIsRush] = useState(false);
   const [notes, setNotes] = useState('');
   const [paymentOption, setPaymentOption] = useState('bolt'); // 'bolt' | 'wallet'
+
+  React.useEffect(() => {
+    setQuantityInput(String(quantity));
+  }, [quantity]);
+
+  React.useEffect(() => {
+    if (quantity > 1 && isRush) {
+      setIsRush(false);
+    }
+  }, [quantity, isRush]);
   
   // File Upload State
   const [selectedAssets, setSelectedAssets] = useState([]);
@@ -75,8 +87,10 @@ export const VectorArtPage = () => {
     : 10.00;
 
   const isComplexSelected = serviceCategory.toLowerCase().includes('complex');
-  const basePrice = isComplexSelected ? complexRate : simpleRate;
-  const rushSurcharge = isRush ? rushFeeAmount : 0.00;
+  const unitRate = isComplexSelected ? complexRate : simpleRate;
+  const basePrice = unitRate * quantity;
+  const allowRush = quantity === 1;
+  const rushSurcharge = (isRush && allowRush) ? rushFeeAmount : 0.00;
   const totalPriceNum = Number(basePrice) + Number(rushSurcharge);
   const totalPrice = totalPriceNum.toFixed(2);
 
@@ -295,9 +309,12 @@ export const VectorArtPage = () => {
                 style={{
                   border: isDragOver ? '2px dashed var(--orange-500)' : '2px dashed var(--border-color)',
                   background: isDragOver ? '#fff7ed' : '#f8fafc',
-                  borderRadius: '12px',
-                  padding: '2.5rem 1.5rem',
-                  textAlign: 'center',
+                  borderRadius: '10px',
+                  padding: '0.85rem 1.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.85rem',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
@@ -312,13 +329,15 @@ export const VectorArtPage = () => {
                   style={{ display: 'none' }}
                 />
                 
-                <UploadCloud size={44} style={{ color: 'var(--orange-500)', marginBottom: '0.75rem' }} />
-                <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
-                  Click to Browse or Drag & Drop Artwork
-                </h4>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
-                  Supports JPG, PNG, BMP, PSD, PDF, or mobile photos of hand sketches (Up to 50MB per file)
-                </p>
+                <UploadCloud size={24} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
+                <div style={{ textAlign: 'left' }}>
+                  <h4 style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0 0 0.15rem' }}>
+                    Click to Browse or Drag & Drop Artwork
+                  </h4>
+                  <p style={{ fontSize: '0.73rem', color: 'var(--text-muted)', margin: 0 }}>
+                    Supports JPG, PNG, BMP, PSD, PDF, or mobile photos of hand sketches (Up to 50MB)
+                  </p>
+                </div>
               </div>
 
               {/* Uploaded File List Preview */}
@@ -442,7 +461,82 @@ export const VectorArtPage = () => {
                   </div>
                 </div>
 
-                {/* Requested Vector Output Formats */}
+                {/* Dual Quantity Control: Dropdown & Manual Input */}
+                <div>
+                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.9rem', color: 'var(--navy-900)', marginBottom: '0.4rem' }}>
+                    Order Quantity (Dropdown & Manual Entry)
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.75rem', alignItems: 'center' }}>
+                    <select
+                      className="form-control"
+                      value={[1, 2, 3, 5, 10, 15, 25, 50].includes(quantity) ? quantity : 'custom'}
+                      onChange={(e) => {
+                        if (e.target.value !== 'custom') {
+                          setQuantity(parseInt(e.target.value, 10) || 1);
+                        }
+                      }}
+                      style={{ fontWeight: 800 }}
+                    >
+                      <option value="1">1 Artwork (Single Order)</option>
+                      <option value="2">2 Artworks (Package)</option>
+                      <option value="3">3 Artworks (Package)</option>
+                      <option value="5">5 Artworks (Bulk Batch)</option>
+                      <option value="10">10 Artworks (Bulk Batch)</option>
+                      <option value="15">15 Artworks (Bulk Batch)</option>
+                      <option value="25">25 Artworks (Volume Tier)</option>
+                      <option value="custom">Custom Quantity...</option>
+                    </select>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        style={{ width: '36px', height: '38px', background: '#f1f5f9', border: '1px solid var(--border-color)', color: 'var(--navy-900)', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}
+                      >
+                        -
+                      </button>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={quantityInput}
+                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => {
+                          const rawVal = e.target.value;
+                          if (rawVal === '') {
+                            setQuantityInput('');
+                            return;
+                          }
+                          const cleanVal = rawVal.replace(/\D/g, '');
+                          if (cleanVal === '') {
+                            setQuantityInput('');
+                            return;
+                          }
+                          const parsed = parseInt(cleanVal, 10);
+                          setQuantityInput(String(parsed));
+                          if (parsed > 0) {
+                            setQuantity(parsed);
+                          }
+                        }}
+                        onBlur={() => {
+                          if (!quantityInput || parseInt(quantityInput, 10) < 1) {
+                            setQuantity(1);
+                            setQuantityInput('1');
+                          }
+                        }}
+                        className="form-control"
+                        style={{ textAlign: 'center', fontWeight: 800, padding: '0.4rem 0.5rem' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setQuantity(quantity + 1)}
+                        style={{ width: '36px', height: '38px', background: '#f1f5f9', border: '1px solid var(--border-color)', color: 'var(--navy-900)', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
                 <div>
                   <label style={{ display: 'block', fontWeight: 700, fontSize: '0.9rem', color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
                     Requested Vector Output Formats
@@ -589,11 +683,18 @@ export const VectorArtPage = () => {
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--navy-700)' }}>
-                  <span>Base Rate ({isComplexSelected ? 'Complex' : 'Simple'}):</span>
+                  <span>Quantity:</span>
+                  <span style={{ fontWeight: 700, color: 'var(--navy-900)' }}>
+                    {quantity} {quantity === 1 ? 'Artwork' : 'Artworks'} (${unitRate.toFixed(2)}/ea)
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--navy-700)' }}>
+                  <span>Artwork Subtotal:</span>
                   <span style={{ fontWeight: 700 }}>${basePrice.toFixed(2)}</span>
                 </div>
 
-                {isRush && (
+                {isRush && quantity === 1 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--orange-600)', fontWeight: 700 }}>
                     <span>Super Rush (2-4 Hrs):</span>
                     <span>+${rushSurcharge.toFixed(2)}</span>

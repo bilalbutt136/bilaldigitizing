@@ -41,13 +41,24 @@ export const HeaderNav = () => {
   } = useAppState();
 
   const [isServicesOpen, setIsServicesOpen] = useState(false);
+  const [isStoreOpen, setIsStoreOpen] = useState(false);
+  const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const servicesDropdownRef = useRef(null);
+  const storeDropdownRef = useRef(null);
+  const pricingDropdownRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (servicesDropdownRef.current && !servicesDropdownRef.current.contains(e.target)) {
         setIsServicesOpen(false);
+      }
+      if (storeDropdownRef.current && !storeDropdownRef.current.contains(e.target)) {
+        setIsStoreOpen(false);
+      }
+      if (pricingDropdownRef.current && !pricingDropdownRef.current.contains(e.target)) {
+        setIsPricingOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -185,7 +196,7 @@ export const HeaderNav = () => {
                   zIndex: 2000
                 }}>
                   <div style={{
-                    width: '195px',
+                    width: '210px',
                     background: '#ffffff',
                     border: '1.5px solid var(--border-color)',
                     borderRadius: '12px',
@@ -238,7 +249,7 @@ export const HeaderNav = () => {
                       type="button"
                       onClick={() => {
                         setCurrentView('public');
-                        navigate('/vector-art');
+                        navigate('/services/vector-tracing');
                         setIsServicesOpen(false);
                       }}
                       style={{
@@ -265,14 +276,71 @@ export const HeaderNav = () => {
                     >
                       Vector Tracing & Redraw
                     </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
-                    {/* Option 3: Custom Patches */}
+            {/* Store Dropdown Item (Positioned right next to Services) */}
+            <div 
+              ref={storeDropdownRef}
+              style={{ position: 'relative', display: 'inline-block' }}
+              onMouseEnter={() => setIsStoreOpen(true)}
+              onMouseLeave={() => setIsStoreOpen(false)}
+            >
+              <button 
+                onClick={() => {
+                  handleGoStore();
+                  setIsStoreOpen(!isStoreOpen);
+                }}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  color: isStoreOpen || isStoreActive ? 'var(--orange-600)' : 'var(--navy-800)', 
+                  fontWeight: isStoreActive ? 800 : 600, 
+                  fontSize: '0.925rem', 
+                  cursor: 'pointer', 
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  transition: 'color 0.15s ease'
+                }}
+              >
+                Store <ChevronDown size={13} style={{ transition: 'transform 0.2s', transform: isStoreOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+              </button>
+
+              {/* Store Dropdown Popup Card Menu */}
+              {isStoreOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: '-10px',
+                  paddingTop: '8px',
+                  zIndex: 2000
+                }}>
+                  <div style={{
+                    width: '235px',
+                    background: '#ffffff',
+                    border: '1.5px solid var(--border-color)',
+                    borderRadius: '12px',
+                    boxShadow: '0 12px 32px rgba(15, 23, 42, 0.15)',
+                    padding: '0.4rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.15rem',
+                    animation: 'fadeIn 0.15s ease-out'
+                  }}>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0.4rem 0.85rem 0.2rem' }}>
+                      Physical Products & Apparel
+                    </div>
+
                     <button
                       type="button"
                       onClick={() => {
                         setCurrentView('public');
                         navigate('/custom-patches');
-                        setIsServicesOpen(false);
+                        setIsStoreOpen(false);
                       }}
                       style={{
                         width: '100%',
@@ -296,12 +364,273 @@ export const HeaderNav = () => {
                         e.currentTarget.style.color = 'var(--navy-900)';
                       }}
                     >
-                      Custom Patches
+                      Custom Patches & Emblems
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentView('public');
+                        navigate('/custom-tshirts');
+                        setIsStoreOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '0.55rem 0.85rem',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        color: 'var(--navy-900)',
+                        fontSize: '0.875rem',
+                        fontWeight: 700,
+                        transition: 'all 0.18s ease'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = '#fff7ed';
+                        e.currentTarget.style.color = 'var(--orange-600)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--navy-900)';
+                      }}
+                    >
+                      Custom T-Shirts & Apparel
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentView('public');
+                        navigate('/custom-caps');
+                        setIsStoreOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '0.55rem 0.85rem',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        color: 'var(--navy-900)',
+                        fontSize: '0.875rem',
+                        fontWeight: 700,
+                        transition: 'all 0.18s ease'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = '#fff7ed';
+                        e.currentTarget.style.color = 'var(--orange-600)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--navy-900)';
+                      }}
+                    >
+                      Headwear & 3D Puff Caps
+                    </button>
+
+                    <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '0.2rem 0' }} />
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleGoStore();
+                        setIsStoreOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '0.55rem 0.85rem',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        color: 'var(--orange-600)',
+                        fontSize: '0.85rem',
+                        fontWeight: 800,
+                        transition: 'all 0.18s ease'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = '#fff7ed';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                      }}
+                    >
+                      All Store Merchandise →
                     </button>
                   </div>
                 </div>
               )}
             </div>
+
+            {/* Pricing Dropdown Item */}
+            <div 
+              ref={pricingDropdownRef}
+              style={{ position: 'relative', display: 'inline-block' }}
+              onMouseEnter={() => setIsPricingOpen(true)}
+              onMouseLeave={() => setIsPricingOpen(false)}
+            >
+              <button 
+                onClick={() => {
+                  setCurrentView('public');
+                  if (location.pathname !== '/') {
+                    navigate('/pricing');
+                  } else {
+                    const el = document.getElementById('order-builder');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }
+                  setIsPricingOpen(!isPricingOpen);
+                }}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  color: isPricingOpen ? 'var(--orange-600)' : 'var(--navy-800)', 
+                  fontWeight: 600, 
+                  fontSize: '0.925rem', 
+                  cursor: 'pointer', 
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  transition: 'color 0.15s ease'
+                }}
+              >
+                Pricing <ChevronDown size={13} style={{ transition: 'transform 0.2s', transform: isPricingOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+              </button>
+
+              {/* Pricing Dropdown Popup Card Menu */}
+              {isPricingOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: '-10px',
+                  paddingTop: '8px',
+                  zIndex: 2000
+                }}>
+                  <div style={{
+                    width: '220px',
+                    background: '#ffffff',
+                    border: '1.5px solid var(--border-color)',
+                    borderRadius: '12px',
+                    boxShadow: '0 12px 32px rgba(15, 23, 42, 0.15)',
+                    padding: '0.4rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.15rem',
+                    animation: 'fadeIn 0.15s ease-out'
+                  }}>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0.4rem 0.85rem 0.2rem' }}>
+                      Rates & Pricing Tiers
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentView('public');
+                        navigate('/embroidery-digitizing');
+                        setIsPricingOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '0.55rem 0.85rem',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        color: 'var(--navy-900)',
+                        fontSize: '0.875rem',
+                        fontWeight: 700
+                      }}
+                      onMouseOver={(e) => { e.currentTarget.style.background = '#fff7ed'; e.currentTarget.style.color = 'var(--orange-600)'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--navy-900)'; }}
+                    >
+                      Embroidery Digitizing Rates
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentView('public');
+                        navigate('/services/vector-tracing');
+                        setIsPricingOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '0.55rem 0.85rem',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        color: 'var(--navy-900)',
+                        fontSize: '0.875rem',
+                        fontWeight: 700
+                      }}
+                      onMouseOver={(e) => { e.currentTarget.style.background = '#fff7ed'; e.currentTarget.style.color = 'var(--orange-600)'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--navy-900)'; }}
+                    >
+                      Vector Tracing Rates
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentView('public');
+                        navigate('/pricing?cat=patches');
+                        setIsPricingOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '0.55rem 0.85rem',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        color: 'var(--navy-900)',
+                        fontSize: '0.875rem',
+                        fontWeight: 700
+                      }}
+                      onMouseOver={(e) => { e.currentTarget.style.background = '#fff7ed'; e.currentTarget.style.color = 'var(--orange-600)'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--navy-900)'; }}
+                    >
+                      Custom Patches Tiers
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentView('public');
+                        navigate('/pricing?cat=store');
+                        setIsPricingOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '0.55rem 0.85rem',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        color: 'var(--navy-900)',
+                        fontSize: '0.875rem',
+                        fontWeight: 700
+                      }}
+                      onMouseOver={(e) => { e.currentTarget.style.background = '#fff7ed'; e.currentTarget.style.color = 'var(--orange-600)'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--navy-900)'; }}
+                    >
+                      Apparel & Cap Rates
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Portfolio Link */}
             <button 
               onClick={() => {
                 setCurrentView('public');
@@ -319,49 +648,10 @@ export const HeaderNav = () => {
             >
               Portfolio
             </button>
-            <button 
-              onClick={() => handleNavClick('pricing')}
-              style={{ background: 'none', border: 'none', color: 'var(--navy-800)', fontWeight: 600, fontSize: '0.925rem', cursor: 'pointer', padding: 0 }}
-            >
-              Pricing
-            </button>
-            <button 
-              onClick={handleGoStore}
-              style={{ 
-                background: isStoreActive ? 'var(--orange-50)' : '#fff7ed',
-                border: '1.5px solid var(--orange-400)',
-                color: 'var(--orange-700)', 
-                fontWeight: 800, 
-                fontSize: '0.875rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                cursor: 'pointer',
-                padding: '0.35rem 0.85rem',
-                borderRadius: '9999px',
-                boxShadow: '0 2px 8px rgba(255, 122, 0, 0.15)'
-              }}
-            >
-              <ShoppingBag size={15} /> Store
-            </button>
           </nav>
         )}
 
-        {currentView === 'customer' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ background: 'var(--navy-100)', padding: '0.4rem 0.85rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}>
-              Logged in: <strong style={{ color: 'var(--orange-700)' }}>{authUser?.company || 'Apex Athletics Apparel'}</strong>
-            </div>
-          </div>
-        )}
 
-        {currentView === 'admin' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--green-600)', fontWeight: 700, fontSize: '0.9rem' }}>
-              <TrendingUp size={16} /> Admin Operations Authorized
-            </span>
-          </div>
-        )}
 
         {/* Right Action CTAs */}
         <div style={{ 
@@ -391,17 +681,21 @@ export const HeaderNav = () => {
             {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
           
-          {/* Primary Order Now Button - Hidden on Admin, Customer Portal View & Admin Routes */}
+          {/* Primary Order Now Button - Direct Navigation to Order Builder & Payment System */}
           {currentView !== 'admin' && currentView !== 'customer' && !location.pathname.includes('admin') && (
             <button 
               className="btn btn-primary-orange btn-sm"
               onClick={() => {
-                if (isAuthenticated) {
-                  protectedNavigate('customer', true);
-                  navigate('/client-portal');
+                setCurrentView('public');
+                const el = document.getElementById('order-builder') || document.getElementById('pricing');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth' });
                 } else {
-                  protectedNavigate('customer', true);
-                  navigate('/login');
+                  navigate('/');
+                  setTimeout(() => {
+                    const targetEl = document.getElementById('order-builder') || document.getElementById('pricing');
+                    if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth' });
+                  }, 150);
                 }
               }}
               style={{
@@ -544,7 +838,7 @@ export const HeaderNav = () => {
           <button
             type="button"
             onClick={() => {
-              navigate('/vector-art');
+              navigate('/services/vector-tracing');
               setIsMobileMenuOpen(false);
             }}
             style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
@@ -564,7 +858,7 @@ export const HeaderNav = () => {
           </button>
 
           <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.6rem', marginBottom: '0.2rem' }}>
-            Custom Shop (Physical Shipping)
+            Custom Physical Storefront
           </div>
 
           <button
@@ -575,7 +869,29 @@ export const HeaderNav = () => {
             }}
             style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
           >
-            Custom Patches
+            Custom Patches & Emblems
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              navigate('/custom-tshirts');
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
+          >
+            Custom T-Shirts & Apparel
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              navigate('/custom-caps');
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
+          >
+            Headwear & 3D Puff Caps
           </button>
 
           <button
@@ -586,7 +902,7 @@ export const HeaderNav = () => {
             }}
             style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '0.95rem', color: 'var(--orange-600)', padding: '0.4rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
           >
-            <ShoppingBag size={16} /> Store
+            <ShoppingBag size={16} /> All Store Merchandise
           </button>
 
           <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '0.85rem', marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>

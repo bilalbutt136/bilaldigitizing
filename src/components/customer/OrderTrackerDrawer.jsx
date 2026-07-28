@@ -23,7 +23,14 @@ import {
   Check,
   Trash2,
   FileCode,
-  Printer
+  Printer,
+  Truck,
+  MapPin,
+  Package,
+  PackageCheck,
+  CreditCard,
+  ExternalLink,
+  Copy
 } from 'lucide-react';
 
 const FORMAT_METADATA = {
@@ -69,6 +76,10 @@ export const OrderTrackerDrawer = () => {
   // Show Admin dropzone ONLY if user has admin role AND is currently viewing inside the Admin Portal
   const isCurrentlyOnAdminPortal = currentView === 'admin' || (typeof window !== 'undefined' && window.location.pathname.includes('admin'));
   const isAdmin = authUser?.role === 'admin' && isCurrentlyOnAdminPortal;
+
+  // Check if physical store or custom patch order
+  const isPhysicalPatchOrder = ord.type === 'patch' || ord.type === 'patches' || ord.serviceCategory?.toLowerCase().includes('patch');
+  const isPhysicalStoreOrder = isPhysicalPatchOrder || ord.type === 'store' || ord.type === 'merchandise' || ord.type === 'digital_product' || Boolean(ord.isStoreItem) || ord.serviceCategory?.toLowerCase().includes('store') || ord.serviceCategory?.toLowerCase().includes('merchandise');
 
   // Determine order stage timeline index
   const stages = [
@@ -206,60 +217,237 @@ export const OrderTrackerDrawer = () => {
           background: '#ffffff',
           padding: '0 1.75rem'
         }}>
-          <button
-            onClick={() => setActiveTab('timeline')}
-            style={{
-              padding: '0.85rem 1.25rem',
-              border: 'none',
-              background: 'transparent',
-              borderBottom: `3px solid ${activeTab === 'timeline' ? 'var(--orange-600)' : 'transparent'}`,
-              color: activeTab === 'timeline' ? 'var(--orange-600)' : 'var(--navy-700)',
-              fontWeight: 700,
-              fontSize: '0.9rem',
-              cursor: 'pointer'
-            }}
-          >
-            📊 Live Progress & Specs
-          </button>
+          {isPhysicalStoreOrder ? (
+            <button
+              style={{
+                padding: '0.85rem 1.25rem',
+                border: 'none',
+                background: 'transparent',
+                borderBottom: '3px solid var(--orange-600)',
+                color: 'var(--orange-600)',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                cursor: 'default'
+              }}
+            >
+              📦 Order Fulfillment & Shipping Details
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={() => setActiveTab('timeline')}
+                style={{
+                  padding: '0.85rem 1.25rem',
+                  border: 'none',
+                  background: 'transparent',
+                  borderBottom: `3px solid ${activeTab === 'timeline' ? 'var(--orange-600)' : 'transparent'}`,
+                  color: activeTab === 'timeline' ? 'var(--orange-600)' : 'var(--navy-700)',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer'
+                }}
+              >
+                📊 Live Progress & Specs
+              </button>
 
-          <button
-            onClick={() => setActiveTab('downloads')}
-            style={{
-              padding: '0.85rem 1.25rem',
-              border: 'none',
-              background: 'transparent',
-              borderBottom: `3px solid ${activeTab === 'downloads' ? 'var(--orange-600)' : 'transparent'}`,
-              color: activeTab === 'downloads' ? 'var(--orange-600)' : 'var(--navy-700)',
-              fontWeight: 700,
-              fontSize: '0.9rem',
-              cursor: 'pointer'
-            }}
-          >
-            📂 Files & Source Assets ({allDownloadFormats.length})
-          </button>
+              <button
+                onClick={() => setActiveTab('downloads')}
+                style={{
+                  padding: '0.85rem 1.25rem',
+                  border: 'none',
+                  background: 'transparent',
+                  borderBottom: `3px solid ${activeTab === 'downloads' ? 'var(--orange-600)' : 'transparent'}`,
+                  color: activeTab === 'downloads' ? 'var(--orange-600)' : 'var(--navy-700)',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer'
+                }}
+              >
+                📂 Files & Source Assets ({allDownloadFormats.length})
+              </button>
 
-          <button
-            onClick={() => setActiveTab('revisions')}
-            style={{
-              padding: '0.85rem 1.25rem',
-              border: 'none',
-              background: 'transparent',
-              borderBottom: `3px solid ${activeTab === 'revisions' ? 'var(--orange-600)' : 'transparent'}`,
-              color: activeTab === 'revisions' ? 'var(--orange-600)' : 'var(--navy-700)',
-              fontWeight: 700,
-              fontSize: '0.9rem',
-              cursor: 'pointer'
-            }}
-          >
-            🔄 Request Revisions ({ord.revisions?.length || 0})
-          </button>
+              <button
+                onClick={() => setActiveTab('revisions')}
+                style={{
+                  padding: '0.85rem 1.25rem',
+                  border: 'none',
+                  background: 'transparent',
+                  borderBottom: `3px solid ${activeTab === 'revisions' ? 'var(--orange-600)' : 'transparent'}`,
+                  color: activeTab === 'revisions' ? 'var(--orange-600)' : 'var(--navy-700)',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer'
+                }}
+              >
+                🔄 Request Revisions ({ord.revisions?.length || 0})
+              </button>
+            </>
+          )}
         </div>
 
         {/* Drawer Body Content */}
         <div style={{ padding: '1.75rem', overflowY: 'auto' }}>
           
-          {/* TAB 1: Live Timeline */}
-          {activeTab === 'timeline' && (
+          {/* PHYSICAL STORE & MERCHANDISE FULFILLMENT VIEW */}
+          {isPhysicalStoreOrder ? (
+            <div>
+              {/* 4-Step Fulfillment / Production Progress Bar */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: '0.5rem',
+                marginBottom: '2rem',
+                position: 'relative'
+              }}>
+                {(isPhysicalPatchOrder ? [
+                  { key: 'proof', label: 'Proof Approval' },
+                  { key: 'production', label: 'Weaving / Embroidering' },
+                  { key: 'qc', label: 'Quality & Border Check' },
+                  { key: 'shipped', label: 'Dispatched & Shipping' }
+                ] : [
+                  { key: 'placed', label: 'Order Placed' },
+                  { key: 'processing', label: 'Processing & Packing' },
+                  { key: 'shipped', label: 'Shipped & In Transit' },
+                  { key: 'delivered', label: 'Delivered' }
+                ]).map((stg, idx) => {
+                  const currentIdx = ord.status === 'completed' || ord.status === 'delivered' ? 3 : (ord.status === 'shipped' ? 2 : (ord.status === 'digitizing' || ord.status === 'assigned' ? 1 : 0));
+                  const isDone = idx <= currentIdx;
+                  const isCurrent = idx === currentIdx;
+                  return (
+                    <div key={stg.key} style={{ textAlign: 'center' }}>
+                      <div style={{
+                        height: '6px',
+                        background: isDone ? 'var(--green-500)' : 'var(--navy-100)',
+                        borderRadius: '3px',
+                        marginBottom: '0.75rem',
+                        transition: 'background 0.3s'
+                      }} />
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: isDone ? 'var(--green-500)' : 'var(--navy-100)',
+                        color: isDone ? '#ffffff' : 'var(--text-muted)',
+                        margin: '0 auto 0.4rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.8rem',
+                        fontWeight: 700
+                      }}>
+                        {isDone ? <CheckCircle2 size={18} /> : idx + 1}
+                      </div>
+                      <div style={{
+                        fontSize: '0.78rem',
+                        fontWeight: isCurrent ? 800 : 600,
+                        color: isCurrent ? 'var(--navy-900)' : 'var(--text-muted)'
+                      }}>
+                        {stg.label}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Patch Manufacturing Specs Card (if Custom Patch Order) */}
+              {isPhysicalPatchOrder && (
+                <div style={{ background: '#ffffff', border: '1.5px solid var(--orange-500)', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.5rem' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Package size={17} /> Physical Patch Manufacturing Specifications
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', fontSize: '0.875rem' }}>
+                    <div><strong>Patch Style:</strong> <span style={{ color: 'var(--navy-900)', fontWeight: 800 }}>{ord.serviceCategory || ord.title}</span></div>
+                    <div><strong>Order Quantity:</strong> <strong>{ord.quantity || 100} Pcs</strong></div>
+                    <div><strong>Backing Attachment:</strong> {ord.backing || 'Velcro Hook & Loop'}</div>
+                    <div><strong>Border Edge Finish:</strong> {ord.borderType || 'Merrowed Die-Cut Border'}</div>
+                    <div><strong>Size Dimensions:</strong> {ord.patchSize || '3.5" x 3.5" Standard'}</div>
+                    <div><strong>Total Cost:</strong> <strong style={{ color: 'var(--navy-900)' }}>${parseFloat(ord.price || 0).toFixed(2)}</strong></div>
+                  </div>
+                </div>
+              )}
+
+              {/* Shipping Address & Package Tracking Box */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
+                {/* Shipping Address Card */}
+                <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.75rem' }}>
+                    <MapPin size={16} style={{ color: 'var(--orange-600)' }} /> Shipping Destination
+                  </div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--navy-900)' }}>
+                    {ord.clientName || 'Sarah Jenkins'}
+                  </div>
+                  <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)', marginTop: '0.25rem', lineHeight: 1.5 }}>
+                    {ord.shippingAddress?.street || '1042 Industrial Parkway, Suite 400'}<br />
+                    {ord.shippingAddress?.cityStateZip || 'Austin, TX 78758, United States'}
+                  </div>
+                </div>
+
+                {/* Tracking & Carrier Information */}
+                <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.75rem' }}>
+                    <Truck size={16} style={{ color: 'var(--orange-600)' }} /> Carrier & Tracking Details
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                    <strong>Carrier:</strong> {ord.carrier || 'FedEx Express Ground'}
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--navy-900)', marginBottom: '0.75rem' }}>
+                    <strong>Tracking #:</strong> <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--orange-600)' }}>{ord.trackingNumber || 'TRK-99482019482'}</span>
+                  </div>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={() => alert(`Carrier status for ${ord.trackingNumber || 'TRK-99482019482'}: In Transit to Destination`)}
+                    style={{ gap: '0.4rem' }}
+                  >
+                    <ExternalLink size={14} /> Track Package Live
+                  </button>
+                </div>
+              </div>
+
+              {/* Purchased Product Summary */}
+              <div style={{ background: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.5rem' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.85rem' }}>Itemized Order Summary</h4>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <img 
+                      src={ord.artworkUrl || ord.productImage || 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=120&q=80'} 
+                      alt={ord.title}
+                      style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover', border: '1.5px solid var(--orange-500)' }} 
+                    />
+                    <div>
+                      <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.95rem' }}>{ord.title}</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        Category: {ord.serviceCategory} • Order ID: {formatOrderId(ord.id)}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)' }}>${parseFloat(ord.price || 0).toFixed(2)}</div>
+                    <span className="badge badge-completed" style={{ fontSize: '0.7rem' }}>Paid</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Activity Log */}
+              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.75rem' }}>Fulfillment Activity Log</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  {(ord.history || [
+                    { timestamp: ord.createdAt, label: 'Order Placed & Payment Confirmed' },
+                    { timestamp: ord.createdAt, label: 'Package Processing & Quality Check' }
+                  ]).map((h, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.85rem' }}>
+                      <Clock size={14} style={{ color: 'var(--orange-600)' }} />
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{new Date(h.timestamp).toLocaleTimeString()}</span>
+                      <span style={{ fontWeight: 600, color: 'var(--navy-900)' }}>{h.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* TAB 1: Live Timeline for Digitizing & Vector Orders */}
+              {activeTab === 'timeline' && (
             <div>
               {/* Visual 5-step progress bar */}
               <div style={{
@@ -729,6 +917,8 @@ export const OrderTrackerDrawer = () => {
               </div>
 
             </div>
+          )}
+            </>
           )}
 
         </div>

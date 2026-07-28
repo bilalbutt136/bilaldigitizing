@@ -141,6 +141,46 @@ export const INITIAL_ORDERS = [
       { timestamp: '2026-07-23T10:05:00Z', label: 'Order Submitted by Client' }
     ],
     revisions: []
+  },
+  {
+    id: '#P-8820',
+    title: 'Apex Tactical Embroidered Patches (100 Pcs)',
+    type: 'patch',
+    serviceCategory: 'Custom Embroidered Patch',
+    clientName: 'Apex Athletics Apparel',
+    clientEmail: 'sarah@apexapparel.com',
+    createdAt: '2026-07-24T11:20:00Z',
+    status: 'digitizing',
+    isRush: false,
+    quantity: 100,
+    backing: 'Velcro Hook & Loop',
+    borderType: 'Merrowed Die-Cut Border',
+    dimensions: { width: 3.5, height: 3.5, unit: 'inches' },
+    price: 185.00,
+    artworkUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=600&q=80',
+    history: [
+      { timestamp: '2026-07-24T11:20:00Z', label: 'Patch Order Confirmed & In Production' }
+    ],
+    revisions: []
+  },
+  {
+    id: '#S-3104',
+    title: 'Master Monogram Embroidery Font Pack (25 DST/PES Styles)',
+    type: 'store',
+    serviceCategory: 'Digital Store Download',
+    clientName: 'Apex Athletics Apparel',
+    clientEmail: 'sarah@apexapparel.com',
+    createdAt: '2026-07-25T16:45:00Z',
+    status: 'completed',
+    isStoreItem: true,
+    fileFormats: ['DST', 'PES', 'EXP', 'EMB', 'AI'],
+    price: 39.00,
+    artworkUrl: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=600&q=80',
+    outputFileUrl: 'Master_Monogram_Font_Pack_v2.zip',
+    history: [
+      { timestamp: '2026-07-25T16:45:00Z', label: 'Instant License Purchase Completed' }
+    ],
+    revisions: []
   }
 ];
 

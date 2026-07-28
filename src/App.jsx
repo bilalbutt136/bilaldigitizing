@@ -12,7 +12,10 @@ import { MerchandiseStore } from './components/public/MerchandiseStore';
 import { StorePage } from './components/public/StorePage';
 import { VectorArtPage } from './components/public/VectorArtPage';
 import { EmbroideryDigitizingPage } from './components/public/EmbroideryDigitizingPage';
+import { CustomApparelPage } from './components/public/CustomApparelPage';
+import { CustomHeadwearPage } from './components/public/CustomHeadwearPage';
 import { CoreServicesOrderSection } from './components/public/CoreServicesOrderSection';
+import { ServicesGrid } from './components/public/ServicesGrid';
 import { WhyChooseUs } from './components/public/WhyChooseUs';
 import { TestimonialsFAQ } from './components/public/TestimonialsFAQ';
 import { Footer } from './components/public/Footer';
@@ -145,9 +148,10 @@ const PublicView = ({ scrollTo }) => {
     setCurrentView('public');
     if (scrollTo) {
       setTimeout(() => {
-        const el = document.getElementById(scrollTo);
+        const targetId = (scrollTo === 'calculator' || scrollTo === 'pricing') ? 'order-builder' : (scrollTo === 'services' ? 'order-builder' : scrollTo);
+        const el = document.getElementById(targetId);
         if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+      }, 120);
     }
   }, [scrollTo, setCurrentView]);
 
@@ -184,14 +188,18 @@ const MainContent = () => {
           <Route path="/signup" element={<PublicView />} />
           <Route path="/services" element={<PublicView scrollTo="services" />} />
           <Route path="/embroidery-digitizing" element={<EmbroideryDigitizingPage />} />
+          <Route path="/services/embroidery-digitizing" element={<EmbroideryDigitizingPage />} />
           <Route path="/patches" element={<CustomPatchesSection />} />
           <Route path="/custom-patches" element={<CustomPatchesSection />} />
+          <Route path="/custom-tshirts" element={<CustomApparelPage />} />
+          <Route path="/custom-caps" element={<CustomHeadwearPage />} />
+          <Route path="/services/vector-tracing" element={<VectorArtPage />} />
           <Route path="/vector-art" element={<VectorArtPage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/calculator" element={<PublicView scrollTo="calculator" />} />
           <Route path="/pricing" element={<PublicView scrollTo="calculator" />} />
           <Route path="/store" element={<StorePage />} />
-          <Route path="/formats" element={<PublicView scrollTo="formats" />} />
+          <Route path="/formats" element={<PublicView scrollTo="services" />} />
           <Route path="/faq" element={<PublicView scrollTo="faqs" />} />
           
           <Route path="/client-portal" element={<CustomerDashboard />} />
