@@ -468,21 +468,21 @@ button, input, select, textarea, a {
   }
 
   .container {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
+    padding-left: 1.25rem !important;
+    padding-right: 1.25rem !important;
   }
 
   h1, .hero-title {
-    font-size: 2.1rem !important;
+    font-size: clamp(1.75rem, 5.5vw, 2.3rem) !important;
     line-height: 1.2 !important;
   }
 
   h2 {
-    font-size: 1.65rem !important;
+    font-size: clamp(1.4rem, 4.5vw, 1.75rem) !important;
   }
 
   h3 {
-    font-size: 1.3rem !important;
+    font-size: clamp(1.15rem, 3.5vw, 1.4rem) !important;
   }
 
   .btn-sm {
@@ -517,16 +517,8 @@ button, input, select, textarea, a {
 
 @media (max-width: 480px) {
   .container {
-    padding-left: 0.75rem !important;
-    padding-right: 0.75rem !important;
-  }
-
-  h1, .hero-title {
-    font-size: 1.75rem !important;
-  }
-
-  h2 {
-    font-size: 1.45rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
   }
 
   .btn-full-mobile {

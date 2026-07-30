@@ -113,29 +113,30 @@ export const HeaderNav = () => {
       {/* Main Brand Navbar */}
 
       {/* 2. Main Brand Navbar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1.5rem 0.85rem 0.75rem', width: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
         {/* Brand Logo */}
         <div 
-          style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', marginLeft: 0 }}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', flexShrink: 0 }}
           onClick={handleGoHome}
         >
           <div style={{
             background: 'linear-gradient(135deg, var(--navy-900), #ff7a00)',
             color: '#ffffff',
-            padding: '0.6rem',
+            padding: '0.45rem',
             borderRadius: 'var(--radius-md)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(255, 122, 0, 0.25)'
+            boxShadow: '0 4px 12px rgba(255, 122, 0, 0.25)',
+            flexShrink: 0
           }}>
-            <Scissors size={24} style={{ color: 'var(--orange-500)' }} />
+            <Scissors size={20} style={{ color: 'var(--orange-500)' }} />
           </div>
           <div>
-            <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.35rem', color: 'var(--navy-900)', letterSpacing: '-0.02em', leading: 1 }}>
+            <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.15rem', color: 'var(--navy-900)', letterSpacing: '-0.02em', leading: 1, whiteSpace: 'nowrap' }}>
               BILAL DIGITIZING<span style={{ color: 'var(--orange-500)' }}>.PRO</span>
             </div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <div className="desktop-only" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Embroidery & Vector Studio
             </div>
           </div>
@@ -469,34 +470,13 @@ export const HeaderNav = () => {
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
-          gap: '0.6rem',
-          marginRight: !isAuthenticated ? '0.5rem' : '0'
+          gap: '0.4rem',
+          flexShrink: 0
         }}>
-          
-          {/* Mobile Hamburger Toggle Button */}
-          <button
-            type="button"
-            className="mobile-only"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            style={{
-              background: '#f1f5f9',
-              border: '1px solid var(--border-color)',
-              color: 'var(--navy-900)',
-              padding: '0.45rem',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            aria-label="Toggle Navigation Menu"
-          >
-            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
-          
           {/* Primary Order Now Button - Direct Navigation to Order Builder & Payment System */}
           {currentView !== 'admin' && currentView !== 'customer' && !location.pathname.includes('admin') && (
             <button 
-              className="btn btn-primary-orange btn-sm"
+              className="btn btn-primary-orange"
               onClick={() => {
                 if (openOrderWizard) {
                   openOrderWizard();
@@ -507,15 +487,39 @@ export const HeaderNav = () => {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.35rem',
-                padding: '0.35rem 0.75rem',
-                fontSize: '0.825rem',
-                fontWeight: 800
+                gap: '0.3rem',
+                padding: '0.4rem 0.65rem',
+                fontSize: '0.8rem',
+                fontWeight: 800,
+                borderRadius: '8px',
+                whiteSpace: 'nowrap'
               }}
             >
               <PlusCircle size={14} /> Order Now
             </button>
           )}
+
+          {/* Mobile Hamburger Toggle Button */}
+          <button
+            type="button"
+            className="mobile-only"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            style={{
+              background: '#f1f5f9',
+              border: '1px solid var(--border-color)',
+              color: 'var(--navy-900)',
+              width: '36px',
+              height: '36px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}
+            aria-label="Toggle Navigation Menu"
+          >
+            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
 
           {/* Dynamic Authentication Controls */}
           {!isAuthenticated ? (

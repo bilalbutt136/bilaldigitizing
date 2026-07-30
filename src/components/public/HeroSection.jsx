@@ -73,12 +73,12 @@ export const HeroSection = () => {
 
             {/* Main Bold Headline */}
             <h1 style={{
-              fontSize: 'clamp(2.4rem, 4.5vw, 3.6rem)',
+              fontSize: 'clamp(1.75rem, 5.5vw, 3.6rem)',
               fontWeight: 800,
-              lineHeight: 1.15,
+              lineHeight: 1.2,
               color: '#ffffff',
               marginBottom: '1.25rem',
-              letterSpacing: '-0.025em'
+              letterSpacing: '-0.02em'
             }}>
               Embroidery Digitizing, <span style={{
                 background: 'linear-gradient(135deg, #f97316 0%, #fb923c 100%)',
@@ -89,7 +89,7 @@ export const HeroSection = () => {
 
             {/* Clear Subtext */}
             <p style={{
-              fontSize: '1.15rem',
+              fontSize: 'clamp(0.95rem, 2.8vw, 1.15rem)',
               lineHeight: 1.65,
               color: '#cbd5e1',
               marginBottom: '2rem',
@@ -99,9 +99,9 @@ export const HeroSection = () => {
             </p>
 
             {/* 4 Key Trust Checkmarks Grid */}
-            <div style={{
+            <div className="grid-responsive-2" style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
               gap: '1.15rem',
               marginBottom: '2.5rem'
             }}>
