@@ -219,7 +219,7 @@ export const HeaderNav = () => {
                       type="button"
                       onClick={() => {
                         setCurrentView('public');
-                        navigate('/embroidery-digitizing');
+                        navigate('/services/embroidery-digitizing');
                         setIsServicesOpen(false);
                       }}
                       style={{
@@ -367,7 +367,7 @@ export const HeaderNav = () => {
                       type="button"
                       onClick={() => {
                         setCurrentView('public');
-                        navigate('/embroidery-digitizing');
+                        navigate('/services/embroidery-digitizing');
                         setIsPricingOpen(false);
                       }}
                       style={{
@@ -633,7 +633,7 @@ export const HeaderNav = () => {
           <button
             type="button"
             onClick={() => {
-              navigate('/embroidery-digitizing');
+              navigate('/services/embroidery-digitizing');
               setIsMobileMenuOpen(false);
             }}
             style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}

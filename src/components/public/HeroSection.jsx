@@ -160,7 +160,7 @@ export const HeroSection = () => {
 
               <button 
                 type="button"
-                onClick={() => navigate('/embroidery-digitizing')}
+                onClick={() => navigate('/services/embroidery-digitizing')}
                 className="btn btn-outline btn-lg"
                 style={{ 
                   color: '#ffffff', 

@@ -142,7 +142,7 @@ export const ServicesGrid = () => {
               <button 
                 className="btn btn-primary-orange"
                 style={{ width: '100%', justifyContent: 'space-between', fontWeight: 800, padding: '0.75rem 1.25rem' }}
-                onClick={() => handleOrderRedirect('digitizing', '/embroidery-digitizing')}
+                onClick={() => handleOrderRedirect('digitizing', '/services/embroidery-digitizing')}
               >
                 Configure Digitizing Order <ArrowRight size={18} />
               </button>
@@ -214,7 +214,7 @@ export const ServicesGrid = () => {
               <button 
                 className="btn btn-primary-orange"
                 style={{ width: '100%', justifyContent: 'space-between', fontWeight: 800, padding: '0.75rem 1.25rem' }}
-                onClick={() => handleOrderRedirect('vector', '/vector-art')}
+                onClick={() => handleOrderRedirect('vector', '/services/vector-tracing')}
               >
                 Configure Vector Redraw <ArrowRight size={18} />
               </button>

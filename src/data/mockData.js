@@ -225,7 +225,7 @@ export const SERVICES = [
     stitches: 'DST, PES, EMB, EXP Files',
     time: '8 - 12 Hours',
     icon: 'Layers',
-    route: '/embroidery-digitizing',
+    route: '/services/embroidery-digitizing',
     desc: 'Commercial machine-ready files for polos, jackets, caps, and left chest logos with zero thread breaks.'
   },
   {
@@ -235,7 +235,7 @@ export const SERVICES = [
     stitches: 'AI, EPS, SVG, PDF, CDR',
     time: '6 - 12 Hours',
     icon: 'PenTool',
-    route: '/vector-art',
+    route: '/services/vector-tracing',
     desc: 'Transform pixelated JPEGs, PNGs, and sketches into 100% hand-drawn scalable vector files for printing & embroidery.'
   },
   {

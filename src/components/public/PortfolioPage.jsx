@@ -555,7 +555,7 @@ export const PortfolioPage = () => {
                   transition: 'all 0.2s ease'
                 }}
                 onClick={() => {
-                  navigate('/embroidery-digitizing');
+                  navigate('/services/embroidery-digitizing');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               >
@@ -656,7 +656,7 @@ export const PortfolioPage = () => {
                 className="btn btn-primary-orange"
                 onClick={() => {
                   setActiveItemModal(null);
-                  navigate('/embroidery-digitizing');
+                  navigate('/services/embroidery-digitizing');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 style={{ fontWeight: 800, padding: '0.65rem 1.35rem' }}
