@@ -42,10 +42,11 @@
       "static/chunks/44530001-36b3e4f4c85f2629.js",
       "static/chunks/324-a213f95a5c5bfe75.js",
       "static/chunks/801-3fe3c8daa206ba7c.js",
+      "static/chunks/902-2429f6f5ecc8bc66.js",
       "static/chunks/869-fbaddb644671c98c.js",
       "static/chunks/543-c447380183cf0d30.js",
       "static/chunks/410-2681db56ed5f7d61.js",
-      "static/chunks/app/client-portal/page-15a485d278e27cbc.js"
+      "static/chunks/app/client-portal/page-d674ca48ef430495.js"
     ],
     "/custom-patches/page": [
       "static/chunks/webpack-3ee587442acc35af.js",
@@ -114,17 +115,6 @@
       "static/chunks/869-fbaddb644671c98c.js",
       "static/chunks/app/secure-admin-login/page-12eb4cbd6fd8ac19.js"
     ],
-    "/services/embroidery-digitizing/page": [
-      "static/chunks/webpack-3ee587442acc35af.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-3d881dfa8c72bc56.js",
-      "static/chunks/main-app-c27c25a71575a79b.js",
-      "static/chunks/44530001-36b3e4f4c85f2629.js",
-      "static/chunks/324-a213f95a5c5bfe75.js",
-      "static/chunks/801-3fe3c8daa206ba7c.js",
-      "static/chunks/869-fbaddb644671c98c.js",
-      "static/chunks/app/services/embroidery-digitizing/page-86b9bde60d99f0eb.js"
-    ],
     "/services/vector-tracing/page": [
       "static/chunks/webpack-3ee587442acc35af.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
@@ -135,6 +125,17 @@
       "static/chunks/801-3fe3c8daa206ba7c.js",
       "static/chunks/869-fbaddb644671c98c.js",
       "static/chunks/app/services/vector-tracing/page-b7527c484d308220.js"
+    ],
+    "/services/embroidery-digitizing/page": [
+      "static/chunks/webpack-3ee587442acc35af.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-3d881dfa8c72bc56.js",
+      "static/chunks/main-app-c27c25a71575a79b.js",
+      "static/chunks/44530001-36b3e4f4c85f2629.js",
+      "static/chunks/324-a213f95a5c5bfe75.js",
+      "static/chunks/801-3fe3c8daa206ba7c.js",
+      "static/chunks/869-fbaddb644671c98c.js",
+      "static/chunks/app/services/embroidery-digitizing/page-86b9bde60d99f0eb.js"
     ],
     "/signup/page": [
       "static/chunks/webpack-3ee587442acc35af.js",
