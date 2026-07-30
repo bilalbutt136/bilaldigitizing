@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { useAppState } from '../../context/StateContext';
 import {
@@ -9,15 +11,51 @@ import {
   Clock
 } from 'lucide-react';
 
-import { useLocation } from 'react-router-dom';
+import { useLocation } from '../../utils/navigation';
 
 export const PricingCalculator = () => {
-  const { pricing = {}, pricingCards = [], protectedNavigate } = useAppState();
+  const { pricing = {}, pricingCards = [], protectedNavigate, openOrderWizard } = useAppState();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const initialCategory = searchParams.get('cat') || searchParams.get('service') || 'all';
 
   const [activeCategory, setActiveCategory] = React.useState(initialCategory);
+
+  const handleSelectPackage = (cat) => {
+    const cId = (cat.id || '').toLowerCase();
+    const cCat = (cat.category || '').toLowerCase();
+    const cTitle = (cat.title || '').toLowerCase();
+
+    let tierKey = 'standard';
+    if (cId.includes('basic') || cTitle.includes('basic')) tierKey = 'basic';
+    else if (cId.includes('premium') || cTitle.includes('premium')) tierKey = 'premium';
+    else if (cId.includes('standard') || cTitle.includes('standard')) tierKey = 'standard';
+
+    let type = 'embroidery';
+    if (cCat === 'vector' || cId.includes('vector') || cTitle.includes('vector')) {
+      type = 'vector';
+    } else if (cCat === 'patches' || cId.includes('patch') || cTitle.includes('patch')) {
+      type = 'patch';
+    }
+
+    if (openOrderWizard) {
+      openOrderWizard({
+        tierKey,
+        type,
+        category: cat.category,
+        title: cat.title,
+        rate: cat.rate
+      });
+    } else {
+      protectedNavigate('customer', true, {
+        tierKey,
+        type,
+        category: cat.category,
+        title: cat.title,
+        rate: cat.rate
+      });
+    }
+  };
 
   React.useEffect(() => {
     const cat = new URLSearchParams(location.search).get('cat') || new URLSearchParams(location.search).get('service');
@@ -34,67 +72,111 @@ export const PricingCalculator = () => {
     {
       id: 'pcard-basic',
       category: 'embroidery',
-      title: 'Basic',
-      subTitle: 'Simple Logo Digitizing',
+      title: 'Basic Digitizing Tier',
+      subTitle: 'Simple Left-Chest & Small Logos',
       icon: Zap,
-      discountTag: '40% OFF',
-      strikePrice: '$5.00',
+      discountTag: 'FAST TURNAROUND',
+      strikePrice: '$15.00',
       rate: `$${minFee}`,
       unit: '/ design',
-      delivery: '1 day delivery',
-      btnText: 'Order 1 Design',
-      badge: 'MOST POPULAR',
-      popular: true,
+      delivery: '8 - 12 Hours Delivery',
+      btnText: 'Order Basic Tier',
+      badge: 'ESSENTIAL TIER',
+      popular: false,
       features: [
-        'For 4" by 4" Simple design',
-        'All major formats',
-        'Unlimited Revisions'
+        'Logos up to 4" x 4"',
+        'All commercial formats (.DST, .PES, .EXP, .EMB)',
+        'Free machine stitch simulation proof',
+        '100% Free Unlimited Revisions'
       ]
     },
     {
       id: 'pcard-standard',
       category: 'embroidery',
-      title: 'Standard',
-      subTitle: 'Medium Level Logo Digitizing',
+      title: 'Standard Digitizing Tier',
+      subTitle: 'Medium Chest & Cap Crests',
       icon: Trophy,
-      discountTag: '40% OFF',
-      strikePrice: '$15.00',
+      discountTag: 'EXPRESS RUSH AVAILABLE',
+      strikePrice: '$20.00',
       rate: `$${(parseFloat(minFee) + 5).toFixed(2)}`,
       unit: '/ design',
-      delivery: '1 days delivery',
-      btnText: 'Order 1 Design',
-      badge: null,
-      popular: false,
+      delivery: '4 - 12 Hours Delivery',
+      btnText: 'Order Standard Tier',
+      badge: 'MOST POPULAR TIER',
+      popular: true,
       features: [
-        'For up-to 4" to 8" Simple design',
-        'All major formats',
-        'Unlimited revisions'
+        'Medium logos up to 8" x 8"',
+        'Includes free native .EMB Wilcom source file',
+        '3D Foam cap pathing & distortion compensation',
+        '24/7 Priority studio support'
       ]
     },
     {
       id: 'pcard-premium',
       category: 'embroidery',
-      title: 'Premium',
-      subTitle: 'Detailed Logo Digitizing',
+      title: 'Premium Digitizing Tier',
+      subTitle: 'Jacket Backs & Large Masterpiece Crests',
       icon: Sparkles,
-      discountTag: '40% OFF',
-      strikePrice: '$25.00',
+      discountTag: 'HIGH STITCH COUNT',
+      strikePrice: '$35.00',
       rate: `$${(parseFloat(minFee) + 15).toFixed(2)}`,
       unit: '/ design',
-      delivery: '2 days delivery',
-      btnText: 'Order 1 Design',
-      badge: 'BEST VALUE',
+      delivery: '12 - 24 Hours Delivery',
+      btnText: 'Order Premium Tier',
+      badge: 'JACKET BACK TIER',
       popular: false,
       features: [
-        'For large size design little complex',
-        'All major formats',
-        'Unlimited revisions',
-        'Priority support'
+        'Large jacket backs (9"-12"+ High Stitch Count)',
+        'Master pathing for complex gradient shading',
+        'High density underlay & zero thread break pathing',
+        'VIP priority studio desk'
+      ]
+    },
+    {
+      id: 'pcard-vector-simple',
+      category: 'vector',
+      title: 'Vector Tracing Tier',
+      subTitle: 'Hand-Drawn Vector Redraw',
+      icon: Zap,
+      discountTag: 'INFINITE RESOLUTION',
+      strikePrice: '$25.00',
+      rate: `$${vectorFee}`,
+      unit: '/ artwork',
+      delivery: '6 - 12 Hours Delivery',
+      btnText: 'Order Vector Tier',
+      badge: 'VECTOR TIER',
+      popular: false,
+      features: [
+        'Clean logo & raster JPEG/PNG redraws',
+        'Hand-drawn 100% scalable vector paths',
+        'Deliverables: .AI, .EPS, .SVG, .PDF, .CDR',
+        'Spot Pantone & CMYK print color separations'
+      ]
+    },
+    {
+      id: 'pcard-patch-tier',
+      category: 'patches',
+      title: 'Custom Patches Tier',
+      subTitle: 'Embroidered, Leather & PVC Emblems',
+      icon: Trophy,
+      discountTag: 'WORLDWIDE SHIPPING',
+      strikePrice: '$3.50',
+      rate: `$${patchesFee}`,
+      unit: '/ patch starting',
+      delivery: '3 - 5 Days Shipping',
+      btnText: 'Order Patches Tier',
+      badge: 'BULK TIER PACKAGES',
+      popular: false,
+      features: [
+        'Classic merrowed border & die-cut edge',
+        'Iron-on, velcro, or sew-on backing options',
+        'Free pre-production digital sew-out proof',
+        'Volume tier discounts for 25 to 1000+ pcs'
       ]
     }
   ];
 
-  const allCards = (pricingCards && pricingCards.length > 0) ? pricingCards : defaultCards;
+  const allCards = (pricingCards && pricingCards.length > 0) ? pricingCards.filter(c => (c.category || '').toLowerCase() !== 'store' && (c.category || '').toLowerCase() !== 'apparel') : defaultCards;
   const cardsToRender = activeCategory === 'all'
     ? allCards
     : allCards.filter(c => (c.category || '').toLowerCase() === activeCategory.toLowerCase() || (c.title || '').toLowerCase().includes(activeCategory.toLowerCase()));
@@ -120,15 +202,15 @@ export const PricingCalculator = () => {
             borderRadius: '9999px',
             marginBottom: '0.75rem'
           }}>
-            <Tag size={16} /> Transparent Flat Rates & Pricing Tiers
+            <Tag size={16} /> Streamlined Pricing Tier Packages
           </div>
 
           <h2 style={{ fontSize: '2.5rem', color: '#ffffff', marginBottom: '0.85rem', fontWeight: 800 }}>
-            Embroidery & Vector Pricing Studio
+            Embroidery & Patch Pricing Packages
           </h2>
 
           <p style={{ color: '#94a3b8', fontSize: '1.05rem', lineHeight: 1.65, marginBottom: '1.5rem' }}>
-            Turn your artwork into precise embroidery files ready for production. Every design is digitized with the right stitch settings to ensure clean results and smooth machine performance.
+            Transparent flat-rate tier packages for embroidery digitizing, vector artwork redraws, and physical custom patches with zero hidden fees.
           </p>
 
           {/* Key Feature Bullets */}
@@ -144,13 +226,13 @@ export const PricingCalculator = () => {
             marginBottom: '2rem'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <CheckCircle size={17} style={{ color: '#10b981' }} /> Accurate Stitching
+              <CheckCircle size={17} style={{ color: '#10b981' }} /> Machine-Tested Pathing
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <CheckCircle size={17} style={{ color: '#10b981' }} /> Smooth Embroidery Results
+              <CheckCircle size={17} style={{ color: '#10b981' }} /> All Commercial Formats (.DST, .PES, .EXP, .EMB)
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <CheckCircle size={17} style={{ color: '#10b981' }} /> All Embroidery File Formats
+              <CheckCircle size={17} style={{ color: '#10b981' }} /> Free Unlimited Revisions
             </div>
           </div>
 
@@ -163,11 +245,10 @@ export const PricingCalculator = () => {
             flexWrap: 'wrap'
           }}>
             {[
-              { id: 'all', label: 'All Pricing Tiers' },
-              { id: 'embroidery', label: 'Embroidery Digitizing' },
-              { id: 'vector', label: 'Vector Tracing' },
-              { id: 'patches', label: 'Custom Patches' },
-              { id: 'store', label: 'Apparel & Caps' }
+              { id: 'all', label: 'All Tier Packages' },
+              { id: 'embroidery', label: 'Embroidery Digitizing Tiers' },
+              { id: 'vector', label: 'Vector Tracing Tiers' },
+              { id: 'patches', label: 'Custom Patches Tiers' }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -206,6 +287,7 @@ export const PricingCalculator = () => {
             return (
               <div
                 key={cat.id || idx}
+                onClick={() => handleSelectPackage(cat)}
                 style={{
                   background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
                   border: '2px solid #ff7a00',
@@ -216,7 +298,8 @@ export const PricingCalculator = () => {
                   flexDirection: 'column',
                   justifyContent: 'space-between',
                   boxShadow: '0 14px 35px rgba(255, 122, 0, 0.25)',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer'
                 }}
               >
                 {/* Top Badge Pill */}
@@ -312,7 +395,10 @@ export const PricingCalculator = () => {
                         padding: '0.85rem 1.5rem',
                         boxShadow: '0 4px 14px rgba(255, 122, 0, 0.4)'
                       }}
-                      onClick={() => protectedNavigate('customer', true)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectPackage(cat);
+                      }}
                     >
                       {cat.btnText || 'Order 1 Design'}
                     </button>

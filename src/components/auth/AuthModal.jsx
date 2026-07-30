@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { 
   X, 
@@ -134,7 +136,7 @@ export const AuthModal = () => {
               {authModalMode === 'login' ? 'Account Sign In' : authModalMode === 'signup' ? 'Create Client Account' : 'Reset Password'}
             </h3>
             <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
-              BDIGITIZING.PRO Studio Portal
+              BILAL DIGITIZING.PRO Studio Portal
             </div>
           </div>
 

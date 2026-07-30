@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { MoveHorizontal, Eye, Scissors, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';

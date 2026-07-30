@@ -1,7 +1,8 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
-import { CoreServicesOrderSection } from './CoreServicesOrderSection';
 import { 
   Layers, 
   CheckCircle, 
@@ -22,7 +23,7 @@ import {
 
 export const EmbroideryDigitizingPage = () => {
   const navigate = useNavigate();
-  const { pricing = {}, pricingCards = [], protectedNavigate, setIsOrderWizardOpen } = useAppState();
+  const { pricing = {}, pricingCards = [], protectedNavigate, setIsOrderWizardOpen, openOrderWizard } = useAppState();
 
   const [selectedTier, setSelectedTier] = useState('standard');
 
@@ -106,12 +107,16 @@ export const EmbroideryDigitizingPage = () => {
 
   const cardsToRender = defaultCards;
 
-  const handleSelectTier = (tierKey = 'standard') => {
+  const handleSelectTier = (tierKey = 'standard', cardObj = null) => {
     setSelectedTier(tierKey);
-    const el = document.getElementById('digitizing-order-section');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    } else {
+    if (openOrderWizard) {
+      openOrderWizard({
+        tierKey,
+        type: 'embroidery',
+        title: cardObj?.title || `${tierKey.toUpperCase()} Digitizing`,
+        rate: cardObj?.rate
+      });
+    } else if (setIsOrderWizardOpen) {
       setIsOrderWizardOpen(true);
     }
   };
@@ -245,7 +250,7 @@ export const EmbroideryDigitizingPage = () => {
               return (
                 <div
                   key={cat.id || idx}
-                  onClick={() => handleSelectTier(cat.tierKey || 'standard')}
+                  onClick={() => handleSelectTier(cat.tierKey || 'standard', cat)}
                   style={{
                     background: isSelected ? 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)' : '#0f172a',
                     border: isSelected ? '3px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.12)',
@@ -344,7 +349,7 @@ export const EmbroideryDigitizingPage = () => {
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleSelectTier(cat.tierKey || 'standard');
+                        handleSelectTier(cat.tierKey || 'standard', cat);
                       }}
                     >
                       {isSelected ? `✓ Selected (${cat.rate})` : cat.btnText} <ArrowRight size={17} />
@@ -357,16 +362,9 @@ export const EmbroideryDigitizingPage = () => {
           </div>
 
           <div style={{ textAlign: 'center', marginTop: '2.5rem', color: '#94a3b8', fontSize: '0.9rem' }}>
-            📌 <em>Prices are flat rates per design with zero hidden charges. Need multiple designs? Select bulk quantities below for instant volume discounts.</em>
+            📌 <em>Prices are flat rates per design with zero hidden charges. Need multiple designs? Click any tier package above to open your instant order form.</em>
           </div>
 
-        </div>
-      </section>
-
-      {/* Interactive Order Builder Mount */}
-      <section id="digitizing-order-section" style={{ padding: '3rem 0', background: 'var(--navy-950)' }}>
-        <div className="container">
-          <CoreServicesOrderSection defaultService="digitizing" hideTabs={true} initialTier={selectedTier} />
         </div>
       </section>
 

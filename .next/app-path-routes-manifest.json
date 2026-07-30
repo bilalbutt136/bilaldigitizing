@@ -1,0 +1,14 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/admin-portal/page": "/admin-portal",
+  "/login/page": "/login",
+  "/portfolio/page": "/portfolio",
+  "/page": "/",
+  "/client-portal/page": "/client-portal",
+  "/custom-patches/page": "/custom-patches",
+  "/secure-admin-login/page": "/secure-admin-login",
+  "/services/vector-tracing/page": "/services/vector-tracing",
+  "/services/embroidery-digitizing/page": "/services/embroidery-digitizing",
+  "/signup/page": "/signup",
+  "/store/page": "/store"
+}

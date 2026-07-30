@@ -1,8 +1,11 @@
+'use client';
+
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { 
   X, 
   UploadCloud, 
+  Upload,
   Check, 
   Scissors, 
   Zap, 
@@ -17,14 +20,17 @@ import {
   CreditCard,
   Lock,
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  Sparkles,
+  Clock,
+  Plus,
+  Minus
 } from 'lucide-react';
-import { MACHINE_FORMATS } from '../../data/mockData';
-
 export const OrderWizardModal = () => {
   const { 
     isOrderWizardOpen, 
     setIsOrderWizardOpen, 
+    orderWizardInitialData,
     createOrder,
     pricing,
     walletBalance = 150.00,
@@ -35,8 +41,15 @@ export const OrderWizardModal = () => {
 
   const [step, setStep] = useState(1); // 1: Upload & Service | 2: Specs | 3: Review | 4: Payment
 
-  // Form State
-  const [type, setType] = useState('embroidery'); // 'embroidery' | 'vector'
+  // Package Tier State with safe fallback default
+  const [selectedPackageTier, setSelectedPackageTier] = useState('standard'); // 'basic' | 'standard' | 'premium'
+  
+  // Itemized Placements Cart State with default initial placement item
+  const [placementItems, setPlacementItems] = useState([
+    { id: 1, placementType: 'left_chest', quantity: 1, quantityInput: '1', specificNotes: '' }
+  ]);
+
+  const [type, setType] = useState('embroidery'); // 'embroidery' | 'vector' | 'patch'
   const [title, setTitle] = useState('');
   
   // Multi-File Upload Selected Assets Array State
@@ -57,6 +70,30 @@ export const OrderWizardModal = () => {
   const [notes, setNotes] = useState('');
   const [paymentOption, setPaymentOption] = useState('bolt'); // 'bolt' | 'wallet' | 'card'
 
+  // Custom Patches State Variables with safe defaults
+  const [patchStyle, setPatchStyle] = useState('Embroidered');
+  const [patchBacking, setPatchBacking] = useState('Iron-On');
+  const [patchQuantity, setPatchQuantity] = useState(50);
+
+  React.useEffect(() => {
+    if (isOrderWizardOpen && orderWizardInitialData) {
+      if (orderWizardInitialData.tierKey) {
+        setSelectedPackageTier(orderWizardInitialData.tierKey);
+      } else if (orderWizardInitialData.tier) {
+        setSelectedPackageTier(orderWizardInitialData.tier);
+      }
+      if (orderWizardInitialData.type) {
+        setType(orderWizardInitialData.type);
+      }
+      if (orderWizardInitialData.serviceCategory || orderWizardInitialData.title) {
+        setServiceCategory(orderWizardInitialData.serviceCategory || orderWizardInitialData.title);
+      }
+      if (orderWizardInitialData.placementType) {
+        setPlacementType(orderWizardInitialData.placementType);
+      }
+    }
+  }, [isOrderWizardOpen, orderWizardInitialData]);
+
   const PLACEMENT_OPTIONS = [
     { id: 'left_chest', label: 'Left Chest / Polo', desc: 'Standard logo up to 4.0"', isJacketBack: false },
     { id: 'cap_front', label: 'Cap / Hat Front', desc: 'Center-out pathing', isJacketBack: false },
@@ -76,29 +113,91 @@ export const OrderWizardModal = () => {
     });
   };
 
-  // Quantity & Bulk Multi-Package State
-  const [selectedPackageTier, setSelectedPackageTier] = useState('basic'); // 'basic' | 'standard' | 'premium' | 'bulk_combination'
-  const [singleQuantity, setSingleQuantity] = useState(1);
-  const [singleQuantityInput, setSingleQuantityInput] = useState('1');
-  const [bulkBasicQty, setBulkBasicQty] = useState(1);
-  const [bulkStandardQty, setBulkStandardQty] = useState(1);
-  const [bulkPremiumQty, setBulkPremiumQty] = useState(0);
+  const FORMAT_OPTIONS = [
+    { id: 'dst', label: '.DST', desc: 'Tajima / Universal' },
+    { id: 'pes', label: '.PES', desc: 'Brother / Baby Lock' },
+    { id: 'exp', label: '.EXP', desc: 'Melco / Bernina' },
+    { id: 'jef', label: '.JEF', desc: 'Janome / Elna' },
+    { id: 'hus', label: '.HUS', desc: 'Husqvarna Viking' },
+    { id: 'emb', label: '.EMB', desc: 'Wilcom Source File' },
+    { id: 'vp3', label: '.VP3', desc: 'PFAFF / Viking' },
+    { id: 'xxx', label: '.XXX', desc: 'Singer' }
+  ];
 
-  React.useEffect(() => {
-    setSingleQuantityInput(String(singleQuantity));
-  }, [singleQuantity]);
+  const addPlacementItem = () => {
+    setPlacementItems(prev => [
+      ...prev,
+      { id: Date.now(), placementType: 'left_chest', quantity: 1, quantityInput: '1', specificNotes: '' }
+    ]);
+  };
 
-  const totalWizardQty = selectedPackageTier === 'bulk_combination' 
-    ? (bulkBasicQty + bulkStandardQty + bulkPremiumQty) 
-    : singleQuantity;
+  const removePlacementItem = (id) => {
+    if (placementItems.length === 1) return;
+    setPlacementItems(prev => prev.filter(item => item.id !== id));
+  };
 
-  React.useEffect(() => {
-    if (totalWizardQty > 1 && isRush) {
-      setIsRush(false);
+  const updatePlacementItem = (id, field, value) => {
+    setPlacementItems(prev => prev.map(item => {
+      if (item.id === id) {
+        if (field === 'quantity') {
+          const num = Math.max(1, parseInt(value, 10) || 1);
+          return { ...item, quantity: num, quantityInput: String(num) };
+        }
+        if (field === 'quantityInput') {
+          const raw = String(value);
+          if (raw === '') return { ...item, quantityInput: '' };
+          const clean = raw.replace(/\D/g, '');
+          if (clean === '') return { ...item, quantityInput: '' };
+          const parsed = parseInt(clean, 10);
+          return { ...item, quantityInput: String(parsed), quantity: parsed > 0 ? parsed : item.quantity };
+        }
+        return { ...item, [field]: value };
+      }
+      return item;
+    }));
+  };
+
+  const handlePlacementFileUpload = (itemId, files) => {
+    if (!files || files.length === 0) return;
+    const fileArray = Array.from(files);
+    const newFiles = fileArray.map(file => {
+      const fileName = file.name || 'artwork_file';
+      const fileExt = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';
+      const previewUrl = (file.type && file.type.startsWith('image/')) ? URL.createObjectURL(file) : null;
+      return {
+        id: `file_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        name: fileName,
+        size: (file.size / 1024).toFixed(1) + ' KB',
+        type: fileExt.toUpperCase() || 'FILE',
+        previewUrl,
+        rawFile: file
+      };
+    });
+
+    setPlacementItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return { ...item, files: [...(item.files || []), ...newFiles] };
+      }
+      return item;
+    }));
+  };
+
+  const removeFileFromPlacement = (itemId, fileId) => {
+    setPlacementItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return { ...item, files: (item.files || []).filter(f => f.id !== fileId) };
+      }
+      return item;
+    }));
+  };
+
+  const selectAllFormats = () => {
+    if (requestedFormats.length === FORMAT_OPTIONS.length) {
+      setRequestedFormats(['dst', 'pes', 'emb']);
+    } else {
+      setRequestedFormats(FORMAT_OPTIONS.map(f => f.id));
     }
-  }, [totalWizardQty, isRush]);
-
-  if (!isOrderWizardOpen) return null;
+  };
 
   const toggleFormat = (fmtId) => {
     setRequestedFormats(prev => 
@@ -106,1023 +205,894 @@ export const OrderWizardModal = () => {
     );
   };
 
-  // Dynamic Price Calculation with Multi-Placement handling
-  const calculatePrice = () => {
-    const basicRate = parseFloat(pricing?.minOrderFee) || 5.00;
-    const standardRate = parseFloat(pricing?.vectorSimpleRate || 10.00);
-    const premiumRate = parseFloat(pricing?.vectorComplexRate || 20.00);
-
-    let baseTotal = 0;
-
-    if (selectedPackageTier === 'bulk_combination') {
-      baseTotal = (bulkBasicQty * basicRate) + (bulkStandardQty * standardRate) + (bulkPremiumQty * premiumRate);
-      if (baseTotal === 0) {
-        baseTotal = singleQuantity * basicRate;
+  const getServicePricingDetails = () => {
+    let customRateVal = null;
+    if (orderWizardInitialData?.rate) {
+      const match = String(orderWizardInitialData.rate).match(/\$\s*([0-9]+(?:\.[0-9]+)?)/);
+      if (match && match[1]) {
+        customRateVal = parseFloat(match[1]);
+      } else if (!isNaN(parseFloat(orderWizardInitialData.rate))) {
+        customRateVal = parseFloat(orderWizardInitialData.rate);
       }
-    } else {
-      let baseTierRate = basicRate;
-      if (selectedPackageTier === 'standard') baseTierRate = standardRate;
-      if (selectedPackageTier === 'premium') baseTierRate = premiumRate;
-
-      let perDesignTotalRate = 0;
-      if (type === 'vector') {
-        const isComplex = serviceCategory.toLowerCase().includes('complex') || selectedPackageTier === 'premium';
-        perDesignTotalRate = isComplex ? premiumRate : standardRate;
-      } else {
-        perDesignTotalRate = selectedPlacements.reduce((sum, pId) => {
-          const isJacket = pId === 'jacket_back';
-          const rate = isJacket ? 20.00 : baseTierRate;
-          return sum + rate;
-        }, 0);
-      }
-
-      baseTotal = singleQuantity * perDesignTotalRate;
     }
 
-    const allowRush = totalWizardQty === 1;
-    const rush = (isRush && allowRush) ? (parseFloat(pricing?.rushSurcharge) || 10.00) : 0;
-    return (baseTotal + rush).toFixed(2);
-  };
-
-  const calculatedTotal = calculatePrice();
-
-  // Multi-File Processing Handler (Processes all image & vector files regardless of special names, hashes, or alphanumeric strings)
-  const processFilesList = (files) => {
-    if (!files || files.length === 0) return;
-    const fileArray = Array.from(files);
-
-    const newAssets = fileArray.map((file) => {
-      const fileName = file.name || 'unnamed_asset';
-      const fileExt = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';
+    if (type === 'vector') {
+      const currentTier = selectedPackageTier || 'standard';
+      const basicRate = (customRateVal && currentTier === 'basic') ? customRateVal : 15.00;
+      const standardRate = (customRateVal && currentTier === 'standard') ? customRateVal : 25.00;
+      const premiumRate = (customRateVal && currentTier === 'premium') ? customRateVal : 40.00;
       
-      // Broad image check including special file extensions
-      const isImage = file.type?.startsWith('image/') || 
-        ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'bmp', 'tif', 'tiff', 'ico', 'heic', 'avif'].includes(fileExt);
+      let rateEach = standardRate;
+      if (currentTier === 'basic') rateEach = basicRate;
+      if (currentTier === 'premium') rateEach = premiumRate;
 
-      let previewUrl = null;
-      if (isImage) {
-        try {
-          previewUrl = URL.createObjectURL(file);
-        } catch (_) {
-          previewUrl = null;
-        }
-      }
+      const safePlacementItems = Array.isArray(placementItems) && placementItems.length > 0 
+        ? placementItems 
+        : [{ id: 1, placementType: 'vector_redraw', quantity: 1, quantityInput: '1', specificNotes: '' }];
+
+      let baseSubtotal = 0;
+      const placementBreakdown = safePlacementItems.map((item, idx) => {
+        const subtotal = rateEach * (item.quantity || 1);
+        baseSubtotal += subtotal;
+        return {
+          index: idx + 1,
+          id: item.id || idx + 1,
+          label: `Vector Artwork #${idx + 1}`,
+          quantity: item.quantity || 1,
+          priceEach: rateEach,
+          subtotal,
+          notes: item.specificNotes || ''
+        };
+      });
+
+      const totalQty = safePlacementItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
+      const allowRush = totalQty === 1;
+      const rushSurcharge = (isRush && allowRush) ? 10.00 : 0;
+      const finalPrice = baseSubtotal + rushSurcharge;
 
       return {
-        id: `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-        name: fileName,
-        size: file.size || 0,
-        type: file.type || fileExt || 'asset',
-        preview: previewUrl,
-        fileObj: file
+        serviceTitle: 'Vector Art & Color Separation',
+        currentTier,
+        rateEach,
+        baseSubtotal,
+        totalPlacementQuantity: totalQty,
+        rushSurcharge,
+        finalPrice,
+        placementBreakdown
       };
-    });
+    } else if (type === 'patch') {
+      const currentTier = selectedPackageTier || 'standard';
+      const rateEach = currentTier === 'basic' ? 1.50 : currentTier === 'premium' ? 3.50 : 2.50;
+      const safeQty = Math.max(10, patchQuantity || 25);
+      const baseSubtotal = rateEach * safeQty;
+      const finalPrice = baseSubtotal;
 
-    // Immediately push files to selectedAssets state array for instant UI preview cards
-    setSelectedAssets(prev => [...prev, ...newAssets]);
+      return {
+        serviceTitle: 'Physical Custom Patches',
+        currentTier,
+        patchStyle,
+        patchBacking,
+        rateEach,
+        baseSubtotal,
+        totalPlacementQuantity: safeQty,
+        rushSurcharge: 0,
+        finalPrice,
+        placementBreakdown: [{
+          index: 1,
+          id: 1,
+          label: `${patchStyle} Patch (${patchBacking})`,
+          quantity: safeQty,
+          priceEach: rateEach,
+          subtotal: baseSubtotal,
+          notes: ''
+        }]
+      };
+    } else {
+      // Embroidery Digitizing
+      const currentTier = selectedPackageTier || 'standard';
+      const basicRate = (customRateVal && currentTier === 'basic') ? customRateVal : (parseFloat(pricing?.minOrderFee) || 10.00);
+      const standardRate = (customRateVal && currentTier === 'standard') ? customRateVal : (parseFloat(pricing?.vectorSimpleRate) || 15.00);
+      const premiumRate = (customRateVal && currentTier === 'premium') ? customRateVal : (parseFloat(pricing?.vectorComplexRate) || 25.00);
 
-    // Fallback FileReader for dataURL if object URL is unsupported
-    fileArray.forEach((file, idx) => {
-      const fileName = file.name || '';
-      const fileExt = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';
-      const isImage = file.type?.startsWith('image/') || 
-        ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'bmp', 'tif', 'tiff'].includes(fileExt);
+      let baseTierRate = basicRate;
+      if (currentTier === 'standard') baseTierRate = standardRate;
+      if (currentTier === 'premium') baseTierRate = premiumRate;
 
-      if (isImage && !newAssets[idx].preview) {
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-          setSelectedAssets(prev => prev.map(asset => 
-            asset.fileObj === file ? { ...asset, preview: evt.target.result } : asset
-          ));
+      const safePlacementItems = Array.isArray(placementItems) && placementItems.length > 0 
+        ? placementItems 
+        : [{ id: 1, placementType: 'left_chest', quantity: 1, quantityInput: '1', specificNotes: '' }];
+
+      let baseSubtotal = 0;
+      const placementBreakdown = safePlacementItems.map((item, idx) => {
+        const isJacket = item.placementType === 'jacket_back' || item.placementType === 'Jacket Back Crest';
+        const itemPriceEach = isJacket ? 20.00 : baseTierRate;
+        const subtotal = itemPriceEach * (item.quantity || 1);
+        baseSubtotal += subtotal;
+        
+        const foundPlc = PLACEMENT_OPTIONS.find(p => p.id === item.placementType);
+        const label = foundPlc ? foundPlc.label.split(' (')[0] : (item.placementType || 'Left Chest / Polo Logo');
+
+        return {
+          index: idx + 1,
+          id: item.id || idx + 1,
+          placementType: item.placementType,
+          label,
+          quantity: item.quantity || 1,
+          priceEach: itemPriceEach,
+          subtotal,
+          notes: item.specificNotes || ''
         };
-        reader.readAsDataURL(file);
-      }
-    });
+      });
+
+      const totalPlacementQuantity = safePlacementItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
+
+      let discountPercent = 0;
+      if (totalPlacementQuantity >= 50) discountPercent = 35;
+      else if (totalPlacementQuantity >= 25) discountPercent = 25;
+      else if (totalPlacementQuantity >= 15) discountPercent = 20;
+      else if (totalPlacementQuantity >= 10) discountPercent = 15;
+      else if (totalPlacementQuantity >= 5) discountPercent = 10;
+
+      const discountAmount = (baseSubtotal * discountPercent) / 100;
+      const discountedSubtotal = baseSubtotal - discountAmount;
+
+      const allowRush = totalPlacementQuantity === 1;
+      const rushSurcharge = (isRush && allowRush) ? (parseFloat(pricing?.rushSurcharge) || 10.00) : 0;
+      const finalPrice = discountedSubtotal + rushSurcharge;
+
+      return {
+        serviceTitle: 'Embroidery Digitizing',
+        currentTier,
+        baseTierRate,
+        baseSubtotal,
+        discountPercent,
+        discountAmount,
+        discountedSubtotal,
+        totalPlacementQuantity,
+        rushSurcharge,
+        finalPrice,
+        placementBreakdown
+      };
+    }
   };
+
+  const pricingDetails = getServicePricingDetails();
 
   const handleFileChange = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      processFilesList(e.target.files);
-    }
-    // Reset file input value so re-selecting identical filename triggers onChange reliably
-    e.target.value = '';
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      processFilesList(e.dataTransfer.files);
+    if (e.target.files) {
+      const newAssets = Array.from(e.target.files).map(file => ({
+        id: Date.now() + Math.random(),
+        name: file.name,
+        preview: URL.createObjectURL(file)
+      }));
+      setSelectedAssets(prev => [...prev, ...newAssets]);
     }
   };
 
-  const removeUploadedFile = (indexToRemove) => {
-    setSelectedAssets(prev => {
-      const itemToRemove = prev[indexToRemove];
-      if (itemToRemove?.preview && itemToRemove.preview.startsWith('blob:')) {
-        try { URL.revokeObjectURL(itemToRemove.preview); } catch (_) {}
-      }
-      return prev.filter((_, idx) => idx !== indexToRemove);
-    });
+  const handleRemoveAsset = (id) => {
+    setSelectedAssets(prev => prev.filter(a => a.id !== id));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!title.trim()) {
-      alert('Please enter a design brief title.');
-      setStep(1);
+      alert('Please enter an artwork or order title.');
       return;
     }
-
-    const orderCost = parseFloat(calculatedTotal);
-
-    if (paymentOption === 'wallet') {
-      if (walletBalance < orderCost) {
-        alert(`Insufficient Studio Wallet Balance ($${walletBalance.toFixed(2)} available vs $${orderCost.toFixed(2)} total cost). Please top up your wallet or select BoltPayouts Payment Gateway.`);
-        setIsDepositModalOpen(true);
-        return;
-      }
-      if (deductWalletBalance) {
-        deductWalletBalance(orderCost);
-      }
-    } else if (paymentOption === 'bolt') {
-      const redirectUrl = `${window.location.origin}/client-portal?bolt_status=success&amount=${orderCost}`;
-      const boltUrl = `https://www.boltpayouts.xyz/pay/boltpayouts?amount=${orderCost}&currency=USD&email=${encodeURIComponent(authUser?.email || 'client@bdigitizing.pro')}&return_url=${encodeURIComponent(redirectUrl)}`;
-      try {
-        window.open(boltUrl, '_blank');
-      } catch (_) {
-        window.location.href = boltUrl;
-      }
-    }
-
-    const primaryPreview = uploadedFilesList.length > 0 ? uploadedFilesList[0].preview : null;
-    const primaryName = uploadedFilesList.length > 0 ? uploadedFilesList[0].name : 'design_artwork.png';
-
-    const newOrderData = {
+    const orderData = {
       title,
       type,
-      placementType,
-      serviceCategory: `${placementType} (${type === 'embroidery' ? 'Embroidery' : 'Vector'})`,
-      isRush,
-      dimensions: { width: parseFloat(width), height: parseFloat(height), unit: 'inches' },
+      selectedPackageTier,
+      placementItems,
       fabricType,
-      colorsCount: parseInt(colorsCount),
-      estimatedStitches: type === 'embroidery' ? Math.round(width * height * 1100) : 0,
       requestedFormats,
-      price: orderCost,
-      notes,
-      paymentMethod: paymentOption === 'wallet' ? 'Studio Wallet Credit' : (paymentOption === 'bolt' ? 'BoltPayouts Gateway' : 'Credit Card'),
-      paymentStatus: 'Paid',
-      artworkUrl: primaryPreview,
-      image_url: primaryPreview,
-      logo: primaryPreview,
-      file_url: primaryPreview,
-      file_path: primaryName,
-      artworkFileName: primaryName,
-      artworkFilesList: uploadedFilesList.map(f => ({ name: f.name, preview: f.preview }))
+      isRush,
+      patchStyle,
+      patchBacking,
+      patchQuantity,
+      totalPrice: pricingDetails.finalPrice,
+      uploadedFiles: selectedAssets.map(a => a.name)
     };
-
-    createOrder(newOrderData);
+    if (createOrder) {
+      createOrder(orderData);
+    }
     setIsOrderWizardOpen(false);
-    setStep(1);
-    setTitle('');
+    alert(`Order "${title}" placed successfully! Total: $${pricingDetails.finalPrice.toFixed(2)}`);
   };
 
+  if (!isOrderWizardOpen) return null;
+
   return (
-    <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '800px' }}>
-        
-        {/* Modal Header */}
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(15, 23, 42, 0.85)',
+      backdropFilter: 'blur(8px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 99999,
+      padding: '1.5rem',
+      overflowY: 'auto'
+    }}>
+      <div style={{
+        background: '#0f172a',
+        border: '1px solid rgba(255, 255, 255, 0.15)',
+        borderRadius: '20px',
+        width: '100%',
+        maxWidth: '1140px',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+        overflow: 'hidden',
+        margin: 'auto'
+      }}>
+        {/* Header */}
         <div style={{
-          padding: '1.25rem 1.75rem',
-          borderBottom: '1px solid var(--border-color)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          background: 'var(--navy-950)',
+          padding: '1.25rem 1.75rem',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          background: '#0f172a',
           color: '#ffffff',
-          borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0'
+          borderRadius: '20px 20px 0 0'
         }}>
-          <div>
-            <h3 style={{ fontSize: '1.25rem', color: '#ffffff', marginBottom: '0.15rem' }}>
-              Upload New Design Brief
-            </h3>
-            <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-              Step {step} of 4 — {step === 1 ? 'Service & Multi-File Upload' : step === 2 ? 'Technical Specifications' : step === 3 ? 'Brief Summary' : 'BoltPayouts Gateway Payment'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <Sparkles size={22} style={{ color: 'var(--orange-400)' }} />
+            <div>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                Configure {pricingDetails.serviceTitle} Order
+              </h3>
+              <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.1rem' }}>
+                Multi-step order configuration with live instant pricing calculation
+              </div>
             </div>
           </div>
 
           <button 
             onClick={() => setIsOrderWizardOpen(false)}
-            style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+            style={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', color: '#cbd5e1', width: '34px', height: '34px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
-        {/* Step Progress Bar */}
-        <div style={{ background: 'var(--navy-900)', padding: '0.5rem 1.75rem', display: 'flex', gap: '0.5rem' }}>
-          {[1, 2, 3, 4].map((s) => (
-            <div 
-              key={s} 
-              style={{ 
-                flex: 1, 
-                height: '4px', 
-                borderRadius: '2px',
-                background: s <= step ? 'var(--orange-500)' : 'rgba(255,255,255,0.15)',
-                transition: 'all 0.3s'
-              }} 
-            />
-          ))}
-        </div>
-
         <form onSubmit={handleSubmit} style={{ padding: '1.75rem' }}>
-          
-          {/* STEP 1: Service Selection & Multi-File Upload */}
-          {step === 1 && (
-            <div>
-              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                <label>Design Brief Title / Reference Name *</label>
-                <input 
-                  type="text" 
-                  className="form-control"
-                  placeholder="e.g. Apex Athletics Left Chest Polo Logo..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                />
-              </div>
 
-              {/* Service Type Switch */}
-              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                <label>Select Primary Studio Service</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => setType('embroidery')}
-                    style={{
-                      padding: '1rem',
-                      borderRadius: 'var(--radius-md)',
-                      border: `2px solid ${type === 'embroidery' ? 'var(--orange-600)' : 'var(--border-color)'}`,
-                      background: type === 'embroidery' ? 'var(--orange-50)' : '#ffffff',
-                      color: type === 'embroidery' ? 'var(--orange-700)' : 'var(--navy-800)',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      textAlign: 'left'
-                    }}
-                  >
-                    🧵 Custom Embroidery Digitizing
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400 }}>Stitch pathing for Tajima, Brother, Melco (.DST, .PES, .EMB)</div>
-                  </button>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.75rem', alignItems: 'start' }}>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              
+              {/* Step 1: Title & File Upload */}
+              <div style={{ padding: '1.5rem', background: '#1e293b', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ffffff', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Upload size={18} style={{ color: 'var(--orange-400)' }} /> Step 1: Order Title & Artwork Upload
+                </h3>
 
-                  <button
-                    type="button"
-                    onClick={() => setType('vector')}
-                    style={{
-                      padding: '1rem',
-                      borderRadius: 'var(--radius-md)',
-                      border: `2px solid ${type === 'vector' ? 'var(--orange-600)' : 'var(--border-color)'}`,
-                      background: type === 'vector' ? 'var(--orange-50)' : '#ffffff',
-                      color: type === 'vector' ? 'var(--orange-700)' : 'var(--navy-800)',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      textAlign: 'left'
-                    }}
-                  >
-                    ✒️ Vector Art & Color Separation
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400 }}>High-res .AI, .EPS, .SVG vector tracing</div>
-                  </button>
-                </div>
-              </div>
-
-              {/* Placement Selection */}
-              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                <label>Placement / Garment Target</label>
-                <select 
-                  className="form-control"
-                  value={placementType}
-                  onChange={(e) => setPlacementType(e.target.value)}
-                >
-                  <option value="Left Chest / Polo">Left Chest / Polo Shirt (Standard 3.5"-4.0")</option>
-                  <option value="Cap Front / 3D Puff">Cap Front / Hat (3D Foam Compensation)</option>
-                  <option value="Jacket Back Crest">Jacket Back / Large Crest (9"-12"+)</option>
-                  <option value="Sleeve / Cuff Logo">Sleeve / Cuff / Visor Emblem</option>
-                  <option value="Applique / Patch">Custom Woven Patch / Applique</option>
-                  <option value="Vector Art Conversion">Vector Artwork Conversion (Print / Screen)</option>
-                </select>
-              </div>
-
-              {/* Package Tier Cards Display */}
-              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                <label>Select Pricing Package Tier *</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem', marginTop: '0.35rem' }}>
-                  <div
-                    onClick={() => setSelectedPackageTier('basic')}
-                    style={{
-                      border: selectedPackageTier === 'basic' ? '2px solid var(--orange-500)' : '1px solid var(--border-color)',
-                      background: selectedPackageTier === 'basic' ? 'var(--orange-50)' : '#ffffff',
-                      padding: '0.85rem',
-                      borderRadius: 'var(--radius-sm)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase' }}>⚡ BASIC</div>
-                    <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.15rem 0' }}>$10.00</div>
-                    <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', lineHeight: 1.25 }}>Left Chest / Simple Logo up to 4"</div>
-                  </div>
-
-                  <div
-                    onClick={() => setSelectedPackageTier('standard')}
-                    style={{
-                      border: selectedPackageTier === 'standard' ? '2px solid var(--orange-500)' : '1px solid var(--border-color)',
-                      background: selectedPackageTier === 'standard' ? 'var(--orange-50)' : '#ffffff',
-                      padding: '0.85rem',
-                      borderRadius: 'var(--radius-sm)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase' }}>🏆 STANDARD</div>
-                    <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.15rem 0' }}>$15.00</div>
-                    <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', lineHeight: 1.25 }}>Medium Detail / Cap / Sleeve Logo</div>
-                  </div>
-
-                  <div
-                    onClick={() => setSelectedPackageTier('premium')}
-                    style={{
-                      border: selectedPackageTier === 'premium' ? '2px solid var(--orange-500)' : '1px solid var(--border-color)',
-                      background: selectedPackageTier === 'premium' ? 'var(--orange-50)' : '#ffffff',
-                      padding: '0.85rem',
-                      borderRadius: 'var(--radius-sm)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase' }}>✨ PREMIUM</div>
-                    <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.15rem 0' }}>$25.00</div>
-                    <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', lineHeight: 1.25 }}>Jacket Back / Complex 3D Puff</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Single Quantity vs Multi-Package Quantity Controls */}
-              {selectedPackageTier !== 'bulk_combination' ? (
-                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                  <label>Order Quantity (Dropdown Preset & Manual Entry)</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.75rem', alignItems: 'center' }}>
-                    <select
-                      className="form-control"
-                      value={[1, 2, 3, 5, 10, 15, 25, 50].includes(singleQuantity) ? singleQuantity : 'custom'}
-                      onChange={(e) => {
-                        if (e.target.value !== 'custom') {
-                          setSingleQuantity(parseInt(e.target.value) || 1);
-                        }
-                      }}
-                      style={{ fontWeight: 700 }}
-                    >
-                      <option value="1">1 Design (Single Order)</option>
-                      <option value="2">2 Designs (Package)</option>
-                      <option value="3">3 Designs (Package)</option>
-                      <option value="5">5 Designs (Bulk Batch)</option>
-                      <option value="10">10 Designs (Bulk Batch)</option>
-                      <option value="15">15 Designs (Bulk Batch)</option>
-                      <option value="25">25 Designs (Shop Tier)</option>
-                      <option value="50">50 Designs (Volume Tier)</option>
-                      <option value="custom">Custom Quantity...</option>
-                    </select>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <button
-                        type="button"
-                        onClick={() => setSingleQuantity(Math.max(1, singleQuantity - 1))}
-                        style={{ width: '36px', height: '38px', background: '#f1f5f9', border: '1px solid var(--border-color)', color: 'var(--navy-900)', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}
-                      >
-                        -
-                      </button>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={singleQuantityInput}
-                        onFocus={(e) => e.target.select()}
-                        onChange={(e) => {
-                          const rawVal = e.target.value;
-                          if (rawVal === '') {
-                            setSingleQuantityInput('');
-                            return;
-                          }
-                          const cleanVal = rawVal.replace(/\D/g, '');
-                          if (cleanVal === '') {
-                            setSingleQuantityInput('');
-                            return;
-                          }
-                          const parsed = parseInt(cleanVal, 10);
-                          setSingleQuantityInput(String(parsed));
-                          if (parsed > 0) {
-                            setSingleQuantity(parsed);
-                          }
-                        }}
-                        onBlur={() => {
-                          if (!singleQuantityInput || parseInt(singleQuantityInput, 10) < 1) {
-                            setSingleQuantity(1);
-                            setSingleQuantityInput('1');
-                          }
-                        }}
-                        className="form-control"
-                        style={{ textAlign: 'center', fontWeight: 800, padding: '0.4rem 0.5rem' }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setSingleQuantity(singleQuantity + 1)}
-                        style={{ width: '36px', height: '38px', background: '#f1f5f9', border: '1px solid var(--border-color)', color: 'var(--navy-900)', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div style={{
-                  background: '#f8fafc',
-                  border: '1.5px solid var(--orange-300)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '1.25rem',
-                  marginBottom: '1.5rem'
-                }}>
-                  <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--navy-900)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Zap size={16} style={{ color: 'var(--orange-500)' }} /> Bulk Multi-Package Quantity Selection
-                  </div>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.85rem' }}>
-                    <div>
-                      <label style={{ fontSize: '0.78rem', fontWeight: 800 }}>Basic ($10/ea)</label>
-                      <select
-                        className="form-control"
-                        value={bulkBasicQty}
-                        onChange={(e) => setBulkBasicQty(parseInt(e.target.value) || 0)}
-                      >
-                        {[0, 1, 2, 3, 4, 5, 10, 15, 20, 25, 50].map(q => (
-                          <option key={q} value={q}>{q} Designs</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label style={{ fontSize: '0.78rem', fontWeight: 800 }}>Standard ($15/ea)</label>
-                      <select
-                        className="form-control"
-                        value={bulkStandardQty}
-                        onChange={(e) => setBulkStandardQty(parseInt(e.target.value) || 0)}
-                      >
-                        {[0, 1, 2, 3, 4, 5, 10, 15, 20, 25, 50].map(q => (
-                          <option key={q} value={q}>{q} Designs</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label style={{ fontSize: '0.78rem', fontWeight: 800 }}>Premium ($25/ea)</label>
-                      <select
-                        className="form-control"
-                        value={bulkPremiumQty}
-                        onChange={(e) => setBulkPremiumQty(parseInt(e.target.value) || 0)}
-                      >
-                        {[0, 1, 2, 3, 4, 5, 10, 15, 20, 25, 50].map(q => (
-                          <option key={q} value={q}>{q} Designs</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Native Drag & Drop Multiple File Selector */}
-              <div className="form-group">
-                <label>Upload Artwork Files (Select Multiple .PNG, .JPG, .AI, .CDR, .PDF, .DST)</label>
-                <div 
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  style={{
-                    border: `2px dashed ${isDragOver ? 'var(--orange-500)' : 'var(--orange-600)'}`,
-                    borderRadius: 'var(--radius-md)',
-                    padding: '0.85rem 1.25rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.85rem',
-                    background: isDragOver ? 'var(--orange-50)' : 'var(--navy-100)',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  <input 
-                    type="file" 
-                    multiple
-                    accept="*/*"
-                    onChange={handleFileChange}
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      opacity: 0,
-                      cursor: 'pointer',
-                      width: '100%',
-                      height: '100%'
-                    }}
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>
+                    Artwork / Order Name *
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="e.g. Apex Logo Digitizing / Custom Patch Order"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                    style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.15)', color: '#ffffff' }}
                   />
-                  <UploadCloud size={24} style={{ color: isDragOver ? 'var(--orange-500)' : 'var(--orange-600)', flexShrink: 0 }} />
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.875rem' }}>
-                      Drag & Drop multiple files or click to browse
-                    </div>
-                    <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>
-                      Supports PNG, JPG, PDF, AI, EPS, CDR, DST, EMB, PES, EXP, ZIP & all formats
-                    </div>
-                  </div>
                 </div>
-              </div>
 
-              {/* Selected Assets Array List Grid with Removal Controls */}
-              {selectedAssets.length > 0 && (
-                <div style={{ marginTop: '1.25rem' }}>
-                  <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.65rem' }}>
-                    Selected Source Assets ({selectedAssets.length}):
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.85rem',
+                  padding: '1.1rem 1.25rem',
+                  background: '#0f172a',
+                  border: '2px dashed rgba(255, 122, 0, 0.45)',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s ease'
+                }}>
+                  <Upload size={24} style={{ color: 'var(--orange-400)', flexShrink: 0 }} />
+                  <div>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 800, color: '#ffffff', display: 'block' }}>Click or drag artwork files to upload</span>
+                    <span style={{ fontSize: '0.73rem', color: '#94a3b8' }}>Supports PNG, JPG, PDF, AI, SVG, PSD, DST</span>
                   </div>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.75rem' }}>
-                    {selectedAssets.map((fileItem, idx) => (
-                      <div 
-                        key={fileItem.id || idx}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.75rem',
-                          background: '#ffffff',
-                          border: '1px solid var(--border-color)',
-                          padding: '0.6rem 0.85rem',
-                          borderRadius: 'var(--radius-sm)',
-                          boxShadow: 'var(--shadow-sm)'
-                        }}
-                      >
-                        {fileItem.preview ? (
-                          <img 
-                            src={fileItem.preview} 
-                            alt={fileItem.name} 
-                            style={{ width: '42px', height: '42px', borderRadius: '4px', objectFit: 'cover', border: '1px solid var(--border-color)' }}
-                          />
-                        ) : (
-                          <div style={{ width: '42px', height: '42px', borderRadius: '4px', background: 'var(--orange-50)', color: 'var(--orange-600)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <FileCode size={20} />
-                          </div>
-                        )}
+                  <input type="file" multiple onChange={handleFileChange} style={{ display: 'none' }} />
+                </label>
 
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div 
-                            style={{ 
-                              fontWeight: 700, 
-                              fontSize: '0.825rem', 
-                              color: 'var(--navy-900)', 
-                              whiteSpace: 'nowrap', 
-                              overflow: 'hidden', 
-                              textOverflow: 'ellipsis' 
-                            }}
-                            title={fileItem.name}
-                          >
-                            {fileItem.name}
-                          </div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--green-600)', fontWeight: 600 }}>
-                            ✓ Attached ({fileItem.size ? `${(fileItem.size / 1024).toFixed(0)} KB` : 'Ready'})
-                          </div>
-                        </div>
-
-                        <button 
-                          type="button" 
-                          onClick={() => removeUploadedFile(idx)}
-                          style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.2rem' }}
-                          title="Remove file"
-                        >
+                {selectedAssets.length > 0 && (
+                  <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {selectedAssets.map(ast => (
+                      <div key={ast.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#0f172a', padding: '0.6rem 0.85rem', borderRadius: '8px', fontSize: '0.85rem' }}>
+                        <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{ast.name}</span>
+                        <button type="button" onClick={() => handleRemoveAsset(ast.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
                           <Trash2 size={16} />
                         </button>
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-
-            </div>
-          )}
-
-          {/* STEP 2: Technical Specifications & Formats */}
-          {step === 2 && (
-            <div>
-              {/* Dimensions */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
-                <div className="form-group">
-                  <label>Width (Inches)</label>
-                  <input 
-                    type="number" 
-                    className="form-control"
-                    step="0.1"
-                    min="0.5"
-                    max="18"
-                    value={width}
-                    onChange={(e) => setWidth(parseFloat(e.target.value) || 1)}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Height (Inches)</label>
-                  <input 
-                    type="number" 
-                    className="form-control"
-                    step="0.1"
-                    min="0.5"
-                    max="18"
-                    value={height}
-                    onChange={(e) => setHeight(parseFloat(e.target.value) || 1)}
-                  />
-                </div>
+                )}
               </div>
 
-              {/* Target Fabric */}
-              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                <label>Target Garment Fabric / Material Type</label>
-                <input 
-                  type="text" 
-                  className="form-control"
-                  placeholder="e.g. 100% Pique Cotton Polo, 6-Panel Structured Cap, Denim Jacket..."
-                  value={fabricType}
-                  onChange={(e) => setFabricType(e.target.value)}
-                />
-              </div>
+              {/* Step 2: Configure Service Options */}
+              <div style={{ padding: '1.5rem', background: '#1e293b', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ffffff', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Sparkles size={18} style={{ color: 'var(--orange-400)' }} /> Step 2: Configure {pricingDetails.serviceTitle} Options
+                </h3>
 
-              {/* Format Checkboxes */}
-              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                <label>Required Output Machine & Master Formats (Free Included)</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem', marginTop: '0.35rem' }}>
-                  {MACHINE_FORMATS.map(fmt => {
-                    const isSelected = requestedFormats.includes(fmt.id);
-                    return (
-                      <div 
-                        key={fmt.id}
-                        onClick={() => toggleFormat(fmt.id)}
-                        style={{
-                          border: `1.5px solid ${isSelected ? 'var(--orange-500)' : 'var(--border-color)'}`,
-                          background: isSelected ? '#fff7ed' : '#ffffff',
-                          padding: '0.6rem 0.75rem',
-                          borderRadius: 'var(--radius-sm)',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          fontSize: '0.85rem',
-                          fontWeight: 600,
-                          color: isSelected ? 'var(--orange-600)' : 'var(--navy-800)'
-                        }}
-                      >
-                        <div style={{
-                          width: '16px',
-                          height: '16px',
-                          borderRadius: '3px',
-                          border: `1px solid ${isSelected ? 'var(--orange-500)' : '#cbd5e1'}`,
-                          background: isSelected ? 'var(--orange-500)' : '#ffffff',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#ffffff'
-                        }}>
-                          {isSelected && <Check size={12} />}
-                        </div>
-                        {fmt.name.split(' ')[0]}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Special Color Notes */}
-              <div className="form-group">
-                <label>Special Instructions & Thread Color Notes</label>
-                <textarea 
-                  className="form-control"
-                  rows="3"
-                  placeholder="e.g. Match Pantone 186C Red, keep eagle eye sharp, apply 3mm foam compensation on cap front letter T..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* STEP 3: Brief Summary & Review */}
-          {step === 3 && (
-            <div>
-              <div style={{
-                background: 'var(--navy-100)',
-                padding: '1.25rem',
-                borderRadius: 'var(--radius-md)',
-                marginBottom: '1.5rem'
-              }}>
-                <h4 style={{ color: 'var(--navy-900)', marginBottom: '0.75rem' }}>Brief Summary Review</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.875rem' }}>
-                  <div><strong>Title:</strong> {title || 'Untitled Brief'}</div>
-                  <div><strong>Type:</strong> {type === 'embroidery' ? 'Custom Embroidery' : 'Vector Art'}</div>
-                  <div><strong>Placement:</strong> {placementType}</div>
-                  <div><strong>Dimensions:</strong> {width} x {height} inches</div>
-                  <div><strong>Target Fabric:</strong> {fabricType}</div>
-                  <div><strong>Attached Files:</strong> {uploadedFilesList.length} File(s)</div>
-                  <div><strong>Formats Requested:</strong> {requestedFormats.join(', ').toUpperCase()}</div>
-                </div>
-              </div>
-
-              {/* Super Rush Switch (Displayed ONLY when order quantity === 1) */}
-              {totalWizardQty === 1 ? (
-                <div style={{
-                  background: isRush ? '#fff7ed' : 'var(--bg-main)',
-                  border: `1.5px solid ${isRush ? 'var(--orange-500)' : 'var(--border-color)'}`,
-                  padding: '0.85rem 1rem',
-                  borderRadius: 'var(--radius-sm)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '1.5rem',
-                  boxShadow: isRush ? '0 4px 14px rgba(249, 115, 22, 0.15)' : 'none'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Zap size={18} style={{ color: 'var(--orange-500)' }} />
+                {/* 1. EMBROIDERY DIGITIZING */}
+                {type === 'embroidery' && (
+                  <>
                     <div>
-                      <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--navy-900)' }}>
-                        ⚡ Super Rush (2-4 Hrs / Express) Turnaround
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        + ${(parseFloat(pricing?.rushSurcharge) || 10.00).toFixed(2)} Priority Express Surcharge
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#cbd5e1', marginBottom: '0.65rem' }}>
+                        Select Pricing Package Tier *
+                      </label>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
+                        
+                        <div
+                          onClick={() => setSelectedPackageTier('basic')}
+                          style={{
+                            border: selectedPackageTier === 'basic' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
+                            background: selectedPackageTier === 'basic' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
+                            padding: '1rem 0.85rem',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase' }}>⚡ BASIC</span>
+                            {selectedPackageTier === 'basic' && (
+                              <span style={{ fontSize: '0.63rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>Selected</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$10.00 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ design</span></div>
+                          <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>Simple Left Chest / Small Logo (up to 4")</div>
+                        </div>
+
+                        <div
+                          onClick={() => setSelectedPackageTier('standard')}
+                          style={{
+                            border: selectedPackageTier === 'standard' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
+                            background: selectedPackageTier === 'standard' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
+                            padding: '1rem 0.85rem',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase' }}>⭐ STANDARD</span>
+                            {selectedPackageTier === 'standard' && (
+                              <span style={{ fontSize: '0.63rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>Selected</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$15.00 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ design</span></div>
+                          <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>Standard Left Chest, Cap & Sleeve Logos</div>
+                        </div>
+
+                        <div
+                          onClick={() => setSelectedPackageTier('premium')}
+                          style={{
+                            border: selectedPackageTier === 'premium' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
+                            background: selectedPackageTier === 'premium' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
+                            padding: '1rem 0.85rem',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#a855f7', textTransform: 'uppercase' }}>✨ PREMIUM</span>
+                            {selectedPackageTier === 'premium' && (
+                              <span style={{ fontSize: '0.63rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>Selected</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$25.00 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ design</span></div>
+                          <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>Jacket Back, Large Crest & 3D Puff</div>
+                        </div>
+
                       </div>
                     </div>
-                  </div>
-                  <input 
-                    type="checkbox" 
-                    checked={isRush} 
-                    onChange={(e) => setIsRush(e.target.checked)} 
-                    style={{ width: 18, height: 18, accentColor: 'var(--orange-500)', cursor: 'pointer' }}
-                  />
-                </div>
-              ) : (
-                <div style={{
-                  fontSize: '0.78rem',
-                  color: 'var(--text-muted)',
-                  background: 'var(--navy-100)',
-                  padding: '0.65rem 0.85rem',
-                  borderRadius: 'var(--radius-sm)',
-                  marginBottom: '1.5rem'
-                }}>
-                  📌 <em>Super Rush (2-4 Hrs) is available for single-design orders. Bulk orders ({totalWizardQty} designs) are processed under standard studio turnaround.</em>
-                </div>
-              )}
 
-              {/* Total Summary Price Box */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                background: '#ffffff',
-                border: '2px solid var(--orange-500)',
-                padding: '1.25rem 1.5rem',
-                borderRadius: 'var(--radius-md)',
-                boxShadow: '0 4px 14px rgba(249, 115, 22, 0.15)'
-              }}>
-                <div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Order Brief Cost</div>
-                  <div style={{ fontSize: '2.1rem', fontWeight: 800, color: 'var(--navy-950)', lineHeight: 1.1 }}>${calculatedTotal}</div>
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-primary-orange btn-lg"
-                  onClick={() => setStep(4)}
-                >
-                  Proceed to Payment Gateway <ArrowRight size={18} />
-                </button>
-              </div>
-            </div>
-          )}
+                    {/* Interactive Placements Cart */}
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                        <label style={{ fontSize: '0.875rem', fontWeight: 800, color: '#ffffff' }}>
+                          📍 Configure Order Placement Items ({placementItems.length} Item{placementItems.length > 1 ? 's' : ''}) *
+                        </label>
+                        <button type="button" onClick={addPlacementItem} style={{ background: 'rgba(255, 122, 0, 0.2)', border: '1px solid var(--orange-500)', color: 'var(--orange-400)', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}>
+                          + Add Another Placement
+                        </button>
+                      </div>
 
-          {/* STEP 4: Dedicated BoltPayouts Payment Gateway & Checkout */}
-          {step === 4 && (
-            <div>
-              
-              {/* Total Order Amount Banner */}
-              <div style={{
-                background: 'linear-gradient(135deg, var(--navy-950), var(--navy-900))',
-                color: '#ffffff',
-                padding: '1.5rem',
-                borderRadius: 'var(--radius-md)',
-                marginBottom: '1.5rem',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--orange-500)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Checkout Order Total
-                  </div>
-                  <div style={{ fontSize: '2.25rem', fontWeight: 800, color: '#ffffff' }}>
-                    ${calculatedTotal}
-                  </div>
-                </div>
+                      {placementItems.map((item, index) => (
+                        <div key={item.id} style={{ background: '#0f172a', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '10px', padding: '0.85rem 1rem', marginBottom: '0.75rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--orange-400)' }}>Placement Item #{index + 1}</span>
+                            {placementItems.length > 1 && (
+                              <button type="button" onClick={() => removePlacementItem(item.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
+                                <Trash2 size={16} />
+                              </button>
+                            )}
+                          </div>
 
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Order Brief:</div>
-                  <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#ffffff' }}>{title || 'Custom Brief'}</div>
-                </div>
-              </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.75rem' }}>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Placement Location</label>
+                              <select value={item.placementType} onChange={(e) => updatePlacementItem(item.id, 'placementType', e.target.value)} className="form-control" style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem' }}>
+                                {PLACEMENT_OPTIONS.map(plc => (
+                                  <option key={plc.id} value={plc.id}>{plc.label}</option>
+                                ))}
+                              </select>
+                            </div>
 
-              {/* Payment Method Selection Options */}
-              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                <label style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.95rem' }}>
-                  Select Payment Method to Complete Order
-                </label>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Quantity</label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <button type="button" onClick={() => updatePlacementItem(item.id, 'quantity', Math.max(1, item.quantity - 1))} style={{ width: '32px', height: '34px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}>-</button>
+                                <input type="text" value={item.quantityInput} onChange={(e) => updatePlacementItem(item.id, 'quantityInput', e.target.value)} className="form-control" style={{ textAlign: 'center', background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800, padding: '0.3rem' }} />
+                                <button type="button" onClick={() => updatePlacementItem(item.id, 'quantity', item.quantity + 1)} style={{ width: '32px', height: '34px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}>+</button>
+                              </div>
+                            </div>
+                          </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginTop: '0.5rem' }}>
-                  
-                  {/* Featured Option 1: BoltPayouts Gateway */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentOption('bolt')}
+                          {/* Dedicated File Upload Zone for this Placement */}
+                          <div style={{ background: '#1e293b', padding: '0.65rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', marginTop: '0.6rem' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.3rem' }}>
+                              <span>📎 Reference File for Placement #{index + 1} *</span>
+                              {item.files && item.files.length > 0 && (
+                                <span style={{ color: 'var(--orange-400)', fontWeight: 800 }}>{item.files.length} File{item.files.length > 1 ? 's' : ''}</span>
+                              )}
+                            </label>
+
+                            <div
+                              onClick={() => document.getElementById(`modal-plc-file-${item.id}`)?.click()}
+                              style={{
+                                border: '1.5px dashed rgba(255, 122, 0, 0.45)',
+                                background: '#0f172a',
+                                borderRadius: '6px',
+                                padding: '0.5rem',
+                                textAlign: 'center',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.4rem'
+                              }}
+                            >
+                              <Upload size={14} style={{ color: 'var(--orange-400)' }} />
+                              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e2e8f0' }}>Upload File for Item #{index + 1}</span>
+                              <input
+                                type="file"
+                                id={`modal-plc-file-${item.id}`}
+                                multiple
+                                style={{ display: 'none' }}
+                                onChange={(e) => handlePlacementFileUpload(item.id, e.target.files)}
+                              />
+                            </div>
+
+                            {item.files && item.files.length > 0 && (
+                              <div style={{ marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                                {item.files.map(f => (
+                                  <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.3rem 0.5rem', background: '#0f172a', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.72rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                      <FileCode size={12} style={{ color: 'var(--orange-400)' }} />
+                                      <span style={{ fontWeight: 700, color: '#ffffff' }}>{f.name}</span>
+                                    </div>
+                                    <button type="button" onClick={() => removeFileFromPlacement(item.id, f.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}>
+                                      <Trash2 size={12} />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Target Garment Fabric *</label>
+                      <select value={fabricType} onChange={(e) => setFabricType(e.target.value)} className="form-control" style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.15)', color: '#ffffff' }}>
+                        <option value="Pique Cotton Polo">Pique Polo Cotton</option>
+                        <option value="Fleece Hoodie">Fleece Hoodie / Sweatshirt</option>
+                        <option value="Structured Cap 3D Foam">Structured Cap / Hat (3D Foam)</option>
+                        <option value="Performance Dry-Fit">Performance Dry-Fit Polyester</option>
+                        <option value="Towel / Terry Cloth">Towel / Thick Plush Terry</option>
+                        <option value="Leather / Canvas">Leather / Heavy Canvas</option>
+                        <option value="Softshell Jacket">Softshell Jacket / Outerwear</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Required Machine File Formats</label>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.5rem' }}>
+                        {[{id: 'dst', label: '.DST'}, {id: 'pes', label: '.PES'}, {id: 'exp', label: '.EXP'}, {id: 'jef', label: '.JEF'}, {id: 'emb', label: '.EMB'}].map(fmt => (
+                          <div key={fmt.id} onClick={() => toggleFormat(fmt.id)} style={{ padding: '0.5rem', background: requestedFormats.includes(fmt.id) ? 'rgba(255, 122, 0, 0.2)' : '#0f172a', border: requestedFormats.includes(fmt.id) ? '1.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <input type="checkbox" checked={requestedFormats.includes(fmt.id)} onChange={() => {}} style={{ accentColor: 'var(--orange-500)' }} />
+                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffffff' }}>{fmt.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* 2. VECTOR ART & COLOR SEPARATION */}
+                {type === 'vector' && (
+                  <>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#cbd5e1', marginBottom: '0.65rem' }}>
+                        Select Pricing Package Tier *
+                      </label>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
+                        
+                        <div
+                          onClick={() => setSelectedPackageTier('basic')}
+                          style={{
+                            border: selectedPackageTier === 'basic' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
+                            background: selectedPackageTier === 'basic' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
+                            padding: '1rem 0.85rem',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase' }}>⚡ BASIC REDRAW</span>
+                            {selectedPackageTier === 'basic' && (
+                              <span style={{ fontSize: '0.63rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>Selected</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$15.00 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ artwork</span></div>
+                          <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>Clean text, simple logos, 1-3 colors</div>
+                        </div>
+
+                        <div
+                          onClick={() => setSelectedPackageTier('standard')}
+                          style={{
+                            border: selectedPackageTier === 'standard' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
+                            background: selectedPackageTier === 'standard' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
+                            padding: '1rem 0.85rem',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase' }}>⭐ COLOR SEPARATION</span>
+                            {selectedPackageTier === 'standard' && (
+                              <span style={{ fontSize: '0.63rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>Selected</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$25.00 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ artwork</span></div>
+                          <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>Multi-color screen print prep & vector tracing</div>
+                        </div>
+
+                        <div
+                          onClick={() => setSelectedPackageTier('premium')}
+                          style={{
+                            border: selectedPackageTier === 'premium' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
+                            background: selectedPackageTier === 'premium' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
+                            padding: '1rem 0.85rem',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#a855f7', textTransform: 'uppercase' }}>✨ COMPLEX ART</span>
+                            {selectedPackageTier === 'premium' && (
+                              <span style={{ fontSize: '0.63rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>Selected</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$40.00 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ artwork</span></div>
+                          <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>Mascots, gradients, detailed hand art</div>
+                        </div>
+
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Required Vector Formats</label>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.5rem' }}>
+                        {['.AI', '.EPS', '.SVG', '.PDF', '.CDR', '.PSD'].map(fmt => (
+                          <div key={fmt} onClick={() => toggleFormat(fmt.toLowerCase())} style={{ padding: '0.5rem', background: requestedFormats.includes(fmt.toLowerCase()) ? 'rgba(255, 122, 0, 0.2)' : '#0f172a', border: requestedFormats.includes(fmt.toLowerCase()) ? '1.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <input type="checkbox" checked={requestedFormats.includes(fmt.toLowerCase())} onChange={() => {}} style={{ accentColor: 'var(--orange-500)' }} />
+                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffffff' }}>{fmt}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* 3. PHYSICAL CUSTOM PATCHES */}
+                {type === 'patch' && (
+                  <>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#cbd5e1', marginBottom: '0.65rem' }}>
+                        Select Patch Material & Tier *
+                      </label>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
+                        
+                        <div
+                          onClick={() => setSelectedPackageTier('basic')}
+                          style={{
+                            border: selectedPackageTier === 'basic' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
+                            background: selectedPackageTier === 'basic' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
+                            padding: '1rem 0.85rem',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase' }}>🧵 EMBROIDERED</span>
+                            {selectedPackageTier === 'basic' && (
+                              <span style={{ fontSize: '0.63rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>Selected</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$1.50 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ patch</span></div>
+                          <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>Merrowed border, min 10 pcs</div>
+                        </div>
+
+                        <div
+                          onClick={() => setSelectedPackageTier('standard')}
+                          style={{
+                            border: selectedPackageTier === 'standard' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
+                            background: selectedPackageTier === 'standard' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
+                            padding: '1rem 0.85rem',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase' }}>🪵 LEATHER</span>
+                            {selectedPackageTier === 'standard' && (
+                              <span style={{ fontSize: '0.63rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>Selected</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$2.50 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ patch</span></div>
+                          <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>Genuine/Faux leather, min 10 pcs</div>
+                        </div>
+
+                        <div
+                          onClick={() => setSelectedPackageTier('premium')}
+                          style={{
+                            border: selectedPackageTier === 'premium' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
+                            background: selectedPackageTier === 'premium' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
+                            padding: '1rem 0.85rem',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#a855f7', textTransform: 'uppercase' }}>✨ 3D PVC RUBBER</span>
+                            {selectedPackageTier === 'premium' && (
+                              <span style={{ fontSize: '0.63rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>Selected</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$3.50 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ patch</span></div>
+                          <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>3D Rubber PVC, min 10 pcs</div>
+                        </div>
+
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Patch Style</label>
+                        <select value={patchStyle} onChange={(e) => setPatchStyle(e.target.value)} className="form-control" style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)' }}>
+                          <option value="Embroidered">Embroidered Patch (Merrowed Border)</option>
+                          <option value="Leather">Genuine / Faux Leather Patch</option>
+                          <option value="PVC">3D Soft Rubber PVC Patch</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Backing Option</label>
+                        <select value={patchBacking} onChange={(e) => setPatchBacking(e.target.value)} className="form-control" style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)' }}>
+                          <option value="Iron-On">Heat Seal / Iron-On</option>
+                          <option value="Velcro">Velcro Hook & Loop</option>
+                          <option value="Sew-On">Standard Sew-On</option>
+                          <option value="Adhesive">Peel & Stick Adhesive</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#cbd5e1', marginBottom: '0.4rem' }}>
+                        Select Patch Quantity (Preset Steps or Custom) *
+                      </label>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.75rem', alignItems: 'center', marginBottom: '0.65rem' }}>
+                        <select
+                          value={[100, 200, 300, 400, 500, 1000].includes(patchQuantity) ? patchQuantity : 'custom'}
+                          onChange={(e) => {
+                            if (e.target.value !== 'custom') {
+                              setPatchQuantity(parseInt(e.target.value, 10));
+                            }
+                          }}
+                          className="form-control"
+                          style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800 }}
+                        >
+                          <option value="100">100 Pcs (Standard Min Tier)</option>
+                          <option value="200">200 Pcs (Package Batch)</option>
+                          <option value="300">300 Pcs (Mid Tier)</option>
+                          <option value="400">400 Pcs (Bulk Tier)</option>
+                          <option value="500">500 Pcs (Volume Saver)</option>
+                          <option value="1000">1000 Pcs (Wholesale VIP)</option>
+                          <option value="custom">Custom Quantity...</option>
+                        </select>
+
+                        <input 
+                          type="number" 
+                          min="10" 
+                          step="5" 
+                          value={patchQuantity} 
+                          onChange={(e) => setPatchQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))} 
+                          className="form-control" 
+                          placeholder="Custom Pcs"
+                          style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800 }} 
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                        {[100, 200, 300, 400, 500, 1000].map(qty => (
+                          <button
+                            key={qty}
+                            type="button"
+                            onClick={() => setPatchQuantity(qty)}
+                            style={{
+                              padding: '0.3rem 0.65rem',
+                              borderRadius: '6px',
+                              border: patchQuantity === qty ? '1.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.15)',
+                              background: patchQuantity === qty ? 'var(--orange-500)' : 'rgba(255,255,255,0.05)',
+                              color: '#ffffff',
+                              fontWeight: 800,
+                              fontSize: '0.75rem',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            {qty} Pcs
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {pricingDetails.totalPlacementQuantity === 1 && type !== 'patch' && (
+                  <div 
+                    onClick={() => setIsRush(!isRush)}
                     style={{
-                      padding: '1rem 1.25rem',
-                      borderRadius: 'var(--radius-md)',
-                      border: `2px solid ${paymentOption === 'bolt' ? 'var(--orange-500)' : 'var(--border-color)'}`,
-                      background: paymentOption === 'bolt' ? '#fff7ed' : '#ffffff',
-                      color: paymentOption === 'bolt' ? 'var(--navy-950)' : 'var(--navy-900)',
-                      fontWeight: 700,
-                      textAlign: 'left',
-                      cursor: 'pointer',
+                      background: isRush ? 'linear-gradient(135deg, rgba(255, 122, 0, 0.25) 0%, rgba(255, 122, 0, 0.1) 100%)' : '#0f172a',
+                      border: isRush ? '2px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
+                      padding: '0.85rem 1rem',
+                      borderRadius: '10px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      boxShadow: paymentOption === 'bolt' ? '0 6px 20px rgba(249, 115, 22, 0.2)' : 'none'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{
-                        background: 'var(--orange-500)',
-                        color: '#ffffff',
-                        padding: '0.5rem',
-                        borderRadius: '6px',
-                        display: 'flex'
-                      }}>
-                        <Zap size={22} />
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-900)' }}>
-                          BoltPayouts Payment Gateway
-                        </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-                          https://www.boltpayouts.xyz/pay/boltpayouts (Cards, Apple Pay, Debit)
-                        </div>
-                      </div>
-                    </div>
-                    <span style={{ fontSize: '0.75rem', background: 'var(--orange-500)', color: '#ffffff', padding: '0.25rem 0.65rem', borderRadius: '4px', fontWeight: 800 }}>
-                      ⚡ Recommended
-                    </span>
-                  </button>
-
-                  {/* Option 2: Studio Wallet Credit */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentOption('wallet')}
-                    style={{
-                      padding: '1rem 1.25rem',
-                      borderRadius: 'var(--radius-md)',
-                      border: `2px solid ${paymentOption === 'wallet' ? 'var(--orange-500)' : 'var(--border-color)'}`,
-                      background: paymentOption === 'wallet' ? '#fff7ed' : '#ffffff',
-                      color: paymentOption === 'wallet' ? 'var(--orange-600)' : 'var(--navy-900)',
-                      fontWeight: 700,
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{
-                        background: 'var(--navy-900)',
-                        color: '#ffffff',
-                        padding: '0.5rem',
-                        borderRadius: '6px',
-                        display: 'flex'
-                      }}>
-                        <Wallet size={22} />
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-900)' }}>
-                          Pay with Studio Wallet Balance
-                        </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          Available Wallet Balance: <strong style={{ color: 'var(--green-600)' }}>${walletBalance.toFixed(2)}</strong>
-                        </div>
-                      </div>
-                    </div>
-                    {walletBalance >= parseFloat(calculatedTotal) ? (
-                      <span style={{ fontSize: '0.75rem', background: '#ecfdf5', color: 'var(--green-600)', padding: '0.25rem 0.65rem', borderRadius: '4px', fontWeight: 800 }}>
-                        Sufficient Funds
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: '0.75rem', background: '#fff1f2', color: '#e11d48', padding: '0.25rem 0.65rem', borderRadius: '4px', fontWeight: 800 }}>
-                        Deposit Required
-                      </span>
-                    )}
-                  </button>
-
-                  {/* Option 3: Credit Card */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentOption('card')}
-                    style={{
-                      padding: '0.85rem 1.25rem',
-                      borderRadius: 'var(--radius-md)',
-                      border: `2px solid ${paymentOption === 'card' ? 'var(--orange-500)' : 'var(--border-color)'}`,
-                      background: paymentOption === 'card' ? '#fff7ed' : '#ffffff',
-                      color: paymentOption === 'card' ? 'var(--orange-600)' : 'var(--navy-900)',
-                      fontWeight: 700,
-                      textAlign: 'left',
                       cursor: 'pointer'
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                      <CreditCard size={18} style={{ color: 'var(--orange-600)' }} />
-                      <span style={{ fontSize: '0.875rem' }}>Standard Credit Card Invoice</span>
+                      <Zap size={20} style={{ color: 'var(--orange-400)' }} />
+                      <div>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ffffff', display: 'block' }}>Super Rush (2-4 Hrs / Express) Turnaround</span>
+                        <span style={{ fontSize: '0.73rem', color: '#cbd5e1' }}>Need urgent delivery? Get your completed file in 2–4 hours (+$10.00)</span>
+                      </div>
                     </div>
+                    <input type="checkbox" checked={isRush} onChange={() => {}} style={{ width: '18px', height: '18px', accentColor: 'var(--orange-500)', cursor: 'pointer' }} />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Sticky Live Order Summary Panel */}
+            <div style={{ position: 'sticky', top: '10px' }}>
+              <div style={{ padding: '1.5rem', background: '#1e293b', border: '2px solid var(--orange-500)', borderRadius: '16px', boxShadow: '0 12px 32px rgba(255, 122, 0, 0.18)' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#ffffff', marginBottom: '1.15rem', borderBottom: '1px solid rgba(255,255,255,0.12)', paddingBottom: '0.75rem' }}>
+                  Order Summary
+                </h3>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
+                    <span>Selected Service:</span>
+                    <strong style={{ color: 'var(--orange-400)' }}>{pricingDetails.serviceTitle}</strong>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
+                    <span>Selected Tier:</span>
+                    <strong style={{ color: '#ffffff', textTransform: 'capitalize' }}>
+                      {pricingDetails.currentTier} (${(pricingDetails.rateEach || pricingDetails.baseTierRate || 10).toFixed(2)})
+                    </strong>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
+                    <span>Total Quantity:</span>
+                    <span style={{ color: '#ffffff', fontWeight: 700 }}>
+                      {pricingDetails.totalPlacementQuantity} Pcs
+                    </span>
+                  </div>
+
+                  <div style={{ background: '#0f172a', padding: '0.75rem 0.85rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      📍 ITEMS BREAKDOWN ({pricingDetails.placementBreakdown.length}):
+                    </div>
+                    {pricingDetails.placementBreakdown.map((item, idx) => (
+                      <div key={item.id || idx} style={{ display: 'flex', flexDirection: 'column', borderBottom: idx < pricingDetails.placementBreakdown.length - 1 ? '1px dashed rgba(255,255,255,0.08)' : 'none', paddingBottom: '0.35rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#e2e8f0' }}>
+                          <span>#{item.index} {item.label} (x{item.quantity}):</span>
+                          <strong style={{ color: '#ffffff' }}>${item.subtotal.toFixed(2)}</strong>
+                        </div>
+                      </div>
+                    ))}
+                    <div style={{ borderTop: '1px dashed rgba(255,255,255,0.15)', paddingTop: '0.35rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', fontWeight: 800, color: '#ffffff' }}>
+                      <span>Subtotal:</span>
+                      <span style={{ color: 'var(--orange-400)' }}>${pricingDetails.baseSubtotal.toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
+                    <span>Turnaround Guarantee:</span>
+                    <span style={{ color: '#ffffff', fontWeight: 700 }}>
+                      {type === 'patch' ? '📦 3-5 Days Shipping' : isRush ? '⚡ 2-4 Hours Super Rush' : '8-12 Hours Standard'}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.15)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
+                    <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff' }}>Total Price:</span>
+                    <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--orange-400)' }}>
+                      ${pricingDetails.finalPrice.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-primary-orange"
+                    style={{
+                      width: '100%',
+                      padding: '0.9rem',
+                      fontSize: '1.05rem',
+                      fontWeight: 800,
+                      borderRadius: '10px',
+                      boxShadow: '0 8px 24px rgba(255, 122, 0, 0.35)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Complete Order (${pricingDetails.finalPrice.toFixed(2)}) <ArrowRight size={18} />
                   </button>
 
+                  <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.85rem' }}>
+                    ✓ 100% Quality Guaranteed • Free Unlimited Revisions
+                  </div>
                 </div>
               </div>
-
-              {/* Encryption Security Note */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--green-600)', fontSize: '0.8rem', fontWeight: 600, marginTop: '1rem' }}>
-                <ShieldCheck size={18} /> Encrypted 256-Bit SSL Payment Guarantee
-              </div>
-
             </div>
-          )}
-
-          {/* Modal Footer */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: '2rem',
-            paddingTop: '1rem',
-            borderTop: '1px solid var(--border-color)'
-          }}>
-            {step > 1 ? (
-              <button 
-                type="button" 
-                className="btn btn-outline"
-                onClick={() => setStep(s => s - 1)}
-              >
-                <ArrowLeft size={16} /> Back
-              </button>
-            ) : <div />}
-
-            {step < 4 ? (
-              <button 
-                type="button" 
-                className="btn btn-primary-orange"
-                onClick={() => {
-                  if (step === 1 && !title.trim()) {
-                    alert('Please enter a design brief title.');
-                    return;
-                  }
-                  setStep(s => s + 1);
-                }}
-              >
-                {step === 3 ? 'Proceed to Payment Gateway' : 'Continue'} <ArrowRight size={16} />
-              </button>
-            ) : (
-              <button 
-                type="submit" 
-                className="btn btn-primary-orange btn-lg"
-                style={{ boxShadow: '0 6px 22px rgba(249, 115, 22, 0.45)' }}
-              >
-                <FileCheck size={18} /> {paymentOption === 'bolt' ? `Pay $${calculatedTotal} via BoltPayouts` : `Pay $${calculatedTotal} & Finalize Order`}
-              </button>
-            )}
           </div>
-
         </form>
-
       </div>
     </div>
   );

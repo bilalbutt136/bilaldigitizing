@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { 
@@ -38,7 +40,7 @@ export const DepositModal = () => {
     setIsProcessing(true);
 
     const redirectUrl = `${window.location.origin}/client-portal?bolt_status=success&amount=${amount}`;
-    const boltGatewayUrl = `https://www.boltpayouts.xyz/pay/boltpayouts?amount=${amount}&currency=USD&email=${encodeURIComponent(authUser?.email || 'client@bdigitizing.pro')}&return_url=${encodeURIComponent(redirectUrl)}`;
+    const boltGatewayUrl = `https://www.boltpayouts.xyz/pay/boltpayouts?amount=${amount}&currency=USD&email=${encodeURIComponent(authUser?.email || 'client@bilaldigitizing.pro')}&return_url=${encodeURIComponent(redirectUrl)}`;
 
     // Launch BoltPayouts secure checkout interface immediately
     try {

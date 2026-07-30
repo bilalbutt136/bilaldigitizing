@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import {
   CheckCircle,
@@ -20,7 +22,7 @@ import {
 
 export const CustomPatchesSection = () => {
   const navigate = useNavigate();
-  const { patchCards = [], protectedNavigate, createOrder, showToast } = useAppState();
+  const { patchCards = [], protectedNavigate, createOrder, showToast, openOrderWizard } = useAppState();
 
   const [selectedTierId, setSelectedTierId] = useState('patch-embroidered');
   const [quantity, setQuantity] = useState(100);
@@ -135,11 +137,22 @@ export const CustomPatchesSection = () => {
   const unitRate = getUnitPriceForTier(currentSelectedCard, selectedTierId);
   const totalCost = Number(quantity || 50) * unitRate;
 
-  const handleSelectTier = (tierId) => {
+  const handleSelectTier = (tierId, cardObj = null) => {
     setSelectedTierId(tierId);
-    const builderElem = document.getElementById('patch-order-builder');
-    if (builderElem) {
-      builderElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const targetCard = cardObj || cardsToRender.find(c => c.id === tierId) || currentSelectedCard;
+    let tierKey = 'standard';
+    if (tierId.includes('woven') || tierId.includes('basic')) tierKey = 'basic';
+    else if (tierId.includes('pvc') || tierId.includes('premium')) tierKey = 'premium';
+
+    if (openOrderWizard) {
+      openOrderWizard({
+        tierKey,
+        type: 'patch',
+        category: 'Custom Patches',
+        title: targetCard?.title || 'Custom Patch Order',
+        rate: targetCard?.rate || '$2.50',
+        quantity: 100
+      });
     }
   };
 
@@ -279,6 +292,7 @@ export const CustomPatchesSection = () => {
             return (
               <div
                 key={cat.id}
+                onClick={() => handleSelectTier(cat.id, cat)}
                 style={{
                   background: isSelected ? 'rgba(255, 122, 0, 0.12)' : 'rgba(255, 255, 255, 0.03)',
                   border: isSelected ? '2px solid #ff7a00' : '1.5px solid rgba(255, 255, 255, 0.1)',
@@ -289,7 +303,8 @@ export const CustomPatchesSection = () => {
                   flexDirection: 'column',
                   justifyContent: 'space-between',
                   boxShadow: isSelected ? '0 14px 35px rgba(255, 122, 0, 0.35)' : 'none',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer'
                 }}
               >
                 {/* Top Badge Pill */}
@@ -355,16 +370,19 @@ export const CustomPatchesSection = () => {
                         width: '100%',
                         justifyContent: 'center',
                         fontWeight: 800,
-                        background: isSelected ? '#ffffff' : 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)',
-                        color: isSelected ? 'var(--navy-950)' : '#ffffff',
+                        background: 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)',
+                        color: '#ffffff',
                         borderRadius: '9999px',
                         padding: '0.85rem 1.5rem',
                         boxShadow: '0 4px 14px rgba(255, 122, 0, 0.4)',
                         cursor: 'pointer'
                       }}
-                      onClick={() => handleSelectTier(cat.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectTier(cat.id, cat);
+                      }}
                     >
-                      {isSelected ? '✓ Tier Selected - Configure Below' : (cat.btnText || 'Order Patches')}
+                      {cat.btnText || 'Order Patches'}
                     </button>
                   </div>
 
@@ -385,255 +403,6 @@ export const CustomPatchesSection = () => {
               </div>
             );
           })}
-        </div>
-
-        {/* 3. Interactive Custom Patch Order Builder Section */}
-        <div id="patch-order-builder" style={{ scrollMarginTop: '100px', maxWidth: '1050px', margin: '0 auto 4rem' }}>
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.04)',
-            border: '2px solid var(--orange-500)',
-            borderRadius: '20px',
-            padding: '2.5rem',
-            boxShadow: '0 20px 45px rgba(0,0,0,0.4)'
-          }}>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1.25rem' }}>
-              <div>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  STEP 2 OF 2 • ORDER CONFIGURATOR
-                </span>
-                <h2 style={{ fontSize: '1.75rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0 0' }}>
-                  Configure Your {currentSelectedCard.title} Order
-                </h2>
-              </div>
-
-              <div style={{ background: 'rgba(249, 115, 22, 0.2)', border: '1px solid var(--orange-500)', padding: '0.6rem 1.25rem', borderRadius: '12px', textAlign: 'right' }}>
-                <div style={{ fontSize: '0.75rem', color: '#cbd5e1' }}>ESTIMATED TOTAL COST</div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--orange-400)', lineHeight: 1.1 }}>
-                  ${totalCost.toFixed(2)}
-                </div>
-              </div>
-            </div>
-
-            <form onSubmit={handlePatchSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-
-              {/* Tier Pills Selector */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 800, color: '#e2e8f0', marginBottom: '0.65rem' }}>
-                  1. Selected Patch Style & Tier
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
-                  {cardsToRender.map((c) => {
-                    const cPrice = getUnitPriceForTier(c, c.id);
-                    const isThisSelected = currentSelectedCard.id === c.id;
-                    return (
-                      <button
-                        type="button"
-                        key={c.id}
-                        onClick={() => setSelectedTierId(c.id)}
-                        style={{
-                          padding: '0.85rem 1rem',
-                          borderRadius: '12px',
-                          border: isThisSelected ? '2px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.15)',
-                          background: isThisSelected ? 'linear-gradient(135deg, rgba(255,122,0,0.25) 0%, rgba(255,122,0,0.1) 100%)' : 'rgba(255,255,255,0.03)',
-                          color: '#ffffff',
-                          fontWeight: isThisSelected ? 800 : 600,
-                          fontSize: '0.875rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between'
-                        }}
-                      >
-                        <span>{c.title}</span>
-                        <span style={{ color: 'var(--orange-400)', fontWeight: 800 }}>
-                          Starting from ${cPrice.toFixed(2)} / patch
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Quantity Options */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
-                  <label style={{ fontSize: '0.875rem', fontWeight: 800, color: '#e2e8f0', margin: 0 }}>
-                    2. Patch Quantity (Min. 50 Pcs)
-                  </label>
-                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Unit Rate: <strong>${unitRate.toFixed(2)}/pc</strong></span>
-                </div>
-                <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-                  {[50, 100, 200, 500, 1000].map(qty => (
-                    <button
-                      type="button"
-                      key={qty}
-                      onClick={() => setQuantity(qty)}
-                      style={{
-                        padding: '0.5rem 1.1rem',
-                        borderRadius: '8px',
-                        border: quantity === qty ? '2px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.15)',
-                        background: quantity === qty ? 'var(--orange-500)' : 'rgba(255,255,255,0.05)',
-                        color: '#ffffff',
-                        fontWeight: 800,
-                        fontSize: '0.85rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {qty} Pcs
-                    </button>
-                  ))}
-                </div>
-                <input
-                  type="number"
-                  min="50"
-                  step="10"
-                  className="form-control"
-                  placeholder="Or enter custom quantity..."
-                  value={quantity}
-                  onChange={(e) => setQuantity(Math.max(50, parseInt(e.target.value) || 50))}
-                  style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)', color: '#ffffff', maxWidth: '250px' }}
-                />
-              </div>
-
-              {/* Backing & Border Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
-                {/* Backing */}
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 800, color: '#e2e8f0', marginBottom: '0.5rem' }}>
-                    3. Backing Attachment
-                  </label>
-                  <select
-                    className="form-select"
-                    value={backing}
-                    onChange={(e) => setBacking(e.target.value)}
-                    style={{ background: 'var(--navy-900)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff' }}
-                  >
-                    <option value="Velcro Hook & Loop">Velcro Hook & Loop (Tactical)</option>
-                    <option value="Iron-On Heat Seal">Iron-On Heat Press Seal</option>
-                    <option value="Sew-On / Plain Back">Sew-On / Plain Cloth Backing</option>
-                    <option value="Peel & Stick Adhesive">Peel & Stick Self Adhesive</option>
-                  </select>
-                </div>
-
-                {/* Border */}
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 800, color: '#e2e8f0', marginBottom: '0.5rem' }}>
-                    4. Border Edge Finish
-                  </label>
-                  <select
-                    className="form-select"
-                    value={borderType}
-                    onChange={(e) => setBorderType(e.target.value)}
-                    style={{ background: 'var(--navy-900)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff' }}
-                  >
-                    <option value="Merrowed Die-Cut Border">Merrowed Overlock Border</option>
-                    <option value="Hot Cut Border">Hot Cut Clean Edge Border</option>
-                    <option value="Laser Cut Clean Edge">Laser Cut Contour Border</option>
-                  </select>
-                </div>
-
-                {/* Size */}
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 800, color: '#e2e8f0', marginBottom: '0.5rem' }}>
-                    5. Patch Size Dimension
-                  </label>
-                  <select
-                    className="form-select"
-                    value={patchSize}
-                    onChange={(e) => setPatchSize(e.target.value)}
-                    style={{ background: 'var(--navy-900)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff' }}
-                  >
-                    <option value='2.5" x 2.5" Small'>2.5" x 2.5" Small Badge</option>
-                    <option value='3.0" x 3.0" Medium'>3.0" x 3.0" Medium Emblem</option>
-                    <option value='3.5" x 3.5" (Standard)'>3.5" x 3.5" Standard Size</option>
-                    <option value='4.0" x 4.0" Large'>4.0" x 4.0" Large Jacket Patch</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Upload Artwork Box */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 800, color: '#e2e8f0', marginBottom: '0.5rem' }}>
-                  6. Upload Patch Logo / Design Artwork
-                </label>
-                <div style={{
-                  border: '2px dashed rgba(255,122,0,0.5)',
-                  borderRadius: '12px',
-                  padding: '1.5rem',
-                  textAlign: 'center',
-                  background: 'rgba(255,122,0,0.05)',
-                  cursor: 'pointer',
-                  position: 'relative'
-                }}>
-                  <input
-                    type="file"
-                    accept="image/*,.ai,.pdf,.psd,.eps,.svg"
-                    onChange={handleFileChange}
-                    style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
-                  />
-                  {artworkPreviewUrl ? (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
-                      <img src={artworkPreviewUrl} alt="Patch Artwork" style={{ maxHeight: '80px', borderRadius: '8px', border: '1px solid var(--orange-500)' }} />
-                      <div style={{ textAlign: 'left' }}>
-                        <div style={{ fontWeight: 800, color: '#ffffff' }}>{artworkFile?.name || 'Uploaded Artwork'}</div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--orange-400)' }}>Click to replace file</div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <UploadCloud size={32} style={{ color: 'var(--orange-400)', marginBottom: '0.5rem' }} />
-                      <div style={{ fontWeight: 700, color: '#ffffff', fontSize: '0.9rem' }}>
-                        Click or Drop Logo File Here (PNG, JPG, AI, SVG, PDF)
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.2rem' }}>
-                        High resolution files ensure exact thread matching
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Special Instructions Notes */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 800, color: '#e2e8f0', marginBottom: '0.5rem' }}>
-                  7. Design & Color Notes (Optional)
-                </label>
-                <textarea
-                  className="form-control"
-                  rows="2"
-                  placeholder="Specify Pantone thread colors, metallic threads, or layout details..."
-                  value={patchNotes}
-                  onChange={(e) => setPatchNotes(e.target.value)}
-                  style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)', color: '#ffffff' }}
-                />
-              </div>
-
-              {/* Order Submission Button */}
-              <div style={{ marginTop: '1rem' }}>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="btn btn-block"
-                  style={{
-                    width: '100%',
-                    justifyContent: 'center',
-                    fontWeight: 900,
-                    fontSize: '1.1rem',
-                    background: 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)',
-                    color: '#ffffff',
-                    borderRadius: '12px',
-                    padding: '1.1rem 2rem',
-                    boxShadow: '0 6px 20px rgba(255, 122, 0, 0.45)',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {isSubmitting ? 'Processing Custom Order...' : `Confirm & Place Order ($${totalCost.toFixed(2)})`}
-                </button>
-              </div>
-
-            </form>
-          </div>
         </div>
 
         {/* 4. Process Steps & Timeline Specs Grid */}

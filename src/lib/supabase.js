@@ -1,20 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const getEnvVar = (name, fallbackName) => {
+  if (typeof process !== 'undefined' && process.env) {
+    if (process.env[name]) return process.env[name];
+    if (fallbackName && process.env[fallbackName]) return process.env[fallbackName];
+  }
+  return '';
+};
 
-// Toggle switch for development mode vs active Supabase production backend
-// Set ENABLE_SUPABASE_DATABASE = true to re-enable live Supabase DB & Storage when deploying
+const supabaseUrl = getEnvVar('NEXT_PUBLIC_SUPABASE_URL', 'VITE_SUPABASE_URL');
+const supabaseAnonKey = getEnvVar('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY');
+
 export const ENABLE_SUPABASE_DATABASE = false; 
 
 export const isSupabaseConfigured = 
   ENABLE_SUPABASE_DATABASE &&
   Boolean(supabaseUrl) && 
   Boolean(supabaseAnonKey) && 
-  !supabaseUrl.includes('your-project-id') && 
-  !supabaseAnonKey.includes('your-anon-key');
+  !supabaseUrl.includes('placeholder') && 
+  !supabaseAnonKey.includes('placeholder');
 
-// Fallback dummy client or active Supabase client
 export const supabase = isSupabaseConfigured 
   ? createClient(supabaseUrl, supabaseAnonKey, {
       auth: {

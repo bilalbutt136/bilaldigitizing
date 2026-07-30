@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { CheckCircle2, ArrowRight, ShieldCheck, Sparkles, Layers, Eye } from 'lucide-react';
@@ -168,24 +170,6 @@ export const CustomerSewOutsSection = () => {
             </div>
           ))}
         </div>
-
-        {/* Bottom Call To Action */}
-        <div style={{ textAlign: 'center' }}>
-          <button 
-            type="button"
-            className="btn btn-primary-orange btn-lg"
-            style={{ 
-              fontWeight: 800, 
-              padding: '1rem 2.25rem', 
-              fontSize: '1.1rem',
-              boxShadow: '0 8px 25px rgba(249, 115, 22, 0.4)'
-            }}
-            onClick={() => protectedNavigate('customer', true)}
-          >
-            Get My Design Digitized Now <ArrowRight size={18} />
-          </button>
-        </div>
-
       </div>
     </section>
   );

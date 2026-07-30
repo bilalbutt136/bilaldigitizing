@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { FAQS } from '../../data/mockData';
 import { Star, ChevronDown, ChevronUp, MessageSquare, Quote } from 'lucide-react';
@@ -10,7 +12,7 @@ export const TestimonialsFAQ = () => {
       name: 'Dave Miller',
       role: 'Owner, Custom Cap Crafters',
       rating: 5,
-      comment: 'BDIGITIZING is our go-to partner for 3D puff cap digitizing. The foam compensation and center-out pathing are flawless. Zero thread breaks on our Tajima 6-head machine!',
+      comment: 'Bilal Digitizing is our go-to partner for 3D puff cap digitizing. The foam compensation and center-out pathing are flawless. Zero thread breaks on our Tajima 6-head machine!',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80'
     },
     {

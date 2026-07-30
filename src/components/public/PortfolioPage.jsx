@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { 
   Sparkles, 
@@ -15,7 +17,8 @@ import {
   X, 
   Filter,
   CheckCircle2,
-  FileCode
+  FileCode,
+  UploadCloud
 } from 'lucide-react';
 
 const PORTFOLIO_ITEMS = [
@@ -34,8 +37,8 @@ const PORTFOLIO_ITEMS = [
   },
   {
     id: 'port-2',
-    category: 'puff',
-    categoryLabel: '3D Puff & Cap',
+    category: 'embroidery',
+    categoryLabel: 'Embroidery Digitizing',
     title: 'Cybernetics 3D Raised Cap Logo',
     description: '3mm EVA foam pathing with sharp corner perforations. Center-out sequencing engineered specifically for structured cap frames.',
     beforeImg: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80',
@@ -140,7 +143,7 @@ export const PortfolioPage = () => {
   const combinedItems = portfolioSamples && portfolioSamples.length > 0
     ? portfolioSamples.map((s, idx) => ({
         id: s.id || `sample-${idx}`,
-        category: (s.category || '').toLowerCase().includes('vector') ? 'vector' : (s.category || '').toLowerCase().includes('puff') || (s.category || '').toLowerCase().includes('cap') ? 'puff' : (s.category || '').toLowerCase().includes('patch') ? 'patches' : 'embroidery',
+        category: (s.category || '').toLowerCase().includes('vector') ? 'vector' : (s.category || '').toLowerCase().includes('patch') ? 'patches' : 'embroidery',
         categoryLabel: s.category || 'Embroidery Digitizing',
         title: s.title || 'Custom Digitized Design',
         description: s.description || 'Commercial machine file pathing with smooth underlay foundation.',
@@ -160,7 +163,6 @@ export const PortfolioPage = () => {
   const filterTabs = [
     { key: 'all', label: 'All Works' },
     { key: 'embroidery', label: 'Embroidery Digitizing' },
-    { key: 'puff', label: '3D Puff & Cap' },
     { key: 'vector', label: 'Vector Art Conversion' },
     { key: 'patches', label: 'Custom Patches' }
   ];
@@ -489,24 +491,6 @@ export const PortfolioPage = () => {
                       </div>
                     </div>
                   </div>
-
-                  {/* Card Action Footer */}
-                  <div style={{ padding: '0 1.5rem 1.5rem' }}>
-                    <button
-                      type="button"
-                      className="btn btn-primary-orange"
-                      style={{
-                        width: '100%',
-                        fontWeight: 800,
-                        padding: '0.75rem',
-                        fontSize: '0.9rem',
-                        justifyContent: 'center'
-                      }}
-                      onClick={() => protectedNavigate('customer', true)}
-                    >
-                      Order Similar Design <ArrowRight size={16} />
-                    </button>
-                  </div>
                 </div>
               );
             })}
@@ -552,18 +536,30 @@ export const PortfolioPage = () => {
 
               <button
                 type="button"
-                className="btn btn-primary-orange btn-lg"
+                className="btn btn-navy btn-lg"
                 style={{
                   fontWeight: 800,
-                  fontSize: '1.1rem',
-                  padding: '1rem 2.5rem',
-                  background: '#ffffff',
-                  color: 'var(--navy-950)',
-                  boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3)'
+                  fontSize: '1.05rem',
+                  padding: '0.95rem 2.25rem',
+                  background: '#0f172a',
+                  backgroundColor: '#0f172a',
+                  color: '#ffffff',
+                  border: '2px solid rgba(255, 255, 255, 0.25)',
+                  borderRadius: '10px',
+                  boxShadow: '0 8px 25px rgba(15, 23, 42, 0.4)',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.6rem',
+                  transition: 'all 0.2s ease'
                 }}
-                onClick={() => protectedNavigate('customer', true)}
+                onClick={() => {
+                  navigate('/embroidery-digitizing');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
               >
-                Start My Order Now <ArrowRight size={18} />
+                <UploadCloud size={20} style={{ color: 'var(--orange-400)' }} /> Upload Your Artwork Now <ArrowRight size={18} />
               </button>
             </div>
           </div>
@@ -660,7 +656,8 @@ export const PortfolioPage = () => {
                 className="btn btn-primary-orange"
                 onClick={() => {
                   setActiveItemModal(null);
-                  protectedNavigate('customer', true);
+                  navigate('/embroidery-digitizing');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 style={{ fontWeight: 800, padding: '0.65rem 1.35rem' }}
               >

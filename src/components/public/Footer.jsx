@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { Scissors, ShieldCheck, Mail, Phone, MapPin, Heart } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
@@ -31,7 +33,7 @@ export const Footer = () => {
                 <Scissors size={20} />
               </div>
               <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.25rem' }}>
-                BDIGITIZING<span style={{ color: 'var(--orange-500)' }}>.PRO</span>
+                BILAL DIGITIZING<span style={{ color: 'var(--orange-500)' }}>.PRO</span>
               </span>
             </div>
             <p style={{ fontSize: '0.875rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
@@ -103,7 +105,7 @@ export const Footer = () => {
           gap: '1rem'
         }}>
           <div>
-            © {new Date().getFullYear()} BDIGITIZING.PRO — Custom Embroidery Digitizing & Vector Services. All rights reserved.
+            © {new Date().getFullYear()} BILAL DIGITIZING.PRO — Custom Embroidery Digitizing & Vector Services. All rights reserved.
           </div>
 
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>

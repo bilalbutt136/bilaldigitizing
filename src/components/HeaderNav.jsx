@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from '../utils/navigation';
 import { useAppState } from '../context/StateContext';
 import { 
   Phone, 
@@ -37,7 +39,8 @@ export const HeaderNav = () => {
     logout,
     protectedNavigate,
     setIsAuthModalOpen,
-    setAuthModalMode
+    setAuthModalMode,
+    openOrderWizard
   } = useAppState();
 
   const [isServicesOpen, setIsServicesOpen] = useState(false);
@@ -130,7 +133,7 @@ export const HeaderNav = () => {
           </div>
           <div>
             <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.35rem', color: 'var(--navy-900)', letterSpacing: '-0.02em', leading: 1 }}>
-              BDIGITIZING<span style={{ color: 'var(--orange-500)' }}>.PRO</span>
+              BILAL DIGITIZING<span style={{ color: 'var(--orange-500)' }}>.PRO</span>
             </div>
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Embroidery & Vector Studio
@@ -281,190 +284,24 @@ export const HeaderNav = () => {
               )}
             </div>
 
-            {/* Store Dropdown Item (Positioned right next to Services) */}
-            <div 
-              ref={storeDropdownRef}
-              style={{ position: 'relative', display: 'inline-block' }}
-              onMouseEnter={() => setIsStoreOpen(true)}
-              onMouseLeave={() => setIsStoreOpen(false)}
+            {/* Custom Patches & Emblems Nav Button */}
+            <button 
+              onClick={() => {
+                setCurrentView('public');
+                navigate('/custom-patches');
+              }}
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                color: location.pathname === '/custom-patches' ? 'var(--orange-600)' : 'var(--navy-800)', 
+                fontWeight: location.pathname === '/custom-patches' ? 800 : 600, 
+                fontSize: '0.925rem', 
+                cursor: 'pointer', 
+                padding: 0 
+              }}
             >
-              <button 
-                onClick={() => {
-                  handleGoStore();
-                  setIsStoreOpen(!isStoreOpen);
-                }}
-                style={{ 
-                  background: 'none', 
-                  border: 'none', 
-                  color: isStoreOpen || isStoreActive ? 'var(--orange-600)' : 'var(--navy-800)', 
-                  fontWeight: isStoreActive ? 800 : 600, 
-                  fontSize: '0.925rem', 
-                  cursor: 'pointer', 
-                  padding: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                  transition: 'color 0.15s ease'
-                }}
-              >
-                Store <ChevronDown size={13} style={{ transition: 'transform 0.2s', transform: isStoreOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
-              </button>
-
-              {/* Store Dropdown Popup Card Menu */}
-              {isStoreOpen && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: '-10px',
-                  paddingTop: '8px',
-                  zIndex: 2000
-                }}>
-                  <div style={{
-                    width: '235px',
-                    background: '#ffffff',
-                    border: '1.5px solid var(--border-color)',
-                    borderRadius: '12px',
-                    boxShadow: '0 12px 32px rgba(15, 23, 42, 0.15)',
-                    padding: '0.4rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.15rem',
-                    animation: 'fadeIn 0.15s ease-out'
-                  }}>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0.4rem 0.85rem 0.2rem' }}>
-                      Physical Products & Apparel
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCurrentView('public');
-                        navigate('/custom-patches');
-                        setIsStoreOpen(false);
-                      }}
-                      style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '0.55rem 0.85rem',
-                        background: 'transparent',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        color: 'var(--navy-900)',
-                        fontSize: '0.875rem',
-                        fontWeight: 700,
-                        transition: 'all 0.18s ease'
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = '#fff7ed';
-                        e.currentTarget.style.color = 'var(--orange-600)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--navy-900)';
-                      }}
-                    >
-                      Custom Patches & Emblems
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCurrentView('public');
-                        navigate('/custom-tshirts');
-                        setIsStoreOpen(false);
-                      }}
-                      style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '0.55rem 0.85rem',
-                        background: 'transparent',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        color: 'var(--navy-900)',
-                        fontSize: '0.875rem',
-                        fontWeight: 700,
-                        transition: 'all 0.18s ease'
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = '#fff7ed';
-                        e.currentTarget.style.color = 'var(--orange-600)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--navy-900)';
-                      }}
-                    >
-                      Custom T-Shirts & Apparel
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCurrentView('public');
-                        navigate('/custom-caps');
-                        setIsStoreOpen(false);
-                      }}
-                      style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '0.55rem 0.85rem',
-                        background: 'transparent',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        color: 'var(--navy-900)',
-                        fontSize: '0.875rem',
-                        fontWeight: 700,
-                        transition: 'all 0.18s ease'
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = '#fff7ed';
-                        e.currentTarget.style.color = 'var(--orange-600)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--navy-900)';
-                      }}
-                    >
-                      Headwear & 3D Puff Caps
-                    </button>
-
-                    <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '0.2rem 0' }} />
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleGoStore();
-                        setIsStoreOpen(false);
-                      }}
-                      style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '0.55rem 0.85rem',
-                        background: 'transparent',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        color: 'var(--orange-600)',
-                        fontSize: '0.85rem',
-                        fontWeight: 800,
-                        transition: 'all 0.18s ease'
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = '#fff7ed';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'transparent';
-                      }}
-                    >
-                      All Store Merchandise →
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+              Custom Patches
+            </button>
 
             {/* Pricing Dropdown Item */}
             <div 
@@ -479,7 +316,7 @@ export const HeaderNav = () => {
                   if (location.pathname !== '/') {
                     navigate('/pricing');
                   } else {
-                    const el = document.getElementById('order-builder');
+                    const el = document.getElementById('pricing');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }
                   setIsPricingOpen(!isPricingOpen);
@@ -600,31 +437,6 @@ export const HeaderNav = () => {
                     >
                       Custom Patches Tiers
                     </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCurrentView('public');
-                        navigate('/pricing?cat=store');
-                        setIsPricingOpen(false);
-                      }}
-                      style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '0.55rem 0.85rem',
-                        background: 'transparent',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        color: 'var(--navy-900)',
-                        fontSize: '0.875rem',
-                        fontWeight: 700
-                      }}
-                      onMouseOver={(e) => { e.currentTarget.style.background = '#fff7ed'; e.currentTarget.style.color = 'var(--orange-600)'; }}
-                      onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--navy-900)'; }}
-                    >
-                      Apparel & Cap Rates
-                    </button>
                   </div>
                 </div>
               )}
@@ -686,16 +498,10 @@ export const HeaderNav = () => {
             <button 
               className="btn btn-primary-orange btn-sm"
               onClick={() => {
-                setCurrentView('public');
-                const el = document.getElementById('order-builder') || document.getElementById('pricing');
-                if (el) {
-                  el.scrollIntoView({ behavior: 'smooth' });
+                if (openOrderWizard) {
+                  openOrderWizard();
                 } else {
-                  navigate('/');
-                  setTimeout(() => {
-                    const targetEl = document.getElementById('order-builder') || document.getElementById('pricing');
-                    if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth' });
-                  }, 150);
+                  protectedNavigate('customer', true);
                 }
               }}
               style={{
@@ -858,7 +664,7 @@ export const HeaderNav = () => {
           </button>
 
           <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.6rem', marginBottom: '0.2rem' }}>
-            Custom Physical Storefront
+            Physical Custom Goods
           </div>
 
           <button
@@ -870,39 +676,6 @@ export const HeaderNav = () => {
             style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
           >
             Custom Patches & Emblems
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              navigate('/custom-tshirts');
-              setIsMobileMenuOpen(false);
-            }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
-          >
-            Custom T-Shirts & Apparel
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              navigate('/custom-caps');
-              setIsMobileMenuOpen(false);
-            }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
-          >
-            Headwear & 3D Puff Caps
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              handleGoStore();
-              setIsMobileMenuOpen(false);
-            }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '0.95rem', color: 'var(--orange-600)', padding: '0.4rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-          >
-            <ShoppingBag size={16} /> All Store Merchandise
           </button>
 
           <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '0.85rem', marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>

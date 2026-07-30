@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { Building2, Mail, Award, DollarSign, FileText } from 'lucide-react';
 

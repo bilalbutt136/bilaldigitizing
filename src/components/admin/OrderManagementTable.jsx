@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { useAppState, formatOrderId } from '../../context/StateContext';
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';

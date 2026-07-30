@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { 

@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { RefreshCw, Home, ShieldAlert } from 'lucide-react';
 

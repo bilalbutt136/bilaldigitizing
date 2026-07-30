@@ -1,43 +1,31 @@
+'use client';
+
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { OrderManagementTable } from './OrderManagementTable';
 import { ClientDirectory } from './ClientDirectory';
 import { PricingSettingsModal } from './PricingSettingsModal';
 import { SiteCmsEditor } from './SiteCmsEditor';
-import { StoreManagementEditor } from './StoreManagementEditor';
 import { AdminChatInbox } from './AdminChatInbox';
 import { 
   LayoutDashboard, 
   ClipboardList, 
-  ShoppingBag, 
   Sliders, 
   Users, 
-  UserCheck, 
   MessageSquare, 
   Image, 
-  Sparkles, 
-  Tag, 
-  Mail, 
-  Target, 
-  CreditCard, 
   Settings, 
   LogOut, 
   TrendingUp, 
   Layers, 
   AlertCircle, 
-  RefreshCw, 
-  DollarSign, 
-  Save, 
-  CheckCircle2,
-  Lock,
-  Globe
+  RefreshCw
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
   const { 
     orders = [], 
     clients = [], 
-    digitizers = [],
     setIsPricingSettingsOpen,
     resetAllData,
     authUser,
@@ -49,13 +37,10 @@ export const AdminDashboard = () => {
     showToast
   } = useAppState();
 
-  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard | orders | store | services | clients | digitizers | wallets | chat | portfolio | hero | marketing | email | pixel | payments | settings
+  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard | orders | services | clients | digitizers | wallets | chat | portfolio | hero | marketing | email | pixel | payments | settings
 
   // Settings State Form
   const [metaPixelId, setMetaPixelId] = useState(siteSettings.metaPixelId || '123456789098765');
-  const [boltUrl, setBoltUrl] = useState('https://www.boltpayouts.xyz/pay/boltpayouts');
-  const [discountCode, setDiscountCode] = useState('EMB2026');
-  const [discountPercent, setDiscountPercent] = useState('15% OFF');
   const [adminEmail, setAdminEmail] = useState(siteSettings.adminEmail || 'shahidbutt59191@gmail.com');
 
   React.useEffect(() => {
@@ -63,43 +48,6 @@ export const AdminDashboard = () => {
       setAdminEmail(siteSettings.adminEmail);
     }
   }, [siteSettings?.adminEmail]);
-
-  const [localStoreOrders, setLocalStoreOrders] = useState([]);
-
-  React.useEffect(() => {
-    const loadStoreOrders = () => {
-      try {
-        const stored = JSON.parse(localStorage.getItem('store_orders') || '[]');
-        setLocalStoreOrders(stored);
-      } catch (_) {}
-    };
-
-    loadStoreOrders();
-    window.addEventListener('focus', loadStoreOrders);
-    window.addEventListener('store_orders_updated', loadStoreOrders);
-
-    return () => {
-      window.removeEventListener('focus', loadStoreOrders);
-      window.removeEventListener('store_orders_updated', loadStoreOrders);
-    };
-  }, []);
-
-  const storeOrdersCount = React.useMemo(() => {
-    const stateOrders = orders.filter(o => 
-      o.category === 'merchandise' || 
-      o.serviceCategory === 'Merchandise & Store' || 
-      o.serviceCategory === 'merchandise' || 
-      o.serviceType === 'Merchandise & Store' || 
-      o.details?.itemTitle || 
-      (o.title || '').toLowerCase().includes('shirt') || 
-      (o.title || '').toLowerCase().includes('patch') || 
-      (o.title || '').toLowerCase().includes('cap')
-    );
-    const map = new Map();
-    stateOrders.forEach(o => map.set(o.id, o));
-    localStoreOrders.forEach(o => map.set(o.id, o));
-    return map.size;
-  }, [orders, localStoreOrders]);
 
   const configuredAdminEmail = (siteSettings?.adminEmail || 'shahidbutt59191@gmail.com').toLowerCase().trim();
   const isMasterAdmin = isAuthenticated && (
@@ -128,32 +76,19 @@ export const AdminDashboard = () => {
     );
   }
 
-  // Calculations
-  const totalRevenue = orders.reduce((acc, curr) => acc + (parseFloat(curr.price) || 0), 0);
-  const activeJobsCount = orders.filter(o => o.status !== 'completed').length;
-  const newSubmissionsCount = orders.filter(o => o.status === 'submitted').length;
-  const completedJobsCount = orders.filter(o => o.status === 'completed').length;
+  // Calculations & KPI metrics with safe fallbacks
+  const safeOrders = Array.isArray(orders) ? orders : [];
+  const safeClients = Array.isArray(clients) ? clients : [];
+
+  const totalRevenue = safeOrders.reduce((acc, curr) => acc + (parseFloat(curr?.price) || 0), 0);
+  const activeJobsCount = safeOrders.filter(o => o?.status !== 'completed').length;
+  const newSubmissionsCount = safeOrders.filter(o => o?.status === 'submitted').length;
+  const completedJobsCount = safeOrders.filter(o => o?.status === 'completed').length;
 
   const handleSignOut = () => {
     logout();
     protectedNavigate('public');
     showToast('Signed out of Admin Operations Portal', 'info');
-  };
-
-  const handleSaveSettings = (e) => {
-    e.preventDefault();
-    const cleanEmail = (adminEmail || '').toLowerCase().trim();
-    if (!cleanEmail) {
-      showToast('Please enter a valid Master Admin Email address', 'warning');
-      return;
-    }
-
-    updateSiteSettings({ 
-      ...siteSettings, 
-      adminEmail: cleanEmail, 
-      metaPixelId 
-    });
-    showToast(`Master Admin Authorization email updated to "${cleanEmail}" and saved!`, 'success');
   };
 
   // Streamlined Essential Sidebar Menu Sections
@@ -162,10 +97,9 @@ export const AdminDashboard = () => {
       title: 'CORE OPERATIONS',
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'orders', label: 'Orders', icon: ClipboardList, badge: orders.length },
-        { id: 'store', label: 'Store & Merchandise', icon: ShoppingBag, badge: storeOrdersCount > 0 ? storeOrdersCount : null, tag: storeOrdersCount > 0 ? `${storeOrdersCount} ORDERS` : 'LIVE' },
+        { id: 'orders', label: 'Orders', icon: ClipboardList, badge: safeOrders.length },
         { id: 'services', label: 'Services & Pricing', icon: Sliders },
-        { id: 'clients', label: 'Accounts & Wallets', icon: Users, badge: clients.length }
+        { id: 'clients', label: 'Accounts & Wallets', icon: Users, badge: safeClients.length }
       ]
     },
     {
@@ -398,10 +332,7 @@ export const AdminDashboard = () => {
             {/* 2. ORDERS TAB */}
             {activeTab === 'orders' && <OrderManagementTable />}
 
-            {/* 3. STORE & MERCHANDISE TAB */}
-            {activeTab === 'store' && <StoreManagementEditor />}
-
-            {/* 4. SERVICES & PRICING TAB */}
+            {/* 3. SERVICES & PRICING TAB */}
             {(activeTab === 'services' || activeTab === 'cms') && <SiteCmsEditor />}
 
             {/* 5. CLIENTS & WALLETS TAB */}

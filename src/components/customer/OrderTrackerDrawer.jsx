@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { useAppState, formatOrderId } from '../../context/StateContext';
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
@@ -794,8 +796,23 @@ export const OrderTrackerDrawer = () => {
                               </div>
 
                               <button 
-                                className={`btn btn-sm ${isPdf ? 'btn-primary-orange' : isEmb ? 'btn-navy' : 'btn-primary-orange'}`}
-                                style={{ width: '100%', fontSize: '0.8rem' }}
+                                type="button"
+                                className="btn btn-sm btn-primary-orange"
+                                style={{
+                                  width: '100%',
+                                  fontSize: '0.85rem',
+                                  fontWeight: 800,
+                                  background: '#ff7a00',
+                                  backgroundColor: '#ff7a00',
+                                  color: '#ffffff',
+                                  border: 'none',
+                                  boxShadow: '0 4px 14px rgba(255, 122, 0, 0.35)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '0.4rem',
+                                  cursor: 'pointer'
+                                }}
                                 onClick={() => handleDownloadFileAsset(upFile, ext)}
                               >
                                 {isPdf ? <Printer size={14} /> : <Download size={14} />} {isPdf ? 'Print / Export .PDF' : `Download .${ext}`}
@@ -806,7 +823,7 @@ export const OrderTrackerDrawer = () => {
                       </div>
                     ) : (
                       /* Fallback format cards if no custom file upload array exists */
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '1rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
                         {allDownloadFormats.map((fmtKey) => {
                           const fmtMeta = FORMAT_METADATA[fmtKey.toLowerCase()] || { icon: '🧵' };
                           const isPdf = fmtKey.toLowerCase() === 'pdf';
@@ -829,8 +846,23 @@ export const OrderTrackerDrawer = () => {
                               </div>
 
                               <button 
-                                className={`btn btn-sm ${isPdf ? 'btn-primary-orange' : isEmb ? 'btn-navy' : 'btn-outline'}`}
-                                style={{ width: '100%', fontSize: '0.8rem' }}
+                                type="button"
+                                className="btn btn-sm btn-primary-orange"
+                                style={{
+                                  width: '100%',
+                                  fontSize: '0.85rem',
+                                  fontWeight: 800,
+                                  background: '#ff7a00',
+                                  backgroundColor: '#ff7a00',
+                                  color: '#ffffff',
+                                  border: 'none',
+                                  boxShadow: '0 4px 14px rgba(255, 122, 0, 0.35)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '0.4rem',
+                                  cursor: 'pointer'
+                                }}
                                 onClick={() => handleDownloadFileAsset(null, fmtKey)}
                               >
                                 {isPdf ? <Printer size={14} /> : <Download size={14} />} {isPdf ? 'Print / Export .PDF' : `Download .${fmtKey.toUpperCase()}`}

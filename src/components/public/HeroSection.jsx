@@ -1,4 +1,7 @@
+'use client';
+
 import React from 'react';
+import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { 
   CheckCircle2, 
@@ -10,6 +13,7 @@ import {
 import { PortfolioSlider } from './PortfolioSlider';
 
 export const HeroSection = () => {
+  const navigate = useNavigate();
   const { protectedNavigate, pricing = {} } = useAppState();
 
   const minFee = pricing.minOrderFee !== undefined ? parseFloat(pricing.minOrderFee).toFixed(2) : '10.00';
@@ -156,10 +160,7 @@ export const HeroSection = () => {
 
               <button 
                 type="button"
-                onClick={() => {
-                  const el = document.getElementById('order-builder');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
+                onClick={() => navigate('/embroidery-digitizing')}
                 className="btn btn-outline btn-lg"
                 style={{ 
                   color: '#ffffff', 

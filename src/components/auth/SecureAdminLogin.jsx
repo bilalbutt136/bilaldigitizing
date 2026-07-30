@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { ShieldCheck, Lock, Mail, ArrowRight, Home, AlertCircle, Loader2 } from 'lucide-react';
 

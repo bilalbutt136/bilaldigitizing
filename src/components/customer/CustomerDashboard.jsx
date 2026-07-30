@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '../../utils/navigation';
 import { useAppState, formatOrderId } from '../../context/StateContext';
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
 import { 
@@ -290,40 +292,7 @@ export const CustomerDashboard = () => {
                   )}
                 </button>
 
-                {/* Tab 3: Store / Digital Products */}
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('store')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    padding: '0.7rem 0.85rem',
-                    borderRadius: '10px',
-                    border: activeTab === 'store' ? '1.5px solid var(--orange-500)' : '1.5px solid transparent',
-                    background: activeTab === 'store' ? 'linear-gradient(135deg, rgba(255,122,0,0.14) 0%, rgba(255,122,0,0.06) 100%)' : 'transparent',
-                    color: activeTab === 'store' ? 'var(--orange-600)' : 'var(--navy-800)',
-                    fontWeight: activeTab === 'store' ? 800 : 600,
-                    fontSize: '0.875rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.18s ease'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <ShoppingBag size={18} style={{ color: activeTab === 'store' ? 'var(--orange-600)' : 'var(--navy-600)' }} />
-                    <span>Store / Digital Products</span>
-                  </div>
-                  {storeOrders.length > 0 ? (
-                    <span style={{ fontSize: '0.72rem', fontWeight: 800, background: activeTab === 'store' ? 'var(--orange-500)' : 'var(--navy-100)', color: activeTab === 'store' ? '#ffffff' : 'var(--navy-700)', padding: '0.15rem 0.45rem', borderRadius: '9999px' }}>
-                      {storeOrders.length}
-                    </span>
-                  ) : (
-                    <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--orange-600)', background: '#fff7ed', padding: '0.1rem 0.35rem', borderRadius: '4px' }}>STORE</span>
-                  )}
-                </button>
-
-                {/* Tab 4: Account & Profile */}
+                {/* Tab 3: Account & Profile */}
                 <button
                   type="button"
                   onClick={() => setActiveTab('profile')}
@@ -561,22 +530,63 @@ export const CustomerDashboard = () => {
                     flexWrap: 'wrap',
                     gap: '1rem'
                   }}>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.65rem' }}>
                       <button 
-                        className={`btn btn-sm ${filterStatus === 'all' ? 'btn-primary-orange' : 'btn-outline'}`}
+                        type="button"
                         onClick={() => setFilterStatus('all')}
+                        style={{
+                          background: filterStatus === 'all' ? '#ff7a00' : '#f8fafc',
+                          backgroundColor: filterStatus === 'all' ? '#ff7a00' : '#f8fafc',
+                          color: filterStatus === 'all' ? '#ffffff' : 'var(--navy-800)',
+                          border: filterStatus === 'all' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
+                          fontWeight: 800,
+                          fontSize: '0.85rem',
+                          padding: '0.5rem 1.15rem',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          boxShadow: filterStatus === 'all' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
+                          transition: 'all 0.18s ease'
+                        }}
                       >
                         All Orders ({myOrders.length})
                       </button>
+
                       <button 
-                        className={`btn btn-sm ${filterStatus === 'active' ? 'btn-primary-orange' : 'btn-outline'}`}
+                        type="button"
                         onClick={() => setFilterStatus('active')}
+                        style={{
+                          background: filterStatus === 'active' ? '#ff7a00' : '#f8fafc',
+                          backgroundColor: filterStatus === 'active' ? '#ff7a00' : '#f8fafc',
+                          color: filterStatus === 'active' ? '#ffffff' : 'var(--navy-800)',
+                          border: filterStatus === 'active' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
+                          fontWeight: 800,
+                          fontSize: '0.85rem',
+                          padding: '0.5rem 1.15rem',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          boxShadow: filterStatus === 'active' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
+                          transition: 'all 0.18s ease'
+                        }}
                       >
-                        Active ({activeOrders.length})
+                        Active Orders ({activeOrders.length})
                       </button>
+
                       <button 
-                        className={`btn btn-sm ${filterStatus === 'completed' ? 'btn-primary-orange' : 'btn-outline'}`}
+                        type="button"
                         onClick={() => setFilterStatus('completed')}
+                        style={{
+                          background: filterStatus === 'completed' ? '#ff7a00' : '#f8fafc',
+                          backgroundColor: filterStatus === 'completed' ? '#ff7a00' : '#f8fafc',
+                          color: filterStatus === 'completed' ? '#ffffff' : 'var(--navy-800)',
+                          border: filterStatus === 'completed' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
+                          fontWeight: 800,
+                          fontSize: '0.85rem',
+                          padding: '0.5rem 1.15rem',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          boxShadow: filterStatus === 'completed' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
+                          transition: 'all 0.18s ease'
+                        }}
                       >
                         Completed ({completedOrders.length})
                       </button>
@@ -804,165 +814,20 @@ export const CustomerDashboard = () => {
                     </div>
                   )}
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginTop: '1.5rem' }}>
-                    <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                      <div style={{ background: '#fff7ed', color: 'var(--orange-600)', padding: '0.65rem', borderRadius: '8px', display: 'inline-flex', marginBottom: '0.85rem' }}>
-                        <Package size={22} />
+                  <div style={{ maxWidth: '600px', marginTop: '1.5rem' }}>
+                    <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
+                      <div style={{ background: '#fff7ed', color: 'var(--orange-600)', padding: '0.75rem', borderRadius: '10px', display: 'inline-flex', marginBottom: '0.85rem' }}>
+                        <Package size={24} />
                       </div>
-                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>Custom Woven & Embroidered Patches</h3>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: '1rem' }}>
-                        Iron-on, velcro, or sew-on backing options with custom die-cut borders.
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>Custom Woven, Embroidered & PVC Patches</h3>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: '1.15rem' }}>
+                        Iron-on, velcro, or sew-on backing options with merrowed borders and custom die-cut shapes shipped worldwide.
                       </p>
-                      <button className="btn btn-outline btn-sm" onClick={() => navigate('/custom-patches')} style={{ width: '100%', justifyContent: 'center' }}>
-                        Configure Patches <ArrowRight size={14} />
-                      </button>
-                    </div>
-
-                    <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                      <div style={{ background: '#e0f2fe', color: '#0369a1', padding: '0.65rem', borderRadius: '8px', display: 'inline-flex', marginBottom: '0.85rem' }}>
-                        <ShoppingBag size={22} />
-                      </div>
-                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>Custom Apparel & T-Shirts</h3>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: '1rem' }}>
-                        Premium cotton polo shirts, hoodies, and screen-printed custom t-shirts.
-                      </p>
-                      <button className="btn btn-outline btn-sm" onClick={() => navigate('/custom-tshirts')} style={{ width: '100%', justifyContent: 'center' }}>
-                        View Apparel Options <ArrowRight size={14} />
-                      </button>
-                    </div>
-
-                    <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                      <div style={{ background: '#fae8ff', color: '#86198f', padding: '0.65rem', borderRadius: '8px', display: 'inline-flex', marginBottom: '0.85rem' }}>
-                        <Zap size={22} />
-                      </div>
-                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>Headwear & 3D Puff Caps</h3>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: '1rem' }}>
-                        Structured snapbacks, dad hats, and 3D foam raised embroidered beanies.
-                      </p>
-                      <button className="btn btn-outline btn-sm" onClick={() => navigate('/custom-caps')} style={{ width: '100%', justifyContent: 'center' }}>
-                        View Headwear <ArrowRight size={14} />
+                      <button className="btn btn-outline btn-sm" onClick={() => navigate('/custom-patches')} style={{ width: '100%', justifyContent: 'center', fontWeight: 800 }}>
+                        Configure Custom Patches Order <ArrowRight size={14} />
                       </button>
                     </div>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 3: STORE / DIGITAL PRODUCTS PURCHASES */}
-            {activeTab === 'store' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div className="card" style={{ padding: '2rem', background: '#ffffff', border: '1.5px solid var(--border-color)', borderRadius: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                    <div>
-                      <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0 0 0.25rem' }}>
-                        Store Purchases & Digital Product Downloads
-                      </h2>
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>
-                        Access your purchased machine font packs, stock embroidery designs, and vector art collections ({storeOrders.length} item{storeOrders.length !== 1 ? 's' : ''}).
-                      </p>
-                    </div>
-                    <button
-                      className="btn btn-primary-orange"
-                      onClick={() => navigate('/store')}
-                    >
-                      <ShoppingBag size={18} /> Browse Digital Store
-                    </button>
-                  </div>
-
-                  {/* Store Downloads List Table */}
-                  {storeOrders.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '3rem 1rem', background: '#f8fafc', borderRadius: '12px', border: '1px dashed var(--border-color)' }}>
-                      <ShoppingBag size={42} style={{ color: 'var(--text-light)', marginBottom: '0.75rem' }} />
-                      <h4 style={{ fontWeight: 800, color: 'var(--navy-900)', margin: '0 0 0.25rem' }}>No Digital Store Purchases Yet</h4>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>Explore commercial machine font packs, stock DST/PES files, and clipart vectors.</p>
-                      <button className="btn btn-primary-orange btn-md" onClick={() => navigate('/store')}>
-                        Visit Merchandise Store
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                        <thead>
-                          <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--navy-700)' }}>
-                            <th style={{ padding: '0.75rem 1rem' }}>Order ID & Product Name</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Product Category</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Purchase Date</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Status & License</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Price</th>
-                            <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {storeOrders.map((ord) => {
-                            const isDigitalDownload = Boolean(ord.outputFileUrl || ord.isDigital || ord.serviceCategory?.toLowerCase().includes('download') || ord.serviceCategory?.toLowerCase().includes('digital') || ord.type === 'digital_product');
-                            
-                            return (
-                              <tr key={ord.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                {/* Product Image & Title */}
-                                <td style={{ padding: '1rem' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                                    <img 
-                                      src={ord.artworkUrl || 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=120&q=80'} 
-                                      alt={ord.title}
-                                      style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover', border: '1.5px solid var(--orange-500)' }} 
-                                    />
-                                    <div>
-                                      <div style={{ fontWeight: 800, color: 'var(--navy-900)' }}>{ord.title}</div>
-                                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Order ID: <strong>{formatOrderId(ord.id)}</strong></div>
-                                    </div>
-                                  </div>
-                                </td>
-
-                                {/* Product Category */}
-                                <td style={{ padding: '1rem' }}>
-                                  <span style={{ fontWeight: 700, color: 'var(--navy-800)' }}>
-                                    {ord.serviceCategory || 'Store Product'}
-                                  </span>
-                                </td>
-
-                                {/* Purchase Date */}
-                                <td style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                  {ord.createdAt ? new Date(ord.createdAt).toLocaleDateString() : 'Recent'}
-                                </td>
-
-                                {/* Status */}
-                                <td style={{ padding: '1rem' }}>
-                                  <span className="badge badge-completed">
-                                    {isDigitalDownload ? 'Active License' : 'Order Completed'}
-                                  </span>
-                                </td>
-
-                                {/* Price */}
-                                <td style={{ padding: '1rem', fontWeight: 800, color: 'var(--navy-900)' }}>
-                                  ${parseFloat(ord.price || 0).toFixed(2)}
-                                </td>
-
-                                {/* Conditional Management Actions */}
-                                <td style={{ padding: '1rem', textAlign: 'right' }}>
-                                  {isDigitalDownload ? (
-                                    <button 
-                                      className="btn btn-primary-orange btn-sm"
-                                      onClick={() => alert(`Downloading files for ${ord.title}...`)}
-                                    >
-                                      <Download size={15} /> Download Files
-                                    </button>
-                                  ) : (
-                                    <button 
-                                      className="btn btn-outline btn-sm"
-                                      onClick={() => setSelectedOrderForDrawer(ord)}
-                                    >
-                                      <FileText size={15} /> View Receipt
-                                    </button>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-
                 </div>
               </div>
             )}

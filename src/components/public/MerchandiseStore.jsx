@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { 
@@ -19,7 +21,7 @@ import {
   FileCheck
 } from 'lucide-react';
 
-import { useLocation } from 'react-router-dom';
+import { useLocation } from '../../utils/navigation';
 
 export const MerchandiseStore = () => {
   const { storeProducts = [], openStoreOrderModal } = useAppState();

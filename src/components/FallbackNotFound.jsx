@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { useAppState } from '../context/StateContext';
 import { Construction, ArrowLeft, Home, UserCheck } from 'lucide-react';
@@ -38,14 +40,14 @@ export const FallbackNotFound = () => {
         </p>
 
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button 
+          <button
             className="btn btn-primary-orange"
             onClick={() => protectedNavigate('public')}
           >
             <Home size={16} /> Return to Public Site
           </button>
 
-          <button 
+          <button
             className="btn btn-primary-orange"
             onClick={() => protectedNavigate('customer')}
           >

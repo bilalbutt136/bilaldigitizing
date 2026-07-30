@@ -1,5 +1,7 @@
+'use client';
+
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { 
   Layers, 
@@ -20,14 +22,13 @@ import {
 
 export const ServicesGrid = () => {
   const navigate = useNavigate();
-  const { protectedNavigate, openStoreOrderModal } = useAppState();
+  const { protectedNavigate, openStoreOrderModal, openOrderWizard } = useAppState();
 
   const handleOrderRedirect = (serviceType, route) => {
-    const el = document.getElementById('order-builder');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    } else if (route) {
+    if (route) {
       navigate(route);
+    } else if (openOrderWizard) {
+      openOrderWizard({ type: serviceType });
     } else {
       protectedNavigate('customer', true);
     }
@@ -223,7 +224,7 @@ export const ServicesGrid = () => {
         </div>
 
         {/* ==================================================================
-            LOWER SECTION: PHYSICAL CUSTOM APPAREL & MERCHANDISE SHOP
+            LOWER SECTION: PHYSICAL CUSTOM PATCHES & EMBLEMS
            ================================================================== */}
         <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 3.5rem' }}>
           <div style={{
@@ -241,165 +242,70 @@ export const ServicesGrid = () => {
             borderRadius: '9999px',
             marginBottom: '0.75rem'
           }}>
-            <Truck size={16} /> Physical Custom Apparel & Merchandise Shop (Worldwide Shipping)
+            <Truck size={16} /> Physical Custom Patches & Emblems (Worldwide Shipping)
           </div>
 
           <h2 style={{ fontSize: '2.25rem', color: 'var(--navy-900)', marginBottom: '0.75rem', fontWeight: 800 }}>
-            Custom Manufactured Physical Goods
+            Custom Manufactured Patches & Emblems
           </h2>
 
           <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: 1.6 }}>
-            High-density custom patches, embroidered T-shirts, and 3D puff caps manufactured and shipped directly to your door with full quality inspection.
+            High-density embroidered, genuine leather, and 3D soft PVC custom patches manufactured with merrowed borders and shipped directly to your door.
           </p>
         </div>
 
-        {/* 3 Physical Shop Products Cards Grid */}
+        {/* Physical Patches Featured Card Container */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '1.75rem'
+          maxWidth: '700px',
+          margin: '0 auto'
         }}>
           
-          {/* Physical Product 1: Custom Patches */}
+          {/* Physical Product: Custom Patches */}
           <div 
             className="card"
             style={{
-              padding: '2rem 1.75rem',
+              padding: '2.5rem 2.25rem',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
               background: '#ffffff',
-              border: '1px solid var(--border-color)',
-              borderRadius: '14px',
-              boxShadow: 'var(--shadow-sm)'
+              border: '2px solid var(--orange-400)',
+              borderRadius: '16px',
+              boxShadow: 'var(--shadow-md)'
             }}
           >
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <div style={{ background: 'rgba(249, 115, 22, 0.1)', color: 'var(--orange-600)', padding: '0.75rem', borderRadius: '10px', display: 'inline-flex' }}>
-                  <Tag size={26} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <div style={{ background: 'rgba(249, 115, 22, 0.1)', color: 'var(--orange-600)', padding: '0.85rem', borderRadius: '12px', display: 'inline-flex' }}>
+                  <Tag size={30} />
                 </div>
-                <span style={{ fontSize: '0.8rem', fontWeight: 800, background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', padding: '0.3rem 0.65rem', borderRadius: '9999px' }}>
-                  Physical Shipping
+                <span style={{ fontSize: '0.85rem', fontWeight: 800, background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', padding: '0.35rem 0.85rem', borderRadius: '9999px' }}>
+                  Worldwide Physical Delivery
                 </span>
               </div>
 
-              <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--navy-900)', fontWeight: 800 }}>
-                Physical Custom Patches
+              <h3 style={{ fontSize: '1.6rem', marginBottom: '0.65rem', color: 'var(--navy-900)', fontWeight: 800 }}>
+                Custom Patches & Emblems
               </h3>
 
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: 1.5, marginBottom: '1rem' }}>
-                Embroidered, genuine leather, and 3D soft PVC custom patches with merrowed borders and iron-on/velcro backing.
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.975rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+                Premium embroidered, genuine leather, and 3D soft tactical PVC custom patches. Choose from merrowed edges, iron-on, velcro, or sew-on backing options with precision die-cut shaping.
               </p>
 
-              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--orange-600)', marginBottom: '1.25rem' }}>
-                From $1.50 / patch (Bulk Discounts Available)
+              <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+                <strong style={{ color: 'var(--navy-900)', display: 'block', marginBottom: '0.25rem' }}>Bulk Tiered Rates:</strong>
+                <span style={{ color: 'var(--orange-600)', fontWeight: 800 }}>From $1.50 / patch</span>
+                <span style={{ color: 'var(--navy-700)', marginLeft: '0.5rem' }}>(Volume Tier Pricing Available)</span>
               </div>
             </div>
 
             <div>
               <button 
-                className="btn btn-outline btn-md"
-                style={{ width: '100%', justifyContent: 'center', fontWeight: 800, borderColor: 'var(--navy-300)', color: 'var(--navy-900)' }}
+                className="btn btn-primary-orange btn-lg"
+                style={{ width: '100%', justifyContent: 'center', fontWeight: 800 }}
                 onClick={() => handleOrderRedirect('patches', '/custom-patches')}
               >
-                Configure Custom Patches <ArrowRight size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Physical Product 2: Custom T-Shirts */}
-          <div 
-            className="card"
-            style={{
-              padding: '2rem 1.75rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              background: '#ffffff',
-              border: '1px solid var(--border-color)',
-              borderRadius: '14px',
-              boxShadow: 'var(--shadow-sm)'
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <div style={{ background: 'rgba(249, 115, 22, 0.1)', color: 'var(--orange-600)', padding: '0.75rem', borderRadius: '10px', display: 'inline-flex' }}>
-                  <Shirt size={26} />
-                </div>
-                <span style={{ fontSize: '0.8rem', fontWeight: 800, background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', padding: '0.3rem 0.65rem', borderRadius: '9999px' }}>
-                  Physical Shipping
-                </span>
-              </div>
-
-              <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--navy-900)', fontWeight: 800 }}>
-                Custom Embroidered T-Shirts
-              </h3>
-
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: 1.5, marginBottom: '1rem' }}>
-                Quality cotton & tri-blend corporate apparel embroidered with your custom logo artwork in S-3XL sizes.
-              </p>
-
-              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--orange-600)', marginBottom: '1.25rem' }}>
-                From $14.00 / shirt (S - 3XL Breakdown)
-              </div>
-            </div>
-
-            <div>
-              <button 
-                className="btn btn-outline btn-md"
-                style={{ width: '100%', justifyContent: 'center', fontWeight: 800, borderColor: 'var(--navy-300)', color: 'var(--navy-900)' }}
-                onClick={() => handleOrderRedirect('tshirts', '/store')}
-              >
-                Configure Custom T-Shirts <ArrowRight size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Physical Product 3: Custom Caps & 3D Puff Hats */}
-          <div 
-            className="card"
-            style={{
-              padding: '2rem 1.75rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              background: '#ffffff',
-              border: '1px solid var(--border-color)',
-              borderRadius: '14px',
-              boxShadow: 'var(--shadow-sm)'
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <div style={{ background: 'rgba(249, 115, 22, 0.1)', color: 'var(--orange-600)', padding: '0.75rem', borderRadius: '10px', display: 'inline-flex' }}>
-                  <HardHat size={26} />
-                </div>
-                <span style={{ fontSize: '0.8rem', fontWeight: 800, background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', padding: '0.3rem 0.65rem', borderRadius: '9999px' }}>
-                  Physical Shipping
-                </span>
-              </div>
-
-              <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--navy-900)', fontWeight: 800 }}>
-                Caps & 3D Puff Raised Hats
-              </h3>
-
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: 1.5, marginBottom: '1rem' }}>
-                Structured snapbacks, dad hats, and beanies embroidered with heavy 3D raised foam logo pathing.
-              </p>
-
-              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--orange-600)', marginBottom: '1.25rem' }}>
-                From $12.00 / cap (+ $2.00 3D Foam)
-              </div>
-            </div>
-
-            <div>
-              <button 
-                className="btn btn-outline btn-md"
-                style={{ width: '100%', justifyContent: 'center', fontWeight: 800, borderColor: 'var(--navy-300)', color: 'var(--navy-900)' }}
-                onClick={() => handleOrderRedirect('caps', '/store')}
-              >
-                Configure Custom Caps <ArrowRight size={16} />
+                Configure Custom Patches Order <ArrowRight size={18} />
               </button>
             </div>
           </div>

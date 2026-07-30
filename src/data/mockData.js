@@ -240,33 +240,13 @@ export const SERVICES = [
   },
   {
     id: 'custom-patches',
-    title: 'Physical Custom Patches',
+    title: 'Physical Custom Patches & Emblems',
     price: 'Starting $1.50 / patch',
     stitches: 'Iron-On, Velcro & Sew-On',
     time: '3 - 5 Days + Express Ship',
     icon: 'Tag',
     route: '/custom-patches',
     desc: 'High-density embroidered, leather, and PVC custom patches with merrowed borders and physical worldwide shipping.'
-  },
-  {
-    id: 'custom-tshirts',
-    title: 'Custom T-Shirts (Logo Stitchout)',
-    price: 'Starting $14.00 / shirt',
-    stitches: 'Premium Cotton + Stitchout',
-    time: '2 - 4 Days Shipping',
-    icon: 'Shirt',
-    route: '/custom-tshirts',
-    desc: 'Quality cotton & tri-blend apparel embroidered with your custom corporate logo or artwork in S-3XL sizes.'
-  },
-  {
-    id: 'custom-caps-3d',
-    title: 'Custom Caps & 3D Puff Hats',
-    price: 'Starting $12.00 / cap',
-    stitches: '3D Foam Raised Embroidery',
-    time: '2 - 4 Days Shipping',
-    icon: 'HardHat',
-    route: '/custom-caps',
-    desc: 'Structured snapbacks, dad hats, and beanies embroidered with heavy 3D raised foam logo pathing.'
   }
 ];
 

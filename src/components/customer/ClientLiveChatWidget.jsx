@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { playNotificationSound } from '../../utils/audioNotification';
@@ -17,7 +19,13 @@ import {
 } from 'lucide-react';
 
 export const ClientLiveChatWidget = () => {
-  const { authUser, currentUser, showToast } = useAppState();
+  const { authUser, currentUser, isAuthenticated, showToast } = useAppState();
+
+  // Authentication Guard: Hide live chat widget entirely for guests and unauthenticated users
+  const isLoggedIn = isAuthenticated || Boolean(authUser);
+  if (!isLoggedIn) {
+    return null;
+  }
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -25,9 +33,9 @@ export const ClientLiveChatWidget = () => {
   const [attachedFile, setAttachedFile] = useState(null);
 
   const activeUser = authUser || currentUser || {
-    name: 'Shahid Butt',
-    email: 'shahidbutt59191@gmail.com',
-    company: 'Apex Apparel'
+    name: 'Client User',
+    email: 'client@example.com',
+    company: 'Client Studio'
   };
 
   const cleanName = (activeUser?.name || 'Client').replace(/\s*\(ADMIN\)/gi, '').trim();
@@ -154,7 +162,7 @@ export const ClientLiveChatWidget = () => {
 
   return (
     <>
-      {/* Floating Chat Trigger Button (Bottom Right) */}
+      {/* Floating Action Button */}
       {!isOpen && (
         <button
           type="button"
@@ -163,39 +171,64 @@ export const ClientLiveChatWidget = () => {
             position: 'fixed',
             bottom: '24px',
             right: '24px',
-            zIndex: 1900,
-            background: 'linear-gradient(135deg, var(--navy-900) 0%, var(--orange-500) 100%)',
+            zIndex: 9990,
+            background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
+            backgroundColor: '#1d4ed8',
             color: '#ffffff',
-            border: 'none',
-            padding: '0.85rem 1.35rem',
-            borderRadius: '9999px',
-            boxShadow: '0 8px 28px rgba(249, 115, 22, 0.4)',
+            border: '1.5px solid rgba(255, 255, 255, 0.25)',
+            padding: '0.75rem 1.35rem 0.75rem 1rem',
+            borderRadius: '16px',
+            boxShadow: '0 12px 32px rgba(29, 78, 216, 0.45), 0 4px 12px rgba(0, 0, 0, 0.2)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.65rem',
-            fontWeight: 800,
-            fontSize: '0.925rem',
-            transition: 'all 0.2s ease-in-out',
-            transform: 'scale(1)'
+            gap: '0.85rem',
+            transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            transform: 'translateY(0)'
           }}
-          onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.04)'}
-          onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'translateY(-3px)';
+            e.currentTarget.style.boxShadow = '0 16px 36px rgba(29, 78, 216, 0.55), 0 6px 16px rgba(0, 0, 0, 0.25)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 12px 32px rgba(29, 78, 216, 0.45), 0 4px 12px rgba(0, 0, 0, 0.2)';
+          }}
         >
-          <div style={{ position: 'relative' }}>
-            <MessageSquare size={20} />
+          {/* Left Chat Icon Container */}
+          <div style={{
+            position: 'relative',
+            width: '42px',
+            height: '42px',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}>
+            <MessageSquare size={22} style={{ color: '#ffffff' }} />
             <span style={{
               position: 'absolute',
-              top: '-3px',
-              right: '-3px',
-              width: '9px',
-              height: '9px',
+              top: '1px',
+              right: '1px',
+              width: '10px',
+              height: '10px',
               borderRadius: '50%',
-              background: '#10b981',
-              border: '2px solid #ffffff'
+              background: '#22c55e',
+              border: '2px solid #1d4ed8'
             }} />
           </div>
-          <span>Live Support Chat</span>
+
+          {/* Text Content Stack */}
+          <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#ffffff', lineHeight: 1.25, letterSpacing: '-0.01em' }}>
+              Chat with support
+            </span>
+            <span style={{ fontSize: '0.78rem', color: '#bfdbfe', fontWeight: 600, lineHeight: 1.25, marginTop: '2px' }}>
+              We're here to help
+            </span>
+          </div>
         </button>
       )}
 
@@ -260,7 +293,7 @@ export const ClientLiveChatWidget = () => {
 
               <div>
                 <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#ffffff', leading: 1.1 }}>
-                  Master Digitizer Support
+                  Bilal Digitizing Support
                 </div>
                 <div style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 700 }}>
                   ● Online • Real-Time Assistance

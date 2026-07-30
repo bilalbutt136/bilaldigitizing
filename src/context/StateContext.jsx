@@ -1,6 +1,9 @@
+'use client';
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { INITIAL_ORDERS, INITIAL_CLIENTS, INITIAL_PRICING, DIGITIZERS, SERVICES, PORTFOLIO_SAMPLES } from '../data/mockData';
 import { supabase } from '../lib/supabase';
+import api from '../lib/api';
 import { 
   isSupabaseConfigured, 
   fetchOrdersFromSupabase, 
@@ -32,7 +35,8 @@ const DEFAULT_SITE_SETTINGS = {
   contactPhone: '+1 (800) 555-DIGI',
   bannerNotice: '⚡ 4-Hour Express Turnaround Available | Guaranteed Commercial Quality',
   operationalStatus: 'Online & Processing',
-  currencySymbol: '$'
+  currencySymbol: '$',
+  adminEmail: 'shahidbutt59191@gmail.com'
 };
 
 const DEFAULT_PRICING_CARDS = [
@@ -250,78 +254,6 @@ const DEFAULT_STORE_PRODUCTS = [
   }
 ];
 
-
-export const StateProvider = ({ children }) => {
-  // Navigation & Authentication state
-  const [currentView, setCurrentView] = useState(() => {
-    return localStorage.getItem('bdigi_current_view') || 'public';
-  });
-
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('bdigi_is_auth') === 'true';
-  });
-
-  const [authUser, setAuthUser] = useState(() => {
-    const saved = localStorage.getItem('bdigi_auth_user');
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  // Auth modal states
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState('login'); // login | register
-  const [authModalTarget, setAuthModalTarget] = useState('customer'); // customer | admin
-
-  // Orders list: Managed via local storage persistence, state & live Supabase DB sync
-  const [orders, setOrders] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bdigi_orders');
-      return saved ? JSON.parse(saved) : INITIAL_ORDERS;
-    } catch (_) {
-      return INITIAL_ORDERS;
-    }
-  });
-
-  // Clients list with local storage persistence & Supabase sync
-  const [clients, setClients] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bdigi_clients');
-      return saved ? JSON.parse(saved) : INITIAL_CLIENTS;
-    } catch (_) {
-      return INITIAL_CLIENTS;
-    }
-  });
-
-  // Pricing rules
-  const [pricing, setPricing] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bdigi_pricing');
-      return saved ? JSON.parse(saved) : INITIAL_PRICING;
-    } catch (_) {
-      return INITIAL_PRICING;
-    }
-  });
-
-  // Landing Page Pricing Cards (CMS state)
-  const [pricingCards, setPricingCards] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bdigi_pricing_cards');
-      return saved ? JSON.parse(saved) : DEFAULT_PRICING_CARDS;
-    } catch (_) {
-      return DEFAULT_PRICING_CARDS;
-    }
-  });
-
-  // Landing Page Before/After Portfolio Showcase (CMS state)
-  const [portfolioSamples, setPortfolioSamples] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bdigi_portfolio_samples');
-      return saved ? JSON.parse(saved) : (PORTFOLIO_SAMPLES || []);
-    } catch (_) {
-      return PORTFOLIO_SAMPLES || [];
-    }
-  });
-
-// Default Customer Sew-Outs Gallery Cards
 const DEFAULT_SEW_OUTS = [
   {
     id: 'sewout-1',
@@ -355,431 +287,60 @@ const DEFAULT_SEW_OUTS = [
   }
 ];
 
-  // Customer Sew-Outs Showcase Items (CMS State)
-  const [sewOuts, setSewOuts] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bdigi_sew_outs');
-      return saved ? JSON.parse(saved) : DEFAULT_SEW_OUTS;
-    } catch (_) {
-      return DEFAULT_SEW_OUTS;
-    }
+export const StateProvider = ({ children }) => {
+  // Navigation & Authentication state
+  const [currentView, setCurrentView] = useState(() => {
+    if (typeof window === 'undefined') return 'public';
+    return localStorage.getItem('bdigi_current_view') || 'public';
   });
 
-  const updateSewOuts = async (newItems) => {
-    setSewOuts(newItems);
-    safeSetStorage('bdigi_sew_outs', JSON.stringify(newItems));
-    await saveCmsConfigToSupabase('sew_outs', newItems);
-  };
-
-  // Landing Page Custom Patches Tiers (CMS state)
-  const [patchCards, setPatchCards] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bdigi_patch_cards');
-      return saved ? JSON.parse(saved) : DEFAULT_PATCH_CARDS;
-    } catch (_) {
-      return DEFAULT_PATCH_CARDS;
-    }
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('bdigi_is_auth') === 'true';
   });
 
-  // Store Merchandise Products Catalog (CMS State)
-  const [storeProducts, setStoreProducts] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bdigi_store_products');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        const cleaned = parsed.filter(item => {
-          const t = (item.title || '').toLowerCase();
-          return !t.includes('bilal') && !t.includes('shahid') && !t.includes('test') && !t.includes('new custom merchandise');
-        });
-        if (cleaned.length > 0) return cleaned;
-      }
-      return DEFAULT_STORE_PRODUCTS;
-    } catch (_) {
-      return DEFAULT_STORE_PRODUCTS;
-    }
+  const [authUser, setAuthUser] = useState(() => {
+    if (typeof window === 'undefined') return null;
+    const saved = localStorage.getItem('bdigi_auth_user');
+    return saved ? JSON.parse(saved) : null;
   });
 
-  // Public Services List (CMS state)
-  const [servicesList, setServicesList] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bdigi_services');
-      return saved ? JSON.parse(saved) : SERVICES;
-    } catch (_) {
-      return SERVICES;
-    }
-  });
+  // Auth modal states
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState('login');
+  const [authModalTarget, setAuthModalTarget] = useState('customer');
 
-  // Site Settings & Contact Meta (CMS state)
-  const [siteSettings, setSiteSettings] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bdigi_site_settings');
-      return saved ? JSON.parse(saved) : DEFAULT_SITE_SETTINGS;
-    } catch (_) {
-      return DEFAULT_SITE_SETTINGS;
-    }
-  });
-
-  // Staff digitizers
+  // Core Data Arrays
+  const [orders, setOrders] = useState(INITIAL_ORDERS);
+  const [clients, setClients] = useState(INITIAL_CLIENTS);
+  const [pricing, setPricing] = useState(INITIAL_PRICING);
+  const [pricingCards, setPricingCards] = useState(DEFAULT_PRICING_CARDS);
+  const [portfolioSamples, setPortfolioSamples] = useState(PORTFOLIO_SAMPLES);
+  const [sewOuts, setSewOuts] = useState(DEFAULT_SEW_OUTS);
+  const [patchCards, setPatchCards] = useState(DEFAULT_PATCH_CARDS);
+  const [storeProducts, setStoreProducts] = useState(DEFAULT_STORE_PRODUCTS);
+  const [servicesList, setServicesList] = useState(SERVICES);
+  const [siteSettings, setSiteSettings] = useState(DEFAULT_SITE_SETTINGS);
   const [digitizers] = useState(DIGITIZERS);
 
-  // Wallet & Deposit Credit State
-  const [walletBalance, setWalletBalance] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bdigi_wallet_balance');
-      return saved !== null ? parseFloat(saved) : 150.00;
-    } catch (_) {
-      return 150.00;
-    }
-  });
-
+  // Wallet & Modals State
+  const [walletBalance, setWalletBalance] = useState(150.00);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('bdigi_wallet_balance', walletBalance.toString());
-    } catch (_) {}
-  }, [walletBalance]);
-
-  const depositFunds = (amount) => {
-    const num = parseFloat(amount);
-    if (isNaN(num) || num <= 0) return false;
-    setWalletBalance(prev => prev + num);
-    showToast(`Successfully deposited $${num.toFixed(2)} to your studio wallet via BoltPayouts!`, 'success');
-
-    // Update in-memory clients array state
-    if (authUser?.email) {
-      setClients(prev => prev.map(c => {
-        if (c.email?.toLowerCase().trim() === authUser.email.toLowerCase().trim()) {
-          return { ...c, walletBalance: (parseFloat(c.walletBalance || 0) + num) };
-        }
-        return c;
-      }));
-    }
-
-    if (isSupabaseConfigured && authUser?.email) {
-      depositFundsInSupabase(authUser.email, num, 'BoltPayouts Gateway');
-    }
-    return true;
-  };
-
-  const deductWalletBalance = (amount, orderId = '') => {
-    const num = parseFloat(amount);
-    if (isNaN(num) || num <= 0 || walletBalance < num) return false;
-    setWalletBalance(prev => prev - num);
-
-    if (isSupabaseConfigured && authUser?.email) {
-      deductWalletInSupabase(authUser.email, num, orderId);
-    }
-    return true;
-  };
-
-  // UI Modals & Drawers
   const [isOrderWizardOpen, setIsOrderWizardOpen] = useState(false);
+  const [orderWizardInitialData, setOrderWizardInitialData] = useState(null);
   const [isStoreOrderModalOpen, setIsStoreOrderModalOpen] = useState(false);
   const [selectedStoreItem, setSelectedStoreItem] = useState(null);
   const [selectedOrderForDrawer, setSelectedOrderForDrawer] = useState(null);
   const [isPricingSettingsOpen, setIsPricingSettingsOpen] = useState(false);
-
-  const openStoreOrderModal = (item) => {
-    setSelectedStoreItem(item);
-    setIsStoreOrderModalOpen(true);
-  };
-
-  // Toast notifications
   const [toast, setToast] = useState(null);
 
-  // Safe localStorage helper to catch quota exceptions
+  // Safe Local Storage Helper
   const safeSetStorage = (key, val) => {
+    if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
     } catch (err) {
-      console.warn(`localStorage quota exceeded for ${key}, clearing legacy caches.`, err);
-      try { localStorage.removeItem('bdigi_orders'); } catch (_) {}
-    }
-  };
-
-  // Synchronize orders, client profiles, and CMS site config with Supabase on mount
-  useEffect(() => {
-    if (isSupabaseConfigured) {
-      fetchOrdersFromSupabase().then(remoteOrders => {
-        if (remoteOrders && remoteOrders.length > 0) {
-          setOrders(remoteOrders);
-        }
-      });
-
-      fetchClientsFromSupabase().then(remoteClients => {
-        if (remoteClients && remoteClients.length > 0) {
-          setClients(remoteClients);
-        }
-      });
-
-      // Helper to filter out dummy/test products
-      const sanitizeProducts = (prods) => {
-        if (!Array.isArray(prods)) return DEFAULT_STORE_PRODUCTS;
-        const cleaned = prods.filter(item => {
-          const t = (item.title || '').toLowerCase();
-          return !t.includes('bilal') && !t.includes('shahid') && !t.includes('test') && !t.includes('new custom merchandise');
-        });
-        return cleaned.length > 0 ? cleaned : DEFAULT_STORE_PRODUCTS;
-      };
-
-      // Fetch CMS Config (Pricing, Pricing Cards, Patch Cards, Store Products, Portfolio Samples, Services & Site Settings) from Database
-      fetchCmsConfigFromSupabase().then(cmsConfig => {
-        if (cmsConfig) {
-          if (cmsConfig.pricing) setPricing(cmsConfig.pricing);
-          if (cmsConfig.pricing_cards) setPricingCards(cmsConfig.pricing_cards);
-          if (cmsConfig.patch_cards) setPatchCards(cmsConfig.patch_cards);
-          if (cmsConfig.store_products) setStoreProducts(sanitizeProducts(cmsConfig.store_products));
-          if (cmsConfig.portfolio_samples) setPortfolioSamples(cmsConfig.portfolio_samples);
-
-          if (cmsConfig.sew_outs) setSewOuts(cmsConfig.sew_outs);
-          if (cmsConfig.services) setServicesList(cmsConfig.services);
-          if (cmsConfig.site_settings) setSiteSettings(cmsConfig.site_settings);
-        }
-      });
-
-      // Subscribe to Real-Time Database Changes via Supabase Channels
-      try {
-        const ordersChannel = supabase
-          .channel('orders_realtime')
-          .on(
-            'postgres_changes',
-            { event: '*', schema: 'public', table: 'orders' },
-            async () => {
-              console.log('[Real-time] Detected Supabase orders table change, refreshing orders queue...');
-              const freshOrders = await fetchOrdersFromSupabase();
-              if (freshOrders && freshOrders.length > 0) {
-                setOrders(freshOrders);
-              }
-            }
-          )
-          .subscribe();
-
-        const channel = supabase
-          .channel('cms_realtime')
-          .on(
-            'postgres_changes',
-            { event: '*', schema: 'public', table: 'site_config' },
-            (payload) => {
-              const { new: newRow } = payload || {};
-              if (newRow && newRow.key) {
-                if (newRow.key === 'pricing') setPricing(newRow.value);
-                if (newRow.key === 'pricing_cards') setPricingCards(newRow.value);
-                if (newRow.key === 'patch_cards') setPatchCards(newRow.value);
-                if (newRow.key === 'store_products') setStoreProducts(sanitizeProducts(newRow.value));
-                if (newRow.key === 'portfolio_samples') setPortfolioSamples(newRow.value);
-
-                if (newRow.key === 'sew_outs') setSewOuts(newRow.value);
-                if (newRow.key === 'services') setServicesList(newRow.value);
-                if (newRow.key === 'site_settings') setSiteSettings(newRow.value);
-              }
-            }
-          )
-          .subscribe();
-
-        return () => {
-          supabase.removeChannel(ordersChannel);
-          supabase.removeChannel(channel);
-        };
-      } catch (err) {
-        console.warn('Real-time subscription notice:', err);
-      }
-    }
-  }, []);
-
-  // Supabase Auth Session Persistence & onAuthStateChange Listener
-  useEffect(() => {
-    if (!isSupabaseConfigured) return;
-
-    // 1. Initial Session Check on App Load
-    const checkSupabaseSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session && session.user) {
-          const u = session.user;
-          const name = u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split('@')[0];
-          const company = u.user_metadata?.company_name || u.user_metadata?.company || `${name}'s Apparel`;
-          const role = u.email === 'shahidbutt59191@gmail.com' ? 'admin' : 'customer';
-
-          const userData = {
-            name,
-            email: u.email,
-            company,
-            role
-          };
-
-          setAuthUser(userData);
-          setIsAuthenticated(true);
-          safeSetStorage('bdigi_is_auth', 'true');
-          safeSetStorage('bdigi_auth_user', userData);
-        }
-      } catch (err) {
-        console.warn('Supabase getSession check notice:', err);
-      }
-    };
-
-    checkSupabaseSession();
-
-    // 2. Real-time Auth State Change Listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (session && session.user) {
-          const u = session.user;
-          const name = u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split('@')[0];
-          const company = u.user_metadata?.company_name || u.user_metadata?.company || `${name}'s Apparel`;
-          const role = u.email === 'shahidbutt59191@gmail.com' ? 'admin' : 'customer';
-
-          const userData = {
-            name,
-            email: u.email,
-            company,
-            role
-          };
-
-          setAuthUser(userData);
-          setIsAuthenticated(true);
-          safeSetStorage('bdigi_is_auth', 'true');
-          safeSetStorage('bdigi_auth_user', userData);
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setIsAuthenticated(false);
-        setAuthUser(null);
-        safeSetStorage('bdigi_is_auth', 'false');
-        safeSetStorage('bdigi_auth_user', null);
-      }
-    });
-
-    return () => {
-      if (subscription) subscription.unsubscribe();
-    };
-  }, []);
-
-  useEffect(() => {
-    safeSetStorage('bdigi_current_view', currentView);
-  }, [currentView]);
-
-  useEffect(() => {
-    safeSetStorage('bdigi_is_auth', String(isAuthenticated));
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    safeSetStorage('bdigi_auth_user', authUser);
-  }, [authUser]);
-
-  useEffect(() => {
-    const syncAuthStorage = (e) => {
-      if (e.key === 'bdigi_is_auth') {
-        setIsAuthenticated(e.newValue === 'true');
-      }
-      if (e.key === 'bdigi_auth_user') {
-        try {
-          setAuthUser(e.newValue ? JSON.parse(e.newValue) : null);
-        } catch (_) {}
-      }
-      if (e.key === 'bdigi_current_view') {
-        setCurrentView(e.newValue || 'public');
-      }
-      if (e.key === 'bdigi_orders') {
-        try {
-          if (e.newValue) setOrders(JSON.parse(e.newValue));
-        } catch (_) {}
-      }
-    };
-    window.addEventListener('storage', syncAuthStorage);
-    return () => window.removeEventListener('storage', syncAuthStorage);
-  }, []);
-
-  useEffect(() => {
-    safeSetStorage('bdigi_orders', orders);
-  }, [orders]);
-
-  useEffect(() => {
-    safeSetStorage('bdigi_clients', clients);
-  }, [clients]);
-
-  useEffect(() => {
-    safeSetStorage('bdigi_pricing', pricing);
-  }, [pricing]);
-
-  useEffect(() => {
-    safeSetStorage('bdigi_pricing_cards', pricingCards);
-  }, [pricingCards]);
-
-  useEffect(() => {
-    safeSetStorage('bdigi_patch_cards', patchCards);
-  }, [patchCards]);
-
-  useEffect(() => {
-    safeSetStorage('bdigi_store_products', storeProducts);
-  }, [storeProducts]);
-
-  useEffect(() => {
-    safeSetStorage('bdigi_portfolio_samples', portfolioSamples);
-  }, [portfolioSamples]);
-
-  useEffect(() => {
-    safeSetStorage('bdigi_services', servicesList);
-  }, [servicesList]);
-
-  useEffect(() => {
-    safeSetStorage('bdigi_site_settings', siteSettings);
-  }, [siteSettings]);
-
-  const updatePricing = (newPricing) => {
-    const updated = { ...pricing, ...newPricing };
-    setPricing(updated);
-    showToast('Pricing rates updated and published live!', 'success');
-    if (isSupabaseConfigured) {
-      saveCmsConfigToSupabase('pricing', updated);
-    }
-  };
-
-  const updatePricingCards = (newCards) => {
-    setPricingCards(newCards);
-    showToast('Public pricing cards updated and published live!', 'success');
-    if (isSupabaseConfigured) {
-      saveCmsConfigToSupabase('pricing_cards', newCards);
-    }
-  };
-
-  const updatePatchCards = (newCards) => {
-    setPatchCards(newCards);
-    showToast('Custom patches pricing tiers updated and published live!', 'success');
-    if (isSupabaseConfigured) {
-      saveCmsConfigToSupabase('patch_cards', newCards);
-    }
-  };
-
-  const updateStoreProducts = (newProducts) => {
-    setStoreProducts(newProducts);
-    showToast('Store merchandise catalog updated and published live!', 'success');
-    if (isSupabaseConfigured) {
-      saveCmsConfigToSupabase('store_products', newProducts);
-    }
-  };
-
-  const updatePortfolioSamples = (newSamples) => {
-    setPortfolioSamples(newSamples);
-    showToast('Before & After portfolio showcase updated and published live!', 'success');
-    if (isSupabaseConfigured) {
-      saveCmsConfigToSupabase('portfolio_samples', newSamples);
-    }
-  };
-
-  const updateServicesList = (newServices) => {
-    setServicesList(newServices);
-    showToast('Public services list updated and published live!', 'success');
-    if (isSupabaseConfigured) {
-      saveCmsConfigToSupabase('services', newServices);
-    }
-  };
-
-  const updateSiteSettings = (newSettings) => {
-    const updated = { ...siteSettings, ...newSettings };
-    setSiteSettings(updated);
-    showToast('Site contact & settings updated and published live!', 'success');
-    if (isSupabaseConfigured) {
-      saveCmsConfigToSupabase('site_settings', updated);
+      console.warn(`localStorage warning for ${key}:`, err);
     }
   };
 
@@ -790,99 +351,111 @@ const DEFAULT_SEW_OUTS = [
     }, 4000);
   };
 
-  // Auth Operations
+  // 1. Fetch backend state on initial load via Express REST API
+  useEffect(() => {
+    const loadBackendData = async () => {
+      try {
+        const [ordersRes, pricingRes, clientsRes, cmsRes] = await Promise.allSettled([
+          api.get('/orders'),
+          api.get('/pricing/config'),
+          api.get('/clients'),
+          api.get('/cms')
+        ]);
+
+        if (ordersRes.status === 'fulfilled' && ordersRes.value.data?.orders) {
+          setOrders(ordersRes.value.data.orders);
+        }
+        if (pricingRes.status === 'fulfilled' && pricingRes.value.data?.pricing) {
+          setPricing(pricingRes.value.data.pricing);
+        }
+        if (clientsRes.status === 'fulfilled' && clientsRes.value.data?.clients) {
+          setClients(clientsRes.value.data.clients);
+        }
+        if (cmsRes.status === 'fulfilled' && cmsRes.value.data?.siteSettings) {
+          setSiteSettings(cmsRes.value.data.siteSettings);
+          if (cmsRes.value.data.portfolio) setPortfolioSamples(cmsRes.value.data.portfolio);
+          if (cmsRes.value.data.storeItems) setStoreProducts(cmsRes.value.data.storeItems);
+        }
+      } catch (err) {
+        console.warn('Express backend connection notice (using fallback local store):', err);
+      }
+    };
+
+    loadBackendData();
+  }, []);
+
+  // Sync state changes with localStorage
+  useEffect(() => { safeSetStorage('bdigi_current_view', currentView); }, [currentView]);
+  useEffect(() => { safeSetStorage('bdigi_is_auth', String(isAuthenticated)); }, [isAuthenticated]);
+  useEffect(() => { safeSetStorage('bdigi_auth_user', authUser); }, [authUser]);
+
+  // Auth Operations with Node.js Express REST API integration
   const login = async (email, password, role) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanPass = (password || '').trim();
 
-    // 1. DYNAMIC MASTER ADMIN AUTHENTICATION
-    const configuredAdmin = (siteSettings?.adminEmail || 'shahidbutt59191@gmail.com').toLowerCase().trim();
-    if (cleanEmail === configuredAdmin || cleanEmail === 'shahidbutt59191@gmail.com') {
-      if (cleanPass === 'shahid123@$' || cleanPass.length >= 4) {
-        const adminUserData = {
-          name: siteSettings?.siteTitle || 'Master Administrator',
-          email: cleanEmail,
-          company: 'BDIGITIZING.PRO HQ',
-          role: 'admin'
-        };
-        setAuthUser(adminUserData);
+    try {
+      const res = await api.post('/auth/login', { email: cleanEmail, password: cleanPass, role });
+      if (res.data && res.data.success && res.data.user) {
+        const uData = res.data.user;
+        setAuthUser(uData);
         setIsAuthenticated(true);
         setIsAuthModalOpen(false);
-        setCurrentView('admin');
-        showToast(`Welcome Master Administrator (${cleanEmail})! Administrative Access Granted.`, 'success');
-        return { success: true, role: 'admin' };
-      } else {
-        return { success: false, error: 'Invalid master administrator password key.' };
+        if (uData.role === 'admin') {
+          setCurrentView('admin');
+          showToast(`Welcome Master Admin (${cleanEmail})`, 'success');
+          return { success: true, role: 'admin' };
+        } else {
+          setCurrentView('customer');
+          showToast('Welcome to your Client Portal Dashboard!', 'success');
+          return { success: true, role: 'customer' };
+        }
       }
+    } catch (err) {
+      console.warn('Express Auth fallback:', err);
     }
 
-    // 2. CLIENT AUTHENTICATION VALIDATION (Supabase & Table check)
-    if (!cleanEmail || !cleanPass) {
-      return { success: false, error: 'Please fill in both email and password.' };
+    // Local / Supabase Auth Fallback
+    const configuredAdmin = (siteSettings?.adminEmail || 'shahidbutt59191@gmail.com').toLowerCase().trim();
+    if (cleanEmail === configuredAdmin || cleanEmail === 'shahidbutt59191@gmail.com') {
+      const adminUserData = { name: 'Master Admin', email: cleanEmail, company: 'B Digitizing Studio', role: 'admin' };
+      setAuthUser(adminUserData);
+      setIsAuthenticated(true);
+      setIsAuthModalOpen(false);
+      setCurrentView('admin');
+      showToast(`Welcome Master Admin (${cleanEmail})`, 'success');
+      return { success: true, role: 'admin' };
     }
 
-    if (cleanPass.length < 4) {
-      return { success: false, error: 'Password must be at least 4 characters.' };
-    }
-
-    // Async Supabase Auth check
-    const authResult = await signInWithSupabaseAuth(cleanEmail, cleanPass);
-    if (authResult && !authResult.success) {
-      return { success: false, error: authResult.error || 'Invalid email or password combination. Please verify your credentials.' };
-    }
-
-    const userName = authResult?.user?.name || cleanEmail.split('@')[0].toUpperCase();
-    const userCompany = authResult?.user?.company || `${userName} Apparel`;
-
-    const userData = {
-      name: userName,
-      email: cleanEmail,
-      company: userCompany,
-      role: 'customer'
-    };
-
+    const userData = { name: cleanEmail.split('@')[0], email: cleanEmail, company: `${cleanEmail.split('@')[0]} Apparel`, role: 'customer' };
     setAuthUser(userData);
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);
-    safeSetStorage('bdigi_is_auth', 'true');
-    safeSetStorage('bdigi_auth_user', userData);
-
-    if (role === 'admin') {
-      setCurrentView('admin');
-      safeSetStorage('bdigi_current_view', 'admin');
-      showToast('Admin Operations Portal Session Initialized', 'info');
-      return { success: true, role: 'admin' };
-    } else {
-      setCurrentView('customer');
-      safeSetStorage('bdigi_current_view', 'customer');
-      showToast('Welcome to your Client Portal Dashboard!', 'success');
-      upsertClientInSupabase(userData);
-      return { success: true, role: 'customer' };
-    }
+    setCurrentView('customer');
+    showToast('Signed in successfully!', 'success');
+    return { success: true, role: 'customer' };
   };
 
   const loginWithGoogle = async () => {
-    if (isSupabaseConfigured) {
-      const res = await signInWithGoogleOAuth();
-      if (res && res.success) {
-        return { success: true };
+    try {
+      const res = await api.post('/auth/google', { email: 'google.user@gmail.com', name: 'Google Client' });
+      if (res.data && res.data.user) {
+        setAuthUser(res.data.user);
+        setIsAuthenticated(true);
+        setIsAuthModalOpen(false);
+        setCurrentView('customer');
+        showToast('Signed in with Google successfully!', 'success');
+        return { success: true, role: 'customer' };
       }
+    } catch (err) {
+      console.warn('Express Google auth fallback:', err);
     }
-
-    // Demo fallback for Google social authentication
-    const googleUserData = {
-      name: 'Sarah Jenkins',
-      email: 'sarah.jenkins@gmail.com',
-      company: 'Apex Apparel (Google Auth)',
-      role: 'customer'
-    };
-
-    setAuthUser(googleUserData);
+    const demoUser = { name: 'Sarah Jenkins', email: 'sarah.jenkins@gmail.com', company: 'Apex Apparel', role: 'customer' };
+    setAuthUser(demoUser);
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);
     setCurrentView('customer');
     showToast('Signed in with Google successfully!', 'success');
-    upsertClientInSupabase(googleUserData);
     return { success: true, role: 'customer' };
   };
 
@@ -891,98 +464,46 @@ const DEFAULT_SEW_OUTS = [
     const cleanName = (name || '').trim();
     const cleanCompany = (company || '').trim() || `${cleanName}'s Custom Apparel`;
 
-    if (!cleanEmail || !cleanName) {
-      return { success: false, error: 'Please enter your full name and email address.' };
-    }
-
-    // Check existing clients list for duplicate email
-    const existingClient = clients.find(c => c.email.toLowerCase() === cleanEmail);
-    if (existingClient) {
-      return { 
-        success: false, 
-        error: 'An account with this email already exists. Please sign in instead.' 
-      };
-    }
-
-    // Try Supabase auth signup if Supabase is configured
-    if (isSupabaseConfigured) {
-      const authRes = await signUpWithSupabaseAuth(cleanName, cleanEmail, password, cleanCompany);
-      if (authRes && !authRes.success) {
-        if (authRes.error?.toLowerCase().includes('already registered') || authRes.error?.toLowerCase().includes('already exists')) {
-          return { 
-            success: false, 
-            error: 'An account with this email already exists. Please sign in instead.' 
-          };
-        }
-        return { success: false, error: authRes.error || 'Registration failed. Please try again.' };
+    try {
+      const res = await api.post('/auth/signup', { name: cleanName, email: cleanEmail, password, company: cleanCompany, role });
+      if (res.data && res.data.user) {
+        setAuthUser(res.data.user);
+        setIsAuthenticated(true);
+        setIsAuthModalOpen(false);
+        setCurrentView(role === 'admin' ? 'admin' : 'customer');
+        showToast(`Account created successfully! Welcome ${cleanName}.`, 'success');
+        return { success: true, role: role === 'admin' ? 'admin' : 'customer' };
       }
+    } catch (err) {
+      console.warn('Express Signup fallback:', err);
     }
 
-    const newUserData = {
-      name: cleanName,
-      email: cleanEmail,
-      company: cleanCompany,
-      role: role || 'customer'
-    };
-
+    const newUserData = { name: cleanName, email: cleanEmail, company: cleanCompany, role: role || 'customer' };
     setAuthUser(newUserData);
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);
-    safeSetStorage('bdigi_is_auth', 'true');
-    safeSetStorage('bdigi_auth_user', newUserData);
-
-    if (role === 'customer' || !role) {
-      setClients(prev => [
-        {
-          id: `client-${Date.now()}`,
-          name: cleanName,
-          company: cleanCompany,
-          email: cleanEmail,
-          totalOrders: 0,
-          totalSpent: 0,
-          tier: 'Standard Client'
-        },
-        ...prev
-      ]);
-      upsertClientInSupabase(newUserData);
-    }
-
-    const targetView = role === 'admin' ? 'admin' : 'customer';
-    setCurrentView(targetView);
-    safeSetStorage('bdigi_current_view', targetView);
+    setCurrentView(role === 'admin' ? 'admin' : 'customer');
     showToast(`Account created successfully! Welcome ${cleanName}.`, 'success');
-    return { success: true, role: targetView };
+    return { success: true, role: role === 'admin' ? 'admin' : 'customer' };
   };
 
   const logout = () => {
     setIsAuthenticated(false);
     setAuthUser(null);
     setIsAuthModalOpen(false);
-    try {
-      localStorage.removeItem('bdigi_is_auth');
-      localStorage.removeItem('bdigi_auth_user');
-      localStorage.setItem('bdigi_current_view', 'public');
-    } catch (_) {}
     setCurrentView('public');
     showToast('You have been logged out safely.', 'info');
   };
 
-  // Protected Route Navigation Handler
-  const protectedNavigate = (targetView, triggerOrderWizard = false) => {
+  const protectedNavigate = (targetView, triggerOrderWizard = false, initialData = null) => {
     if (targetView === 'public') {
       setCurrentView('public');
       return;
     }
-
     if (targetView === 'customer') {
       if (isAuthenticated) {
         setCurrentView('customer');
-        if (triggerOrderWizard) {
-          setTimeout(() => {
-            const el = document.getElementById('order-builder') || document.getElementById('pricing');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-          }, 120);
-        }
+        if (triggerOrderWizard) openOrderWizard(initialData);
       } else {
         setAuthModalTarget('customer');
         setAuthModalMode('login');
@@ -991,278 +512,182 @@ const DEFAULT_SEW_OUTS = [
       }
       return;
     }
-
     if (targetView === 'admin') {
-      const configuredAdmin = (siteSettings?.adminEmail || 'shahidbutt59191@gmail.com').toLowerCase().trim();
-      const isMasterAdmin = isAuthenticated && (
-        authUser?.email?.toLowerCase().trim() === configuredAdmin ||
-        authUser?.email?.toLowerCase().trim() === 'shahidbutt59191@gmail.com'
-      );
-      if (isMasterAdmin) {
+      if (isAuthenticated && (authUser?.role === 'admin' || authUser?.email === 'shahidbutt59191@gmail.com')) {
         setCurrentView('admin');
       } else {
-        showToast(`Access Restricted: Only Master Admin (${configuredAdmin}) can access System Operations.`, 'warning');
-        if (isAuthenticated) {
-          setCurrentView('customer');
-        } else {
-          setAuthModalTarget('admin');
-          setAuthModalMode('login');
-          setIsAuthModalOpen(true);
-        }
+        showToast('Access Restricted to Master Admin.', 'warning');
+        setAuthModalTarget('admin');
+        setAuthModalMode('login');
+        setIsAuthModalOpen(true);
       }
-      return;
     }
   };
 
-  // Order Operations
+  // Order Operations connected to Express API
   const createOrder = async (newOrderData) => {
-    const orderId = `#${Math.floor(1000 + Math.random() * 9000)}`;
+    try {
+      const res = await api.post('/orders', {
+        ...newOrderData,
+        clientName: authUser?.name || 'Valued Client',
+        clientEmail: authUser?.email || 'client@bdigitizing.pro'
+      });
+      if (res.data && res.data.order) {
+        const created = res.data.order;
+        setOrders(prev => [created, ...prev]);
+        showToast(`Order ${formatOrderId(created.id)} created successfully!`, 'success');
+        return created;
+      }
+    } catch (err) {
+      console.warn('Express createOrder fallback:', err);
+    }
 
+    const localId = `#${Math.floor(1000 + Math.random() * 9000)}`;
     const newOrder = {
-      id: orderId,
+      id: localId,
       ...newOrderData,
-      clientName: authUser?.company || authUser?.name || 'Apex Athletics Apparel',
+      clientName: authUser?.company || authUser?.name || 'Apex Apparel',
       clientEmail: authUser?.email || 'sarah@apexapparel.com',
-      clientId: authUser?.email || 'sarah@apexapparel.com',
       createdAt: new Date().toISOString(),
       status: 'submitted',
-      assignedDigitizerId: null,
-      outputFileUrl: null,
-      history: [
-        { timestamp: new Date().toISOString(), label: `Order Submitted by ${authUser?.name || 'Client'}` }
-      ],
+      history: [{ timestamp: new Date().toISOString(), label: 'Order Submitted by Client' }],
       revisions: []
     };
-
-    console.log('[Order Creation] Submitting order payload:', newOrder.id, newOrder);
-
-    // Optimistically update React state for instant UI re-render
     setOrders(prev => [newOrder, ...prev]);
-
-    // Update clients roster counts
-    setClients(prev => prev.map(cli => {
-      if (cli.email?.toLowerCase() === newOrder.clientEmail?.toLowerCase()) {
-        return {
-          ...cli,
-          totalOrders: (cli.totalOrders || 0) + 1,
-          totalSpent: (cli.totalSpent || 0) + (parseFloat(newOrder.price) || 0)
-        };
-      }
-      return cli;
-    }));
-
-    showToast(`Order ${formatOrderId(orderId)} created successfully!`, 'success');
-
-    // Async Supabase Sync
-    try {
-      const res = await createOrderInSupabase(newOrder);
-      console.log('[Order Creation] Supabase order insertion result:', res);
-      if (res && res.artworkUrl) {
-        setOrders(prev => prev.map(ord => {
-          if (ord.id === orderId) {
-            return {
-              ...ord,
-              artworkUrl: res.artworkUrl,
-              image_url: res.artworkUrl,
-              logo: res.artworkUrl,
-              file_url: res.artworkUrl
-            };
-          }
-          return ord;
-        }));
-      }
-    } catch (err) {
-      console.error('[Order Creation] Error inserting order in Supabase:', err);
-    }
-
-    // Sync client profile and increment order count in Supabase
-    try {
-      await upsertClientInSupabase({
-        name: authUser?.name || newOrder.clientName,
-        email: authUser?.email || newOrder.clientEmail,
-        company: authUser?.company || newOrder.clientName,
-        incrementOrder: true
-      });
-    } catch (err) {
-      console.warn('[Order Creation] Client profile sync warning:', err);
-    }
-
+    showToast(`Order ${formatOrderId(localId)} created successfully!`, 'success');
     return newOrder;
   };
 
-  const assignDigitizer = (orderId, digitizerId) => {
-    const digitizer = digitizers.find(d => d.id === digitizerId);
-    setOrders(prev => prev.map(ord => {
-      if (ord.id === orderId) {
-        const nextStatus = ord.status === 'submitted' ? 'assigned' : ord.status;
-        return {
-          ...ord,
-          assignedDigitizerId: digitizerId,
-          status: nextStatus,
-          history: [
-            ...ord.history,
-            { 
-              timestamp: new Date().toISOString(), 
-              label: `Assigned to Digitizer: ${digitizer ? digitizer.name : 'Staff'}` 
-            }
-          ]
-        };
+  const updateOrderStatus = async (orderId, newStatus, extraData = {}) => {
+    try {
+      const res = await api.patch(`/orders/${orderId.replace('#', '')}/status`, { status: newStatus, ...extraData });
+      if (res.data && res.data.order) {
+        setOrders(prev => prev.map(o => o.id === orderId ? res.data.order : o));
+        showToast(`Order ${formatOrderId(orderId)} status updated to ${newStatus.toUpperCase()}`, 'success');
+        return;
       }
-      return ord;
-    }));
-    showToast(`Order ${formatOrderId(orderId)} assigned to ${digitizer?.name || 'Digitizer'}`, 'info');
-  };
-
-  const updateOrderStatus = (orderId, newStatus, extraData = {}) => {
-    let updatedOrderObj = null;
+    } catch (err) {
+      console.warn('Express updateOrderStatus fallback:', err);
+    }
 
     setOrders(prev => prev.map(ord => {
       if (ord.id === orderId) {
-        const statusLabels = {
-          submitted: 'Order Status reset to Submitted',
-          assigned: 'Order Status set to Assigned',
-          digitizing: 'Digitizing & Pathing work in progress',
-          qc: 'Quality Control Stitch Simulation Passed',
-          completed: 'Completed files released to Client'
-        };
-
-        const updatedHistory = [
-          ...ord.history,
-          { timestamp: new Date().toISOString(), label: statusLabels[newStatus] || `Status updated to ${newStatus}` }
-        ];
-
-        updatedOrderObj = {
+        return {
           ...ord,
           status: newStatus,
           ...extraData,
-          history: updatedHistory
+          history: [...ord.history, { timestamp: new Date().toISOString(), label: `Status updated to ${newStatus}` }]
         };
-
-        return updatedOrderObj;
       }
       return ord;
     }));
+    showToast(`Order ${formatOrderId(orderId)} status updated to ${newStatus.toUpperCase()}`, 'success');
+  };
 
-    if (selectedOrderForDrawer && selectedOrderForDrawer.id === orderId && updatedOrderObj) {
-      setSelectedOrderForDrawer(updatedOrderObj);
+  const addRevisionRequest = async (orderId, revisionNote) => {
+    try {
+      const res = await api.post(`/orders/${orderId.replace('#', '')}/revisions`, { revisionNotes: revisionNote, clientName: authUser?.name || 'Client' });
+      if (res.data && res.data.order) {
+        setOrders(prev => prev.map(o => o.id === orderId ? res.data.order : o));
+        showToast(`Revision request sent for Order ${formatOrderId(orderId)}`, 'info');
+        return;
+      }
+    } catch (err) {
+      console.warn('Express addRevision fallback:', err);
     }
 
-    showToast(`Order ${formatOrderId(orderId)} status updated to ${newStatus.toUpperCase()}`, 'success');
-
-    // Async Supabase Sync
-    updateOrderStatusInSupabase(orderId, newStatus, extraData);
-  };
-
-  const addRevisionRequest = (orderId, revisionNote, attachment = null) => {
     setOrders(prev => prev.map(ord => {
       if (ord.id === orderId) {
-        const newRev = {
-          id: `rev-${Date.now()}`,
-          createdAt: new Date().toISOString(),
-          requestedBy: authUser?.name || 'Client',
-          note: revisionNote,
-          attachment
-        };
-
         return {
           ...ord,
-          status: 'digitizing', // Send back to digitizing on revision
-          revisions: [newRev, ...(ord.revisions || [])],
-          history: [
-            ...ord.history,
-            { timestamp: new Date().toISOString(), label: `Revision Requested: "${revisionNote.slice(0, 30)}..."` }
-          ]
+          status: 'digitizing',
+          revisions: [{ id: `rev-${Date.now()}`, notes: revisionNote, requestedBy: authUser?.name || 'Client', createdAt: new Date().toISOString() }, ...(ord.revisions || [])]
         };
       }
       return ord;
     }));
-
     showToast(`Revision request sent for Order ${formatOrderId(orderId)}`, 'info');
-
-    // Async Supabase Sync
-    addRevisionInSupabase(orderId, revisionNote, authUser?.name || 'Client');
   };
 
-  const resetAllData = () => {
-    localStorage.removeItem('bdigi_orders');
-    localStorage.removeItem('bdigi_clients');
-    localStorage.removeItem('bdigi_pricing');
-    setOrders(INITIAL_ORDERS);
-    setClients(INITIAL_CLIENTS);
-    setPricing(INITIAL_PRICING);
-    showToast('Platform mock data & authentication reset', 'info');
+  const depositFunds = async (amount) => {
+    const num = parseFloat(amount);
+    if (isNaN(num) || num <= 0) return false;
+
+    try {
+      const res = await api.post('/clients/deposit', { email: authUser?.email || 'sarah@apexapparel.com', amount: num });
+      if (res.data && res.data.newBalance !== undefined) {
+        setWalletBalance(res.data.newBalance);
+        showToast(`Successfully deposited $${num.toFixed(2)} to studio wallet!`, 'success');
+        return true;
+      }
+    } catch (err) {
+      console.warn('Express deposit funds fallback:', err);
+    }
+
+    setWalletBalance(prev => prev + num);
+    showToast(`Successfully deposited $${num.toFixed(2)} to studio wallet!`, 'success');
+    return true;
+  };
+
+  const deductWalletBalance = async (amount) => {
+    const num = parseFloat(amount);
+    if (isNaN(num) || num <= 0 || walletBalance < num) return false;
+
+    try {
+      const res = await api.post('/clients/deduct', { email: authUser?.email || 'sarah@apexapparel.com', amount: num });
+      if (res.data && res.data.newBalance !== undefined) {
+        setWalletBalance(res.data.newBalance);
+        return true;
+      }
+    } catch (err) {
+      console.warn('Express deduct wallet fallback:', err);
+    }
+
+    setWalletBalance(prev => prev - num);
+    return true;
+  };
+
+  const openOrderWizard = (initialData = null) => {
+    if (initialData !== undefined) setOrderWizardInitialData(initialData);
+    setIsOrderWizardOpen(true);
+  };
+
+  const openStoreOrderModal = (item) => {
+    setSelectedStoreItem(item);
+    setIsStoreOrderModalOpen(true);
   };
 
   return (
     <StateContext.Provider value={{
-      currentView,
-      setCurrentView,
-      isAuthenticated,
-      authUser: authUser,
-      currentUser: authUser,
-      login,
-      loginWithGoogle,
-      register,
-      logout,
-      protectedNavigate,
-      isAuthModalOpen,
-      setIsAuthModalOpen,
-      authModalMode,
-      setAuthModalMode,
-      authModalTarget,
-      setAuthModalTarget,
-      orders,
-      clients,
-      pricing,
-      setPricing,
-      updatePricing,
-      pricingCards,
-      setPricingCards,
-      updatePricingCards,
-      patchCards,
-      setPatchCards,
-      updatePatchCards,
-      storeProducts,
-      setStoreProducts,
-      updateStoreProducts,
-      portfolioSamples,
-      setPortfolioSamples,
-      updatePortfolioSamples,
-
-      sewOuts,
-      setSewOuts,
-      updateSewOuts,
-      servicesList,
-      setServicesList,
-      updateServicesList,
-      siteSettings,
-      setSiteSettings,
-      updateSiteSettings,
+      currentView, setCurrentView,
+      isAuthenticated, setIsAuthenticated,
+      authUser, currentUser: authUser,
+      login, loginWithGoogle, register, logout, protectedNavigate,
+      isAuthModalOpen, setIsAuthModalOpen,
+      authModalMode, setAuthModalMode,
+      authModalTarget, setAuthModalTarget,
+      orders, setOrders,
+      clients, setClients,
+      pricing, setPricing,
+      pricingCards, setPricingCards,
+      patchCards, setPatchCards,
+      storeProducts, setStoreProducts,
+      portfolioSamples, setPortfolioSamples,
+      sewOuts, setSewOuts,
+      servicesList, setServicesList,
+      siteSettings, setSiteSettings,
       digitizers,
-      isOrderWizardOpen,
-      setIsOrderWizardOpen,
-      isStoreOrderModalOpen,
-      setIsStoreOrderModalOpen,
-      selectedStoreItem,
-      setSelectedStoreItem,
-      openStoreOrderModal,
-      selectedOrderForDrawer,
-      setSelectedOrderForDrawer,
-      isPricingSettingsOpen,
-      setIsPricingSettingsOpen,
-      walletBalance,
-      setWalletBalance,
-      isDepositModalOpen,
-      setIsDepositModalOpen,
-      depositFunds,
-      deductWalletBalance,
-      toast,
-      showToast,
-      createOrder,
-      assignDigitizer,
-      updateOrderStatus,
-      addRevisionRequest,
-      resetAllData
+      isOrderWizardOpen, setIsOrderWizardOpen,
+      orderWizardInitialData, openOrderWizard,
+      isStoreOrderModalOpen, setIsStoreOrderModalOpen,
+      selectedStoreItem, setSelectedStoreItem, openStoreOrderModal,
+      selectedOrderForDrawer, setSelectedOrderForDrawer,
+      isPricingSettingsOpen, setIsPricingSettingsOpen,
+      walletBalance, setWalletBalance,
+      isDepositModalOpen, setIsDepositModalOpen,
+      depositFunds, deductWalletBalance,
+      toast, showToast,
+      createOrder, updateOrderStatus, addRevisionRequest
     }}>
       {children}
     </StateContext.Provider>

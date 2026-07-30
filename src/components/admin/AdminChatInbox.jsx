@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppState, formatOrderId } from '../../context/StateContext';
 import { playNotificationSound } from '../../utils/audioNotification';

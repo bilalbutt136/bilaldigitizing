@@ -1,0 +1,14 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/admin-portal/page": "app/admin-portal/page.js",
+  "/login/page": "app/login/page.js",
+  "/portfolio/page": "app/portfolio/page.js",
+  "/page": "app/page.js",
+  "/client-portal/page": "app/client-portal/page.js",
+  "/custom-patches/page": "app/custom-patches/page.js",
+  "/secure-admin-login/page": "app/secure-admin-login/page.js",
+  "/services/vector-tracing/page": "app/services/vector-tracing/page.js",
+  "/services/embroidery-digitizing/page": "app/services/embroidery-digitizing/page.js",
+  "/signup/page": "app/signup/page.js",
+  "/store/page": "app/store/page.js"
+}

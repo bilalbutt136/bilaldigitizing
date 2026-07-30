@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { 
   Layers, 
@@ -18,7 +20,8 @@ import {
   DollarSign,
   Plus,
   Minus,
-  Zap
+  Zap,
+  Check
 } from 'lucide-react';
 
 export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTabs = false, initialTier = 'standard' }) => {
@@ -26,6 +29,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
   const { pricing = {}, createOrder, isAuthenticated, protectedNavigate, showToast } = useAppState();
 
   const [activeService, setActiveService] = useState(defaultService);
+  const [isOrderViewOpen, setIsOrderViewOpen] = useState(false);
 
   // Common Order State
   const [title, setTitle] = useState('');
@@ -133,6 +137,40 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
         if (!item.quantityInput || parseInt(item.quantityInput, 10) < 1) {
           return { ...item, quantity: 1, quantityInput: '1' };
         }
+      }
+      return item;
+    }));
+  };
+
+  const handlePlacementFileUpload = (itemId, files) => {
+    if (!files || files.length === 0) return;
+    const fileArray = Array.from(files);
+    const newFiles = fileArray.map(file => {
+      const fileName = file.name || 'artwork_file';
+      const fileExt = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';
+      const previewUrl = (file.type && file.type.startsWith('image/')) ? URL.createObjectURL(file) : null;
+      return {
+        id: `file_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        name: fileName,
+        size: (file.size / 1024).toFixed(1) + ' KB',
+        type: fileExt.toUpperCase() || 'FILE',
+        previewUrl,
+        rawFile: file
+      };
+    });
+
+    setPlacementItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return { ...item, files: [...(item.files || []), ...newFiles] };
+      }
+      return item;
+    }));
+  };
+
+  const removeFileFromPlacement = (itemId, fileId) => {
+    setPlacementItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return { ...item, files: (item.files || []).filter(f => f.id !== fileId) };
       }
       return item;
     }));
@@ -375,23 +413,23 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
           </p>
         </div>
 
-        {/* Category Header Badges (Only shown when browsing all services) */}
+        {/* Category Header Badges */}
         {!hideTabs && (
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
             <div style={{ background: '#0f172a', border: '1px solid var(--orange-500)', color: 'var(--orange-400)', padding: '0.4rem 1rem', borderRadius: '9999px', fontSize: '0.8rem', fontWeight: 800 }}>
               📁 Digital Studio Services (Instant File Download)
             </div>
             <div style={{ background: '#0f172a', border: '1px solid rgba(255, 122, 0, 0.4)', color: '#ffffff', padding: '0.4rem 1rem', borderRadius: '9999px', fontSize: '0.8rem', fontWeight: 800 }}>
-              🛍️ Physical Custom Apparel & Patch Shop (Worldwide Shipping)
+              📦 Physical Custom Patches (Worldwide Shipping)
             </div>
           </div>
         )}
 
-        {/* 5 Core Services Selector Tabs (Hidden when single dedicated service view active) */}
+        {/* 3 Core Services Selector Tabs */}
         {!hideTabs && (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
             gap: '0.85rem',
             marginBottom: '2.5rem'
           }}>
@@ -460,63 +498,278 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
               <span style={{ fontWeight: 800, fontSize: '0.925rem' }}>Physical Custom Patches</span>
               <span style={{ fontSize: '0.73rem', color: '#10b981', fontWeight: 700 }}>Physical Shipping</span>
             </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveService('tshirts')}
-              style={{
-                padding: '1.15rem 1rem',
-                borderRadius: '12px',
-                border: activeService === 'tshirts' ? '2px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
-                background: activeService === 'tshirts' ? 'linear-gradient(135deg, rgba(255,122,0,0.2) 0%, rgba(255,122,0,0.05) 100%)' : '#1e293b',
-                color: '#ffffff',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '0.5rem',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <Shirt size={24} style={{ color: activeService === 'tshirts' ? 'var(--orange-400)' : '#94a3b8' }} />
-              <span style={{ fontWeight: 800, fontSize: '0.925rem' }}>Custom T-Shirts</span>
-              <span style={{ fontSize: '0.73rem', color: '#10b981', fontWeight: 700 }}>Physical Shipping</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveService('caps')}
-              style={{
-                padding: '1.15rem 1rem',
-                borderRadius: '12px',
-                border: activeService === 'caps' ? '2px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
-                background: activeService === 'caps' ? 'linear-gradient(135deg, rgba(255,122,0,0.2) 0%, rgba(255,122,0,0.05) 100%)' : '#1e293b',
-                color: '#ffffff',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '0.5rem',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <HardHat size={24} style={{ color: activeService === 'caps' ? 'var(--orange-400)' : '#94a3b8' }} />
-              <span style={{ fontWeight: 800, fontSize: '0.925rem' }}>Caps & 3D Puff Hats</span>
-              <span style={{ fontSize: '0.73rem', color: '#10b981', fontWeight: 700 }}>Physical Shipping</span>
-            </button>
           </div>
         )}
 
-        {/* Main Form Grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '2rem',
-          alignItems: 'start'
-        }}>
-          
-          {/* Form Left Side */}
-          <form onSubmit={handleSubmitOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        {/* Pricing Cards View OR Order Configuration Form View */}
+        {!isOrderViewOpen ? (
+          <div style={{ marginTop: '1rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              <h3 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.5rem' }}>
+                Choose Your Embroidery Digitizing Package Tier
+              </h3>
+              <p style={{ color: '#94a3b8', fontSize: '0.95rem' }}>
+                Select a package tier below to open the dedicated order configuration form
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+              
+              {/* Basic Tier Card */}
+              <div
+                onClick={() => {
+                  setDigitizingPackageTier('basic');
+                  setIsOrderViewOpen(true);
+                }}
+                style={{
+                  background: '#1e293b',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  borderRadius: '16px',
+                  padding: '1.5rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.25s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.25)'
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#38bdf8', background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '0.25rem 0.6rem', borderRadius: '9999px', textTransform: 'uppercase' }}>
+                      ⚡ BASIC DIGITIZING
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>Small Logo</span>
+                  </div>
+
+                  <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.35rem 0' }}>
+                    Basic Digitizing
+                  </h3>
+
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.75rem' }}>
+                    <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--orange-400)' }}>$10.00</span>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>/ design</span>
+                  </div>
+
+                  <div style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Clock size={14} style={{ color: 'var(--orange-400)' }} /> 8–12 Hours Delivery
+                  </div>
+
+                  <p style={{ fontSize: '0.825rem', color: '#94a3b8', lineHeight: 1.45, marginBottom: '1.25rem' }}>
+                    Simple Left Chest / Small Logo up to 4.0". Ideal for simple text, monogramming, and clean logos.
+                  </p>
+
+                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem', color: '#cbd5e1' }}>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Check size={14} style={{ color: '#10b981' }} /> Up to 4" Left Chest / Hat Logo
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Check size={14} style={{ color: '#10b981' }} /> All machine formats (.DST, .PES, .EXP)
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Check size={14} style={{ color: '#10b981' }} /> Free native .EMB Wilcom source file
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Check size={14} style={{ color: '#10b981' }} /> 100% Free Unlimited Revisions
+                    </li>
+                  </ul>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn btn-primary-orange"
+                  style={{ width: '100%', height: '42px', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+                >
+                  Configure Basic Order <ArrowRight size={16} />
+                </button>
+              </div>
+
+              {/* Standard Tier Card */}
+              <div
+                onClick={() => {
+                  setDigitizingPackageTier('standard');
+                  setIsOrderViewOpen(true);
+                }}
+                style={{
+                  background: '#1e293b',
+                  border: '2.5px solid var(--orange-500)',
+                  borderRadius: '16px',
+                  padding: '1.5rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.25s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 12px 36px rgba(255, 122, 0, 0.22)',
+                  position: 'relative'
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#fb923c', background: 'rgba(251, 146, 60, 0.15)', border: '1px solid rgba(251, 146, 60, 0.3)', padding: '0.25rem 0.6rem', borderRadius: '9999px', textTransform: 'uppercase' }}>
+                      ⭐ MOST POPULAR • STANDARD
+                    </span>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>
+                      POPULAR
+                    </span>
+                  </div>
+
+                  <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.35rem 0' }}>
+                    Standard Digitizing
+                  </h3>
+
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.75rem' }}>
+                    <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--orange-400)' }}>$15.00</span>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>/ design</span>
+                  </div>
+
+                  <div style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Clock size={14} style={{ color: 'var(--orange-400)' }} /> 8–12 Hours Standard Delivery
+                  </div>
+
+                  <p style={{ fontSize: '0.825rem', color: '#94a3b8', lineHeight: 1.45, marginBottom: '1.25rem' }}>
+                    Standard Left Chest, Cap & Sleeve Logos up to 5.0" with detailed pathing & density balance.
+                  </p>
+
+                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem', color: '#cbd5e1' }}>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Check size={14} style={{ color: '#10b981' }} /> Left Chest, Cap & Sleeve Logos up to 5.0"
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Check size={14} style={{ color: '#10b981' }} /> Optimized stitch density & fabric pathing
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Check size={14} style={{ color: '#10b981' }} /> Free 3D Puff / Flat cap pathing
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Check size={14} style={{ color: '#10b981' }} /> 100% Free Unlimited Revisions
+                    </li>
+                  </ul>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn btn-primary-orange"
+                  style={{ width: '100%', height: '42px', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+                >
+                  Configure Standard Order <ArrowRight size={16} />
+                </button>
+              </div>
+
+              {/* Premium Tier Card */}
+              <div
+                onClick={() => {
+                  setDigitizingPackageTier('premium');
+                  setIsOrderViewOpen(true);
+                }}
+                style={{
+                  background: '#1e293b',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  borderRadius: '16px',
+                  padding: '1.5rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.25s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.25)'
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#a855f7', background: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)', padding: '0.25rem 0.6rem', borderRadius: '9999px', textTransform: 'uppercase' }}>
+                      ✨ VIP & JACKET BACK • PREMIUM
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>Jacket Back</span>
+                  </div>
+
+                  <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.35rem 0' }}>
+                    Premium Digitizing
+                  </h3>
+
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.75rem' }}>
+                    <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--orange-400)' }}>$25.00</span>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>/ design</span>
+                  </div>
+
+                  <div style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Clock size={14} style={{ color: '#10b981' }} /> 12–24 Hours Priority
+                  </div>
+
+                  <p style={{ fontSize: '0.825rem', color: '#94a3b8', lineHeight: 1.45, marginBottom: '1.25rem' }}>
+                    Large crests, full jacket backs (9"-12"+), complex 3D puff, and high stitch-count designs.
+                  </p>
+
+                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem', color: '#cbd5e1' }}>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Check size={14} style={{ color: '#10b981' }} /> Large crests & jacket backs (9"-12"+)
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Check size={14} style={{ color: '#10b981' }} /> Complex 3D Puff & multi-layer pathing
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Check size={14} style={{ color: '#10b981' }} /> Free machine simulation sew-out proof
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Check size={14} style={{ color: '#10b981' }} /> 24/7 Priority studio desk support
+                    </li>
+                  </ul>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn btn-primary-orange"
+                  style={{ width: '100%', height: '42px', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+                >
+                  Configure Premium Order <ArrowRight size={16} />
+                </button>
+              </div>
+
+            </div>
+          </div>
+        ) : (
+          /* Dedicated Order Configuration View */
+          <div>
+            {/* Back Action Bar */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+              <button
+                type="button"
+                onClick={() => setIsOrderViewOpen(false)}
+                style={{
+                  background: '#1e293b',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: '#cbd5e1',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                ← Back to Pricing Packages
+              </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Selected Tier:</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--orange-400)', background: 'rgba(255, 122, 0, 0.15)', padding: '0.25rem 0.75rem', borderRadius: '9999px', border: '1px solid var(--orange-500)', textTransform: 'uppercase' }}>
+                  {digitizingPackageTier} Digitizing Package
+                </span>
+              </div>
+            </div>
+
+            {/* Main Form Grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '2rem',
+              alignItems: 'start'
+            }}>
+              
+              {/* Form Left Side */}
+              <form onSubmit={handleSubmitOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             
             {/* Step 1: Title & File Upload */}
             <div className="card" style={{ padding: '1.75rem', background: '#1e293b', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px' }}>
@@ -589,74 +842,248 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                     <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#cbd5e1', marginBottom: '0.65rem' }}>
                       Select Pricing Package Tier *
                     </label>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.85rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem' }}>
+                      {/* Basic Card */}
                       <div
                         onClick={() => setDigitizingPackageTier('basic')}
                         style={{
-                          border: digitizingPackageTier === 'basic' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.15)',
-                          background: digitizingPackageTier === 'basic' ? 'linear-gradient(135deg, rgba(255, 122, 0, 0.25) 0%, rgba(255, 122, 0, 0.1) 100%)' : '#0f172a',
-                          boxShadow: digitizingPackageTier === 'basic' ? '0 6px 20px rgba(255, 122, 0, 0.28)' : 'none',
-                          padding: '0.85rem',
-                          borderRadius: '10px',
+                          border: digitizingPackageTier === 'basic' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
+                          background: digitizingPackageTier === 'basic' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
+                          boxShadow: digitizingPackageTier === 'basic' ? '0 8px 25px rgba(255, 122, 0, 0.28)' : 'none',
+                          padding: '1.25rem 1rem',
+                          borderRadius: '12px',
                           cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          position: 'relative'
+                          transition: 'all 0.25s ease',
+                          position: 'relative',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between'
                         }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase' }}>⚡ BASIC</div>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginBottom: '0.65rem',
+                          paddingBottom: '0.5rem',
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                        }}>
+                          <span style={{
+                            fontSize: '0.7rem',
+                            fontWeight: 800,
+                            color: '#38bdf8',
+                            background: 'rgba(56, 189, 248, 0.15)',
+                            border: '1px solid rgba(56, 189, 248, 0.3)',
+                            padding: '0.25rem 0.6rem',
+                            borderRadius: '9999px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em'
+                          }}>
+                            ⚡ ESSENTIAL TIER
+                          </span>
                           {digitizingPackageTier === 'basic' && (
-                            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>✓ Selected</span>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.15rem 0.5rem', borderRadius: '9999px', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                              <Check size={11} /> Selected
+                            </span>
                           )}
                         </div>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$5.00 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ design</span></div>
-                        <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>Simple Left Chest / Small Logo (up to 4")</div>
+
+                        <div>
+                          <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.25rem 0' }}>
+                            Basic Digitizing
+                          </h4>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.5rem' }}>
+                            <span style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--orange-400)' }}>$10.00</span>
+                            <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 600 }}>/ design</span>
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 700, marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <Clock size={13} style={{ color: 'var(--orange-400)' }} /> 8 - 12 Hours Delivery
+                          </div>
+                          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.78rem', color: '#cbd5e1' }}>
+                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <Check size={13} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
+                              <span>Simple left chest & small logos up to 4.0"</span>
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <Check size={13} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
+                              <span>All machine formats (.DST, .PES, .EXP)</span>
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <Check size={13} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
+                              <span>Essential stitch pathing & underlay</span>
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <Check size={13} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
+                              <span>Free native .EMB Wilcom source file</span>
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <Check size={13} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
+                              <span>100% Free Unlimited Revisions</span>
+                            </li>
+                          </ul>
+                        </div>
                       </div>
 
+                      {/* Standard Card */}
                       <div
                         onClick={() => setDigitizingPackageTier('standard')}
                         style={{
-                          border: digitizingPackageTier === 'standard' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.15)',
-                          background: digitizingPackageTier === 'standard' ? 'linear-gradient(135deg, rgba(255, 122, 0, 0.25) 0%, rgba(255, 122, 0, 0.1) 100%)' : '#0f172a',
-                          boxShadow: digitizingPackageTier === 'standard' ? '0 6px 20px rgba(255, 122, 0, 0.28)' : 'none',
-                          padding: '0.85rem',
-                          borderRadius: '10px',
+                          border: digitizingPackageTier === 'standard' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
+                          background: digitizingPackageTier === 'standard' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
+                          boxShadow: digitizingPackageTier === 'standard' ? '0 8px 25px rgba(255, 122, 0, 0.28)' : 'none',
+                          padding: '1.25rem 1rem',
+                          borderRadius: '12px',
                           cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          position: 'relative'
+                          transition: 'all 0.25s ease',
+                          position: 'relative',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between'
                         }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase' }}>🏆 STANDARD</div>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginBottom: '0.65rem',
+                          paddingBottom: '0.5rem',
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                        }}>
+                          <span style={{
+                            fontSize: '0.7rem',
+                            fontWeight: 800,
+                            color: '#fb923c',
+                            background: 'rgba(251, 146, 60, 0.15)',
+                            border: '1px solid rgba(251, 146, 60, 0.3)',
+                            padding: '0.25rem 0.6rem',
+                            borderRadius: '9999px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em'
+                          }}>
+                            ⭐ MOST POPULAR • STANDARD
+                          </span>
                           {digitizingPackageTier === 'standard' && (
-                            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>✓ Selected</span>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.15rem 0.5rem', borderRadius: '9999px', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                              <Check size={11} /> Selected
+                            </span>
                           )}
                         </div>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$10.00 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ design</span></div>
-                        <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>Standard Left Chest, Cap & Sleeve Logos</div>
+
+                        <div>
+                          <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.25rem 0' }}>
+                            Standard Digitizing
+                          </h4>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.5rem' }}>
+                            <span style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--orange-400)' }}>$15.00</span>
+                            <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 600 }}>/ design</span>
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 700, marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <Clock size={13} style={{ color: 'var(--orange-400)' }} /> 8 - 12 Hours Express
+                          </div>
+                          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.78rem', color: '#cbd5e1' }}>
+                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <Check size={13} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
+                              <span>Medium chest, cap & sleeve logos up to 8.0"</span>
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <Check size={13} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
+                              <span>3D Puff cap foam density pathing</span>
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <Check size={13} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
+                              <span>Includes free native .EMB source file</span>
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <Check size={13} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
+                              <span>All commercial machine formats</span>
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <Check size={13} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
+                              <span>100% Free Unlimited Revisions</span>
+                            </li>
+                          </ul>
+                        </div>
                       </div>
 
+                      {/* Premium Card */}
                       <div
                         onClick={() => setDigitizingPackageTier('premium')}
                         style={{
-                          border: digitizingPackageTier === 'premium' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.15)',
-                          background: digitizingPackageTier === 'premium' ? 'linear-gradient(135deg, rgba(255, 122, 0, 0.25) 0%, rgba(255, 122, 0, 0.1) 100%)' : '#0f172a',
-                          boxShadow: digitizingPackageTier === 'premium' ? '0 6px 20px rgba(255, 122, 0, 0.28)' : 'none',
-                          padding: '0.85rem',
-                          borderRadius: '10px',
+                          border: digitizingPackageTier === 'premium' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
+                          background: digitizingPackageTier === 'premium' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
+                          boxShadow: digitizingPackageTier === 'premium' ? '0 8px 25px rgba(255, 122, 0, 0.28)' : 'none',
+                          padding: '1.25rem 1rem',
+                          borderRadius: '12px',
                           cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          position: 'relative'
+                          transition: 'all 0.25s ease',
+                          position: 'relative',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between'
                         }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase' }}>✨ PREMIUM</div>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginBottom: '0.65rem',
+                          paddingBottom: '0.5rem',
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                        }}>
+                          <span style={{
+                            fontSize: '0.7rem',
+                            fontWeight: 800,
+                            color: '#c084fc',
+                            background: 'rgba(192, 132, 252, 0.15)',
+                            border: '1px solid rgba(192, 132, 252, 0.3)',
+                            padding: '0.25rem 0.6rem',
+                            borderRadius: '9999px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em'
+                          }}>
+                            ✨ VIP & JACKET BACK • PREMIUM
+                          </span>
                           {digitizingPackageTier === 'premium' && (
-                            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>✓ Selected</span>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.15rem 0.5rem', borderRadius: '9999px', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                              <Check size={11} /> Selected
+                            </span>
                           )}
                         </div>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$20.00 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ design</span></div>
-                        <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>Jacket Back, Large Crest & 3D Puff</div>
+
+                        <div>
+                          <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.25rem 0' }}>
+                            Premium Digitizing
+                          </h4>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.5rem' }}>
+                            <span style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--orange-400)' }}>$25.00</span>
+                            <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 600 }}>/ design</span>
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 700, marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <Clock size={13} style={{ color: 'var(--orange-400)' }} /> 12 - 24 Hours Priority
+                          </div>
+                          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.78rem', color: '#cbd5e1' }}>
+                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <Check size={13} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
+                              <span>Large crests & jacket backs (9"-12"+)</span>
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <Check size={13} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
+                              <span>Complex 3D Puff & multi-layer pathing</span>
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <Check size={13} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
+                              <span>Free machine simulation sew-out proof</span>
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <Check size={13} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
+                              <span>24/7 Priority studio desk support</span>
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <Check size={13} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
+                              <span>100% Free Unlimited Revisions</span>
+                            </li>
+                          </ul>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -807,6 +1234,66 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                                   onChange={(e) => updatePlacementItem(item.id, 'specificNotes', e.target.value)}
                                   style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem' }}
                                 />
+                              </div>
+
+                              {/* Dedicated File Upload Zone Bound to this Specific Placement Item */}
+                              <div style={{ gridColumn: 'span 2', background: '#1e293b', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', marginTop: '0.35rem' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                                  <span>📎 Reference Artwork File for {option?.label || `Placement #${index + 1}`} *</span>
+                                  {item.files && item.files.length > 0 && (
+                                    <span style={{ color: 'var(--orange-400)', fontWeight: 800 }}>{item.files.length} File{item.files.length > 1 ? 's' : ''} Attached</span>
+                                  )}
+                                </label>
+
+                                <div
+                                  onClick={() => document.getElementById(`plc-file-input-${item.id}`)?.click()}
+                                  style={{
+                                    border: '1.5px dashed rgba(255, 122, 0, 0.45)',
+                                    background: '#0f172a',
+                                    borderRadius: '8px',
+                                    padding: '0.65rem 0.85rem',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.5rem'
+                                  }}
+                                >
+                                  <Upload size={15} style={{ color: 'var(--orange-400)' }} />
+                                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#e2e8f0' }}>
+                                    Upload File for {option?.label || `Placement #${index + 1}`}
+                                  </span>
+                                  <input
+                                    type="file"
+                                    id={`plc-file-input-${item.id}`}
+                                    multiple
+                                    style={{ display: 'none' }}
+                                    onChange={(e) => handlePlacementFileUpload(item.id, e.target.files)}
+                                  />
+                                </div>
+
+                                {/* Uploaded files bound to this placement item */}
+                                {item.files && item.files.length > 0 && (
+                                  <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                                    {item.files.map(f => (
+                                      <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.35rem 0.6rem', background: '#0f172a', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.75rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                          {f.previewUrl ? (
+                                            <img src={f.previewUrl} alt={f.name} style={{ width: '20px', height: '20px', objectFit: 'cover', borderRadius: '4px' }} />
+                                          ) : (
+                                            <FileCode size={13} style={{ color: 'var(--orange-400)' }} />
+                                          )}
+                                          <span style={{ fontWeight: 700, color: '#ffffff' }}>{f.name}</span>
+                                          <span style={{ color: '#94a3b8', fontSize: '0.68rem' }}>({f.size})</span>
+                                        </div>
+                                        <button type="button" onClick={() => removeFileFromPlacement(item.id, f.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}>
+                                          <Trash2 size={13} />
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
 
                             </div>
@@ -1100,69 +1587,64 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Patch Quantity (pcs)</label>
-                    <input type="number" min="10" step="5" value={patchQuantity} onChange={(e) => setPatchQuantity(Number(e.target.value))} className="form-control" style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800 }} />
-                  </div>
-                </div>
-              )}
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#cbd5e1', marginBottom: '0.4rem' }}>
+                      Select Patch Quantity (Preset Steps or Custom) *
+                    </label>
 
-              {/* 4. CUSTOM T-SHIRTS */}
-              {activeService === 'tshirts' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Shirt Color</label>
-                      <input type="text" value={tshirtColor} onChange={(e) => setTshirtColor(e.target.value)} className="form-control" style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)' }} />
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Logo Placement</label>
-                      <select value={tshirtPlacement} onChange={(e) => setTshirtPlacement(e.target.value)} className="form-control" style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)' }}>
-                        <option value="Left Chest Embroidery">Left Chest Embroidery</option>
-                        <option value="Full Center Chest">Full Center Chest</option>
-                        <option value="Sleeve Logo">Sleeve Logo</option>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.75rem', alignItems: 'center', marginBottom: '0.65rem' }}>
+                      <select
+                        value={[100, 200, 300, 400, 500, 1000].includes(patchQuantity) ? patchQuantity : 'custom'}
+                        onChange={(e) => {
+                          if (e.target.value !== 'custom') {
+                            setPatchQuantity(parseInt(e.target.value, 10));
+                          }
+                        }}
+                        className="form-control"
+                        style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800 }}
+                      >
+                        <option value="100">100 Pcs (Standard Min Tier)</option>
+                        <option value="200">200 Pcs (Package Batch)</option>
+                        <option value="300">300 Pcs (Mid Tier)</option>
+                        <option value="400">400 Pcs (Bulk Tier)</option>
+                        <option value="500">500 Pcs (Volume Saver)</option>
+                        <option value="1000">1000 Pcs (Wholesale VIP)</option>
+                        <option value="custom">Custom Quantity...</option>
                       </select>
-                    </div>
-                  </div>
 
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.5rem' }}>Size Quantity Breakdown (S - 3XL)</label>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.5rem' }}>
-                      {['S', 'M', 'L', 'XL', '2XL', '3XL'].map(sz => (
-                        <div key={sz} style={{ textAlign: 'center' }}>
-                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8' }}>{sz}</span>
-                          <input type="number" min="0" value={tshirtSizes[sz] || 0} onChange={(e) => setTshirtSizes(prev => ({ ...prev, [sz]: Number(e.target.value) }))} className="form-control" style={{ padding: '0.3rem', textAlign: 'center', background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800 }} />
-                        </div>
+                      <input 
+                        type="number" 
+                        min="10" 
+                        step="5" 
+                        value={patchQuantity} 
+                        onChange={(e) => setPatchQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))} 
+                        className="form-control" 
+                        placeholder="Custom Pcs"
+                        style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800 }} 
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                      {[100, 200, 300, 400, 500, 1000].map(qty => (
+                        <button
+                          key={qty}
+                          type="button"
+                          onClick={() => setPatchQuantity(qty)}
+                          style={{
+                            padding: '0.3rem 0.65rem',
+                            borderRadius: '6px',
+                            border: patchQuantity === qty ? '1.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.15)',
+                            background: patchQuantity === qty ? 'var(--orange-500)' : 'rgba(255,255,255,0.05)',
+                            color: '#ffffff',
+                            fontWeight: 800,
+                            fontSize: '0.75rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {qty} Pcs
+                        </button>
                       ))}
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 5. CUSTOM CAPS & 3D PUFF HATS */}
-              {activeService === 'caps' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Cap Style</label>
-                      <select value={capStyle} onChange={(e) => setCapStyle(e.target.value)} className="form-control" style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)' }}>
-                        <option value="Structured Snapback">Structured Snapback Cap</option>
-                        <option value="Dad Hat">Unstructured Dad Hat</option>
-                        <option value="Beanie">Knit Beanie Hat</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Cap Quantity (pcs)</label>
-                      <input type="number" min="6" step="6" value={capQuantity} onChange={(e) => setCapQuantity(Number(e.target.value))} className="form-control" style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800 }} />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#0f172a', padding: '0.85rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)' }}>
-                    <input type="checkbox" id="puff-check" checked={is3dPuff} onChange={(e) => setIs3dPuff(e.target.checked)} style={{ width: '18px', height: '18px', accentColor: 'var(--orange-500)' }} />
-                    <label htmlFor="puff-check" style={{ fontSize: '0.875rem', fontWeight: 700, color: '#ffffff', cursor: 'pointer' }}>
-                      Add 3D Foam Raised Embroidery (+ $2.00 / cap)
-                    </label>
                   </div>
                 </div>
               )}
@@ -1188,9 +1670,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                   <span>Selected Service:</span>
                   <strong style={{ color: 'var(--orange-400)' }}>
                     {activeService === 'digitizing' ? 'Embroidery Digitizing' :
-                     activeService === 'vector' ? 'Vector Tracing' :
-                     activeService === 'patches' ? 'Custom Patches' :
-                     activeService === 'tshirts' ? 'Custom T-Shirts' : 'Caps & 3D Puff Hats'}
+                     activeService === 'vector' ? 'Vector Tracing' : 'Custom Patches'}
                   </strong>
                 </div>
 
@@ -1250,11 +1730,54 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                   </>
                 )}
 
+                {activeService === 'vector' && (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
+                      <span>Selected Tier:</span>
+                      <strong style={{ color: '#ffffff', textTransform: 'capitalize' }}>
+                        {vectorComplexity === 'simple' ? 'Simple Redraw ($15.00/art)' : 'Complex Redraw ($25.00/art)'}
+                      </strong>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
+                      <span>Total Artworks:</span>
+                      <span style={{ color: '#ffffff', fontWeight: 700 }}>
+                        {vectorQuantity} {vectorQuantity === 1 ? 'Artwork' : 'Artworks'}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
+                      <span>Output Formats:</span>
+                      <span style={{ color: 'var(--orange-400)', fontWeight: 700 }}>
+                        {targetFormats.length} Formats Selected
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                {activeService === 'patches' && (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
+                      <span>Selected Style:</span>
+                      <strong style={{ color: '#ffffff' }}>
+                        {patchStyle} Patch ({patchBacking})
+                      </strong>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
+                      <span>Total Quantity:</span>
+                      <span style={{ color: 'var(--orange-400)', fontWeight: 800 }}>
+                        {patchQuantity} Pcs
+                      </span>
+                    </div>
+                  </>
+                )}
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
                   <span>Turnaround Guarantee:</span>
                   <span style={{ color: '#ffffff', fontWeight: 700 }}>
-                    {activeService === 'patches' || activeService === 'tshirts' || activeService === 'caps' 
-                      ? '2-4 Days Shipping' 
+                    {activeService === 'patches' 
+                      ? '📦 3-5 Days Worldwide Shipping' 
                       : (isRush && totalPlacementQuantity === 1)
                         ? '⚡ 2-4 Hours Super Rush' 
                         : '8-12 Hours Standard'}
@@ -1314,6 +1837,8 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
           </div>
 
         </div>
+      </div>
+      )}
 
       </div>
     </section>

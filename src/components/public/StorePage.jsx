@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { MerchandiseStore } from './MerchandiseStore';
 import { 

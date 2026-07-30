@@ -1,8 +1,11 @@
+'use client';
+
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { 
   Zap, 
+  Upload,
   UploadCloud, 
   Check, 
   CheckCircle2, 
@@ -33,27 +36,91 @@ export const VectorArtPage = () => {
     protectedNavigate
   } = useAppState();
 
-  // Form State
-  const [title, setTitle] = useState('');
-  const [serviceCategory, setServiceCategory] = useState('Simple Vector Redraw'); // 'Simple Vector Redraw' | 'Complex Vector Redraw'
+  // Multi-Item Vector Cart State
+  const [vectorItems, setVectorItems] = useState([
+    { id: 1, name: 'Vector Artwork #1', complexity: 'Simple Vector Redraw', quantity: 1, quantityInput: '1', notes: '', files: [] }
+  ]);
   const [colorMode, setColorMode] = useState('Spot Colors (Pantone/Solid)');
   const [requestedFormats, setRequestedFormats] = useState(['ai', 'eps', 'svg', 'pdf']);
-  const [quantity, setQuantity] = useState(1);
-  const [quantityInput, setQuantityInput] = useState('1');
   const [isRush, setIsRush] = useState(false);
-  const [notes, setNotes] = useState('');
   const [paymentOption, setPaymentOption] = useState('bolt'); // 'bolt' | 'wallet'
+  const [isOrderViewOpen, setIsOrderViewOpen] = useState(false);
 
-  React.useEffect(() => {
-    setQuantityInput(String(quantity));
-  }, [quantity]);
+  const addVectorItem = () => {
+    setVectorItems(prev => [
+      ...prev,
+      {
+        id: Date.now(),
+        name: `Vector Artwork #${prev.length + 1}`,
+        complexity: 'Simple Vector Redraw',
+        quantity: 1,
+        quantityInput: '1',
+        notes: '',
+        files: []
+      }
+    ]);
+  };
 
-  React.useEffect(() => {
-    if (quantity > 1 && isRush) {
-      setIsRush(false);
-    }
-  }, [quantity, isRush]);
-  
+  const removeVectorItem = (id) => {
+    if (vectorItems.length <= 1) return;
+    setVectorItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  const updateVectorItem = (id, field, value) => {
+    setVectorItems(prev => prev.map(item => {
+      if (item.id === id) {
+        if (field === 'quantity') {
+          const num = Math.max(1, parseInt(value, 10) || 1);
+          return { ...item, quantity: num, quantityInput: String(num) };
+        }
+        if (field === 'quantityInput') {
+          const raw = String(value);
+          if (raw === '') return { ...item, quantityInput: '' };
+          const clean = raw.replace(/\D/g, '');
+          if (clean === '') return { ...item, quantityInput: '' };
+          const parsed = parseInt(clean, 10);
+          return { ...item, quantityInput: String(parsed), quantity: parsed > 0 ? parsed : item.quantity };
+        }
+        return { ...item, [field]: value };
+      }
+      return item;
+    }));
+  };
+
+  const handleItemFileUpload = (itemId, files) => {
+    if (!files || files.length === 0) return;
+    const fileArray = Array.from(files);
+    const newFiles = fileArray.map(file => {
+      const fileName = file.name || 'artwork_file';
+      const fileExt = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';
+      const previewUrl = (file.type && file.type.startsWith('image/')) ? URL.createObjectURL(file) : null;
+      return {
+        id: `file_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        name: fileName,
+        size: (file.size / 1024).toFixed(1) + ' KB',
+        type: fileExt.toUpperCase() || 'FILE',
+        previewUrl,
+        rawFile: file
+      };
+    });
+
+    setVectorItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return { ...item, files: [...(item.files || []), ...newFiles] };
+      }
+      return item;
+    }));
+  };
+
+  const removeFileFromItem = (itemId, fileId) => {
+    setVectorItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return { ...item, files: (item.files || []).filter(f => f.id !== fileId) };
+      }
+      return item;
+    }));
+  };
+
   // File Upload State
   const [selectedAssets, setSelectedAssets] = useState([]);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -73,7 +140,7 @@ export const VectorArtPage = () => {
     );
   };
 
-  // Dynamic Price Calculation
+  // Dynamic Price Calculation across vectorItems
   const simpleRate = (pricing?.vectorSimpleRate && !isNaN(parseFloat(pricing.vectorSimpleRate)) && parseFloat(pricing.vectorSimpleRate) > 0)
     ? parseFloat(pricing.vectorSimpleRate)
     : 15.00;
@@ -86,12 +153,43 @@ export const VectorArtPage = () => {
     ? parseFloat(pricing.rushSurcharge)
     : 10.00;
 
-  const isComplexSelected = serviceCategory.toLowerCase().includes('complex');
-  const unitRate = isComplexSelected ? complexRate : simpleRate;
-  const basePrice = unitRate * quantity;
-  const allowRush = quantity === 1;
+  const superRushRate = complexRate + rushFeeAmount;
+
+  const safeVectorItems = Array.isArray(vectorItems) && vectorItems.length > 0 
+    ? vectorItems 
+    : [{ id: 1, name: 'Vector Artwork #1', complexity: 'Simple Vector Redraw', quantity: 1, quantityInput: '1', notes: '' }];
+
+  let basePrice = 0;
+  const vectorBreakdown = safeVectorItems.map((item, idx) => {
+    const compStr = (item.complexity || '').toLowerCase();
+    let itemRate = simpleRate;
+    if (compStr.includes('super rush') || compStr.includes('express')) {
+      itemRate = superRushRate;
+    } else if (compStr.includes('complex')) {
+      itemRate = complexRate;
+    } else {
+      itemRate = simpleRate;
+    }
+
+    const itemSubtotal = itemRate * (item.quantity || 1);
+    basePrice += itemSubtotal;
+
+    return {
+      index: idx + 1,
+      id: item.id || idx + 1,
+      name: item.name || `Vector Artwork #${idx + 1}`,
+      complexity: item.complexity || 'Simple Vector Redraw',
+      rate: itemRate,
+      quantity: item.quantity || 1,
+      subtotal: itemSubtotal,
+      notes: item.notes || ''
+    };
+  });
+
+  const totalVectorQuantity = safeVectorItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
+  const allowRush = totalVectorQuantity === 1;
   const rushSurcharge = (isRush && allowRush) ? rushFeeAmount : 0.00;
-  const totalPriceNum = Number(basePrice) + Number(rushSurcharge);
+  const totalPriceNum = basePrice + rushSurcharge;
   const totalPrice = totalPriceNum.toFixed(2);
 
   // File Upload Handling
@@ -164,16 +262,21 @@ export const VectorArtPage = () => {
     setIsSubmitting(true);
 
     try {
+      const firstItemName = vectorItems[0]?.name || 'Vector Art Order';
+      const orderTitle = title.trim() || `${firstItemName}${vectorItems.length > 1 ? ` (+${vectorItems.length - 1} more)` : ''}`;
+
       const newVectorOrder = {
         type: 'vector',
-        title: title.trim(),
-        serviceCategory,
+        title: orderTitle,
+        serviceCategory: 'Vector Art & Color Separation',
         placementType: 'Vector Art Redraw',
         colorMode,
         requestedFormats,
         isRush,
+        vectorItems,
+        vectorBreakdown,
+        totalQuantity: totalVectorQuantity,
         price: parseFloat(totalPrice),
-        notes,
         uploadedFiles: selectedAssets.map(ast => ast.name),
         artworkUrl: selectedAssets[0]?.previewUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=80',
         paymentMethod: paymentOption,
@@ -197,11 +300,11 @@ export const VectorArtPage = () => {
   };
 
   return (
-    <div style={{ background: 'var(--bg-main)', minHeight: '100vh', paddingBottom: '5rem' }}>
+    <div style={{ background: '#0b1329', minHeight: '100vh', paddingBottom: '5rem', color: '#ffffff' }}>
       
       {/* 1. Studio Header Banner */}
       <section style={{
-        background: 'linear-gradient(135deg, var(--navy-950) 0%, #0f172a 60%, #1e1b4b 100%)',
+        background: 'linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%)',
         color: '#ffffff',
         padding: '4.5rem 0 3.5rem',
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
@@ -275,13 +378,273 @@ export const VectorArtPage = () => {
         </div>
       </section>
 
-      {/* 2. Order Form Container */}
-      <div className="container" style={{ marginTop: '2.5rem' }}>
+      {/* 2. Pricing Tier Cards OR Order Configuration Form View */}
+      {!isOrderViewOpen ? (
+        <div className="container" style={{ marginTop: '2.5rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.5rem' }}>
+              Choose Your Vector Conversion Package Tier
+            </h2>
+            <p style={{ color: '#94a3b8', fontSize: '0.95rem' }}>
+              Select a package tier below to open the dedicated order configuration form
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+            
+            {/* Card 1: Simple Vector Redraw */}
+            <div
+              onClick={() => {
+                updateVectorItem(vectorItems[0]?.id || 1, 'complexity', 'Simple Vector Redraw');
+                setIsRush(false);
+                setIsOrderViewOpen(true);
+              }}
+              style={{
+                background: '#1e293b',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                cursor: 'pointer',
+                transition: 'all 0.25s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.25)'
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#38bdf8', background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '0.25rem 0.6rem', borderRadius: '9999px', textTransform: 'uppercase' }}>
+                    ⚡ SIMPLE REDRAW
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>Standard</span>
+                </div>
+
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.35rem 0' }}>
+                  Simple Vector Redraw
+                </h3>
+
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--orange-400)' }}>${simpleRate.toFixed(2)}</span>
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>/ design</span>
+                </div>
+
+                <div style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <Clock size={14} style={{ color: 'var(--orange-400)' }} /> 8–12 Hours Standard Delivery
+                </div>
+
+                <p style={{ fontSize: '0.825rem', color: '#94a3b8', lineHeight: 1.45, marginBottom: '1.25rem' }}>
+                  Logos with clean lines, solid color fills, text vectorization, and 1–3 solid color elements.
+                </p>
+
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem', color: '#cbd5e1' }}>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Check size={14} style={{ color: '#10b981' }} /> 100% Hand-drawn vector paths
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Check size={14} style={{ color: '#10b981' }} /> All formats (.AI, .EPS, .SVG, .PDF)
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Check size={14} style={{ color: '#10b981' }} /> Clean node reduction & pantone colors
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Check size={14} style={{ color: '#10b981' }} /> Free Unlimited Revisions
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-primary-orange"
+                style={{ width: '100%', height: '42px', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+              >
+                Configure Simple Order <ArrowRight size={16} />
+              </button>
+            </div>
+
+            {/* Card 2: Complex Vector Redraw */}
+            <div
+              onClick={() => {
+                updateVectorItem(vectorItems[0]?.id || 1, 'complexity', 'Complex Vector Redraw');
+                setIsRush(false);
+                setIsOrderViewOpen(true);
+              }}
+              style={{
+                background: '#1e293b',
+                border: '2.5px solid var(--orange-500)',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                cursor: 'pointer',
+                transition: 'all 0.25s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                boxShadow: '0 12px 36px rgba(255, 122, 0, 0.22)',
+                position: 'relative'
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#fb923c', background: 'rgba(251, 146, 60, 0.15)', border: '1px solid rgba(251, 146, 60, 0.3)', padding: '0.25rem 0.6rem', borderRadius: '9999px', textTransform: 'uppercase' }}>
+                    ⭐ MOST POPULAR • COMPLEX
+                  </span>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>
+                    POPULAR
+                  </span>
+                </div>
+
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.35rem 0' }}>
+                  Complex Vector Redraw
+                </h3>
+
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--orange-400)' }}>${complexRate.toFixed(2)}</span>
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>/ design</span>
+                </div>
+
+                <div style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <Clock size={14} style={{ color: 'var(--orange-400)' }} /> 8–12 Hours Standard Delivery
+                </div>
+
+                <p style={{ fontSize: '0.825rem', color: '#94a3b8', lineHeight: 1.45, marginBottom: '1.25rem' }}>
+                  Mascots, intricate crests, gradient shading, fine line details, and multi-color illustrations.
+                </p>
+
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem', color: '#cbd5e1' }}>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Check size={14} style={{ color: '#10b981' }} /> Multi-layer artwork & gradient meshes
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Check size={14} style={{ color: '#10b981' }} /> Precise color separations (Pantone/CMYK)
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Check size={14} style={{ color: '#10b981' }} /> High detail line art & mascot tracing
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Check size={14} style={{ color: '#10b981' }} /> Free Unlimited Revisions
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-primary-orange"
+                style={{ width: '100%', height: '42px', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+              >
+                Configure Complex Order <ArrowRight size={16} />
+              </button>
+            </div>
+
+            {/* Card 3: Super Rush Vector */}
+            <div
+              onClick={() => {
+                updateVectorItem(vectorItems[0]?.id || 1, 'complexity', 'Complex Vector Redraw');
+                setIsRush(true);
+                setIsOrderViewOpen(true);
+              }}
+              style={{
+                background: '#1e293b',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                cursor: 'pointer',
+                transition: 'all 0.25s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.25)'
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#a855f7', background: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)', padding: '0.25rem 0.6rem', borderRadius: '9999px', textTransform: 'uppercase' }}>
+                    ✨ EXPRESS • SUPER RUSH
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>Priority</span>
+                </div>
+
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.35rem 0' }}>
+                  Super Rush Vector
+                </h3>
+
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--orange-400)' }}>${(complexRate + rushFeeAmount).toFixed(2)}</span>
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>/ design</span>
+                </div>
+
+                <div style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <Clock size={14} style={{ color: '#10b981' }} /> 2–4 Hours Express Priority
+                </div>
+
+                <p style={{ fontSize: '0.825rem', color: '#94a3b8', lineHeight: 1.45, marginBottom: '1.25rem' }}>
+                  Urgent deadline delivery. Dedicated vector artist assigned immediately for 2-4 hour express turnaround.
+                </p>
+
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem', color: '#cbd5e1' }}>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Check size={14} style={{ color: '#10b981' }} /> 2–4 Hours Express Priority Delivery
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Check size={14} style={{ color: '#10b981' }} /> Dedicated lead vector artist assigned
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Check size={14} style={{ color: '#10b981' }} /> All formats (.AI, .EPS, .SVG, .PDF, .CDR)
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Check size={14} style={{ color: '#10b981' }} /> Priority revision turnaround
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-primary-orange"
+                style={{ width: '100%', height: '42px', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+              >
+                Configure Super Rush <ArrowRight size={16} />
+              </button>
+            </div>
+
+          </div>
+        </div>
+      ) : (
+        /* Dedicated Order Configuration View */
+        <div id="vector-order-form" className="container" style={{ marginTop: '2rem' }}>
+          
+          {/* Back Action Bar */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+            <button
+              type="button"
+              onClick={() => setIsOrderViewOpen(false)}
+              style={{
+                background: '#1e293b',
+                border: '1px solid rgba(255,255,255,0.2)',
+                color: '#cbd5e1',
+                padding: '0.5rem 1rem',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              ← Back to Pricing Packages
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Configuring:</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--orange-400)', background: 'rgba(255, 122, 0, 0.15)', padding: '0.25rem 0.75rem', borderRadius: '9999px', border: '1px solid var(--orange-500)' }}>
+                {vectorBreakdown[0]?.complexity || 'Vector Redraw'} {isRush ? '(Super Rush Express)' : ''}
+              </span>
+            </div>
+          </div>
         <div 
           className="grid-responsive-2col"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
             gap: '2rem',
             alignItems: 'start'
           }}
@@ -290,13 +653,13 @@ export const VectorArtPage = () => {
           {/* Main Order Form */}
           <form onSubmit={handleSubmitOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
             
-            {/* Step A: Upload Artwork Files */}
-            <div className="card" style={{ padding: '2rem', background: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
+            {/* Step 1: Upload Artwork Files */}
+            <div style={{ padding: '2rem', background: '#1e293b', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#fff7ed', color: 'var(--orange-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255, 122, 0, 0.2)', border: '1px solid var(--orange-500)', color: 'var(--orange-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
                   1
                 </div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
                   Upload Source Image or Sketch
                 </h3>
               </div>
@@ -307,10 +670,10 @@ export const VectorArtPage = () => {
                 onDragLeave={() => setIsDragOver(false)}
                 onDrop={handleFileDrop}
                 style={{
-                  border: isDragOver ? '2px dashed var(--orange-500)' : '2px dashed var(--border-color)',
-                  background: isDragOver ? '#fff7ed' : '#f8fafc',
+                  border: isDragOver ? '2px dashed var(--orange-500)' : '2px dashed rgba(255, 122, 0, 0.45)',
+                  background: isDragOver ? 'rgba(255, 122, 0, 0.18)' : '#0f172a',
                   borderRadius: '10px',
-                  padding: '0.85rem 1.25rem',
+                  padding: '1.1rem 1.25rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -329,12 +692,12 @@ export const VectorArtPage = () => {
                   style={{ display: 'none' }}
                 />
                 
-                <UploadCloud size={24} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
+                <UploadCloud size={24} style={{ color: 'var(--orange-400)', flexShrink: 0 }} />
                 <div style={{ textAlign: 'left' }}>
-                  <h4 style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0 0 0.15rem' }}>
+                  <h4 style={{ fontSize: '0.875rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.15rem' }}>
                     Click to Browse or Drag & Drop Artwork
                   </h4>
-                  <p style={{ fontSize: '0.73rem', color: 'var(--text-muted)', margin: 0 }}>
+                  <p style={{ fontSize: '0.73rem', color: '#94a3b8', margin: 0 }}>
                     Supports JPG, PNG, BMP, PSD, PDF, or mobile photos of hand sketches (Up to 50MB)
                   </p>
                 </div>
@@ -343,7 +706,7 @@ export const VectorArtPage = () => {
               {/* Uploaded File List Preview */}
               {selectedAssets.length > 0 && (
                 <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--navy-800)' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1' }}>
                     Uploaded Artwork ({selectedAssets.length} file{selectedAssets.length > 1 ? 's' : ''}):
                   </div>
                   {selectedAssets.map((ast) => (
@@ -353,9 +716,10 @@ export const VectorArtPage = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '0.6rem 0.85rem',
-                        background: 'var(--navy-100)',
+                        padding: '0.65rem 0.85rem',
+                        background: '#0f172a',
                         borderRadius: '8px',
+                        border: '1px solid rgba(255,255,255,0.1)',
                         fontSize: '0.85rem'
                       }}
                     >
@@ -363,11 +727,11 @@ export const VectorArtPage = () => {
                         {ast.previewUrl ? (
                           <img src={ast.previewUrl} alt={ast.name} style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '6px' }} />
                         ) : (
-                          <FileCode size={24} style={{ color: 'var(--orange-500)' }} />
+                          <FileCode size={24} style={{ color: 'var(--orange-400)' }} />
                         )}
                         <div>
-                          <div style={{ fontWeight: 700, color: 'var(--navy-900)' }}>{ast.name}</div>
-                          <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>{ast.size} • {ast.type}</div>
+                          <div style={{ fontWeight: 700, color: '#ffffff' }}>{ast.name}</div>
+                          <div style={{ fontSize: '0.73rem', color: '#94a3b8' }}>{ast.size} • {ast.type}</div>
                         </div>
                       </div>
 
@@ -384,161 +748,260 @@ export const VectorArtPage = () => {
               )}
             </div>
 
-            {/* Step B: Artwork Specifications */}
-            <div className="card" style={{ padding: '2rem', background: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
+            {/* Step 2: Artwork Specifications */}
+            <div style={{ padding: '2rem', background: '#1e293b', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#fff7ed', color: 'var(--orange-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255, 122, 0, 0.2)', border: '1px solid var(--orange-500)', color: 'var(--orange-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
                   2
                 </div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
                   Vector Conversion Specifications
                 </h3>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 
-                {/* Order Title */}
-                <div>
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.9rem', color: 'var(--navy-900)', marginBottom: '0.4rem' }}>
-                    Order Title / Artwork Name *
+                {/* Itemized Vector Cart Items */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <label style={{ display: 'block', fontWeight: 800, fontSize: '0.875rem', color: '#ffffff' }}>
+                    📍 Configure Vector Design Items ({vectorItems.length} Item{vectorItems.length > 1 ? 's' : ''}) *
                   </label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="e.g. Apex Athletics Logo Vector Conversion"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    required
-                    style={{ width: '100%', height: '42px' }}
-                  />
-                </div>
 
-                {/* Vector Complexity Selection */}
-                <div>
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.9rem', color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
-                    Vector Complexity & Detail Level
-                  </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div 
-                      onClick={() => setServiceCategory('Simple Vector Redraw')}
-                      style={{
-                        padding: '1rem',
-                        border: serviceCategory === 'Simple Vector Redraw' ? '2px solid var(--orange-500)' : '1px solid var(--border-color)',
-                        background: serviceCategory === 'Simple Vector Redraw' ? '#fff7ed' : '#ffffff',
-                        borderRadius: '10px',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                        <strong style={{ color: 'var(--navy-900)', fontSize: '0.95rem' }}>Simple / Standard Redraw</strong>
-                        <span style={{ fontWeight: 800, color: 'var(--orange-600)' }}>${simpleRate.toFixed(2)}</span>
-                      </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                        Logos with clean lines, solid color fills, text vectorization, and 1–3 color elements.
-                      </div>
-                    </div>
+                  {vectorItems.map((item, index) => {
+                    const compStr = (item.complexity || '').toLowerCase();
+                    const isSuperRush = compStr.includes('super rush') || compStr.includes('express');
+                    const isComplex = compStr.includes('complex') && !isSuperRush;
+                    const isSimple = !isComplex && !isSuperRush;
 
-                    <div 
-                      onClick={() => setServiceCategory('Complex Vector Redraw')}
-                      style={{
-                        padding: '1rem',
-                        border: serviceCategory === 'Complex Vector Redraw' ? '2px solid var(--orange-500)' : '1px solid var(--border-color)',
-                        background: serviceCategory === 'Complex Vector Redraw' ? '#fff7ed' : '#ffffff',
-                        borderRadius: '10px',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                        <strong style={{ color: 'var(--navy-900)', fontSize: '0.95rem' }}>Complex / Detailed Redraw</strong>
-                        <span style={{ fontWeight: 800, color: 'var(--orange-600)' }}>${complexRate.toFixed(2)}</span>
-                      </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                        Mascots, intricate crests, gradient shading, fine line details, and multi-color illustrations.
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                    let itemRate = simpleRate;
+                    if (isSuperRush) itemRate = superRushRate;
+                    else if (isComplex) itemRate = complexRate;
+                    else itemRate = simpleRate;
 
-                {/* Dual Quantity Control: Dropdown & Manual Input */}
-                <div>
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.9rem', color: 'var(--navy-900)', marginBottom: '0.4rem' }}>
-                    Order Quantity (Dropdown & Manual Entry)
-                  </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.75rem', alignItems: 'center' }}>
-                    <select
-                      className="form-control"
-                      value={[1, 2, 3, 5, 10, 15, 25, 50].includes(quantity) ? quantity : 'custom'}
-                      onChange={(e) => {
-                        if (e.target.value !== 'custom') {
-                          setQuantity(parseInt(e.target.value, 10) || 1);
-                        }
-                      }}
-                      style={{ fontWeight: 800 }}
-                    >
-                      <option value="1">1 Artwork (Single Order)</option>
-                      <option value="2">2 Artworks (Package)</option>
-                      <option value="3">3 Artworks (Package)</option>
-                      <option value="5">5 Artworks (Bulk Batch)</option>
-                      <option value="10">10 Artworks (Bulk Batch)</option>
-                      <option value="15">15 Artworks (Bulk Batch)</option>
-                      <option value="25">25 Artworks (Volume Tier)</option>
-                      <option value="custom">Custom Quantity...</option>
-                    </select>
+                    const itemSubtotal = itemRate * (item.quantity || 1);
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <button
-                        type="button"
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        style={{ width: '36px', height: '38px', background: '#f1f5f9', border: '1px solid var(--border-color)', color: 'var(--navy-900)', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}
-                      >
-                        -
-                      </button>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={quantityInput}
-                        onFocus={(e) => e.target.select()}
-                        onChange={(e) => {
-                          const rawVal = e.target.value;
-                          if (rawVal === '') {
-                            setQuantityInput('');
-                            return;
-                          }
-                          const cleanVal = rawVal.replace(/\D/g, '');
-                          if (cleanVal === '') {
-                            setQuantityInput('');
-                            return;
-                          }
-                          const parsed = parseInt(cleanVal, 10);
-                          setQuantityInput(String(parsed));
-                          if (parsed > 0) {
-                            setQuantity(parsed);
-                          }
+                    return (
+                      <div
+                        key={item.id}
+                        style={{
+                          background: '#0f172a',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          borderRadius: '12px',
+                          padding: '1.15rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.85rem'
                         }}
-                        onBlur={() => {
-                          if (!quantityInput || parseInt(quantityInput, 10) < 1) {
-                            setQuantity(1);
-                            setQuantityInput('1');
-                          }
-                        }}
-                        className="form-control"
-                        style={{ textAlign: 'center', fontWeight: 800, padding: '0.4rem 0.5rem' }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setQuantity(quantity + 1)}
-                        style={{ width: '36px', height: '38px', background: '#f1f5f9', border: '1px solid var(--border-color)', color: 'var(--navy-900)', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}
                       >
-                        +
-                      </button>
-                    </div>
-                  </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.6rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ background: 'var(--orange-500)', color: '#ffffff', fontSize: '0.72rem', fontWeight: 900, borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              {index + 1}
+                            </span>
+                            <strong style={{ fontSize: '0.9rem', color: '#ffffff' }}>{item.name}</strong>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <span style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--orange-400)' }}>
+                              ${itemRate.toFixed(2)}/ea • Subtotal: ${itemSubtotal.toFixed(2)}
+                            </span>
+
+                            {vectorItems.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeVectorItem(item.id)}
+                                style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', width: '26px', height: '26px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 3 Pricing Tier Cards Side-by-Side */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.65rem' }}>
+                          {/* Card 1: Simple Redraw */}
+                          <div
+                            onClick={() => updateVectorItem(item.id, 'complexity', 'Simple Vector Redraw')}
+                            style={{
+                              padding: '0.75rem 0.85rem',
+                              border: isSimple ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.12)',
+                              background: isSimple ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#1e293b',
+                              borderRadius: '10px',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <strong style={{ color: isSimple ? 'var(--orange-400)' : '#ffffff', fontSize: '0.825rem' }}>⚡ Simple</strong>
+                              <span style={{ fontWeight: 900, color: 'var(--orange-400)', fontSize: '0.85rem' }}>${simpleRate.toFixed(2)}</span>
+                            </div>
+                            <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.25rem' }}>Clean text, solid fills</div>
+                          </div>
+
+                          {/* Card 2: Complex Redraw */}
+                          <div
+                            onClick={() => updateVectorItem(item.id, 'complexity', 'Complex Vector Redraw')}
+                            style={{
+                              padding: '0.75rem 0.85rem',
+                              border: isComplex ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.12)',
+                              background: isComplex ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#1e293b',
+                              borderRadius: '10px',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <strong style={{ color: isComplex ? 'var(--orange-400)' : '#ffffff', fontSize: '0.825rem' }}>⭐ Complex</strong>
+                              <span style={{ fontWeight: 900, color: 'var(--orange-400)', fontSize: '0.85rem' }}>${complexRate.toFixed(2)}</span>
+                            </div>
+                            <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.25rem' }}>Mascots, gradients, detailed</div>
+                          </div>
+
+                          {/* Card 3: Super Rush Express */}
+                          <div
+                            onClick={() => updateVectorItem(item.id, 'complexity', 'Super Rush Vector')}
+                            style={{
+                              padding: '0.75rem 0.85rem',
+                              border: isSuperRush ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.12)',
+                              background: isSuperRush ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#1e293b',
+                              borderRadius: '10px',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <strong style={{ color: isSuperRush ? 'var(--orange-400)' : '#ffffff', fontSize: '0.825rem' }}>✨ Super Rush</strong>
+                              <span style={{ fontWeight: 900, color: 'var(--orange-400)', fontSize: '0.85rem' }}>${superRushRate.toFixed(2)}</span>
+                            </div>
+                            <div style={{ fontSize: '0.7rem', color: '#10b981', marginTop: '0.25rem', fontWeight: 700 }}>2–4 Hrs Priority Express</div>
+                          </div>
+                        </div>
+
+                        {/* Quantity Controls */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.75rem', alignItems: 'center' }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Design Name / Label</label>
+                            <input
+                              type="text"
+                              value={item.name}
+                              onChange={(e) => updateVectorItem(item.id, 'name', e.target.value)}
+                              className="form-control"
+                              style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem' }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Quantity</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              <button type="button" onClick={() => updateVectorItem(item.id, 'quantity', Math.max(1, item.quantity - 1))} style={{ width: '32px', height: '34px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}>-</button>
+                              <input type="text" value={item.quantityInput !== undefined ? item.quantityInput : item.quantity} onChange={(e) => updateVectorItem(item.id, 'quantityInput', e.target.value)} className="form-control" style={{ textAlign: 'center', background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800, padding: '0.3rem' }} />
+                              <button type="button" onClick={() => updateVectorItem(item.id, 'quantity', item.quantity + 1)} style={{ width: '32px', height: '34px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}>+</button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Specific Instructions for this Design</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Remove background, change red to navy blue, keep typography vector clean..."
+                            value={item.notes}
+                            onChange={(e) => updateVectorItem(item.id, 'notes', e.target.value)}
+                            className="form-control"
+                            style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.8rem' }}
+                          />
+                        </div>
+
+                        {/* Dedicated File Upload Zone Bound to this Specific Item */}
+                        <div style={{ background: '#1e293b', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                            <span>📎 Reference Artwork File for {item.name} *</span>
+                            {item.files && item.files.length > 0 && (
+                              <span style={{ color: 'var(--orange-400)', fontWeight: 800 }}>{item.files.length} File{item.files.length > 1 ? 's' : ''} Attached</span>
+                            )}
+                          </label>
+
+                          <div
+                            onClick={() => document.getElementById(`item-file-input-${item.id}`)?.click()}
+                            style={{
+                              border: '1.5px dashed rgba(255, 122, 0, 0.45)',
+                              background: '#0f172a',
+                              borderRadius: '8px',
+                              padding: '0.65rem 0.85rem',
+                              textAlign: 'center',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '0.5rem'
+                            }}
+                          >
+                            <Upload size={15} style={{ color: 'var(--orange-400)' }} />
+                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#e2e8f0' }}>
+                              Upload File specifically for {item.name}
+                            </span>
+                            <input
+                              type="file"
+                              id={`item-file-input-${item.id}`}
+                              multiple
+                              style={{ display: 'none' }}
+                              onChange={(e) => handleItemFileUpload(item.id, e.target.files)}
+                            />
+                          </div>
+
+                          {/* Uploaded files bound to this item */}
+                          {item.files && item.files.length > 0 && (
+                            <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                              {item.files.map(f => (
+                                <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.35rem 0.6rem', background: '#0f172a', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.75rem' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    {f.previewUrl ? (
+                                      <img src={f.previewUrl} alt={f.name} style={{ width: '20px', height: '20px', objectFit: 'cover', borderRadius: '4px' }} />
+                                    ) : (
+                                      <FileCode size={13} style={{ color: 'var(--orange-400)' }} />
+                                    )}
+                                    <span style={{ fontWeight: 700, color: '#ffffff' }}>{f.name}</span>
+                                    <span style={{ color: '#94a3b8', fontSize: '0.68rem' }}>({f.size})</span>
+                                  </div>
+                                  <button type="button" onClick={() => removeFileFromItem(item.id, f.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}>
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  <button
+                    type="button"
+                    onClick={addVectorItem}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      background: 'rgba(255, 122, 0, 0.12)',
+                      border: '1.5px dashed var(--orange-500)',
+                      color: 'var(--orange-400)',
+                      fontWeight: 800,
+                      fontSize: '0.875rem',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <Sparkles size={16} /> + Add Another Design
+                  </button>
                 </div>
+
                 <div>
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.9rem', color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
+                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '0.5rem' }}>
                     Requested Vector Output Formats
                   </label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.65rem' }}>
@@ -550,8 +1013,8 @@ export const VectorArtPage = () => {
                           onClick={() => toggleFormat(fmt.id)}
                           style={{
                             padding: '0.6rem 0.85rem',
-                            border: isChecked ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
-                            background: isChecked ? '#fff7ed' : '#f8fafc',
+                            border: isChecked ? '1.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.12)',
+                            background: isChecked ? 'rgba(255, 122, 0, 0.2)' : '#0f172a',
                             borderRadius: '8px',
                             cursor: 'pointer',
                             display: 'flex',
@@ -559,15 +1022,15 @@ export const VectorArtPage = () => {
                             gap: '0.5rem',
                             fontSize: '0.85rem',
                             fontWeight: 700,
-                            color: isChecked ? 'var(--orange-700)' : 'var(--navy-800)'
+                            color: isChecked ? 'var(--orange-400)' : '#e2e8f0'
                           }}
                         >
                           <div style={{
                             width: '18px',
                             height: '18px',
                             borderRadius: '4px',
-                            border: isChecked ? 'none' : '1.5px solid var(--navy-300)',
-                            background: isChecked ? 'var(--orange-500)' : '#ffffff',
+                            border: isChecked ? 'none' : '1.5px solid rgba(255,255,255,0.3)',
+                            background: isChecked ? 'var(--orange-500)' : '#1e293b',
                             color: '#ffffff',
                             display: 'flex',
                             alignItems: 'center',
@@ -585,14 +1048,14 @@ export const VectorArtPage = () => {
 
                 {/* Color Mode Selection */}
                 <div>
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.9rem', color: 'var(--navy-900)', marginBottom: '0.4rem' }}>
+                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '0.4rem' }}>
                     Vector Color Separation Mode
                   </label>
                   <select
-                    className="form-select"
+                    className="form-control"
                     value={colorMode}
                     onChange={(e) => setColorMode(e.target.value)}
-                    style={{ width: '100%', height: '42px' }}
+                    style={{ width: '100%', height: '42px', background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)' }}
                   >
                     <option value="Spot Colors (Pantone/Solid)">Spot Colors (Pantone / Solid Separation for Screen Printing)</option>
                     <option value="Full Color CMYK (Process Printing)">Full Color CMYK (Process Printing / DTG / Vinyl)</option>
@@ -602,7 +1065,7 @@ export const VectorArtPage = () => {
 
                 {/* Turnaround Time Selection */}
                 <div>
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.9rem', color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
+                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '0.5rem' }}>
                     Turnaround Time
                   </label>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -610,8 +1073,8 @@ export const VectorArtPage = () => {
                       onClick={() => setIsRush(false)}
                       style={{
                         padding: '0.85rem 1rem',
-                        border: !isRush ? '2px solid var(--orange-500)' : '1px solid var(--border-color)',
-                        background: !isRush ? '#fff7ed' : '#ffffff',
+                        border: !isRush ? '2px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.15)',
+                        background: !isRush ? 'rgba(255, 122, 0, 0.2)' : '#0f172a',
                         borderRadius: '10px',
                         cursor: 'pointer',
                         display: 'flex',
@@ -620,8 +1083,8 @@ export const VectorArtPage = () => {
                       }}
                     >
                       <div>
-                        <div style={{ fontWeight: 700, color: 'var(--navy-900)', fontSize: '0.9rem' }}>Standard Turnaround</div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>8–12 Hours Delivery</div>
+                        <div style={{ fontWeight: 700, color: '#ffffff', fontSize: '0.9rem' }}>Standard Turnaround</div>
+                        <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>8–12 Hours Delivery</div>
                       </div>
                       <span style={{ fontWeight: 800, color: '#10b981', fontSize: '0.85rem' }}>FREE</span>
                     </div>
@@ -630,8 +1093,8 @@ export const VectorArtPage = () => {
                       onClick={() => setIsRush(true)}
                       style={{
                         padding: '0.85rem 1rem',
-                        border: isRush ? '2px solid var(--orange-500)' : '1px solid var(--border-color)',
-                        background: isRush ? '#fff7ed' : '#ffffff',
+                        border: isRush ? '2px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.15)',
+                        background: isRush ? 'rgba(255, 122, 0, 0.2)' : '#0f172a',
                         borderRadius: '10px',
                         cursor: 'pointer',
                         display: 'flex',
@@ -640,27 +1103,12 @@ export const VectorArtPage = () => {
                       }}
                     >
                       <div>
-                        <div style={{ fontWeight: 700, color: 'var(--navy-900)', fontSize: '0.9rem' }}>Super Rush</div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>2–4 Hours Express</div>
+                        <div style={{ fontWeight: 700, color: '#ffffff', fontSize: '0.9rem' }}>Super Rush</div>
+                        <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>2–4 Hours Express</div>
                       </div>
-                      <span style={{ fontWeight: 800, color: 'var(--orange-600)', fontSize: '0.85rem' }}>+$10.00</span>
+                      <span style={{ fontWeight: 800, color: 'var(--orange-400)', fontSize: '0.85rem' }}>+$10.00</span>
                     </div>
                   </div>
-                </div>
-
-                {/* Special Instructions */}
-                <div>
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.9rem', color: 'var(--navy-900)', marginBottom: '0.4rem' }}>
-                    Special Vector Redraw Instructions (Optional)
-                  </label>
-                  <textarea
-                    className="form-control"
-                    rows={3}
-                    placeholder="Specify font name modifications, color adjustments, line thickness requests, or cleanups..."
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    style={{ width: '100%', padding: '0.75rem' }}
-                  />
                 </div>
 
               </div>
@@ -670,51 +1118,70 @@ export const VectorArtPage = () => {
 
           {/* Right Checkout & Order Summary Card */}
           <div style={{ position: 'sticky', top: '100px' }}>
-            <div className="card" style={{ padding: '1.75rem', background: '#ffffff', border: '1.5px solid var(--orange-400)', borderRadius: '16px', boxShadow: 'var(--shadow-md)' }}>
+            <div className="card" style={{ padding: '1.75rem', background: '#1e293b', border: '2px solid var(--orange-500)', borderRadius: '16px', boxShadow: '0 12px 32px rgba(255, 122, 0, 0.18)' }}>
               
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#ffffff', marginBottom: '1.25rem', borderBottom: '1px solid rgba(255,255,255,0.12)', paddingBottom: '0.75rem' }}>
                 Vector Order Summary
               </h3>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--navy-700)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
                   <span>Service Type:</span>
-                  <strong style={{ color: 'var(--navy-900)' }}>{serviceCategory}</strong>
+                  <strong style={{ color: 'var(--orange-400)' }}>Vector Art & Color Separation</strong>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--navy-700)' }}>
-                  <span>Quantity:</span>
-                  <span style={{ fontWeight: 700, color: 'var(--navy-900)' }}>
-                    {quantity} {quantity === 1 ? 'Artwork' : 'Artworks'} (${unitRate.toFixed(2)}/ea)
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
+                  <span>Total Artworks:</span>
+                  <span style={{ fontWeight: 700, color: '#ffffff' }}>
+                    {totalVectorQuantity} Pcs across {vectorItems.length} {vectorItems.length === 1 ? 'item' : 'items'}
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--navy-700)' }}>
-                  <span>Artwork Subtotal:</span>
-                  <span style={{ fontWeight: 700 }}>${basePrice.toFixed(2)}</span>
+                {/* Itemized Vector Cart Breakdown */}
+                <div style={{ background: '#0f172a', padding: '0.75rem 0.85rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    📍 VECTOR CART ({vectorItems.length}):
+                  </div>
+                  {vectorBreakdown.map((item, idx) => (
+                    <div key={item.id || idx} style={{ display: 'flex', flexDirection: 'column', borderBottom: idx < vectorBreakdown.length - 1 ? '1px dashed rgba(255,255,255,0.08)' : 'none', paddingBottom: '0.35rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#e2e8f0' }}>
+                        <span>#{item.index} {item.name} (x{item.quantity}):</span>
+                        <strong style={{ color: '#ffffff' }}>${item.subtotal.toFixed(2)}</strong>
+                      </div>
+                      {item.notes && (
+                        <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontStyle: 'italic', paddingLeft: '0.5rem' }}>
+                          Note: {item.notes}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <div style={{ borderTop: '1px dashed rgba(255,255,255,0.15)', paddingTop: '0.35rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', fontWeight: 800, color: '#ffffff' }}>
+                    <span>Artworks Subtotal:</span>
+                    <span style={{ color: 'var(--orange-400)' }}>${basePrice.toFixed(2)}</span>
+                  </div>
                 </div>
 
-                {isRush && quantity === 1 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--orange-600)', fontWeight: 700 }}>
+                {isRush && totalVectorQuantity === 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--orange-400)', fontWeight: 700 }}>
                     <span>Super Rush (2-4 Hrs):</span>
                     <span>+${rushSurcharge.toFixed(2)}</span>
                   </div>
                 )}
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--navy-700)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
                   <span>Output Formats:</span>
-                  <span style={{ fontWeight: 700, color: 'var(--orange-600)' }}>{requestedFormats.map(f => f.toUpperCase()).join(', ')}</span>
+                  <span style={{ fontWeight: 700, color: 'var(--orange-400)' }}>{requestedFormats.map(f => f.toUpperCase()).join(', ')}</span>
                 </div>
 
-                <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--navy-900)' }}>Total Price:</span>
-                  <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--orange-600)' }}>${totalPrice}</span>
+                <div style={{ borderTop: '1px dashed rgba(255,255,255,0.2)', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff' }}>Total Price:</span>
+                  <span style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--orange-400)' }}>${totalPrice}</span>
                 </div>
               </div>
 
               {/* Payment Method Selector */}
               <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', color: 'var(--navy-800)', marginBottom: '0.5rem' }}>
+                <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '0.5rem' }}>
                   Select Payment Option
                 </label>
 
@@ -723,8 +1190,8 @@ export const VectorArtPage = () => {
                     onClick={() => setPaymentOption('wallet')}
                     style={{
                       padding: '0.65rem 0.85rem',
-                      border: paymentOption === 'wallet' ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
-                      background: paymentOption === 'wallet' ? '#fff7ed' : '#ffffff',
+                      border: paymentOption === 'wallet' ? '1.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.15)',
+                      background: paymentOption === 'wallet' ? 'rgba(255, 122, 0, 0.2)' : '#0f172a',
                       borderRadius: '8px',
                       cursor: 'pointer',
                       display: 'flex',
@@ -734,18 +1201,18 @@ export const VectorArtPage = () => {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Wallet size={16} style={{ color: 'var(--orange-500)' }} />
-                      <span style={{ fontWeight: 700, color: 'var(--navy-900)' }}>Client Wallet Balance</span>
+                      <Wallet size={16} style={{ color: 'var(--orange-400)' }} />
+                      <span style={{ fontWeight: 700, color: '#ffffff' }}>Client Wallet Balance</span>
                     </div>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>(${walletBalance.toFixed(2)})</span>
+                    <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>(${walletBalance.toFixed(2)})</span>
                   </div>
 
                   <div
                     onClick={() => setPaymentOption('bolt')}
                     style={{
                       padding: '0.65rem 0.85rem',
-                      border: paymentOption === 'bolt' ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
-                      background: paymentOption === 'bolt' ? '#fff7ed' : '#ffffff',
+                      border: paymentOption === 'bolt' ? '1.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.15)',
+                      background: paymentOption === 'bolt' ? 'rgba(255, 122, 0, 0.2)' : '#0f172a',
                       borderRadius: '8px',
                       cursor: 'pointer',
                       display: 'flex',
@@ -754,8 +1221,8 @@ export const VectorArtPage = () => {
                       fontSize: '0.85rem'
                     }}
                   >
-                    <CreditCard size={16} style={{ color: 'var(--orange-500)' }} />
-                    <span style={{ fontWeight: 700, color: 'var(--navy-900)' }}>Instant Online Card Checkout</span>
+                    <CreditCard size={16} style={{ color: 'var(--orange-400)' }} />
+                    <span style={{ fontWeight: 700, color: '#ffffff' }}>Instant Online Card Checkout</span>
                   </div>
                 </div>
               </div>
@@ -776,7 +1243,8 @@ export const VectorArtPage = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '0.5rem',
-                  boxShadow: '0 4px 14px rgba(255, 122, 0, 0.35)'
+                  background: 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)',
+                  boxShadow: '0 8px 24px rgba(255, 122, 0, 0.35)'
                 }}
               >
                 {isSubmitting ? (
@@ -788,16 +1256,12 @@ export const VectorArtPage = () => {
                 )}
               </button>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', marginTop: '0.85rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                <Lock size={13} /> 256-Bit SSL Encrypted & Money-Back Guaranteed
-              </div>
-
             </div>
           </div>
 
         </div>
       </div>
-
+      )}
     </div>
   );
 };

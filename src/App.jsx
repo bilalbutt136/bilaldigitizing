@@ -25,6 +25,7 @@ import { OrderWizardModal } from './components/customer/OrderWizardModal';
 import { StoreOrderModal } from './components/customer/StoreOrderModal';
 import { OrderTrackerDrawer } from './components/customer/OrderTrackerDrawer';
 import { DepositModal } from './components/customer/DepositModal';
+import { ClientLiveChatWidget } from './components/customer/ClientLiveChatWidget';
 
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AuthModal } from './components/auth/AuthModal';
@@ -89,10 +90,7 @@ const UrlSyncHandler = () => {
     // 3. Calculator / Pricing
     if (combined.startsWith('calculat') || combined.startsWith('price') || combined.startsWith('pric')) {
       setCurrentView('public');
-      setTimeout(() => {
-        const el = document.getElementById('calculator');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+      if (rawPath !== '/embroidery-digitizing') navigate('/embroidery-digitizing', { replace: true });
       return;
     }
 
@@ -148,7 +146,7 @@ const PublicView = ({ scrollTo }) => {
     setCurrentView('public');
     if (scrollTo) {
       setTimeout(() => {
-        const targetId = (scrollTo === 'calculator' || scrollTo === 'pricing') ? 'order-builder' : (scrollTo === 'services' ? 'order-builder' : scrollTo);
+        const targetId = scrollTo === 'services' ? 'order-builder' : scrollTo;
         const el = document.getElementById(targetId);
         if (el) el.scrollIntoView({ behavior: 'smooth' });
       }, 120);
@@ -158,7 +156,6 @@ const PublicView = ({ scrollTo }) => {
   return (
     <>
       <HeroSection />
-      <CoreServicesOrderSection />
       <CustomerSewOutsSection />
       <WhyChooseUs />
       <TestimonialsFAQ />
@@ -191,14 +188,14 @@ const MainContent = () => {
           <Route path="/services/embroidery-digitizing" element={<EmbroideryDigitizingPage />} />
           <Route path="/patches" element={<CustomPatchesSection />} />
           <Route path="/custom-patches" element={<CustomPatchesSection />} />
-          <Route path="/custom-tshirts" element={<CustomApparelPage />} />
-          <Route path="/custom-caps" element={<CustomHeadwearPage />} />
+          <Route path="/custom-tshirts" element={<Navigate to="/custom-patches" replace />} />
+          <Route path="/custom-caps" element={<Navigate to="/custom-patches" replace />} />
           <Route path="/services/vector-tracing" element={<VectorArtPage />} />
           <Route path="/vector-art" element={<VectorArtPage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
-          <Route path="/calculator" element={<PublicView scrollTo="calculator" />} />
-          <Route path="/pricing" element={<PublicView scrollTo="calculator" />} />
-          <Route path="/store" element={<StorePage />} />
+          <Route path="/calculator" element={<Navigate to="/embroidery-digitizing" replace />} />
+          <Route path="/pricing" element={<Navigate to="/embroidery-digitizing" replace />} />
+          <Route path="/store" element={<Navigate to="/custom-patches" replace />} />
           <Route path="/formats" element={<PublicView scrollTo="services" />} />
           <Route path="/faq" element={<PublicView scrollTo="faqs" />} />
           
@@ -225,6 +222,7 @@ const MainContent = () => {
       <StoreOrderModal />
       <OrderTrackerDrawer />
       <DepositModal />
+      <ClientLiveChatWidget />
 
       {/* Toast Notifications */}
       {toast && (
