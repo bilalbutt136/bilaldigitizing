@@ -1,0 +1,140 @@
+{
+  "version": 3,
+  "pages404": true,
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [
+      {
+        "source": "/vector-art",
+        "destination": "/services/vector-tracing",
+        "regex": "^/vector-art(?:/)?$"
+      },
+      {
+        "source": "/patches",
+        "destination": "/custom-patches",
+        "regex": "^/patches(?:/)?$"
+      },
+      {
+        "source": "/dashboard",
+        "destination": "/client-portal",
+        "regex": "^/dashboard(?:/)?$"
+      },
+      {
+        "source": "/admin",
+        "destination": "/admin-portal",
+        "regex": "^/admin(?:/)?$"
+      }
+    ],
+    "fallback": []
+  },
+  "dynamicRoutes": [],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/admin-portal",
+      "regex": "^/admin\\-portal(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin\\-portal(?:/)?$"
+    },
+    {
+      "page": "/client-portal",
+      "regex": "^/client\\-portal(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/client\\-portal(?:/)?$"
+    },
+    {
+      "page": "/custom-patches",
+      "regex": "^/custom\\-patches(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/custom\\-patches(?:/)?$"
+    },
+    {
+      "page": "/login",
+      "regex": "^/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/login(?:/)?$"
+    },
+    {
+      "page": "/portfolio",
+      "regex": "^/portfolio(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/portfolio(?:/)?$"
+    },
+    {
+      "page": "/pricing",
+      "regex": "^/pricing(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/pricing(?:/)?$"
+    },
+    {
+      "page": "/secure-admin-login",
+      "regex": "^/secure\\-admin\\-login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/secure\\-admin\\-login(?:/)?$"
+    },
+    {
+      "page": "/services/embroidery-digitizing",
+      "regex": "^/services/embroidery\\-digitizing(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/services/embroidery\\-digitizing(?:/)?$"
+    },
+    {
+      "page": "/services/vector-tracing",
+      "regex": "^/services/vector\\-tracing(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/services/vector\\-tracing(?:/)?$"
+    },
+    {
+      "page": "/signup",
+      "regex": "^/signup(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/signup(?:/)?$"
+    },
+    {
+      "page": "/store",
+      "regex": "^/store(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/store(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments"
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

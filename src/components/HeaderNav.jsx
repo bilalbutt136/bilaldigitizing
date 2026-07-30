@@ -417,7 +417,7 @@ export const HeaderNav = () => {
                       type="button"
                       onClick={() => {
                         setCurrentView('public');
-                        navigate('/pricing?cat=patches');
+                        navigate('/custom-patches');
                         setIsPricingOpen(false);
                       }}
                       style={{

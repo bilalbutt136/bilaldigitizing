@@ -6,9 +6,10 @@
   "/page": "app/page.js",
   "/login/page": "app/login/page.js",
   "/portfolio/page": "app/portfolio/page.js",
-  "/services/embroidery-digitizing/page": "app/services/embroidery-digitizing/page.js",
+  "/pricing/page": "app/pricing/page.js",
   "/secure-admin-login/page": "app/secure-admin-login/page.js",
-  "/signup/page": "app/signup/page.js",
+  "/services/embroidery-digitizing/page": "app/services/embroidery-digitizing/page.js",
   "/services/vector-tracing/page": "app/services/vector-tracing/page.js",
+  "/signup/page": "app/signup/page.js",
   "/store/page": "app/store/page.js"
 }
