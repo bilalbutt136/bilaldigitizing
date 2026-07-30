@@ -20,8 +20,8 @@ export const ClientDirectory = () => {
         </div>
       </div>
 
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+      <div className="overflow-x-auto">
+        <table style={{ width: '100%', minWidth: '600px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--navy-700)' }}>
               <th style={{ padding: '0.75rem 1rem' }}>Company / Shop Name</th>

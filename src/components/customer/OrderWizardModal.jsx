@@ -461,7 +461,7 @@ export const OrderWizardModal = () => {
 
         <form onSubmit={handleSubmit} style={{ padding: '1.75rem' }}>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.75rem', alignItems: 'start' }}>
+          <div className="configurator-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.75rem', alignItems: 'start' }}>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               

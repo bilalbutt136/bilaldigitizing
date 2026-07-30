@@ -447,6 +447,17 @@ button, input, select, textarea, a {
   }
 }
 
+@media (max-width: 992px) {
+  .dashboard-layout-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .dashboard-sidebar-sticky {
+    position: relative !important;
+    top: 0 !important;
+    height: auto !important;
+  }
+}
+
 @media (max-width: 768px) {
   .desktop-only {
     display: none !important;
@@ -477,18 +488,30 @@ button, input, select, textarea, a {
   .btn-sm {
     padding: 0.55rem 0.85rem !important;
     font-size: 0.85rem !important;
-    min-height: 38px;
+    min-height: 40px;
   }
 
   .btn-md, .btn-lg {
     padding: 0.65rem 1.15rem !important;
     font-size: 0.925rem !important;
-    min-height: 44px;
+    min-height: 46px;
   }
 
   .mobile-relative-sticky {
     position: relative !important;
     top: 0 !important;
+  }
+
+  .grid-responsive-2,
+  .grid-responsive-3,
+  .grid-responsive-4,
+  .configurator-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .form-row-responsive {
+    flex-direction: column !important;
+    align-items: stretch !important;
   }
 }
 
@@ -505,4 +528,21 @@ button, input, select, textarea, a {
   h2 {
     font-size: 1.45rem !important;
   }
+
+  .btn-full-mobile {
+    width: 100% !important;
+  }
 }
+
+/* Global Responsive Table Container */
+.overflow-x-auto,
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive table {
+  min-width: 600px;
+}
+

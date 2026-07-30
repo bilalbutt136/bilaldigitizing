@@ -169,10 +169,10 @@ export const AdminDashboard = () => {
         </div>
 
         {/* 2-Column Sidebar Layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '270px 1fr', gap: '1.75rem', alignItems: 'start' }}>
+        <div className="dashboard-layout-grid" style={{ display: 'grid', gridTemplateColumns: '270px 1fr', gap: '1.75rem', alignItems: 'start' }}>
           
           {/* Left-Hand Admin Sidebar Navigation Container */}
-          <div className="card" style={{
+          <div className="card dashboard-sidebar-sticky" style={{
             padding: '1.25rem 0.85rem',
             background: '#ffffff',
             border: '1px solid var(--border-color)',

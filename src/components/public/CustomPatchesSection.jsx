@@ -277,9 +277,9 @@ export const CustomPatchesSection = () => {
         </div>
 
         {/* 2. Custom Patches Pricing Cards Grid */}
-        <div style={{
+        <div className="grid-responsive-3" style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
           gap: '2rem',
           maxWidth: '1200px',
           margin: '0 auto 4rem'

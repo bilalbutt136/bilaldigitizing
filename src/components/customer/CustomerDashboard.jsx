@@ -152,6 +152,7 @@ export const CustomerDashboard = () => {
         
         {/* Main Grid Layout: Left Vertical Sidebar + Right Content Workspace */}
         <div 
+          className="dashboard-layout-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'minmax(250px, 270px) 1fr',
@@ -164,6 +165,7 @@ export const CustomerDashboard = () => {
               LEFT VERTICAL SIDEBAR NAVIGATION MENU (FULL-HEIGHT STICKY)
              ================================================================== */}
           <aside
+            className="dashboard-sidebar-sticky"
             style={{
               background: '#ffffff',
               border: '1.5px solid var(--border-color)',

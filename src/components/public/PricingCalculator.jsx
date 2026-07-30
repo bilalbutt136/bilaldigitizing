@@ -273,9 +273,9 @@ export const PricingCalculator = () => {
         </div>
 
         {/* Dynamic Pricing Category Cards */}
-        <div style={{
+        <div className="grid-responsive-3" style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
           gap: '1.75rem',
           maxWidth: '1200px',
           margin: '0 auto'

@@ -761,7 +761,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
             </div>
 
             {/* Main Form Grid */}
-            <div style={{
+            <div className="configurator-grid" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
               gap: '2rem',
