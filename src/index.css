@@ -584,4 +584,46 @@ button, input, select, textarea, a {
   }
 }
 
+/* Master Mobile Responsive Overhauls & Layout Fluidity */
+@media (max-width: 992px) {
+  .admin-sidebar-fixed {
+    display: none !important;
+  }
+
+  .admin-main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 1.25rem 1rem 4rem !important;
+  }
+
+  .client-portal-fluid-container {
+    padding: 0 1rem !important;
+  }
+
+  .client-sidebar-saas {
+    display: none !important;
+  }
+
+  .dashboard-layout-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .modal-dialog,
+  .modal-content {
+    width: 96% !important;
+    max-width: 96% !important;
+    margin: 1rem auto !important;
+    padding: 1.25rem !important;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 

@@ -21,7 +21,9 @@ import {
   Layers, 
   AlertCircle, 
   RefreshCw,
-  Bell
+  Bell,
+  Menu,
+  X
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -42,6 +44,7 @@ export const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard'); // dashboard | orders | services | clients | digitizers | wallets | chat | portfolio | hero | marketing | email | pixel | payments | settings
   const [isHeaderNotificationOpen, setIsHeaderNotificationOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(4);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Settings State Form
   const [metaPixelId, setMetaPixelId] = useState(siteSettings.metaPixelId || '123456789098765');
@@ -149,8 +152,154 @@ export const AdminDashboard = () => {
   ];
 
   return (
-    <div className="admin-portal-wrapper" style={{ display: 'flex', minHeight: 'calc(100vh - 73px)', background: 'var(--bg-main)', position: 'relative', width: '100%' }}>
+    <div className="admin-portal-wrapper" style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 73px)', background: 'var(--bg-main)', position: 'relative', width: '100%' }}>
       
+      {/* MOBILE STICKY HEADER BAR FOR ADMIN PORTAL */}
+      <div 
+        className="mobile-only"
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 95,
+          background: '#ffffff',
+          borderBottom: '1.5px solid var(--border-color)',
+          padding: '0.75rem 1rem',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          boxShadow: 'var(--shadow-sm)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <button
+            type="button"
+            onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+            style={{
+              background: '#f1f5f9',
+              border: '1px solid var(--border-color)',
+              color: 'var(--navy-900)',
+              width: '40px',
+              height: '40px',
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
+            aria-label="Toggle Admin Navigation Drawer"
+          >
+            {isMobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+          
+          <div>
+            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>
+              Operations Desk
+            </span>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0, lineHeight: 1.1 }}>
+              {activeTab === 'dashboard' && 'Admin Operations'}
+              {activeTab === 'orders' && 'Order Pipeline'}
+              {activeTab === 'services' && 'Service Rates'}
+              {activeTab === 'clients' && 'Client Directory'}
+              {activeTab === 'chat' && 'Inbox & Support'}
+              {activeTab === 'settings' && 'Studio Settings'}
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      {/* MOBILE SLIDE-OUT DRAWER OVERLAY */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="mobile-only"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 2000,
+            display: 'flex'
+          }}
+          onClick={() => setIsMobileSidebarOpen(false)}
+        >
+          <div 
+            style={{
+              width: '285px',
+              maxHeight: '100vh',
+              background: '#ffffff',
+              padding: '1.25rem 1rem',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)' }}>
+                <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--navy-900)' }}>Admin Navigation</span>
+                <button 
+                  type="button" 
+                  onClick={() => setIsMobileSidebarOpen(false)}
+                  style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '0.35rem', cursor: 'pointer' }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {navigationSections.map((sec, idx) => (
+                  <div key={idx}>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>
+                      {sec.title}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      {sec.items.map(item => {
+                        const IconComp = item.icon;
+                        const isActive = activeTab === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveTab(item.id);
+                              setIsMobileSidebarOpen(false);
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              width: '100%',
+                              padding: '0.65rem 0.8rem',
+                              borderRadius: '8px',
+                              border: isActive ? '1.5px solid #ff7a00' : '1px solid transparent',
+                              background: isActive ? 'rgba(255, 122, 0, 0.12)' : 'transparent',
+                              color: isActive ? '#ff7a00' : 'var(--navy-800)',
+                              fontWeight: isActive ? 800 : 600,
+                              fontSize: '0.85rem',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                              <IconComp size={16} style={{ color: isActive ? '#ff7a00' : 'var(--navy-600)' }} />
+                              <span>{item.label}</span>
+                            </div>
+                            {item.badge !== undefined && (
+                              <span style={{ fontSize: '0.725rem', fontWeight: 800, background: isActive ? '#ff7a00' : '#e2e8f0', color: isActive ? '#ffffff' : 'var(--navy-800)', padding: '0.1rem 0.5rem', borderRadius: '12px' }}>
+                                {item.badge}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <aside className="admin-sidebar-fixed" style={{
         position: 'fixed',
         top: '73px',

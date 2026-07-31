@@ -361,9 +361,10 @@ export const CustomerDashboard = () => {
                 {/* Navigation Items */}
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                   {[
+                    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
                     { id: 'digitizing', label: 'Embroidery Digitizing', icon: Layers, badge: digitizingOrders.length },
+                    { id: 'vector', label: 'Vector Art Conversion', icon: PenTool, badge: vectorOrders.length },
                     { id: 'patches', label: 'Custom Patches & Goods', icon: Package, badge: patchOrders.length },
-                    { id: 'store', label: 'Digital Store Purchases', icon: ShoppingBag, badge: storeOrders.length },
                     { id: 'profile', label: 'Account Profile', icon: User },
                     { id: 'support', label: 'Support & 24/7 Live Chat', icon: MessageSquare },
                     { id: 'settings', label: 'Preferences & Settings', icon: Settings }
