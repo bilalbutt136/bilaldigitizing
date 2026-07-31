@@ -20,6 +20,7 @@ export const OrderManagementTable = () => {
   } = useAppState();
 
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all'); // 'all' | 'embroidery' | 'vector' | 'patch'
   const [searchTerm, setSearchTerm] = useState('');
   const [lightboxOrder, setLightboxOrder] = useState(null);
 
@@ -30,6 +31,20 @@ export const OrderManagementTable = () => {
     const matchesSearch = titleText.includes(searchTerm.toLowerCase()) || 
                           idText.includes(searchTerm.toLowerCase()) ||
                           clientNameText.includes(searchTerm.toLowerCase());
+
+    const ordType = (ord?.type || '').toLowerCase();
+    const ordCat = (ord?.serviceCategory || '').toLowerCase();
+
+    let matchesCategory = true;
+    if (filterCategory === 'embroidery') {
+      matchesCategory = ordType === 'embroidery' || ordType === 'digitizing' || (!ordType && !ordCat.includes('vector') && !ordCat.includes('patch'));
+    } else if (filterCategory === 'vector') {
+      matchesCategory = ordType === 'vector' || ordCat.includes('vector');
+    } else if (filterCategory === 'patch') {
+      matchesCategory = ordType === 'patch' || ordType === 'patches' || ordCat.includes('patch');
+    }
+
+    if (!matchesCategory) return false;
     
     if (filterStatus === 'submitted') return matchesSearch && (ord?.status === 'submitted' || !ord?.status);
     if (filterStatus === 'digitizing') return matchesSearch && (ord?.status === 'digitizing' || ord?.status === 'assigned');
@@ -195,17 +210,33 @@ export const OrderManagementTable = () => {
           </button>
         </div>
 
-        {/* Search Input */}
-        <div style={{ position: 'relative', width: '280px' }}>
-          <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
-          <input 
-            type="text" 
+        {/* Category & Search Controls */}
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Category Dropdown Filter */}
+          <select
             className="form-control"
-            placeholder="Search order title, client, or ID..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ paddingLeft: '2.2rem' }}
-          />
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            style={{ width: '210px', fontWeight: 800, fontSize: '0.825rem', background: '#ffffff', color: 'var(--navy-900)' }}
+          >
+            <option value="all">📂 All Service Categories</option>
+            <option value="embroidery">🧵 Embroidery Digitizing</option>
+            <option value="vector">📐 Vector Tracing</option>
+            <option value="patch">📦 Custom Patches</option>
+          </select>
+
+          {/* Search Input */}
+          <div style={{ position: 'relative', width: '260px' }}>
+            <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
+            <input 
+              type="text" 
+              className="form-control"
+              placeholder="Search title, client, or ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ paddingLeft: '2.2rem' }}
+            />
+          </div>
         </div>
       </div>
 

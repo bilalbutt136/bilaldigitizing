@@ -22,7 +22,12 @@ import {
 
 export const ServicesGrid = () => {
   const navigate = useNavigate();
-  const { protectedNavigate, openStoreOrderModal, openOrderWizard } = useAppState();
+  const { protectedNavigate, openOrderWizard, pricingCards = [], servicesList = [], patchCards = [] } = useAppState();
+
+  // Dynamic overrides from Admin CMS
+  const embMinPrice = pricingCards[0]?.rate || 'Starting $10.00';
+  const vecMinPrice = servicesList[0]?.rate || 'Starting $15.00';
+  const patchMinPrice = patchCards[0]?.rate || 'Starting $1.50 / patch';
 
   const handleOrderRedirect = (serviceType, route) => {
     if (route) {

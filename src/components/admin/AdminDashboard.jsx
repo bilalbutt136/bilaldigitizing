@@ -172,16 +172,19 @@ export const AdminDashboard = () => {
         {/* 2-Column Sidebar Layout */}
         <div className="dashboard-layout-grid" style={{ display: 'grid', gridTemplateColumns: '270px 1fr', gap: '1.75rem', alignItems: 'start' }}>
           
-          {/* Left-Hand Admin Sidebar Navigation Container */}
+          {/* Left-Hand Admin Sidebar Navigation Container (Independent Scrollable SaaS Panel) */}
           <div className="card dashboard-sidebar-sticky" style={{
             padding: '1.25rem 0.85rem',
             background: '#ffffff',
-            border: '1px solid var(--border-color)',
+            border: '1.5px solid var(--border-color)',
             color: '#0f172a',
-            borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-sm)',
+            borderRadius: '16px',
+            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.06)',
             position: 'sticky',
-            top: '85px'
+            top: '90px',
+            maxHeight: 'calc(100vh - 110px)',
+            overflowY: 'auto',
+            zIndex: 10
           }}>
             {menuSections.map((sec, secIdx) => (
               <div key={secIdx} style={{ marginBottom: secIdx === menuSections.length - 1 ? 0 : '1.25rem' }}>

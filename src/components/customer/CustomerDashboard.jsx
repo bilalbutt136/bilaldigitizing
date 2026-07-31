@@ -408,7 +408,7 @@ export const CustomerDashboard = () => {
         >
 
           {/* ==================================================================
-              LEFT VERTICAL SIDEBAR NAVIGATION MENU (FULL-HEIGHT STICKY)
+              LEFT VERTICAL SIDEBAR NAVIGATION MENU (INDEPENDENT SCROLLABLE SAAS PANEL)
              ================================================================== */}
           <aside
             className="dashboard-sidebar-sticky"
@@ -417,10 +417,10 @@ export const CustomerDashboard = () => {
               border: '1.5px solid var(--border-color)',
               borderRadius: '16px',
               padding: '1.25rem 0.85rem',
-              boxShadow: 'var(--shadow-sm)',
+              boxShadow: '0 10px 30px rgba(15, 23, 42, 0.06)',
               position: 'sticky',
-              top: '85px',
-              height: 'calc(100vh - 105px)',
+              top: '90px',
+              maxHeight: 'calc(100vh - 110px)',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',

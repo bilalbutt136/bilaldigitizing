@@ -147,23 +147,20 @@ export const CustomerSewOutsSection = () => {
                   </span>
                 </div>
 
-                {/* Card Content Body */}
-                <div style={{ padding: '1.5rem' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
-                    {item.title}
-                  </h3>
-                  
-                  <div style={{ fontSize: '0.8rem', color: 'var(--orange-600)', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Layers size={14} /> Formats: {item.formats}
+                {/* Clean Card Caption Body */}
+                <div style={{ padding: '1.15rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0 0 0.25rem 0' }}>
+                      {item.title}
+                    </h3>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                      Formats: {item.formats}
+                    </div>
                   </div>
 
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                    {item.features.map((feat, fIdx) => (
-                      <li key={fIdx} style={{ fontSize: '0.875rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <CheckCircle2 size={16} style={{ color: '#10b981', flexShrink: 0 }} /> {feat}
-                      </li>
-                    ))}
-                  </ul>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, background: '#ecfdf5', color: '#047857', padding: '0.25rem 0.65rem', borderRadius: '9999px', border: '1px solid #a7f3d0' }}>
+                    Verified Sew-Out
+                  </span>
                 </div>
               </div>
 

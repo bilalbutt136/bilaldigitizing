@@ -464,31 +464,20 @@ export const PortfolioPage = () => {
                       />
                     </div>
 
-                    {/* Card Body */}
-                    <div style={{ padding: '1.5rem' }}>
-                      <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem', lineHeight: 1.3 }}>
-                        {item.title}
-                      </h3>
-                      
-                      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
-                        {item.description}
-                      </p>
-
-                      {/* Metadata Specs */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.825rem', color: 'var(--navy-800)', fontWeight: 700, background: '#f1f5f9', padding: '0.85rem 1rem', borderRadius: '8px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ color: 'var(--text-muted)' }}>Complexity / Count:</span>
-                          <span style={{ color: 'var(--orange-600)', fontWeight: 800 }}>⚡ {item.stitchCount}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ color: 'var(--text-muted)' }}>Colors & Threads:</span>
-                          <span>{item.colors}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ color: 'var(--text-muted)' }}>Formats:</span>
-                          <span style={{ fontFamily: 'monospace', fontSize: '0.775rem' }}>{item.formats}</span>
+                    {/* Clean Card Body Caption */}
+                    <div style={{ padding: '1.25rem 1.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem' }}>
+                      <div>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0 0 0.25rem 0', lineHeight: 1.3 }}>
+                          {item.title}
+                        </h3>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                          {item.categoryLabel} • {item.formats}
                         </div>
                       </div>
+
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, background: '#fff7ed', color: 'var(--orange-600)', border: '1px solid #ffedd5', padding: '0.3rem 0.7rem', borderRadius: '9999px', flexShrink: 0 }}>
+                        ⚡ {item.stitchCount}
+                      </span>
                     </div>
                   </div>
                 </div>

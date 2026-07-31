@@ -186,8 +186,6 @@ export const ServiceManagementEditor = () => {
       setPricingCards(prev => prev.filter(p => p.id !== idToDelete));
     } else if (activeCategory === 'patches') {
       setPatchCards(prev => prev.filter(p => p.id !== idToDelete));
-    } else if (activeCategory === 'store') {
-      setStoreProducts(prev => prev.filter(p => p.id !== idToDelete));
     } else {
       setServicesList(prev => prev.filter(p => p.id !== idToDelete));
     }
@@ -199,7 +197,6 @@ export const ServiceManagementEditor = () => {
   const getCurrentList = () => {
     if (activeCategory === 'embroidery') return pricingCards;
     if (activeCategory === 'patches') return patchCards;
-    if (activeCategory === 'store') return storeProducts;
     return servicesList;
   };
 
@@ -319,15 +316,6 @@ export const ServiceManagementEditor = () => {
               style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
             >
               📦 Custom Patches Tiers ({patchCards.length})
-            </button>
-
-            <button 
-              type="button"
-              className={`btn btn-sm ${activeCategory === 'store' ? 'btn-primary-orange' : 'btn-outline'}`}
-              onClick={() => setActiveCategory('store')}
-              style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-            >
-              🛍️ Store Products ({storeProducts.length})
             </button>
           </div>
 
