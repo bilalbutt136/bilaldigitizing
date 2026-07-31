@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { 
+  LayoutDashboard,
   Layers, 
   PenTool,
   Package, 
@@ -39,6 +40,16 @@ export const ClientSidebar = ({
   const displayWallet = mounted ? walletBalance : 150.00;
 
   const sections = [
+    {
+      title: 'CORE OPERATIONS',
+      items: [
+        {
+          id: 'dashboard',
+          label: 'Dashboard',
+          icon: LayoutDashboard
+        }
+      ]
+    },
     {
       title: 'DIGITAL STUDIO SERVICES',
       items: [

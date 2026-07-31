@@ -67,11 +67,12 @@ export const CustomerDashboard = () => {
     logout
   } = useAppState();
 
-  const [activeTab, setActiveTab] = useState('digitizing'); // 'digitizing' | 'vector' | 'patches' | 'profile' | 'support' | 'settings'
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'digitizing' | 'vector' | 'patches' | 'profile' | 'support' | 'settings'
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [lightboxOrder, setLightboxOrder] = useState(null);
   const [isServiceSelectorOpen, setIsServiceSelectorOpen] = useState(false);
+  const [isHeaderNotificationOpen, setIsHeaderNotificationOpen] = useState(false);
 
   // Mobile App UI State
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -458,8 +459,8 @@ export const CustomerDashboard = () => {
              ================================================================== */}
           <main style={{ minWidth: 0 }}>
             
-            {/* TAB 1: EMBROIDERY DIGITIZING & MAIN DASHBOARD */}
-            {activeTab === 'digitizing' && (
+            {/* TAB 0: MAIN CLIENT DASHBOARD */}
+            {activeTab === 'dashboard' && (
               <>
                 {/* Welcome Header Container - Styled for Parity with Admin Portal */}
                 <div style={{
@@ -487,7 +488,140 @@ export const CustomerDashboard = () => {
                     </p>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
+                    {/* Chat Button with "Chat" Label & Live Green Indicator */}
+                    <button
+                      type="button"
+                      onClick={handleOpenLiveSupport}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.45rem',
+                        background: '#ffffff',
+                        border: '1.5px solid var(--border-color)',
+                        color: 'var(--navy-900)',
+                        padding: '0.6rem 1rem',
+                        borderRadius: 'var(--radius-md)',
+                        fontWeight: 800,
+                        fontSize: '0.875rem',
+                        cursor: 'pointer',
+                        boxShadow: 'var(--shadow-sm)',
+                        transition: 'all 0.15s ease'
+                      }}
+                      onMouseOver={(e) => { e.currentTarget.style.borderColor = '#ff7a00'; e.currentTarget.style.color = '#ff7a00'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.color = 'var(--navy-900)'; }}
+                    >
+                      <MessageSquare size={17} style={{ color: '#ff7a00' }} />
+                      <span>Chat</span>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
+                    </button>
+
+                    {/* Notification Bell Button with Interactive Dropdown List */}
+                    <div style={{ position: 'relative' }}>
+                      <button
+                        type="button"
+                        onClick={() => setIsHeaderNotificationOpen(!isHeaderNotificationOpen)}
+                        style={{
+                          position: 'relative',
+                          background: isHeaderNotificationOpen ? '#fff7ed' : '#ffffff',
+                          border: isHeaderNotificationOpen ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
+                          color: 'var(--navy-900)',
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: 'var(--radius-md)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          boxShadow: 'var(--shadow-sm)',
+                          transition: 'all 0.15s ease'
+                        }}
+                        title="Notifications"
+                      >
+                        <Bell size={18} style={{ color: isHeaderNotificationOpen ? '#ff7a00' : 'var(--navy-800)' }} />
+                        {unreadNotifications > 0 && (
+                          <span style={{
+                            position: 'absolute',
+                            top: '2px',
+                            right: '2px',
+                            background: '#ff7a00',
+                            color: '#ffffff',
+                            fontSize: '0.62rem',
+                            fontWeight: 900,
+                            width: '16px',
+                            height: '16px',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '1.5px solid #ffffff'
+                          }}>
+                            {unreadNotifications}
+                          </span>
+                        )}
+                      </button>
+
+                      {/* Dropdown Popup List */}
+                      {isHeaderNotificationOpen && (
+                        <div style={{
+                          position: 'absolute',
+                          top: 'calc(100% + 10px)',
+                          right: 0,
+                          width: '320px',
+                          background: '#ffffff',
+                          border: '1.5px solid var(--border-color)',
+                          borderRadius: '14px',
+                          boxShadow: '0 12px 32px rgba(15, 23, 42, 0.15)',
+                          padding: '0.85rem',
+                          zIndex: 100
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)' }}>
+                            <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--navy-900)' }}>Notifications</span>
+                            <button
+                              type="button"
+                              onClick={() => setUnreadNotifications(0)}
+                              style={{ background: 'none', border: 'none', color: '#ff7a00', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}
+                            >
+                              Mark all read
+                            </button>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                            <div style={{ padding: '0.65rem', borderRadius: '8px', background: '#fff7ed', border: '1px solid rgba(255, 122, 0, 0.2)', fontSize: '0.8rem' }}>
+                              <div style={{ fontWeight: 800, color: 'var(--navy-900)' }}>🧵 Order #DIG-8842 Ready</div>
+                              <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Digitizing complete! .DST & .PES files ready for download.</div>
+                            </div>
+                            <div style={{ padding: '0.65rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
+                              <div style={{ fontWeight: 800, color: 'var(--navy-900)' }}>✒️ Vector Redraw Assigned</div>
+                              <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Vector artwork pathing in progress by senior artist.</div>
+                            </div>
+                            <div style={{ padding: '0.65rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
+                              <div style={{ fontWeight: 800, color: 'var(--navy-900)' }}>💬 Live Support Operator Online</div>
+                              <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Digitizing lead available for 24/7 technical queries.</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <button 
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={() => setIsDepositModalOpen(true)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.45rem',
+                        padding: '0.65rem 1.15rem',
+                        fontSize: '0.85rem',
+                        fontWeight: 700,
+                        borderRadius: 'var(--radius-md)',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <Wallet size={16} style={{ color: 'var(--orange-500)' }} /> Top-Up Wallet
+                    </button>
+
                     <button 
                       type="button"
                       className="btn btn-primary-orange"
@@ -509,75 +643,92 @@ export const CustomerDashboard = () => {
                   </div>
                 </div>
 
-                {/* Summary Stat Cards + Wallet Balance Card */}
+                {/* Summary Stat Cards - Styled with Admin Operations Desk Border-Left Accents */}
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '1.15rem',
-                  marginBottom: '2rem'
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+                  gap: '1.25rem',
+                  marginBottom: '1.75rem'
                 }}>
-                  {/* Wallet Balance Card */}
-                  <div className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderTop: '4px solid var(--orange-500)', background: '#fff7ed' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                        <div style={{ background: 'var(--orange-500)', color: '#ffffff', padding: '0.5rem', borderRadius: 'var(--radius-sm)' }}>
-                          <Wallet size={18} />
-                        </div>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Studio Wallet</div>
+                  {/* Card 1: Wallet Balance */}
+                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #ff7a00', background: '#ffffff' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Studio Wallet Credit</span>
+                      <div style={{ background: 'rgba(255, 122, 0, 0.12)', color: '#ff7a00', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
+                        <Wallet size={18} />
                       </div>
                     </div>
-
-                    <div style={{ marginBottom: '0.75rem' }}>
-                      <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--navy-950)' }}>${walletBalance.toFixed(2)}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Available Deposit Credit</div>
-                    </div>
-
-                    <button 
-                      className="btn btn-primary-orange btn-sm"
-                      onClick={() => setIsDepositModalOpen(true)}
-                      style={{ width: '100%', justifyContent: 'center', padding: '0.35rem 0.65rem', fontSize: '0.78rem' }}
-                    >
-                      + Deposit Funds
-                    </button>
-                  </div>
-
-                  <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ background: '#e0f2fe', color: '#0369a1', padding: '0.85rem', borderRadius: 'var(--radius-md)' }}>
-                      <Clock size={24} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)' }}>{activeOrders.length}</div>
-                      <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>Active Digitizing Jobs</div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '0.4rem' }}>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+                        ${walletBalance.toFixed(2)}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsDepositModalOpen(true)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--orange-600)',
+                          fontSize: '0.75rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          padding: 0
+                        }}
+                      >
+                        + Deposit
+                      </button>
                     </div>
                   </div>
 
-                  <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ background: 'var(--green-50)', color: 'var(--green-600)', padding: '0.85rem', borderRadius: 'var(--radius-md)' }}>
-                      <CheckCircle2 size={24} />
+                  {/* Card 2: Active Jobs */}
+                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #3b82f6', background: '#ffffff' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Digitizing Jobs</span>
+                      <div style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
+                        <Clock size={18} />
+                      </div>
                     </div>
-                    <div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)' }}>{completedOrders.length}</div>
-                      <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>Completed Downloads</div>
-                    </div>
-                  </div>
-
-                  <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ background: '#fae8ff', color: '#86198f', padding: '0.85rem', borderRadius: 'var(--radius-md)' }}>
-                      <RotateCcw size={24} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)' }}>{revisionOrders.length}</div>
-                      <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>Revisions Requested</div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.4rem 0 0.1rem' }}>
+                      {activeOrders.length}
                     </div>
                   </div>
 
-                  <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ background: 'var(--orange-50)', color: 'var(--orange-600)', padding: '0.85rem', borderRadius: 'var(--radius-md)' }}>
-                      <DollarSign size={24} />
+                  {/* Card 3: Completed Downloads */}
+                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #10b981', background: '#ffffff' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Completed Downloads</span>
+                      <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
+                        <CheckCircle2 size={18} />
+                      </div>
                     </div>
-                    <div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)' }}>${totalSpent.toFixed(2)}</div>
-                      <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>Total Invoiced Spend</div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.4rem 0 0.1rem' }}>
+                      {completedOrders.length}
+                    </div>
+                  </div>
+
+                  {/* Card 4: Revisions Requested */}
+                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #8b5cf6', background: '#ffffff' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Revisions Requested</span>
+                      <div style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
+                        <RotateCcw size={18} />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.4rem 0 0.1rem' }}>
+                      {revisionOrders.length}
+                    </div>
+                  </div>
+
+                  {/* Card 5: Total Spend */}
+                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #ec4899', background: '#ffffff' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Invoiced Spend</span>
+                      <div style={{ background: 'rgba(236, 72, 153, 0.12)', color: '#ec4899', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
+                        <DollarSign size={18} />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.4rem 0 0.1rem' }}>
+                      ${totalSpent.toFixed(2)}
                     </div>
                   </div>
                 </div>
@@ -788,315 +939,25 @@ export const CustomerDashboard = () => {
                   )}
 
                 </div>
-
-                {/* Full Comprehensive Embroidery Digitizing Service Overview & Package Pricing */}
-                <div style={{ marginTop: '2.5rem' }}>
-                  <EmbroideryDigitizingPage />
-                </div>
               </>
             )}
 
-            {/* TAB 2: VECTOR ART CONVERSION */}
+            {/* TAB 1: EMBROIDERY DIGITIZING PUBLIC LANDING VIEW */}
+            {activeTab === 'digitizing' && (
+              <EmbroideryDigitizingPage />
+            )}
+
+            {/* TAB 2: VECTOR ART CONVERSION PUBLIC LANDING VIEW */}
             {activeTab === 'vector' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div className="card" style={{ padding: '2rem', background: '#ffffff', border: '1.5px solid var(--border-color)', borderRadius: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                    <div>
-                      <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0 0 0.25rem', display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                        <PenTool size={22} style={{ color: '#ff7a00' }} /> Vector Art Conversion & Raster Redraw
-                      </h2>
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>
-                        Hand-traced node path redraws, Pantone spot color separations, and resolution-independent master source files (.AI, .EPS, .SVG, .PDF) ({vectorOrders.length} order{vectorOrders.length !== 1 ? 's' : ''}).
-                      </p>
-                    </div>
-                    <button
-                      className="btn btn-primary-orange"
-                      onClick={() => {
-                        if (openOrderWizard) {
-                          openOrderWizard({ type: 'vector' });
-                        } else {
-                          setIsOrderWizardOpen(true);
-                        }
-                      }}
-                    >
-                      <PlusCircle size={18} /> Order Vector Conversion
-                    </button>
-                  </div>
-
-                  {/* Vector Orders Table or Empty State with Vector Showcase */}
-                  {filteredVectorOrders.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '2.5rem 1rem', background: '#f8fafc', borderRadius: '12px', border: '1px dashed var(--border-color)', marginBottom: '1.5rem' }}>
-                      <PenTool size={42} style={{ color: 'var(--orange-500)', marginBottom: '0.5rem' }} />
-                      <h4 style={{ fontWeight: 800, color: 'var(--navy-900)', margin: '0 0 0.25rem' }}>No Active Vector Redraw Orders</h4>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Convert pixelated JPEGs/PNGs into 100% scalable vector artwork for screen printing and vinyl cutting.</p>
-                      <button 
-                        className="btn btn-primary-orange btn-sm" 
-                        onClick={() => {
-                          if (openOrderWizard) {
-                            openOrderWizard({ type: 'vector' });
-                          } else {
-                            setIsOrderWizardOpen(true);
-                          }
-                        }}
-                      >
-                        Submit Vector Artwork Request
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ overflowX: 'auto', marginBottom: '2rem' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                        <thead>
-                          <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--navy-700)' }}>
-                            <th style={{ padding: '0.75rem 1rem' }}>Vector Artwork & Title</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Service Specs</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Date Submitted</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Status</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Cost</th>
-                            <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredVectorOrders.map((ord) => (
-                            <tr key={ord.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                              <td style={{ padding: '1rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                                  <img 
-                                    src={ord.artworkUrl || ord.image_url || 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=120&q=80'} 
-                                    alt={ord.title}
-                                    style={{ width: '50px', height: '50px', borderRadius: '8px', objectFit: 'cover', border: '1.5px solid var(--orange-500)' }} 
-                                  />
-                                  <div>
-                                    <div style={{ fontWeight: 800, color: 'var(--navy-900)' }}>{ord.title}</div>
-                                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>ID: {formatOrderId(ord.id)}</div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td style={{ padding: '1rem' }}>
-                                <div style={{ fontWeight: 700, color: 'var(--navy-800)' }}>{ord.serviceCategory || 'Raster-to-Vector Redraw'}</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                  Formats: <strong>.AI, .EPS, .SVG, .PDF</strong>
-                                </div>
-                              </td>
-                              <td style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                {ord.createdAt ? new Date(ord.createdAt).toLocaleDateString() : 'Recent'}
-                              </td>
-                              <td style={{ padding: '1rem' }}>
-                                {getStatusBadge(ord.status)}
-                              </td>
-                              <td style={{ padding: '1rem', fontWeight: 800, color: 'var(--navy-900)' }}>
-                                ${parseFloat(ord.price || 15).toFixed(2)}
-                              </td>
-                              <td style={{ padding: '1rem', textAlign: 'right' }}>
-                                <button className="btn btn-outline btn-sm" onClick={() => setSelectedOrderForDrawer(ord)}>
-                                  View Brief & Files <ChevronRight size={15} />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-
-                  {/* Vector Redraw Showcase Grid */}
-                  <div>
-                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1rem' }}>
-                      Vector Conversion Capabilities & Sample Grids
-                    </h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
-                      
-                      <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
-                        <img 
-                          src="https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=500&q=80" 
-                          alt="Vintage Mascot Vector"
-                          style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', marginBottom: '0.85rem' }} 
-                        />
-                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase' }}>Hand-Drawn Node Tracing</div>
-                        <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.2rem 0 0.4rem' }}>Low-Res Raster to Sharp AI Vector</h4>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.45, marginBottom: '1rem' }}>
-                          Convert pixelated JPEGs into clean Adobe Illustrator vector paths suitable for large-format banners and apparel print.
-                        </p>
-                        <button 
-                          className="btn btn-outline btn-sm" 
-                          onClick={() => {
-                            if (openOrderWizard) openOrderWizard({ type: 'vector' });
-                            else setIsOrderWizardOpen(true);
-                          }}
-                          style={{ width: '100%', justifyContent: 'center', fontWeight: 800 }}
-                        >
-                          Order Vector Redraw <ArrowRight size={14} />
-                        </button>
-                      </div>
-
-                      <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
-                        <img 
-                          src="https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=500&q=80" 
-                          alt="Color Separation Vector"
-                          style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', marginBottom: '0.85rem' }} 
-                        />
-                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase' }}>Screen Printing Films</div>
-                        <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.2rem 0 0.4rem' }}>Pantone Spot Color Separation</h4>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.45, marginBottom: '1rem' }}>
-                          Precise spot color layer separation with registration marks ready for screen printing film outputs and vinyl plotters.
-                        </p>
-                        <button 
-                          className="btn btn-outline btn-sm" 
-                          onClick={() => {
-                            if (openOrderWizard) openOrderWizard({ type: 'vector' });
-                            else setIsOrderWizardOpen(true);
-                          }}
-                          style={{ width: '100%', justifyContent: 'center', fontWeight: 800 }}
-                        >
-                          Order Color Separation <ArrowRight size={14} />
-                        </button>
-                      </div>
-
-                      <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
-                        <img 
-                          src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=500&q=80" 
-                          alt="Corporate Crest Redraw"
-                          style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', marginBottom: '0.85rem' }} 
-                        />
-                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase' }}>Master Source Files</div>
-                        <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.2rem 0 0.4rem' }}>Multi-Format Vector Package</h4>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.45, marginBottom: '1rem' }}>
-                          Receive complete source files (.AI, .EPS, .SVG, .PDF, .CDR) with full commercial ownership rights.
-                        </p>
-                        <button 
-                          className="btn btn-outline btn-sm" 
-                          onClick={() => {
-                            if (openOrderWizard) openOrderWizard({ type: 'vector' });
-                            else setIsOrderWizardOpen(true);
-                          }}
-                          style={{ width: '100%', justifyContent: 'center', fontWeight: 800 }}
-                        >
-                          Request Vector Package <ArrowRight size={14} />
-                        </button>
-                      </div>
-
-                    </div>
-                  </div>
-
-                </div>
-
-                {/* Full Comprehensive Vector Art Conversion Overview & Workflow */}
-                <div style={{ marginTop: '2.5rem' }}>
-                  <VectorArtPage />
-                </div>
-              </div>
+              <VectorArtPage />
             )}
 
-            {/* TAB 3: CUSTOM PATCHES & MANUFACTURED GOODS */}
+            {/* TAB 3: CUSTOM PATCHES & MANUFACTURED GOODS PUBLIC LANDING VIEW */}
             {activeTab === 'patches' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div className="card" style={{ padding: '2rem', background: '#ffffff', border: '1.5px solid var(--border-color)', borderRadius: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                    <div>
-                      <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0 0 0.25rem' }}>
-                        Custom Patches & Physical Manufactured Goods
-                      </h2>
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>
-                        Manage custom physical embroidered patches, leather emblems, screen-printed T-shirts, and 3D puff hats ({patchOrders.length} order{patchOrders.length !== 1 ? 's' : ''}).
-                      </p>
-                    </div>
-                    <button
-                      className="btn btn-primary-orange"
-                      onClick={() => navigate('/custom-patches')}
-                    >
-                      <PlusCircle size={18} /> Order Custom Patches
-                    </button>
-                  </div>
-
-                  {/* Patch Orders List Table */}
-                  {patchOrders.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '2.5rem 1rem', background: '#f8fafc', borderRadius: '12px', border: '1px dashed var(--border-color)' }}>
-                      <Package size={38} style={{ color: 'var(--text-light)', marginBottom: '0.5rem' }} />
-                      <h4 style={{ fontWeight: 800, color: 'var(--navy-900)', margin: '0 0 0.25rem' }}>No Physical Patch Orders Yet</h4>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Configure custom embroidered, leather, or woven patches with low minimums.</p>
-                      <button className="btn btn-primary-orange btn-sm" onClick={() => navigate('/custom-patches')}>
-                        Create Patch Order
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ overflowX: 'auto', marginBottom: '2rem' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                        <thead>
-                          <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--navy-700)' }}>
-                            <th style={{ padding: '0.75rem 1rem' }}>Patch Artwork & Title</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Manufacturing Specs</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Date Submitted</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Production Status</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Cost</th>
-                            <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {patchOrders.map((ord) => (
-                            <tr key={ord.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                              <td style={{ padding: '1rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                                  <img 
-                                    src={ord.artworkUrl || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=120&q=80'} 
-                                    alt={ord.title}
-                                    style={{ width: '50px', height: '50px', borderRadius: '8px', objectFit: 'cover', border: '1.5px solid var(--orange-500)' }} 
-                                  />
-                                  <div>
-                                    <div style={{ fontWeight: 800, color: 'var(--navy-900)' }}>{ord.title}</div>
-                                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>ID: {formatOrderId(ord.id)}</div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td style={{ padding: '1rem' }}>
-                                <div style={{ fontWeight: 700, color: 'var(--navy-800)' }}>{ord.serviceCategory}</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                  Qty: <strong>{ord.quantity || 100} Pcs</strong> • {ord.backing || 'Velcro Backing'}
-                                </div>
-                              </td>
-                              <td style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                {ord.createdAt ? new Date(ord.createdAt).toLocaleDateString() : 'Recent'}
-                              </td>
-                              <td style={{ padding: '1rem' }}>
-                                <span className="badge badge-digitizing">In Manufacturing</span>
-                              </td>
-                              <td style={{ padding: '1rem', fontWeight: 800, color: 'var(--navy-900)' }}>
-                                ${parseFloat(ord.price || 0).toFixed(2)}
-                              </td>
-                              <td style={{ padding: '1rem', textAlign: 'right' }}>
-                                <button className="btn btn-outline btn-sm" onClick={() => setSelectedOrderForDrawer(ord)}>
-                                  View Brief & Tracking <ChevronRight size={15} />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-
-                  <div style={{ maxWidth: '600px', marginTop: '1.5rem' }}>
-                    <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
-                      <div style={{ background: '#fff7ed', color: 'var(--orange-600)', padding: '0.75rem', borderRadius: '10px', display: 'inline-flex', marginBottom: '0.85rem' }}>
-                        <Package size={24} />
-                      </div>
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>Custom Woven, Embroidered & PVC Patches</h3>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: '1.15rem' }}>
-                        Iron-on, velcro, or sew-on backing options with merrowed borders and custom die-cut shapes shipped worldwide.
-                      </p>
-                      <button className="btn btn-outline btn-sm" onClick={() => navigate('/custom-patches')} style={{ width: '100%', justifyContent: 'center', fontWeight: 800 }}>
-                        Configure Custom Patches Order <ArrowRight size={14} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Full Comprehensive Custom Patches & Goods Overview & Workflow */}
-                <div style={{ marginTop: '2.5rem' }}>
-                  <CustomPatchesSection />
-                </div>
-              </div>
+              <CustomPatchesSection />
             )}
 
-            {/* TAB 3: ACCOUNT & PROFILE */}
+            {/* TAB 4: ACCOUNT & PROFILE */}
             {activeTab === 'profile' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div className="card" style={{ padding: '2rem', background: '#ffffff', border: '1.5px solid var(--border-color)', borderRadius: '16px' }}>
