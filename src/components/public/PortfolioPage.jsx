@@ -485,73 +485,110 @@ export const PortfolioPage = () => {
             })}
           </div>
 
-          {/* Bottom Conversion CTA Banner */}
-          <div style={{
-            background: 'linear-gradient(135deg, var(--navy-900) 0%, #ff7a00 100%)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '3.5rem 2.5rem',
-            color: '#ffffff',
-            textAlign: 'center',
-            boxShadow: '0 16px 40px rgba(15, 23, 42, 0.2)',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            <div style={{ maxWidth: '720px', margin: '0 auto' }}>
+          {/* Dynamic Bottom Conversion CTA Banner */}
+          {(() => {
+            const getCtaConfig = (filter) => {
+              switch (filter) {
+                case 'patches':
+                  return {
+                    badge: '📦 CUSTOM PATCH MANUFACTURE',
+                    heading: 'Ready to Order Custom Patches?',
+                    subtext: 'Configure custom manufactured patches with velcro, iron-on, or sew-on backing, merrowed border options, and fast 3-5 day studio production.',
+                    btnText: 'Order Custom Patches Now',
+                    route: '/custom-patches'
+                  };
+                case 'vector':
+                  return {
+                    badge: '📐 VECTOR TRACING & REDRAW',
+                    heading: 'Ready to Convert Your Vector Artwork?',
+                    subtext: 'Transform low-res logos, raster JPGs, and sketches into clean, 100% hand-drawn scalable vector files (.AI, .EPS, .SVG, .PDF) in 6-12 hours.',
+                    btnText: 'Order Vector Tracing Now',
+                    route: '/services/vector-tracing'
+                  };
+                case 'embroidery':
+                case 'all':
+                default:
+                  return {
+                    badge: '⚡ COMMERCIAL QUALITY GUARANTEE',
+                    heading: 'Ready to Digitize Your Logo?',
+                    subtext: 'Submit your logo today and receive commercial machine-ready files (.DST, .PES, .EMB) in as fast as 4 hours with unlimited free revisions.',
+                    btnText: 'Upload Your Artwork Now',
+                    route: '/services/embroidery-digitizing'
+                  };
+              }
+            };
+
+            const cta = getCtaConfig(activeFilter);
+
+            return (
               <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                background: 'rgba(255, 255, 255, 0.15)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
+                background: 'linear-gradient(135deg, var(--navy-900) 0%, #ff7a00 100%)',
+                borderRadius: 'var(--radius-lg)',
+                padding: '3.5rem 2.5rem',
                 color: '#ffffff',
-                fontWeight: 800,
-                fontSize: '0.825rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                padding: '0.35rem 0.95rem',
-                borderRadius: '9999px',
-                marginBottom: '1rem'
+                textAlign: 'center',
+                boxShadow: '0 16px 40px rgba(15, 23, 42, 0.2)',
+                position: 'relative',
+                overflow: 'hidden'
               }}>
-                <Zap size={16} /> Commercial Quality Guarantee
+                <div style={{ maxWidth: '720px', margin: '0 auto' }}>
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    color: '#ffffff',
+                    fontWeight: 800,
+                    fontSize: '0.825rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    padding: '0.35rem 0.95rem',
+                    borderRadius: '9999px',
+                    marginBottom: '1rem'
+                  }}>
+                    <Zap size={16} /> {cta.badge}
+                  </div>
+
+                  <h2 style={{ fontSize: '2.4rem', fontWeight: 800, color: '#ffffff', marginBottom: '1rem' }}>
+                    {cta.heading}
+                  </h2>
+
+                  <p style={{ fontSize: '1.1rem', color: '#f1f5f9', lineHeight: 1.6, marginBottom: '2.25rem' }}>
+                    {cta.subtext}
+                  </p>
+
+                  <button
+                    type="button"
+                    className="btn btn-navy btn-lg"
+                    style={{
+                      fontWeight: 800,
+                      fontSize: '1.05rem',
+                      padding: '0.95rem 2.25rem',
+                      background: '#0f172a',
+                      backgroundColor: '#0f172a',
+                      color: '#ffffff',
+                      border: '2px solid rgba(255, 255, 255, 0.25)',
+                      borderRadius: '10px',
+                      boxShadow: '0 8px 25px rgba(15, 23, 42, 0.4)',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.6rem',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onClick={() => {
+                      navigate(cta.route);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  >
+                    <UploadCloud size={20} style={{ color: 'var(--orange-400)' }} /> {cta.btnText} <ArrowRight size={18} />
+                  </button>
+                </div>
               </div>
-
-              <h2 style={{ fontSize: '2.4rem', fontWeight: 800, color: '#ffffff', marginBottom: '1rem' }}>
-                Ready to Digitize Your Artwork?
-              </h2>
-
-              <p style={{ fontSize: '1.1rem', color: '#f1f5f9', lineHeight: 1.6, marginBottom: '2.25rem' }}>
-                Submit your logo today and receive commercial machine-ready files (.DST, .PES, .EMB) in as fast as 4 hours with unlimited free revisions.
-              </p>
-
-              <button
-                type="button"
-                className="btn btn-navy btn-lg"
-                style={{
-                  fontWeight: 800,
-                  fontSize: '1.05rem',
-                  padding: '0.95rem 2.25rem',
-                  background: '#0f172a',
-                  backgroundColor: '#0f172a',
-                  color: '#ffffff',
-                  border: '2px solid rgba(255, 255, 255, 0.25)',
-                  borderRadius: '10px',
-                  boxShadow: '0 8px 25px rgba(15, 23, 42, 0.4)',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.6rem',
-                  transition: 'all 0.2s ease'
-                }}
-                onClick={() => {
-                  navigate('/services/embroidery-digitizing');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-              >
-                <UploadCloud size={20} style={{ color: 'var(--orange-400)' }} /> Upload Your Artwork Now <ArrowRight size={18} />
-              </button>
-            </div>
-          </div>
+            );
+          })()}
 
         </div>
       </section>
