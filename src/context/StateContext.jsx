@@ -600,13 +600,55 @@ export const StateProvider = ({ children }) => {
       if (ord.id === orderId) {
         return {
           ...ord,
-          status: 'digitizing',
-          revisions: [{ id: `rev-${Date.now()}`, notes: revisionNote, requestedBy: authUser?.name || 'Client', createdAt: new Date().toISOString() }, ...(ord.revisions || [])]
+          status: 'revision',
+          updatedAt: new Date().toISOString(),
+          revisions: [{ id: `rev-${Date.now()}`, notes: revisionNote, requestedBy: authUser?.name || 'Client', createdAt: new Date().toISOString() }, ...(ord.revisions || [])],
+          history: [{ timestamp: new Date().toISOString(), label: `Revision Requested: "${revisionNote.slice(0, 35)}..."` }, ...ord.history]
         };
       }
       return ord;
     }));
     showToast(`Revision request sent for Order ${formatOrderId(orderId)}`, 'info');
+  };
+
+  const addOrderMessage = (orderId, text, senderName, senderRole = 'admin', attachments = []) => {
+    if (!text && (!attachments || attachments.length === 0)) return;
+    const msgObj = {
+      id: `msg-${Date.now()}`,
+      sender: senderName || (senderRole === 'admin' ? 'Master Admin' : 'Client'),
+      senderRole: senderRole,
+      text: text || '',
+      attachments: attachments || [],
+      timestamp: new Date().toISOString()
+    };
+
+    setOrders(prev => prev.map(ord => {
+      if (ord.id === orderId) {
+        const updatedMsgs = [...(ord.messages || []), msgObj];
+        return {
+          ...ord,
+          messages: updatedMsgs,
+          updatedAt: new Date().toISOString(),
+          history: [{ timestamp: new Date().toISOString(), label: `Message posted by ${msgObj.sender}` }, ...ord.history]
+        };
+      }
+      return ord;
+    }));
+  };
+
+  const cancelOrder = (orderId, reason = 'Cancelled by Admin') => {
+    setOrders(prev => prev.map(ord => {
+      if (ord.id === orderId) {
+        return {
+          ...ord,
+          status: 'cancelled',
+          updatedAt: new Date().toISOString(),
+          history: [{ timestamp: new Date().toISOString(), label: `Order Cancelled: ${reason}` }, ...ord.history]
+        };
+      }
+      return ord;
+    }));
+    showToast(`Order ${formatOrderId(orderId)} marked as CANCELLED`, 'warning');
   };
 
   const depositFunds = async (amount) => {
@@ -687,7 +729,7 @@ export const StateProvider = ({ children }) => {
       isDepositModalOpen, setIsDepositModalOpen,
       depositFunds, deductWalletBalance,
       toast, showToast,
-      createOrder, updateOrderStatus, addRevisionRequest
+      createOrder, updateOrderStatus, addRevisionRequest, addOrderMessage, cancelOrder
     }}>
       {children}
     </StateContext.Provider>

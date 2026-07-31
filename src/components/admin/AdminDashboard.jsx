@@ -6,6 +6,7 @@ import { OrderManagementTable } from './OrderManagementTable';
 import { ClientDirectory } from './ClientDirectory';
 import { PricingSettingsModal } from './PricingSettingsModal';
 import { SiteCmsEditor } from './SiteCmsEditor';
+import { ServiceManagementEditor } from './ServiceManagementEditor';
 import { AdminChatInbox } from './AdminChatInbox';
 import { 
   LayoutDashboard, 
@@ -333,7 +334,8 @@ export const AdminDashboard = () => {
             {activeTab === 'orders' && <OrderManagementTable />}
 
             {/* 3. SERVICES & PRICING TAB */}
-            {(activeTab === 'services' || activeTab === 'cms') && <SiteCmsEditor />}
+            {activeTab === 'services' && <ServiceManagementEditor />}
+            {activeTab === 'cms' && <SiteCmsEditor />}
 
             {/* 5. CLIENTS & WALLETS TAB */}
             {(activeTab === 'clients' || activeTab === 'wallets') && <ClientDirectory />}

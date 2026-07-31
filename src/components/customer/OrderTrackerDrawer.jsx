@@ -55,6 +55,8 @@ export const OrderTrackerDrawer = () => {
     setSelectedOrderForDrawer,
     addRevisionRequest,
     updateOrderStatus,
+    addOrderMessage,
+    cancelOrder,
     orders,
     authUser,
     currentView,
@@ -62,7 +64,8 @@ export const OrderTrackerDrawer = () => {
   } = useAppState();
 
   const [revisionNote, setRevisionNote] = useState('');
-  const [activeTab, setActiveTab] = useState('timeline'); // timeline | downloads | revisions
+  const [chatMessageText, setChatMessageText] = useState('');
+  const [activeTab, setActiveTab] = useState('timeline'); // timeline | downloads | messages | revisions
   const [showLightbox, setShowLightbox] = useState(false);
   const [showWorksheetModal, setShowWorksheetModal] = useState(false);
 
@@ -83,16 +86,17 @@ export const OrderTrackerDrawer = () => {
   const isPhysicalPatchOrder = ord.type === 'patch' || ord.type === 'patches' || ord.serviceCategory?.toLowerCase().includes('patch');
   const isPhysicalStoreOrder = isPhysicalPatchOrder || ord.type === 'store' || ord.type === 'merchandise' || ord.type === 'digital_product' || Boolean(ord.isStoreItem) || ord.serviceCategory?.toLowerCase().includes('store') || ord.serviceCategory?.toLowerCase().includes('merchandise');
 
-  // Determine order stage timeline index
+  // Fiverr-style granular stages
   const stages = [
-    { key: 'submitted', label: 'Brief Submitted' },
-    { key: 'assigned', label: 'Assigned' },
-    { key: 'digitizing', label: 'Digitizing' },
-    { key: 'qc', label: 'Quality Control' },
-    { key: 'completed', label: 'Completed' }
+    { key: 'submitted', label: '🔴 New / Pending' },
+    { key: 'digitizing', label: '⚡ In Progress' },
+    { key: 'revision', label: '🔄 In Revision' },
+    { key: 'delivered', label: '📦 Delivered' },
+    { key: 'completed', label: '✅ Completed' }
   ];
 
-  const currentStageIndex = stages.findIndex(s => s.key === ord.status);
+  const stageKeys = ['submitted', 'digitizing', 'revision', 'delivered', 'completed'];
+  const currentStageIndex = ord.status === 'cancelled' ? -1 : stageKeys.indexOf(ord.status === 'assigned' ? 'digitizing' : ord.status === 'qc' ? 'delivered' : ord.status || 'submitted');
   const isCompletedOrUnlocked = ord.status === 'completed' || (ord.uploadedMachineFiles && ord.uploadedMachineFiles.length > 0);
 
   const handleRevisionSubmit = (e) => {
@@ -100,6 +104,40 @@ export const OrderTrackerDrawer = () => {
     if (!revisionNote.trim()) return;
     addRevisionRequest(ord.id, revisionNote);
     setRevisionNote('');
+  };
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (!chatMessageText.trim()) return;
+    const senderRole = isAdmin ? 'admin' : 'client';
+    const senderName = isAdmin ? (authUser?.name || 'Master Admin') : (ord.clientName || 'Client');
+    addOrderMessage(ord.id, chatMessageText, senderName, senderRole);
+    setChatMessageText('');
+    showToast('Message sent to order activity log', 'success');
+  };
+
+  const formatPlacementTimeFull = (isoString) => {
+    if (!isoString) return 'Just now';
+    try {
+      const d = new Date(isoString);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return 'Recent';
+    }
+  };
+
+  const getElapsedTimeFormatted = (createdIso, updatedIso) => {
+    try {
+      const start = new Date(createdIso || Date.now()).getTime();
+      const end = updatedIso && (ord.status === 'completed' || ord.status === 'delivered') ? new Date(updatedIso).getTime() : Date.now();
+      const diffMs = Math.max(0, end - start);
+      const totalMins = Math.floor(diffMs / 60000);
+      const hrs = Math.floor(totalMins / 60);
+      const mins = totalMins % 60;
+      return `${hrs}h ${mins}m`;
+    } catch {
+      return 'N/A';
+    }
   };
 
   // Helper to download original client source artwork
@@ -266,6 +304,22 @@ export const OrderTrackerDrawer = () => {
                 }}
               >
                 📂 Files & Source Assets ({allDownloadFormats.length})
+              </button>
+
+              <button
+                onClick={() => setActiveTab('messages')}
+                style={{
+                  padding: '0.85rem 1.25rem',
+                  border: 'none',
+                  background: 'transparent',
+                  borderBottom: `3px solid ${activeTab === 'messages' ? 'var(--orange-600)' : 'transparent'}`,
+                  color: activeTab === 'messages' ? 'var(--orange-600)' : 'var(--navy-700)',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer'
+                }}
+              >
+                💬 Communication Log ({ord.messages?.length || 0})
               </button>
 
               <button
@@ -497,6 +551,122 @@ export const OrderTrackerDrawer = () => {
                   );
                 })}
               </div>
+
+              {/* Precise Fiverr Order Timestamps Grid */}
+              <div style={{
+                background: '#f8fafc',
+                border: '1px solid var(--border-color)',
+                borderRadius: '12px',
+                padding: '1.25rem',
+                marginBottom: '1.75rem',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: '1rem',
+                fontSize: '0.825rem'
+              }}>
+                <div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <Clock size={13} style={{ color: 'var(--orange-600)' }} /> Placement Timestamp
+                  </div>
+                  <div style={{ fontWeight: 800, color: 'var(--navy-900)' }}>
+                    {formatPlacementTimeFull(ord.createdAt)}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <Zap size={13} style={{ color: 'var(--orange-600)' }} /> Expected Turnaround SLA
+                  </div>
+                  <div style={{ fontWeight: 800, color: 'var(--navy-900)' }}>
+                    {ord.isRush ? '⚡ 4-Hour Express' : `${ord.turnaroundHours || 12}-Hour Standard SLA`}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <RotateCcw size={13} style={{ color: 'var(--orange-600)' }} /> Total Elapsed Time
+                  </div>
+                  <div style={{ fontWeight: 800, color: 'var(--navy-900)' }}>
+                    {getElapsedTimeFormatted(ord.createdAt, ord.updatedAt)}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <Sparkles size={13} style={{ color: 'var(--orange-600)' }} /> Last Activity Sync
+                  </div>
+                  <div style={{ fontWeight: 800, color: 'var(--orange-600)' }}>
+                    {formatPlacementTimeFull(ord.updatedAt || ord.createdAt)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Admin Quick Lifecycle Stage Transition Bar */}
+              {isAdmin && (
+                <div style={{
+                  background: 'var(--navy-950)',
+                  color: '#ffffff',
+                  padding: '1rem 1.25rem',
+                  borderRadius: '12px',
+                  marginBottom: '1.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem'
+                }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--orange-500)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <ShieldCheck size={18} /> Master Admin Order Stage Controls:
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline"
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', color: '#ffffff', borderColor: 'rgba(255,255,255,0.3)' }}
+                      onClick={() => updateOrderStatus(ord.id, 'digitizing')}
+                    >
+                      ⚡ Start Digitizing
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline"
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', color: '#f59e0b', borderColor: '#f59e0b' }}
+                      onClick={() => updateOrderStatus(ord.id, 'revision')}
+                    >
+                      🔄 Put in Revision
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-primary-orange"
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
+                      onClick={() => updateOrderStatus(ord.id, 'delivered')}
+                    >
+                      📦 Deliver Machine Package
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', background: '#10b981', color: '#ffffff', border: 'none' }}
+                      onClick={() => updateOrderStatus(ord.id, 'completed')}
+                    >
+                      ✅ Complete Order
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', background: '#dc2626', color: '#ffffff', border: 'none' }}
+                      onClick={() => cancelOrder(ord.id)}
+                    >
+                      ❌ Cancel Order
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Brief Specs & Product Artwork Details Grid */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
@@ -877,6 +1047,129 @@ export const OrderTrackerDrawer = () => {
 
               </div>
 
+            </div>
+          )}
+
+          {/* TAB: Fiverr Real-Time Activity & Communication Log */}
+          {activeTab === 'messages' && (
+            <div>
+              <div style={{
+                background: 'var(--navy-950)',
+                color: '#ffffff',
+                padding: '1.25rem',
+                borderRadius: '12px',
+                marginBottom: '1.5rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div>
+                  <h4 style={{ fontSize: '1.05rem', color: '#ffffff', margin: '0 0 0.25rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Send size={18} style={{ color: 'var(--orange-500)' }} /> Order Communication & Activity Log
+                  </h4>
+                  <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                    Track messages, revision notes, technical artwork specifications, and machine file attachments.
+                  </div>
+                </div>
+
+                <span className="badge badge-assigned" style={{ fontSize: '0.75rem' }}>
+                  {ord.messages?.length || 0} Messages
+                </span>
+              </div>
+
+              {/* Message Feed Stream */}
+              <div style={{
+                background: '#f8fafc',
+                border: '1px solid var(--border-color)',
+                borderRadius: '12px',
+                padding: '1.25rem',
+                marginBottom: '1.5rem',
+                maxHeight: '340px',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem'
+              }}>
+                {(!ord.messages || ord.messages.length === 0) ? (
+                  <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                    💬 No messages posted yet. Use the form below to send notes or attach files for Order {formatOrderId(ord.id)}.
+                  </div>
+                ) : (
+                  ord.messages.map((msg) => {
+                    const isMsgAdmin = msg.senderRole === 'admin';
+                    return (
+                      <div 
+                        key={msg.id}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: isMsgAdmin ? 'flex-end' : 'flex-start'
+                        }}
+                      >
+                        <div style={{
+                          maxWidth: '82%',
+                          background: isMsgAdmin ? 'var(--navy-900)' : '#ffffff',
+                          color: isMsgAdmin ? '#ffffff' : 'var(--navy-900)',
+                          border: isMsgAdmin ? 'none' : '1.5px solid var(--border-color)',
+                          padding: '0.85rem 1.1rem',
+                          borderRadius: isMsgAdmin ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
+                          boxShadow: 'var(--shadow-sm)'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
+                            <div style={{ fontWeight: 800, fontSize: '0.8rem', color: isMsgAdmin ? 'var(--orange-400)' : 'var(--navy-900)' }}>
+                              {msg.sender}
+                            </div>
+                            <span style={{ fontSize: '0.68rem', color: isMsgAdmin ? '#94a3b8' : 'var(--text-muted)' }}>
+                              {formatPlacementTimeFull(msg.timestamp)}
+                            </span>
+                          </div>
+
+                          <div style={{ fontSize: '0.875rem', lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>
+                            {msg.text}
+                          </div>
+
+                          {msg.attachments && msg.attachments.length > 0 && (
+                            <div style={{ marginTop: '0.65rem', borderTop: `1px solid ${isMsgAdmin ? 'rgba(255,255,255,0.15)' : 'var(--border-color)'}`, paddingTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                              {msg.attachments.map((att, aIdx) => (
+                                <div key={aIdx} style={{ fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                  <span>📎</span>
+                                  <span style={{ fontWeight: 700 }}>{att.name || att}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Send Message Form */}
+              <form onSubmit={handleSendMessage} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+                    Post Message to Activity Log
+                  </label>
+                  <textarea 
+                    rows={3}
+                    className="form-control"
+                    placeholder="Type technical notes, machine setup instructions, or response to client..."
+                    value={chatMessageText}
+                    onChange={(e) => setChatMessageText(e.target.value)}
+                    style={{ fontSize: '0.875rem' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Posting as <strong>{isAdmin ? (authUser?.name || 'Master Admin') : (ord.clientName || 'Client')}</strong>
+                  </span>
+                  <button type="submit" className="btn btn-primary-orange btn-sm" style={{ fontWeight: 800 }}>
+                    <Send size={14} /> Send Message
+                  </button>
+                </div>
+              </form>
             </div>
           )}
 

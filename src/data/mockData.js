@@ -42,25 +42,36 @@ export const INITIAL_ORDERS = [
     serviceCategory: 'Left Chest / Polo',
     clientName: 'Apex Athletics Apparel',
     clientEmail: 'sarah@apexapparel.com',
-    createdAt: '2026-07-22T14:30:00Z',
-    status: 'completed', // submitted | assigned | digitizing | qc | completed
+    createdAt: new Date(Date.now() - 3600000 * 18).toISOString(),
+    updatedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+    turnaroundHours: 12,
+    status: 'completed',
     isRush: true,
     dimensions: { width: 3.5, height: 3.2, unit: 'inches' },
     fabricType: 'Pique Cotton Polo',
     colorsCount: 5,
     estimatedStitches: 11400,
     requestedFormats: ['dst', 'pes', 'emb', 'svg'],
-    price: 27.10, // ($1.50 * 11.4) + $10 rush
+    price: 27.10,
     assignedDigitizerId: 'dig-1',
     notes: 'Please keep the yellow beak sharp and use underlay density suitable for pique cotton to prevent sinking.',
     artworkUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
     outputFileUrl: 'Golden_Eagle_Sports_Logo.dst',
+    uploadedMachineFiles: [
+      { name: 'Golden_Eagle_Sports_Logo.dst', format: 'dst', type: 'finished_machine_file', uploadedAt: new Date(Date.now() - 3600000 * 3).toISOString() },
+      { name: 'Golden_Eagle_Sports_Logo.pes', format: 'pes', type: 'finished_machine_file', uploadedAt: new Date(Date.now() - 3600000 * 3).toISOString() },
+      { name: 'Golden_Eagle_Sports_Logo_Worksheet.pdf', format: 'pdf', type: 'finished_machine_file', uploadedAt: new Date(Date.now() - 3600000 * 3).toISOString() }
+    ],
     history: [
-      { timestamp: '2026-07-22T14:30:00Z', label: 'Order Submitted by Client' },
-      { timestamp: '2026-07-22T14:45:00Z', label: 'Assigned to Master Digitizer Alex Mercer' },
-      { timestamp: '2026-07-22T16:20:00Z', label: 'Digitizing & Pathing Completed' },
-      { timestamp: '2026-07-22T17:00:00Z', label: 'Quality Assurance Machine Simulation Passed' },
-      { timestamp: '2026-07-22T17:15:00Z', label: 'Final DST & PES Files Released to Client' }
+      { timestamp: new Date(Date.now() - 3600000 * 18).toISOString(), label: 'Order Placement Confirmed by Sarah Jenkins' },
+      { timestamp: new Date(Date.now() - 3600000 * 16).toISOString(), label: 'Assigned to Master Digitizer Alex Mercer' },
+      { timestamp: new Date(Date.now() - 3600000 * 6).toISOString(), label: 'Digitizing & Machine Pathing Completed' },
+      { timestamp: new Date(Date.now() - 3600000 * 3).toISOString(), label: 'Files Uploaded: .DST, .PES, and PDF Production Worksheet' },
+      { timestamp: new Date(Date.now() - 3600000 * 2).toISOString(), label: 'Order Marked Completed by Client' }
+    ],
+    messages: [
+      { id: 'm-1', sender: 'Sarah Jenkins', senderRole: 'client', text: 'Hi Alex, please ensure the yellow beak stitch line is extra sharp!', timestamp: new Date(Date.now() - 3600000 * 17).toISOString() },
+      { id: 'm-2', sender: 'Alex Mercer', senderRole: 'admin', text: 'Noted Sarah! Added double zig-zag underlay for pique fabric stability.', timestamp: new Date(Date.now() - 3600000 * 15).toISOString() }
     ],
     revisions: []
   },
@@ -71,7 +82,9 @@ export const INITIAL_ORDERS = [
     serviceCategory: 'Vector Conversion / Color Sep',
     clientName: 'Custom Cap Crafters',
     clientEmail: 'dave@customcaps.io',
-    createdAt: '2026-07-23T08:15:00Z',
+    createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
+    updatedAt: new Date(Date.now() - 3600000 * 1).toISOString(),
+    turnaroundHours: 12,
     status: 'digitizing',
     isRush: false,
     dimensions: { width: 10.0, height: 8.5, unit: 'inches' },
@@ -85,9 +98,13 @@ export const INITIAL_ORDERS = [
     artworkUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=600&q=80',
     outputFileUrl: null,
     history: [
-      { timestamp: '2026-07-23T08:15:00Z', label: 'Order Submitted by Client' },
-      { timestamp: '2026-07-23T08:30:00Z', label: 'Assigned to Vector Lead Elena Rostova' },
-      { timestamp: '2026-07-23T09:00:00Z', label: 'Vector Tracing & Node Cleanup in Progress' }
+      { timestamp: new Date(Date.now() - 3600000 * 4).toISOString(), label: 'Order Submitted by Client Dave Miller' },
+      { timestamp: new Date(Date.now() - 3600000 * 3).toISOString(), label: 'Assigned to Lead Vector Artist Elena Rostova' },
+      { timestamp: new Date(Date.now() - 3600000 * 1).toISOString(), label: 'Vector Tracing & Pantone Color Separation in Progress' }
+    ],
+    messages: [
+      { id: 'm-3', sender: 'Dave Miller', senderRole: 'client', text: 'Can we get color separation for white, red, yellow, and black inks?', timestamp: new Date(Date.now() - 3600000 * 3.5).toISOString() },
+      { id: 'm-4', sender: 'Elena Rostova', senderRole: 'admin', text: 'Working on clean node vector traces right now! Will upload .AI and .SVG shortly.', timestamp: new Date(Date.now() - 3600000 * 1).toISOString() }
     ],
     revisions: []
   },
@@ -98,8 +115,10 @@ export const INITIAL_ORDERS = [
     serviceCategory: '3D Puff / Cap Front',
     clientName: 'Vintage Threads Co.',
     clientEmail: 'mia@vintagethreads.com',
-    createdAt: '2026-07-23T09:45:00Z',
-    status: 'assigned',
+    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+    updatedAt: new Date(Date.now() - 3600000 * 0.5).toISOString(),
+    turnaroundHours: 4,
+    status: 'revision',
     isRush: true,
     dimensions: { width: 4.8, height: 2.2, unit: 'inches' },
     fabricType: 'Structured Snapback Cap',
@@ -112,10 +131,16 @@ export const INITIAL_ORDERS = [
     artworkUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80',
     outputFileUrl: null,
     history: [
-      { timestamp: '2026-07-23T09:45:00Z', label: 'Order Submitted by Client' },
-      { timestamp: '2026-07-23T10:00:00Z', label: 'Assigned to Cap Specialist Marcus Vance' }
+      { timestamp: new Date(Date.now() - 3600000 * 2).toISOString(), label: 'Express Order Placed (4-Hour Turnaround)' },
+      { timestamp: new Date(Date.now() - 3600000 * 1.5).toISOString(), label: 'Assigned to Cap Specialist Marcus Vance' },
+      { timestamp: new Date(Date.now() - 3600000 * 0.5).toISOString(), label: 'Client Requested Revision for Foam Density' }
     ],
-    revisions: []
+    messages: [
+      { id: 'm-5', sender: 'Mia Thorne', senderRole: 'client', text: 'Please increase the puff density around the outer edges so the foam does not show through.', timestamp: new Date(Date.now() - 3600000 * 0.5).toISOString() }
+    ],
+    revisions: [
+      { id: 'rev-1', requestedBy: 'Mia Thorne', notes: 'Please increase the puff density around the outer edges so foam does not show through.', createdAt: new Date(Date.now() - 3600000 * 0.5).toISOString() }
+    ]
   },
   {
     id: '#9515',
@@ -124,7 +149,9 @@ export const INITIAL_ORDERS = [
     serviceCategory: 'Jacket Back / Large Crest',
     clientName: 'Apex Athletics Apparel',
     clientEmail: 'sarah@apexapparel.com',
-    createdAt: '2026-07-23T10:05:00Z',
+    createdAt: new Date(Date.now() - 3600000 * 1).toISOString(),
+    updatedAt: new Date(Date.now() - 3600000 * 1).toISOString(),
+    turnaroundHours: 12,
     status: 'submitted',
     isRush: false,
     dimensions: { width: 11.5, height: 13.0, unit: 'inches' },
@@ -132,13 +159,50 @@ export const INITIAL_ORDERS = [
     colorsCount: 7,
     estimatedStitches: 48500,
     requestedFormats: ['dst', 'pes', 'emb'],
-    price: 72.75, // $1.50 * 48.5
+    price: 72.75,
     assignedDigitizerId: null,
     notes: 'Large jacket back design. High density fill with metallic gold thread simulation in center.',
     artworkUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=600&q=80',
     outputFileUrl: null,
     history: [
-      { timestamp: '2026-07-23T10:05:00Z', label: 'Order Submitted by Client' }
+      { timestamp: new Date(Date.now() - 3600000 * 1).toISOString(), label: 'New Brief Submitted by Client' }
+    ],
+    messages: [],
+    revisions: []
+  },
+  {
+    id: '#9530',
+    title: 'Precision Crest Delivered Package',
+    type: 'embroidery',
+    serviceCategory: 'Left Chest / Crest',
+    clientName: 'Precision Promo Gear',
+    clientEmail: 'rchen@precisionpromo.com',
+    createdAt: new Date(Date.now() - 3600000 * 10).toISOString(),
+    updatedAt: new Date(Date.now() - 3600000 * 1.5).toISOString(),
+    turnaroundHours: 12,
+    status: 'delivered',
+    isRush: false,
+    dimensions: { width: 3.8, height: 3.5, unit: 'inches' },
+    fabricType: 'Soft Shell Jacket',
+    colorsCount: 3,
+    estimatedStitches: 9800,
+    requestedFormats: ['dst', 'pes', 'emb', 'pdf'],
+    price: 15.00,
+    assignedDigitizerId: 'dig-1',
+    notes: 'Soft shell jacket underlay to prevent puckering.',
+    artworkUrl: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=600&q=80',
+    outputFileUrl: 'Precision_Crest_Master.dst',
+    uploadedMachineFiles: [
+      { name: 'Precision_Crest_Master.dst', format: 'dst', type: 'finished_machine_file', uploadedAt: new Date(Date.now() - 3600000 * 1.5).toISOString() },
+      { name: 'Precision_Crest_Master.emb', format: 'emb', type: 'finished_machine_file', uploadedAt: new Date(Date.now() - 3600000 * 1.5).toISOString() },
+      { name: 'Precision_Crest_Worksheet.pdf', format: 'pdf', type: 'finished_machine_file', uploadedAt: new Date(Date.now() - 3600000 * 1.5).toISOString() }
+    ],
+    history: [
+      { timestamp: new Date(Date.now() - 3600000 * 10).toISOString(), label: 'Order Placement Confirmed' },
+      { timestamp: new Date(Date.now() - 3600000 * 1.5).toISOString(), label: 'Finished Machine Files Delivered to Client for Review' }
+    ],
+    messages: [
+      { id: 'm-6', sender: 'Master Admin', senderRole: 'admin', text: 'Your completed files (.DST, .EMB, .PDF) have been uploaded! Please inspect the stitch-out sheet.', timestamp: new Date(Date.now() - 3600000 * 1.5).toISOString() }
     ],
     revisions: []
   },
@@ -149,7 +213,9 @@ export const INITIAL_ORDERS = [
     serviceCategory: 'Custom Embroidered Patch',
     clientName: 'Apex Athletics Apparel',
     clientEmail: 'sarah@apexapparel.com',
-    createdAt: '2026-07-24T11:20:00Z',
+    createdAt: new Date(Date.now() - 3600000 * 36).toISOString(),
+    updatedAt: new Date(Date.now() - 3600000 * 12).toISOString(),
+    turnaroundHours: 48,
     status: 'digitizing',
     isRush: false,
     quantity: 100,
@@ -159,8 +225,9 @@ export const INITIAL_ORDERS = [
     price: 185.00,
     artworkUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=600&q=80',
     history: [
-      { timestamp: '2026-07-24T11:20:00Z', label: 'Patch Order Confirmed & In Production' }
+      { timestamp: new Date(Date.now() - 3600000 * 36).toISOString(), label: 'Patch Order Confirmed & In Production' }
     ],
+    messages: [],
     revisions: []
   },
   {
@@ -170,7 +237,9 @@ export const INITIAL_ORDERS = [
     serviceCategory: 'Digital Store Download',
     clientName: 'Apex Athletics Apparel',
     clientEmail: 'sarah@apexapparel.com',
-    createdAt: '2026-07-25T16:45:00Z',
+    createdAt: new Date(Date.now() - 3600000 * 48).toISOString(),
+    updatedAt: new Date(Date.now() - 3600000 * 48).toISOString(),
+    turnaroundHours: 1,
     status: 'completed',
     isStoreItem: true,
     fileFormats: ['DST', 'PES', 'EXP', 'EMB', 'AI'],
@@ -178,8 +247,9 @@ export const INITIAL_ORDERS = [
     artworkUrl: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=600&q=80',
     outputFileUrl: 'Master_Monogram_Font_Pack_v2.zip',
     history: [
-      { timestamp: '2026-07-25T16:45:00Z', label: 'Instant License Purchase Completed' }
+      { timestamp: new Date(Date.now() - 3600000 * 48).toISOString(), label: 'Instant License Purchase Completed' }
     ],
+    messages: [],
     revisions: []
   }
 ];

@@ -457,20 +457,25 @@ class DataStore {
   }
 
   updateOrderStatus(orderId, status, digitizerId = null, outputFileUrl = null) {
-    const order = this.orders.find(o => o.id === orderId);
+    const order = this.orders.find(o => o.id === orderId || o.id === `#${orderId.replace('#', '')}`);
     if (!order) return null;
     order.status = status;
+    order.updatedAt = new Date().toISOString();
     if (digitizerId) order.assignedDigitizerId = digitizerId;
     if (outputFileUrl) order.outputFileUrl = outputFileUrl;
 
     const labelMap = {
+      submitted: `Order Reset to New / Pending`,
       assigned: `Assigned to Digitizer`,
       digitizing: `Digitizing & Vector Pathing in Progress`,
+      revision: `Order Status Moved to Revision`,
+      delivered: `Finished Packages Delivered to Client`,
       qc: `Quality Assurance Check Passed`,
-      completed: `Files Released & Completed`
+      completed: `Files Released & Order Completed`,
+      cancelled: `Order Cancelled`
     };
 
-    order.history.push({
+    order.history.unshift({
       timestamp: new Date().toISOString(),
       label: labelMap[status] || `Status updated to ${status}`
     });
@@ -479,7 +484,7 @@ class DataStore {
   }
 
   addRevision(orderId, revisionNotes, clientName = 'Client') {
-    const order = this.orders.find(o => o.id === orderId);
+    const order = this.orders.find(o => o.id === orderId || o.id === `#${orderId.replace('#', '')}`);
     if (!order) return null;
 
     const revisionObj = {
@@ -490,13 +495,34 @@ class DataStore {
       status: 'pending'
     };
 
-    order.revisions.push(revisionObj);
-    order.status = 'digitizing';
-    order.history.push({
+    if (!order.revisions) order.revisions = [];
+    order.revisions.unshift(revisionObj);
+    order.status = 'revision';
+    order.updatedAt = new Date().toISOString();
+    order.history.unshift({
       timestamp: new Date().toISOString(),
       label: `Revision Requested: "${revisionNotes.slice(0, 40)}..."`
     });
 
+    return order;
+  }
+
+  addMessage(orderId, text, senderName, senderRole = 'admin', attachments = []) {
+    const order = this.orders.find(o => o.id === orderId || o.id === `#${orderId.replace('#', '')}`);
+    if (!order) return null;
+
+    if (!order.messages) order.messages = [];
+    const msgObj = {
+      id: `msg-${Date.now()}`,
+      sender: senderName || (senderRole === 'admin' ? 'Master Admin' : 'Client'),
+      senderRole: senderRole,
+      text: text || '',
+      attachments: attachments || [],
+      timestamp: new Date().toISOString()
+    };
+
+    order.messages.push(msgObj);
+    order.updatedAt = new Date().toISOString();
     return order;
   }
 

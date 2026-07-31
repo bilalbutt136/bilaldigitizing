@@ -72,4 +72,18 @@ router.post('/:id/revisions', (req, res) => {
   }
 });
 
+// POST /api/orders/:id/messages
+router.post('/:id/messages', (req, res) => {
+  try {
+    const { text, senderName, senderRole, attachments } = req.body;
+    const updatedOrder = store.addMessage(req.params.id, text, senderName, senderRole, attachments);
+    if (!updatedOrder) {
+      return res.status(404).json({ success: false, message: 'Order not found.' });
+    }
+    return res.json({ success: true, order: updatedOrder });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 export default router;
