@@ -489,9 +489,35 @@ export const StateProvider = ({ children }) => {
     }, 4000);
   };
 
-  // 1. Fetch backend state on initial load via Express REST API
+  // 1. Fetch backend state on initial load via Supabase DB and Express REST API
   useEffect(() => {
     const loadBackendData = async () => {
+      // First attempt Supabase DB fetch if enabled
+      if (isSupabaseConfigured) {
+        try {
+          const [sbOrders, sbClients, sbCms] = await Promise.allSettled([
+            fetchOrdersFromSupabase(),
+            fetchClientsFromSupabase(),
+            fetchCmsConfigFromSupabase()
+          ]);
+
+          if (sbOrders.status === 'fulfilled' && sbOrders.value && sbOrders.value.length > 0) {
+            setOrders(sbOrders.value);
+            console.log('✅ Loaded orders directly from Supabase PostgreSQL Database!');
+          }
+          if (sbClients.status === 'fulfilled' && sbClients.value && sbClients.value.length > 0) {
+            setClients(sbClients.value);
+            console.log('✅ Loaded clients directly from Supabase PostgreSQL Database!');
+          }
+          if (sbCms.status === 'fulfilled' && sbCms.value) {
+            if (sbCms.value.siteSettings) setSiteSettings(sbCms.value.siteSettings);
+          }
+        } catch (sbErr) {
+          console.warn('Supabase DB initial load notice:', sbErr);
+        }
+      }
+
+      // Secondary attempt Express REST API
       try {
         const [ordersRes, pricingRes, clientsRes, cmsRes] = await Promise.allSettled([
           api.get('/orders'),
@@ -500,14 +526,14 @@ export const StateProvider = ({ children }) => {
           api.get('/cms')
         ]);
 
-        if (ordersRes.status === 'fulfilled' && ordersRes.value.data?.orders) {
-          setOrders(ordersRes.value.data.orders);
+        if (ordersRes.status === 'fulfilled' && ordersRes.value.data?.orders && ordersRes.value.data.orders.length > 0) {
+          setOrders(prev => prev.length > 0 ? prev : ordersRes.value.data.orders);
         }
         if (pricingRes.status === 'fulfilled' && pricingRes.value.data?.pricing) {
           setPricing(pricingRes.value.data.pricing);
         }
         if (clientsRes.status === 'fulfilled' && clientsRes.value.data?.clients) {
-          setClients(clientsRes.value.data.clients);
+          setClients(prev => prev.length > 0 ? prev : clientsRes.value.data.clients);
         }
         if (cmsRes.status === 'fulfilled' && cmsRes.value.data?.siteSettings) {
           setSiteSettings(cmsRes.value.data.siteSettings);
@@ -662,14 +688,33 @@ export const StateProvider = ({ children }) => {
     }
   };
 
-  // Order Operations connected to Express API
+  // Order Operations connected to Supabase DB & Express API
   const createOrder = async (newOrderData) => {
+    const localId = newOrderData.id || `#${Math.floor(1000 + Math.random() * 9000)}`;
+    const fullOrderPayload = {
+      id: localId,
+      ...newOrderData,
+      clientName: authUser?.company || authUser?.name || 'Valued Client',
+      clientEmail: authUser?.email || 'client@bdigitizing.pro',
+      createdAt: new Date().toISOString(),
+      status: 'submitted',
+      history: [{ timestamp: new Date().toISOString(), label: 'Order Submitted by Client' }],
+      revisions: []
+    };
+
+    // Save to live Supabase DB if enabled
+    if (isSupabaseConfigured) {
+      try {
+        await createOrderInSupabase(fullOrderPayload);
+        console.log('✅ Order saved to Supabase DB:', localId);
+      } catch (sbErr) {
+        console.warn('Supabase create order notice:', sbErr);
+      }
+    }
+
+    // Save to Express REST API if available
     try {
-      const res = await api.post('/orders', {
-        ...newOrderData,
-        clientName: authUser?.name || 'Valued Client',
-        clientEmail: authUser?.email || 'client@bdigitizing.pro'
-      });
+      const res = await api.post('/orders', fullOrderPayload);
       if (res.data && res.data.order) {
         const created = res.data.order;
         setOrders(prev => [created, ...prev]);
@@ -680,23 +725,22 @@ export const StateProvider = ({ children }) => {
       console.warn('Express createOrder fallback:', err);
     }
 
-    const localId = `#${Math.floor(1000 + Math.random() * 9000)}`;
-    const newOrder = {
-      id: localId,
-      ...newOrderData,
-      clientName: authUser?.company || authUser?.name || 'Apex Apparel',
-      clientEmail: authUser?.email || 'sarah@apexapparel.com',
-      createdAt: new Date().toISOString(),
-      status: 'submitted',
-      history: [{ timestamp: new Date().toISOString(), label: 'Order Submitted by Client' }],
-      revisions: []
-    };
-    setOrders(prev => [newOrder, ...prev]);
+    setOrders(prev => [fullOrderPayload, ...prev]);
     showToast(`Order ${formatOrderId(localId)} created successfully!`, 'success');
-    return newOrder;
+    return fullOrderPayload;
   };
 
   const updateOrderStatus = async (orderId, newStatus, extraData = {}) => {
+    // Save to live Supabase DB if enabled
+    if (isSupabaseConfigured) {
+      try {
+        await updateOrderStatusInSupabase(orderId, newStatus, extraData);
+        console.log(`✅ Order ${orderId} updated to '${newStatus}' in Supabase DB!`);
+      } catch (sbErr) {
+        console.warn('Supabase update order status notice:', sbErr);
+      }
+    }
+
     try {
       const res = await api.patch(`/orders/${orderId.replace('#', '')}/status`, { status: newStatus, ...extraData });
       if (res.data && res.data.order) {
@@ -714,7 +758,7 @@ export const StateProvider = ({ children }) => {
           ...ord,
           status: newStatus,
           ...extraData,
-          history: [...ord.history, { timestamp: new Date().toISOString(), label: `Status updated to ${newStatus}` }]
+          history: [...(ord.history || []), { timestamp: new Date().toISOString(), label: `Status updated to ${newStatus}` }]
         };
       }
       return ord;
@@ -723,6 +767,14 @@ export const StateProvider = ({ children }) => {
   };
 
   const addRevisionRequest = async (orderId, revisionNote) => {
+    if (isSupabaseConfigured) {
+      try {
+        await addRevisionInSupabase(orderId, revisionNote, authUser?.name || 'Client');
+      } catch (sbErr) {
+        console.warn('Supabase add revision notice:', sbErr);
+      }
+    }
+
     try {
       const res = await api.post(`/orders/${orderId.replace('#', '')}/revisions`, { revisionNotes: revisionNote, clientName: authUser?.name || 'Client' });
       if (res.data && res.data.order) {
@@ -732,6 +784,7 @@ export const StateProvider = ({ children }) => {
       }
     } catch (err) {
       console.warn('Express addRevision fallback:', err);
+    }
     }
 
     setOrders(prev => prev.map(ord => {
