@@ -34,11 +34,16 @@ import {
   LogOut,
   Menu,
   Sun,
-  Moon
+  Moon,
+  PenTool,
+  X
 } from 'lucide-react';
 import { UserMenuDropdown } from '../common/UserMenuDropdown';
 import { ClientLiveChatWidget } from './ClientLiveChatWidget';
 import { ClientSidebar } from './ClientSidebar';
+import { EmbroideryDigitizingPage } from '../public/EmbroideryDigitizingPage';
+import { VectorArtPage } from '../public/VectorArtPage';
+import { CustomPatchesSection } from '../public/CustomPatchesSection';
 
 const DEFAULT_USER = {
   name: 'Sarah Jenkins',
@@ -54,6 +59,7 @@ export const CustomerDashboard = () => {
     authUser,
     currentUser, 
     setIsOrderWizardOpen, 
+    openOrderWizard,
     setSelectedOrderForDrawer,
     walletBalance = 150.00,
     setIsDepositModalOpen,
@@ -61,10 +67,11 @@ export const CustomerDashboard = () => {
     logout
   } = useAppState();
 
-  const [activeTab, setActiveTab] = useState('digitizing'); // 'digitizing' | 'patches' | 'store' | 'profile' | 'support' | 'settings'
+  const [activeTab, setActiveTab] = useState('digitizing'); // 'digitizing' | 'vector' | 'patches' | 'profile' | 'support' | 'settings'
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [lightboxOrder, setLightboxOrder] = useState(null);
+  const [isServiceSelectorOpen, setIsServiceSelectorOpen] = useState(false);
 
   // Mobile App UI State
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -112,10 +119,13 @@ export const CustomerDashboard = () => {
   // 1. Strictly Embroidery Digitizing Orders ONLY
   const digitizingOrders = myOrders.filter(isEmbroideryOrder);
 
-  // 2. Strictly Custom Patches & Physical Manufactured Goods
+  // 2. Strictly Vector Art Conversion Orders
+  const vectorOrders = myOrders.filter(isVectorOrder);
+
+  // 3. Strictly Custom Patches & Physical Manufactured Goods
   const patchOrders = myOrders.filter(isPatchOrder);
 
-  // 3. Strictly Store & Digital Product Purchases
+  // 4. Strictly Store & Digital Product Purchases
   const storeOrders = myOrders.filter(isStoreOrder);
 
   const activeOrders = digitizingOrders.filter(o => o?.status !== 'completed');
@@ -126,6 +136,16 @@ export const CustomerDashboard = () => {
   const digitizingSpent = digitizingOrders.reduce((acc, curr) => acc + (parseFloat(curr?.price) || 0), 0);
 
   const filteredDigitizingOrders = digitizingOrders.filter(o => {
+    const titleMatch = (o?.title || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const idMatch = (o?.id || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = titleMatch || idMatch;
+    
+    if (filterStatus === 'active') return matchesSearch && o?.status !== 'completed';
+    if (filterStatus === 'completed') return matchesSearch && o?.status === 'completed';
+    return matchesSearch;
+  });
+
+  const filteredVectorOrders = vectorOrders.filter(o => {
     const titleMatch = (o?.title || '').toLowerCase().includes(searchTerm.toLowerCase());
     const idMatch = (o?.id || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSearch = titleMatch || idMatch;
@@ -163,7 +183,7 @@ export const CustomerDashboard = () => {
 
   return (
     <div className="dashboard-main-container" style={{ padding: '1.5rem 0 8rem', background: 'var(--bg-main)', minHeight: 'calc(100vh - 80px)' }}>
-      <div className="container">
+      <div className="client-portal-fluid-container" style={{ maxWidth: '1680px', width: '100%', padding: '0 2.25rem', margin: '0 auto', boxSizing: 'border-box' }}>
 
         {/* 1. TOP STICKY HEADER BAR FOR MOBILE APP UI */}
         <div 
@@ -408,7 +428,7 @@ export const CustomerDashboard = () => {
           className="dashboard-layout-grid"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'minmax(250px, 270px) 1fr',
+            gridTemplateColumns: '280px 1fr',
             gap: '2rem',
             alignItems: 'start'
           }}
@@ -441,30 +461,52 @@ export const CustomerDashboard = () => {
             {/* TAB 1: EMBROIDERY DIGITIZING & MAIN DASHBOARD */}
             {activeTab === 'digitizing' && (
               <>
-                {/* Welcome Header */}
+                {/* Welcome Header Container - Styled for Parity with Admin Portal */}
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   marginBottom: '1.75rem',
                   flexWrap: 'wrap',
-                  gap: '1rem'
+                  gap: '1rem',
+                  background: '#ffffff',
+                  padding: '1.25rem 1.75rem',
+                  borderRadius: 'var(--radius-lg)',
+                  boxShadow: '0 4px 20px rgba(15, 23, 42, 0.04)',
+                  border: '1px solid var(--border-color)'
                 }}>
                   <div>
-                    <h1 style={{ fontSize: '1.85rem', color: 'var(--navy-900)', marginBottom: '0.25rem' }}>
-                      Client Dashboard
-                    </h1>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
+                        Client Portal Dashboard
+                      </h1>
+                      <span className="badge badge-assigned" style={{ fontSize: '0.725rem', background: 'rgba(255, 122, 0, 0.12)', color: '#ff7a00', border: '1px solid rgba(255, 122, 0, 0.3)' }}>CLIENT PORTAL</span>
+                    </div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.2rem 0 0' }}>
                       Welcome back, <strong>{activeUser?.name || DEFAULT_USER.name}</strong> ({activeUser?.company || DEFAULT_USER.company})
                     </p>
                   </div>
 
-                  <button 
-                    className="btn btn-primary-orange btn-lg"
-                    onClick={() => setIsOrderWizardOpen(true)}
-                  >
-                    <PlusCircle size={20} /> Upload New Design Brief
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    <button 
+                      type="button"
+                      className="btn btn-primary-orange"
+                      onClick={() => setIsServiceSelectorOpen(true)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.65rem 1.35rem',
+                        fontSize: '0.9rem',
+                        fontWeight: 800,
+                        borderRadius: 'var(--radius-md)',
+                        boxShadow: '0 4px 14px rgba(255, 122, 0, 0.35)',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <PlusCircle size={18} /> Order Now
+                    </button>
+                  </div>
                 </div>
 
                 {/* Summary Stat Cards + Wallet Balance Card */}
@@ -746,10 +788,205 @@ export const CustomerDashboard = () => {
                   )}
 
                 </div>
+
+                {/* Full Comprehensive Embroidery Digitizing Service Overview & Package Pricing */}
+                <div style={{ marginTop: '2.5rem' }}>
+                  <EmbroideryDigitizingPage />
+                </div>
               </>
             )}
 
-            {/* TAB 2: CUSTOM PATCHES & MANUFACTURED GOODS */}
+            {/* TAB 2: VECTOR ART CONVERSION */}
+            {activeTab === 'vector' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div className="card" style={{ padding: '2rem', background: '#ffffff', border: '1.5px solid var(--border-color)', borderRadius: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div>
+                      <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0 0 0.25rem', display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                        <PenTool size={22} style={{ color: '#ff7a00' }} /> Vector Art Conversion & Raster Redraw
+                      </h2>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>
+                        Hand-traced node path redraws, Pantone spot color separations, and resolution-independent master source files (.AI, .EPS, .SVG, .PDF) ({vectorOrders.length} order{vectorOrders.length !== 1 ? 's' : ''}).
+                      </p>
+                    </div>
+                    <button
+                      className="btn btn-primary-orange"
+                      onClick={() => {
+                        if (openOrderWizard) {
+                          openOrderWizard({ type: 'vector' });
+                        } else {
+                          setIsOrderWizardOpen(true);
+                        }
+                      }}
+                    >
+                      <PlusCircle size={18} /> Order Vector Conversion
+                    </button>
+                  </div>
+
+                  {/* Vector Orders Table or Empty State with Vector Showcase */}
+                  {filteredVectorOrders.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '2.5rem 1rem', background: '#f8fafc', borderRadius: '12px', border: '1px dashed var(--border-color)', marginBottom: '1.5rem' }}>
+                      <PenTool size={42} style={{ color: 'var(--orange-500)', marginBottom: '0.5rem' }} />
+                      <h4 style={{ fontWeight: 800, color: 'var(--navy-900)', margin: '0 0 0.25rem' }}>No Active Vector Redraw Orders</h4>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Convert pixelated JPEGs/PNGs into 100% scalable vector artwork for screen printing and vinyl cutting.</p>
+                      <button 
+                        className="btn btn-primary-orange btn-sm" 
+                        onClick={() => {
+                          if (openOrderWizard) {
+                            openOrderWizard({ type: 'vector' });
+                          } else {
+                            setIsOrderWizardOpen(true);
+                          }
+                        }}
+                      >
+                        Submit Vector Artwork Request
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ overflowX: 'auto', marginBottom: '2rem' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--navy-700)' }}>
+                            <th style={{ padding: '0.75rem 1rem' }}>Vector Artwork & Title</th>
+                            <th style={{ padding: '0.75rem 1rem' }}>Service Specs</th>
+                            <th style={{ padding: '0.75rem 1rem' }}>Date Submitted</th>
+                            <th style={{ padding: '0.75rem 1rem' }}>Status</th>
+                            <th style={{ padding: '0.75rem 1rem' }}>Cost</th>
+                            <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredVectorOrders.map((ord) => (
+                            <tr key={ord.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                              <td style={{ padding: '1rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                                  <img 
+                                    src={ord.artworkUrl || ord.image_url || 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=120&q=80'} 
+                                    alt={ord.title}
+                                    style={{ width: '50px', height: '50px', borderRadius: '8px', objectFit: 'cover', border: '1.5px solid var(--orange-500)' }} 
+                                  />
+                                  <div>
+                                    <div style={{ fontWeight: 800, color: 'var(--navy-900)' }}>{ord.title}</div>
+                                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>ID: {formatOrderId(ord.id)}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td style={{ padding: '1rem' }}>
+                                <div style={{ fontWeight: 700, color: 'var(--navy-800)' }}>{ord.serviceCategory || 'Raster-to-Vector Redraw'}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                  Formats: <strong>.AI, .EPS, .SVG, .PDF</strong>
+                                </div>
+                              </td>
+                              <td style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                {ord.createdAt ? new Date(ord.createdAt).toLocaleDateString() : 'Recent'}
+                              </td>
+                              <td style={{ padding: '1rem' }}>
+                                {getStatusBadge(ord.status)}
+                              </td>
+                              <td style={{ padding: '1rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+                                ${parseFloat(ord.price || 15).toFixed(2)}
+                              </td>
+                              <td style={{ padding: '1rem', textAlign: 'right' }}>
+                                <button className="btn btn-outline btn-sm" onClick={() => setSelectedOrderForDrawer(ord)}>
+                                  View Brief & Files <ChevronRight size={15} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {/* Vector Redraw Showcase Grid */}
+                  <div>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1rem' }}>
+                      Vector Conversion Capabilities & Sample Grids
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
+                      
+                      <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
+                        <img 
+                          src="https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=500&q=80" 
+                          alt="Vintage Mascot Vector"
+                          style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', marginBottom: '0.85rem' }} 
+                        />
+                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase' }}>Hand-Drawn Node Tracing</div>
+                        <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.2rem 0 0.4rem' }}>Low-Res Raster to Sharp AI Vector</h4>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.45, marginBottom: '1rem' }}>
+                          Convert pixelated JPEGs into clean Adobe Illustrator vector paths suitable for large-format banners and apparel print.
+                        </p>
+                        <button 
+                          className="btn btn-outline btn-sm" 
+                          onClick={() => {
+                            if (openOrderWizard) openOrderWizard({ type: 'vector' });
+                            else setIsOrderWizardOpen(true);
+                          }}
+                          style={{ width: '100%', justifyContent: 'center', fontWeight: 800 }}
+                        >
+                          Order Vector Redraw <ArrowRight size={14} />
+                        </button>
+                      </div>
+
+                      <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
+                        <img 
+                          src="https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=500&q=80" 
+                          alt="Color Separation Vector"
+                          style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', marginBottom: '0.85rem' }} 
+                        />
+                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase' }}>Screen Printing Films</div>
+                        <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.2rem 0 0.4rem' }}>Pantone Spot Color Separation</h4>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.45, marginBottom: '1rem' }}>
+                          Precise spot color layer separation with registration marks ready for screen printing film outputs and vinyl plotters.
+                        </p>
+                        <button 
+                          className="btn btn-outline btn-sm" 
+                          onClick={() => {
+                            if (openOrderWizard) openOrderWizard({ type: 'vector' });
+                            else setIsOrderWizardOpen(true);
+                          }}
+                          style={{ width: '100%', justifyContent: 'center', fontWeight: 800 }}
+                        >
+                          Order Color Separation <ArrowRight size={14} />
+                        </button>
+                      </div>
+
+                      <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
+                        <img 
+                          src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=500&q=80" 
+                          alt="Corporate Crest Redraw"
+                          style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', marginBottom: '0.85rem' }} 
+                        />
+                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase' }}>Master Source Files</div>
+                        <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.2rem 0 0.4rem' }}>Multi-Format Vector Package</h4>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.45, marginBottom: '1rem' }}>
+                          Receive complete source files (.AI, .EPS, .SVG, .PDF, .CDR) with full commercial ownership rights.
+                        </p>
+                        <button 
+                          className="btn btn-outline btn-sm" 
+                          onClick={() => {
+                            if (openOrderWizard) openOrderWizard({ type: 'vector' });
+                            else setIsOrderWizardOpen(true);
+                          }}
+                          style={{ width: '100%', justifyContent: 'center', fontWeight: 800 }}
+                        >
+                          Request Vector Package <ArrowRight size={14} />
+                        </button>
+                      </div>
+
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Full Comprehensive Vector Art Conversion Overview & Workflow */}
+                <div style={{ marginTop: '2.5rem' }}>
+                  <VectorArtPage />
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: CUSTOM PATCHES & MANUFACTURED GOODS */}
             {activeTab === 'patches' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div className="card" style={{ padding: '2rem', background: '#ffffff', border: '1.5px solid var(--border-color)', borderRadius: '16px' }}>
@@ -851,6 +1088,11 @@ export const CustomerDashboard = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Full Comprehensive Custom Patches & Goods Overview & Workflow */}
+                <div style={{ marginTop: '2.5rem' }}>
+                  <CustomPatchesSection />
+                </div>
               </div>
             )}
 
@@ -888,8 +1130,8 @@ export const CustomerDashboard = () => {
                     <button className="btn btn-primary-orange" onClick={() => setIsDepositModalOpen(true)}>
                       <Wallet size={18} /> Top-Up Studio Wallet Funds
                     </button>
-                    <button className="btn btn-outline" onClick={() => setIsOrderWizardOpen(true)}>
-                      <PlusCircle size={18} /> Submit New Design
+                    <button className="btn btn-outline" onClick={() => setIsServiceSelectorOpen(true)}>
+                      <PlusCircle size={18} /> Order Now
                     </button>
                   </div>
                 </div>
@@ -1057,7 +1299,7 @@ export const CustomerDashboard = () => {
         {/* Item 3: New Order */}
         <button
           type="button"
-          onClick={() => setIsOrderWizardOpen(true)}
+          onClick={() => setIsServiceSelectorOpen(true)}
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -1110,6 +1352,279 @@ export const CustomerDashboard = () => {
           <span>Wallet (${walletBalance.toFixed(0)})</span>
         </button>
       </div>
+
+      {/* SERVICE SELECTOR MODAL (3 Core Services Choice Dialog) */}
+      {isServiceSelectorOpen && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem'
+          }}
+          onClick={() => setIsServiceSelectorOpen(false)}
+        >
+          <div 
+            style={{
+              background: '#ffffff',
+              borderRadius: '20px',
+              maxWidth: '560px',
+              width: '100%',
+              padding: '2rem',
+              boxShadow: '0 20px 50px rgba(15, 23, 42, 0.25)',
+              border: '1.5px solid var(--border-color)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+              <div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.25rem' }}>
+                  New Project Request
+                </div>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0 }}>
+                  Select Desired Service
+                </h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                  Choose a service category to launch the custom order configurator
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsServiceSelectorOpen(false)}
+                style={{
+                  background: '#f1f5f9',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'var(--navy-700)'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* 3 Service Choice Cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              
+              {/* Choice 1: Embroidery Digitizing */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsServiceSelectorOpen(false);
+                  if (openOrderWizard) openOrderWizard({ type: 'embroidery' });
+                  else setIsOrderWizardOpen(true);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  padding: '1.15rem 1.25rem',
+                  background: '#ffffff',
+                  border: '1.5px solid var(--border-color)',
+                  borderRadius: '14px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'all 0.18s ease',
+                  boxShadow: '0 2px 8px rgba(15, 23, 42, 0.03)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#ff7a00';
+                  e.currentTarget.style.background = 'rgba(255, 122, 0, 0.03)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-color)';
+                  e.currentTarget.style.background = '#ffffff';
+                  e.currentTarget.style.transform = 'none';
+                }}
+              >
+                <div style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, var(--orange-500), #e66e00)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(255, 122, 0, 0.25)',
+                  flexShrink: 0
+                }}>
+                  <Layers size={24} />
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ fontSize: '1.025rem', fontWeight: 800, color: 'var(--navy-950)' }}>
+                      Embroidery Digitizing
+                    </div>
+                    <ChevronRight size={18} style={{ color: 'var(--orange-500)' }} />
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem', lineHeight: 1.35 }}>
+                    DST, PES, EMB stitch pathing for commercial embroidery machines
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem' }}>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#fff7ed', color: 'var(--orange-700)', padding: '0.12rem 0.45rem', borderRadius: '4px', border: '1px solid rgba(255, 122, 0, 0.2)' }}>
+                      4-12 Hr Delivery
+                    </span>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#f1f5f9', color: 'var(--navy-700)', padding: '0.12rem 0.45rem', borderRadius: '4px' }}>
+                      Starts $10.00
+                    </span>
+                  </div>
+                </div>
+              </button>
+
+              {/* Choice 2: Vector Art Conversion */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsServiceSelectorOpen(false);
+                  if (openOrderWizard) openOrderWizard({ type: 'vector' });
+                  else setIsOrderWizardOpen(true);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  padding: '1.15rem 1.25rem',
+                  background: '#ffffff',
+                  border: '1.5px solid var(--border-color)',
+                  borderRadius: '14px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'all 0.18s ease',
+                  boxShadow: '0 2px 8px rgba(15, 23, 42, 0.03)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#ff7a00';
+                  e.currentTarget.style.background = 'rgba(255, 122, 0, 0.03)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-color)';
+                  e.currentTarget.style.background = '#ffffff';
+                  e.currentTarget.style.transform = 'none';
+                }}
+              >
+                <div style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #0284c7, #0369a1)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)',
+                  flexShrink: 0
+                }}>
+                  <PenTool size={24} />
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ fontSize: '1.025rem', fontWeight: 800, color: 'var(--navy-950)' }}>
+                      Vector Art Conversion
+                    </div>
+                    <ChevronRight size={18} style={{ color: '#0284c7' }} />
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem', lineHeight: 1.35 }}>
+                    Hand-traced AI, EPS, SVG vector redraw & Pantone spot color separation
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem' }}>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#e0f2fe', color: '#0369a1', padding: '0.12rem 0.45rem', borderRadius: '4px', border: '1px solid rgba(2, 132, 199, 0.2)' }}>
+                      Screen Print Ready
+                    </span>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#f1f5f9', color: 'var(--navy-700)', padding: '0.12rem 0.45rem', borderRadius: '4px' }}>
+                      Starts $15.00
+                    </span>
+                  </div>
+                </div>
+              </button>
+
+              {/* Choice 3: Custom Patches & Goods */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsServiceSelectorOpen(false);
+                  if (openOrderWizard) openOrderWizard({ type: 'patch' });
+                  else setIsOrderWizardOpen(true);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  padding: '1.15rem 1.25rem',
+                  background: '#ffffff',
+                  border: '1.5px solid var(--border-color)',
+                  borderRadius: '14px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'all 0.18s ease',
+                  boxShadow: '0 2px 8px rgba(15, 23, 42, 0.03)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#ff7a00';
+                  e.currentTarget.style.background = 'rgba(255, 122, 0, 0.03)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-color)';
+                  e.currentTarget.style.background = '#ffffff';
+                  e.currentTarget.style.transform = 'none';
+                }}
+              >
+                <div style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #16a34a, #15803d)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(22, 163, 74, 0.25)',
+                  flexShrink: 0
+                }}>
+                  <Package size={24} />
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ fontSize: '1.025rem', fontWeight: 800, color: 'var(--navy-950)' }}>
+                      Custom Patches & Goods
+                    </div>
+                    <ChevronRight size={18} style={{ color: '#16a34a' }} />
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem', lineHeight: 1.35 }}>
+                    Custom embroidered, woven, 3D molded PVC rubber & leather patches
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem' }}>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#dcfce7', color: '#15803d', padding: '0.12rem 0.45rem', borderRadius: '4px', border: '1px solid rgba(22, 163, 74, 0.2)' }}>
+                      Physical Shipping
+                    </span>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#f1f5f9', color: 'var(--navy-700)', padding: '0.12rem 0.45rem', borderRadius: '4px' }}>
+                      Starts $1.50 / pc
+                    </span>
+                  </div>
+                </div>
+              </button>
+
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
