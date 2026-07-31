@@ -49,32 +49,6 @@ const PORTFOLIO_ITEMS = [
     clientType: 'Headwear Brand'
   },
   {
-    id: 'port-3',
-    category: 'vector',
-    categoryLabel: 'Vector Conversion',
-    title: 'Vintage Skull & Rose Vector Redraw',
-    description: 'Hand-traced raster JPG converted to resolution-independent vector graphics with Pantone spot color separation.',
-    beforeImg: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80',
-    afterImg: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
-    stitchCount: 'N/A (Scalable Vector)',
-    colors: '4 Spot Color Separations',
-    formats: 'AI, EPS, SVG, PDF',
-    clientType: 'Screen Printer'
-  },
-  {
-    id: 'port-4',
-    category: 'patches',
-    categoryLabel: 'Custom Patches',
-    title: 'Tactical Merrowed Border Embroidered Patch',
-    description: 'High-density rayon thread embroidery with classic overlock merrowed border edges and heavy-duty velcro backing.',
-    beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
-    afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
-    stitchCount: '18,200 Stitches',
-    colors: '6 Rayon Thread Colors',
-    formats: 'Velcro / Iron-On Backing',
-    clientType: 'Uniform Outfitters'
-  },
-  {
     id: 'port-5',
     category: 'embroidery',
     categoryLabel: 'Embroidery Digitizing',
@@ -86,6 +60,45 @@ const PORTFOLIO_ITEMS = [
     colors: '7 Metallic & Rayon Colors',
     formats: 'DST, PES, EMB, VP3',
     clientType: 'Custom Motorcycle Apparel'
+  },
+  {
+    id: 'port-7',
+    category: 'embroidery',
+    categoryLabel: 'Embroidery Digitizing',
+    title: 'Titanium Motors 3D Foam Snapback',
+    description: 'Heavy 3D foam caps engineered for multi-needle Tajima machines with zero thread breaks during high-speed runs.',
+    beforeImg: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80',
+    afterImg: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80',
+    stitchCount: '14,200 Stitches',
+    colors: '3 Thread Colors + 3mm EVA',
+    formats: 'DST, EXP, HUS',
+    clientType: 'Motorsports Shop'
+  },
+  {
+    id: 'port-9',
+    category: 'embroidery',
+    categoryLabel: 'Embroidery Digitizing',
+    title: 'High-Detail Floral Monogram Left Chest',
+    description: 'Micro satin stitching and delicate shading density mapped for high-end corporate softshell jackets and dress shirts.',
+    beforeImg: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80',
+    afterImg: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=800&q=80',
+    stitchCount: '9,800 Stitches',
+    colors: '4 Madeira Thread Colors',
+    formats: 'DST, PES, EMB, ART',
+    clientType: 'Corporate Uniform Client'
+  },
+  {
+    id: 'port-3',
+    category: 'vector',
+    categoryLabel: 'Vector Conversion',
+    title: 'Vintage Skull & Rose Vector Redraw',
+    description: 'Hand-traced raster JPG converted to resolution-independent vector graphics with Pantone spot color separation.',
+    beforeImg: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80',
+    afterImg: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
+    stitchCount: 'N/A (Scalable Vector)',
+    colors: '4 Spot Color Separations',
+    formats: 'AI, EPS, SVG, PDF',
+    clientType: 'Screen Printer'
   },
   {
     id: 'port-6',
@@ -101,17 +114,43 @@ const PORTFOLIO_ITEMS = [
     clientType: 'Promo Merchandise Co.'
   },
   {
-    id: 'port-7',
-    category: 'puff',
-    categoryLabel: '3D Puff & Cap',
-    title: 'Titanium Motors 3D Foam Snapback',
-    description: 'Heavy 3D foam caps engineered for multi-needle Tajima machines with zero thread breaks during high-speed runs.',
+    id: 'port-10',
+    category: 'vector',
+    categoryLabel: 'Vector Conversion',
+    title: 'Automotive Racing Team Emblem Vectorization',
+    description: 'Low-res cell phone camera photo transformed into razor-sharp Illustrator vector paths with gradient mesh color fills.',
     beforeImg: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80',
-    afterImg: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80',
-    stitchCount: '14,200 Stitches',
-    colors: '3 Thread Colors + 3mm EVA',
-    formats: 'DST, EXP, HUS',
-    clientType: 'Motorsports Shop'
+    afterImg: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
+    stitchCount: 'N/A (Vector Master)',
+    colors: 'CMYK + Pantone Spot Separations',
+    formats: 'AI, EPS, SVG, PDF',
+    clientType: 'Vinyl & Decal Manufacturer'
+  },
+  {
+    id: 'port-11',
+    category: 'vector',
+    categoryLabel: 'Vector Conversion',
+    title: 'Hand-Drawn Mascot Sketch to Vinyl Print Vector',
+    description: 'Pencil drawing scanned and hand-traced node-by-node with perfectly closed anchor points for plotters and vinyl cutters.',
+    beforeImg: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80',
+    afterImg: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=800&q=80',
+    stitchCount: 'N/A (Vector Master)',
+    colors: 'Single Color Cut Paths',
+    formats: 'AI, SVG, DXF, EPS',
+    clientType: 'Signage & Apparel Printer'
+  },
+  {
+    id: 'port-4',
+    category: 'patches',
+    categoryLabel: 'Custom Patches',
+    title: 'Tactical Merrowed Border Embroidered Patch',
+    description: 'High-density rayon thread embroidery with classic overlock merrowed border edges and heavy-duty velcro backing.',
+    beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
+    afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
+    stitchCount: '18,200 Stitches',
+    colors: '6 Rayon Thread Colors',
+    formats: 'Velcro / Iron-On Backing',
+    clientType: 'Uniform Outfitters'
   },
   {
     id: 'port-8',
@@ -125,6 +164,45 @@ const PORTFOLIO_ITEMS = [
     colors: '3 Color Molded Rubber',
     formats: 'Tactical Hook & Loop',
     clientType: 'Outdoor & Tactical Gear'
+  },
+  {
+    id: 'port-12',
+    category: 'patches',
+    categoryLabel: 'Custom Patches',
+    title: 'Vintage Laser-Engraved Genuine Leather Patch',
+    description: 'Rustic genuine tan leather patch with precision laser-etched debossing and stitched border channel for denim & beanies.',
+    beforeImg: 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=800&q=80',
+    afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
+    stitchCount: 'Laser Etched Leather',
+    colors: 'Natural Tan & Dark Burnish',
+    formats: 'Heat Seal / Sew-On Groove',
+    clientType: 'Lifestyle & Denim Apparel'
+  },
+  {
+    id: 'port-13',
+    category: 'patches',
+    categoryLabel: 'Custom Patches',
+    title: 'Custom Chenille Varsity Letterman Patch',
+    description: 'Plush high-loft chenille loop yarn combined with gold embroidery underlay and felt backing for high school varsity jackets.',
+    beforeImg: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80',
+    afterImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
+    stitchCount: 'High-Loft Chenille Yarn',
+    colors: '3 Chenille Colors + Metallic',
+    formats: 'Heavy Felt Sew-On Backing',
+    clientType: 'Varsity & Athletics Brand'
+  },
+  {
+    id: 'port-14',
+    category: 'patches',
+    categoryLabel: 'Custom Patches',
+    title: 'Sublimated HD Printed Patch with Overlock Edge',
+    description: 'Photographic resolution dye-sublimation patch for complex artwork with gradient fills, trimmed with a merrowed border.',
+    beforeImg: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80',
+    afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
+    stitchCount: 'Dye-Sublimated + Satin Border',
+    colors: 'Full Color Photographic HD',
+    formats: 'Iron-On & Adhesive Backing',
+    clientType: 'Event & Festival Merchandise'
   }
 ];
 
@@ -132,7 +210,7 @@ export const PortfolioPage = () => {
   const navigate = useNavigate();
   const { protectedNavigate, portfolioSamples = [] } = useAppState();
 
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [activeFilter, setActiveFilter] = useState('embroidery');
   const [activeItemModal, setActiveItemModal] = useState(null);
   const [comparisonPositions, setComparisonPositions] = useState({});
 
@@ -156,12 +234,9 @@ export const PortfolioPage = () => {
       }))
     : PORTFOLIO_ITEMS;
 
-  const filteredItems = activeFilter === 'all'
-    ? combinedItems
-    : combinedItems.filter(item => item.category === activeFilter);
+  const filteredItems = combinedItems.filter(item => item.category === activeFilter);
 
   const filterTabs = [
-    { key: 'all', label: 'All Works' },
     { key: 'embroidery', label: 'Embroidery Digitizing' },
     { key: 'vector', label: 'Vector Art Conversion' },
     { key: 'patches', label: 'Custom Patches' }
@@ -357,9 +432,13 @@ export const PortfolioPage = () => {
                     >
                       {/* After Image (Full width background) */}
                       <img 
-                        src={item.afterImg} 
-                        alt={`${item.title} Finished Stitchout`}
+                        src={item.afterImg || item.image || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80'} 
+                        alt={`${item.title || 'Portfolio'} Finished Stitchout`}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80';
+                        }}
                       />
 
                       {/* Before Image (Clipped overlay) */}
@@ -376,9 +455,13 @@ export const PortfolioPage = () => {
                         }}
                       >
                         <img 
-                          src={item.beforeImg} 
-                          alt={`${item.title} Original Artwork`}
+                          src={item.beforeImg || item.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'} 
+                          alt={`${item.title || 'Portfolio'} Original Artwork`}
                           style={{ width: '100%', height: '100%', objectFit: 'cover', maxWidth: 'none' }}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80';
+                          }}
                         />
                         <span style={{
                           position: 'absolute',

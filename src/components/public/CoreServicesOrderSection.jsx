@@ -66,8 +66,14 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
   // Service 3: Custom Patches State
   const [patchStyle, setPatchStyle] = useState('Embroidered'); // 'Embroidered' | 'Leather' | 'PVC'
   const [patchBacking, setPatchBacking] = useState('Iron-On'); // 'Iron-On' | 'Velcro' | 'Sew-On' | 'Adhesive'
-  const [patchQuantity, setPatchQuantity] = useState(25);
+  const [patchQuantity, setPatchQuantity] = useState(100);
+  const [patchQuantityInput, setPatchQuantityInput] = useState('100');
   const [patchSize, setPatchSize] = useState('3.0 inches');
+
+  // Sync patchQuantity state with input string
+  React.useEffect(() => {
+    setPatchQuantityInput(String(patchQuantity));
+  }, [patchQuantity]);
 
   // Service 4: Custom T-Shirts State
   const [tshirtColor, setTshirtColor] = useState('Black');
@@ -320,6 +326,24 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
   // Order Submission Handler
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
+
+    if (activeService === 'digitizing') {
+      const invalidItem = placementItems.find(p => !p.quantityInput || parseInt(p.quantityInput, 10) < 1);
+      if (invalidItem) {
+        showToast('Minimum quantity per placement item is 1 Pcs.', 'error');
+        return;
+      }
+    } else if (activeService === 'vector') {
+      if (!vectorQuantityInput || parseInt(vectorQuantityInput, 10) < 1) {
+        showToast('Minimum order quantity for Vector Tracing is 1 Artwork.', 'error');
+        return;
+      }
+    } else if (activeService === 'patches') {
+      if (!patchQuantityInput || parseInt(patchQuantityInput, 10) < 50) {
+        showToast('Minimum order quantity for Custom Patches is 50 Pcs.', 'error');
+        return;
+      }
+    }
 
     setIsSubmitting(true);
     const totalPrice = calculatePrice();
@@ -1503,6 +1527,12 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                         </button>
                       </div>
                     </div>
+
+                    {(vectorQuantityInput === '' || parseInt(vectorQuantityInput, 10) < 1) && (
+                      <div style={{ fontSize: '0.78rem', color: '#fb923c', fontWeight: 800, marginTop: '0.35rem' }}>
+                        ⚠️ Minimum order quantity for Vector Tracing is 1 Artwork.
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1510,13 +1540,55 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
               {/* 3. PHYSICAL CUSTOM PATCHES */}
               {activeService === 'patches' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+                  {/* 3 Pricing Tier Package Buttons */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#cbd5e1', marginBottom: '0.45rem' }}>
+                      Select Pricing Tier Package *
+                    </label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '1.15rem' }}>
+                      {[
+                        { id: 'basic', label: 'ESSENTIAL', title: 'Micro Woven', rate: '$1.50/ea', style: 'Woven' },
+                        { id: 'standard', label: 'MOST POPULAR', title: 'Embroidered', rate: '$2.50/ea', style: 'Embroidered' },
+                        { id: 'premium', label: 'LUXURY & PVC', title: '3D PVC & Leather', rate: '$3.50/ea', style: 'PVC' }
+                      ].map(tier => {
+                        const isActive = patchStyle === tier.style || (tier.id === 'standard' && patchStyle === 'Embroidered');
+                        return (
+                          <div
+                            key={tier.id}
+                            onClick={() => setPatchStyle(tier.style)}
+                            style={{
+                              padding: '0.75rem 0.85rem',
+                              borderRadius: '10px',
+                              border: isActive ? '2px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.15)',
+                              background: isActive ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.22) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
+                              color: '#ffffff',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            <div style={{ fontSize: '0.68rem', fontWeight: 800, color: isActive ? 'var(--orange-400)' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              {tier.label}
+                            </div>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#ffffff', margin: '0.1rem 0' }}>
+                              {tier.title}
+                            </div>
+                            <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--orange-400)' }}>
+                              Starting at {tier.rate}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Patch Style</label>
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Patch Style / Material</label>
                       <select value={patchStyle} onChange={(e) => setPatchStyle(e.target.value)} className="form-control" style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)' }}>
-                        <option value="Embroidered">Embroidered Patch (Merrowed Border)</option>
-                        <option value="Leather">Genuine / Faux Leather Patch</option>
+                        <option value="Embroidered">Embroidered Patch (Classic Stitched)</option>
+                        <option value="Woven">Micro Woven Patch (Fine Detail)</option>
                         <option value="PVC">3D Soft Rubber PVC Patch</option>
+                        <option value="Leather">Genuine / Faux Leather Patch</option>
                       </select>
                     </div>
 
@@ -1557,23 +1629,58 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                       </select>
 
                       <input 
-                        type="number" 
-                        min="10" 
-                        step="5" 
-                        value={patchQuantity} 
-                        onChange={(e) => setPatchQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))} 
+                        type="text" 
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={patchQuantityInput} 
+                        onChange={(e) => {
+                          const rawVal = e.target.value;
+                          if (rawVal === '') {
+                            setPatchQuantityInput('');
+                            setPatchQuantity(0);
+                            return;
+                          }
+                          const cleanVal = rawVal.replace(/\D/g, '');
+                          setPatchQuantityInput(cleanVal);
+                          if (cleanVal !== '') {
+                            const parsed = parseInt(cleanVal, 10);
+                            setPatchQuantity(parsed);
+                          } else {
+                            setPatchQuantity(0);
+                          }
+                        }}
+                        onBlur={() => {
+                          if (!patchQuantityInput || parseInt(patchQuantityInput, 10) < 50) {
+                            setPatchQuantityInput('50');
+                            setPatchQuantity(50);
+                          }
+                        }}
                         className="form-control" 
-                        placeholder="Custom Pcs"
-                        style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800 }} 
+                        placeholder="Custom Pcs (min. 50)"
+                        style={{
+                          background: '#0f172a',
+                          color: '#ffffff',
+                          border: (patchQuantityInput === '' || parseInt(patchQuantityInput, 10) < 50) ? '1.5px solid #fb923c' : '1px solid rgba(255,255,255,0.15)',
+                          fontWeight: 800
+                        }} 
                       />
                     </div>
 
+                    {(patchQuantityInput === '' || parseInt(patchQuantityInput, 10) < 50) && (
+                      <div style={{ fontSize: '0.78rem', color: '#fb923c', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                        ⚠️ Minimum order quantity for Custom Patches is 50 Pcs.
+                      </div>
+                    )}
+
                     <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                      {[100, 200, 300, 400, 500, 1000].map(qty => (
+                      {[50, 100, 200, 300, 500, 1000].map(qty => (
                         <button
                           key={qty}
                           type="button"
-                          onClick={() => setPatchQuantity(qty)}
+                          onClick={() => {
+                            setPatchQuantity(qty);
+                            setPatchQuantityInput(String(qty));
+                          }}
                           style={{
                             padding: '0.3rem 0.65rem',
                             borderRadius: '6px',

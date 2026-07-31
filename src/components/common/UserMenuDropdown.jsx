@@ -19,6 +19,12 @@ import {
 
 export const UserMenuDropdown = () => {
   const navigate = useNavigate();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const { 
     isAuthenticated,
     currentView,
@@ -32,9 +38,7 @@ export const UserMenuDropdown = () => {
   } = useAppState();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [themeMode, setThemeMode] = useState(() => {
-    return localStorage.getItem('bdigi_theme') || 'light';
-  });
+  const [themeMode, setThemeMode] = useState('light');
 
   const dropdownRef = useRef(null);
 
@@ -49,7 +53,8 @@ export const UserMenuDropdown = () => {
   }, []);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('bdigi_theme') || 'light';
+    const savedTheme = (typeof window !== 'undefined' && localStorage.getItem('bdigi_theme')) || 'light';
+    setThemeMode(savedTheme);
     document.documentElement.setAttribute('data-theme', savedTheme);
     if (savedTheme === 'dark') {
       document.body.classList.add('dark-mode');
@@ -58,7 +63,7 @@ export const UserMenuDropdown = () => {
     }
   }, []);
 
-  if (!isAuthenticated) return null;
+  if (!mounted || !isAuthenticated) return null;
 
   const activeUser = authUser || currentUser || {
     name: 'Sarah Jenkins',
@@ -101,7 +106,7 @@ export const UserMenuDropdown = () => {
     .substring(0, 2)
     .toUpperCase();
 
-  const isViewingAdmin = currentView === 'admin' || (typeof window !== 'undefined' && window.location.pathname.includes('admin'));
+  const isViewingAdmin = (mounted && currentView === 'admin') || (mounted && typeof window !== 'undefined' && window.location.pathname.includes('admin'));
   const badgeLabel = isViewingAdmin ? 'MASTER ADMIN' : 'VERIFIED CLIENT';
 
   return (

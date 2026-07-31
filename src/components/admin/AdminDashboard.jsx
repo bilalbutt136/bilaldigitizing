@@ -50,11 +50,37 @@ export const AdminDashboard = () => {
     }
   }, [siteSettings?.adminEmail]);
 
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const configuredAdminEmail = (siteSettings?.adminEmail || 'shahidbutt59191@gmail.com').toLowerCase().trim();
-  const isMasterAdmin = isAuthenticated && (
+  const isMasterAdmin = mounted && isAuthenticated && (
     authUser?.email?.toLowerCase().trim() === configuredAdminEmail ||
     authUser?.email?.toLowerCase().trim() === 'shahidbutt59191@gmail.com'
   );
+
+  if (!mounted) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 'calc(100vh - 73px)',
+        background: 'var(--bg-main)',
+        color: 'var(--text-muted)',
+        fontSize: '0.9rem',
+        fontWeight: 600
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <RefreshCw size={20} className="spin-icon" style={{ color: 'var(--orange-500)' }} />
+          <span>Authenticating Operations Desk...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (!isMasterAdmin) {
     return (
@@ -120,10 +146,169 @@ export const AdminDashboard = () => {
   ];
 
   return (
-    <div style={{ padding: '2rem 0 4rem', background: 'var(--bg-main)', minHeight: 'calc(100vh - 120px)' }}>
-      <div className="container" style={{ maxWidth: '1400px' }}>
-        
-        {/* Top Bar Header */}
+    <div className="admin-portal-wrapper" style={{ display: 'flex', minHeight: 'calc(100vh - 73px)', background: 'var(--bg-main)', position: 'relative', width: '100%' }}>
+      
+      <aside className="admin-sidebar-fixed" style={{
+        position: 'fixed',
+        top: '73px',
+        left: 0,
+        bottom: 0,
+        width: '280px',
+        background: '#ffffff',
+        borderRight: '1px solid var(--border-color)',
+        boxShadow: '4px 0 20px rgba(15, 23, 42, 0.04)',
+        overflowY: 'auto',
+        padding: '1.5rem 1rem',
+        zIndex: 90,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between'
+      }}>
+        <div>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.65rem',
+            padding: '0.5rem 0.75rem 1.25rem',
+            marginBottom: '1.25rem',
+            borderBottom: '1px solid var(--border-color)'
+          }}>
+            <div style={{
+              background: 'linear-gradient(135deg, var(--navy-900), #ff7a00)',
+              color: '#ffffff',
+              padding: '0.45rem',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(255, 122, 0, 0.25)'
+            }}>
+              <LayoutDashboard size={18} style={{ color: '#ffffff' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--navy-900)', lineHeight: 1.1 }}>
+                Operations Desk
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '0.15rem' }}>
+                Master Control Panel
+              </div>
+            </div>
+          </div>
+
+          {menuSections.map((sec, secIdx) => (
+            <div key={secIdx} style={{ marginBottom: secIdx === menuSections.length - 1 ? 0 : '1.25rem' }}>
+              <div style={{
+                fontSize: '0.675rem',
+                fontWeight: 800,
+                color: 'var(--orange-600)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                padding: '0.25rem 0.75rem',
+                marginBottom: '0.4rem'
+              }}>
+                {sec.title}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                {sec.items.map(item => {
+                  const IconComp = item.icon;
+                  const isActive = activeTab === item.id;
+
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        if (item.id === 'signout') {
+                          handleSignOut();
+                        } else {
+                          setActiveTab(item.id);
+                        }
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.65rem 0.75rem',
+                        borderRadius: 'var(--radius-md)',
+                        border: isActive ? '1.5px solid #ff7a00' : '1px solid transparent',
+                        background: isActive 
+                          ? 'rgba(255, 122, 0, 0.12)' 
+                          : item.danger ? 'rgba(220, 38, 38, 0.08)' : 'transparent',
+                        color: isActive 
+                          ? '#ff7a00' 
+                          : item.danger ? '#dc2626' : '#475569',
+                        fontWeight: isActive ? 800 : 600,
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.18s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <IconComp size={16} style={{ color: isActive ? '#ff7a00' : item.danger ? '#ef4444' : '#64748b' }} />
+                        <span>{item.label}</span>
+                      </div>
+
+                      {item.badge !== undefined && (
+                        <span style={{
+                          fontSize: '0.7rem',
+                          fontWeight: 800,
+                          background: isActive ? '#ff7a00' : '#e2e8f0',
+                          color: isActive ? '#ffffff' : '#334155',
+                          padding: '0.1rem 0.45rem',
+                          borderRadius: '9999px'
+                        }}>
+                          {item.badge}
+                        </span>
+                      )}
+
+                      {item.tag && (
+                        <span style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 800,
+                          background: 'rgba(249, 115, 22, 0.15)',
+                          color: '#f97316',
+                          padding: '0.1rem 0.4rem',
+                          borderRadius: '4px'
+                        }}>
+                          {item.tag}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{
+          marginTop: '2rem',
+          padding: '0.85rem',
+          background: 'var(--navy-50)',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-color)',
+          fontSize: '0.75rem',
+          color: 'var(--navy-900)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
+            System Live
+          </div>
+          <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginTop: '0.2rem' }}>
+            {configuredAdminEmail}
+          </div>
+        </div>
+      </aside>
+
+      <main className="admin-main-content" style={{
+        marginLeft: '280px',
+        width: 'calc(100% - 280px)',
+        padding: '2rem 2.5rem 4rem',
+        boxSizing: 'border-box',
+        minHeight: 'calc(100vh - 73px)'
+      }}>
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -169,353 +354,135 @@ export const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* 2-Column Sidebar Layout */}
-        <div className="dashboard-layout-grid" style={{ display: 'grid', gridTemplateColumns: '270px 1fr', gap: '1.75rem', alignItems: 'start' }}>
-          
-          {/* Left-Hand Admin Sidebar Navigation Container (Independent Scrollable SaaS Panel) */}
-          <div className="card dashboard-sidebar-sticky" style={{
-            padding: '1.25rem 0.85rem',
-            background: '#ffffff',
-            border: '1.5px solid var(--border-color)',
-            color: '#0f172a',
-            borderRadius: '16px',
-            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.06)',
-            position: 'sticky',
-            top: '90px',
-            maxHeight: 'calc(100vh - 110px)',
-            overflowY: 'auto',
-            zIndex: 10
-          }}>
-            {menuSections.map((sec, secIdx) => (
-              <div key={secIdx} style={{ marginBottom: secIdx === menuSections.length - 1 ? 0 : '1.25rem' }}>
-                <div style={{
-                  fontSize: '0.675rem',
-                  fontWeight: 800,
-                  color: 'var(--orange-600)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
-                  padding: '0.25rem 0.75rem',
-                  marginBottom: '0.4rem'
-                }}>
-                  {sec.title}
+        {activeTab === 'dashboard' && (
+          <div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: '1.25rem',
+              marginBottom: '1.75rem'
+            }}>
+              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #ff7a00' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Revenue</span>
+                  <div style={{ background: 'rgba(255, 122, 0, 0.12)', color: '#ff7a00', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
+                    <TrendingUp size={18} />
+                  </div>
                 </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  {sec.items.map(item => {
-                    const IconComp = item.icon;
-                    const isActive = activeTab === item.id;
-
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => {
-                          if (item.id === 'signout') {
-                            handleSignOut();
-                          } else {
-                            setActiveTab(item.id);
-                          }
-                        }}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '0.65rem 0.75rem',
-                          borderRadius: 'var(--radius-md)',
-                          border: isActive ? '1.5px solid #ff7a00' : '1px solid transparent',
-                          background: isActive 
-                            ? 'rgba(255, 122, 0, 0.12)' 
-                            : item.danger ? 'rgba(220, 38, 38, 0.08)' : 'transparent',
-                          color: isActive 
-                            ? '#ff7a00' 
-                            : item.danger ? '#dc2626' : '#475569',
-                          fontWeight: isActive ? 800 : 600,
-                          fontSize: '0.85rem',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          transition: 'all 0.18s ease'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                          <IconComp size={16} style={{ color: isActive ? '#ff7a00' : item.danger ? '#ef4444' : '#64748b' }} />
-                          <span>{item.label}</span>
-                        </div>
-
-                        {item.badge !== undefined && (
-                          <span style={{
-                            fontSize: '0.7rem',
-                            fontWeight: 800,
-                            background: isActive ? '#ff7a00' : '#e2e8f0',
-                            color: isActive ? '#ffffff' : '#334155',
-                            padding: '0.1rem 0.45rem',
-                            borderRadius: '9999px'
-                          }}>
-                            {item.badge}
-                          </span>
-                        )}
-
-                        {item.tag && (
-                          <span style={{
-                            fontSize: '0.65rem',
-                            fontWeight: 800,
-                            background: 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)',
-                            color: '#ffffff',
-                            padding: '0.1rem 0.45rem',
-                            borderRadius: '9999px'
-                          }}>
-                            {item.tag}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.4rem 0 0.1rem' }}>
+                  ${totalRevenue.toFixed(2)}
                 </div>
               </div>
-            ))}
-          </div>
 
-          {/* Right Main Panel Content */}
-          <div style={{ minWidth: 0 }}>
+              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #3b82f6' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Jobs in Pipeline</span>
+                  <div style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
+                    <ClipboardList size={18} />
+                  </div>
+                </div>
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.4rem 0 0.1rem' }}>
+                  {activeJobsCount}
+                </div>
+              </div>
+
+              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #10b981' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Completed Files</span>
+                  <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
+                    <Layers size={18} />
+                  </div>
+                </div>
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.4rem 0 0.1rem' }}>
+                  {completedJobsCount}
+                </div>
+              </div>
+
+              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #8b5cf6' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Registered Clients</span>
+                  <div style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
+                    <Users size={18} />
+                  </div>
+                </div>
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.4rem 0 0.1rem' }}>
+                  {safeClients.length}
+                </div>
+              </div>
+            </div>
+
+            <OrderManagementTable />
+          </div>
+        )}
+
+        {activeTab === 'orders' && <OrderManagementTable />}
+        {activeTab === 'services' && <ServiceManagementEditor />}
+        {activeTab === 'clients' && <ClientDirectory />}
+        {activeTab === 'chat' && <AdminChatInbox />}
+        {activeTab === 'heroslider' && <SiteCmsEditor />}
+
+        {activeTab === 'settings' && (
+          <div className="card" style={{ padding: '2rem', maxWidth: '720px', background: '#ffffff' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--navy-900)' }}>
+              ⚙️ Global Studio Settings & Security
+            </h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+              Manage site branding, master admin authorization, and database sync status.
+            </p>
             
-            {/* 1. DASHBOARD OVERVIEW TAB */}
-            {activeTab === 'dashboard' && (
-              <div>
-                {/* 4 Operations KPI Cards */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                  gap: '1.25rem',
-                  marginBottom: '1.75rem'
-                }}>
-                  <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', background: '#ffffff' }}>
-                    <div style={{ background: 'var(--green-50)', color: 'var(--green-600)', padding: '0.85rem', borderRadius: 'var(--radius-md)' }}>
-                      <TrendingUp size={24} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)' }}>${totalRevenue.toFixed(2)}</div>
-                      <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>Gross Revenue</div>
-                    </div>
-                  </div>
-
-                  <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', background: '#ffffff' }}>
-                    <div style={{ background: '#e0f2fe', color: '#0369a1', padding: '0.85rem', borderRadius: 'var(--radius-md)' }}>
-                      <Layers size={24} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)' }}>{activeJobsCount}</div>
-                      <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>Active Production Queue</div>
-                    </div>
-                  </div>
-
-                  <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', background: '#ffffff' }}>
-                    <div style={{ background: '#fef3c7', color: '#92400e', padding: '0.85rem', borderRadius: 'var(--radius-md)' }}>
-                      <AlertCircle size={24} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)' }}>{newSubmissionsCount}</div>
-                      <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>New Brief Submissions</div>
-                    </div>
-                  </div>
-
-                  <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', background: '#ffffff' }}>
-                    <div style={{ background: '#fae8ff', color: '#86198f', padding: '0.85rem', borderRadius: 'var(--radius-md)' }}>
-                      <Users size={24} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)' }}>{clients.length}</div>
-                      <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>Registered Shops / Brands</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Dashboard Orders Pipeline Table */}
-                <OrderManagementTable />
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              updateSiteSettings({ metaPixelId, adminEmail });
+              showToast('Security settings saved successfully!', 'success');
+            }} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div className="form-group">
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.4rem', display: 'block' }}>
+                  Master Admin Email Address
+                </label>
+                <input 
+                  type="email" 
+                  className="form-control" 
+                  value={adminEmail}
+                  onChange={(e) => setAdminEmail(e.target.value)}
+                  placeholder="shahidbutt59191@gmail.com"
+                  required
+                />
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.3rem', display: 'block' }}>
+                  This email address has master access to the Operations Desk.
+                </span>
               </div>
-            )}
 
-            {/* 2. ORDERS TAB */}
-            {activeTab === 'orders' && <OrderManagementTable />}
-
-            {/* 3. SERVICES & PRICING TAB */}
-            {activeTab === 'services' && <ServiceManagementEditor />}
-            {activeTab === 'cms' && <SiteCmsEditor />}
-
-            {/* 5. CLIENTS & WALLETS TAB */}
-            {(activeTab === 'clients' || activeTab === 'wallets') && <ClientDirectory />}
-
-            {/* 6. DIGITIZERS & STAFF TAB */}
-            {activeTab === 'digitizers' && (
-              <div className="card" style={{ padding: '2rem', background: '#ffffff' }}>
-                <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
-                  🎨 Production Digitizers & Quality Staff
-                </h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                  Manage internal embroidery digitizers, vector artists, shift assignments, and workload metrics.
-                </p>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
-                  {digitizers.map(staff => (
-                    <div key={staff.id} style={{ padding: '1.25rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', background: '#f8fafc' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                        <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '1rem' }}>{staff.name}</div>
-                        <span style={{ fontSize: '0.75rem', background: '#dcfce7', color: '#15803d', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>
-                          AVAILABLE
-                        </span>
-                      </div>
-                      <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
-                        Role: <strong>{staff.role}</strong>
-                      </div>
-                      <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>
-                        Specialty: <strong>{staff.specialty || '3D Foam & Caps'}</strong>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              <div className="form-group">
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.4rem', display: 'block' }}>
+                  Meta Pixel ID (Facebook Ads Tracking)
+                </label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  value={metaPixelId}
+                  onChange={(e) => setMetaPixelId(e.target.value)}
+                  placeholder="123456789098765"
+                />
               </div>
-            )}
 
-            {/* 7. LIVE CHAT & SUPPORT TAB */}
-            {activeTab === 'chat' && <AdminChatInbox />}
-
-            {/* 8. HERO SLIDER SHOWCASE CMS */}
-            {(activeTab === 'heroslider' || activeTab === 'portfolio' || activeTab === 'hero') && <SiteCmsEditor />}
-
-            {/* 9. MARKETING & COUPONS TAB */}
-            {activeTab === 'marketing' && (
-              <div className="card" style={{ padding: '2rem', background: '#ffffff' }}>
-                <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
-                  📢 Marketing, Discount Codes & Promotions
-                </h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                  Create promotional coupon codes and active shop discount rules for registered embroidery clients.
-                </p>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
-                  <div style={{ padding: '1.25rem', border: '1.5px solid var(--orange-400)', background: '#fff7ed', borderRadius: 'var(--radius-md)' }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase' }}>ACTIVE PROMO CODE</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.25rem 0' }}>{discountCode}</div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--navy-800)' }}>Discount: <strong>{discountPercent}</strong> on first digitizing order</div>
-                  </div>
-                </div>
+              <div className="form-group">
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.4rem', display: 'block' }}>
+                  Database Real-Time Channels
+                </label>
+                <input type="text" disabled className="form-control" value="Supabase Real-Time Enabled (site_config table)" />
               </div>
-            )}
 
-            {/* 11. EMAIL HUB & ALERTS TAB */}
-            {activeTab === 'email' && (
-              <div className="card" style={{ padding: '2rem', background: '#ffffff' }}>
-                <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
-                  ✉️ Email Hub & Automated Dispatch Logs
-                </h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                  Configure automated email notifications for order status updates, deposit receipts, and sew-out proofs.
-                </p>
-
-                <div style={{ padding: '1.25rem', background: '#f8fafc', borderRadius: 'var(--radius-md)', fontSize: '0.85rem' }}>
-                  <div><strong>SMTP Gateway:</strong> Active (Studio Notifications Service)</div>
-                  <div style={{ marginTop: '0.4rem' }}><strong>Target Master Email:</strong> shahidbutt59191@gmail.com</div>
-                </div>
-              </div>
-            )}
-
-            {/* 12. META PIXEL & ANALYTICS TAB */}
-            {activeTab === 'pixel' && (
-              <div className="card" style={{ padding: '2rem', background: '#ffffff' }}>
-                <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
-                  🎯 Meta Pixel & Conversion Analytics
-                </h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                  Inject your Meta Pixel ID to track checkout events, store orders, and ad campaigns.
-                </p>
-
-                <div style={{ maxWidth: '480px' }}>
-                  <div className="form-group">
-                    <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>Meta Pixel Dataset ID</label>
-                    <input 
-                      type="text" 
-                      className="form-control"
-                      style={{ fontWeight: 700, marginTop: '0.35rem' }}
-                      value={metaPixelId}
-                      onChange={(e) => setMetaPixelId(e.target.value)}
-                    />
-                  </div>
-                  <button type="button" className="btn btn-primary-orange btn-sm" onClick={handleSaveSettings}>
-                    <Save size={14} /> Save Meta Pixel ID
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* 13. PAYMENT PROCESSORS TAB */}
-            {activeTab === 'payments' && (
-              <div className="card" style={{ padding: '2rem', background: '#ffffff' }}>
-                <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
-                  ⚡ Payment Processors & Gateway Setup
-                </h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                  Configure client wallet top-up links and BoltPayouts checkout settings.
-                </p>
-
-                <div style={{ padding: '1.25rem', border: '1.5px solid #6366f1', background: '#e0e7ff', borderRadius: 'var(--radius-md)' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#3730a3' }}>BOLT PAYOUTS GATEWAY URL</div>
-                  <input 
-                    type="text" 
-                    className="form-control"
-                    style={{ fontWeight: 800, marginTop: '0.4rem', color: '#1e1b4b' }}
-                    value={boltUrl}
-                    onChange={(e) => setBoltUrl(e.target.value)}
-                  />
-                  <div style={{ fontSize: '0.75rem', color: '#4338ca', marginTop: '0.4rem' }}>
-                    Strict URL: <strong>https://www.boltpayouts.xyz/pay/boltpayouts</strong>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 14. SETTINGS & SECURITY TAB */}
-            {activeTab === 'settings' && (
-              <div className="card" style={{ padding: '2rem', background: '#ffffff' }}>
-                <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
-                  ⚙️ Global Studio Settings & Security
-                </h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                  Manage site branding, master admin authorization, and database sync status.
-                </p>
-
-                <form onSubmit={handleSaveSettings} style={{ maxWidth: '520px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label style={{ fontSize: '0.825rem', fontWeight: 800 }}>Master Admin Authorization Email</label>
-                    <input 
-                      type="email" 
-                      className="form-control" 
-                      value={adminEmail} 
-                      onChange={(e) => setAdminEmail(e.target.value)}
-                      placeholder="e.g. shahidbutt59191@gmail.com"
-                      required
-                      style={{ fontWeight: 700, color: 'var(--navy-900)', background: '#ffffff' }}
-                    />
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.35rem', lineHeight: 1.4 }}>
-                      Users logging in with this email address will automatically receive Master Administrator access to the Operations Desk.
-                    </div>
-                  </div>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label style={{ fontSize: '0.825rem', fontWeight: 800 }}>Database Real-Time Channels</label>
-                    <input type="text" disabled className="form-control" value="Supabase Real-Time Enabled (site_config table)" />
-                  </div>
-                  <button type="submit" className="btn btn-primary-orange">
-                    <Save size={16} /> Save Security Configuration
-                  </button>
-                </form>
-              </div>
-            )}
-
+              <button type="submit" className="btn btn-primary-orange" style={{ alignSelf: 'flex-start' }}>
+                <Settings size={16} /> Save Security Configuration
+              </button>
+            </form>
           </div>
-
-        </div>
+        )}
 
         {/* Pricing Settings Modal */}
         <PricingSettingsModal />
+      </main>
 
-      </div>
     </div>
   );
 };

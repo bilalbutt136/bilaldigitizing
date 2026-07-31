@@ -19,41 +19,30 @@ import {
 } from 'lucide-react';
 
 export const ClientLiveChatWidget = () => {
-  const { authUser, currentUser, isAuthenticated, showToast } = useAppState();
+  const [mounted, setMounted] = useState(false);
 
-  // Authentication Guard: Hide live chat widget entirely for guests and unauthenticated users
-  const isLoggedIn = isAuthenticated || Boolean(authUser);
-  if (!isLoggedIn) {
-    return null;
-  }
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const { authUser, currentUser, isAuthenticated, showToast } = useAppState();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messageInput, setMessageInput] = useState('');
   const [attachedFile, setAttachedFile] = useState(null);
+  const [chats, setChats] = useState([]);
 
-  const activeUser = authUser || currentUser || {
-    name: 'Client User',
-    email: 'client@example.com',
-    company: 'Client Studio'
-  };
-
-  const cleanName = (activeUser?.name || 'Client').replace(/\s*\(ADMIN\)/gi, '').trim();
-  const clientEmail = (activeUser?.email || 'client@example.com').toLowerCase().trim();
-  const clientCompany = activeUser?.company || `${cleanName}'s Account`;
-  const avatarUrl = activeUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0f172a&color=fff`;
-
-  const chatFeedRef = useRef(null);
-  const fileInputRef = useRef(null);
-
-  const [chats, setChats] = useState(() => {
+  useEffect(() => {
     try {
-      const saved = localStorage.getItem('bdigi_admin_chats');
-      return saved ? JSON.parse(saved) : [];
+      const saved = typeof window !== 'undefined' && localStorage.getItem('bdigi_admin_chats');
+      if (saved) {
+        setChats(JSON.parse(saved));
+      }
     } catch {
-      return [];
+      // fallback
     }
-  });
+  }, []);
 
   // Real-time Event Listener for incoming admin replies across tabs and windows
   useEffect(() => {
@@ -77,19 +66,19 @@ export const ClientLiveChatWidget = () => {
     };
   }, []);
 
-  // Find or create current client's chat thread
-  let clientThread = chats.find(c => c.clientEmail === clientEmail) || chats[0] || {
-    id: `chat-${clientEmail}`,
-    clientName: activeUser.name,
-    clientCompany: activeUser.company,
-    clientEmail: clientEmail,
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
-    status: 'online',
-    orderId: '#3839',
-    orderTitle: 'Logo Digitizing & Support',
-    unreadCount: 0,
-    messages: []
+  const activeUser = authUser || currentUser || {
+    name: 'Client User',
+    email: 'client@example.com',
+    company: 'Client Studio'
   };
+
+  const cleanName = (activeUser?.name || 'Client').replace(/\s*\(ADMIN\)/gi, '').trim();
+  const clientEmail = (activeUser?.email || 'client@example.com').toLowerCase().trim();
+  const clientCompany = activeUser?.company || `${cleanName}'s Account`;
+  const avatarUrl = activeUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0f172a&color=fff`;
+
+  const chatFeedRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const scrollToBottom = () => {
     if (chatFeedRef.current) {
@@ -105,6 +94,12 @@ export const ClientLiveChatWidget = () => {
       scrollToBottom();
     }
   }, [isOpen, chats]);
+
+  // Authentication Guard: Hide live chat widget entirely for guests and unauthenticated users
+  const isLoggedIn = isAuthenticated || Boolean(authUser);
+  if (!mounted || !isLoggedIn) {
+    return null;
+  }
 
   const handleSendMessage = (e) => {
     e?.preventDefault();

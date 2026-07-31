@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { UserMenuDropdown } from '../common/UserMenuDropdown';
 import { ClientLiveChatWidget } from './ClientLiveChatWidget';
+import { ClientSidebar } from './ClientSidebar';
 
 const DEFAULT_USER = {
   name: 'Sarah Jenkins',
@@ -68,10 +69,15 @@ export const CustomerDashboard = () => {
   // Mobile App UI State
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState(3);
+  // Client-side mounting guard for hydration safety
+  const [mounted, setMounted] = React.useState(false);
 
-  // Safe User Resolution
-  const activeUser = authUser || currentUser || DEFAULT_USER;
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Safe User Resolution (SSR-safe initial state)
+  const activeUser = (mounted ? (authUser || currentUser) : null) || DEFAULT_USER;
   const userEmail = activeUser?.email || DEFAULT_USER.email;
 
   // Strict Category Helper Functions
@@ -410,254 +416,21 @@ export const CustomerDashboard = () => {
           {/* ==================================================================
               LEFT VERTICAL SIDEBAR NAVIGATION MENU (INDEPENDENT SCROLLABLE SAAS PANEL)
              ================================================================== */}
-          <aside
-            className="dashboard-sidebar-sticky"
-            style={{
-              background: '#ffffff',
-              border: '1.5px solid var(--border-color)',
-              borderRadius: '16px',
-              padding: '1.25rem 0.85rem',
-              boxShadow: '0 10px 30px rgba(15, 23, 42, 0.06)',
-              position: 'sticky',
-              top: '90px',
-              maxHeight: 'calc(100vh - 110px)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              overflowY: 'auto',
-              zIndex: 10
+          <ClientSidebar 
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            activeUser={activeUser}
+            walletBalance={walletBalance}
+            digitizingCount={digitizingOrders.length}
+            patchCount={patchOrders.length}
+            storeCount={storeOrders.length}
+            onOpenDepositModal={() => setIsDepositModalOpen(true)}
+            onOpenLiveSupport={handleOpenLiveSupport}
+            onLogout={() => {
+              if (logout) logout();
+              navigate('/login');
             }}
-          >
-            <div>
-              {/* Studio User Header Badge */}
-              <div
-                style={{
-                  padding: '0.95rem 0.85rem',
-                  background: 'linear-gradient(135deg, var(--navy-950) 0%, #0f172a 100%)',
-                  borderRadius: '12px',
-                  color: '#ffffff',
-                  marginBottom: '1.25rem'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                  <div style={{
-                    width: '42px',
-                    height: '42px',
-                    borderRadius: '10px',
-                    background: 'linear-gradient(135deg, var(--orange-500), #e66e00)',
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 900,
-                    fontSize: '1.15rem',
-                    boxShadow: '0 4px 14px rgba(255, 122, 0, 0.35)',
-                    flexShrink: 0
-                  }}>
-                    {(activeUser?.name || 'S')[0].toUpperCase()}
-                  </div>
-                  <div style={{ overflow: 'hidden' }}>
-                    <div style={{ fontWeight: 800, fontSize: '0.925rem', color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {activeUser?.name || DEFAULT_USER.name}
-                    </div>
-                    <div style={{ fontSize: '0.73rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {activeUser?.company || DEFAULT_USER.company}
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.08)', padding: '0.4rem 0.65rem', borderRadius: '8px', fontSize: '0.75rem' }}>
-                  <span style={{ color: '#cbd5e1' }}>Wallet Credit:</span>
-                  <strong style={{ color: 'var(--orange-400)', fontWeight: 800 }}>${walletBalance.toFixed(2)}</strong>
-                </div>
-              </div>
-
-              {/* Sidebar Menu Header */}
-              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 0.5rem 0.55rem' }}>
-                Client Studio Navigation
-              </div>
-
-              {/* 6 Clean Navigation Tabs */}
-              <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                
-                {/* Tab 1: Embroidery Digitizing */}
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('digitizing')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    padding: '0.7rem 0.85rem',
-                    borderRadius: '10px',
-                    border: activeTab === 'digitizing' ? '1.5px solid var(--orange-500)' : '1.5px solid transparent',
-                    background: activeTab === 'digitizing' ? 'linear-gradient(135deg, rgba(255,122,0,0.14) 0%, rgba(255,122,0,0.06) 100%)' : 'transparent',
-                    color: activeTab === 'digitizing' ? 'var(--orange-600)' : 'var(--navy-800)',
-                    fontWeight: activeTab === 'digitizing' ? 800 : 600,
-                    fontSize: '0.875rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.18s ease'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <Layers size={18} style={{ color: activeTab === 'digitizing' ? 'var(--orange-600)' : 'var(--navy-600)' }} />
-                    <span>Embroidery Digitizing</span>
-                  </div>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 800, background: activeTab === 'digitizing' ? 'var(--orange-500)' : 'var(--navy-100)', color: activeTab === 'digitizing' ? '#ffffff' : 'var(--navy-700)', padding: '0.15rem 0.45rem', borderRadius: '9999px' }}>
-                    {digitizingOrders.length}
-                  </span>
-                </button>
-
-                {/* Tab 2: Custom Patches & Goods */}
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('patches')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    padding: '0.7rem 0.85rem',
-                    borderRadius: '10px',
-                    border: activeTab === 'patches' ? '1.5px solid var(--orange-500)' : '1.5px solid transparent',
-                    background: activeTab === 'patches' ? 'linear-gradient(135deg, rgba(255,122,0,0.14) 0%, rgba(255,122,0,0.06) 100%)' : 'transparent',
-                    color: activeTab === 'patches' ? 'var(--orange-600)' : 'var(--navy-800)',
-                    fontWeight: activeTab === 'patches' ? 800 : 600,
-                    fontSize: '0.875rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.18s ease'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <Package size={18} style={{ color: activeTab === 'patches' ? 'var(--orange-600)' : 'var(--navy-600)' }} />
-                    <span>Custom Patches & Goods</span>
-                  </div>
-                  {patchOrders.length > 0 && (
-                    <span style={{ fontSize: '0.72rem', fontWeight: 800, background: activeTab === 'patches' ? 'var(--orange-500)' : 'var(--navy-100)', color: activeTab === 'patches' ? '#ffffff' : 'var(--navy-700)', padding: '0.15rem 0.45rem', borderRadius: '9999px' }}>
-                      {patchOrders.length}
-                    </span>
-                  )}
-                </button>
-
-                {/* Tab 3: Account & Profile */}
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('profile')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    padding: '0.7rem 0.85rem',
-                    borderRadius: '10px',
-                    border: activeTab === 'profile' ? '1.5px solid var(--orange-500)' : '1.5px solid transparent',
-                    background: activeTab === 'profile' ? 'linear-gradient(135deg, rgba(255,122,0,0.14) 0%, rgba(255,122,0,0.06) 100%)' : 'transparent',
-                    color: activeTab === 'profile' ? 'var(--orange-600)' : 'var(--navy-800)',
-                    fontWeight: activeTab === 'profile' ? 800 : 600,
-                    fontSize: '0.875rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.18s ease'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <User size={18} style={{ color: activeTab === 'profile' ? 'var(--orange-600)' : 'var(--navy-600)' }} />
-                    <span>Account & Profile</span>
-                  </div>
-                </button>
-
-                {/* Tab 5: Live Support Chat */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab('support');
-                    handleOpenLiveSupport();
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    padding: '0.7rem 0.85rem',
-                    borderRadius: '10px',
-                    border: activeTab === 'support' ? '1.5px solid var(--orange-500)' : '1.5px solid transparent',
-                    background: activeTab === 'support' ? 'linear-gradient(135deg, rgba(255,122,0,0.14) 0%, rgba(255,122,0,0.06) 100%)' : 'transparent',
-                    color: activeTab === 'support' ? 'var(--orange-600)' : 'var(--navy-800)',
-                    fontWeight: activeTab === 'support' ? 800 : 600,
-                    fontSize: '0.875rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.18s ease'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <MessageSquare size={18} style={{ color: activeTab === 'support' ? 'var(--orange-600)' : 'var(--navy-600)' }} />
-                    <span>Live Support Chat</span>
-                  </div>
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} title="Studio Live 24/7" />
-                </button>
-
-                {/* Tab 6: Settings */}
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('settings')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    padding: '0.7rem 0.85rem',
-                    borderRadius: '10px',
-                    border: activeTab === 'settings' ? '1.5px solid var(--orange-500)' : '1.5px solid transparent',
-                    background: activeTab === 'settings' ? 'linear-gradient(135deg, rgba(255,122,0,0.14) 0%, rgba(255,122,0,0.06) 100%)' : 'transparent',
-                    color: activeTab === 'settings' ? 'var(--orange-600)' : 'var(--navy-800)',
-                    fontWeight: activeTab === 'settings' ? 800 : 600,
-                    fontSize: '0.875rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.18s ease'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <Settings size={18} style={{ color: activeTab === 'settings' ? 'var(--orange-600)' : 'var(--navy-600)' }} />
-                    <span>Settings</span>
-                  </div>
-                </button>
-
-              </nav>
-            </div>
-
-            {/* Sidebar Bottom Footer Badge */}
-            <div style={{ marginTop: 'auto', paddingTop: '1.25rem', borderTop: '1px dashed var(--border-color)' }}>
-              <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: 800, color: '#10b981' }}>
-                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981' }} />
-                  24/7 Studio Systems Operational
-                </div>
-                
-                <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.2rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/')}
-                    style={{ flex: 1, padding: '0.35rem 0.5rem', background: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, color: 'var(--navy-900)', cursor: 'pointer' }}
-                  >
-                    Public Site
-                  </button>
-                  {logout && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        logout();
-                        navigate('/');
-                      }}
-                      style={{ padding: '0.35rem 0.6rem', background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, color: '#e11d48', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                    >
-                      <LogOut size={13} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-          </aside>
+          />
 
           {/* ==================================================================
               RIGHT CONTENT WORKSPACE PANE

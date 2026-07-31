@@ -29,7 +29,11 @@ import { UserMenuDropdown } from './common/UserMenuDropdown';
 export const HeaderNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isStoreActive = location.pathname === '/store';
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const { 
     currentView, 
@@ -42,6 +46,11 @@ export const HeaderNav = () => {
     setAuthModalMode,
     openOrderWizard
   } = useAppState();
+
+  const safeCurrentView = mounted ? currentView : 'public';
+  const safeIsAuthenticated = mounted ? isAuthenticated : false;
+  const currentPath = mounted ? (location?.pathname || '') : '';
+  const isStoreActive = currentPath === '/store';
 
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [isStoreOpen, setIsStoreOpen] = useState(false);
@@ -70,7 +79,7 @@ export const HeaderNav = () => {
 
   const handleNavClick = (sectionId) => {
     setCurrentView('public');
-    if (location.pathname !== '/') {
+    if (currentPath !== '/') {
       navigate('/');
       if (sectionId) {
         setTimeout(() => {
@@ -96,14 +105,14 @@ export const HeaderNav = () => {
 
   const handleGoClientPortal = () => {
     protectedNavigate('customer');
-    if (isAuthenticated) {
+    if (safeIsAuthenticated) {
       navigate('/client-portal');
     }
   };
 
   const handleGoAdminPortal = () => {
     protectedNavigate('admin');
-    if (isAuthenticated && authUser?.role === 'admin') {
+    if (safeIsAuthenticated && authUser?.role === 'admin') {
       navigate('/admin-portal');
     }
   };
@@ -143,7 +152,7 @@ export const HeaderNav = () => {
         </div>
 
         {/* Public Navigation Links (Desktop) */}
-        {currentView === 'public' && (
+        {safeCurrentView === 'public' && (
           <nav className="desktop-only" style={{ alignItems: 'center', gap: '1.75rem' }}>
             {/* Home Link */}
             <button 
@@ -151,8 +160,8 @@ export const HeaderNav = () => {
               style={{ 
                 background: 'none', 
                 border: 'none', 
-                color: location.pathname === '/' ? 'var(--orange-600)' : 'var(--navy-800)', 
-                fontWeight: location.pathname === '/' ? 800 : 600, 
+                color: currentPath === '/' ? 'var(--orange-600)' : 'var(--navy-800)', 
+                fontWeight: currentPath === '/' ? 800 : 600, 
                 fontSize: '0.925rem', 
                 cursor: 'pointer', 
                 padding: 0 
@@ -248,7 +257,7 @@ export const HeaderNav = () => {
                       Embroidery Digitizing
                     </button>
 
-                    {/* Option 2: Vector Tracing */}
+                    {/* Option 3: Vector Tracing */}
                     <button
                       type="button"
                       onClick={() => {
@@ -452,8 +461,8 @@ export const HeaderNav = () => {
               style={{ 
                 background: 'none', 
                 border: 'none', 
-                color: location.pathname === '/portfolio' ? 'var(--orange-600)' : 'var(--navy-800)', 
-                fontWeight: location.pathname === '/portfolio' ? 800 : 600, 
+                color: currentPath === '/portfolio' ? 'var(--orange-600)' : 'var(--navy-800)', 
+                fontWeight: currentPath === '/portfolio' ? 800 : 600, 
                 fontSize: '0.925rem', 
                 cursor: 'pointer', 
                 padding: 0 
@@ -474,7 +483,7 @@ export const HeaderNav = () => {
           flexShrink: 0
         }}>
           {/* Primary Order Now Button - Direct Navigation to Order Builder & Payment System */}
-          {currentView !== 'admin' && currentView !== 'customer' && !location.pathname.includes('admin') && (
+          {safeCurrentView !== 'admin' && safeCurrentView !== 'customer' && !currentPath.includes('admin') && (
             <button 
               className="btn btn-primary-orange"
               onClick={() => {
@@ -522,7 +531,7 @@ export const HeaderNav = () => {
           </button>
 
           {/* Dynamic Authentication Controls */}
-          {!isAuthenticated ? (
+          {!safeIsAuthenticated ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <button 
                 className="btn btn-outline btn-sm"
@@ -567,7 +576,7 @@ export const HeaderNav = () => {
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {currentView === 'public' && (
+              {safeCurrentView === 'public' && (
                 <button
                   className="btn btn-outline btn-sm"
                   style={{
@@ -594,7 +603,7 @@ export const HeaderNav = () => {
             </div>
           )}
 
-          {currentView !== 'public' && (
+          {safeCurrentView !== 'public' && (
             <button 
               className="btn btn-outline btn-sm"
               onClick={handleGoHome}
@@ -683,7 +692,7 @@ export const HeaderNav = () => {
           </button>
 
           <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '0.85rem', marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-            {!isAuthenticated ? (
+            {!safeIsAuthenticated ? (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <button
                   className="btn btn-outline btn-md"

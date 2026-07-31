@@ -1,14 +1,24 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Scissors, ShieldCheck, Mail, Phone, MapPin, Heart } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 
 export const Footer = () => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const { setCurrentView, isAuthenticated, authUser, siteSettings = {} } = useAppState();
+
+  const safeIsAuthenticated = mounted ? isAuthenticated : false;
+  const safeAuthUser = mounted ? authUser : null;
 
   const phone = siteSettings.contactPhone || '+1 (800) 555-DIGI (3444)';
   const email = siteSettings.supportEmail || 'orders@bdigitizing-pro.com';
+  const currentYear = mounted ? new Date().getFullYear() : 2026;
 
   return (
     <footer style={{ background: 'var(--navy-950)', color: '#94a3b8', padding: '4rem 0 2rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
@@ -105,11 +115,11 @@ export const Footer = () => {
           gap: '1rem'
         }}>
           <div>
-            © {new Date().getFullYear()} BILAL DIGITIZING.PRO — Custom Embroidery Digitizing & Vector Services. All rights reserved.
+            © {currentYear} BILAL DIGITIZING.PRO — Custom Embroidery Digitizing & Vector Services. All rights reserved.
           </div>
 
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            {(!isAuthenticated || authUser?.role !== 'admin') && (
+            {(!safeIsAuthenticated || safeAuthUser?.role !== 'admin') && (
               <button 
                 onClick={() => setCurrentView('customer')}
                 style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', fontSize: '0.8rem' }}
@@ -117,7 +127,7 @@ export const Footer = () => {
                 Client Dashboard Access
               </button>
             )}
-            {isAuthenticated && authUser?.email?.toLowerCase().trim() === 'shahidbutt59191@gmail.com' && (
+            {safeIsAuthenticated && safeAuthUser?.email?.toLowerCase().trim() === 'shahidbutt59191@gmail.com' && (
               <button 
                 onClick={() => setCurrentView('admin')}
                 style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', fontSize: '0.8rem' }}

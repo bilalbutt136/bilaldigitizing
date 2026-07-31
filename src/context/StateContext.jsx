@@ -287,6 +287,114 @@ const DEFAULT_SEW_OUTS = [
   }
 ];
 
+const DEFAULT_SERVICE_CMS_CONTENT = {
+  embroidery: {
+    hero: {
+      title: 'Commercial Embroidery Digitizing',
+      highlight: '100% Guaranteed',
+      subtext: 'Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks.',
+      badge: 'STARTS $10.00',
+      primaryCta: 'Upload Embroidery Design',
+      secondaryCta: 'View Digitizing Rates',
+      trustPoints: [
+        { title: '100% Manual Digitizing', sub: 'Master digitizers, zero auto-trace' },
+        { title: 'Free Revisions Included', sub: '100% satisfaction guaranteed' },
+        { title: 'Machine-Ready Formats', sub: 'DST, PES, EXP, EMB, JEF' },
+        { title: 'Super Fast 4-12 Hrs Delivery', sub: '24/7 express rush processing' }
+      ]
+    },
+    showcase: {
+      title: 'Embroidery Sew-Outs & Stitch Quality Showcase',
+      subtext: 'Real commercial embroidery sew-outs produced on Tajima, Brother, and Barudan multi-head industrial machines.',
+      samples: [
+        { id: 'emb-s1', title: 'Golden Eagle Sports Polo', category: 'Left Chest', stitches: '12,450 Stitches', colors: '5 Madeira Colors', fabric: 'Pique Cotton Polo', image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80' },
+        { id: 'emb-s2', title: 'Tactical Flexfit Cap Front', category: '3D Puff Cap', stitches: '15,800 Stitches', colors: '2 Colors (3mm Foam)', fabric: 'Structured Wool Cap', image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80' },
+        { id: 'emb-s3', title: 'Heritage Apparel Jacket Crest', category: 'Jacket Back', stitches: '48,200 Stitches', colors: '8 Madeira Colors', fabric: 'Heavy Leather & Canvas', image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80' }
+      ]
+    },
+    workflow: {
+      title: 'How It Works: Embroidery Digitizing Workflow',
+      subtext: 'From initial logo upload to machine-ready stitch file delivery in 4 simple steps.',
+      steps: [
+        { step: '01', title: 'Upload Raster / Vector Logo', desc: 'Submit your logo file and specify target fabric type (polo, cap, hoodie) and required dimensions.' },
+        { step: '02', title: 'Manual Pathing & Density Mapping', desc: 'Master digitizers set Wilcom underlay density, satin stitch directions, and fabric pull compensation.' },
+        { step: '03', title: 'Virtual Stitch Simulation & Testing', desc: 'Every machine file undergoes pathing simulation to guarantee zero thread trims and zero needle breaks.' },
+        { step: '04', title: 'Instant Download & Free Revisions', desc: 'Download production-ready machine files (.DST, .PES, .EMB) with 100% free unlimited revisions.' }
+      ]
+    }
+  },
+  vector: {
+    hero: {
+      title: 'Raster to Scalable Vector Redraw',
+      highlight: 'Hand-Traced Vector',
+      subtext: 'Transform pixelated JPEGs, PNGs, and hand sketches into 100% resolution-independent vector graphics (.AI, .EPS, .SVG, .PDF) with Pantone spot color separation.',
+      badge: 'STARTS $15.00 FLAT',
+      primaryCta: 'Upload Artwork for Vectoring',
+      secondaryCta: 'View Vector Rates',
+      trustPoints: [
+        { title: '100% Hand-Drawn Node Paths', sub: 'Clean vectors for printing & cutting' },
+        { title: 'Pantone Spot Color Separation', sub: 'Screen printing & vinyl cut ready' },
+        { title: 'Master Source Files Included', sub: 'AI, EPS, SVG, PDF, CDR' },
+        { title: '6-12 Hrs Turnaround', sub: 'Same-day vector delivery' }
+      ]
+    },
+    showcase: {
+      title: 'Vector Art Redrawing & Separation Showcase',
+      subtext: 'Low-res raster JPEGs converted into resolution-independent Adobe Illustrator vector node paths.',
+      samples: [
+        { id: 'vec-s1', title: 'Vintage Skull & Rose Vector', category: 'Spot Color Sep', stitches: 'N/A (Scalable Vector)', colors: '4 Pantone Spot Colors', fabric: 'Screen Printing & Cutters', image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80' },
+        { id: 'vec-s2', title: 'Wildcat Athletic Team Mascot', category: 'Hand-Drawn Vector', stitches: 'N/A (Scalable Vector)', colors: '3 Screen Colors', fabric: 'Vinyl & Apparel Print', image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80' },
+        { id: 'vec-s3', title: 'Corporate Shield & Crest Redraw', category: 'Clean AI & SVG', stitches: 'N/A (Scalable Vector)', colors: 'Full CMYK Vector', fabric: 'Large Format Banners', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80' }
+      ]
+    },
+    workflow: {
+      title: 'How It Works: Vector Art Conversion Workflow',
+      subtext: 'Pixel-perfect node tracing and color separation for print and vinyl cutting.',
+      steps: [
+        { step: '01', title: 'Upload Low-Res Image or Sketch', desc: 'Upload your pixelated JPEG, PNG, or hand sketch with target printing specifications.' },
+        { step: '02', title: 'Manual Pen-Tool Vector Tracing', desc: 'Vector artists redraw your logo node-by-node in Adobe Illustrator — zero auto-tracing distortion.' },
+        { step: '03', title: 'Color Separation & Scale Adjustment', desc: 'Clean Pantone spot color layer separation ready for screen printing films and vinyl plotters.' },
+        { step: '04', title: 'Instant Vector Delivery', desc: 'Download resolution-independent master vector source files (.AI, .EPS, .SVG, .PDF).' }
+      ]
+    }
+  },
+  patch: {
+    hero: {
+      title: 'Physical Custom Patches & Emblems',
+      highlight: 'Physical Shipping',
+      subtext: 'Order high-density embroidered patches, 3D molded waterproof PVC emblems, woven labels, and genuine laser-engraved leather patches with physical shipping worldwide.',
+      badge: 'STARTS $1.50 / PATCH',
+      primaryCta: 'Order Custom Patches',
+      secondaryCta: 'Explore Patch Tiers',
+      trustPoints: [
+        { title: 'Velcro & Iron-On Backing', sub: 'Hook & loop, heat seal or sew-on' },
+        { title: 'Classic Merrowed Borders', sub: 'Overlock edges & die-cut shapes' },
+        { title: 'Waterproof 3D Molded PVC', sub: 'High-durability tactical rubber' },
+        { title: '3-5 Days Production', sub: 'Express physical delivery' }
+      ]
+    },
+    showcase: {
+      title: 'Physical Custom Patches & Goods Showcase',
+      subtext: 'Custom embroidered, woven, PVC rubber, and genuine leather emblems delivered nationwide.',
+      samples: [
+        { id: 'pat-s1', title: 'Tactical Merrowed Embroidered Patch', category: 'Overlock Edge', stitches: 'High Density Rayon', colors: 'Velcro Backing', fabric: 'Heavy Duty Felt', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80' },
+        { id: 'pat-s2', title: '3D Molded Rubber PVC Patch', category: 'Tactical PVC', stitches: 'Waterproof Rubber', colors: 'Hook & Loop Backing', fabric: 'Tactical Outerwear', image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80' },
+        { id: 'pat-s3', title: 'Laser Debossed Genuine Leather Patch', category: 'Real Leather', stitches: 'Engraved Leather', colors: 'Heat Seal Iron-On', fabric: 'Denim & Headwear', image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80' }
+      ]
+    },
+    workflow: {
+      title: 'How It Works: Custom Patches Production Workflow',
+      subtext: 'Crafting premium physical emblems from digital proofing to doorstep delivery.',
+      steps: [
+        { step: '01', title: 'Artwork Submission & Specs', desc: 'Upload your artwork and choose patch material (Embroidered, Woven, PVC, Leather), backing, and border.' },
+        { step: '02', title: 'Digital Proof & Approval', desc: 'Receive a high-resolution 1:1 digital mockup & physical sample proof for final approval before mass production.' },
+        { step: '03', title: 'Precision Stitching & Molding', desc: 'High-density embroidery, fine woven thread weaving, or 3D waterproof PVC vulcanization.' },
+        { step: '04', title: 'Quality Check & Express Shipping', desc: 'Every emblem undergoes strict quality inspection before express physical shipping worldwide.' }
+      ]
+    }
+  }
+};
+
 export const StateProvider = ({ children }) => {
   // Navigation & Authentication state
   const [currentView, setCurrentView] = useState(() => {
@@ -322,6 +430,36 @@ export const StateProvider = ({ children }) => {
   const [servicesList, setServicesList] = useState(SERVICES);
   const [siteSettings, setSiteSettings] = useState(DEFAULT_SITE_SETTINGS);
   const [digitizers] = useState(DIGITIZERS);
+
+  // Dynamic Service-Driven Homepage & CMS Content State
+  const [activeHomeServiceTab, setActiveHomeServiceTab] = useState('embroidery'); // 'embroidery' | 'vector' | 'patch'
+  const [serviceCmsContent, setServiceCmsContent] = useState(() => {
+    if (typeof window === 'undefined') return DEFAULT_SERVICE_CMS_CONTENT;
+    try {
+      const saved = localStorage.getItem('bdigi_service_cms');
+      return saved ? JSON.parse(saved) : DEFAULT_SERVICE_CMS_CONTENT;
+    } catch (e) {
+      return DEFAULT_SERVICE_CMS_CONTENT;
+    }
+  });
+
+  const updateServiceCmsContent = (serviceKey, sectionKey, updatedData) => {
+    setServiceCmsContent(prev => {
+      const nextState = {
+        ...prev,
+        [serviceKey]: {
+          ...prev[serviceKey],
+          [sectionKey]: {
+            ...prev[serviceKey]?.[sectionKey],
+            ...updatedData
+          }
+        }
+      };
+      safeSetStorage('bdigi_service_cms', nextState);
+      return nextState;
+    });
+    showToast(`Updated CMS content for ${serviceKey.toUpperCase()} - ${sectionKey.toUpperCase()}`, 'success');
+  };
 
   // Wallet & Modals State
   const [walletBalance, setWalletBalance] = useState(150.00);
@@ -699,6 +837,41 @@ export const StateProvider = ({ children }) => {
     setIsStoreOrderModalOpen(true);
   };
 
+  const updatePricing = (newPricing) => {
+    setPricing(newPricing);
+    safeSetStorage('bdigi_pricing', newPricing);
+  };
+
+  const updatePricingCards = (newCards) => {
+    setPricingCards(newCards);
+    safeSetStorage('bdigi_pricing_cards', newCards);
+  };
+
+  const updatePatchCards = (newCards) => {
+    setPatchCards(newCards);
+    safeSetStorage('bdigi_patch_cards', newCards);
+  };
+
+  const updatePortfolioSamples = (newPortfolio) => {
+    setPortfolioSamples(newPortfolio);
+    safeSetStorage('bdigi_portfolio', newPortfolio);
+  };
+
+  const updateSewOuts = (newSewOuts) => {
+    setSewOuts(newSewOuts);
+    safeSetStorage('bdigi_sew_outs', newSewOuts);
+  };
+
+  const updateServicesList = (newServices) => {
+    setServicesList(newServices);
+    safeSetStorage('bdigi_services', newServices);
+  };
+
+  const updateSiteSettings = (newSettings) => {
+    setSiteSettings(newSettings);
+    safeSetStorage('bdigi_site_settings', newSettings);
+  };
+
   return (
     <StateContext.Provider value={{
       currentView, setCurrentView,
@@ -710,14 +883,16 @@ export const StateProvider = ({ children }) => {
       authModalTarget, setAuthModalTarget,
       orders, setOrders,
       clients, setClients,
-      pricing, setPricing,
-      pricingCards, setPricingCards,
-      patchCards, setPatchCards,
+      pricing, setPricing, updatePricing,
+      pricingCards, setPricingCards, updatePricingCards,
+      patchCards, setPatchCards, updatePatchCards,
       storeProducts, setStoreProducts,
-      portfolioSamples, setPortfolioSamples,
-      sewOuts, setSewOuts,
-      servicesList, setServicesList,
-      siteSettings, setSiteSettings,
+      portfolioSamples, setPortfolioSamples, updatePortfolioSamples,
+      sewOuts, setSewOuts, updateSewOuts,
+      servicesList, setServicesList, updateServicesList,
+      siteSettings, setSiteSettings, updateSiteSettings,
+      activeHomeServiceTab, setActiveHomeServiceTab,
+      serviceCmsContent, setServiceCmsContent, updateServiceCmsContent,
       digitizers,
       isOrderWizardOpen, setIsOrderWizardOpen,
       orderWizardInitialData, openOrderWizard,

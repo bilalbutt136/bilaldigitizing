@@ -27,23 +27,33 @@ import {
 export const SiteCmsEditor = () => {
   const { 
     pricing, 
+    setPricing,
     updatePricing, 
     pricingCards,
+    setPricingCards,
     updatePricingCards,
     patchCards,
+    setPatchCards,
     updatePatchCards,
     portfolioSamples,
+    setPortfolioSamples,
     updatePortfolioSamples,
     sewOuts,
+    setSewOuts,
     updateSewOuts,
     servicesList, 
+    setServicesList,
     updateServicesList, 
     siteSettings, 
+    setSiteSettings,
     updateSiteSettings,
+    serviceCmsContent = {},
+    updateServiceCmsContent,
     showToast
   } = useAppState();
 
-  const [activeSection, setActiveSection] = useState('portfolio'); // 'portfolio' | 'pricing' | 'sewouts' | 'settings'
+  const [activeSection, setActiveSection] = useState('serviceCms'); // 'serviceCms' | 'portfolio' | 'pricing' | 'sewouts' | 'settings'
+  const [activeCmsTab, setActiveCmsTab] = useState('embroidery'); // 'embroidery' | 'vector' | 'patch'
 
   // Local draft states
   const [draftPricing, setDraftPricing] = useState({ ...pricing });
@@ -53,6 +63,7 @@ export const SiteCmsEditor = () => {
   const [draftSewOuts, setDraftSewOuts] = useState([...(sewOuts || [])]);
   const [draftServices, setDraftServices] = useState([...(servicesList || [])]);
   const [draftSettings, setDraftSettings] = useState({ ...siteSettings });
+  const [draftServiceCms, setDraftServiceCms] = useState(JSON.parse(JSON.stringify(serviceCmsContent)));
 
   // Handle Image Upload helper
   const handleImageUpload = (e, setUrlFn) => {
@@ -204,14 +215,41 @@ export const SiteCmsEditor = () => {
   // Publish changes live to context & localStorage & Supabase DB
   const handleSaveAll = (e) => {
     e.preventDefault();
-    updatePricing(draftPricing);
-    updatePricingCards(draftPricingCards);
-    updatePatchCards(draftPatchCards);
-    updatePortfolioSamples(draftPortfolio);
-    updateSewOuts(draftSewOuts);
-    updateServicesList(draftServices);
-    updateSiteSettings(draftSettings);
-    showToast('All CMS updates, pricing & sew-outs showcase gallery published live!', 'success');
+
+    if (typeof updatePricing === 'function') updatePricing(draftPricing);
+    else if (typeof setPricing === 'function') setPricing(draftPricing);
+
+    if (typeof updatePricingCards === 'function') updatePricingCards(draftPricingCards);
+    else if (typeof setPricingCards === 'function') setPricingCards(draftPricingCards);
+
+    if (typeof updatePatchCards === 'function') updatePatchCards(draftPatchCards);
+    else if (typeof setPatchCards === 'function') setPatchCards(draftPatchCards);
+
+    if (typeof updatePortfolioSamples === 'function') updatePortfolioSamples(draftPortfolio);
+    else if (typeof setPortfolioSamples === 'function') setPortfolioSamples(draftPortfolio);
+
+    if (typeof updateSewOuts === 'function') updateSewOuts(draftSewOuts);
+    else if (typeof setSewOuts === 'function') setSewOuts(draftSewOuts);
+
+    if (typeof updateServicesList === 'function') updateServicesList(draftServices);
+    else if (typeof setServicesList === 'function') setServicesList(draftServices);
+
+    if (typeof updateSiteSettings === 'function') updateSiteSettings(draftSettings);
+    else if (typeof setSiteSettings === 'function') setSiteSettings(draftSettings);
+
+    if (typeof updateServiceCmsContent === 'function' && draftServiceCms) {
+      ['embroidery', 'patch', 'vector'].forEach(srvKey => {
+        ['hero', 'showcase', 'advantages', 'workflow'].forEach(secKey => {
+          if (draftServiceCms[srvKey]?.[secKey]) {
+            updateServiceCmsContent(srvKey, secKey, draftServiceCms[srvKey][secKey]);
+          }
+        });
+      });
+    }
+
+    if (typeof showToast === 'function') {
+      showToast('All 3 Service CMS pages, pricing & showcase content published live!', 'success');
+    }
   };
 
   return (
@@ -256,8 +294,30 @@ export const SiteCmsEditor = () => {
         display: 'flex',
         borderBottom: '1px solid var(--border-color)',
         background: 'var(--navy-100)',
-        padding: '0 1.25rem'
+        padding: '0 1.25rem',
+        overflowX: 'auto'
       }}>
+        <button
+          type="button"
+          onClick={() => setActiveSection('serviceCms')}
+          style={{
+            padding: '1rem 1.25rem',
+            border: 'none',
+            borderBottom: activeSection === 'serviceCms' ? '3px solid #ff7a00' : '3px solid transparent',
+            background: 'none',
+            fontWeight: 800,
+            fontSize: '0.9rem',
+            color: activeSection === 'serviceCms' ? '#ff7a00' : '#64748b',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <Sparkles size={18} /> 3-Service Homepage CMS Flow
+        </button>
+
         <button
           type="button"
           onClick={() => setActiveSection('pricing')}
@@ -272,7 +332,8 @@ export const SiteCmsEditor = () => {
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem'
+            gap: '0.5rem',
+            whiteSpace: 'nowrap'
           }}
         >
           <Tag size={18} /> Pricing Cards & Tiers
@@ -341,6 +402,438 @@ export const SiteCmsEditor = () => {
 
       {/* Editor Body */}
       <form onSubmit={handleSaveAll} style={{ padding: '2rem' }}>
+
+        {/* SECTION: 3-SERVICE HOMEPAGE CMS FLOW MANAGER */}
+        {activeSection === 'serviceCms' && (
+          <div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.25rem' }}>
+                🎨 Dynamic 3-Service Homepage CMS Manager
+              </h3>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                Select a service below to customize its Section 1 (Hero & Overview), Section 2 (Showcase & Samples), and Section 3 (Technical Advantages) live on the homepage.
+              </p>
+
+              {/* Service Selection Tabs inside CMS Panel */}
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+                {[
+                  { id: 'embroidery', label: 'Embroidery Digitizing CMS' },
+                  { id: 'patch', label: 'Custom Patches & Goods CMS' },
+                  { id: 'vector', label: 'Vector Art Conversion CMS' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveCmsTab(tab.id)}
+                    style={{
+                      padding: '0.55rem 1.15rem',
+                      borderRadius: '8px',
+                      border: '1.5px solid',
+                      borderColor: activeCmsTab === tab.id ? '#ff7a00' : 'var(--border-color)',
+                      background: activeCmsTab === tab.id ? 'var(--orange-50)' : '#ffffff',
+                      color: activeCmsTab === tab.id ? '#ff7a00' : 'var(--navy-900)',
+                      fontWeight: 800,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Active Service CMS Form Fields */}
+            {['embroidery', 'patch', 'vector'].map(srvKey => {
+              if (activeCmsTab !== srvKey) return null;
+              const srvData = draftServiceCms[srvKey] || {};
+              const hero = srvData.hero || {};
+              const showcase = srvData.showcase || {};
+              const advantages = srvData.advantages || {};
+
+              const updateHeroField = (field, val) => {
+                setDraftServiceCms(prev => ({
+                  ...prev,
+                  [srvKey]: {
+                    ...prev[srvKey],
+                    hero: { ...prev[srvKey]?.hero, [field]: val }
+                  }
+                }));
+              };
+
+              const updateShowcaseField = (field, val) => {
+                setDraftServiceCms(prev => ({
+                  ...prev,
+                  [srvKey]: {
+                    ...prev[srvKey],
+                    showcase: { ...prev[srvKey]?.showcase, [field]: val }
+                  }
+                }));
+              };
+
+              const updateAdvantageField = (field, val) => {
+                setDraftServiceCms(prev => ({
+                  ...prev,
+                  [srvKey]: {
+                    ...prev[srvKey],
+                    advantages: { ...prev[srvKey]?.advantages, [field]: val }
+                  }
+                }));
+              };
+
+              return (
+                <div key={srvKey} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+                  
+                  {/* Block 1: Section 1 (Hero & Overview) */}
+                  <div className="card" style={{ padding: '1.5rem', border: '1.5px solid var(--border-color)', background: '#ffffff' }}>
+                    <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Layers size={18} style={{ color: '#ff7a00' }} /> Section 1: Hero & Overview Content ({srvKey.toUpperCase()})
+                    </h4>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.15rem' }}>
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Headline Title</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={hero.title || ''}
+                          onChange={(e) => updateHeroField('title', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Highlight Tagline</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={hero.highlight || ''}
+                          onChange={(e) => updateHeroField('highlight', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Rate Badge String</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={hero.badge || ''}
+                          onChange={(e) => updateHeroField('badge', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Overview Subtext / Description</label>
+                        <textarea
+                          className="form-control"
+                          rows={2}
+                          value={hero.subtext || ''}
+                          onChange={(e) => updateHeroField('subtext', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Primary CTA Label</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={hero.primaryCta || ''}
+                          onChange={(e) => updateHeroField('primaryCta', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Secondary CTA Label</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={hero.secondaryCta || ''}
+                          onChange={(e) => updateHeroField('secondaryCta', e.target.value)}
+                        />
+                      </div>
+
+                      {/* Hero Banner Image URL with Upload Button */}
+                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Hero Banner Showcase Image URL</label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={hero.bannerImage || ''}
+                            onChange={(e) => updateHeroField('bannerImage', e.target.value)}
+                            placeholder="https://images.unsplash.com/... or upload local image"
+                          />
+                          <label className="btn btn-outline btn-sm" style={{ cursor: 'pointer', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center' }}>
+                            Upload Image
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: 'none' }}
+                              onChange={(e) => handleImageUpload(e, (url) => updateHeroField('bannerImage', url))}
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Editable Trust Points / Feature Badges (4 Badges) */}
+                      <div style={{ gridColumn: '1 / -1', marginTop: '0.5rem' }}>
+                        <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)', display: 'block', marginBottom: '0.5rem' }}>
+                          ⭐ Feature Badges & Trust Points (4 Key Highlights)
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
+                          {[0, 1, 2, 3].map(tpIdx => {
+                            const tpList = hero.trustPoints || [];
+                            const tp = tpList[tpIdx] || {};
+
+                            const updateTp = (field, val) => {
+                              const nextTps = [...tpList];
+                              nextTps[tpIdx] = { ...nextTps[tpIdx], [field]: val };
+                              updateHeroField('trustPoints', nextTps);
+                            };
+
+                            return (
+                              <div key={tpIdx} style={{ background: '#f8fafc', border: '1px solid var(--border-color)', padding: '0.85rem', borderRadius: '8px' }}>
+                                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#ff7a00', marginBottom: '0.35rem' }}>
+                                  BADGE 0{tpIdx + 1}
+                                </div>
+                                <div className="form-group" style={{ marginBottom: '0.4rem' }}>
+                                  <label style={{ fontSize: '0.72rem' }}>Badge Title</label>
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    style={{ fontSize: '0.825rem' }}
+                                    value={tp.title || ''}
+                                    onChange={(e) => updateTp('title', e.target.value)}
+                                  />
+                                </div>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                  <label style={{ fontSize: '0.72rem' }}>Subtext / Detail</label>
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    style={{ fontSize: '0.825rem' }}
+                                    value={tp.sub || ''}
+                                    onChange={(e) => updateTp('sub', e.target.value)}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Block 2: Section 2 (Work Showcase Header) */}
+                  <div className="card" style={{ padding: '1.5rem', border: '1.5px solid var(--border-color)', background: '#ffffff' }}>
+                    <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Eye size={18} style={{ color: '#ff7a00' }} /> Section 2: Work Showcase Header ({srvKey.toUpperCase()})
+                    </h4>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.15rem' }}>
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Showcase Title</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={showcase.title || ''}
+                          onChange={(e) => updateShowcaseField('title', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Showcase Description Subtext</label>
+                        <textarea
+                          className="form-control"
+                          rows={2}
+                          value={showcase.subtext || ''}
+                          onChange={(e) => updateShowcaseField('subtext', e.target.value)}
+                        />
+                      </div>
+
+                      {/* Editable Showcase Sample Cards (3 Items) */}
+                      <div style={{ gridColumn: '1 / -1', marginTop: '0.5rem' }}>
+                        <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)', display: 'block', marginBottom: '0.5rem' }}>
+                          🖼️ Work Showcase Sample Showcase Items
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem' }}>
+                          {[0, 1, 2].map(sampleIdx => {
+                            const defaultList = DEFAULT_SERVICE_CMS_CONTENT[srvKey]?.showcase?.samples || [];
+                            const samplesList = (showcase.samples && showcase.samples.length > 0) ? showcase.samples : defaultList;
+                            const smp = samplesList[sampleIdx] || {};
+                            const currentImgVal = smp.image || smp.imageURL || smp.afterImg || '';
+
+                            const updateSample = (field, val) => {
+                              const nextSamples = [...samplesList];
+                              const currentSmp = nextSamples[sampleIdx] || { id: `${srvKey}-s${sampleIdx + 1}` };
+                              const updatedSmp = { 
+                                ...currentSmp, 
+                                [field]: val,
+                                ...(field === 'image' ? { image: val, imageURL: val, afterImg: val } : {})
+                              };
+                              nextSamples[sampleIdx] = updatedSmp;
+                              updateShowcaseField('samples', nextSamples);
+                            };
+
+                            return (
+                              <div key={sampleIdx} style={{ background: '#f8fafc', border: '1px solid var(--border-color)', padding: '0.85rem', borderRadius: '8px' }}>
+                                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#ff7a00', marginBottom: '0.35rem' }}>
+                                  SAMPLE ITEM #{sampleIdx + 1}
+                                </div>
+
+                                <div className="form-group" style={{ marginBottom: '0.4rem' }}>
+                                  <label style={{ fontSize: '0.72rem' }}>Sample Title</label>
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    style={{ fontSize: '0.825rem' }}
+                                    value={smp.title || ''}
+                                    onChange={(e) => updateSample('title', e.target.value)}
+                                  />
+                                </div>
+
+                                <div className="form-group" style={{ marginBottom: '0.4rem' }}>
+                                  <label style={{ fontSize: '0.72rem' }}>Category Tag</label>
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    style={{ fontSize: '0.825rem' }}
+                                    value={smp.category || ''}
+                                    onChange={(e) => updateSample('category', e.target.value)}
+                                  />
+                                </div>
+
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                  <label style={{ fontSize: '0.72rem' }}>Image URL</label>
+                                  <div style={{ display: 'flex', gap: '0.35rem' }}>
+                                    <input
+                                      type="text"
+                                      className="form-control"
+                                      style={{ fontSize: '0.78rem' }}
+                                      value={currentImgVal}
+                                      onChange={(e) => updateSample('image', e.target.value)}
+                                      placeholder="https://... or upload local image"
+                                    />
+                                    <label className="btn btn-outline btn-sm" style={{ cursor: 'pointer', fontSize: '0.7rem', padding: '0.2rem 0.5rem', whiteSpace: 'nowrap' }}>
+                                      Upload
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        style={{ display: 'none' }}
+                                        onChange={(e) => handleImageUpload(e, (url) => updateSample('image', url))}
+                                      />
+                                    </label>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Block 3: Section 3 (4-Step How It Works Workflow) */}
+                  <div className="card" style={{ padding: '1.5rem', border: '1.5px solid var(--border-color)', background: '#ffffff' }}>
+                    <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Zap size={18} style={{ color: '#ff7a00' }} /> Section 3: 4-Step "How It Works" Workflow ({srvKey.toUpperCase()})
+                    </h4>
+
+                    {(() => {
+                      const workflow = srvData.workflow || srvData.advantages || {};
+                      const steps = workflow.steps || [];
+
+                      const updateWorkflowMain = (field, val) => {
+                        setDraftServiceCms(prev => ({
+                          ...prev,
+                          [srvKey]: {
+                            ...prev[srvKey],
+                            workflow: { ...prev[srvKey]?.workflow, [field]: val }
+                          }
+                        }));
+                      };
+
+                      const updateWorkflowStep = (idx, field, val) => {
+                        setDraftServiceCms(prev => {
+                          const currentWf = prev[srvKey]?.workflow || prev[srvKey]?.advantages || {};
+                          const currentSteps = [...(currentWf.steps || [])];
+                          currentSteps[idx] = { ...currentSteps[idx], [field]: val };
+                          return {
+                            ...prev,
+                            [srvKey]: {
+                              ...prev[srvKey],
+                              workflow: { ...currentWf, steps: currentSteps }
+                            }
+                          };
+                        });
+                      };
+
+                      return (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.15rem' }}>
+                          <div className="form-group">
+                            <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Workflow Title</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={workflow.title || ''}
+                              onChange={(e) => updateWorkflowMain('title', e.target.value)}
+                            />
+                          </div>
+
+                          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                            <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Workflow Subtext</label>
+                            <textarea
+                              className="form-control"
+                              rows={2}
+                              value={workflow.subtext || ''}
+                              onChange={(e) => updateWorkflowMain('subtext', e.target.value)}
+                            />
+                          </div>
+
+                          {/* Editable Step 01 to Step 04 Fields */}
+                          <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
+                            {[0, 1, 2, 3].map(stepIdx => {
+                              const st = steps[stepIdx] || {};
+                              return (
+                                <div key={stepIdx} style={{ background: '#f8fafc', border: '1px solid var(--border-color)', padding: '1rem', borderRadius: '8px' }}>
+                                  <div style={{ fontWeight: 800, fontSize: '0.825rem', color: '#ff7a00', marginBottom: '0.5rem' }}>
+                                    STEP 0{stepIdx + 1} CONFIGURATION
+                                  </div>
+                                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>Step Title</label>
+                                      <input
+                                        type="text"
+                                        className="form-control"
+                                        style={{ fontSize: '0.85rem' }}
+                                        value={st.title || ''}
+                                        onChange={(e) => updateWorkflowStep(stepIdx, 'title', e.target.value)}
+                                      />
+                                    </div>
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>Step Description</label>
+                                      <input
+                                        type="text"
+                                        className="form-control"
+                                        style={{ fontSize: '0.85rem' }}
+                                        value={st.desc || ''}
+                                        onChange={(e) => updateWorkflowStep(stepIdx, 'desc', e.target.value)}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* SECTION: LANDING PAGE PRICING CARDS & PATCH TIERS */}
         {activeSection === 'pricing' && (

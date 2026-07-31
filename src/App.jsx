@@ -16,6 +16,7 @@ import { CustomApparelPage } from './components/public/CustomApparelPage';
 import { CustomHeadwearPage } from './components/public/CustomHeadwearPage';
 import { CoreServicesOrderSection } from './components/public/CoreServicesOrderSection';
 import { ServicesGrid } from './components/public/ServicesGrid';
+import { StructuredServicesSection } from './components/public/StructuredServicesSection';
 import { WhyChooseUs } from './components/public/WhyChooseUs';
 import { TestimonialsFAQ } from './components/public/TestimonialsFAQ';
 import { Footer } from './components/public/Footer';
@@ -146,7 +147,7 @@ const PublicView = ({ scrollTo }) => {
     setCurrentView('public');
     if (scrollTo) {
       setTimeout(() => {
-        const targetId = scrollTo === 'services' ? 'order-builder' : scrollTo;
+        const targetId = scrollTo === 'services' ? 'sew-outs' : scrollTo;
         const el = document.getElementById(targetId);
         if (el) el.scrollIntoView({ behavior: 'smooth' });
       }, 120);
@@ -155,9 +156,16 @@ const PublicView = ({ scrollTo }) => {
 
   return (
     <>
+      {/* Section 1: Hero & Service Switcher */}
       <HeroSection />
+
+      {/* Section 2: Category-Specific Work Showcase & Sew-Outs */}
       <CustomerSewOutsSection />
+
+      {/* Section 3: Technical Advantages & Production Process */}
       <WhyChooseUs />
+
+      {/* Social Proof & FAQ */}
       <TestimonialsFAQ />
     </>
   );

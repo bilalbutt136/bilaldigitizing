@@ -5,43 +5,59 @@ import { useAppState } from '../../context/StateContext';
 import { CheckCircle2, ArrowRight, ShieldCheck, Sparkles, Layers, Eye } from 'lucide-react';
 
 export const CustomerSewOutsSection = () => {
-  const { protectedNavigate, sewOuts = [] } = useAppState();
+  const { 
+    protectedNavigate, 
+    activeHomeServiceTab = 'embroidery', 
+    serviceCmsContent = {}, 
+    portfolioSamples = [] 
+  } = useAppState();
+  
   const [activeCard, setActiveCard] = useState(null);
+  const [isMounted, setIsMounted] = useState(false);
 
-  const defaultSewOuts = [
-    {
-      id: 'sewout-1',
-      title: 'Logo Digitizing (Cap Embroidery)',
-      category: 'Cap & Snapback Logo',
-      beforeImg: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80',
-      afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
-      stitchCount: '8,400 Stitches',
-      formats: 'DST, PES, EMB, EXP',
-      features: ['Center-out cap pathing', '3D foam raised thread depth', 'Zero needle breaks']
-    },
-    {
-      id: 'sewout-2',
-      title: 'Live Graphic Image Digitizing',
-      category: 'Complex Artwork & Emblems',
-      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
-      afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
-      stitchCount: '14,200 Stitches',
-      formats: 'DST, PES, JEF, HUS',
-      features: ['High-density tatami fill', 'Precision color blending', 'Clean outline satin borders']
-    },
-    {
-      id: 'sewout-3',
-      title: 'Left Chest Digitizing (Polo & Apparel)',
-      category: 'Corporate Uniform Logo',
-      beforeImg: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80',
-      afterImg: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=800&q=80',
-      stitchCount: '6,800 Stitches',
-      formats: 'DST, PES, EMB, VP3',
-      features: ['Knit fabric pull compensation', 'Smooth Underlay foundation', 'Zero puckering guaranteed']
-    }
-  ];
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
-  const itemsToRender = (sewOuts && sewOuts.length > 0) ? sewOuts : defaultSewOuts;
+  const currentKey = activeHomeServiceTab === 'patches' ? 'patch' : (activeHomeServiceTab || 'embroidery');
+  const cmsShowcase = isMounted ? (serviceCmsContent[currentKey]?.showcase || {}) : {};
+
+  const showcaseTitle = cmsShowcase.title || (
+    currentKey === 'vector' ? 'Vector Art Redrawing & Separation Showcase' :
+    currentKey === 'patch' ? 'Physical Custom Patches & Goods Showcase' :
+    'Embroidery Sew-Outs & Stitch Quality Showcase'
+  );
+
+  const showcaseSubtext = cmsShowcase.subtext || (
+    currentKey === 'vector' ? 'Low-res raster JPEGs converted into resolution-independent Adobe Illustrator vector node paths.' :
+    currentKey === 'patch' ? 'Custom embroidered, woven, PVC rubber, and genuine leather emblems delivered nationwide.' :
+    'Real stitch-outs delivered to 1,200+ commercial embroidery shops and apparel decorators. Clean pathing, crisp satin fills, and zero thread breaks.'
+  );
+
+  const samplesList = cmsShowcase.samples && cmsShowcase.samples.length > 0
+    ? cmsShowcase.samples
+    : (
+      currentKey === 'vector' ? [
+        { id: 'vec-s1', title: 'Vintage Skull & Rose Vector', category: 'Spot Color Sep', stitches: 'N/A (Scalable Vector)', formats: 'AI, EPS, SVG, PDF', image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80' },
+        { id: 'vec-s2', title: 'Wildcat Athletic Team Mascot', category: 'Hand-Drawn Vector', stitches: 'N/A (Scalable Vector)', formats: 'AI, EPS, SVG', image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80' },
+        { id: 'vec-s3', title: 'Corporate Shield & Crest Redraw', category: 'Clean AI & SVG', stitches: 'N/A (Scalable Vector)', formats: 'AI, SVG, PDF', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80' }
+      ] :
+      currentKey === 'patch' ? [
+        { id: 'pat-s1', title: 'Tactical Merrowed Embroidered Patch', category: 'Overlock Edge', stitches: 'High Density Rayon', formats: 'Velcro Backing', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80' },
+        { id: 'pat-s2', title: '3D Molded Rubber PVC Patch', category: 'Tactical PVC', stitches: 'Waterproof Rubber', formats: 'Hook & Loop Backing', image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80' },
+        { id: 'pat-s3', title: 'Laser Debossed Genuine Leather Patch', category: 'Real Leather', stitches: 'Engraved Leather', formats: 'Heat Seal Iron-On', image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80' }
+      ] : [
+        { id: 'emb-s1', title: 'Golden Eagle Sports Polo', category: 'Left Chest', stitches: '12,450 Stitches', formats: 'DST, PES, EMB, EXP', image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80' },
+        { id: 'emb-s2', title: 'Tactical Flexfit Cap Front', category: '3D Puff Cap', stitches: '15,800 Stitches', formats: 'DST, PES, EMB, JEF', image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80' },
+        { id: 'emb-s3', title: 'Heritage Apparel Jacket Crest', category: 'Jacket Back', stitches: '48,200 Stitches', formats: 'DST, PES, EMB, VP3', image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80' }
+      ]
+    );
+
+  const categoryFallback = currentKey === 'vector' 
+    ? 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80'
+    : currentKey === 'patch'
+    ? 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'
+    : 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80';
 
   return (
     <section id="sew-outs" style={{ padding: '5rem 0', background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
@@ -68,11 +84,11 @@ export const CustomerSewOutsSection = () => {
           </div>
 
           <h2 style={{ fontSize: '2.5rem', color: 'var(--navy-900)', marginBottom: '0.85rem', fontWeight: 800 }}>
-            Our Customers' Sew-Outs
+            {showcaseTitle}
           </h2>
 
           <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: 1.65, margin: 0 }}>
-            Real stitch-outs delivered to 1,200+ commercial embroidery shops and apparel decorators. Clean pathing, crisp satin fills, and zero thread breaks.
+            {showcaseSubtext}
           </p>
         </div>
 
@@ -83,7 +99,7 @@ export const CustomerSewOutsSection = () => {
           gap: '2rem',
           marginBottom: '3rem'
         }}>
-          {itemsToRender.map((item) => (
+          {samplesList.map((item) => (
             <div 
               key={item.id}
               className="card"
@@ -101,11 +117,16 @@ export const CustomerSewOutsSection = () => {
             >
               <div>
                 {/* Image Container with Before vs After Badge */}
-                <div style={{ position: 'relative', height: '230px', overflow: 'hidden', background: '#0f172a' }}>
+                <div className="w-full h-full relative overflow-hidden" style={{ position: 'relative', height: '230px', overflow: 'hidden', background: '#0f172a' }}>
                   <img 
-                    src={item.image || item.afterImg} 
-                    alt={item.title}
+                    src={item.image || item.afterImg || item.beforeImg || categoryFallback} 
+                    alt={item.title || 'Work Showcase Sample'}
+                    className="w-full h-full object-cover"
                     style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = categoryFallback;
+                    }}
                     onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
                     onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1.0)'}
                   />

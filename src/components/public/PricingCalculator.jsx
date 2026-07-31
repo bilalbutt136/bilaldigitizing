@@ -275,14 +275,18 @@ export const PricingCalculator = () => {
         {/* Dynamic Pricing Category Cards */}
         <div className="grid-responsive-3" style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
           gap: '1.75rem',
           maxWidth: '1200px',
-          margin: '0 auto'
+          margin: '0 auto',
+          alignItems: 'stretch'
         }}>
           {cardsToRender.map((cat, idx) => {
             const isPopular = cat.popular || cat.badge === 'MOST POPULAR';
             const IconComp = cat.icon || (idx === 0 ? Zap : idx === 1 ? Trophy : Sparkles);
+
+            const rawRate = (cat.rate || '$2.50').replace(/\/.*$/, '').trim();
+            const displayRate = rawRate.startsWith('$') ? rawRate : `$${rawRate}`;
 
             return (
               <div
@@ -290,15 +294,16 @@ export const PricingCalculator = () => {
                 onClick={() => handleSelectPackage(cat)}
                 style={{
                   background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
-                  border: '2px solid #ff7a00',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: '2.5rem 1.75rem 2rem',
+                  border: isPopular ? '2px solid #ff7a00' : '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '16px',
+                  padding: '2.25rem 1.6rem 1.85rem',
                   position: 'relative',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
-                  boxShadow: '0 14px 35px rgba(255, 122, 0, 0.25)',
-                  transition: 'all 0.3s ease',
+                  height: '100%',
+                  boxShadow: isPopular ? '0 12px 30px rgba(255, 122, 0, 0.25)' : 'none',
+                  transition: 'all 0.25s ease',
                   cursor: 'pointer'
                 }}
               >
@@ -306,17 +311,18 @@ export const PricingCalculator = () => {
                 {cat.badge && (
                   <div style={{
                     position: 'absolute',
-                    top: '-14px',
+                    top: '-13px',
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    background: isPopular ? 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)' : 'rgba(255, 255, 255, 0.15)',
+                    background: isPopular ? 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)' : 'rgba(255, 255, 255, 0.15)',
                     color: '#ffffff',
-                    fontSize: '0.725rem',
-                    fontWeight: 800,
-                    padding: '0.3rem 1.1rem',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    padding: '0.25rem 0.95rem',
                     borderRadius: '9999px',
                     letterSpacing: '0.06em',
-                    boxShadow: '0 4px 12px rgba(255, 122, 0, 0.35)',
+                    textTransform: 'uppercase',
+                    boxShadow: '0 4px 12px rgba(255, 122, 0, 0.25)',
                     whiteSpace: 'nowrap'
                   }}>
                     {cat.badge}
@@ -326,93 +332,100 @@ export const PricingCalculator = () => {
                 <div>
                   {/* Card Title & Icon Header */}
                   <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                      <IconComp size={20} style={{ color: '#ff9433' }} />
-                      <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                      <IconComp size={18} style={{ color: '#ff9433' }} />
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#ffffff', letterSpacing: '-0.01em', margin: 0 }}>
                         {cat.title}
                       </h3>
                     </div>
                     {cat.subTitle && (
-                      <div style={{ fontSize: '0.85rem', fontWeight: 700, fontStyle: 'italic', color: '#cbd5e1' }}>
+                      <div style={{ fontSize: '0.825rem', fontWeight: 500, color: '#94a3b8', lineHeight: 1.35 }}>
                         {cat.subTitle}
                       </div>
                     )}
                   </div>
 
-                  {/* 40% OFF Tag & Pricing */}
-                  <div style={{ textAlign: 'left', padding: '0 0.5rem', marginBottom: '1.5rem' }}>
+                  {/* Refined Pricing Box */}
+                  <div style={{ 
+                    textAlign: 'center', 
+                    padding: '0.85rem 1rem', 
+                    marginBottom: '1.25rem',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    borderRadius: '12px'
+                  }}>
                     {cat.discountTag && (
                       <span style={{
                         display: 'inline-block',
                         background: 'rgba(16, 185, 129, 0.2)',
                         border: '1px solid rgba(16, 185, 129, 0.4)',
                         color: '#34d399',
-                        fontSize: '0.725rem',
-                        fontWeight: 800,
-                        padding: '0.2rem 0.55rem',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        padding: '0.15rem 0.5rem',
                         borderRadius: '4px',
-                        marginBottom: '0.5rem'
+                        marginBottom: '0.35rem'
                       }}>
                         {cat.discountTag}
                       </span>
                     )}
 
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', flexWrap: 'wrap' }}>
-                      {cat.strikePrice && (
-                        <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '1.1rem', fontWeight: 700 }}>
-                          {cat.strikePrice} {cat.unit || '/ design'}
-                        </span>
-                      )}
-                    </div>
+                    {cat.strikePrice && (
+                      <div style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.15rem' }}>
+                        {cat.strikePrice} {cat.unit || '/ design'}
+                      </div>
+                    )}
 
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginTop: '0.15rem' }}>
-                      <span style={{ fontSize: '2.4rem', fontWeight: 900, color: '#ff7a00', lineHeight: 1 }}>
-                        {cat.rate}
+                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.35rem' }}>
+                      <span style={{ fontSize: '2.1rem', fontWeight: 700, color: '#ff7a00', lineHeight: 1, letterSpacing: '-0.02em' }}>
+                        {displayRate}
                       </span>
-                      <span style={{ fontSize: '0.875rem', color: '#94a3b8', fontWeight: 600 }}>
-                        {cat.unit || '/ design'}
+                      <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 500 }}>
+                        {cat.unit || (activeCategory === 'patches' ? '/ patch' : '/ design')}
                       </span>
                     </div>
 
                     {cat.delivery && (
-                      <div style={{ fontSize: '0.825rem', color: '#94a3b8', fontWeight: 600, marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <Clock size={14} style={{ color: '#ff7a00' }} /> {cat.delivery}
+                      <div style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 500, marginTop: '0.35rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+                        <Clock size={13} style={{ color: '#ff7a00' }} /> {cat.delivery}
                       </div>
                     )}
                   </div>
 
                   {/* Action CTA Button */}
-                  <div style={{ marginBottom: '1.75rem' }}>
+                  <div style={{ marginBottom: '1.5rem' }}>
                     <button
                       className="btn btn-block"
                       style={{
                         width: '100%',
                         justifyContent: 'center',
-                        fontWeight: 800,
-                        background: 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)',
+                        fontWeight: 700,
+                        fontSize: '0.875rem',
+                        background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
                         color: '#ffffff',
                         borderRadius: '9999px',
-                        padding: '0.85rem 1.5rem',
-                        boxShadow: '0 4px 14px rgba(255, 122, 0, 0.4)'
+                        padding: '0.75rem 1.25rem',
+                        boxShadow: isPopular ? '0 4px 16px rgba(255, 122, 0, 0.35)' : '0 2px 8px rgba(0, 0, 0, 0.2)',
+                        cursor: 'pointer'
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSelectPackage(cat);
                       }}
                     >
-                      {cat.btnText || 'Order 1 Design'}
+                      {cat.btnText || 'Order Now'}
                     </button>
                   </div>
 
                   {/* Divider line */}
-                  <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '1.25rem' }}></div>
+                  <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '1.15rem' }}></div>
 
                   {/* Feature Bullets List */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                     {(cat.features || []).map((feat, fIdx) => (
-                      <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#e2e8f0' }}>
-                        <CheckCircle size={17} style={{ color: '#10b981', flexShrink: 0 }} />
-                        <span style={{ fontWeight: 600 }}>{feat}</span>
+                      <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#e2e8f0' }}>
+                        <CheckCircle size={16} style={{ color: '#10b981', flexShrink: 0 }} />
+                        <span style={{ fontWeight: 500 }}>{feat}</span>
                       </div>
                     ))}
                   </div>

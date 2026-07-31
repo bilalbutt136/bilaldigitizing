@@ -258,7 +258,7 @@ export const PORTFOLIO_SAMPLES = [
   {
     id: 'port-1',
     title: 'Majestic Eagle Emblem',
-    category: 'Left Chest & Polo',
+    category: 'Embroidery Digitizing',
     stitchCount: '12,450 Stitches',
     colors: '5 Thread Colors',
     originalImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
@@ -268,7 +268,7 @@ export const PORTFOLIO_SAMPLES = [
   {
     id: 'port-2',
     title: 'Cybernetics 3D Raised Cap Logo',
-    category: '3D Puff Cap',
+    category: 'Embroidery Digitizing',
     stitchCount: '15,800 Stitches',
     colors: '2 Thread Colors (3mm Foam)',
     originalImage: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80',
@@ -284,6 +284,26 @@ export const PORTFOLIO_SAMPLES = [
     originalImage: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80',
     digitizedImage: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
     description: 'Raster JPG transformed into resolution-independent AI/SVG vector with pantone color matching.'
+  },
+  {
+    id: 'port-4',
+    title: 'Tactical Merrowed Border Patch',
+    category: 'Custom Patches',
+    stitchCount: '18,200 Stitches',
+    colors: '6 Rayon Thread Colors',
+    originalImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
+    digitizedImage: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
+    description: 'High-density rayon thread embroidery with classic overlock merrowed border edges and heavy-duty velcro backing.'
+  },
+  {
+    id: 'port-8',
+    title: 'Tactical 3D Molded Rubber PVC Patch',
+    category: 'Custom Patches',
+    stitchCount: '3D Molded PVC',
+    colors: '3 Color Molded Rubber',
+    originalImage: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
+    digitizedImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
+    description: '100% waterproof molded PVC patch with deep dimensional layers, laser-cut border edges, and tactical hook-and-loop velcro.'
   }
 ];
 
