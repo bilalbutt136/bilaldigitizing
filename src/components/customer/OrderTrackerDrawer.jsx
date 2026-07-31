@@ -32,7 +32,8 @@ import {
   PackageCheck,
   CreditCard,
   ExternalLink,
-  Copy
+  Copy,
+  Zap
 } from 'lucide-react';
 
 const FORMAT_METADATA = {

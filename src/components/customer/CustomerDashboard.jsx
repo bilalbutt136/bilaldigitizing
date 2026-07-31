@@ -69,6 +69,7 @@ export const CustomerDashboard = () => {
   // Mobile App UI State
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(2);
   // Client-side mounting guard for hydration safety
   const [mounted, setMounted] = React.useState(false);
 

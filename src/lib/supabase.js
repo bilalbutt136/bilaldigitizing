@@ -1,18 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
-const getEnvVar = (name, fallbackName) => {
-  if (typeof process !== 'undefined' && process.env) {
-    if (process.env[name]) return process.env[name];
-    if (fallbackName && process.env[fallbackName]) return process.env[fallbackName];
-  }
-  if (typeof window !== 'undefined') {
-    if (window.__ENV__ && window.__ENV__[name]) return window.__ENV__[name];
-  }
-  return '';
-};
+const supabaseUrl = 
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 
+  process.env.VITE_SUPABASE_URL || 
+  'https://qkgvgrscjlijajuzouke.supabase.co';
 
-const supabaseUrl = getEnvVar('NEXT_PUBLIC_SUPABASE_URL', 'VITE_SUPABASE_URL') || 'https://olyvwiqduzmkkubyoyvv.supabase.co';
-const supabaseAnonKey = getEnvVar('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY') || 'sb_publishable_r57d3KY6Ru767j3Z6_ZnlA_v4Hxt2Ss';
+const supabaseAnonKey = 
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 
+  process.env.VITE_SUPABASE_ANON_KEY || 
+  'sb_publishable_0eKj4G4pMdA_t1y7w6P5Rg_KVGkM4_F';
 
 export const ENABLE_SUPABASE_DATABASE = true; 
 

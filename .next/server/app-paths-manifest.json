@@ -1,7 +1,0 @@
-{
-  "/custom-patches/page": "app/custom-patches/page.js",
-  "/page": "app/page.js",
-  "/secure-admin-login/page": "app/secure-admin-login/page.js",
-  "/services/embroidery-digitizing/page": "app/services/embroidery-digitizing/page.js",
-  "/services/vector-tracing/page": "app/services/vector-tracing/page.js"
-}

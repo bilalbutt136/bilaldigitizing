@@ -501,6 +501,8 @@ export const OrderWizardModal = () => {
     const orderData = {
       title: orderTitle,
       type,
+      serviceCategory: pricingDetails?.serviceTitle || type || 'Embroidery Digitizing',
+      price: parseFloat(pricingDetails?.finalPrice || 15.00),
       selectedPackageTier,
       placementItems,
       fabricType,
@@ -513,7 +515,7 @@ export const OrderWizardModal = () => {
       patchHeight,
       patchQuantity,
       notes: notes.trim(),
-      totalPrice: pricingDetails.finalPrice,
+      totalPrice: pricingDetails?.finalPrice || 15.00,
       uploadedFiles: selectedAssets.map(a => a.name)
     };
     if (createOrder) {

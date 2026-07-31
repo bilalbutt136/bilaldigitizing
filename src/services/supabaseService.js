@@ -170,6 +170,10 @@ export async function uploadFileToSupabaseStorage(fileObj, bucketName = 'client-
       return null;
     }
 
+    const { data: publicUrlData } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(filePath);
+
     const publicUrl = publicUrlData?.publicUrl || null;
     console.log("Uploaded File URL:", publicUrl);
     return publicUrl;
@@ -279,24 +283,30 @@ export async function createOrderInSupabase(newOrder) {
       if (storageUrl) uploadedArtworkUrl = storageUrl;
     }
 
+    const resolvedCategory = newOrder.serviceCategory || newOrder.serviceType || newOrder.type || newOrder.title || 'Embroidery Digitizing';
+    const resolvedName = newOrder.clientName || 'Valued Client';
+    const resolvedEmail = newOrder.clientEmail || 'client@bdigitizing.pro';
+    const resolvedTitle = newOrder.title || `${resolvedCategory} Order`;
+    const resolvedPrice = parseFloat(newOrder.price || newOrder.totalPrice || 15.00);
+
     const primaryDbRow = {
       id: newOrder.id,
-      title: newOrder.title,
-      description: newOrder.notes || newOrder.title,
-      client_id: newOrder.clientId || newOrder.clientEmail,
-      client_name: newOrder.clientName,
-      client_email: newOrder.clientEmail,
-      service_category: newOrder.serviceCategory,
-      service_type: newOrder.serviceCategory,
-      placement_type: newOrder.placementType,
-      fabric_type: newOrder.fabricType,
-      dimensions: newOrder.dimensions,
-      estimated_stitches: newOrder.estimatedStitches,
-      colors_count: newOrder.colorsCount,
-      requested_formats: newOrder.requestedFormats,
+      title: resolvedTitle,
+      description: newOrder.notes || resolvedTitle,
+      client_id: newOrder.clientId || resolvedEmail,
+      client_name: resolvedName,
+      client_email: resolvedEmail,
+      service_category: resolvedCategory,
+      service_type: resolvedCategory,
+      placement_type: newOrder.placementType || 'Left Chest / Polo',
+      fabric_type: newOrder.fabricType || 'Cotton Pique Polo',
+      dimensions: newOrder.dimensions || { width: 3.5, height: 3.0, unit: 'inches' },
+      estimated_stitches: newOrder.estimatedStitches || 12400,
+      colors_count: newOrder.colorsCount || 4,
+      requested_formats: newOrder.requestedFormats || ['dst', 'pes', 'emb', 'pdf'],
       is_rush: Boolean(newOrder.isRush),
-      price: parseFloat(newOrder.price || 15.00),
-      cost: parseFloat(newOrder.price || 15.00),
+      price: resolvedPrice,
+      cost: resolvedPrice,
       payment_status: 'Paid',
       notes: newOrder.notes || '',
       artwork_url: uploadedArtworkUrl || '',
@@ -305,7 +315,7 @@ export async function createOrderInSupabase(newOrder) {
       status: newOrder.status || 'submitted'
     };
 
-    console.log("Saving Order Payload:", primaryDbRow);
+    console.log("Saving Order Payload to Supabase DB:", primaryDbRow);
 
     const { data, error } = await supabase.from('orders').insert([primaryDbRow]).select();
     if (error) {
@@ -314,11 +324,11 @@ export async function createOrderInSupabase(newOrder) {
       // Clean fallback payload with core universal columns
       const fallbackDbRow = {
         id: newOrder.id,
-        title: newOrder.title,
-        client_name: newOrder.clientName,
-        client_email: newOrder.clientEmail,
-        service_category: newOrder.serviceCategory,
-        price: parseFloat(newOrder.price || 15.00),
+        title: resolvedTitle,
+        client_name: resolvedName,
+        client_email: resolvedEmail,
+        service_category: resolvedCategory,
+        price: resolvedPrice,
         status: newOrder.status || 'submitted',
         notes: newOrder.notes || '',
         artwork_url: uploadedArtworkUrl || '',

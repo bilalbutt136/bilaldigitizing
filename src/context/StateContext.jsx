@@ -553,10 +553,33 @@ export const StateProvider = ({ children }) => {
   useEffect(() => { safeSetStorage('bdigi_is_auth', String(isAuthenticated)); }, [isAuthenticated]);
   useEffect(() => { safeSetStorage('bdigi_auth_user', authUser); }, [authUser]);
 
-  // Auth Operations with Node.js Express REST API integration
+  // Auth Operations with Supabase DB & Express REST API integration
   const login = async (email, password, role) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanPass = (password || '').trim();
+
+    if (isSupabaseConfigured) {
+      try {
+        const sbRes = await signInWithSupabaseAuth(cleanEmail, cleanPass);
+        if (sbRes && sbRes.success && sbRes.user) {
+          const uData = {
+            id: sbRes.user.id,
+            name: sbRes.user.name || sbRes.user.full_name || cleanEmail.split('@')[0],
+            email: cleanEmail,
+            company: sbRes.user.company || sbRes.user.company_name || `${cleanEmail.split('@')[0]} Apparel`,
+            role: cleanEmail === 'shahidbutt59191@gmail.com' ? 'admin' : (sbRes.user.role || role || 'customer')
+          };
+          setAuthUser(uData);
+          setIsAuthenticated(true);
+          setIsAuthModalOpen(false);
+          setCurrentView(uData.role === 'admin' ? 'admin' : 'customer');
+          showToast(`Welcome back ${uData.name}!`, 'success');
+          return { success: true, role: uData.role };
+        }
+      } catch (sbErr) {
+        console.warn('Supabase Auth login notice:', sbErr);
+      }
+    }
 
     try {
       const res = await api.post('/auth/login', { email: cleanEmail, password: cleanPass, role });
@@ -592,6 +615,9 @@ export const StateProvider = ({ children }) => {
     }
 
     const userData = { name: cleanEmail.split('@')[0], email: cleanEmail, company: `${cleanEmail.split('@')[0]} Apparel`, role: 'customer' };
+    if (isSupabaseConfigured) {
+      upsertClientInSupabase(userData);
+    }
     setAuthUser(userData);
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);
@@ -615,6 +641,9 @@ export const StateProvider = ({ children }) => {
       console.warn('Express Google auth fallback:', err);
     }
     const demoUser = { name: 'Sarah Jenkins', email: 'sarah.jenkins@gmail.com', company: 'Apex Apparel', role: 'customer' };
+    if (isSupabaseConfigured) {
+      upsertClientInSupabase(demoUser);
+    }
     setAuthUser(demoUser);
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);
@@ -627,28 +656,39 @@ export const StateProvider = ({ children }) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanName = (name || '').trim();
     const cleanCompany = (company || '').trim() || `${cleanName}'s Custom Apparel`;
+    const userRole = role || 'customer';
+
+    if (isSupabaseConfigured) {
+      try {
+        await signUpWithSupabaseAuth(cleanName, cleanEmail, password, cleanCompany);
+        await upsertClientInSupabase({ name: cleanName, email: cleanEmail, company: cleanCompany, role: userRole });
+        console.log('✅ Client registered in Supabase DB:', cleanEmail);
+      } catch (sbErr) {
+        console.warn('Supabase register notice:', sbErr);
+      }
+    }
 
     try {
-      const res = await api.post('/auth/signup', { name: cleanName, email: cleanEmail, password, company: cleanCompany, role });
+      const res = await api.post('/auth/signup', { name: cleanName, email: cleanEmail, password, company: cleanCompany, role: userRole });
       if (res.data && res.data.user) {
         setAuthUser(res.data.user);
         setIsAuthenticated(true);
         setIsAuthModalOpen(false);
-        setCurrentView(role === 'admin' ? 'admin' : 'customer');
+        setCurrentView(userRole === 'admin' ? 'admin' : 'customer');
         showToast(`Account created successfully! Welcome ${cleanName}.`, 'success');
-        return { success: true, role: role === 'admin' ? 'admin' : 'customer' };
+        return { success: true, role: userRole === 'admin' ? 'admin' : 'customer' };
       }
     } catch (err) {
       console.warn('Express Signup fallback:', err);
     }
 
-    const newUserData = { name: cleanName, email: cleanEmail, company: cleanCompany, role: role || 'customer' };
+    const newUserData = { name: cleanName, email: cleanEmail, company: cleanCompany, role: userRole };
     setAuthUser(newUserData);
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);
-    setCurrentView(role === 'admin' ? 'admin' : 'customer');
+    setCurrentView(userRole === 'admin' ? 'admin' : 'customer');
     showToast(`Account created successfully! Welcome ${cleanName}.`, 'success');
-    return { success: true, role: role === 'admin' ? 'admin' : 'customer' };
+    return { success: true, role: userRole === 'admin' ? 'admin' : 'customer' };
   };
 
   const logout = () => {
@@ -784,7 +824,6 @@ export const StateProvider = ({ children }) => {
       }
     } catch (err) {
       console.warn('Express addRevision fallback:', err);
-    }
     }
 
     setOrders(prev => prev.map(ord => {
