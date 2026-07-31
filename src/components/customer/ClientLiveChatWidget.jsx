@@ -162,84 +162,71 @@ export const ClientLiveChatWidget = () => {
 
   return (
     <>
-      {/* Floating Action Button */}
-      {!isOpen && (
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            zIndex: 9990,
-            background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
-            backgroundColor: '#1d4ed8',
-            color: '#ffffff',
-            border: '1.5px solid rgba(255, 255, 255, 0.25)',
-            padding: '0.75rem 1.35rem 0.75rem 1rem',
-            borderRadius: '16px',
-            boxShadow: '0 12px 32px rgba(29, 78, 216, 0.45), 0 4px 12px rgba(0, 0, 0, 0.2)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.85rem',
-            transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-            transform: 'translateY(0)'
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.transform = 'translateY(-3px)';
-            e.currentTarget.style.boxShadow = '0 16px 36px rgba(29, 78, 216, 0.55), 0 6px 16px rgba(0, 0, 0, 0.25)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 12px 32px rgba(29, 78, 216, 0.45), 0 4px 12px rgba(0, 0, 0, 0.2)';
-          }}
-        >
-          {/* Left Chat Icon Container */}
-          <div style={{
-            position: 'relative',
-            width: '42px',
-            height: '42px',
-            borderRadius: '50%',
-            background: 'rgba(255, 255, 255, 0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0
-          }}>
-            <MessageSquare size={22} style={{ color: '#ffffff' }} />
-            <span style={{
-              position: 'absolute',
-              top: '1px',
-              right: '1px',
-              width: '10px',
-              height: '10px',
-              borderRadius: '50%',
-              background: '#22c55e',
-              border: '2px solid #1d4ed8'
-            }} />
-          </div>
-
-          {/* Text Content Stack */}
-          <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#ffffff', lineHeight: 1.25, letterSpacing: '-0.01em' }}>
-              Chat with support
-            </span>
-            <span style={{ fontSize: '0.78rem', color: '#bfdbfe', fontWeight: 600, lineHeight: 1.25, marginTop: '2px' }}>
-              We're here to help
-            </span>
-          </div>
-        </button>
-      )}
-
-      {/* Floating Chat Window Panel */}
-      {isOpen && (
-        <div style={{
+      {/* Standalone Circular Floating Action Button */}
+      <button
+        type="button"
+        className="floating-chat-trigger"
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
           position: 'fixed',
           bottom: '24px',
           right: '24px',
-          zIndex: 2000,
-          width: '360px',
+          zIndex: 8500,
+          width: '56px',
+          height: '56px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
+          color: '#ffffff',
+          border: '2px solid rgba(255, 255, 255, 0.3)',
+          boxShadow: '0 10px 28px rgba(29, 78, 216, 0.5), 0 4px 12px rgba(0, 0, 0, 0.25)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+          transform: 'scale(1)'
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.transform = 'scale(1.08)';
+          e.currentTarget.style.boxShadow = '0 14px 34px rgba(29, 78, 216, 0.6), 0 6px 16px rgba(0, 0, 0, 0.3)';
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = '0 10px 28px rgba(29, 78, 216, 0.5), 0 4px 12px rgba(0, 0, 0, 0.25)';
+        }}
+        aria-label="Toggle Live Support Chat"
+      >
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {isOpen ? (
+            <X size={24} style={{ color: '#ffffff' }} />
+          ) : (
+            <>
+              <MessageSquare size={24} style={{ color: '#ffffff' }} />
+              <span style={{
+                position: 'absolute',
+                top: '-2px',
+                right: '-2px',
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                background: '#22c55e',
+                border: '2px solid #1d4ed8'
+              }} />
+            </>
+          )}
+        </div>
+      </button>
+
+      {/* Floating Chat Window Panel */}
+      {isOpen && (
+        <div 
+          className="floating-chat-window"
+          style={{
+            position: 'fixed',
+            bottom: '90px',
+            right: '24px',
+            zIndex: 8800,
+            width: '360px',
           height: isMinimized ? '60px' : '520px',
           background: '#ffffff',
           borderRadius: 'var(--radius-lg)',

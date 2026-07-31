@@ -155,7 +155,7 @@ export const CustomerDashboard = () => {
   };
 
   return (
-    <div style={{ padding: '1.5rem 0 4rem', background: 'var(--bg-main)', minHeight: 'calc(100vh - 80px)' }}>
+    <div className="dashboard-main-container" style={{ padding: '1.5rem 0 8rem', background: 'var(--bg-main)', minHeight: 'calc(100vh - 80px)' }}>
       <div className="container">
 
         {/* 1. TOP STICKY HEADER BAR FOR MOBILE APP UI */}
@@ -1221,19 +1221,19 @@ export const CustomerDashboard = () => {
 
       {/* 3. FIXED BOTTOM NAVIGATION BAR FOR MOBILE VIEWPORTS */}
       <div 
-        className="mobile-only"
+        className="mobile-only mobile-bottom-nav"
         style={{
           position: 'fixed',
           bottom: 0,
           left: 0,
           right: 0,
-          zIndex: 1500,
+          zIndex: 9999,
           background: '#ffffff',
           borderTop: '1px solid var(--border-color)',
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          padding: '0.4rem 0.25rem 0.65rem',
-          boxShadow: '0 -6px 20px rgba(0,0,0,0.12)'
+          gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+          padding: '0.45rem 0.2rem max(0.65rem, env(safe-area-inset-bottom, 0.65rem))',
+          boxShadow: '0 -6px 24px rgba(0,0,0,0.15)'
         }}
       >
         {/* Item 1: Dashboard */}

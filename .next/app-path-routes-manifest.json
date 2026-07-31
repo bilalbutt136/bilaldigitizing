@@ -1,15 +1,15 @@
 {
   "/_not-found/page": "/_not-found",
   "/admin-portal/page": "/admin-portal",
-  "/client-portal/page": "/client-portal",
   "/custom-patches/page": "/custom-patches",
-  "/login/page": "/login",
+  "/client-portal/page": "/client-portal",
   "/page": "/",
   "/portfolio/page": "/portfolio",
+  "/login/page": "/login",
   "/pricing/page": "/pricing",
   "/secure-admin-login/page": "/secure-admin-login",
-  "/services/embroidery-digitizing/page": "/services/embroidery-digitizing",
   "/services/vector-tracing/page": "/services/vector-tracing",
+  "/services/embroidery-digitizing/page": "/services/embroidery-digitizing",
   "/signup/page": "/signup",
   "/store/page": "/store"
 }

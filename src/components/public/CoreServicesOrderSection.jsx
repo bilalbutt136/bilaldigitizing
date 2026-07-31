@@ -321,19 +321,21 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
 
-    if (!title.trim()) {
-      showToast('Please enter an order title/artwork name', 'error');
-      return;
-    }
-
     setIsSubmitting(true);
     const totalPrice = calculatePrice();
 
     const details = getDigitizingPricingDetails();
     const placementsSummary = details.placementBreakdown.map(p => `${p.label} (x${p.quantity})`).join(', ');
 
+    const orderTitle = title.trim() || (
+      activeService === 'digitizing' ? `Embroidery Digitizing (${placementsSummary || 'Standard Order'})` :
+      activeService === 'vector' ? `Vector Tracing (${vectorComplexity.toUpperCase()})` :
+      activeService === 'patches' ? `Custom Patches (${patchQuantity}x ${patchStyle})` :
+      `Custom Order`
+    );
+
     const newOrderPayload = {
-      title,
+      title: orderTitle,
       type: activeService,
       serviceCategory: 
         activeService === 'digitizing' ? `Embroidery Digitizing (${placementsSummary})` :
@@ -771,68 +773,11 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
               {/* Form Left Side */}
               <form onSubmit={handleSubmitOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             
-            {/* Step 1: Title & File Upload */}
-            <div className="card" style={{ padding: '1.75rem', background: '#1e293b', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px' }}>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Upload size={18} style={{ color: 'var(--orange-400)' }} /> Step 1: Order Title & Artwork Upload
-              </h3>
-
-              <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>
-                  Artwork / Order Name *
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="e.g. Apex Logo Digitizing / Custom Patch Order"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                  style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.15)', color: '#ffffff' }}
-                />
-              </div>
-
-              {/* Compact Upload Box */}
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.85rem',
-                padding: '0.85rem 1.25rem',
-                background: '#0f172a',
-                border: '2px dashed rgba(255, 122, 0, 0.4)',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                textAlign: 'left'
-              }}>
-                <Upload size={22} style={{ color: 'var(--orange-400)', flexShrink: 0 }} />
-                <div>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ffffff', display: 'block' }}>Click or drag artwork files to upload</span>
-                  <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Supports PNG, JPG, PDF, AI, SVG, PSD, DST</span>
-                </div>
-                <input type="file" multiple onChange={handleFileChange} style={{ display: 'none' }} />
-              </label>
-
-              {/* Upload Preview */}
-              {selectedAssets.length > 0 && (
-                <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {selectedAssets.map(ast => (
-                    <div key={ast.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#0f172a', padding: '0.55rem 0.85rem', borderRadius: '8px', fontSize: '0.85rem' }}>
-                      <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{ast.name} ({ast.size})</span>
-                      <button type="button" onClick={() => removeAsset(ast.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Step 2: Service-Specific Specifications */}
-            <div className="card" style={{ padding: '1.75rem', background: '#1e293b', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px' }}>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Sparkles size={18} style={{ color: 'var(--orange-400)' }} /> Step 2: Configure Digitizing Options
-              </h3>
+              {/* Step 1: Service-Specific Specifications & Item Placement Options */}
+              <div className="card" style={{ padding: '1.75rem', background: '#1e293b', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px' }}>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Sparkles size={18} style={{ color: 'var(--orange-400)' }} /> Step 1: Configure Digitizing Options
+                </h3>
 
               {/* 1. EMBROIDERY DIGITIZING */}
               {activeService === 'digitizing' && (
