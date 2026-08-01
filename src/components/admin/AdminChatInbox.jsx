@@ -137,12 +137,13 @@ export const AdminChatInbox = () => {
   }, [activeChatId, conversations]);
 
   const activeChat = conversations.find(c => c.id === activeChatId) || conversations[0] || null;
+  const currentActiveChatId = activeChat ? activeChat.id : activeChatId;
 
   // Filter conversations
   const filteredConversations = conversations.filter(conv => {
-    const matchesSearch = conv.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      conv.clientCompany.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      conv.orderId.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (conv.clientName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (conv.clientCompany || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (conv.orderId || '').toLowerCase().includes(searchTerm.toLowerCase());
     if (filterMode === 'unread') {
       return matchesSearch && conv.unreadCount > 0;
     }
@@ -163,6 +164,7 @@ export const AdminChatInbox = () => {
   const handleSendMessage = (e) => {
     e?.preventDefault();
     if (!replyInput.trim() && !attachedFile) return;
+    if (!currentActiveChatId) return;
 
     const newMsg = {
       id: 'msg-' + Date.now(),
@@ -174,11 +176,11 @@ export const AdminChatInbox = () => {
     };
 
     setConversations(prev => prev.map(conv => {
-      if (conv.id === activeChatId) {
+      if (conv.id === currentActiveChatId) {
         return {
           ...conv,
           unreadCount: 0,
-          messages: [...conv.messages, newMsg]
+          messages: [...(conv.messages || []), newMsg]
         };
       }
       return conv;

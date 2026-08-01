@@ -28,7 +28,10 @@ export const AuthModal = () => {
     register,
     requestPasswordReset,
     updatePassword,
-    showToast
+    showToast,
+    openOrderWizard,
+    orderWizardInitialData,
+    authModalTarget
   } = useAppState();
 
   // Form & Validation State
@@ -54,6 +57,9 @@ export const AuthModal = () => {
   // Legal Modal State (Terms / Privacy)
   const [legalModalType, setLegalModalType] = useState(null);
 
+  // Centered Error Modal Popup State
+  const [errorModalText, setErrorModalText] = useState(null);
+
   React.useEffect(() => {
     setAuthError('');
     setIsLoading(false);
@@ -63,10 +69,11 @@ export const AuthModal = () => {
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    setAuthError('');
 
     if (!loginEmail.trim() || !loginPassword.trim()) {
-      setAuthError('Please enter both your email address and password.');
+      const err = 'Please enter both your email address and password.';
+      setErrorModalText(err);
+      showToast(err, 'error');
       return;
     }
 
@@ -77,7 +84,9 @@ export const AuthModal = () => {
       setIsLoading(false);
 
       if (result && !result.success) {
-        setAuthError(result.error || 'Invalid credentials. Please verify your email and password.');
+        const err = result.error || 'Invalid login credentials. Account not found or wrong password.';
+        setErrorModalText(err);
+        showToast(err, 'error');
         return;
       }
 
@@ -86,23 +95,29 @@ export const AuthModal = () => {
         navigate('/admin-portal');
       } else {
         navigate('/client-portal');
+        if (orderWizardInitialData || authModalTarget === 'customer') {
+          setTimeout(() => {
+            if (openOrderWizard) openOrderWizard();
+          }, 150);
+        }
       }
     } catch (err) {
       setIsLoading(false);
-      setAuthError('An unexpected authentication error occurred. Please try again.');
+      const errText = 'An unexpected authentication error occurred. Please try again.';
+      setErrorModalText(errText);
+      showToast(errText, 'error');
     }
   };
 
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
-    setAuthError('');
     if (!signupName.trim() || !signupEmail.trim() || !signupPassword.trim()) {
-      setAuthError('Please fill in all required registration fields.');
+      showToast('Please fill in all required registration fields.', 'error');
       return;
     }
 
     if (signupPassword !== signupConfirmPassword) {
-      setAuthError('Passwords do not match. Please verify your password confirmation.');
+      showToast('Passwords do not match. Please verify your password confirmation.', 'error');
       return;
     }
 
@@ -113,24 +128,28 @@ export const AuthModal = () => {
       setIsLoading(false);
 
       if (result && !result.success) {
-        setAuthError(result.error || 'Account creation failed. Please verify your details.');
+        showToast(result.error || 'Account creation failed. An account with this email may already exist.', 'error');
         return;
       }
 
       setIsAuthModalOpen(false);
       navigate('/client-portal');
+      if (orderWizardInitialData || authModalTarget === 'customer') {
+        setTimeout(() => {
+          if (openOrderWizard) openOrderWizard();
+        }, 150);
+      }
     } catch (err) {
       setIsLoading(false);
-      setAuthError('An unexpected registration error occurred. Please try again.');
+      showToast('An unexpected registration error occurred. Please try again.', 'error');
     }
   };
 
   const handleForgotSubmit = async (e) => {
     e.preventDefault();
-    setAuthError('');
 
     if (!forgotEmail.trim()) {
-      setAuthError('Please enter your email address.');
+      showToast('Please enter your email address.', 'error');
       return;
     }
 
@@ -139,7 +158,7 @@ export const AuthModal = () => {
     setIsLoading(false);
 
     if (res && !res.success) {
-      setAuthError(res.error || 'Failed to dispatch password reset link.');
+      showToast(res.error || 'Failed to dispatch password reset link.', 'error');
       return;
     }
 
@@ -148,15 +167,14 @@ export const AuthModal = () => {
 
   const handleUpdatePasswordSubmit = async (e) => {
     e.preventDefault();
-    setAuthError('');
 
     if (!newPassword.trim()) {
-      setAuthError('Please enter a new password.');
+      showToast('Please enter a new password.', 'error');
       return;
     }
 
     if (newPassword !== confirmNewPassword) {
-      setAuthError('Passwords do not match. Please verify your password confirmation.');
+      showToast('Passwords do not match. Please verify your password confirmation.', 'error');
       return;
     }
 
@@ -165,7 +183,7 @@ export const AuthModal = () => {
     setIsLoading(false);
 
     if (res && !res.success) {
-      setAuthError(res.error || 'Failed to update password.');
+      showToast(res.error || 'Failed to update password.', 'error');
       return;
     }
 
@@ -412,26 +430,6 @@ export const AuthModal = () => {
               </p>
             )}
           </div>
-
-          {/* Validation Error Alert Box */}
-          {authError && (
-            <div style={{
-              background: '#fef2f2',
-              border: '1px solid #fca5a5',
-              borderRadius: 'var(--radius-md)',
-              padding: '0.5rem 0.75rem',
-              marginBottom: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              color: '#991b1b',
-              fontSize: '0.82rem',
-              fontWeight: 600
-            }}>
-              <AlertCircle size={16} style={{ color: '#dc2626', flexShrink: 0 }} />
-              <div>{authError}</div>
-            </div>
-          )}
 
           {/* MODE 2: CLIENT SIGNUP FORM (TOP SECTION MANUAL FORM FIRST!) */}
           {authModalMode === 'signup' && (
@@ -847,21 +845,44 @@ export const AuthModal = () => {
                   </button>
                 </form>
               ) : (
-                <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-                  <CheckCircle2 size={48} style={{ color: 'var(--green-500)', marginBottom: '0.75rem' }} />
-                  <h4 style={{ color: 'var(--navy-900)', marginBottom: '0.5rem' }}>Reset Link Dispatched!</h4>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
-                    We sent a recovery link to <strong>{forgotEmail}</strong>.
+                <div style={{ textAlign: 'center', padding: '0.85rem 0' }}>
+                  <CheckCircle2 size={46} style={{ color: 'var(--green-500)', marginBottom: '0.6rem' }} />
+                  <h4 style={{ color: 'var(--navy-900)', marginBottom: '0.4rem', fontWeight: 800, fontSize: '1.2rem' }}>
+                    Password Reset Email Sent!
+                  </h4>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.86rem', marginBottom: '1.15rem', lineHeight: 1.5 }}>
+                    We have dispatched a secure password recovery link to <br />
+                    <strong style={{ color: 'var(--navy-900)' }}>{forgotEmail}</strong>.
                   </p>
+
+                  <div style={{ background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: '14px', padding: '0.85rem 1rem', textAlign: 'left', marginBottom: '1.15rem', fontSize: '0.82rem', color: 'var(--navy-800)' }}>
+                    <div style={{ fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span>📬</span> Next Steps:
+                    </div>
+                    <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                      Click the link inside your email to set a new password. If you don't see the email in your inbox within 2 minutes, please check your <strong>Spam or Junk folder</strong>.
+                    </p>
+                  </div>
                 </div>
               )}
 
-              <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
+              <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'center', alignItems: 'center', marginTop: '1.1rem', flexWrap: 'wrap' }}>
+                {forgotSubmitted && (
+                  <button 
+                    type="button" 
+                    className="btn btn-primary-orange btn-sm"
+                    onClick={() => setForgotSubmitted(false)}
+                    style={{ borderRadius: 'var(--radius-md)', fontWeight: 800, padding: '0.45rem 1rem', fontSize: '0.825rem' }}
+                  >
+                    Try Again / Resend Email
+                  </button>
+                )}
+
                 <button 
                   type="button" 
                   className="btn btn-outline btn-sm"
-                  onClick={() => { setAuthModalMode('login'); setAuthError(''); }}
-                  style={{ borderRadius: 'var(--radius-md)', fontWeight: 700 }}
+                  onClick={() => { setAuthModalMode('login'); setForgotSubmitted(false); }}
+                  style={{ borderRadius: 'var(--radius-md)', fontWeight: 700, padding: '0.45rem 1rem', fontSize: '0.825rem' }}
                 >
                   Back to Sign In
                 </button>
@@ -932,6 +953,106 @@ export const AuthModal = () => {
         </div>
 
       </div>
+
+      {/* PROMINENT CENTERED LOGIN ERROR MODAL POPUP OVERLAY */}
+      {errorModalText && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 30000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.25rem',
+            animation: 'fadeIn 0.2s ease-out'
+          }}
+          onClick={() => setErrorModalText(null)}
+        >
+          <div 
+            style={{
+              maxWidth: '440px',
+              width: '100%',
+              background: '#ffffff',
+              borderRadius: '24px',
+              padding: '2rem 1.75rem',
+              boxShadow: '0 25px 70px rgba(15, 23, 42, 0.45), 0 0 0 1.5px rgba(239, 68, 68, 0.3)',
+              textAlign: 'center',
+              position: 'relative',
+              animation: 'scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close X icon */}
+            <button
+              type="button"
+              onClick={() => setErrorModalText(null)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: '#f8fafc',
+                border: '1px solid var(--border-color)',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--navy-700)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseOver={(e) => { e.currentTarget.style.background = '#f1f5f9'; }}
+              onMouseOut={(e) => { e.currentTarget.style.background = '#f8fafc'; }}
+            >
+              <X size={16} />
+            </button>
+
+            {/* Glowing Red Warning Header Badge */}
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #fef2f2, #fee2e2)',
+              border: '2px solid #fca5a5',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.25rem',
+              boxShadow: '0 8px 24px rgba(239, 68, 68, 0.2)'
+            }}>
+              <AlertCircle size={36} style={{ color: '#dc2626' }} />
+            </div>
+
+            <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--navy-900)', marginBottom: '0.65rem', letterSpacing: '-0.01em' }}>
+              Authentication Error
+            </h3>
+
+            <p style={{ fontSize: '0.925rem', color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: '1.75rem' }}>
+              {errorModalText}
+            </p>
+
+            <button
+              type="button"
+              className="btn btn-primary-orange"
+              onClick={() => setErrorModalText(null)}
+              style={{
+                width: '100%',
+                height: '46px',
+                borderRadius: '12px',
+                fontWeight: 800,
+                fontSize: '0.95rem',
+                boxShadow: '0 6px 20px rgba(255, 122, 0, 0.35)'
+              }}
+            >
+              OK, Got It
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

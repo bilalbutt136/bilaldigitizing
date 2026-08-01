@@ -31,7 +31,7 @@ import { ClientLiveChatWidget } from './components/customer/ClientLiveChatWidget
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AuthModal } from './components/auth/AuthModal';
 import { SecureAdminLogin } from './components/auth/SecureAdminLogin';
-import { CheckCircle2, Info, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, Info, AlertTriangle, AlertCircle } from 'lucide-react';
 
 // Sync URL Path & Auto-Correct Typos with StateContext
 const UrlSyncHandler = () => {
@@ -85,6 +85,13 @@ const UrlSyncHandler = () => {
       setAuthModalMode('login');
       setIsAuthModalOpen(true);
       if (rawPath !== '/login') navigate('/login', { replace: true });
+      return;
+    }
+
+    if (combined.includes('reset-password') || combined.includes('type=recovery') || location.hash.includes('type=recovery')) {
+      setCurrentView('public');
+      setAuthModalMode('update_password');
+      setIsAuthModalOpen(true);
       return;
     }
 
@@ -191,6 +198,7 @@ const MainContent = () => {
           <Route path="/" element={<PublicView />} />
           <Route path="/login" element={<PublicView />} />
           <Route path="/signup" element={<PublicView />} />
+          <Route path="/reset-password" element={<PublicView />} />
           <Route path="/services" element={<PublicView scrollTo="services" />} />
           <Route path="/embroidery-digitizing" element={<EmbroideryDigitizingPage />} />
           <Route path="/services/embroidery-digitizing" element={<EmbroideryDigitizingPage />} />
@@ -232,14 +240,54 @@ const MainContent = () => {
       <DepositModal />
       <ClientLiveChatWidget />
 
-      {/* Toast Notifications */}
+      {/* Global Top Center Toast Notification Popup */}
       {toast && (
-        <div className="toast-container">
-          <div className={`toast toast-${toast.type}`}>
-            {toast.type === 'success' && <CheckCircle2 size={18} />}
-            {toast.type === 'info' && <Info size={18} />}
-            {toast.type === 'warning' && <AlertTriangle size={18} />}
-            <span>{toast.message}</span>
+        <div 
+          className="toast-container"
+          style={{
+            position: 'fixed',
+            top: '24px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 999999,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            pointerEvents: 'none',
+            width: 'auto',
+            maxWidth: '90vw'
+          }}
+        >
+          <div 
+            className={`toast toast-${toast.type}`}
+            style={{
+              pointerEvents: 'auto',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.85rem 1.4rem',
+              borderRadius: '16px',
+              background: toast.type === 'error' ? 'linear-gradient(135deg, #1e1b1e 0%, #0f172a 100%)' : 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+              color: '#ffffff',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.45), 0 0 0 1.5px ' + (
+                toast.type === 'error' ? '#ef4444' : 
+                toast.type === 'success' ? '#22c55e' : 
+                toast.type === 'warning' ? '#f59e0b' : '#3b82f6'
+              ),
+              fontSize: '0.925rem',
+              fontWeight: 800,
+              letterSpacing: '-0.01em',
+              animation: 'toastSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+              backdropFilter: 'blur(12px)',
+              maxWidth: '520px',
+              textAlign: 'left'
+            }}
+          >
+            {toast.type === 'error' && <AlertCircle size={22} style={{ color: '#ef4444', flexShrink: 0 }} />}
+            {toast.type === 'success' && <CheckCircle2 size={22} style={{ color: '#22c55e', flexShrink: 0 }} />}
+            {toast.type === 'info' && <Info size={22} style={{ color: '#3b82f6', flexShrink: 0 }} />}
+            {toast.type === 'warning' && <AlertTriangle size={22} style={{ color: '#f59e0b', flexShrink: 0 }} />}
+            <span style={{ lineHeight: 1.35 }}>{toast.message}</span>
           </div>
         </div>
       )}

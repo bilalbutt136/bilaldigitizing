@@ -28,7 +28,7 @@ export async function signInWithGoogleOAuth() {
 
 // Supabase Email & Password Authentication Handler
 export async function signInWithSupabaseAuth(email, password) {
-  if (!isSupabaseConfigured) return { success: true };
+  if (!isSupabaseConfigured) return { success: false, error: 'Supabase URL/Key not configured.' };
 
   try {
     const cleanEmail = email.toLowerCase().trim();
@@ -38,23 +38,12 @@ export async function signInWithSupabaseAuth(email, password) {
     });
 
     if (error) {
-      // Fallback query to clients table for existing records
-      const { data: clientRecord } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('email', cleanEmail)
-        .maybeSingle();
-
-      if (clientRecord) {
-        return { success: true, user: clientRecord, source: 'clients_table' };
-      }
-
-      return { success: false, error: error.message || 'Invalid email or password combination' };
+      return { success: false, error: error.message || 'Invalid email or password combination.' };
     }
 
     return { success: true, user: data.user, session: data.session, source: 'supabase_auth' };
   } catch (err) {
-    return { success: false, error: err.message || 'Authentication error' };
+    return { success: false, error: err.message || 'Authentication error.' };
   }
 }
 
@@ -141,8 +130,9 @@ export async function sendPasswordResetEmail(email) {
 
   try {
     const cleanEmail = email.toLowerCase().trim();
+    const redirectToUrl = `${window.location.origin}/reset-password`;
     const { data, error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
-      redirectTo: `${window.location.origin}/?mode=reset_password`
+      redirectTo: redirectToUrl
     });
 
     if (error) return { success: false, error: error.message };

@@ -616,16 +616,24 @@ export const StateProvider = ({ children }) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanPass = (password || '').trim();
 
+    if (!cleanEmail || !cleanPass) {
+      return { success: false, error: 'Please enter both your email address and password.' };
+    }
+
+    const configuredAdmin = (siteSettings?.adminEmail || 'shahidbutt59191@gmail.com').toLowerCase().trim();
+    const isMasterAdmin = cleanEmail === configuredAdmin || cleanEmail === 'shahidbutt59191@gmail.com';
+
+    // Strict Supabase Auth Verification
     if (isSupabaseConfigured) {
       try {
         const sbRes = await signInWithSupabaseAuth(cleanEmail, cleanPass);
         if (sbRes && sbRes.success && sbRes.user) {
           const uData = {
             id: sbRes.user.id,
-            name: sbRes.user.name || sbRes.user.full_name || cleanEmail.split('@')[0],
+            name: sbRes.user.user_metadata?.full_name || sbRes.user.user_metadata?.name || sbRes.user.name || cleanEmail.split('@')[0],
             email: cleanEmail,
-            company: sbRes.user.company || sbRes.user.company_name || `${cleanEmail.split('@')[0]} Apparel`,
-            role: cleanEmail === 'shahidbutt59191@gmail.com' ? 'admin' : (sbRes.user.role || role || 'customer')
+            company: sbRes.user.user_metadata?.company || sbRes.user.company || `${cleanEmail.split('@')[0]} Apparel`,
+            role: isMasterAdmin ? 'admin' : (sbRes.user.user_metadata?.role || sbRes.user.role || role || 'customer')
           };
           setAuthUser(uData);
           setIsAuthenticated(true);
@@ -633,12 +641,16 @@ export const StateProvider = ({ children }) => {
           setCurrentView(uData.role === 'admin' ? 'admin' : 'customer');
           showToast(`Welcome back ${uData.name}!`, 'success');
           return { success: true, role: uData.role };
+        } else if (sbRes && !sbRes.success) {
+          return { success: false, error: sbRes.error || 'Invalid login credentials. Please check your email and password.' };
         }
       } catch (sbErr) {
-        console.warn('Supabase Auth login notice:', sbErr);
+        console.warn('Supabase Auth verification notice:', sbErr);
+        return { success: false, error: 'Authentication service notice. Please try again.' };
       }
     }
 
+    // Express REST API backend verification
     try {
       const res = await api.post('/auth/login', { email: cleanEmail, password: cleanPass, role });
       if (res.data && res.data.success && res.data.user) {
@@ -646,42 +658,16 @@ export const StateProvider = ({ children }) => {
         setAuthUser(uData);
         setIsAuthenticated(true);
         setIsAuthModalOpen(false);
-        if (uData.role === 'admin') {
-          setCurrentView('admin');
-          showToast(`Welcome Master Admin (${cleanEmail})`, 'success');
-          return { success: true, role: 'admin' };
-        } else {
-          setCurrentView('customer');
-          showToast('Welcome to your Client Portal Dashboard!', 'success');
-          return { success: true, role: 'customer' };
-        }
+        setCurrentView(uData.role === 'admin' ? 'admin' : 'customer');
+        showToast(`Welcome back ${uData.name}!`, 'success');
+        return { success: true, role: uData.role };
       }
     } catch (err) {
-      console.warn('Express Auth fallback:', err);
+      console.warn('Express Auth backend error:', err);
     }
 
-    // Local / Supabase Auth Fallback
-    const configuredAdmin = (siteSettings?.adminEmail || 'shahidbutt59191@gmail.com').toLowerCase().trim();
-    if (cleanEmail === configuredAdmin || cleanEmail === 'shahidbutt59191@gmail.com') {
-      const adminUserData = { name: 'Master Admin', email: cleanEmail, company: 'B Digitizing Studio', role: 'admin' };
-      setAuthUser(adminUserData);
-      setIsAuthenticated(true);
-      setIsAuthModalOpen(false);
-      setCurrentView('admin');
-      showToast(`Welcome Master Admin (${cleanEmail})`, 'success');
-      return { success: true, role: 'admin' };
-    }
-
-    const userData = { name: cleanEmail.split('@')[0], email: cleanEmail, company: `${cleanEmail.split('@')[0]} Apparel`, role: 'customer' };
-    if (isSupabaseConfigured) {
-      upsertClientInSupabase(userData);
-    }
-    setAuthUser(userData);
-    setIsAuthenticated(true);
-    setIsAuthModalOpen(false);
-    setCurrentView('customer');
-    showToast('Signed in successfully!', 'success');
-    return { success: true, role: 'customer' };
+    // Completely reject any unauthenticated/fake login attempt!
+    return { success: false, error: 'Invalid login credentials. Account not found or incorrect password.' };
   };
 
   const loginWithGoogle = async () => {
@@ -1107,11 +1093,27 @@ export const StateProvider = ({ children }) => {
   };
 
   const openOrderWizard = (initialData = null) => {
+    if (!isAuthenticated && !authUser) {
+      if (initialData !== undefined) setOrderWizardInitialData(initialData);
+      setAuthModalTarget('customer');
+      setAuthModalMode('login');
+      setIsAuthModalOpen(true);
+      showToast('Please sign in or create an account to place an order.', 'info');
+      return;
+    }
+
     if (initialData !== undefined) setOrderWizardInitialData(initialData);
     setIsOrderWizardOpen(true);
   };
 
   const openStoreOrderModal = (item) => {
+    if (!isAuthenticated && !authUser) {
+      setAuthModalTarget('customer');
+      setAuthModalMode('login');
+      setIsAuthModalOpen(true);
+      showToast('Please sign in or create an account to place an order.', 'info');
+      return;
+    }
     setSelectedStoreItem(item);
     setIsStoreOrderModalOpen(true);
   };

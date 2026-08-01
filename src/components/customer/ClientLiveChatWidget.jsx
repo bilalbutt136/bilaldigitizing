@@ -115,19 +115,28 @@ export const ClientLiveChatWidget = () => {
     };
 
     let updatedChats = [...chats];
-    const threadIdx = updatedChats.findIndex(c => c.clientEmail === clientEmail);
+    const threadIdx = updatedChats.findIndex(c => (c.clientEmail || '').toLowerCase().trim() === clientEmail);
 
     if (threadIdx >= 0) {
+      const existingThread = updatedChats[threadIdx];
       updatedChats[threadIdx] = {
-       ...updatedChats[threadIdx],
-        unreadCount: (updatedChats[threadIdx].unreadCount || 0) + 1,
-        messages: [...updatedChats[threadIdx].messages, newMsg]
+        ...existingThread,
+        clientName: cleanName,
+        company: clientCompany,
+        unreadCount: (existingThread.unreadCount || 0) + 1,
+        messages: [...(existingThread.messages || []), newMsg]
       };
     } else {
       const newThread = {
-      ...clientThread,
+        id: `chat-${Date.now()}`,
+        clientName: cleanName,
+        clientEmail: clientEmail,
+        company: clientCompany,
+        avatar: avatarUrl,
+        orderId: '#3842',
+        status: 'active',
         unreadCount: 1,
-        messages: [...clientThread.messages, newMsg]
+        messages: [newMsg]
       };
       updatedChats = [newThread, ...updatedChats];
     }

@@ -626,12 +626,14 @@ button, input, select, textarea, a {
   }
 }
 
-@media (max-width: 768px) {
-  .modal-content {
-    grid-template-columns: 1fr !important;
+@keyframes toastSlideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -24px) scale(0.95);
   }
-  .auth-split-left-panel {
-    display: none !important;
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
   }
 }
 
