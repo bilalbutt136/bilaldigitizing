@@ -15,7 +15,8 @@ import {
   Sparkles,
   ShieldCheck,
   Minimize2,
-  Maximize2
+  Maximize2,
+  Download
 } from 'lucide-react';
 
 export const ClientLiveChatWidget = () => {
@@ -33,11 +34,20 @@ export const ClientLiveChatWidget = () => {
   const [attachedFile, setAttachedFile] = useState(null);
   const [chats, setChats] = useState([]);
 
+  const instanceId = useRef('client-' + Math.random().toString(36).substring(2, 9));
+  const chatsRef = useRef(chats);
+
+  useEffect(() => {
+    chatsRef.current = chats;
+  }, [chats]);
+
   useEffect(() => {
     try {
       const saved = typeof window !== 'undefined' && localStorage.getItem('bdigi_admin_chats');
       if (saved) {
-        setChats(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        chatsRef.current = parsed;
+        setChats(parsed);
       }
     } catch {
       // fallback
@@ -47,14 +57,32 @@ export const ClientLiveChatWidget = () => {
   // Real-time Event Listener for incoming admin replies across tabs and windows
   useEffect(() => {
     const syncChats = (e) => {
+      let incomingChats = null;
+      let senderId = null;
+
       if (e.type === 'bdigi_chat_update' && e.detail) {
-        setChats(e.detail);
-        playNotificationSound('receive');
+        if (Array.isArray(e.detail)) {
+          incomingChats = e.detail;
+        } else if (e.detail.chats) {
+          incomingChats = e.detail.chats;
+          senderId = e.detail.senderId;
+        }
       } else if (e.key === 'bdigi_admin_chats' && e.newValue) {
         try {
-          setChats(JSON.parse(e.newValue));
-          playNotificationSound('receive');
+          incomingChats = JSON.parse(e.newValue);
         } catch (_) { }
+      }
+
+      if (!incomingChats) return;
+      if (senderId === instanceId.current) return; // Ignore self-dispatched events
+
+      const incomingStr = JSON.stringify(incomingChats);
+      const currentStr = JSON.stringify(chatsRef.current);
+
+      if (incomingStr !== currentStr) {
+        chatsRef.current = incomingChats;
+        setChats(incomingChats);
+        playNotificationSound('receive');
       }
     };
 
@@ -107,8 +135,10 @@ export const ClientLiveChatWidget = () => {
     }
   }, [isOpen, chats]);
 
-  // Mount Guard (Available for both authenticated users and home page visitors)
-  if (!mounted) {
+  const isCurrentlyOnAdminPortal = typeof window !== 'undefined' && window.location.pathname.includes('/admin');
+
+  // Mount Guard (Available for both authenticated users and home page visitors; hidden on Admin Portal)
+  if (!mounted || isCurrentlyOnAdminPortal || activeUser?.role === 'admin') {
     return null;
   }
 
@@ -122,6 +152,8 @@ export const ClientLiveChatWidget = () => {
       senderName: activeUser.name,
       text: messageInput.trim() || (attachedFile ? `Attached file: ${attachedFile.name}` : ''),
       attachment: attachedFile ? attachedFile.name : null,
+      fileUrl: attachedFile?.url || null,
+      fileType: attachedFile?.type || null,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
@@ -155,7 +187,9 @@ export const ClientLiveChatWidget = () => {
     setChats(updatedChats);
     try {
       localStorage.setItem('bdigi_admin_chats', JSON.stringify(updatedChats));
-      window.dispatchEvent(new CustomEvent('bdigi_chat_update', { detail: updatedChats }));
+      window.dispatchEvent(new CustomEvent('bdigi_chat_update', {
+        detail: { chats: updatedChats, senderId: instanceId.current }
+      }));
     } catch (_) { }
 
     playNotificationSound('message');
@@ -167,12 +201,73 @@ export const ClientLiveChatWidget = () => {
   const handleFileAttach = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      const fileUrl = URL.createObjectURL(file);
       setAttachedFile({
         name: file.name,
-        size: (file.size / 1024).toFixed(1) + ' KB'
+        size: (file.size / 1024).toFixed(1) + ' KB',
+        url: fileUrl,
+        type: file.type
       });
       showToast(`Attached ${file.name} to message`, 'info');
     }
+  };
+
+  const handleDownloadAttachment = (msg) => {
+    const fileName = msg.attachment || 'attached_file';
+
+    if (msg.fileUrl) {
+      const link = document.createElement('a');
+      link.href = msg.fileUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast(`Downloading ${fileName}...`, 'success');
+      return;
+    }
+
+    const isImage = fileName.match(/\.(png|jpg|jpeg|gif|webp|bmp|svg)$/i);
+    if (isImage) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 600;
+      canvas.height = 400;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, 600, 400);
+      ctx.fillStyle = '#f97316';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText('Bilal Digitizing - Chat Attachment', 40, 100);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '16px sans-serif';
+      ctx.fillText(`File: ${fileName}`, 40, 160);
+      ctx.fillText(`Timestamp: ${msg.timestamp || 'Recent'}`, 40, 200);
+
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast(`Downloaded ${fileName}`, 'success');
+      }, 'image/png');
+      return;
+    }
+
+    const content = `Attachment: ${fileName}\nMessage Text: ${msg.text || ''}\nTimestamp: ${msg.timestamp || ''}`;
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast(`Downloaded ${fileName}`, 'success');
   };
 
   return (
@@ -183,7 +278,6 @@ export const ClientLiveChatWidget = () => {
         className="live-chat-floating-button floating-chat-trigger"
         onClick={() => setIsOpen(!isOpen)}
         style={{
-          display: 'none',
           position: 'fixed',
           bottom: '24px',
           right: '24px',
@@ -329,6 +423,7 @@ export const ClientLiveChatWidget = () => {
                 ref={chatFeedRef}
                 style={{
                   flex: 1,
+                  minHeight: 0,
                   padding: '1rem',
                   overflowY: 'auto',
                   overscrollBehavior: 'contain',
@@ -401,16 +496,53 @@ export const ClientLiveChatWidget = () => {
 
                         {msg.attachment && (
                           <div style={{
-                            marginTop: '0.4rem',
-                            paddingTop: '0.4rem',
-                            borderTop: isClient ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid var(--border-color)',
+                            marginTop: '0.5rem',
+                            padding: '0.4rem 0.6rem',
+                            borderRadius: '8px',
+                            background: isClient ? 'rgba(255, 255, 255, 0.2)' : '#f1f5f9',
+                            border: isClient ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid var(--border-color)',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.35rem',
-                            fontSize: '0.75rem',
-                            fontWeight: 700
+                            justifyContent: 'space-between',
+                            gap: '0.4rem',
+                            flexWrap: 'wrap'
                           }}>
-                            <Paperclip size={13} /> {msg.attachment}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', minWidth: 0, flex: 1 }}>
+                              <Paperclip size={13} style={{ color: isClient ? '#ffffff' : 'var(--orange-600)', flexShrink: 0 }} />
+                              <span style={{
+                                fontSize: '0.74rem',
+                                fontWeight: 700,
+                                color: isClient ? '#ffffff' : 'var(--navy-900)',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }}>
+                                {msg.attachment}
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadAttachment(msg)}
+                              style={{
+                                background: isClient ? '#ffffff' : 'var(--navy-900)',
+                                color: isClient ? 'var(--orange-600)' : '#ffffff',
+                                border: 'none',
+                                borderRadius: '5px',
+                                padding: '0.2rem 0.5rem',
+                                fontSize: '0.7rem',
+                                fontWeight: 800,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease',
+                                flexShrink: 0
+                              }}
+                              title={`Download ${msg.attachment}`}
+                            >
+                              <Download size={12} /> Download
+                            </button>
                           </div>
                         )}
                       </div>

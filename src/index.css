@@ -637,4 +637,43 @@ button, input, select, textarea, a {
   }
 }
 
+/* ==========================================================================
+   ADMIN CHAT INBOX RESPONSIVE & LAYOUT ENGINE
+   ========================================================================== */
+.admin-chat-container {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  height: calc(100vh - 270px);
+  min-height: 500px;
+  max-height: 680px;
+  overflow: hidden;
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+}
+
+@media (max-width: 768px) {
+  .admin-chat-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 200px);
+    min-height: 480px;
+    max-height: none;
+  }
+
+  .admin-chat-sidebar-pane {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .admin-chat-main-pane {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .admin-chat-pane-hidden-mobile {
+    display: none !important;
+  }
+}
+
+
 
