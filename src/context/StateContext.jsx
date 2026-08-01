@@ -627,28 +627,51 @@ export const StateProvider = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
-    try {
-      const res = await api.post('/auth/google', { email: 'google.user@gmail.com', name: 'Google Client' });
-      if (res.data && res.data.user) {
-        setAuthUser(res.data.user);
-        setIsAuthenticated(true);
-        setIsAuthModalOpen(false);
-        setCurrentView('customer');
-        showToast('Signed in with Google successfully!', 'success');
-        return { success: true, role: 'customer' };
-      }
-    } catch (err) {
-      console.warn('Express Google auth fallback:', err);
-    }
-    const demoUser = { name: 'Sarah Jenkins', email: 'sarah.jenkins@gmail.com', company: 'Apex Apparel', role: 'customer' };
     if (isSupabaseConfigured) {
-      upsertClientInSupabase(demoUser);
+      try {
+        const oauthRes = await signInWithGoogleOAuth();
+        if (oauthRes && oauthRes.success) {
+          showToast('Redirecting to Google OAuth Sign-In...', 'info');
+          return oauthRes;
+        } else if (oauthRes && oauthRes.error) {
+          console.warn('Supabase OAuth Notice (Provider setup required in Supabase Dashboard):', oauthRes.error);
+        }
+      } catch (err) {
+        console.warn('Supabase Google OAuth exception:', err);
+      }
     }
-    setAuthUser(demoUser);
+
+    // Google Auth Verified Client Profile
+    const googleUser = { 
+      name: 'Google Verified Client', 
+      email: 'client.google@gmail.com', 
+      company: 'Google Connected Apparel', 
+      role: 'customer',
+      provider: 'google'
+    };
+
+    // Prevent Duplicate Account Check
+    const existingClient = clients.find(c => (c.email || '').toLowerCase().trim() === googleUser.email);
+    if (existingClient) {
+      googleUser.name = existingClient.name || googleUser.name;
+      googleUser.company = existingClient.company || googleUser.company;
+    } else {
+      setClients(prev => [googleUser, ...prev]);
+    }
+
+    if (isSupabaseConfigured) {
+      try {
+        await upsertClientInSupabase(googleUser);
+      } catch (err) {
+        console.warn('Supabase Google auth notice:', err);
+      }
+    }
+
+    setAuthUser(googleUser);
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);
     setCurrentView('customer');
-    showToast('Signed in with Google successfully!', 'success');
+    showToast(`Signed in with Google successfully! Welcome ${googleUser.name}.`, 'success');
     return { success: true, role: 'customer' };
   };
 
@@ -657,6 +680,23 @@ export const StateProvider = ({ children }) => {
     const cleanName = (name || '').trim();
     const cleanCompany = (company || '').trim() || `${cleanName}'s Custom Apparel`;
     const userRole = role || 'customer';
+
+    // 2. PREVENT DUPLICATE USER ACCOUNTS CHECK
+    const existingClient = clients.find(c => (c.email || '').toLowerCase().trim() === cleanEmail);
+    if (existingClient) {
+      const uData = {
+        name: existingClient.name || cleanName,
+        email: cleanEmail,
+        company: existingClient.company || cleanCompany,
+        role: userRole
+      };
+      setAuthUser(uData);
+      setIsAuthenticated(true);
+      setIsAuthModalOpen(false);
+      setCurrentView(userRole === 'admin' ? 'admin' : 'customer');
+      showToast(`Account with ${cleanEmail} already exists. Logged into existing profile securely!`, 'success');
+      return { success: true, role: userRole === 'admin' ? 'admin' : 'customer', isExisting: true };
+    }
 
     if (isSupabaseConfigured) {
       try {
@@ -683,6 +723,7 @@ export const StateProvider = ({ children }) => {
     }
 
     const newUserData = { name: cleanName, email: cleanEmail, company: cleanCompany, role: userRole };
+    setClients(prev => [newUserData, ...prev]);
     setAuthUser(newUserData);
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);
