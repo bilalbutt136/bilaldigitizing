@@ -47,7 +47,9 @@ export const HeaderNav = () => {
     setIsAuthModalOpen,
     setAuthModalMode,
     openOrderWizard,
-    showToast
+    showToast,
+    setActiveAdminTab,
+    setActiveCustomerTab
   } = useAppState();
 
   const safeCurrentView = mounted ? currentView : 'public';
@@ -87,14 +89,20 @@ export const HeaderNav = () => {
   }, []);
 
   const handleOpenLiveSupport = () => {
-    // 1. If Admin Portal or Admin user, navigate to Admin Inbox
+    // 1. If Admin Portal or Admin user, navigate directly to Admin Chat & Inbox tab
     if (safeIsAuthenticated && (authUser?.role === 'admin' || authUser?.email === 'shahidbutt59191@gmail.com')) {
+      if (setActiveAdminTab) setActiveAdminTab('chat');
       protectedNavigate('admin');
       navigate('/admin-portal');
       return;
     }
 
-    // 2. Open Live Support Chat widget directly on current view (Home Page or Client Portal)
+    // 2. If authenticated Client in Portal, set support tab active
+    if (safeIsAuthenticated && setActiveCustomerTab) {
+      setActiveCustomerTab('support');
+    }
+
+    // 3. Open Live Support Chat widget directly on current view (Home Page or Client Portal)
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bdigi_open_chat'));
     }
@@ -629,117 +637,122 @@ export const HeaderNav = () => {
                 </button>
               )}
               
-              {/* TOP HEADER CHAT BUTTON */}
-              <button
-                type="button"
-                onClick={handleOpenLiveSupport}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  background: 'rgba(255, 122, 0, 0.1)',
-                  border: '1px solid rgba(255, 122, 0, 0.35)',
-                  color: 'var(--orange-600)',
-                  padding: '0.45rem 0.85rem',
-                  height: '38px',
-                  borderRadius: '9px',
-                  fontWeight: 800,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseOver={(e) => { e.currentTarget.style.background = '#ff7a00'; e.currentTarget.style.color = '#ffffff'; }}
-                onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255, 122, 0, 0.1)'; e.currentTarget.style.color = 'var(--orange-600)'; }}
-                title="Open 24/7 Live Support Chat"
-              >
-                <MessageSquare size={16} />
-                <span>Chat</span>
-              </button>
-
-              {/* TOP HEADER NOTIFICATION BELL WITH DROPDOWN SUPPORT */}
-              <div ref={notificationDropdownRef} style={{ position: 'relative' }}>
-                <button
-                  type="button"
-                  onClick={() => setIsNotificationDropdownOpen(!isNotificationDropdownOpen)}
-                  style={{
-                    position: 'relative',
-                    background: isNotificationDropdownOpen ? '#ff7a00' : '#f8fafc',
-                    border: '1px solid var(--border-color)',
-                    color: isNotificationDropdownOpen ? '#ffffff' : 'var(--navy-800)',
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: '9px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                  aria-label="Notifications"
-                  title="Notifications"
-                >
-                  <Bell size={17} />
-                  {unreadNotifications > 0 && (
-                    <span style={{
-                      position: 'absolute',
-                      top: '2px',
-                      right: '2px',
-                      background: 'var(--orange-500)',
-                      color: '#ffffff',
-                      fontSize: '0.62rem',
-                      fontWeight: 900,
-                      width: '16px',
-                      height: '16px',
-                      borderRadius: '50%',
+              {/* TOP HEADER CHAT & NOTIFICATIONS (AUTHENTICATED PORTAL VIEWS ONLY) */}
+              {safeCurrentView !== 'public' && (
+                <>
+                  {/* TOP HEADER CHAT BUTTON */}
+                  <button
+                    type="button"
+                    onClick={handleOpenLiveSupport}
+                    style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '1.5px solid #ffffff'
-                    }}>
-                      {unreadNotifications}
-                    </span>
-                  )}
-                </button>
+                      gap: '0.4rem',
+                      background: 'rgba(255, 122, 0, 0.1)',
+                      border: '1px solid rgba(255, 122, 0, 0.35)',
+                      color: 'var(--orange-600)',
+                      padding: '0.45rem 0.85rem',
+                      height: '38px',
+                      borderRadius: '9px',
+                      fontWeight: 800,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.background = '#ff7a00'; e.currentTarget.style.color = '#ffffff'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255, 122, 0, 0.1)'; e.currentTarget.style.color = 'var(--orange-600)'; }}
+                    title="Open 24/7 Live Support Chat"
+                  >
+                    <MessageSquare size={16} />
+                    <span>Chat</span>
+                  </button>
 
-                {/* NOTIFICATION POPUP DROPDOWN LIST */}
-                {isNotificationDropdownOpen && (
-                  <div style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 8px)',
-                    right: 0,
-                    width: '280px',
-                    background: '#ffffff',
-                    border: '1.5px solid var(--border-color)',
-                    borderRadius: '12px',
-                    boxShadow: '0 12px 32px rgba(15, 23, 42, 0.18)',
-                    padding: '0.75rem',
-                    zIndex: 3000,
-                    animation: 'fadeIn 0.15s ease-out'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>Notifications</span>
-                      <button 
-                        type="button" 
-                        onClick={() => { setUnreadNotifications(0); setIsNotificationDropdownOpen(false); }}
-                        style={{ background: 'none', border: 'none', color: '#ff7a00', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
-                      >
-                        Mark all read
-                      </button>
-                    </div>
+                  {/* TOP HEADER NOTIFICATION BELL WITH DROPDOWN SUPPORT */}
+                  <div ref={notificationDropdownRef} style={{ position: 'relative' }}>
+                    <button
+                      type="button"
+                      onClick={() => setIsNotificationDropdownOpen(!isNotificationDropdownOpen)}
+                      style={{
+                        position: 'relative',
+                        background: isNotificationDropdownOpen ? '#ff7a00' : '#f8fafc',
+                        border: '1px solid var(--border-color)',
+                        color: isNotificationDropdownOpen ? '#ffffff' : 'var(--navy-800)',
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '9px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                      aria-label="Notifications"
+                      title="Notifications"
+                    >
+                      <Bell size={17} />
+                      {unreadNotifications > 0 && (
+                        <span style={{
+                          position: 'absolute',
+                          top: '2px',
+                          right: '2px',
+                          background: 'var(--orange-500)',
+                          color: '#ffffff',
+                          fontSize: '0.62rem',
+                          fontWeight: 900,
+                          width: '16px',
+                          height: '16px',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: '1.5px solid #ffffff'
+                        }}>
+                          {unreadNotifications}
+                        </span>
+                      )}
+                    </button>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                      <div style={{ padding: '0.45rem 0.6rem', background: '#f8fafc', borderRadius: '8px', borderLeft: '3px solid #ff7a00' }}>
-                        <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)' }}>Order EMB-9842 Completed</div>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Machine stitch file .DST is ready for download.</div>
+                    {/* NOTIFICATION POPUP DROPDOWN LIST */}
+                    {isNotificationDropdownOpen && (
+                      <div style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 8px)',
+                        right: 0,
+                        width: '280px',
+                        background: '#ffffff',
+                        border: '1.5px solid var(--border-color)',
+                        borderRadius: '12px',
+                        boxShadow: '0 12px 32px rgba(15, 23, 42, 0.18)',
+                        padding: '0.75rem',
+                        zIndex: 3000,
+                        animation: 'fadeIn 0.15s ease-out'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>Notifications</span>
+                          <button 
+                            type="button" 
+                            onClick={() => { setUnreadNotifications(0); setIsNotificationDropdownOpen(false); }}
+                            style={{ background: 'none', border: 'none', color: '#ff7a00', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            Mark all read
+                          </button>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                          <div style={{ padding: '0.45rem 0.6rem', background: '#f8fafc', borderRadius: '8px', borderLeft: '3px solid #ff7a00' }}>
+                            <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)' }}>Order EMB-9842 Completed</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Machine stitch file .DST is ready for download.</div>
+                          </div>
+                          <div style={{ padding: '0.45rem 0.6rem', background: '#f8fafc', borderRadius: '8px', borderLeft: '3px solid #3b82f6' }}>
+                            <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)' }}>Vector VEC-4410 Ready</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>AI source file vector trace completed.</div>
+                          </div>
+                        </div>
                       </div>
-                      <div style={{ padding: '0.45rem 0.6rem', background: '#f8fafc', borderRadius: '8px', borderLeft: '3px solid #3b82f6' }}>
-                        <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)' }}>Vector VEC-4410 Ready</div>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>AI source file vector trace completed.</div>
-                      </div>
-                    </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </>
+              )}
 
               <UserMenuDropdown />
             </div>

@@ -13,6 +13,7 @@ import {
   upsertClientInSupabase,
   fetchClientsFromSupabase,
   signInWithGoogleOAuth,
+  signInWithAppleOAuth,
   signInWithSupabaseAuth,
   signUpWithSupabaseAuth,
   sendPasswordResetEmail,
@@ -415,10 +416,12 @@ export const StateProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : null;
   });
 
-  // Auth modal states
+  // Auth modal & Tab navigation states
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('login');
   const [authModalTarget, setAuthModalTarget] = useState('customer');
+  const [activeAdminTab, setActiveAdminTab] = useState('dashboard');
+  const [activeCustomerTab, setActiveCustomerTab] = useState('dashboard');
 
   // Core Data Arrays
   const [orders, setOrders] = useState(INITIAL_ORDERS);
@@ -789,6 +792,20 @@ export const StateProvider = ({ children }) => {
   };
 
   const loginWithApple = async () => {
+    if (isSupabaseConfigured) {
+      try {
+        const oauthRes = await signInWithAppleOAuth();
+        if (oauthRes && oauthRes.success) {
+          showToast('Redirecting to Apple OAuth Sign-In...', 'info');
+          return oauthRes;
+        } else if (oauthRes && oauthRes.error) {
+          console.warn('Supabase Apple OAuth Notice (Provider setup required in Supabase Dashboard):', oauthRes.error);
+        }
+      } catch (err) {
+        console.warn('Supabase Apple OAuth exception:', err);
+      }
+    }
+
     const appleUser = { 
       name: 'Apple Verified Client', 
       email: 'client.apple@icloud.com', 
@@ -1232,6 +1249,8 @@ export const StateProvider = ({ children }) => {
       isAuthModalOpen, setIsAuthModalOpen,
       authModalMode, setAuthModalMode,
       authModalTarget, setAuthModalTarget,
+      activeAdminTab, setActiveAdminTab,
+      activeCustomerTab, setActiveCustomerTab,
       orders, setOrders,
       clients, setClients,
       pricing, setPricing, updatePricing,

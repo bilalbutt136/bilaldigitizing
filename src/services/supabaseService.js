@@ -26,6 +26,25 @@ export async function signInWithGoogleOAuth() {
   }
 }
 
+// Supabase Apple OAuth Provider Handler
+export async function signInWithAppleOAuth() {
+  if (!isSupabaseConfigured) return { success: false, error: 'Supabase URL/Key not configured yet.' };
+
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message || 'Apple Auth Error' };
+  }
+}
+
 // Supabase Email & Password Authentication Handler
 export async function signInWithSupabaseAuth(email, password) {
   if (!isSupabaseConfigured) return { success: false, error: 'Supabase URL/Key not configured.' };

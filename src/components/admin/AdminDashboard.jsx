@@ -42,10 +42,24 @@ export const AdminDashboard = () => {
     updateSiteSettings,
     adminUsers = [],
     addAdminUser,
+    activeAdminTab = 'dashboard',
+    setActiveAdminTab,
     showToast
   } = useAppState();
 
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTabState, setActiveTabState] = useState(activeAdminTab || 'dashboard');
+
+  React.useEffect(() => {
+    if (activeAdminTab) {
+      setActiveTabState(activeAdminTab);
+    }
+  }, [activeAdminTab]);
+
+  const activeTab = activeTabState;
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab);
+    if (setActiveAdminTab) setActiveAdminTab(tab);
+  };
   const [isHeaderNotificationOpen, setIsHeaderNotificationOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(4);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
