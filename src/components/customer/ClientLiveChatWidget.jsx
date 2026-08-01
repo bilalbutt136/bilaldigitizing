@@ -158,9 +158,9 @@ export const ClientLiveChatWidget = () => {
       window.dispatchEvent(new CustomEvent('bdigi_chat_update', { detail: updatedChats }));
     } catch (_) { }
 
+    playNotificationSound('message');
     setMessageInput('');
     setAttachedFile(null);
-    playNotificationSound('send');
     showToast('Message sent to Master Digitizer Support!', 'success');
   };
 

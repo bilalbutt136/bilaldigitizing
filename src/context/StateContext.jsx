@@ -23,6 +23,7 @@ import {
   fetchCmsConfigFromSupabase,
   saveCmsConfigToSupabase
 } from '../services/supabaseService';
+import { playNotificationSound } from '../utils/audioNotification';
 
 const StateContext = createContext();
 
@@ -531,6 +532,60 @@ export const StateProvider = ({ children }) => {
   const [isPricingSettingsOpen, setIsPricingSettingsOpen] = useState(false);
   const [toast, setToast] = useState(null);
 
+  // Global Notification System State
+  const [notifications, setNotifications] = useState([
+    {
+      id: 'notif-1',
+      title: 'Order EMB-9842 Completed',
+      message: 'Machine stitch file .DST is ready for download.',
+      timestamp: '10 mins ago',
+      read: false,
+      type: 'order',
+      link: '/client-portal'
+    },
+    {
+      id: 'notif-2',
+      title: 'Vector VEC-4410 Ready',
+      message: 'AI source file vector trace completed.',
+      timestamp: '1 hour ago',
+      read: false,
+      type: 'vector',
+      link: '/client-portal'
+    },
+    {
+      id: 'notif-3',
+      title: 'Studio Wallet Credit',
+      message: 'Wallet deposit of $150.00 confirmed.',
+      timestamp: '3 hours ago',
+      read: true,
+      type: 'billing',
+      link: '/client-portal'
+    }
+  ]);
+
+  const addNotification = (notif) => {
+    const newNotif = {
+      id: `notif-${Date.now()}`,
+      timestamp: 'Just now',
+      read: false,
+      ...notif
+    };
+    setNotifications(prev => [newNotif, ...prev]);
+    try {
+      playNotificationSound('notification');
+    } catch (_) {}
+  };
+
+  const markNotificationAsRead = (id) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const markAllNotificationsAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  const unreadNotificationsCount = notifications.filter(n => !n.read).length;
+
   // Safe Local Storage Helper
   const safeSetStorage = (key, val) => {
     if (typeof window === 'undefined') return;
@@ -543,6 +598,9 @@ export const StateProvider = ({ children }) => {
 
   const showToast = (message, type = 'info') => {
     setToast({ message, type, id: Date.now() });
+    try {
+      playNotificationSound('notification');
+    } catch (_) {}
     setTimeout(() => {
       setToast(null);
     }, 4000);
@@ -1325,6 +1383,7 @@ export const StateProvider = ({ children }) => {
       isDepositModalOpen, setIsDepositModalOpen,
       depositFunds, deductWalletBalance,
       toast, showToast,
+      notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead, unreadNotificationsCount,
       createOrder, updateOrderStatus, addRevisionRequest, addOrderMessage, cancelOrder
     }}>
       {children}

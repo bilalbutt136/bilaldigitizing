@@ -329,69 +329,68 @@ export const AuthModal = () => {
           <X size={18} />
         </button>
 
-        {/* LEFT PANEL: BRANDED VALUE PROPOSITION (OPTIMIZED FLEX SPACING & EXPANDED ILLUSTRATION) */}
+        {/* LEFT PANEL: BRANDED VALUE PROPOSITION (EMBROIDERY, VECTOR ART & CUSTOM PATCHES) */}
         <div 
           className="auth-split-left-panel"
           style={{
-            background: 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)',
-            padding: '1.75rem 1.75rem',
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
+            padding: '2rem 1.75rem',
             color: '#ffffff',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            borderRight: '1px solid rgba(255, 255, 255, 0.08)'
           }}
         >
-          <div style={{ flexShrink: 0 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(255, 122, 0, 0.18)', border: '1px solid rgba(255, 122, 0, 0.35)', padding: '0.2rem 0.55rem', borderRadius: '20px', fontSize: '0.68rem', fontWeight: 800, color: '#ff7a00', marginBottom: '0.85rem', letterSpacing: '0.04em' }}>
-              ★ BILAL DIGITIZING.PRO
-            </div>
-
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 900, color: '#ffffff', lineHeight: 1.15, marginBottom: '0.85rem', letterSpacing: '-0.02em' }}>
-              Success starts here
-            </h2>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.55rem' }}>
-                <div style={{ background: 'rgba(34, 197, 94, 0.2)', color: '#4ade80', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.75rem', flexShrink: 0, marginTop: '2px' }}>✓</div>
-                <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#f1f5f9', lineHeight: 1.25 }}>
-                  Over 700 embroidery & vector categories
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.55rem' }}>
-                <div style={{ background: 'rgba(34, 197, 94, 0.2)', color: '#4ade80', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.75rem', flexShrink: 0, marginTop: '2px' }}>✓</div>
-                <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#f1f5f9', lineHeight: 1.25 }}>
-                  100% manual digitizing done faster (4-12 hrs)
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.55rem' }}>
-                <div style={{ background: 'rgba(34, 197, 94, 0.2)', color: '#4ade80', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.75rem', flexShrink: 0, marginTop: '2px' }}>✓</div>
-                <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#f1f5f9', lineHeight: 1.25 }}>
-                  Custom Patches, Woven Labels & 3D PVC Goods
-                </div>
-              </div>
-            </div>
+          <div>
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.35rem 0.85rem',
+              borderRadius: '9999px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              background: 'rgba(245, 158, 11, 0.12)',
+              color: '#fbbf24',
+              border: '1px solid rgba(245, 158, 11, 0.25)',
+              marginBottom: '1rem',
+              letterSpacing: '0.03em'
+            }}>
+              ★ BILAL DIGITIZING.PRO STUDIO
+            </span>
           </div>
 
-          {/* Expanded Brand Illustration / Hero Graphic (Fills Container Cleanly) */}
-          <div style={{ marginTop: '1rem', flex: 1, display: 'flex', alignItems: 'flex-end', minHeight: '120px' }}>
-            <img 
-              src="https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80" 
-              alt="Digitizing Studio Quality" 
-              style={{
-                width: '100%',
-                height: '100%',
-                maxHeight: '185px',
-                minHeight: '120px',
-                objectFit: 'cover',
-                borderRadius: '14px',
-                border: '1px solid rgba(255, 255, 255, 0.18)',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.4)'
-              }}
-            />
+          <div style={{ margin: 'auto 0', display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+            <h1 style={{ fontSize: '1.65rem', fontWeight: 800, color: '#ffffff', lineHeight: 1.25, letterSpacing: '-0.02em', margin: 0 }}>
+              Pro Embroidery, Vector Art & Custom Patches
+            </h1>
+            
+            <p style={{ color: '#cbd5e1', fontSize: '0.875rem', lineHeight: 1.6, margin: 0 }}>
+              Your all-in-one studio for premium digital assets and production-ready files.
+            </p>
+
+            <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: 0, margin: 0, listStyle: 'none' }}>
+              <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.875rem', color: '#e2e8f0' }}>
+                <span style={{ color: '#34d399', fontWeight: 800 }}>✓</span> Custom Embroidery Digitizing (PES, DST)
+              </li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.875rem', color: '#e2e8f0' }}>
+                <span style={{ color: '#34d399', fontWeight: 800 }}>✓</span> Clean Vector Art & Redraw Services
+              </li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.875rem', color: '#e2e8f0' }}>
+                <span style={{ color: '#34d399', fontWeight: 800 }}>✓</span> Custom Patches & Woven Labels
+              </li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.875rem', color: '#e2e8f0' }}>
+                <span style={{ color: '#34d399', fontWeight: 800 }}>✓</span> Fast 4–12 Hour Turnaround
+              </li>
+            </ul>
+          </div>
+
+          <div style={{ paddingTop: '1rem', borderTop: '1px solid rgba(255, 255, 255, 0.1)', fontSize: '0.75rem', color: '#94a3b8', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <span>Trusted by Apparel Brands Worldwide</span>
+            <span style={{ color: '#34d399', fontWeight: 600 }}>● 100% Manual Quality</span>
           </div>
         </div>
 
@@ -651,13 +650,14 @@ export const AuthModal = () => {
               
               {/* Email Input */}
               <div className="form-group" style={{ marginBottom: '0.85rem' }}>
-                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.2rem', display: 'block' }}>
+                <label htmlFor="email" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.2rem', display: 'block' }}>
                   Email Address
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Mail size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
                   <input 
                     type="email" 
+                    id="email"
                     name="username"
                     autoComplete="username"
                     className="form-control"
@@ -672,13 +672,14 @@ export const AuthModal = () => {
 
               {/* Password Input */}
               <div className="form-group" style={{ marginBottom: '0.85rem' }}>
-                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.2rem', display: 'block' }}>
+                <label htmlFor="password" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.2rem', display: 'block' }}>
                   Password
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Lock size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
                   <input 
                     type="password" 
+                    id="password"
                     name="password"
                     autoComplete="current-password"
                     className="form-control"
