@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { getSiteUrl } from '../utils/siteUrl';
 
 export { isSupabaseConfigured };
 
@@ -15,7 +16,7 @@ export async function signInWithGoogleOAuth() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin
+        redirectTo: getSiteUrl()
       }
     });
 
@@ -34,7 +35,7 @@ export async function signInWithAppleOAuth() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'apple',
       options: {
-        redirectTo: window.location.origin
+        redirectTo: getSiteUrl()
       }
     });
 
@@ -149,7 +150,7 @@ export async function sendPasswordResetEmail(email) {
 
   try {
     const cleanEmail = email.toLowerCase().trim();
-    const redirectToUrl = `${window.location.origin}/reset-password`;
+    const redirectToUrl = `${getSiteUrl()}/reset-password`;
     const { data, error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
       redirectTo: redirectToUrl
     });
