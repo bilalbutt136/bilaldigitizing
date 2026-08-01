@@ -58,24 +58,36 @@ export const ClientLiveChatWidget = () => {
       }
     };
 
+    const handleOpenChat = () => {
+      setIsOpen(true);
+      setIsMinimized(false);
+    };
+
     window.addEventListener('storage', syncChats);
     window.addEventListener('bdigi_chat_update', syncChats);
+    window.addEventListener('bdigi_open_chat', handleOpenChat);
     return () => {
       window.removeEventListener('storage', syncChats);
       window.removeEventListener('bdigi_chat_update', syncChats);
+      window.removeEventListener('bdigi_open_chat', handleOpenChat);
     };
   }, []);
 
   const activeUser = authUser || currentUser || {
-    name: 'Client User',
-    email: 'client@example.com',
-    company: 'Client Studio'
+    name: 'Guest Client',
+    email: 'guest@bdigitizing.pro',
+    company: 'Public Visitor'
   };
 
   const cleanName = (activeUser?.name || 'Client').replace(/\s*\(ADMIN\)/gi, '').trim();
-  const clientEmail = (activeUser?.email || 'client@example.com').toLowerCase().trim();
+  const clientEmail = (activeUser?.email || 'guest@bdigitizing.pro').toLowerCase().trim();
   const clientCompany = activeUser?.company || `${cleanName}'s Account`;
   const avatarUrl = activeUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0f172a&color=fff`;
+
+  // Safely resolve the active chat thread for the current user/guest
+  const clientThread = chats.find(c => (c.clientEmail || '').toLowerCase().trim() === clientEmail) || {
+    messages: []
+  };
 
   const chatFeedRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -95,9 +107,8 @@ export const ClientLiveChatWidget = () => {
     }
   }, [isOpen, chats]);
 
-  // Authentication Guard: Hide live chat widget entirely for guests and unauthenticated users
-  const isLoggedIn = isAuthenticated || Boolean(authUser);
-  if (!mounted || !isLoggedIn) {
+  // Mount Guard (Available for both authenticated users and home page visitors)
+  if (!mounted) {
     return null;
   }
 

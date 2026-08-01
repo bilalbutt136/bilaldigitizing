@@ -46,7 +46,8 @@ export const HeaderNav = () => {
     protectedNavigate,
     setIsAuthModalOpen,
     setAuthModalMode,
-    openOrderWizard
+    openOrderWizard,
+    showToast
   } = useAppState();
 
   const safeCurrentView = mounted ? currentView : 'public';
@@ -86,12 +87,24 @@ export const HeaderNav = () => {
   }, []);
 
   const handleOpenLiveSupport = () => {
-    const chatBtn = document.querySelector('.live-chat-floating-button');
-    if (chatBtn) {
-      chatBtn.click();
-    } else if (useAppState().showToast) {
-      useAppState().showToast('Connecting to 24/7 Studio Live Support...', 'info');
+    // 1. If Admin Portal or Admin user, navigate to Admin Inbox
+    if (safeIsAuthenticated && (authUser?.role === 'admin' || authUser?.email === 'shahidbutt59191@gmail.com')) {
+      protectedNavigate('admin');
+      navigate('/admin-portal');
+      return;
     }
+
+    // 2. Open Live Support Chat widget directly on current view (Home Page or Client Portal)
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bdigi_open_chat'));
+    }
+
+    setTimeout(() => {
+      const chatBtn = document.querySelector('.live-chat-floating-button') || document.querySelector('[data-chat-trigger="true"]');
+      if (chatBtn) {
+        chatBtn.click();
+      }
+    }, 100);
   };
 
   const handleNavClick = (sectionId) => {

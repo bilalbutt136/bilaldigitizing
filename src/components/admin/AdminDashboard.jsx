@@ -23,7 +23,9 @@ import {
   RefreshCw,
   Bell,
   Menu,
-  X
+  X,
+  ShieldCheck,
+  UserPlus
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -38,13 +40,21 @@ export const AdminDashboard = () => {
     logout,
     siteSettings = {},
     updateSiteSettings,
+    adminUsers = [],
+    addAdminUser,
     showToast
   } = useAppState();
 
-  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard | orders | services | clients | digitizers | wallets | chat | portfolio | hero | marketing | email | pixel | payments | settings
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [isHeaderNotificationOpen, setIsHeaderNotificationOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(4);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // New Admin Modal & Form State
+  const [showAddAdminModal, setShowAddAdminModal] = useState(false);
+  const [newAdminName, setNewAdminName] = useState('');
+  const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [newAdminPassword, setNewAdminPassword] = useState('');
 
   // Settings State Form
   const [metaPixelId, setMetaPixelId] = useState(siteSettings.metaPixelId || '123456789098765');
@@ -146,6 +156,7 @@ export const AdminDashboard = () => {
       title: 'SYSTEM',
       items: [
         { id: 'settings', label: 'Settings', icon: Settings },
+        { id: 'admintam', label: 'Manage Admins', icon: ShieldCheck, tag: 'Master' },
         { id: 'signout', label: 'Sign Out', icon: LogOut, danger: true }
       ]
     }
@@ -688,20 +699,20 @@ export const AdminDashboard = () => {
         {activeTab === 'chat' && <AdminChatInbox />}
         {activeTab === 'heroslider' && <SiteCmsEditor />}
 
-        {activeTab === 'settings' && (
-          <div className="card" style={{ padding: '2rem', maxWidth: '720px', background: '#ffffff' }}>
+        {(activeTab === 'settings' || activeTab === 'admintam') && (
+          <div className="card" style={{ padding: '2rem', maxWidth: '760px', background: '#ffffff', borderRadius: '16px' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--navy-900)' }}>
-              ⚙️ Global Studio Settings & Security
+              🛡️ Admin Team & Security Operations
             </h3>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-              Manage site branding, master admin authorization, and database sync status.
+              Manage master administrator settings, add new administrators, and configure system security.
             </p>
             
             <form onSubmit={(e) => {
               e.preventDefault();
               updateSiteSettings({ metaPixelId, adminEmail });
               showToast('Security settings saved successfully!', 'success');
-            }} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            }} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2rem' }}>
               <div className="form-group">
                 <label style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.4rem', display: 'block' }}>
                   Master Admin Email Address
@@ -732,17 +743,173 @@ export const AdminDashboard = () => {
                 />
               </div>
 
-              <div className="form-group">
-                <label style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.4rem', display: 'block' }}>
-                  Database Real-Time Channels
-                </label>
-                <input type="text" disabled className="form-control" value="Supabase Real-Time Enabled (site_config table)" />
-              </div>
-
               <button type="submit" className="btn btn-primary-orange" style={{ alignSelf: 'flex-start' }}>
                 <Settings size={16} /> Save Security Configuration
               </button>
             </form>
+
+            {/* DEDICATED ADMIN TEAM MANAGEMENT MODULE */}
+            <div style={{ paddingTop: '1.75rem', borderTop: '1.5px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+                <div>
+                  <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
+                    👥 Authorized Administrator Team
+                  </h4>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, marginTop: '0.2rem' }}>
+                    Registered admins who can sign in and manage studio operations.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-primary-orange btn-sm"
+                  onClick={() => setShowAddAdminModal(true)}
+                  style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <UserPlus size={15} /> Add New Admin
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {/* Master Admin Card */}
+                <div style={{ padding: '0.9rem 1.15rem', background: '#f8fafc', borderRadius: '12px', border: '1.5px solid #ff7a00', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span>Shahid Butt</span>
+                      <span style={{ background: '#ff7a00', color: '#fff', fontSize: '0.65rem', padding: '0.15rem 0.5rem', borderRadius: '10px', fontWeight: 900 }}>MASTER ADMIN</span>
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>shahidbutt59191@gmail.com</div>
+                  </div>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#10b981', background: '#ecfdf5', padding: '0.25rem 0.65rem', borderRadius: '8px' }}>
+                    Active
+                  </span>
+                </div>
+
+                {/* Additional Registered Admins */}
+                {(adminUsers || []).filter(a => (a.email || '').toLowerCase().trim() !== 'shahidbutt59191@gmail.com').map((ad) => (
+                  <div key={ad.id} style={{ padding: '0.9rem 1.15rem', background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span>{ad.name}</span>
+                        <span style={{ background: '#3b82f6', color: '#fff', fontSize: '0.65rem', padding: '0.15rem 0.5rem', borderRadius: '10px', fontWeight: 900 }}>ADMIN</span>
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>{ad.email}</div>
+                    </div>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#10b981', background: '#ecfdf5', padding: '0.25rem 0.65rem', borderRadius: '8px' }}>
+                      Active
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ADD NEW ADMIN MODAL DIALOG */}
+        {showAddAdminModal && (
+          <div 
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(15, 23, 42, 0.65)',
+              backdropFilter: 'blur(6px)',
+              zIndex: 30000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '1.25rem'
+            }}
+            onClick={() => setShowAddAdminModal(false)}
+          >
+            <div 
+              style={{
+                maxWidth: '440px',
+                width: '100%',
+                background: '#ffffff',
+                borderRadius: '20px',
+                padding: '1.75rem',
+                boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+                position: 'relative'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <ShieldCheck size={22} style={{ color: '#ff7a00' }} />
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
+                    Add New Administrator
+                  </h3>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => setShowAddAdminModal(false)} 
+                  style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                const res = await addAdminUser(newAdminName, newAdminEmail, newAdminPassword);
+                if (res && res.success) {
+                  setNewAdminName('');
+                  setNewAdminEmail('');
+                  setNewAdminPassword('');
+                  setShowAddAdminModal(false);
+                }
+              }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.25rem', display: 'block' }}>
+                    Admin Full Name *
+                  </label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    placeholder="e.g. Alex Rivera" 
+                    value={newAdminName} 
+                    onChange={(e) => setNewAdminName(e.target.value)} 
+                    required 
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.25rem', display: 'block' }}>
+                    Admin Email Address *
+                  </label>
+                  <input 
+                    type="email" 
+                    className="form-control" 
+                    placeholder="alex@bdigitizing.pro" 
+                    value={newAdminEmail} 
+                    onChange={(e) => setNewAdminEmail(e.target.value)} 
+                    required 
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.25rem', display: 'block' }}>
+                    Admin Password *
+                  </label>
+                  <input 
+                    type="password" 
+                    className="form-control" 
+                    placeholder="Min 6 characters" 
+                    value={newAdminPassword} 
+                    onChange={(e) => setNewAdminPassword(e.target.value)} 
+                    required 
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                  <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={() => setShowAddAdminModal(false)}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary-orange" style={{ flex: 1, fontWeight: 800 }}>
+                    Create Admin
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
 
