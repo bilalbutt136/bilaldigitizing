@@ -310,23 +310,23 @@ export const PORTFOLIO_SAMPLES = [
 export const SERVICES = [
   {
     id: 'embroidery-digitizing',
-    title: 'Embroidery Digitizing',
+    title: 'Commercial Embroidery Digitizing',
     price: 'Starting $10.00',
-    stitches: 'DST, PES, EMB, EXP Files',
-    time: '8 - 12 Hours',
+    stitches: 'DST, PES, EMB, EXP, VP3, JEF',
+    time: '4 - 12 Hours',
     icon: 'Layers',
     route: '/services/embroidery-digitizing',
-    desc: 'Commercial machine-ready files for polos, jackets, caps, and left chest logos with zero thread breaks.'
+    desc: 'Production-ready embroidery machine files engineered for Tajima, Brother, Melco, Janome & Barudan machines with zero thread breaks.'
   },
   {
     id: 'vector-tracing',
-    title: 'Vector Tracing & Redrawing',
+    title: 'Raster to Scalable Vector Redraw',
     price: 'Starting $15.00',
     stitches: 'AI, EPS, SVG, PDF, CDR',
-    time: '6 - 12 Hours',
+    time: '4 - 12 Hours',
     icon: 'PenTool',
     route: '/services/vector-tracing',
-    desc: 'Transform pixelated JPEGs, PNGs, and sketches into 100% hand-drawn scalable vector files for printing & embroidery.'
+    desc: 'Transform pixelated JPEGs, PNGs, and sketches into 100% hand-drawn scalable vector files with Pantone color separation.'
   },
   {
     id: 'custom-patches',
@@ -336,7 +336,64 @@ export const SERVICES = [
     time: '3 - 5 Days + Express Ship',
     icon: 'Tag',
     route: '/custom-patches',
-    desc: 'High-density embroidered, leather, and PVC custom patches with merrowed borders and physical worldwide shipping.'
+    desc: 'High-density embroidered, 3D molded waterproof PVC, woven, and laser-engraved leather patches with physical worldwide shipping.'
+  }
+];
+
+export const DEFAULT_HERO_SLIDES = [
+  {
+    id: 'slide-1',
+    serviceKey: 'embroidery',
+    badge: 'COMMERCIAL DIGITIZING • STARTS $10.00',
+    title: 'Commercial Embroidery Digitizing',
+    highlight: '100% Machine Ready',
+    description: 'Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks.',
+    rateLabel: 'Starting from $10.00 / logo',
+    primaryCta: 'Upload Embroidery Design',
+    secondaryCta: 'View Digitizing Rates',
+    bannerImage: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1200&q=80',
+    trustPoints: [
+      { title: '100% Manual Digitizing', sub: 'Wilcom master pathing, zero auto-trace' },
+      { title: 'Free Revisions Included', sub: '100% satisfaction guaranteed' },
+      { title: 'Machine-Ready Formats', sub: 'DST, PES, EXP, EMB, JEF, VP3' },
+      { title: 'Super Fast 4-12 Hrs Delivery', sub: '24/7 express rush processing' }
+    ]
+  },
+  {
+    id: 'slide-2',
+    serviceKey: 'vector',
+    badge: 'VECTOR ART TRACING • STARTS $15.00',
+    title: 'Raster to Scalable Vector Redraw',
+    highlight: '100% Hand-Drawn Node Tracing',
+    description: 'Transform low-resolution JPEGs, PNGs, and sketches into 100% resolution-independent vector graphics (.AI, .EPS, .SVG, .PDF, .CDR) with Pantone spot color separation for screen printing & vinyl cutting.',
+    rateLabel: 'Starting from $15.00 flat',
+    primaryCta: 'Upload Artwork for Vectoring',
+    secondaryCta: 'View Vector Rates',
+    bannerImage: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1200&q=80',
+    trustPoints: [
+      { title: 'Hand-Drawn Node Paths', sub: 'Clean curves & sharp vectors' },
+      { title: 'Pantone Color Separation', sub: 'Screen printing & vinyl cut ready' },
+      { title: 'Master Source Files Included', sub: 'AI, EPS, SVG, PDF, CDR' },
+      { title: '4-8 Hour Delivery', sub: 'Same-day express delivery' }
+    ]
+  },
+  {
+    id: 'slide-3',
+    serviceKey: 'patches',
+    badge: 'CUSTOM PATCHES • STARTS $1.50 / PATCH',
+    title: 'Physical Custom Patches & Emblems',
+    highlight: 'Worldwide Physical Shipping',
+    description: 'Order high-density embroidered patches, 3D molded waterproof PVC emblems, woven labels, and genuine laser-engraved leather patches with physical shipping worldwide.',
+    rateLabel: 'Starting from $1.50 / patch',
+    primaryCta: 'Order Custom Patches',
+    secondaryCta: 'Explore Patch Tiers',
+    bannerImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
+    trustPoints: [
+      { title: 'Velcro & Iron-On Backing', sub: 'Hook & loop, heat seal or sew-on' },
+      { title: 'Classic Merrowed Borders', sub: 'Overlock edges & die-cut shapes' },
+      { title: 'Waterproof 3D Molded PVC', sub: 'High-durability tactical rubber' },
+      { title: '3-5 Days Production', sub: 'Express physical delivery' }
+    ]
   }
 ];
 

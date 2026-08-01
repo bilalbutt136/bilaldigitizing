@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { INITIAL_ORDERS, INITIAL_CLIENTS, INITIAL_PRICING, DIGITIZERS, SERVICES, PORTFOLIO_SAMPLES } from '../data/mockData';
+import { INITIAL_ORDERS, INITIAL_CLIENTS, INITIAL_PRICING, DIGITIZERS, SERVICES, PORTFOLIO_SAMPLES, DEFAULT_HERO_SLIDES } from '../data/mockData';
 import { supabase } from '../lib/supabase';
 import api from '../lib/api';
 import { 
@@ -433,6 +433,15 @@ export const StateProvider = ({ children }) => {
   const [patchCards, setPatchCards] = useState(DEFAULT_PATCH_CARDS);
   const [storeProducts, setStoreProducts] = useState(DEFAULT_STORE_PRODUCTS);
   const [servicesList, setServicesList] = useState(SERVICES);
+  const [heroSlides, setHeroSlides] = useState(() => {
+    if (typeof window === 'undefined') return DEFAULT_HERO_SLIDES;
+    try {
+      const saved = localStorage.getItem('bdigi_hero_slides');
+      return saved ? JSON.parse(saved) : DEFAULT_HERO_SLIDES;
+    } catch {
+      return DEFAULT_HERO_SLIDES;
+    }
+  });
   const [siteSettings, setSiteSettings] = useState(DEFAULT_SITE_SETTINGS);
   const [digitizers] = useState(DIGITIZERS);
 
@@ -1234,6 +1243,11 @@ export const StateProvider = ({ children }) => {
     safeSetStorage('bdigi_services', newServices);
   };
 
+  const updateHeroSlides = (newSlides) => {
+    setHeroSlides(newSlides);
+    safeSetStorage('bdigi_hero_slides', newSlides);
+  };
+
   const updateSiteSettings = (newSettings) => {
     setSiteSettings(newSettings);
     safeSetStorage('bdigi_site_settings', newSettings);
@@ -1260,6 +1274,7 @@ export const StateProvider = ({ children }) => {
       portfolioSamples, setPortfolioSamples, updatePortfolioSamples,
       sewOuts, setSewOuts, updateSewOuts,
       servicesList, setServicesList, updateServicesList,
+      heroSlides, setHeroSlides, updateHeroSlides,
       siteSettings, setSiteSettings, updateSiteSettings,
       adminUsers, setAdminUsers, addAdminUser,
       activeHomeServiceTab, setActiveHomeServiceTab,

@@ -23,6 +23,37 @@ import {
   EyeOff,
   Zap
 } from 'lucide-react';
+import { MediaLibraryManager } from './MediaLibraryManager';
+
+const FALLBACK_SERVICE_CMS_CONTENT = {
+  embroidery: {
+    showcase: {
+      samples: [
+        { id: 'emb-s1', title: 'Golden Eagle Sports Polo', category: 'Left Chest', stitches: '12,450 Stitches', colors: '5 Madeira Colors', fabric: 'Pique Cotton Polo', image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80' },
+        { id: 'emb-s2', title: 'Tactical Flexfit Cap Front', category: '3D Puff Cap', stitches: '15,800 Stitches', colors: '2 Colors (3mm Foam)', fabric: 'Structured Wool Cap', image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80' },
+        { id: 'emb-s3', title: 'Heritage Apparel Jacket Crest', category: 'Jacket Back', stitches: '48,200 Stitches', colors: '8 Madeira Colors', fabric: 'Heavy Leather & Canvas', image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80' }
+      ]
+    }
+  },
+  patch: {
+    showcase: {
+      samples: [
+        { id: 'pat-s1', title: 'Tactical Merrowed Embroidered Patch', category: 'Overlock Edge', stitches: 'High Density Rayon', formats: 'Velcro Backing', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80' },
+        { id: 'pat-s2', title: '3D Molded Rubber PVC Patch', category: 'Tactical PVC', stitches: 'Waterproof Rubber', formats: 'Hook & Loop Backing', image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80' },
+        { id: 'pat-s3', title: 'Laser Debossed Genuine Leather Patch', category: 'Real Leather', stitches: 'Engraved Leather', formats: 'Heat Seal Iron-On', image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80' }
+      ]
+    }
+  },
+  vector: {
+    showcase: {
+      samples: [
+        { id: 'vec-s1', title: 'Vintage Skull & Rose Vector', category: 'Spot Color Sep', stitches: 'N/A (Scalable Vector)', formats: 'AI, EPS, SVG, PDF', image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80' },
+        { id: 'vec-s2', title: 'Wildcat Athletic Team Mascot', category: 'Hand-Drawn Vector', stitches: 'N/A (Scalable Vector)', formats: 'AI, EPS, SVG', image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80' },
+        { id: 'vec-s3', title: 'Corporate Shield & Crest Redraw', category: 'Clean AI & SVG', stitches: 'N/A (Scalable Vector)', formats: 'AI, SVG, PDF', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80' }
+      ]
+    }
+  }
+};
 
 export const SiteCmsEditor = () => {
   const { 
@@ -43,7 +74,10 @@ export const SiteCmsEditor = () => {
     updateSewOuts,
     servicesList, 
     setServicesList,
-    updateServicesList, 
+    updateServicesList,
+    heroSlides = [],
+    setHeroSlides,
+    updateHeroSlides, 
     siteSettings, 
     setSiteSettings,
     updateSiteSettings,
@@ -52,8 +86,8 @@ export const SiteCmsEditor = () => {
     showToast
   } = useAppState();
 
-  const [activeSection, setActiveSection] = useState('serviceCms'); // 'serviceCms' | 'portfolio' | 'pricing' | 'sewouts' | 'settings'
-  const [activeCmsTab, setActiveCmsTab] = useState('embroidery'); // 'embroidery' | 'vector' | 'patch'
+  const [activeSection, setActiveSection] = useState('heroslider'); // 'heroslider' | 'serviceCms' | 'portfolio' | 'pricing' | 'vector' | 'settings'
+  const [activeCmsTab, setActiveCmsTab] = useState('embroidery');
 
   // Local draft states
   const [draftPricing, setDraftPricing] = useState({ ...pricing });
@@ -62,6 +96,7 @@ export const SiteCmsEditor = () => {
   const [draftPortfolio, setDraftPortfolio] = useState([...(portfolioSamples || [])]);
   const [draftSewOuts, setDraftSewOuts] = useState([...(sewOuts || [])]);
   const [draftServices, setDraftServices] = useState([...(servicesList || [])]);
+  const [draftHeroSlides, setDraftHeroSlides] = useState([...(heroSlides || [])]);
   const [draftSettings, setDraftSettings] = useState({ ...siteSettings });
   const [draftServiceCms, setDraftServiceCms] = useState(JSON.parse(JSON.stringify(serviceCmsContent)));
 
@@ -234,6 +269,9 @@ export const SiteCmsEditor = () => {
     if (typeof updateServicesList === 'function') updateServicesList(draftServices);
     else if (typeof setServicesList === 'function') setServicesList(draftServices);
 
+    if (typeof updateHeroSlides === 'function') updateHeroSlides(draftHeroSlides);
+    else if (typeof setHeroSlides === 'function') setHeroSlides(draftHeroSlides);
+
     if (typeof updateSiteSettings === 'function') updateSiteSettings(draftSettings);
     else if (typeof setSiteSettings === 'function') setSiteSettings(draftSettings);
 
@@ -297,6 +335,48 @@ export const SiteCmsEditor = () => {
         padding: '0 1.25rem',
         overflowX: 'auto'
       }}>
+        <button
+          type="button"
+          onClick={() => setActiveSection('mediamanager')}
+          style={{
+            padding: '1rem 1.25rem',
+            border: 'none',
+            borderBottom: activeSection === 'mediamanager' ? '3px solid #ff7a00' : '3px solid transparent',
+            background: 'none',
+            fontWeight: 800,
+            fontSize: '0.9rem',
+            color: activeSection === 'mediamanager' ? '#ff7a00' : '#64748b',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <Globe size={18} /> Media & Image Gallery
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSection('heroslider')}
+          style={{
+            padding: '1rem 1.25rem',
+            border: 'none',
+            borderBottom: activeSection === 'heroslider' ? '3px solid #ff7a00' : '3px solid transparent',
+            background: 'none',
+            fontWeight: 800,
+            fontSize: '0.9rem',
+            color: activeSection === 'heroslider' ? '#ff7a00' : '#64748b',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <Sparkles size={18} /> Hero Slider & Banner CMS ({draftHeroSlides.length})
+        </button>
+
         <button
           type="button"
           onClick={() => setActiveSection('serviceCms')}
@@ -402,6 +482,199 @@ export const SiteCmsEditor = () => {
 
       {/* Editor Body */}
       <form onSubmit={handleSaveAll} style={{ padding: '2rem' }}>
+
+        {/* SECTION: MEDIA LIBRARY & IMAGE ASSETS MANAGER */}
+        {activeSection === 'mediamanager' && (
+          <MediaLibraryManager />
+        )}
+
+        {/* SECTION: HERO SLIDER & ANNOUNCEMENT BANNER MANAGER */}
+        {activeSection === 'heroslider' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Globe size={20} style={{ color: '#ff7a00' }} /> Homepage Hero Slider & Banner Announcement Manager
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.25rem 0 0 0' }}>
+                  Create and edit hero slides, banner titles, call-to-action buttons, and trust badges dynamically.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() => {
+                  const newSlide = {
+                    id: `slide-${Date.now()}`,
+                    serviceKey: 'embroidery',
+                    badge: 'NEW PROMO TIER',
+                    title: 'New Digitizing Studio Highlight',
+                    highlight: '100% Guaranteed',
+                    description: 'Custom digitizing & vector artwork description.',
+                    rateLabel: 'Starting from $10.00',
+                    primaryCta: 'Order Now',
+                    secondaryCta: 'Learn More',
+                    bannerImage: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1200&q=80',
+                    trustPoints: [
+                      { title: '100% Manual Digitizing', sub: 'Wilcom master pathing' },
+                      { title: 'Free Revisions', sub: 'Satisfaction guaranteed' },
+                      { title: 'Machine-Ready Formats', sub: 'DST, PES, EXP, EMB' },
+                      { title: '4-12 Hrs Delivery', sub: 'Express processing' }
+                    ]
+                  };
+                  setDraftHeroSlides(prev => [...prev, newSlide]);
+                  showToast('Added new Hero Slide to draft!', 'info');
+                }}
+                style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              >
+                <Plus size={16} /> Add Hero Slide
+              </button>
+            </div>
+
+            {/* Announcement Banner Notice */}
+            <div className="card" style={{ padding: '1.25rem', marginBottom: '1.5rem', background: '#fff7ed', border: '1px solid var(--orange-200)', borderRadius: '12px' }}>
+              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--orange-800)', display: 'block', marginBottom: '0.35rem' }}>
+                📢 Top Announcement Bar Notice (Header Banner)
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                style={{ fontWeight: 700, color: 'var(--navy-900)' }}
+                value={draftSettings.bannerNotice || ''}
+                onChange={(e) => setDraftSettings(prev => ({ ...prev, bannerNotice: e.target.value }))}
+                placeholder="🔥 24/7 EXPRESS DIGITIZING DELIVERED IN 4 HOURS • WILCOM MASTER EMB & DST MACHINE FILES"
+              />
+            </div>
+
+            {/* Hero Slides List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {draftHeroSlides.map((slide, sIdx) => {
+                const updateSlide = (field, val) => {
+                  setDraftHeroSlides(prev => prev.map((item, idx) => idx === sIdx ? { ...item, [field]: val } : item));
+                };
+
+                return (
+                  <div key={slide.id || sIdx} className="card" style={{ padding: '1.5rem', border: '1.5px solid var(--border-color)', background: '#ffffff', borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+                      <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Sparkles size={16} style={{ color: '#ff7a00' }} /> Slide #{sIdx + 1}: {slide.title}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDraftHeroSlides(prev => prev.filter((_, idx) => idx !== sIdx));
+                          showToast('Slide removed from draft', 'info');
+                        }}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                      >
+                        <Trash2 size={15} /> Remove Slide
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Badge Label String</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={slide.badge || ''}
+                          onChange={(e) => updateSlide('badge', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Slide Headline Title</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          style={{ fontWeight: 700 }}
+                          value={slide.title || ''}
+                          onChange={(e) => updateSlide('title', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Highlighted Title Phrase</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          style={{ fontWeight: 700, color: '#ff7a00' }}
+                          value={slide.highlight || ''}
+                          onChange={(e) => updateSlide('highlight', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Rate Label Subtitle</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={slide.rateLabel || ''}
+                          onChange={(e) => updateSlide('rateLabel', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: '1rem' }}>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Slide Description Subtext</label>
+                      <textarea
+                        className="form-control"
+                        rows={2}
+                        value={slide.description || ''}
+                        onChange={(e) => updateSlide('description', e.target.value)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Primary CTA Button Text</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={slide.primaryCta || ''}
+                          onChange={(e) => updateSlide('primaryCta', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Secondary CTA Button Text</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={slide.secondaryCta || ''}
+                          onChange={(e) => updateSlide('secondaryCta', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Banner Image URL</label>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={slide.bannerImage || ''}
+                          onChange={(e) => updateSlide('bannerImage', e.target.value)}
+                          placeholder="https://images.unsplash.com/... or upload"
+                        />
+                        <label className="btn btn-outline btn-sm" style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                          Upload Image
+                          <input
+                            type="file"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={(e) => handleImageUpload(e, (url) => updateSlide('bannerImage', url))}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* SECTION: 3-SERVICE HOMEPAGE CMS FLOW MANAGER */}
         {activeSection === 'serviceCms' && (
@@ -657,7 +930,7 @@ export const SiteCmsEditor = () => {
                         </label>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem' }}>
                           {[0, 1, 2].map(sampleIdx => {
-                            const defaultList = DEFAULT_SERVICE_CMS_CONTENT[srvKey]?.showcase?.samples || [];
+                            const defaultList = serviceCmsContent[srvKey]?.showcase?.samples || FALLBACK_SERVICE_CMS_CONTENT[srvKey]?.showcase?.samples || [];
                             const samplesList = (showcase.samples && showcase.samples.length > 0) ? showcase.samples : defaultList;
                             const smp = samplesList[sampleIdx] || {};
                             const currentImgVal = smp.image || smp.imageURL || smp.afterImg || '';

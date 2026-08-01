@@ -32,32 +32,40 @@ export const ClientDirectory = () => {
             </tr>
           </thead>
           <tbody>
-            {clients.map((c) => (
-              <tr key={c.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                <td style={{ padding: '1rem' }}>
-                  <div style={{ fontWeight: 700, color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Building2 size={16} style={{ color: 'var(--orange-600)' }} />
-                    {c.company}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: {c.id}</div>
-                </td>
-                <td style={{ padding: '1rem' }}>
-                  <div style={{ color: 'var(--navy-900)' }}>{c.contact}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{c.email}</div>
-                </td>
-                <td style={{ padding: '1rem' }}>
-                  <span className={`badge ${c.tier.includes('VIP') ? 'badge-completed' : 'badge-assigned'}`}>
-                    {c.tier}
-                  </span>
-                </td>
-                <td style={{ padding: '1rem', fontWeight: 600, color: 'var(--navy-900)' }}>
-                  {c.totalOrders} jobs
-                </td>
-                <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--green-600)' }}>
-                  ${c.totalSpent.toFixed(2)}
-                </td>
-              </tr>
-            ))}
+            {(clients || []).map((c, idx) => {
+              const tierStr = c.tier || 'Standard Client';
+              const companyName = c.company || c.name || c.email?.split('@')[0] || 'Client Account';
+              const contactName = c.contact || c.name || 'Primary Contact';
+              const ordersCount = c.totalOrders ?? c.orders_count ?? 0;
+              const spendAmount = typeof c.totalSpent === 'number' ? c.totalSpent : (typeof c.wallet_balance === 'number' ? c.wallet_balance : 0);
+
+              return (
+                <tr key={c.id || idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <td style={{ padding: '1rem' }}>
+                    <div style={{ fontWeight: 700, color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Building2 size={16} style={{ color: 'var(--orange-600)' }} />
+                      {companyName}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: {c.id || `c-${idx}`}</div>
+                  </td>
+                  <td style={{ padding: '1rem' }}>
+                    <div style={{ color: 'var(--navy-900)' }}>{contactName}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{c.email || 'N/A'}</div>
+                  </td>
+                  <td style={{ padding: '1rem' }}>
+                    <span className={`badge ${tierStr.includes('VIP') ? 'badge-completed' : 'badge-assigned'}`}>
+                      {tierStr}
+                    </span>
+                  </td>
+                  <td style={{ padding: '1rem', fontWeight: 600, color: 'var(--navy-900)' }}>
+                    {ordersCount} jobs
+                  </td>
+                  <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--green-600)' }}>
+                    ${spendAmount.toFixed(2)}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
