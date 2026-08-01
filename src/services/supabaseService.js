@@ -135,6 +135,39 @@ export async function signUpWithSupabaseAuth(name, email, password, company) {
   }
 }
 
+// Supabase Reset Password for Email Handler
+export async function sendPasswordResetEmail(email) {
+  if (!isSupabaseConfigured) return { success: true };
+
+  try {
+    const cleanEmail = email.toLowerCase().trim();
+    const { data, error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+      redirectTo: `${window.location.origin}/?mode=reset_password`
+    });
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message || 'Password reset request error' };
+  }
+}
+
+// Supabase Update Password Handler (called after user clicks recovery link)
+export async function updateUserPassword(newPassword) {
+  if (!isSupabaseConfigured) return { success: true };
+
+  try {
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message || 'Update password error' };
+  }
+}
+
 // Helper to upload files to Supabase Storage Bucket
 export async function uploadFileToSupabaseStorage(fileObj, bucketName = 'client-uploads', folderPath = 'artwork') {
   if (!isSupabaseConfigured || !fileObj) return null;

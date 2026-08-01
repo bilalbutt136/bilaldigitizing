@@ -626,4 +626,13 @@ button, input, select, textarea, a {
   }
 }
 
+@media (max-width: 768px) {
+  .modal-content {
+    grid-template-columns: 1fr !important;
+  }
+  .auth-split-left-panel {
+    display: none !important;
+  }
+}
+
 
