@@ -637,8 +637,8 @@ export const HeaderNav = () => {
                 </button>
               )}
               
-              {/* TOP HEADER CHAT & NOTIFICATIONS (AUTHENTICATED PORTAL VIEWS ONLY) */}
-              {safeCurrentView !== 'public' && (
+              {/* TOP HEADER CHAT & NOTIFICATIONS (CLIENT PORTAL ONLY) */}
+              {safeCurrentView === 'customer' && (
                 <>
                   {/* TOP HEADER CHAT BUTTON */}
                   <button

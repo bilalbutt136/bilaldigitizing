@@ -433,7 +433,7 @@ export const AuthModal = () => {
 
           {/* MODE 2: CLIENT SIGNUP FORM (TOP SECTION MANUAL FORM FIRST!) */}
           {authModalMode === 'signup' && (
-            <form onSubmit={handleSignupSubmit}>
+            <form onSubmit={handleSignupSubmit} name="signupForm" method="post">
               
               {/* 1. Full Name */}
               <div className="form-group" style={{ marginBottom: '0.6rem' }}>
@@ -444,6 +444,8 @@ export const AuthModal = () => {
                   <User size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
                   <input 
                     type="text" 
+                    name="name"
+                    autoComplete="name"
                     className="form-control"
                     placeholder="e.g. John Miller"
                     value={signupName}
@@ -463,6 +465,8 @@ export const AuthModal = () => {
                   <Mail size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
                   <input 
                     type="email" 
+                    name="email"
+                    autoComplete="username"
                     className="form-control"
                     placeholder="john@company.com"
                     value={signupEmail}
@@ -482,6 +486,8 @@ export const AuthModal = () => {
                   <Lock size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
                   <input 
                     type="password" 
+                    name="password"
+                    autoComplete="new-password"
                     className="form-control"
                     placeholder="Min 6 characters"
                     value={signupPassword}
@@ -501,6 +507,8 @@ export const AuthModal = () => {
                   <Lock size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
                   <input 
                     type="password" 
+                    name="confirmPassword"
+                    autoComplete="new-password"
                     className="form-control"
                     placeholder="Re-enter your password"
                     value={signupConfirmPassword}
@@ -639,7 +647,7 @@ export const AuthModal = () => {
 
           {/* MODE 1: CLEAN PUBLIC SIGN IN FORM */}
           {authModalMode === 'login' && (
-            <form onSubmit={handleLoginSubmit}>
+            <form onSubmit={handleLoginSubmit} name="loginForm" method="post">
               
               {/* Email Input */}
               <div className="form-group" style={{ marginBottom: '0.85rem' }}>
@@ -650,6 +658,8 @@ export const AuthModal = () => {
                   <Mail size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
                   <input 
                     type="email" 
+                    name="username"
+                    autoComplete="username"
                     className="form-control"
                     placeholder="name@company.com"
                     value={loginEmail}
@@ -669,6 +679,8 @@ export const AuthModal = () => {
                   <Lock size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
                   <input 
                     type="password" 
+                    name="password"
+                    autoComplete="current-password"
                     className="form-control"
                     placeholder="Enter your password"
                     value={loginPassword}
@@ -817,7 +829,7 @@ export const AuthModal = () => {
           {authModalMode === 'forgot' && (
             <div>
               {!forgotSubmitted ? (
-                <form onSubmit={handleForgotSubmit}>
+                <form onSubmit={handleForgotSubmit} name="forgotPasswordForm" method="post">
                   <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
                     Enter your registered email address and we'll send you a password reset link.
                   </p>
@@ -830,6 +842,8 @@ export const AuthModal = () => {
                       <Mail size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
                       <input 
                         type="email" 
+                        name="email"
+                        autoComplete="email"
                         className="form-control"
                         placeholder="name@company.com"
                         value={forgotEmail}
@@ -892,7 +906,7 @@ export const AuthModal = () => {
 
           {/* MODE 4: UPDATE PASSWORD (EMAIL RECOVERY LINK CALLBACK) */}
           {authModalMode === 'update_password' && (
-            <form onSubmit={handleUpdatePasswordSubmit}>
+            <form onSubmit={handleUpdatePasswordSubmit} name="updatePasswordForm" method="post">
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
                 Enter your new secure password below to update your account credentials.
               </p>
@@ -905,6 +919,8 @@ export const AuthModal = () => {
                   <Lock size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
                   <input 
                     type="password" 
+                    name="newPassword"
+                    autoComplete="new-password"
                     className="form-control"
                     placeholder="Min 6 characters"
                     value={newPassword}
@@ -923,6 +939,8 @@ export const AuthModal = () => {
                   <Lock size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
                   <input 
                     type="password" 
+                    name="confirmNewPassword"
+                    autoComplete="new-password"
                     className="form-control"
                     placeholder="Re-enter your new password"
                     value={confirmNewPassword}

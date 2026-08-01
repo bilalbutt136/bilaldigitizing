@@ -645,15 +645,15 @@ export const StateProvider = ({ children }) => {
         };
 
         // Immediate Automatic Session Verification & Portal View Redirect
+        const targetView = userRole === 'admin' ? 'admin' : 'customer';
         setAuthUser(uData);
         setIsAuthenticated(true);
         setIsAuthModalOpen(false);
+        setCurrentView(targetView);
 
-        if (userRole === 'admin') {
-          setCurrentView('admin');
-        } else {
-          setCurrentView('customer');
-        }
+        safeSetStorage('bdigi_is_auth', 'true');
+        safeSetStorage('bdigi_auth_user', uData);
+        safeSetStorage('bdigi_current_view', targetView);
 
         try {
           await upsertClientInSupabase(uData);
@@ -667,6 +667,20 @@ export const StateProvider = ({ children }) => {
       authListener?.subscription?.unsubscribe();
     };
   }, [siteSettings]);
+
+  // Automatic Auth State Sync to Local Storage so user NEVER needs to log in again upon page reload or browser return
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      if (isAuthenticated && authUser) {
+        localStorage.setItem('bdigi_is_auth', 'true');
+        localStorage.setItem('bdigi_auth_user', JSON.stringify(authUser));
+        localStorage.setItem('bdigi_current_view', currentView || (authUser.role === 'admin' ? 'admin' : 'customer'));
+      }
+    } catch (err) {
+      console.warn('Auth session sync notice:', err);
+    }
+  }, [isAuthenticated, authUser, currentView]);
 
   // Auth Operations with Supabase DB & Express REST API integration
   const login = async (email, password, role) => {
@@ -733,10 +747,14 @@ export const StateProvider = ({ children }) => {
             company: sbRes.user.user_metadata?.company || sbRes.user.company || `${cleanEmail.split('@')[0]} Apparel`,
             role: isMasterAdmin ? 'admin' : (sbRes.user.user_metadata?.role || sbRes.user.role || role || 'customer')
           };
+          const targetView = uData.role === 'admin' ? 'admin' : 'customer';
           setAuthUser(uData);
           setIsAuthenticated(true);
           setIsAuthModalOpen(false);
-          setCurrentView(uData.role === 'admin' ? 'admin' : 'customer');
+          setCurrentView(targetView);
+          safeSetStorage('bdigi_is_auth', 'true');
+          safeSetStorage('bdigi_auth_user', uData);
+          safeSetStorage('bdigi_current_view', targetView);
           showToast(`Welcome back ${uData.name}!`, 'success');
           return { success: true, role: uData.role };
         } else if (sbRes && !sbRes.success) {
@@ -796,6 +814,9 @@ export const StateProvider = ({ children }) => {
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);
     setCurrentView('customer');
+    safeSetStorage('bdigi_is_auth', 'true');
+    safeSetStorage('bdigi_auth_user', googleUser);
+    safeSetStorage('bdigi_current_view', 'customer');
     showToast(`Signed in with Google successfully! Welcome ${googleUser.name}.`, 'success');
     return { success: true, role: 'customer' };
   };
@@ -843,6 +864,9 @@ export const StateProvider = ({ children }) => {
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);
     setCurrentView('customer');
+    safeSetStorage('bdigi_is_auth', 'true');
+    safeSetStorage('bdigi_auth_user', appleUser);
+    safeSetStorage('bdigi_current_view', 'customer');
     showToast(`Signed in with Apple ID successfully! Welcome ${appleUser.name}.`, 'success');
     return { success: true, role: 'customer' };
   };
@@ -862,12 +886,16 @@ export const StateProvider = ({ children }) => {
         company: existingClient.company || cleanCompany,
         role: userRole
       };
+      const targetView = userRole === 'admin' ? 'admin' : 'customer';
       setAuthUser(uData);
       setIsAuthenticated(true);
       setIsAuthModalOpen(false);
-      setCurrentView(userRole === 'admin' ? 'admin' : 'customer');
+      setCurrentView(targetView);
+      safeSetStorage('bdigi_is_auth', 'true');
+      safeSetStorage('bdigi_auth_user', uData);
+      safeSetStorage('bdigi_current_view', targetView);
       showToast(`Account with ${cleanEmail} already exists. Logged into existing profile securely!`, 'success');
-      return { success: true, role: userRole === 'admin' ? 'admin' : 'customer', isExisting: true };
+      return { success: true, role: targetView, isExisting: true };
     }
 
     if (isSupabaseConfigured) {
@@ -880,15 +908,19 @@ export const StateProvider = ({ children }) => {
       }
     }
 
+    const targetView = userRole === 'admin' ? 'admin' : 'customer';
     try {
       const res = await api.post('/auth/signup', { name: cleanName, email: cleanEmail, password, company: cleanCompany, role: userRole });
       if (res.data && res.data.user) {
         setAuthUser(res.data.user);
         setIsAuthenticated(true);
         setIsAuthModalOpen(false);
-        setCurrentView(userRole === 'admin' ? 'admin' : 'customer');
+        setCurrentView(targetView);
+        safeSetStorage('bdigi_is_auth', 'true');
+        safeSetStorage('bdigi_auth_user', res.data.user);
+        safeSetStorage('bdigi_current_view', targetView);
         showToast(`Account created successfully! Welcome ${cleanName}.`, 'success');
-        return { success: true, role: userRole === 'admin' ? 'admin' : 'customer' };
+        return { success: true, role: targetView };
       }
     } catch (err) {
       console.warn('Express Signup fallback:', err);
@@ -899,9 +931,12 @@ export const StateProvider = ({ children }) => {
     setAuthUser(newUserData);
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);
-    setCurrentView(userRole === 'admin' ? 'admin' : 'customer');
+    setCurrentView(targetView);
+    safeSetStorage('bdigi_is_auth', 'true');
+    safeSetStorage('bdigi_auth_user', newUserData);
+    safeSetStorage('bdigi_current_view', targetView);
     showToast(`Account created successfully! Welcome ${cleanName}.`, 'success');
-    return { success: true, role: userRole === 'admin' ? 'admin' : 'customer' };
+    return { success: true, role: targetView };
   };
 
   const logout = async () => {
