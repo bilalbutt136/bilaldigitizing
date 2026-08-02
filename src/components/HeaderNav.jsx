@@ -93,7 +93,7 @@ export const HeaderNav = () => {
 
   const handleOpenLiveSupport = () => {
     // 1. If Admin Portal or Admin user, navigate directly to Admin Chat & Inbox tab
-    if (safeIsAuthenticated && (authUser?.role === 'admin' || authUser?.email === 'shahidbutt59191@gmail.com')) {
+    if (safeIsAuthenticated && authUser?.role === 'admin') {
       if (setActiveAdminTab) setActiveAdminTab('chat');
       protectedNavigate('admin');
       navigate('/admin-portal');

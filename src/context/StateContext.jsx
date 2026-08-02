@@ -1,27 +1,29 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { INITIAL_ORDERS, INITIAL_CLIENTS, INITIAL_PRICING, DIGITIZERS, SERVICES, PORTFOLIO_SAMPLES, DEFAULT_HERO_SLIDES } from '../data/mockData';
-import { supabase } from '../lib/supabase';
-import api from '../lib/api';
-import { 
-  isSupabaseConfigured, 
-  fetchOrdersFromSupabase, 
-  createOrderInSupabase, 
-  updateOrderStatusInSupabase, 
+import { INITIAL_PRICING, DIGITIZERS, SERVICES, PORTFOLIO_SAMPLES, DEFAULT_HERO_SLIDES } from '../data/mockData';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import {
+  fetchOrdersFromSupabase,
+  createOrderInSupabase,
+  updateOrderStatusInSupabase,
   addRevisionInSupabase,
   upsertClientInSupabase,
   fetchClientsFromSupabase,
   signInWithGoogleOAuth,
   signInWithAppleOAuth,
   signInWithSupabaseAuth,
-  signUpWithSupabaseAuth,
   sendPasswordResetEmail,
   updateUserPassword,
-  depositFundsInSupabase,
-  deductWalletInSupabase,
-  fetchCmsConfigFromSupabase,
-  saveCmsConfigToSupabase
+  saveCmsConfigToSupabase,
+  fetchCatalogFromSupabase,
+  addOrderMessageInSupabase,
+  verifyAdminSession,
+  fetchAdminUsers,
+  addAdminUserInSupabase,
+  depositWalletViaApi,
+  deductWalletViaApi,
+  fetchWalletBalanceFromSupabase
 } from '../services/supabaseService';
 import { playNotificationSound } from '../utils/audioNotification';
 
@@ -39,8 +41,7 @@ const DEFAULT_SITE_SETTINGS = {
   contactPhone: '+1 (800) 555-DIGI',
   bannerNotice: '⚡ 4-Hour Express Turnaround Available | Guaranteed Commercial Quality',
   operationalStatus: 'Online & Processing',
-  currencySymbol: '$',
-  adminEmail: 'shahidbutt59191@gmail.com'
+  currencySymbol: '$'
 };
 
 const DEFAULT_PRICING_CARDS = [
@@ -401,21 +402,9 @@ const DEFAULT_SERVICE_CMS_CONTENT = {
 
 export const StateProvider = ({ children }) => {
   // Navigation & Authentication state
-  const [currentView, setCurrentView] = useState(() => {
-    if (typeof window === 'undefined') return 'public';
-    return localStorage.getItem('bdigi_current_view') || 'public';
-  });
-
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem('bdigi_is_auth') === 'true';
-  });
-
-  const [authUser, setAuthUser] = useState(() => {
-    if (typeof window === 'undefined') return null;
-    const saved = localStorage.getItem('bdigi_auth_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [currentView, setCurrentView] = useState('public');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authUser, setAuthUser] = useState(null);
 
   // Auth modal & Tab navigation states
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -424,9 +413,9 @@ export const StateProvider = ({ children }) => {
   const [activeAdminTab, setActiveAdminTab] = useState('dashboard');
   const [activeCustomerTab, setActiveCustomerTab] = useState('dashboard');
 
-  // Core Data Arrays
-  const [orders, setOrders] = useState(INITIAL_ORDERS);
-  const [clients, setClients] = useState(INITIAL_CLIENTS);
+  // Core Data Arrays (seeded from the database catalog on load)
+  const [orders, setOrders] = useState([]);
+  const [clients, setClients] = useState([]);
   const [pricing, setPricing] = useState(INITIAL_PRICING);
   const [pricingCards, setPricingCards] = useState(DEFAULT_PRICING_CARDS);
   const [portfolioSamples, setPortfolioSamples] = useState(PORTFOLIO_SAMPLES);
@@ -434,95 +423,19 @@ export const StateProvider = ({ children }) => {
   const [patchCards, setPatchCards] = useState(DEFAULT_PATCH_CARDS);
   const [storeProducts, setStoreProducts] = useState(DEFAULT_STORE_PRODUCTS);
   const [servicesList, setServicesList] = useState(SERVICES);
-  const [heroSlides, setHeroSlides] = useState(() => {
-    if (typeof window === 'undefined') return DEFAULT_HERO_SLIDES;
-    try {
-      const saved = localStorage.getItem('bdigi_hero_slides');
-      return saved ? JSON.parse(saved) : DEFAULT_HERO_SLIDES;
-    } catch {
-      return DEFAULT_HERO_SLIDES;
-    }
-  });
+  const [heroSlides, setHeroSlides] = useState(DEFAULT_HERO_SLIDES);
   const [siteSettings, setSiteSettings] = useState(DEFAULT_SITE_SETTINGS);
-  const [digitizers] = useState(DIGITIZERS);
+  const [digitizers, setDigitizers] = useState(DIGITIZERS);
 
-  // Registered Admin Accounts List State
-  const [adminUsers, setAdminUsers] = useState(() => {
-    if (typeof window === 'undefined') return [{ id: 'admin-master', name: 'Shahid Butt', email: 'shahidbutt59191@gmail.com', password: 'shahid123@$', role: 'admin' }];
-    try {
-      const saved = localStorage.getItem('bdigi_admin_list');
-      const parsed = saved ? JSON.parse(saved) : [];
-      const masterExists = parsed.some(a => (a.email || '').toLowerCase().trim() === 'shahidbutt59191@gmail.com');
-      if (!masterExists) {
-        return [{ id: 'admin-master', name: 'Shahid Butt', email: 'shahidbutt59191@gmail.com', password: 'shahid123@$', role: 'admin' }, ...parsed];
-      }
-      return parsed;
-    } catch {
-      return [{ id: 'admin-master', name: 'Shahid Butt', email: 'shahidbutt59191@gmail.com', password: 'shahid123@$', role: 'admin' }];
-    }
-  });
-
-  const addAdminUser = async (name, email, password) => {
-    const cleanName = (name || '').trim();
-    const cleanEmail = (email || '').toLowerCase().trim();
-    const cleanPass = (password || '').trim();
-
-    if (!cleanName || !cleanEmail || !cleanPass) {
-      showToast('Please enter full name, email, and password for new admin.', 'error');
-      return { success: false, error: 'Missing required fields' };
-    }
-
-    const newAdmin = {
-      id: `admin-${Date.now()}`,
-      name: cleanName,
-      email: cleanEmail,
-      password: cleanPass,
-      role: 'admin',
-      addedAt: new Date().toISOString()
-    };
-
-    setAdminUsers(prev => {
-      const updated = [...prev.filter(a => (a.email || '').toLowerCase().trim() !== cleanEmail), newAdmin];
-      safeSetStorage('bdigi_admin_list', updated);
-      return updated;
-    });
-
-    showToast(`Administrator account for ${cleanName} (${cleanEmail}) created successfully!`, 'success');
-    return { success: true };
-  };
+  // Admin whitelist (server-managed via public.admins table)
+  const [adminUsers, setAdminUsers] = useState([]);
 
   // Dynamic Service-Driven Homepage & CMS Content State
-  const [activeHomeServiceTab, setActiveHomeServiceTab] = useState('embroidery'); // 'embroidery' | 'vector' | 'patch'
-  const [serviceCmsContent, setServiceCmsContent] = useState(() => {
-    if (typeof window === 'undefined') return DEFAULT_SERVICE_CMS_CONTENT;
-    try {
-      const saved = localStorage.getItem('bdigi_service_cms');
-      return saved ? JSON.parse(saved) : DEFAULT_SERVICE_CMS_CONTENT;
-    } catch (e) {
-      return DEFAULT_SERVICE_CMS_CONTENT;
-    }
-  });
-
-  const updateServiceCmsContent = (serviceKey, sectionKey, updatedData) => {
-    setServiceCmsContent(prev => {
-      const nextState = {
-        ...prev,
-        [serviceKey]: {
-          ...prev[serviceKey],
-          [sectionKey]: {
-            ...prev[serviceKey]?.[sectionKey],
-            ...updatedData
-          }
-        }
-      };
-      safeSetStorage('bdigi_service_cms', nextState);
-      return nextState;
-    });
-    showToast(`Updated CMS content for ${serviceKey.toUpperCase()} - ${sectionKey.toUpperCase()}`, 'success');
-  };
+  const [activeHomeServiceTab, setActiveHomeServiceTab] = useState('embroidery');
+  const [serviceCmsContent, setServiceCmsContent] = useState(DEFAULT_SERVICE_CMS_CONTENT);
 
   // Wallet & Modals State
-  const [walletBalance, setWalletBalance] = useState(150.00);
+  const [walletBalance, setWalletBalance] = useState(0);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isOrderWizardOpen, setIsOrderWizardOpen] = useState(false);
   const [orderWizardInitialData, setOrderWizardInitialData] = useState(null);
@@ -533,35 +446,7 @@ export const StateProvider = ({ children }) => {
   const [toast, setToast] = useState(null);
 
   // Global Notification System State
-  const [notifications, setNotifications] = useState([
-    {
-      id: 'notif-1',
-      title: 'Order EMB-9842 Completed',
-      message: 'Machine stitch file .DST is ready for download.',
-      timestamp: '10 mins ago',
-      read: false,
-      type: 'order',
-      link: '/client-portal'
-    },
-    {
-      id: 'notif-2',
-      title: 'Vector VEC-4410 Ready',
-      message: 'AI source file vector trace completed.',
-      timestamp: '1 hour ago',
-      read: false,
-      type: 'vector',
-      link: '/client-portal'
-    },
-    {
-      id: 'notif-3',
-      title: 'Studio Wallet Credit',
-      message: 'Wallet deposit of $150.00 confirmed.',
-      timestamp: '3 hours ago',
-      read: true,
-      type: 'billing',
-      link: '/client-portal'
-    }
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   const addNotification = (notif) => {
     const newNotif = {
@@ -586,16 +471,6 @@ export const StateProvider = ({ children }) => {
 
   const unreadNotificationsCount = notifications.filter(n => !n.read).length;
 
-  // Safe Local Storage Helper
-  const safeSetStorage = (key, val) => {
-    if (typeof window === 'undefined') return;
-    try {
-      localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
-    } catch (err) {
-      console.warn(`localStorage warning for ${key}:`, err);
-    }
-  };
-
   const showToast = (message, type = 'info') => {
     setToast({ message, type, id: Date.now() });
     try {
@@ -606,75 +481,84 @@ export const StateProvider = ({ children }) => {
     }, 4000);
   };
 
-  // 1. Fetch backend state on initial load via Supabase DB and Express REST API
-  useEffect(() => {
-    const loadBackendData = async () => {
-      // First attempt Supabase DB fetch if enabled
-      if (isSupabaseConfigured) {
-        try {
-          const [sbOrders, sbClients, sbCms] = await Promise.allSettled([
-            fetchOrdersFromSupabase(),
-            fetchClientsFromSupabase(),
-            fetchCmsConfigFromSupabase()
-          ]);
+  // Build the app-facing user record from a Supabase session user + role
+  const buildAuthUser = (sbUser, role) => {
+    const cleanEmail = (sbUser?.email || '').toLowerCase().trim();
+    return {
+      id: sbUser?.id || `user-${Date.now()}`,
+      name: sbUser?.user_metadata?.full_name || sbUser?.user_metadata?.name || cleanEmail.split('@')[0] || 'Verified User',
+      email: cleanEmail,
+      company: sbUser?.user_metadata?.company || `${cleanEmail.split('@')[0] || 'Valued'} Apparel`,
+      role,
+      provider: sbUser?.app_metadata?.provider || 'email'
+    };
+  };
 
-          if (sbOrders.status === 'fulfilled' && sbOrders.value && sbOrders.value.length > 0) {
-            setOrders(sbOrders.value);
-            console.log('✅ Loaded orders directly from Supabase PostgreSQL Database!');
-          }
-          if (sbClients.status === 'fulfilled' && sbClients.value && sbClients.value.length > 0) {
-            setClients(sbClients.value);
-            console.log('✅ Loaded clients directly from Supabase PostgreSQL Database!');
-          }
-          if (sbCms.status === 'fulfilled' && sbCms.value) {
-            if (sbCms.value.siteSettings) setSiteSettings(sbCms.value.siteSettings);
-          }
-        } catch (sbErr) {
-          console.warn('Supabase DB initial load notice:', sbErr);
+  // Resolve role (admin vs customer) server-side from the admins table
+  const resolveRole = async (email) => {
+    const res = await verifyAdminSession(email);
+    return res?.isAdmin ? 'admin' : 'customer';
+  };
+
+  // Load catalog + admin whitelist + wallet on mount / session change
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadInitialData = async () => {
+      if (!isSupabaseConfigured) return;
+
+      const catalog = await fetchCatalogFromSupabase();
+      if (!cancelled && catalog) {
+        if (catalog.servicesList?.length) setServicesList(catalog.servicesList);
+        if (catalog.pricingCards?.length) setPricingCards(catalog.pricingCards);
+        if (catalog.patchCards?.length) setPatchCards(catalog.patchCards);
+        if (catalog.storeProducts?.length) setStoreProducts(catalog.storeProducts);
+        if (catalog.portfolioSamples?.length) setPortfolioSamples(catalog.portfolioSamples);
+        if (catalog.sewOuts?.length) setSewOuts(catalog.sewOuts);
+        if (catalog.heroSlides?.length) setHeroSlides(catalog.heroSlides);
+        if (catalog.digitizers?.length) {
+          setDigitizers(prev => prev.map(d => {
+            const fresh = catalog.digitizers.find(x => x.id === d.id);
+            return fresh ? { ...d, ...fresh } : d;
+          }));
+        }
+        if (catalog.siteSettings) setSiteSettings(catalog.siteSettings);
+        if (catalog.pricing) setPricing(catalog.pricing);
+        if (catalog.serviceCms) setServiceCmsContent(catalog.serviceCms);
+      }
+
+      // Load current session (restores persistent login)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!cancelled && session?.user) {
+        const role = await resolveRole(session.user.email);
+        const uData = buildAuthUser(session.user, role);
+        setAuthUser(uData);
+        setIsAuthenticated(true);
+        setCurrentView(role === 'admin' ? 'admin' : 'customer');
+
+        const balance = await fetchWalletBalanceFromSupabase(session.user.email);
+        if (!cancelled) setWalletBalance(balance);
+
+        try {
+          await upsertClientInSupabase({ ...uData, role });
+        } catch (err) {
+          console.warn('Client upsert notice:', err);
         }
       }
 
-      // Secondary attempt Express REST API
-      try {
-        const [ordersRes, pricingRes, clientsRes, cmsRes] = await Promise.allSettled([
-          api.get('/orders'),
-          api.get('/pricing/config'),
-          api.get('/clients'),
-          api.get('/cms')
-        ]);
-
-        if (ordersRes.status === 'fulfilled' && ordersRes.value.data?.orders && ordersRes.value.data.orders.length > 0) {
-          setOrders(prev => prev.length > 0 ? prev : ordersRes.value.data.orders);
+      if (!cancelled) {
+        const adminList = await fetchAdminUsers();
+        if (adminList?.length) {
+          setAdminUsers(adminList.map(a => ({ email: a.email, name: a.name || a.email })));
         }
-        if (pricingRes.status === 'fulfilled' && pricingRes.value.data?.pricing) {
-          setPricing(pricingRes.value.data.pricing);
-        }
-        if (clientsRes.status === 'fulfilled' && clientsRes.value.data?.clients) {
-          setClients(prev => prev.length > 0 ? prev : clientsRes.value.data.clients);
-        }
-        if (cmsRes.status === 'fulfilled' && cmsRes.value.data?.siteSettings) {
-          setSiteSettings(cmsRes.value.data.siteSettings);
-          if (cmsRes.value.data.portfolio) setPortfolioSamples(cmsRes.value.data.portfolio);
-          if (cmsRes.value.data.storeItems) setStoreProducts(cmsRes.value.data.storeItems);
-        }
-      } catch (err) {
-        console.warn('Express backend connection notice (using fallback local store):', err);
       }
     };
 
-    loadBackendData();
-  }, []);
-
-  // Sync state changes with localStorage
-  useEffect(() => { safeSetStorage('bdigi_current_view', currentView); }, [currentView]);
-  useEffect(() => { safeSetStorage('bdigi_is_auth', String(isAuthenticated)); }, [isAuthenticated]);
-  useEffect(() => { safeSetStorage('bdigi_auth_user', authUser); }, [authUser]);
-
-  // Automatic Session Verification & Immediate Redirect Handler (Supabase Auth State Listener)
-  useEffect(() => {
-    if (!isSupabaseConfigured) return;
+    loadInitialData();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (cancelled) return;
+
       if (event === 'PASSWORD_RECOVERY') {
         setAuthModalMode('update_password');
         setIsAuthModalOpen(true);
@@ -684,63 +568,58 @@ export const StateProvider = ({ children }) => {
       if (event === 'SIGNED_OUT' || !session?.user) {
         setIsAuthenticated(false);
         setAuthUser(null);
+        setCurrentView('public');
+        setWalletBalance(0);
         return;
       }
 
       if (session?.user) {
-        const cleanEmail = (session.user.email || '').toLowerCase().trim();
-        const configuredAdmin = (siteSettings?.adminEmail || 'shahidbutt59191@gmail.com').toLowerCase().trim();
-        const isMasterAdmin = cleanEmail === configuredAdmin || cleanEmail === 'shahidbutt59191@gmail.com';
-        const userRole = isMasterAdmin ? 'admin' : 'customer';
-
-        const uData = {
-          id: session.user.id,
-          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || cleanEmail.split('@')[0] || 'Verified User',
-          email: cleanEmail,
-          company: session.user.user_metadata?.company || `${cleanEmail.split('@')[0]} Apparel`,
-          role: userRole,
-          provider: session.user.app_metadata?.provider || 'google'
-        };
-
-        // Immediate Automatic Session Verification & Portal View Redirect
-        const targetView = userRole === 'admin' ? 'admin' : 'customer';
+        const role = await resolveRole(session.user.email);
+        const uData = buildAuthUser(session.user, role);
         setAuthUser(uData);
         setIsAuthenticated(true);
         setIsAuthModalOpen(false);
-        setCurrentView(targetView);
+        setCurrentView(role === 'admin' ? 'admin' : 'customer');
 
-        safeSetStorage('bdigi_is_auth', 'true');
-        safeSetStorage('bdigi_auth_user', uData);
-        safeSetStorage('bdigi_current_view', targetView);
+        const balance = await fetchWalletBalanceFromSupabase(session.user.email);
+        if (!cancelled) setWalletBalance(balance);
 
         try {
-          await upsertClientInSupabase(uData);
+          await upsertClientInSupabase({ ...uData, role });
         } catch (err) {
-          console.warn('Supabase client upsert notice:', err);
+          console.warn('Client upsert notice:', err);
         }
       }
     });
 
     return () => {
+      cancelled = true;
       authListener?.subscription?.unsubscribe();
     };
-  }, [siteSettings]);
+  }, []);
 
-  // Automatic Auth State Sync to Local Storage so user NEVER needs to log in again upon page reload or browser return
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  const persistAuth = (uData, view) => {
+    setAuthUser(uData);
+    setIsAuthenticated(true);
+    setIsAuthModalOpen(false);
+    setCurrentView(view);
+  };
+
+  const finishAuth = async (sbUser) => {
+    const role = await resolveRole(sbUser?.email);
+    const uData = buildAuthUser(sbUser, role);
+    persistAuth(uData, role === 'admin' ? 'admin' : 'customer');
+    const balance = await fetchWalletBalanceFromSupabase(sbUser?.email);
+    if (balance) setWalletBalance(balance);
     try {
-      if (isAuthenticated && authUser) {
-        localStorage.setItem('bdigi_is_auth', 'true');
-        localStorage.setItem('bdigi_auth_user', JSON.stringify(authUser));
-        localStorage.setItem('bdigi_current_view', currentView || (authUser.role === 'admin' ? 'admin' : 'customer'));
-      }
+      await upsertClientInSupabase({ ...uData, role });
     } catch (err) {
-      console.warn('Auth session sync notice:', err);
+      console.warn('Client upsert notice:', err);
     }
-  }, [isAuthenticated, authUser, currentView]);
+    return { success: true, role, user: uData };
+  };
 
-  // Auth Operations with Supabase DB & Express REST API integration
+  // Auth Operations (Supabase backed only — no hardcoded credentials)
   const login = async (email, password, role) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanPass = (password || '').trim();
@@ -749,252 +628,104 @@ export const StateProvider = ({ children }) => {
       return { success: false, error: 'Please enter both your email address and password.' };
     }
 
-    const configuredAdmin = (siteSettings?.adminEmail || 'shahidbutt59191@gmail.com').toLowerCase().trim();
-    const isMasterAdmin = cleanEmail === configuredAdmin || cleanEmail === 'shahidbutt59191@gmail.com';
-
-    // 1. Direct Master Admin Credentials Check (shahidbutt59191@gmail.com & shahid123@$)
-    if (isMasterAdmin && (cleanPass === 'shahid123@$' || cleanPass === 'shahid123' || cleanPass === 'admin123')) {
-      const masterUser = {
-        id: 'admin-master-shahid',
-        name: 'Shahid Butt (Master Admin)',
-        email: 'shahidbutt59191@gmail.com',
-        company: 'Bilal Digitizing Master Admin',
-        role: 'admin'
-      };
-      setAuthUser(masterUser);
-      setIsAuthenticated(true);
-      setIsAuthModalOpen(false);
-      setCurrentView('admin');
-      safeSetStorage('bdigi_is_auth', true);
-      safeSetStorage('bdigi_auth_user', masterUser);
-      safeSetStorage('bdigi_current_view', 'admin');
-      showToast(`Welcome back ${masterUser.name}!`, 'success');
-      return { success: true, role: 'admin' };
-    }
-
-    // 2. Registered Admin Accounts List Check
-    const matchedAdmin = (adminUsers || []).find(a => (a.email || '').toLowerCase().trim() === cleanEmail && a.password === cleanPass);
-    if (matchedAdmin) {
-      const adminUser = {
-        id: matchedAdmin.id || `admin-${Date.now()}`,
-        name: matchedAdmin.name || 'Studio Administrator',
-        email: cleanEmail,
-        company: 'Bilal Digitizing Admin Team',
-        role: 'admin'
-      };
-      setAuthUser(adminUser);
-      setIsAuthenticated(true);
-      setIsAuthModalOpen(false);
-      setCurrentView('admin');
-      safeSetStorage('bdigi_is_auth', true);
-      safeSetStorage('bdigi_auth_user', adminUser);
-      safeSetStorage('bdigi_current_view', 'admin');
-      showToast(`Welcome back Administrator ${adminUser.name}!`, 'success');
-      return { success: true, role: 'admin' };
-    }
-
-    // 3. Supabase Auth Verification
     if (isSupabaseConfigured) {
       try {
         const sbRes = await signInWithSupabaseAuth(cleanEmail, cleanPass);
         if (sbRes && sbRes.success && sbRes.user) {
-          const uData = {
-            id: sbRes.user.id,
-            name: sbRes.user.user_metadata?.full_name || sbRes.user.user_metadata?.name || sbRes.user.name || cleanEmail.split('@')[0],
-            email: cleanEmail,
-            company: sbRes.user.user_metadata?.company || sbRes.user.company || `${cleanEmail.split('@')[0]} Apparel`,
-            role: isMasterAdmin ? 'admin' : (sbRes.user.user_metadata?.role || sbRes.user.role || role || 'customer')
-          };
-          const targetView = uData.role === 'admin' ? 'admin' : 'customer';
-          setAuthUser(uData);
-          setIsAuthenticated(true);
-          setIsAuthModalOpen(false);
-          setCurrentView(targetView);
-          safeSetStorage('bdigi_is_auth', 'true');
-          safeSetStorage('bdigi_auth_user', uData);
-          safeSetStorage('bdigi_current_view', targetView);
-          showToast(`Welcome back ${uData.name}!`, 'success');
-          return { success: true, role: uData.role };
-        } else if (sbRes && !sbRes.success) {
+          const result = await finishAuth(sbRes.user);
+          showToast(`Welcome back ${result.user.name}!`, 'success');
+          return result;
+        }
+        if (sbRes && !sbRes.success) {
           return { success: false, error: sbRes.error || 'Invalid login credentials. Please check your email and password.' };
         }
       } catch (sbErr) {
         console.warn('Supabase Auth verification notice:', sbErr);
+        return { success: false, error: 'Authentication is temporarily unavailable. Please try again.' };
       }
     }
 
-    // Completely reject any unauthenticated/fake login attempt!
-    return { success: false, error: 'Invalid login credentials. Account not found or incorrect password.' };
+    return { success: false, error: 'Authentication is not configured. Please try again later.' };
   };
 
   const loginWithGoogle = async () => {
-    if (isSupabaseConfigured) {
-      try {
-        const oauthRes = await signInWithGoogleOAuth();
-        if (oauthRes && oauthRes.success) {
-          showToast('Redirecting to Google OAuth Sign-In...', 'info');
-          return oauthRes;
-        } else if (oauthRes && oauthRes.error) {
-          console.warn('Supabase OAuth Notice (Provider setup required in Supabase Dashboard):', oauthRes.error);
-        }
-      } catch (err) {
-        console.warn('Supabase Google OAuth exception:', err);
+    if (!isSupabaseConfigured) {
+      return { success: false, error: 'Google Sign-In is not configured yet.' };
+    }
+    try {
+      const oauthRes = await signInWithGoogleOAuth();
+      if (oauthRes && oauthRes.success) {
+        showToast('Redirecting to Google Sign-In...', 'info');
+        return oauthRes;
       }
+      return { success: false, error: oauthRes?.error || 'Google Sign-In failed.' };
+    } catch (err) {
+      return { success: false, error: err.message || 'Google Sign-In failed.' };
     }
-
-    // Google Auth Verified Client Profile
-    const googleUser = { 
-      name: 'Google Verified Client', 
-      email: 'client.google@gmail.com', 
-      company: 'Google Connected Apparel', 
-      role: 'customer',
-      provider: 'google'
-    };
-
-    // Prevent Duplicate Account Check
-    const existingClient = clients.find(c => (c.email || '').toLowerCase().trim() === googleUser.email);
-    if (existingClient) {
-      googleUser.name = existingClient.name || googleUser.name;
-      googleUser.company = existingClient.company || googleUser.company;
-    } else {
-      setClients(prev => [googleUser, ...prev]);
-    }
-
-    if (isSupabaseConfigured) {
-      try {
-        await upsertClientInSupabase(googleUser);
-      } catch (err) {
-        console.warn('Supabase Google auth notice:', err);
-      }
-    }
-
-    setAuthUser(googleUser);
-    setIsAuthenticated(true);
-    setIsAuthModalOpen(false);
-    setCurrentView('customer');
-    safeSetStorage('bdigi_is_auth', 'true');
-    safeSetStorage('bdigi_auth_user', googleUser);
-    safeSetStorage('bdigi_current_view', 'customer');
-    showToast(`Signed in with Google successfully! Welcome ${googleUser.name}.`, 'success');
-    return { success: true, role: 'customer' };
   };
 
   const loginWithApple = async () => {
-    if (isSupabaseConfigured) {
-      try {
-        const oauthRes = await signInWithAppleOAuth();
-        if (oauthRes && oauthRes.success) {
-          showToast('Redirecting to Apple OAuth Sign-In...', 'info');
-          return oauthRes;
-        } else if (oauthRes && oauthRes.error) {
-          console.warn('Supabase Apple OAuth Notice (Provider setup required in Supabase Dashboard):', oauthRes.error);
-        }
-      } catch (err) {
-        console.warn('Supabase Apple OAuth exception:', err);
+    if (!isSupabaseConfigured) {
+      return { success: false, error: 'Apple Sign-In is not configured yet.' };
+    }
+    try {
+      const oauthRes = await signInWithAppleOAuth();
+      if (oauthRes && oauthRes.success) {
+        showToast('Redirecting to Apple Sign-In...', 'info');
+        return oauthRes;
       }
+      return { success: false, error: oauthRes?.error || 'Apple Sign-In failed.' };
+    } catch (err) {
+      return { success: false, error: err.message || 'Apple Sign-In failed.' };
     }
-
-    const appleUser = { 
-      name: 'Apple Verified Client', 
-      email: 'client.apple@icloud.com', 
-      company: 'Apple Studio Apparel', 
-      role: 'customer',
-      provider: 'apple'
-    };
-
-    const existingClient = clients.find(c => (c.email || '').toLowerCase().trim() === appleUser.email);
-    if (existingClient) {
-      appleUser.name = existingClient.name || appleUser.name;
-      appleUser.company = existingClient.company || appleUser.company;
-    } else {
-      setClients(prev => [appleUser, ...prev]);
-    }
-
-    if (isSupabaseConfigured) {
-      try {
-        await upsertClientInSupabase(appleUser);
-      } catch (err) {
-        console.warn('Supabase Apple auth notice:', err);
-      }
-    }
-
-    setAuthUser(appleUser);
-    setIsAuthenticated(true);
-    setIsAuthModalOpen(false);
-    setCurrentView('customer');
-    safeSetStorage('bdigi_is_auth', 'true');
-    safeSetStorage('bdigi_auth_user', appleUser);
-    safeSetStorage('bdigi_current_view', 'customer');
-    showToast(`Signed in with Apple ID successfully! Welcome ${appleUser.name}.`, 'success');
-    return { success: true, role: 'customer' };
   };
 
   const register = async (name, email, password, company, role) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanName = (name || '').trim();
-    const cleanCompany = (company || '').trim() || `${cleanName}'s Custom Apparel`;
-    const userRole = role || 'customer';
+    const cleanCompany = (company || '').trim() || `${cleanName || 'Valued'}'s Custom Apparel`;
 
-    // 2. PREVENT DUPLICATE USER ACCOUNTS CHECK
-    const existingClient = clients.find(c => (c.email || '').toLowerCase().trim() === cleanEmail);
-    if (existingClient) {
-      const uData = {
-        name: existingClient.name || cleanName,
+    if (!cleanName || !cleanEmail || !password) {
+      return { success: false, error: 'Please fill in your name, email, and password.' };
+    }
+
+    if (!isSupabaseConfigured) {
+      return { success: false, error: 'Registration is not configured yet. Please try again later.' };
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
-        company: existingClient.company || cleanCompany,
-        role: userRole
+        password,
+        options: {
+          data: {
+            full_name: cleanName,
+            name: cleanName,
+            company: cleanCompany
+          }
+        }
+      });
+
+      if (error) {
+        return { success: false, error: error.message || 'Registration failed.' };
+      }
+
+      const uData = {
+        name: cleanName,
+        email: cleanEmail,
+        company: cleanCompany,
+        role: 'customer'
       };
-      const targetView = userRole === 'admin' ? 'admin' : 'customer';
+      setClients(prev => prev.some(c => c.email === cleanEmail) ? prev : [uData, ...prev]);
       setAuthUser(uData);
       setIsAuthenticated(true);
       setIsAuthModalOpen(false);
-      setCurrentView(targetView);
-      safeSetStorage('bdigi_is_auth', 'true');
-      safeSetStorage('bdigi_auth_user', uData);
-      safeSetStorage('bdigi_current_view', targetView);
-      showToast(`Account with ${cleanEmail} already exists. Logged into existing profile securely!`, 'success');
-      return { success: true, role: targetView, isExisting: true };
-    }
-
-    if (isSupabaseConfigured) {
-      try {
-        await signUpWithSupabaseAuth(cleanName, cleanEmail, password, cleanCompany);
-        await upsertClientInSupabase({ name: cleanName, email: cleanEmail, company: cleanCompany, role: userRole });
-        console.log('✅ Client registered in Supabase DB:', cleanEmail);
-      } catch (sbErr) {
-        console.warn('Supabase register notice:', sbErr);
-      }
-    }
-
-    const targetView = userRole === 'admin' ? 'admin' : 'customer';
-    try {
-      const res = await api.post('/auth/signup', { name: cleanName, email: cleanEmail, password, company: cleanCompany, role: userRole });
-      if (res.data && res.data.user) {
-        setAuthUser(res.data.user);
-        setIsAuthenticated(true);
-        setIsAuthModalOpen(false);
-        setCurrentView(targetView);
-        safeSetStorage('bdigi_is_auth', 'true');
-        safeSetStorage('bdigi_auth_user', res.data.user);
-        safeSetStorage('bdigi_current_view', targetView);
-        showToast(`Account created successfully! Welcome ${cleanName}.`, 'success');
-        return { success: true, role: targetView };
-      }
+      setCurrentView('customer');
+      showToast(`Account created successfully! Welcome ${cleanName}.`, 'success');
+      return { success: true, role: 'customer', user: uData };
     } catch (err) {
-      console.warn('Express Signup fallback:', err);
+      return { success: false, error: err.message || 'Registration failed.' };
     }
-
-    const newUserData = { name: cleanName, email: cleanEmail, company: cleanCompany, role: userRole };
-    setClients(prev => [newUserData, ...prev]);
-    setAuthUser(newUserData);
-    setIsAuthenticated(true);
-    setIsAuthModalOpen(false);
-    setCurrentView(targetView);
-    safeSetStorage('bdigi_is_auth', 'true');
-    safeSetStorage('bdigi_auth_user', newUserData);
-    safeSetStorage('bdigi_current_view', targetView);
-    showToast(`Account created successfully! Welcome ${cleanName}.`, 'success');
-    return { success: true, role: targetView };
   };
 
   const logout = async () => {
@@ -1002,11 +733,9 @@ export const StateProvider = ({ children }) => {
     setAuthUser(null);
     setIsAuthModalOpen(false);
     setCurrentView('public');
+    setWalletBalance(0);
 
     try {
-      localStorage.removeItem('bdigi_is_auth');
-      localStorage.removeItem('bdigi_auth_user');
-      localStorage.removeItem('bdigi_current_view');
       sessionStorage.clear();
     } catch (e) {
       console.warn('Storage clearance notice:', e);
@@ -1032,10 +761,10 @@ export const StateProvider = ({ children }) => {
         const res = await sendPasswordResetEmail(cleanEmail);
         if (res && !res.success) return res;
       } catch (err) {
-        console.warn('Supabase password reset error:', err);
         return { success: false, error: err.message || 'Failed to dispatch reset email.' };
       }
     }
+
     showToast(`Password reset link dispatched to ${cleanEmail}`, 'info');
     return { success: true };
   };
@@ -1050,7 +779,6 @@ export const StateProvider = ({ children }) => {
         const res = await updateUserPassword(newPassword);
         if (res && !res.success) return res;
       } catch (err) {
-        console.warn('Supabase update password error:', err);
         return { success: false, error: err.message || 'Failed to update password.' };
       }
     }
@@ -1078,10 +806,10 @@ export const StateProvider = ({ children }) => {
       return;
     }
     if (targetView === 'admin') {
-      if (isAuthenticated && (authUser?.role === 'admin' || authUser?.email === 'shahidbutt59191@gmail.com')) {
+      if (isAuthenticated && authUser?.role === 'admin') {
         setCurrentView('admin');
       } else {
-        showToast('Access Restricted to Master Admin.', 'warning');
+        showToast('Access Restricted to Studio Admin.', 'warning');
         setAuthModalTarget('admin');
         setAuthModalMode('login');
         setIsAuthModalOpen(true);
@@ -1089,41 +817,29 @@ export const StateProvider = ({ children }) => {
     }
   };
 
-  // Order Operations connected to Supabase DB & Express API
+  // Order Operations connected to Supabase DB
   const createOrder = async (newOrderData) => {
     const localId = newOrderData.id || `#${Math.floor(1000 + Math.random() * 9000)}`;
     const fullOrderPayload = {
       id: localId,
       ...newOrderData,
       clientName: authUser?.company || authUser?.name || 'Valued Client',
-      clientEmail: authUser?.email || 'client@bdigitizing.pro',
+      clientEmail: authUser?.email || '',
       createdAt: new Date().toISOString(),
       status: 'submitted',
       history: [{ timestamp: new Date().toISOString(), label: 'Order Submitted by Client' }],
       revisions: []
     };
 
-    // Save to live Supabase DB if enabled
     if (isSupabaseConfigured) {
       try {
         await createOrderInSupabase(fullOrderPayload);
-        console.log('✅ Order saved to Supabase DB:', localId);
+        setOrders(prev => [fullOrderPayload, ...prev]);
+        showToast(`Order ${formatOrderId(localId)} created successfully!`, 'success');
+        return fullOrderPayload;
       } catch (sbErr) {
         console.warn('Supabase create order notice:', sbErr);
       }
-    }
-
-    // Save to Express REST API if available
-    try {
-      const res = await api.post('/orders', fullOrderPayload);
-      if (res.data && res.data.order) {
-        const created = res.data.order;
-        setOrders(prev => [created, ...prev]);
-        showToast(`Order ${formatOrderId(created.id)} created successfully!`, 'success');
-        return created;
-      }
-    } catch (err) {
-      console.warn('Express createOrder fallback:', err);
     }
 
     setOrders(prev => [fullOrderPayload, ...prev]);
@@ -1132,25 +848,12 @@ export const StateProvider = ({ children }) => {
   };
 
   const updateOrderStatus = async (orderId, newStatus, extraData = {}) => {
-    // Save to live Supabase DB if enabled
     if (isSupabaseConfigured) {
       try {
         await updateOrderStatusInSupabase(orderId, newStatus, extraData);
-        console.log(`✅ Order ${orderId} updated to '${newStatus}' in Supabase DB!`);
       } catch (sbErr) {
         console.warn('Supabase update order status notice:', sbErr);
       }
-    }
-
-    try {
-      const res = await api.patch(`/orders/${orderId.replace('#', '')}/status`, { status: newStatus, ...extraData });
-      if (res.data && res.data.order) {
-        setOrders(prev => prev.map(o => o.id === orderId ? res.data.order : o));
-        showToast(`Order ${formatOrderId(orderId)} status updated to ${newStatus.toUpperCase()}`, 'success');
-        return;
-      }
-    } catch (err) {
-      console.warn('Express updateOrderStatus fallback:', err);
     }
 
     setOrders(prev => prev.map(ord => {
@@ -1176,17 +879,6 @@ export const StateProvider = ({ children }) => {
       }
     }
 
-    try {
-      const res = await api.post(`/orders/${orderId.replace('#', '')}/revisions`, { revisionNotes: revisionNote, clientName: authUser?.name || 'Client' });
-      if (res.data && res.data.order) {
-        setOrders(prev => prev.map(o => o.id === orderId ? res.data.order : o));
-        showToast(`Revision request sent for Order ${formatOrderId(orderId)}`, 'info');
-        return;
-      }
-    } catch (err) {
-      console.warn('Express addRevision fallback:', err);
-    }
-
     setOrders(prev => prev.map(ord => {
       if (ord.id === orderId) {
         return {
@@ -1202,12 +894,22 @@ export const StateProvider = ({ children }) => {
     showToast(`Revision request sent for Order ${formatOrderId(orderId)}`, 'info');
   };
 
-  const addOrderMessage = (orderId, text, senderName, senderRole = 'admin', attachments = []) => {
+  const addOrderMessage = async (orderId, text, senderName, senderRole = 'admin', attachments = []) => {
     if (!text && (!attachments || attachments.length === 0)) return;
-    const msgObj = {
+
+    let persisted = null;
+    if (isSupabaseConfigured) {
+      try {
+        persisted = await addOrderMessageInSupabase(orderId, text, senderName, senderRole, attachments);
+      } catch (err) {
+        console.warn('Supabase add order message notice:', err);
+      }
+    }
+
+    const msgObj = persisted || {
       id: `msg-${Date.now()}`,
       sender: senderName || (senderRole === 'admin' ? 'Master Admin' : 'Client'),
-      senderRole: senderRole,
+      senderRole,
       text: text || '',
       attachments: attachments || [],
       timestamp: new Date().toISOString()
@@ -1246,38 +948,27 @@ export const StateProvider = ({ children }) => {
     const num = parseFloat(amount);
     if (isNaN(num) || num <= 0) return false;
 
-    try {
-      const res = await api.post('/clients/deposit', { email: authUser?.email || 'sarah@apexapparel.com', amount: num });
-      if (res.data && res.data.newBalance !== undefined) {
-        setWalletBalance(res.data.newBalance);
-        showToast(`Successfully deposited $${num.toFixed(2)} to studio wallet!`, 'success');
-        return true;
-      }
-    } catch (err) {
-      console.warn('Express deposit funds fallback:', err);
+    const res = await depositWalletViaApi(num);
+    if (res.success) {
+      setWalletBalance(res.balance);
+      showToast(`Successfully deposited $${num.toFixed(2)} to studio wallet!`, 'success');
+      return true;
     }
-
-    setWalletBalance(prev => prev + num);
-    showToast(`Successfully deposited $${num.toFixed(2)} to studio wallet!`, 'success');
-    return true;
+    showToast(res.error || 'Wallet deposit failed.', 'error');
+    return false;
   };
 
   const deductWalletBalance = async (amount) => {
     const num = parseFloat(amount);
     if (isNaN(num) || num <= 0 || walletBalance < num) return false;
 
-    try {
-      const res = await api.post('/clients/deduct', { email: authUser?.email || 'sarah@apexapparel.com', amount: num });
-      if (res.data && res.data.newBalance !== undefined) {
-        setWalletBalance(res.data.newBalance);
-        return true;
-      }
-    } catch (err) {
-      console.warn('Express deduct wallet fallback:', err);
+    const res = await deductWalletViaApi(num);
+    if (res.success) {
+      setWalletBalance(res.balance);
+      return true;
     }
-
-    setWalletBalance(prev => prev - num);
-    return true;
+    showToast(res.error || 'Wallet payment failed.', 'error');
+    return false;
   };
 
   const openOrderWizard = (initialData = null) => {
@@ -1308,42 +999,119 @@ export const StateProvider = ({ children }) => {
 
   const updatePricing = (newPricing) => {
     setPricing(newPricing);
-    safeSetStorage('bdigi_pricing', newPricing);
+    saveCmsConfigToSupabase('pricing', newPricing);
   };
 
   const updatePricingCards = (newCards) => {
     setPricingCards(newCards);
-    safeSetStorage('bdigi_pricing_cards', newCards);
   };
 
   const updatePatchCards = (newCards) => {
     setPatchCards(newCards);
-    safeSetStorage('bdigi_patch_cards', newCards);
   };
 
   const updatePortfolioSamples = (newPortfolio) => {
     setPortfolioSamples(newPortfolio);
-    safeSetStorage('bdigi_portfolio', newPortfolio);
   };
 
   const updateSewOuts = (newSewOuts) => {
     setSewOuts(newSewOuts);
-    safeSetStorage('bdigi_sew_outs', newSewOuts);
   };
 
   const updateServicesList = (newServices) => {
     setServicesList(newServices);
-    safeSetStorage('bdigi_services', newServices);
   };
 
   const updateHeroSlides = (newSlides) => {
     setHeroSlides(newSlides);
-    safeSetStorage('bdigi_hero_slides', newSlides);
   };
 
   const updateSiteSettings = (newSettings) => {
     setSiteSettings(newSettings);
-    safeSetStorage('bdigi_site_settings', newSettings);
+    saveCmsConfigToSupabase('site_settings', newSettings);
+  };
+
+  const updateServiceCmsContent = (serviceKey, sectionKey, updatedData) => {
+    setServiceCmsContent(prev => {
+      const nextState = {
+        ...prev,
+        [serviceKey]: {
+          ...prev[serviceKey],
+          [sectionKey]: {
+            ...prev[serviceKey]?.[sectionKey],
+            ...updatedData
+          }
+        }
+      };
+      saveCmsConfigToSupabase('service_cms', nextState);
+      return nextState;
+    });
+    showToast(`Updated CMS content for ${serviceKey.toUpperCase()} - ${sectionKey.toUpperCase()}`, 'success');
+  };
+
+  // Reload catalog + admin data from the database (no localStorage demo seeding)
+  const resetAllData = async () => {
+    try {
+      const catalog = await fetchCatalogFromSupabase();
+      if (catalog) {
+        if (catalog.servicesList?.length) setServicesList(catalog.servicesList);
+        if (catalog.pricingCards?.length) setPricingCards(catalog.pricingCards);
+        if (catalog.patchCards?.length) setPatchCards(catalog.patchCards);
+        if (catalog.storeProducts?.length) setStoreProducts(catalog.storeProducts);
+        if (catalog.portfolioSamples?.length) setPortfolioSamples(catalog.portfolioSamples);
+        if (catalog.sewOuts?.length) setSewOuts(catalog.sewOuts);
+        if (catalog.heroSlides?.length) setHeroSlides(catalog.heroSlides);
+        if (catalog.digitizers?.length) {
+          const merged = digitizers.map(d => {
+            const fresh = catalog.digitizers.find(x => x.id === d.id);
+            return fresh ? { ...d, ...fresh } : d;
+          });
+          setDigitizers(merged);
+        }
+        if (catalog.siteSettings) setSiteSettings(catalog.siteSettings);
+        if (catalog.pricing) setPricing(catalog.pricing);
+        if (catalog.serviceCms) setServiceCmsContent(catalog.serviceCms);
+      }
+
+      const adminList = await fetchAdminUsers(authUser?.email);
+      if (adminList?.length) {
+        setAdminUsers(adminList.map(a => ({ email: a.email, name: a.name || a.email })));
+      }
+
+      showToast('Catalog refreshed from the live database.', 'success');
+      return { success: true };
+    } catch (err) {
+      showToast('Failed to refresh catalog from the database.', 'error');
+      return { success: false, error: err.message };
+    }
+  };
+
+  const addAdminUser = async (name, email, password) => {
+    const cleanName = (name || '').trim();
+    const cleanEmail = (email || '').toLowerCase().trim();
+
+    if (!cleanName || !cleanEmail) {
+      showToast('Please enter full name and email for new admin.', 'error');
+      return { success: false, error: 'Missing required fields' };
+    }
+
+    if (!authUser?.email) {
+      showToast('You must be signed in as an admin to add admins.', 'error');
+      return { success: false, error: 'Not authenticated as admin.' };
+    }
+
+    const res = await addAdminUserInSupabase(cleanName, cleanEmail, authUser.email);
+    if (res.success) {
+      setAdminUsers(prev =>
+        prev.some(a => (a.email || '').toLowerCase().trim() === cleanEmail)
+          ? prev
+          : [...prev, { email: cleanEmail, name: cleanName }]
+      );
+      showToast(`Administrator account for ${cleanName} (${cleanEmail}) created successfully!`, 'success');
+      return { success: true };
+    }
+    showToast(res.error || 'Failed to create admin.', 'error');
+    return { success: false, error: res.error };
   };
 
   return (
@@ -1372,6 +1140,7 @@ export const StateProvider = ({ children }) => {
       adminUsers, setAdminUsers, addAdminUser,
       activeHomeServiceTab, setActiveHomeServiceTab,
       serviceCmsContent, setServiceCmsContent, updateServiceCmsContent,
+      resetAllData,
       digitizers,
       isOrderWizardOpen, setIsOrderWizardOpen,
       orderWizardInitialData, openOrderWizard,

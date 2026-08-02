@@ -31,7 +31,7 @@ export const UserMenuDropdown = () => {
     authUser, 
     currentUser, 
     logout, 
-    walletBalance = 150.00,
+    walletBalance = 0,
     setIsDepositModalOpen,
     setIsOrderWizardOpen,
     showToast
@@ -66,9 +66,9 @@ export const UserMenuDropdown = () => {
   if (!mounted || !isAuthenticated) return null;
 
   const activeUser = authUser || currentUser || {
-    name: 'Sarah Jenkins',
-    email: 'sarah@apexapparel.com',
-    company: 'Apex Athletics Apparel',
+    name: 'Verified User',
+    email: '',
+    company: '',
     role: 'customer'
   };
 
@@ -93,7 +93,7 @@ export const UserMenuDropdown = () => {
     showToast('Signed out successfully', 'info');
   };
 
-  const cleanName = (activeUser?.name || 'Sarah Jenkins')
+  const cleanName = (activeUser?.name || 'Verified User')
     .replace(/\s*\([^)]*ADMIN[^)]*\)/gi, '')
     .replace(/ADMIN/gi, '')
     .trim();
@@ -106,8 +106,8 @@ export const UserMenuDropdown = () => {
     .substring(0, 2)
     .toUpperCase();
 
-  const isViewingAdmin = (mounted && currentView === 'admin') || (mounted && typeof window !== 'undefined' && window.location.pathname.includes('admin'));
-  const badgeLabel = isViewingAdmin ? 'MASTER ADMIN' : 'VERIFIED CLIENT';
+  const isViewingAdmin = activeUser?.role === 'admin' || (mounted && currentView === 'admin') || (mounted && typeof window !== 'undefined' && window.location.pathname.includes('admin'));
+  const badgeLabel = isViewingAdmin ? 'STUDIO ADMIN' : 'VERIFIED CLIENT';
 
   return (
     <div ref={dropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
@@ -168,10 +168,10 @@ export const UserMenuDropdown = () => {
           {/* Menu User Header (Compact 3-Line Layout) */}
           <div style={{ padding: '0.65rem 0.85rem', background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
             <div style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', lineHeight: 1.2 }}>
-              {cleanName || 'Sarah Jenkins'}
+              {cleanName || 'Verified User'}
             </div>
             <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginTop: '0.1rem', lineHeight: 1.2 }}>
-              {activeUser?.email || 'sarah@apexapparel.com'}
+              {activeUser?.email || 'Not signed in'}
             </div>
             <div style={{ marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <span style={{ fontSize: '0.65rem', background: '#fff7ed', color: 'var(--orange-700)', fontWeight: 800, padding: '0.1rem 0.45rem', borderRadius: '9999px', border: '1px solid var(--orange-300)', lineHeight: 1.2 }}>

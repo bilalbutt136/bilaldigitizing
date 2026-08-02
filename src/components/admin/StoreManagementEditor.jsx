@@ -519,10 +519,10 @@ export const StoreManagementEditor = () => {
                       <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
                         <span>Submitted on <strong>{order.date || 'Recent'}</strong></span>
                         <span>•</span>
-                        <span>Customer: <strong style={{ color: 'var(--navy-900)' }}>{order.clientName || 'Apex Athletics Apparel'}</strong></span>
+                        <span>Customer: <strong style={{ color: 'var(--navy-900)' }}>{order.clientName || 'Valued Client'}</strong></span>
                         <span>•</span>
                         <span style={{ color: 'var(--orange-600)', fontWeight: 700, background: '#fff7ed', padding: '0.1rem 0.5rem', borderRadius: '4px', border: '1px solid var(--orange-200)' }}>
-                          ✉️ {order.clientEmail || order.clientId || 'sarah@apexapparel.com'}
+                          ✉️ {order.clientEmail || order.clientId || 'No email on file'}
                         </span>
                       </div>
                     </div>

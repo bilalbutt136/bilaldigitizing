@@ -96,7 +96,7 @@ export async function signUpWithSupabaseAuth(name, email, password, company) {
       email: cleanEmail,
       company: cleanCompany,
       role: 'customer',
-      wallet_balance: 150.00,
+      wallet_balance: 0,
       orders_count: 0
     };
 
@@ -119,7 +119,7 @@ export async function signUpWithSupabaseAuth(name, email, password, company) {
           email: cleanEmail,
           company_name: cleanCompany,
           role: 'customer',
-          wallet_balance: 150.00,
+          wallet_balance: 0,
           orders_count: 0
         }])
         .select()
@@ -255,6 +255,7 @@ export async function fetchOrdersFromSupabase() {
     filesData = allFiles || [];
 
     const { data: revsData } = await supabase.from('revisions').select('*');
+    const { data: msgsData } = await supabase.from('order_messages').select('*');
 
     if (!ordersData) return null;
 
@@ -264,6 +265,17 @@ export async function fetchOrdersFromSupabase() {
       const queriedFiles = filesData ? filesData.filter(f => f.order_id === ord.id) : [];
       const ordFiles = [...joinedFiles, ...queriedFiles];
       const ordRevs = revsData ? revsData.filter(r => r.order_id === ord.id) : [];
+      const ordMsgs = (msgsData || [])
+        .filter(m => m.order_id === ord.id)
+        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+        .map(m => ({
+          id: m.id,
+          sender: m.sender,
+          senderRole: m.sender_role,
+          text: m.text,
+          attachments: m.attachments || [],
+          timestamp: m.created_at
+        }));
 
       const machineFiles = ordFiles
         .filter(f => f.file_type === 'finished_machine_file')
@@ -298,6 +310,7 @@ export async function fetchOrdersFromSupabase() {
         createdAt: ord.created_at,
         uploadedMachineFiles: machineFiles,
         revisions: ordRevs.map(r => ({ id: r.id, requestedBy: r.requested_by, note: r.note || r.notes, createdAt: r.created_at })),
+        messages: ordMsgs,
         history: [
           { timestamp: ord.created_at, label: `Order Created in Supabase DB` }
         ]
@@ -315,6 +328,10 @@ export async function createOrderInSupabase(newOrder) {
 
   try {
     let uploadedArtworkUrl = newOrder.artworkUrl || newOrder.image_url || newOrder.logo || newOrder.file_url || '';
+
+    // Attach the authenticated user id (auth.users) for RLS ownership
+    const { data: { session } } = await supabase.auth.getSession();
+    const currentUserId = session?.user?.id || null;
 
     // Upload artwork to Supabase Storage if dataURL or file
     if (uploadedArtworkUrl && uploadedArtworkUrl.startsWith('data:')) {
@@ -334,6 +351,7 @@ export async function createOrderInSupabase(newOrder) {
 
     const primaryDbRow = {
       id: newOrder.id,
+      user_id: currentUserId,
       title: resolvedTitle,
       description: newOrder.notes || resolvedTitle,
       client_id: newOrder.clientId || resolvedEmail,
@@ -394,6 +412,7 @@ export async function createOrderInSupabase(newOrder) {
     try {
       const fileRow = {
         order_id: newOrder.id,
+        user_id: currentUserId,
         file_name: newOrder.artworkFileName || `${newOrder.id}_artwork.png`,
         file_format: 'png',
         file_type: 'client_artwork',
@@ -506,7 +525,6 @@ export async function upsertClientInSupabase(userData) {
 
   try {
     const cleanEmail = userData.email.toLowerCase().trim();
-    if (cleanEmail === 'shahidbutt59191@gmail.com') return; // Exclude admin account from client roster
 
     const { data: existing, error: selectErr } = await supabase
       .from('clients')
@@ -547,7 +565,7 @@ export async function upsertClientInSupabase(userData) {
         .from('clients')
         .insert([{
           ...primaryPayload,
-          wallet_balance: 150.00,
+          wallet_balance: 0,
           orders_count: userData.incrementOrder ? 1 : 0
         }]);
 
@@ -561,7 +579,7 @@ export async function upsertClientInSupabase(userData) {
             email: cleanEmail,
             company_name: clientCompany,
             role: userData.role || 'customer',
-            wallet_balance: 150.00,
+            wallet_balance: 0,
             orders_count: userData.incrementOrder ? 1 : 0
           }]);
         if (fallbackErr) {
@@ -623,7 +641,7 @@ export async function depositFundsInSupabase(clientEmail, depositAmount, payment
       .eq('email', cleanEmail)
       .maybeSingle();
 
-    const currentBal = client ? parseFloat(client.wallet_balance || 0) : 150.00;
+    const currentBal = client ? parseFloat(client.wallet_balance || 0) : 0;
     const updatedBal = currentBal + amount;
 
     if (client) {
@@ -733,5 +751,343 @@ export async function saveCmsConfigToSupabase(key, value) {
   } catch (err) {
     console.warn(`Supabase upsert site_config [${key}] exception:`, err);
     return false;
+  }
+}
+
+// ============================================================
+// CATALOG (DB-driven; replaces mock catalog defaults)
+// ============================================================
+
+// Fetch the full public catalog from Supabase (services, pricing cards,
+// patch cards, store products, portfolio, sew outs, hero slides, digitizers,
+// and the site_config key/value store). Returns null when not configured.
+export async function fetchCatalogFromSupabase() {
+  if (!isSupabaseConfigured) return null;
+
+  try {
+    const [services, pricingCards, patchCards, storeProducts, portfolio, sewOuts, heroSlides, digitizers, siteConfig] =
+      await Promise.all([
+        supabase.from('services').select('*').order('sort_order', { ascending: true }),
+        supabase.from('pricing_cards').select('*').order('sort_order', { ascending: true }),
+        supabase.from('patch_cards').select('*').order('sort_order', { ascending: true }),
+        supabase.from('store_products').select('*').order('sort_order', { ascending: true }),
+        supabase.from('portfolio').select('*').order('sort_order', { ascending: true }),
+        supabase.from('sew_outs').select('*').order('sort_order', { ascending: true }),
+        supabase.from('hero_slides').select('*').order('sort_order', { ascending: true }),
+        supabase.from('digitizers').select('*').order('sort_order', { ascending: true }),
+        supabase.from('site_config').select('key, value')
+      ]);
+
+    const mapServices = (rows) => (rows || []).map(s => ({
+      id: s.id,
+      title: s.title,
+      price: s.price,
+      stitches: s.stitches,
+      time: s.time,
+      icon: s.icon,
+      route: s.route,
+      desc: s.description
+    }));
+
+    const mapCards = (rows) => (rows || []).map(c => ({
+      id: c.id,
+      category: c.category,
+      title: c.title,
+      rate: c.rate,
+      unit: c.unit,
+      badge: c.badge,
+      popular: c.popular,
+      highlight: c.highlight,
+      features: c.features || []
+    }));
+
+    const configMap = {};
+    (siteConfig.data || []).forEach(item => { configMap[item.key] = item.value; });
+
+    return {
+      servicesList: mapServices(services.data),
+      pricingCards: mapCards(pricingCards.data),
+      patchCards: mapCards(patchCards.data),
+      storeProducts: (storeProducts.data || []).map(p => ({
+        id: p.id,
+        category: p.category,
+        title: p.title,
+        price: p.price,
+        unit: p.unit,
+        minQuantity: p.min_quantity,
+        badge: p.badge,
+        status: p.status,
+        image: p.image,
+        description: p.description,
+        sizes: p.sizes || [],
+        colors: p.colors || [],
+        features: p.features || []
+      })),
+      portfolioSamples: (portfolio.data || []).map(p => ({
+        id: p.id,
+        title: p.title,
+        category: p.category,
+        stitchCount: p.stitch_count,
+        colors: p.colors,
+        originalImage: p.original_image,
+        digitizedImage: p.digitized_image,
+        description: p.description
+      })),
+      sewOuts: (sewOuts.data || []).map(s => ({
+        id: s.id,
+        title: s.title,
+        category: s.category,
+        beforeImg: s.before_img,
+        afterImg: s.after_img,
+        stitchCount: s.stitch_count,
+        formats: s.formats,
+        features: s.features || []
+      })),
+      heroSlides: (heroSlides.data || []).map(h => ({
+        id: h.id,
+        serviceKey: h.service_key,
+        badge: h.badge,
+        title: h.title,
+        highlight: h.highlight,
+        description: h.description,
+        rateLabel: h.rate_label,
+        primaryCta: h.primary_cta,
+        secondaryCta: h.secondary_cta,
+        bannerImage: h.banner_image,
+        trustPoints: h.trust_points || []
+      })),
+      digitizers: (digitizers.data || []).map(d => ({
+        id: d.id,
+        name: d.name,
+        role: d.role,
+        rating: d.rating,
+        activeJobs: d.active_jobs,
+        avatar: d.avatar
+      })),
+      siteConfig: configMap,
+      siteSettings: configMap.site_settings || null,
+      pricing: configMap.pricing || null,
+      serviceCms: configMap.service_cms || null
+    };
+  } catch (err) {
+    console.warn('Supabase fetch catalog exception:', err);
+    return null;
+  }
+}
+
+// ============================================================
+// ORDER MESSAGES (chat threads)
+// ============================================================
+
+export async function fetchOrderMessagesFromSupabase(orderId) {
+  if (!isSupabaseConfigured || !orderId) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from('order_messages')
+      .select('*')
+      .eq('order_id', orderId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.warn('Supabase fetch order messages error:', error.message);
+      return [];
+    }
+
+    return (data || []).map(m => ({
+      id: m.id,
+      sender: m.sender,
+      senderRole: m.sender_role,
+      text: m.text,
+      attachments: m.attachments || [],
+      timestamp: m.created_at
+    }));
+  } catch (err) {
+    console.warn('Supabase fetch order messages exception:', err);
+    return [];
+  }
+}
+
+export async function addOrderMessageInSupabase(orderId, text, senderName, senderRole = 'client', attachments = []) {
+  if (!isSupabaseConfigured || !orderId) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from('order_messages')
+      .insert([{
+        order_id: orderId,
+        sender: senderName || (senderRole === 'admin' ? 'Master Admin' : 'Client'),
+        sender_role: senderRole,
+        text: text || '',
+        attachments: attachments || []
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.warn('Supabase add order message error:', error.message);
+      return null;
+    }
+
+    return {
+      id: data.id,
+      sender: data.sender,
+      senderRole: data.sender_role,
+      text: data.text,
+      attachments: data.attachments || [],
+      timestamp: data.created_at
+    };
+  } catch (err) {
+    console.warn('Supabase add order message exception:', err);
+    return null;
+  }
+}
+
+// ============================================================
+// ADMIN SESSION (server-verified via /api/admin/session)
+// ============================================================
+
+export async function verifyAdminSession(email) {
+  if (!email) return { success: false, isAdmin: false };
+
+  try {
+    const res = await fetch('/api/admin/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const json = await res.json();
+    return { success: Boolean(json?.success), isAdmin: Boolean(json?.isAdmin), admin: json?.admin || null };
+  } catch (err) {
+    console.warn('Admin session verification exception:', err);
+    return { success: false, isAdmin: false };
+  }
+}
+
+export async function fetchAdminUsers(email) {
+  try {
+    const res = await fetch('/api/admin/users', {
+      method: 'GET',
+      headers: { 'x-admin-email': email || '' }
+    });
+    const json = await res.json();
+    return json?.admins || [];
+  } catch (err) {
+    console.warn('Fetch admin users exception:', err);
+    return [];
+  }
+}
+
+export async function addAdminUserInSupabase(name, email, callerEmail) {
+  try {
+    const res = await fetch('/api/admin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, callerEmail })
+    });
+    const json = await res.json();
+    if (!json?.success) {
+      return { success: false, error: json?.error || 'Failed to add admin.' };
+    }
+    return { success: true, admin: json.admin };
+  } catch (err) {
+    return { success: false, error: err.message || 'Failed to add admin.' };
+  }
+}
+
+export async function removeAdminUserInSupabase(email, callerEmail) {
+  try {
+    const res = await fetch(`/api/admin/users?email=${encodeURIComponent(email)}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-email': callerEmail || '' }
+    });
+    const json = await res.json();
+    if (!json?.success) {
+      return { success: false, error: json?.error || 'Failed to remove admin.' };
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message || 'Failed to remove admin.' };
+  }
+}
+
+// ============================================================
+// WALLET (server-side ledger via /api/wallet)
+// ============================================================
+
+export async function depositWalletViaApi(amount, paymentMethod = 'Card / Manual') {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) return { success: false, error: 'Not authenticated.' };
+
+    const res = await fetch('/api/wallet', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ action: 'deposit', amount, paymentMethod })
+    });
+    const json = await res.json();
+    if (!json?.success) return { success: false, error: json?.error || 'Deposit failed.' };
+    return { success: true, balance: json.balance };
+  } catch (err) {
+    return { success: false, error: err.message || 'Deposit failed.' };
+  }
+}
+
+export async function deductWalletViaApi(amount, paymentMethod = 'Studio Wallet Credit') {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) return { success: false, error: 'Not authenticated.' };
+
+    const res = await fetch('/api/wallet', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ action: 'deduct', amount, paymentMethod })
+    });
+    const json = await res.json();
+    if (!json?.success) return { success: false, error: json?.error || 'Payment failed.' };
+    return { success: true, balance: json.balance };
+  } catch (err) {
+    return { success: false, error: err.message || 'Payment failed.' };
+  }
+}
+
+// ============================================================
+// SESSION / EMAIL VERIFICATION HELPERS
+// ============================================================
+
+// Resolve the current authenticated session into a user record.
+export async function getCurrentSupabaseUser() {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return null;
+    return session.user;
+  } catch (err) {
+    return null;
+  }
+}
+
+// Read the authenticated user's wallet balance from the clients table.
+export async function fetchWalletBalanceFromSupabase(email) {
+  if (!isSupabaseConfigured || !email) return 0;
+  try {
+    const { data, error } = await supabase
+      .from('clients')
+      .select('wallet_balance')
+      .eq('email', email.toLowerCase().trim())
+      .maybeSingle();
+
+    if (error || !data) return 0;
+    return parseFloat(data.wallet_balance || 0);
+  } catch (err) {
+    return 0;
   }
 }

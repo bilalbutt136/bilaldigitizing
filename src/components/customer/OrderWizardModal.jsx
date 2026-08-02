@@ -33,7 +33,7 @@ export const OrderWizardModal = () => {
     orderWizardInitialData,
     createOrder,
     pricing,
-    walletBalance = 150.00,
+    walletBalance = 0,
     deductWalletBalance,
     setIsDepositModalOpen,
     authUser

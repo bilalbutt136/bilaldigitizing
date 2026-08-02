@@ -113,7 +113,7 @@ export const SecureAdminLogin = () => {
               <input 
                 type="email" 
                 className="form-control"
-                placeholder="shahidbutt59191@gmail.com"
+                placeholder="admin@example.com"
                 value={adminEmail}
                 onChange={(e) => { setAdminEmail(e.target.value); setAdminError(''); }}
                 style={{ paddingLeft: '2.4rem' }}

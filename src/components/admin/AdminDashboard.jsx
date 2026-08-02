@@ -68,11 +68,10 @@ export const AdminDashboard = () => {
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
   const [newAdminName, setNewAdminName] = useState('');
   const [newAdminEmail, setNewAdminEmail] = useState('');
-  const [newAdminPassword, setNewAdminPassword] = useState('');
 
   // Settings State Form
-  const [metaPixelId, setMetaPixelId] = useState(siteSettings.metaPixelId || '123456789098765');
-  const [adminEmail, setAdminEmail] = useState(siteSettings.adminEmail || 'shahidbutt59191@gmail.com');
+  const [metaPixelId, setMetaPixelId] = useState(siteSettings.metaPixelId || '');
+  const [adminEmail, setAdminEmail] = useState(authUser?.email || '');
 
   React.useEffect(() => {
     if (siteSettings?.adminEmail) {
@@ -86,11 +85,8 @@ export const AdminDashboard = () => {
     setMounted(true);
   }, []);
 
-  const configuredAdminEmail = (siteSettings?.adminEmail || 'shahidbutt59191@gmail.com').toLowerCase().trim();
-  const isMasterAdmin = mounted && isAuthenticated && (
-    authUser?.email?.toLowerCase().trim() === configuredAdminEmail ||
-    authUser?.email?.toLowerCase().trim() === 'shahidbutt59191@gmail.com'
-  );
+  const configuredAdminEmail = (siteSettings?.adminEmail || authUser?.email || '').toLowerCase().trim();
+  const isMasterAdmin = mounted && isAuthenticated && authUser?.role === 'admin';
 
   if (!mounted) {
     return (
@@ -516,9 +512,9 @@ export const AdminDashboard = () => {
               type="button"
               className="btn btn-outline btn-sm"
               onClick={resetAllData}
-              title="Reset mock data to initial state"
+              title="Refresh catalog and admin data from the live database"
             >
-              <RefreshCw size={14} /> Reset Demo Data
+              <RefreshCw size={14} /> Refresh Catalog
             </button>
 
             <button 
@@ -621,11 +617,11 @@ export const AdminDashboard = () => {
                   className="form-control" 
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
-                  placeholder="shahidbutt59191@gmail.com"
+                  placeholder="admin@example.com"
                   required
                 />
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.3rem', display: 'block' }}>
-                  This email address has master access to the Operations Desk.
+                  Contact / support email displayed across the studio.
                 </span>
               </div>
 
@@ -638,7 +634,7 @@ export const AdminDashboard = () => {
                   className="form-control" 
                   value={metaPixelId}
                   onChange={(e) => setMetaPixelId(e.target.value)}
-                  placeholder="123456789098765"
+                  placeholder="e.g. 123456789098765"
                 />
               </div>
 
@@ -673,10 +669,10 @@ export const AdminDashboard = () => {
                 <div style={{ padding: '0.9rem 1.15rem', background: '#f8fafc', borderRadius: '12px', border: '1.5px solid #ff7a00', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span>Shahid Butt</span>
+                      <span>{authUser?.name || 'Studio Administrator'}</span>
                       <span style={{ background: '#ff7a00', color: '#fff', fontSize: '0.65rem', padding: '0.15rem 0.5rem', borderRadius: '10px', fontWeight: 900 }}>MASTER ADMIN</span>
                     </div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>shahidbutt59191@gmail.com</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>{authUser?.email || configuredAdminEmail}</div>
                   </div>
                   <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#10b981', background: '#ecfdf5', padding: '0.25rem 0.65rem', borderRadius: '8px' }}>
                     Active
@@ -684,8 +680,8 @@ export const AdminDashboard = () => {
                 </div>
 
                 {/* Additional Registered Admins */}
-                {(adminUsers || []).filter(a => (a.email || '').toLowerCase().trim() !== 'shahidbutt59191@gmail.com').map((ad) => (
-                  <div key={ad.id} style={{ padding: '0.9rem 1.15rem', background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                {(adminUsers || []).filter(a => (a.email || '').toLowerCase().trim() !== (authUser?.email || '').toLowerCase().trim()).map((ad) => (
+                  <div key={ad.email || ad.id} style={{ padding: '0.9rem 1.15rem', background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
                       <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <span>{ad.name}</span>
@@ -749,11 +745,10 @@ export const AdminDashboard = () => {
 
               <form onSubmit={async (e) => {
                 e.preventDefault();
-                const res = await addAdminUser(newAdminName, newAdminEmail, newAdminPassword);
+                const res = await addAdminUser(newAdminName, newAdminEmail);
                 if (res && res.success) {
                   setNewAdminName('');
                   setNewAdminEmail('');
-                  setNewAdminPassword('');
                   setShowAddAdminModal(false);
                 }
               }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -783,20 +778,9 @@ export const AdminDashboard = () => {
                     onChange={(e) => setNewAdminEmail(e.target.value)} 
                     required 
                   />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.25rem', display: 'block' }}>
-                    Admin Password *
-                  </label>
-                  <input 
-                    type="password" 
-                    className="form-control" 
-                    placeholder="Min 6 characters" 
-                    value={newAdminPassword} 
-                    onChange={(e) => setNewAdminPassword(e.target.value)} 
-                    required 
-                  />
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.3rem', display: 'block' }}>
+                    This email is whitelisted for admin access. The person signs in with their own Supabase account credentials.
+                  </span>
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>

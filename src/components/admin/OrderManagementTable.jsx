@@ -394,22 +394,7 @@ export const OrderManagementTable = () => {
 
                     {/* 6. STATUS */}
                     <td style={{ padding: '1rem' }}>
-                      <div style={{ marginBottom: '0.35rem' }}>
-                        {getStatusBadge(ord.status)}
-                      </div>
-                      <select 
-                        value={ord.status || 'submitted'} 
-                        onChange={(e) => updateOrderStatus(ord.id, e.target.value)}
-                        className="form-control"
-                        style={{ fontSize: '0.725rem', padding: '0.2rem 0.4rem', fontWeight: 700, borderRadius: '6px', cursor: 'pointer' }}
-                      >
-                        <option value="submitted">🔴 New / Pending</option>
-                        <option value="digitizing">⚡ In Progress</option>
-                        <option value="revision">🔄 In Revision</option>
-                        <option value="delivered">📦 Delivered</option>
-                        <option value="completed">✅ Completed</option>
-                        <option value="cancelled">❌ Cancelled</option>
-                      </select>
+                      {getStatusBadge(ord.status)}
                     </td>
 
                     {/* 7. ARTWORK */}

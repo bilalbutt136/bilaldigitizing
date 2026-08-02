@@ -184,13 +184,13 @@ export const OrderTrackerDrawer = () => {
     const existingFiles = ord.uploadedMachineFiles || [];
     const updatedFiles = [...adminFilesList, ...existingFiles];
 
-    updateOrderStatus(ord.id, 'completed', {
+    updateOrderStatus(ord.id, 'delivered', {
       outputFileUrl: adminFilesList[0].name,
       uploadedMachineFiles: updatedFiles
     });
 
     setAdminFilesList([]);
-    showToast(`${adminFilesList.length} finished machine package(s) published successfully! Client downloads unlocked.`, 'success');
+    showToast(`${adminFilesList.length} finished machine package(s) delivered to client! Status updated to DELIVERED.`, 'success');
   };
 
   // Helper to download specific uploaded or simulated machine file
@@ -602,72 +602,7 @@ export const OrderTrackerDrawer = () => {
                 </div>
               </div>
 
-              {/* Admin Quick Lifecycle Stage Transition Bar */}
-              {isAdmin && (
-                <div style={{
-                  background: 'var(--navy-950)',
-                  color: '#ffffff',
-                  padding: '1rem 1.25rem',
-                  borderRadius: '12px',
-                  marginBottom: '1.75rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '0.75rem'
-                }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--orange-500)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <ShieldCheck size={18} /> Master Admin Order Stage Controls:
-                  </div>
 
-                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline"
-                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', color: '#ffffff', borderColor: 'rgba(255,255,255,0.3)' }}
-                      onClick={() => updateOrderStatus(ord.id, 'digitizing')}
-                    >
-                      ⚡ Start Digitizing
-                    </button>
-
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline"
-                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', color: '#f59e0b', borderColor: '#f59e0b' }}
-                      onClick={() => updateOrderStatus(ord.id, 'revision')}
-                    >
-                      🔄 Put in Revision
-                    </button>
-
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-primary-orange"
-                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
-                      onClick={() => updateOrderStatus(ord.id, 'delivered')}
-                    >
-                      📦 Deliver Machine Package
-                    </button>
-
-                    <button
-                      type="button"
-                      className="btn btn-sm"
-                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', background: '#10b981', color: '#ffffff', border: 'none' }}
-                      onClick={() => updateOrderStatus(ord.id, 'completed')}
-                    >
-                      ✅ Complete Order
-                    </button>
-
-                    <button
-                      type="button"
-                      className="btn btn-sm"
-                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', background: '#dc2626', color: '#ffffff', border: 'none' }}
-                      onClick={() => cancelOrder(ord.id)}
-                    >
-                      ❌ Cancel Order
-                    </button>
-                  </div>
-                </div>
-              )}
 
               {/* Brief Specs & Product Artwork Details Grid */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
@@ -899,6 +834,77 @@ export const OrderTrackerDrawer = () => {
                   </button>
                 </div>
               </div>
+
+              {/* FIVERR-STYLE DELIVERED ORDER CLIENT ACTION BANNER */}
+              {(ord.status === 'delivered' || ord.uploadedMachineFiles?.length > 0 || ord.status === 'completed') && (
+                <div style={{
+                  background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                  border: '1.5px solid var(--orange-500)',
+                  borderRadius: '14px',
+                  padding: '1.5rem',
+                  marginBottom: '1.75rem',
+                  color: '#ffffff',
+                  boxShadow: '0 10px 25px rgba(15, 23, 42, 0.15)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <PackageCheck size={16} /> Production Machine Package Delivered
+                      </div>
+                      <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                        {ord.status === 'completed' ? '✅ Order Completed & Accepted' : '📦 Your Machine Package is Ready for Review'}
+                      </h4>
+                      <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '0.35rem', marginBottom: 0, maxWidth: '580px', lineHeight: 1.5 }}>
+                        {ord.status === 'completed' 
+                          ? 'This order has been accepted and completed. Downloadable production files remain accessible anytime in your client hub.'
+                          : 'Master digitizer files (.DST, .PES, .EMB, .PDF) are unlocked below. Test stitch your sample or inspect the worksheet, then accept or request modifications.'
+                        }
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                      {ord.status !== 'completed' && (
+                        <>
+                          <button
+                            type="button"
+                            className="btn btn-primary-orange"
+                            onClick={() => {
+                              updateOrderStatus(ord.id, 'completed', { isPaid: true, paymentStatus: 'Paid' });
+                              showToast(`Order ${formatOrderId(ord.id)} completed & accepted! Thank you for choosing Bilal Digitizing.`, 'success');
+                            }}
+                            style={{
+                              fontWeight: 800,
+                              fontSize: '0.85rem',
+                              padding: '0.55rem 1.15rem',
+                              gap: '0.4rem',
+                              boxShadow: '0 4px 14px rgba(249, 115, 22, 0.4)'
+                            }}
+                          >
+                            <CheckCircle2 size={16} /> Complete Order
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn btn-outline"
+                            onClick={() => setActiveTab('revisions')}
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.1)',
+                              color: '#ffffff',
+                              borderColor: 'rgba(255, 255, 255, 0.3)',
+                              fontWeight: 700,
+                              fontSize: '0.85rem',
+                              padding: '0.55rem 1.15rem',
+                              gap: '0.4rem'
+                            }}
+                          >
+                            <RotateCcw size={16} /> Request Modification / Revision
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* SECTION 2: Comprehensive Machine Formats & Production Worksheet (.DST, .PES, .EMB, .JEF, .EXP, .HUS, .VP3, .PDF) */}
               <div>

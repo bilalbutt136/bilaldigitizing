@@ -46,9 +46,9 @@ import { VectorArtPage } from '../public/VectorArtPage';
 import { CustomPatchesSection } from '../public/CustomPatchesSection';
 
 const DEFAULT_USER = {
-  name: 'Sarah Jenkins',
-  email: 'sarah@apexapparel.com',
-  company: 'Apex Athletics Apparel',
+  name: 'Valued Client',
+  email: '',
+  company: '',
   role: 'customer'
 };
 
@@ -61,7 +61,7 @@ export const CustomerDashboard = () => {
     setIsOrderWizardOpen, 
     openOrderWizard,
     setSelectedOrderForDrawer,
-    walletBalance = 150.00,
+    walletBalance = 0,
     setIsDepositModalOpen,
     showToast,
     logout
@@ -115,7 +115,7 @@ export const CustomerDashboard = () => {
   };
 
   // Filter client's orders by exact service category
-  const myOrders = (orders || []).filter(o => o?.clientEmail === userEmail || o?.clientEmail === 'sarah@apexapparel.com');
+  const myOrders = (orders || []).filter(o => o?.clientEmail === userEmail);
 
   // 1. Strictly Embroidery Digitizing Orders ONLY
   const digitizingOrders = myOrders.filter(isEmbroideryOrder);

@@ -127,7 +127,7 @@ export const Footer = () => {
                 Client Dashboard Access
               </button>
             )}
-            {safeIsAuthenticated && safeAuthUser?.email?.toLowerCase().trim() === 'shahidbutt59191@gmail.com' && (
+            {safeIsAuthenticated && safeAuthUser?.role === 'admin' && (
               <button 
                 onClick={() => setCurrentView('admin')}
                 style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', fontSize: '0.8rem' }}

@@ -1,5 +1,4 @@
 import '../src/index.css';
-import '../src/App.css';
 import './globals.css';
 import { Suspense } from 'react';
 import { StateProvider } from '../src/context/StateContext';

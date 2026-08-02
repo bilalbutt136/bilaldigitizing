@@ -13,8 +13,8 @@ envContent.split('\n').forEach(line => {
   }
 });
 
-const supabaseUrl = envVars.NEXT_PUBLIC_SUPABASE_URL || envVars.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = envVars.NEXT_PUBLIC_SUPABASE_ANON_KEY || envVars.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = envVars.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = envVars.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 console.log('--- TESTING NEW SUPABASE CONNECTION ---');
 console.log('Project URL:', supabaseUrl);

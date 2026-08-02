@@ -27,7 +27,7 @@ export const VectorArtPage = () => {
   const { 
     createOrder, 
     pricing, 
-    walletBalance = 150.00, 
+    walletBalance = 0, 
     deductWalletBalance, 
     setIsDepositModalOpen,
     isAuthenticated,
