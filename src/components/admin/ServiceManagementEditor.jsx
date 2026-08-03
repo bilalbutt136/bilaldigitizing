@@ -17,14 +17,15 @@ import {
 export const ServiceManagementEditor = () => {
   const { 
     pricing, 
-    setPricing, 
+    updatePricing, 
     pricingCards = [], 
-    setPricingCards, 
+    updatePricingCards, 
     patchCards = [], 
-    setPatchCards, 
-    setStoreProducts, 
+    updatePatchCards, 
+    storeProducts = [],
+    updateStoreProducts, 
     servicesList = [], 
-    setServicesList,
+    updateServicesList,
     showToast 
   } = useAppState();
 
@@ -60,13 +61,8 @@ export const ServiceManagementEditor = () => {
 
   const handleBasePricingSave = (e) => {
     e.preventDefault();
-    setPricing(prev => ({
-      ...prev,
-      ...basePricing
-    }));
-    try {
-      localStorage.setItem('bdigi_pricing', JSON.stringify({ ...pricing, ...basePricing }));
-    } catch {}
+    const next = { ...pricing, ...basePricing };
+    if (updatePricing) updatePricing(next);
     showToast('Base pricing rates updated successfully!', 'success');
   };
 
@@ -133,33 +129,21 @@ export const ServiceManagementEditor = () => {
     };
 
     if (activeCategory === 'embroidery') {
-      setPricingCards(prev => {
-        const exists = prev.some(p => p.id === updatedObj.id);
-        const next = exists ? prev.map(p => p.id === updatedObj.id ? updatedObj : p) : [...prev, updatedObj];
-        try { localStorage.setItem('bdigi_pricing_cards', JSON.stringify(next)); } catch {}
-        return next;
-      });
+      const exists = (pricingCards || []).some(p => p.id === updatedObj.id);
+      const next = exists ? pricingCards.map(p => p.id === updatedObj.id ? updatedObj : p) : [...pricingCards, updatedObj];
+      if (updatePricingCards) updatePricingCards(next);
     } else if (activeCategory === 'patches') {
-      setPatchCards(prev => {
-        const exists = prev.some(p => p.id === updatedObj.id);
-        const next = exists ? prev.map(p => p.id === updatedObj.id ? updatedObj : p) : [...prev, updatedObj];
-        try { localStorage.setItem('bdigi_patch_cards', JSON.stringify(next)); } catch {}
-        return next;
-      });
+      const exists = (patchCards || []).some(p => p.id === updatedObj.id);
+      const next = exists ? patchCards.map(p => p.id === updatedObj.id ? updatedObj : p) : [...patchCards, updatedObj];
+      if (updatePatchCards) updatePatchCards(next);
     } else if (activeCategory === 'store') {
-      setStoreProducts(prev => {
-        const exists = prev.some(p => p.id === updatedObj.id);
-        const next = exists ? prev.map(p => p.id === updatedObj.id ? updatedObj : p) : [...prev, updatedObj];
-        try { localStorage.setItem('bdigi_store_products', JSON.stringify(next)); } catch {}
-        return next;
-      });
+      const exists = (storeProducts || []).some(p => p.id === updatedObj.id);
+      const next = exists ? storeProducts.map(p => p.id === updatedObj.id ? updatedObj : p) : [...storeProducts, updatedObj];
+      if (updateStoreProducts) updateStoreProducts(next);
     } else {
-      setServicesList(prev => {
-        const exists = prev.some(p => p.id === updatedObj.id);
-        const next = exists ? prev.map(p => p.id === updatedObj.id ? updatedObj : p) : [...prev, updatedObj];
-        try { localStorage.setItem('bdigi_services_list', JSON.stringify(next)); } catch {}
-        return next;
-      });
+      const exists = (servicesList || []).some(p => p.id === updatedObj.id);
+      const next = exists ? servicesList.map(p => p.id === updatedObj.id ? updatedObj : p) : [...servicesList, updatedObj];
+      if (updateServicesList) updateServicesList(next);
     }
 
     showToast(`Service "${formData.title}" saved successfully!`, 'success');
@@ -171,11 +155,14 @@ export const ServiceManagementEditor = () => {
     if (!window.confirm('Are you sure you want to delete this service tier?')) return;
 
     if (activeCategory === 'embroidery') {
-      setPricingCards(prev => prev.filter(p => p.id !== idToDelete));
+      const next = (pricingCards || []).filter(p => p.id !== idToDelete);
+      if (updatePricingCards) updatePricingCards(next);
     } else if (activeCategory === 'patches') {
-      setPatchCards(prev => prev.filter(p => p.id !== idToDelete));
+      const next = (patchCards || []).filter(p => p.id !== idToDelete);
+      if (updatePatchCards) updatePatchCards(next);
     } else {
-      setServicesList(prev => prev.filter(p => p.id !== idToDelete));
+      const next = (servicesList || []).filter(p => p.id !== idToDelete);
+      if (updateServicesList) updateServicesList(next);
     }
 
     showToast('Service tier removed', 'info');

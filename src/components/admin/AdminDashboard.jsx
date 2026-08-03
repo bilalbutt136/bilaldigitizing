@@ -264,7 +264,7 @@ export const AdminDashboard = () => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {navigationSections.map((sec, idx) => (
+                {menuSections.map((sec, idx) => (
                   <div key={idx}>
                     <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>
                       {sec.title}
