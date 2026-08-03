@@ -6,6 +6,7 @@ import { OrderManagementTable } from './OrderManagementTable';
 import { ClientDirectory } from './ClientDirectory';
 import { PricingSettingsModal } from './PricingSettingsModal';
 import { SiteCmsEditor } from './SiteCmsEditor';
+import { BoltPayoutsAdmin } from './BoltPayoutsAdmin';
 import { ServiceManagementEditor } from './ServiceManagementEditor';
 import { AdminChatInbox } from './AdminChatInbox';
 import { 
@@ -24,6 +25,7 @@ import {
   Menu,
   X,
   ShieldCheck,
+  DollarSign,
   UserPlus
 } from 'lucide-react';
 
@@ -155,7 +157,8 @@ export const AdminDashboard = () => {
       title: 'CONTENT & SUPPORT',
       items: [
         { id: 'chat', label: 'Live Chat', icon: MessageSquare, badge: 2 },
-        { id: 'heroslider', label: 'Hero Slider', icon: Image, tag: 'CMS' }
+        { id: 'heroslider', label: 'Hero Slider', icon: Image, tag: 'CMS' },
+        { id: 'boltpayouts', label: 'Payment Hub', icon: DollarSign, tag: 'Gateway' }
       ]
     },
     {
@@ -218,6 +221,7 @@ export const AdminDashboard = () => {
               {activeTab === 'clients' && 'Client Directory'}
               {activeTab === 'chat' && 'Inbox & Support'}
               {activeTab === 'settings' && 'Studio Settings'}
+              {activeTab === 'boltpayouts' && 'BoltPayouts Gateway'}
             </h3>
           </div>
         </div>
@@ -589,6 +593,7 @@ export const AdminDashboard = () => {
         {activeTab === 'clients' && <ClientDirectory />}
         {activeTab === 'chat' && <AdminChatInbox />}
         {activeTab === 'heroslider' && <SiteCmsEditor />}
+        {activeTab === 'boltpayouts' && <BoltPayoutsAdmin />}
 
         {(activeTab === 'settings' || activeTab === 'admintam') && (
           <div className="card" style={{ padding: '2rem', maxWidth: '760px', background: '#ffffff', borderRadius: '16px' }}>
