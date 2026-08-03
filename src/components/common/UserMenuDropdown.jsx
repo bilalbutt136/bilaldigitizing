@@ -102,7 +102,10 @@ export const UserMenuDropdown = () => {
     .substring(0, 2)
     .toUpperCase();
 
-  const isViewingAdmin = activeUser?.role === 'admin' || (mounted && currentView === 'admin') || (mounted && typeof window !== 'undefined' && window.location.pathname.includes('admin'));
+  const isViewingAdmin = 
+    activeUser?.role === 'admin' || 
+    (mounted && currentView === 'admin') || 
+    (mounted && typeof window !== 'undefined' && window.location && window.location.pathname.includes('admin'));
   const badgeLabel = isViewingAdmin ? 'STUDIO ADMIN' : 'VERIFIED CLIENT';
 
   return (

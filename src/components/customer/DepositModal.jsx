@@ -38,7 +38,8 @@ export const DepositModal = () => {
 
     setIsProcessing(true);
 
-    const redirectUrl = `${window.location.origin}/client-portal?bolt_status=success&amount=${amount}`;
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://bdigitizing.pro';
+    const redirectUrl = `${origin}/client-portal?bolt_status=success&amount=${amount}`;
     const boltGatewayUrl = `https://www.boltpayouts.xyz/pay/boltpayouts?amount=${amount}&currency=USD&email=${encodeURIComponent(authUser?.email || 'client@bilaldigitizing.pro')}&return_url=${encodeURIComponent(redirectUrl)}`;
 
     // Launch BoltPayouts secure checkout interface immediately
