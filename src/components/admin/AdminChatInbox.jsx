@@ -60,6 +60,7 @@ export const AdminChatInbox = () => {
   const { showToast, setSelectedOrderForDrawer, orders = [] } = useAppState();
 
   const [conversations, setConversations] = useState(() => {
+    if (typeof window === 'undefined') return deduplicateThreads(INITIAL_CONVERSATIONS);
     try {
       const saved = localStorage.getItem('bdigi_admin_chats');
       const parsed = saved ? JSON.parse(saved) : INITIAL_CONVERSATIONS;
