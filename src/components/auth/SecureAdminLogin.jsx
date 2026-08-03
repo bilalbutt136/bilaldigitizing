@@ -115,6 +115,9 @@ export const SecureAdminLogin = () => {
               <Mail size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
               <input 
                 type="email" 
+                name="email"
+                id="admin-email"
+                autoComplete="email"
                 className="form-control"
                 placeholder="admin@bdigitizing.pro"
                 value={adminEmail}
@@ -126,11 +129,14 @@ export const SecureAdminLogin = () => {
           </div>
 
           <div className="form-group" style={{ marginBottom: '1.75rem' }}>
-            <label style={{ color: 'var(--navy-900)', fontWeight: 700 }}>Security Key / Password</label>
+            <label htmlFor="admin-password" style={{ color: 'var(--navy-900)', fontWeight: 700 }}>Security Key / Password</label>
             <div style={{ position: 'relative' }}>
               <Lock size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
               <input 
                 type="password" 
+                name="password"
+                id="admin-password"
+                autoComplete="current-password"
                 className="form-control"
                 placeholder="••••••••••••"
                 value={adminPassword}

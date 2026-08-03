@@ -681,8 +681,8 @@ export const AuthModal = () => {
                   <input 
                     type="email" 
                     id="email"
-                    name="username"
-                    autoComplete="username"
+                    name="email"
+                    autoComplete="email"
                     className="form-control"
                     placeholder="name@company.com"
                     value={loginEmail}
