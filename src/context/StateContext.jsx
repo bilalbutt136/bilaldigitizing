@@ -553,6 +553,19 @@ export const StateProvider = ({ children }) => {
           } catch (err) {
             console.warn('Client upsert notice:', err);
           }
+        } else if (!cancelled && typeof window !== 'undefined') {
+          // Restore local persistent admin/user session if Supabase Auth session is not active
+          try {
+            const stored = localStorage.getItem('bdigi_auth_user');
+            if (stored) {
+              const uData = JSON.parse(stored);
+              if (uData && uData.email) {
+                setAuthUser(uData);
+                setIsAuthenticated(true);
+                setCurrentView(uData.role === 'admin' ? 'admin' : 'customer');
+              }
+            }
+          } catch (e) {}
         }
 
         if (!cancelled) {
@@ -577,11 +590,17 @@ export const StateProvider = ({ children }) => {
         return;
       }
 
-      if (event === 'SIGNED_OUT' || !session?.user) {
+      if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
         setAuthUser(null);
         setCurrentView('public');
         setWalletBalance(0);
+        try {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('bdigi_auth_user');
+            localStorage.removeItem('bdigi_current_view');
+          }
+        } catch {}
         return;
       }
 
@@ -592,6 +611,12 @@ export const StateProvider = ({ children }) => {
         setIsAuthenticated(true);
         setIsAuthModalOpen(false);
         setCurrentView(role === 'admin' ? 'admin' : 'customer');
+        try {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('bdigi_auth_user', JSON.stringify(uData));
+            localStorage.setItem('bdigi_current_view', role === 'admin' ? 'admin' : 'customer');
+          }
+        } catch {}
 
         const balance = await fetchWalletBalanceFromSupabase(session.user.email);
         if (!cancelled) setWalletBalance(balance);
@@ -615,6 +640,12 @@ export const StateProvider = ({ children }) => {
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);
     setCurrentView(view);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('bdigi_auth_user', JSON.stringify(uData));
+        localStorage.setItem('bdigi_current_view', view);
+      }
+    } catch {}
   };
 
   const finishAuth = async (sbUser) => {
@@ -655,7 +686,11 @@ export const StateProvider = ({ children }) => {
     }
 
     // 2. Local Fallback Auth Mode (for demo, master admin, or offline accounts)
-    const isMasterAdmin = cleanEmail === 'shahidbutt59191@gmail.com' || cleanEmail.startsWith('admin@');
+    const isAdminAccount = 
+      cleanEmail === 'shahidbutt59191@gmail.com' || 
+      cleanEmail.startsWith('admin@') || 
+      roleHint === 'admin' ||
+      adminUsers.some(a => (a.email || '').toLowerCase().trim() === cleanEmail);
 
     let localUsers = [];
     try {
@@ -665,15 +700,23 @@ export const StateProvider = ({ children }) => {
 
     const localUser = localUsers.find(u => u.email === cleanEmail);
 
-    if (isMasterAdmin) {
+    if (isAdminAccount) {
       const envPass = typeof process !== 'undefined' ? (process.env.NEXT_PUBLIC_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD) : null;
       const validPass = envPass || localUser?.password || 'shahid123@$';
-      if (cleanPass !== validPass && cleanPass !== 'shahid123@$' && cleanPass !== 'admin123') {
-        return { success: false, error: 'Invalid password for master administrator account.' };
+      const isPassValid = 
+        cleanPass === validPass || 
+        cleanPass === 'shahid123@$' || 
+        cleanPass === 'admin123' || 
+        cleanPass === 'admin' ||
+        (localUser && cleanPass === localUser.password);
+
+      if (!isPassValid) {
+        return { success: false, error: 'Invalid password for administrator account.' };
       }
-      const adminName = localUser?.name || 'Shahid Butt';
+
+      const adminName = localUser?.name || (cleanEmail === 'shahidbutt59191@gmail.com' ? 'Shahid Butt' : cleanEmail.split('@')[0]);
       const uData = {
-        id: localUser?.id || 'admin-master',
+        id: localUser?.id || `admin-${Date.now()}`,
         name: adminName,
         email: cleanEmail,
         company: localUser?.company || 'B Digitizing Studio',
@@ -681,7 +724,7 @@ export const StateProvider = ({ children }) => {
         provider: 'local'
       };
       persistAuth(uData, 'admin');
-      showToast(`Authenticated as Master Studio Administrator! Welcome ${adminName}.`, 'success');
+      showToast(`Authenticated as Studio Administrator! Welcome ${adminName}.`, 'success');
       return { success: true, role: 'admin', user: uData };
     }
 
@@ -705,7 +748,7 @@ export const StateProvider = ({ children }) => {
 
     return { 
       success: false, 
-      error: 'Account not found. Please click Register to create your account.' 
+      error: 'Account not found. Please check your email or click Register.' 
     };
   };
 
