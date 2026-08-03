@@ -6,10 +6,12 @@ import { AdminDashboard } from '../../src/components/admin/AdminDashboard';
 import { useRouter } from 'next/navigation';
 
 export function AdminPortalClient() {
-  const { setCurrentView, isAuthenticated, authUser } = useAppState();
+  const { setCurrentView, isAuthenticated, isAuthInitialized, authUser } = useAppState();
   const router = useRouter();
 
   useEffect(() => {
+    if (!isAuthInitialized) return;
+
     const isMasterAdmin = isAuthenticated && authUser?.role === 'admin';
 
     if (!isMasterAdmin) {
@@ -21,7 +23,7 @@ export function AdminPortalClient() {
     } else {
       setCurrentView('admin');
     }
-  }, [isAuthenticated, authUser, setCurrentView, router]);
+  }, [isAuthenticated, isAuthInitialized, authUser, setCurrentView, router]);
 
   return <AdminDashboard />;
 }

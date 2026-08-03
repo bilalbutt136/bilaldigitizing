@@ -5,9 +5,11 @@ import { useAppState } from '../../src/context/StateContext';
 import { CustomerDashboard } from '../../src/components/customer/CustomerDashboard';
 
 export function ClientPortalClient() {
-  const { setCurrentView, isAuthenticated, setIsAuthModalOpen, setAuthModalMode } = useAppState();
+  const { setCurrentView, isAuthenticated, isAuthInitialized, setIsAuthModalOpen, setAuthModalMode } = useAppState();
 
   useEffect(() => {
+    if (!isAuthInitialized) return;
+    
     if (!isAuthenticated) {
       setAuthModalMode('login');
       setIsAuthModalOpen(true);
@@ -15,7 +17,7 @@ export function ClientPortalClient() {
     } else {
       setCurrentView('customer');
     }
-  }, [isAuthenticated, setCurrentView, setIsAuthModalOpen, setAuthModalMode]);
+  }, [isAuthenticated, isAuthInitialized, setCurrentView, setIsAuthModalOpen, setAuthModalMode]);
 
   return <CustomerDashboard />;
 }

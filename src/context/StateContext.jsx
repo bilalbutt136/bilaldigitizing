@@ -404,6 +404,7 @@ export const StateProvider = ({ children }) => {
   // Navigation & Authentication state
   const [currentView, setCurrentView] = useState('public');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthInitialized, setIsAuthInitialized] = useState(false);
   const [authUser, setAuthUser] = useState(null);
 
   // Auth modal & Tab navigation states
@@ -505,6 +506,12 @@ export const StateProvider = ({ children }) => {
     ) {
       return 'admin';
     }
+    
+    // Do not hit the admin API endpoint if we are in the client portal
+    if (typeof window !== 'undefined' && !window.location.pathname.includes('admin')) {
+      return 'customer';
+    }
+
     const res = await verifyAdminSession(cleanEmail);
     return res?.isAdmin ? 'admin' : 'customer';
   };
@@ -609,6 +616,10 @@ export const StateProvider = ({ children }) => {
             }
           }
         } catch (e) {}
+      }
+
+      if (!cancelled) {
+        setIsAuthInitialized(true);
       }
     };
 
@@ -1174,7 +1185,8 @@ export const StateProvider = ({ children }) => {
     <StateContext.Provider value={{
       currentView, setCurrentView,
       isAuthenticated, setIsAuthenticated,
-      authUser, currentUser: authUser,
+      isAuthInitialized,
+      authUser, currentUser: authUser, setAuthUser,
       login, loginWithGoogle, loginWithApple, register, logout, protectedNavigate,
       requestPasswordReset, updatePassword,
       isAuthModalOpen, setIsAuthModalOpen,
