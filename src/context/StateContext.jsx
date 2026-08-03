@@ -15,6 +15,7 @@ import {
   updateUserPassword,
   saveCmsConfigToSupabase,
   fetchCatalogFromSupabase,
+  fetchClientsFromSupabase,
   addOrderMessageInSupabase,
   verifyAdminSession,
   fetchAdminUsers,
@@ -507,135 +508,173 @@ export const StateProvider = ({ children }) => {
     return res?.isAdmin ? 'admin' : 'customer';
   };
 
-  // Load catalog + admin whitelist + wallet on mount / session change
+  // Load catalog + admin whitelist + database clients + wallet on mount
   useEffect(() => {
     let cancelled = false;
 
-    if (!isSupabaseConfigured || !supabase) return;
-
     const loadInitialData = async () => {
+      // 1. Load clients from localStorage first so registered users are preserved
       try {
-        const catalog = await fetchCatalogFromSupabase();
-        if (!cancelled && catalog) {
-          if (catalog.servicesList?.length) setServicesList(catalog.servicesList);
-          if (catalog.pricingCards?.length) setPricingCards(catalog.pricingCards);
-          if (catalog.patchCards?.length) setPatchCards(catalog.patchCards);
-          if (catalog.storeProducts?.length) setStoreProducts(catalog.storeProducts);
-          if (catalog.portfolioSamples?.length) setPortfolioSamples(catalog.portfolioSamples);
-          if (catalog.sewOuts?.length) setSewOuts(catalog.sewOuts);
-          if (catalog.heroSlides?.length) setHeroSlides(catalog.heroSlides);
-          if (catalog.digitizers?.length) {
-            setDigitizers(prev => prev.map(d => {
-              const fresh = catalog.digitizers.find(x => x.id === d.id);
-              return fresh ? { ...d, ...fresh } : d;
-            }));
-          }
-          if (catalog.siteSettings) setSiteSettings(catalog.siteSettings);
-          if (catalog.pricing) setPricing(catalog.pricing);
-          if (catalog.serviceCms) setServiceCmsContent(catalog.serviceCms);
-        }
-
-        // Load current session (restores persistent login)
-        const { data: sessionData } = await supabase.auth.getSession();
-        const session = sessionData?.session;
-        if (!cancelled && session?.user) {
-          const role = await resolveRole(session.user.email);
-          const uData = buildAuthUser(session.user, role);
-          setAuthUser(uData);
-          setIsAuthenticated(true);
-          setCurrentView(role === 'admin' ? 'admin' : 'customer');
-
-          const balance = await fetchWalletBalanceFromSupabase(session.user.email);
-          if (!cancelled) setWalletBalance(balance);
-
-          try {
-            await upsertClientInSupabase({ ...uData, role });
-          } catch (err) {
-            console.warn('Client upsert notice:', err);
-          }
-        } else if (!cancelled && typeof window !== 'undefined') {
-          // Restore local persistent admin/user session if Supabase Auth session is not active
-          try {
-            const stored = localStorage.getItem('bdigi_auth_user');
-            if (stored) {
-              const uData = JSON.parse(stored);
-              if (uData && uData.email) {
-                setAuthUser(uData);
-                setIsAuthenticated(true);
-                setCurrentView(uData.role === 'admin' ? 'admin' : 'customer');
-              }
+        if (typeof window !== 'undefined') {
+          const localClients = localStorage.getItem('bdigi_clients');
+          if (localClients) {
+            const parsed = JSON.parse(localClients);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setClients(parsed);
             }
-          } catch (e) {}
-        }
-
-        if (!cancelled) {
-          const adminList = await fetchAdminUsers();
-          if (adminList?.length) {
-            setAdminUsers(adminList.map(a => ({ email: a.email, name: a.name || a.email })));
           }
         }
-      } catch (err) {
-        console.warn('Initial data load notice:', err);
+      } catch (e) {}
+
+      // 2. Fetch catalog & DB clients if Supabase is configured
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const catalog = await fetchCatalogFromSupabase();
+          if (!cancelled && catalog) {
+            if (catalog.servicesList?.length) setServicesList(catalog.servicesList);
+            if (catalog.pricingCards?.length) setPricingCards(catalog.pricingCards);
+            if (catalog.patchCards?.length) setPatchCards(catalog.patchCards);
+            if (catalog.storeProducts?.length) setStoreProducts(catalog.storeProducts);
+            if (catalog.portfolioSamples?.length) setPortfolioSamples(catalog.portfolioSamples);
+            if (catalog.sewOuts?.length) setSewOuts(catalog.sewOuts);
+            if (catalog.heroSlides?.length) setHeroSlides(catalog.heroSlides);
+            if (catalog.digitizers?.length) {
+              setDigitizers(prev => prev.map(d => {
+                const fresh = catalog.digitizers.find(x => x.id === d.id);
+                return fresh ? { ...d, ...fresh } : d;
+              }));
+            }
+            if (catalog.siteSettings) setSiteSettings(catalog.siteSettings);
+            if (catalog.pricing) setPricing(catalog.pricing);
+            if (catalog.serviceCms) setServiceCmsContent(catalog.serviceCms);
+          }
+
+          // Load DB clients from Supabase clients table
+          const dbClients = await fetchClientsFromSupabase();
+          if (!cancelled && dbClients && dbClients.length > 0) {
+            setClients(prev => {
+              const mergedMap = new Map();
+              [...dbClients, ...prev].forEach(c => {
+                if (c && c.email) mergedMap.set(c.email.toLowerCase(), c);
+              });
+              const merged = Array.from(mergedMap.values());
+              try {
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('bdigi_clients', JSON.stringify(merged));
+                }
+              } catch {}
+              return merged;
+            });
+          }
+
+          // Load current Supabase session
+          const { data: sessionData } = await supabase.auth.getSession();
+          const session = sessionData?.session;
+          if (!cancelled && session?.user) {
+            const role = await resolveRole(session.user.email);
+            const uData = buildAuthUser(session.user, role);
+            setAuthUser(uData);
+            setIsAuthenticated(true);
+            setCurrentView(role === 'admin' ? 'admin' : 'customer');
+
+            const balance = await fetchWalletBalanceFromSupabase(session.user.email);
+            if (!cancelled) setWalletBalance(balance);
+
+            try {
+              await upsertClientInSupabase({ ...uData, role });
+            } catch (err) {
+              console.warn('Client upsert notice:', err);
+            }
+          }
+
+          if (!cancelled) {
+            const adminList = await fetchAdminUsers();
+            if (adminList?.length) {
+              setAdminUsers(adminList.map(a => ({ email: a.email, name: a.name || a.email })));
+            }
+          }
+        } catch (err) {
+          console.warn('Initial data load notice:', err);
+        }
+      }
+
+      // 3. Restore persistent local session if active
+      if (!cancelled && typeof window !== 'undefined') {
+        try {
+          const stored = localStorage.getItem('bdigi_auth_user');
+          if (stored) {
+            const uData = JSON.parse(stored);
+            if (uData && uData.email) {
+              setAuthUser(prev => prev || uData);
+              setIsAuthenticated(prev => prev || true);
+              setCurrentView(prev => (prev === 'public' ? (uData.role === 'admin' ? 'admin' : 'customer') : prev));
+            }
+          }
+        } catch (e) {}
       }
     };
 
     loadInitialData();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (cancelled) return;
+    let authSubscription = null;
+    if (isSupabaseConfigured && supabase) {
+      const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (cancelled) return;
 
-      try {
-        if (event === 'PASSWORD_RECOVERY') {
-          setAuthModalMode('update_password');
-          setIsAuthModalOpen(true);
-          return;
-        }
-
-        if (event === 'SIGNED_OUT') {
-          setIsAuthenticated(false);
-          setAuthUser(null);
-          setCurrentView('public');
-          setWalletBalance(0);
-          try {
-            if (typeof window !== 'undefined') {
-              localStorage.removeItem('bdigi_auth_user');
-              localStorage.removeItem('bdigi_current_view');
-            }
-          } catch {}
-          return;
-        }
-
-        if (session?.user) {
-          const role = await resolveRole(session.user.email);
-          const uData = buildAuthUser(session.user, role);
-          setAuthUser(uData);
-          setIsAuthenticated(true);
-          setIsAuthModalOpen(false);
-          setCurrentView(role === 'admin' ? 'admin' : 'customer');
-          try {
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('bdigi_auth_user', JSON.stringify(uData));
-              localStorage.setItem('bdigi_current_view', role === 'admin' ? 'admin' : 'customer');
-            }
-          } catch {}
-
-          const balance = await fetchWalletBalanceFromSupabase(session.user.email);
-          if (!cancelled) setWalletBalance(balance);
-
-          try {
-            await upsertClientInSupabase({ ...uData, role });
-          } catch (err) {
-            console.warn('Client upsert notice:', err);
+        try {
+          if (event === 'PASSWORD_RECOVERY') {
+            setAuthModalMode('update_password');
+            setIsAuthModalOpen(true);
+            return;
           }
+
+          if (event === 'SIGNED_OUT') {
+            setIsAuthenticated(false);
+            setAuthUser(null);
+            setCurrentView('public');
+            setWalletBalance(0);
+            try {
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('bdigi_auth_user');
+                localStorage.removeItem('bdigi_current_view');
+              }
+            } catch {}
+            return;
+          }
+
+          if (session?.user) {
+            const role = await resolveRole(session.user.email);
+            const uData = buildAuthUser(session.user, role);
+            setAuthUser(uData);
+            setIsAuthenticated(true);
+            setIsAuthModalOpen(false);
+            setCurrentView(role === 'admin' ? 'admin' : 'customer');
+            try {
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('bdigi_auth_user', JSON.stringify(uData));
+                localStorage.setItem('bdigi_current_view', role === 'admin' ? 'admin' : 'customer');
+              }
+            } catch {}
+
+            const balance = await fetchWalletBalanceFromSupabase(session.user.email);
+            if (!cancelled) setWalletBalance(balance);
+
+            try {
+              await upsertClientInSupabase({ ...uData, role });
+            } catch (err) {
+              console.warn('Client upsert notice:', err);
+            }
+          }
+        } catch (authErr) {
+          console.warn('onAuthStateChange exception:', authErr);
         }
-      } catch (authErr) {
-        console.warn('onAuthStateChange exception:', authErr);
-      }
-    });
+      });
+      authSubscription = authListener?.subscription;
+    }
 
     return () => {
       cancelled = true;
-      authListener?.subscription?.unsubscribe();
+      authSubscription?.unsubscribe();
     };
   }, []);
 
@@ -796,31 +835,7 @@ export const StateProvider = ({ children }) => {
     const isMasterAdmin = cleanEmail === 'shahidbutt59191@gmail.com' || cleanEmail.startsWith('admin@') || roleHint === 'admin';
     const targetRole = isMasterAdmin ? 'admin' : 'customer';
 
-    if (isSupabaseConfigured) {
-      try {
-        const sbRes = await signUpWithSupabaseAuth(cleanName, cleanEmail, cleanPass, cleanCompany);
-        if (sbRes && sbRes.success) {
-          const uData = sbRes.user || {
-            id: `user-${Date.now()}`,
-            name: cleanName,
-            email: cleanEmail,
-            company: cleanCompany,
-            role: targetRole,
-            provider: 'supabase'
-          };
-          persistAuth(uData, targetRole === 'admin' ? 'admin' : 'customer');
-          showToast(`Account registered successfully! Welcome ${cleanName}.`, 'success');
-          return { success: true, role: targetRole, user: uData };
-        } else if (sbRes && !sbRes.success) {
-          return { success: false, error: sbRes.error || 'Registration failed.' };
-        }
-      } catch (err) {
-        return { success: false, error: err?.message || 'Registration exception.' };
-      }
-    }
-
-    // Local fallback when Supabase is not configured
-    const uData = {
+    let uData = {
       id: `user-${Date.now()}`,
       name: cleanName,
       email: cleanEmail,
@@ -829,7 +844,42 @@ export const StateProvider = ({ children }) => {
       provider: 'local'
     };
 
-    setClients(prev => prev.some(c => c.email === cleanEmail) ? prev : [uData, ...prev]);
+    if (isSupabaseConfigured) {
+      try {
+        const sbRes = await signUpWithSupabaseAuth(cleanName, cleanEmail, cleanPass, cleanCompany);
+        if (sbRes && sbRes.success) {
+          uData = {
+            ...uData,
+            ...(sbRes.user || {}),
+            provider: 'supabase'
+          };
+        } else if (sbRes && !sbRes.success) {
+          return { success: false, error: sbRes.error || 'Registration failed.' };
+        }
+      } catch (err) {
+        return { success: false, error: err?.message || 'Registration exception.' };
+      }
+    }
+
+    // Always update local clients state & localStorage
+    setClients(prev => {
+      const exists = prev.some(c => c.email?.toLowerCase() === cleanEmail);
+      const updated = exists ? prev : [uData, ...prev];
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('bdigi_clients', JSON.stringify(updated));
+        }
+      } catch {}
+      return updated;
+    });
+
+    // Save client record in public.clients database table
+    try {
+      await upsertClientInSupabase(uData);
+    } catch (err) {
+      console.warn('Client DB save notice:', err);
+    }
+
     persistAuth(uData, targetRole === 'admin' ? 'admin' : 'customer');
     showToast(`Account registered successfully! Welcome ${cleanName}.`, 'success');
     return { success: true, role: targetRole, user: uData };

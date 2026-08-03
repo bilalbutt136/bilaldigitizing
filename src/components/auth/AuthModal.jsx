@@ -127,7 +127,9 @@ export const AuthModal = () => {
       setIsLoading(false);
 
       if (result && !result.success) {
-        showToast(result.error || 'Account creation failed. An account with this email may already exist.', 'error');
+        const errMsg = result.error || 'Account creation failed. An account with this email may already exist.';
+        setErrorModalText(errMsg);
+        showToast(errMsg, 'error');
         return;
       }
 

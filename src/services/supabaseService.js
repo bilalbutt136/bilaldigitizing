@@ -109,6 +109,14 @@ export async function signUpWithSupabaseAuth(name, email, password, company) {
 
     const createdUser = authData?.user;
 
+    // Detect duplicate email (Supabase Auth returns user with empty identities array when email is already registered)
+    if (createdUser && Array.isArray(createdUser.identities) && createdUser.identities.length === 0) {
+      return { 
+        success: false, 
+        error: 'An account with this email address already exists. Please sign in instead.' 
+      };
+    }
+
     // Upsert into public.clients table
     try {
       await upsertClientInSupabase({
@@ -519,7 +527,7 @@ export async function addRevisionInSupabase(orderId, note, requestedBy = 'Client
 
 // Upsert Client Profile in Supabase DB (Automatic Save on Login & Order Submission)
 export async function upsertClientInSupabase(userData) {
-  if (!isSupabaseConfigured || !userData || !userData.email) return;
+  if (!isSupabaseConfigured || !userData || !userData.email) return { success: false, error: 'Supabase or user email missing.' };
 
   try {
     const cleanEmail = userData.email.toLowerCase().trim();
@@ -531,7 +539,7 @@ export async function upsertClientInSupabase(userData) {
       .maybeSingle();
 
     if (selectErr) {
-      console.error('[Supabase Client Select Error]:', selectErr.message, selectErr);
+      console.warn('[Supabase Client Select Warning]:', selectErr.message);
     }
 
     const clientName = userData.name || cleanEmail.split('@')[0];
@@ -539,8 +547,10 @@ export async function upsertClientInSupabase(userData) {
 
     const primaryPayload = {
       name: clientName,
+      full_name: clientName,
       email: cleanEmail,
       company: clientCompany,
+      company_name: clientCompany,
       role: userData.role || 'customer'
     };
 
@@ -554,10 +564,10 @@ export async function upsertClientInSupabase(userData) {
         .eq('id', existing.id);
 
       if (updateErr) {
-        console.error('[Supabase Client Update Error]:', updateErr.message, updateErr);
-      } else {
-        console.log('[Supabase Client Update Success]: Updated client record for', cleanEmail);
+        console.error('[Supabase Client Update Error]:', updateErr.message);
+        return { success: false, error: updateErr.message };
       }
+      return { success: true };
     } else {
       const { error: insertErr } = await supabase
         .from('clients')
@@ -568,8 +578,8 @@ export async function upsertClientInSupabase(userData) {
         }]);
 
       if (insertErr) {
-        console.error('[Supabase Client Insert Error]:', insertErr.message, insertErr);
-        // Fallback insert with full_name & company_name
+        console.error('[Supabase Client Insert Error]:', insertErr.message);
+        // Fallback insert with alternative payload structure
         const { error: fallbackErr } = await supabase
           .from('clients')
           .insert([{
@@ -581,16 +591,16 @@ export async function upsertClientInSupabase(userData) {
             orders_count: userData.incrementOrder ? 1 : 0
           }]);
         if (fallbackErr) {
-          console.error('[Supabase Client Fallback Insert Error]:', fallbackErr.message, fallbackErr);
-        } else {
-          console.log('[Supabase Client Fallback Insert Success]: Saved client record via fallback!');
+          console.error('[Supabase Client Fallback Insert Error]:', fallbackErr.message);
+          return { success: false, error: fallbackErr.message };
         }
-      } else {
-        console.log('[Supabase Client Insert Success]: Inserted new client record for', cleanEmail);
+        return { success: true };
       }
+      return { success: true };
     }
   } catch (err) {
     console.error('[Supabase Upsert Client Exception]:', err);
+    return { success: false, error: err?.message };
   }
 }
 
