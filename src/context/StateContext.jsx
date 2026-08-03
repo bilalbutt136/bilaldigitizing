@@ -558,12 +558,14 @@ export const StateProvider = ({ children }) => {
           }
 
           // Load current Supabase session
+          let resolvedAdminEmail = null;
           if (isSupabaseConfigured && supabase) {
             try {
               const { data: sessionData } = await supabase.auth.getSession();
               const session = sessionData?.session;
               if (!cancelled && session?.user) {
                 const role = await resolveRole(session.user.email);
+                if (role === 'admin') resolvedAdminEmail = session.user.email;
                 const uData = buildAuthUser(session.user, role);
                 setAuthUser(uData);
                 setIsAuthenticated(true);
@@ -583,8 +585,8 @@ export const StateProvider = ({ children }) => {
             }
           }
 
-          if (!cancelled) {
-            const adminList = await fetchAdminUsers();
+          if (!cancelled && resolvedAdminEmail) {
+            const adminList = await fetchAdminUsers(resolvedAdminEmail);
             if (adminList?.length) {
               setAdminUsers(adminList.map(a => ({ email: a.email, name: a.name || a.email })));
             }
