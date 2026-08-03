@@ -54,6 +54,10 @@ const nextConfig = {
         destination: '/client-portal',
       },
       {
+        source: '/client',
+        destination: '/client-portal',
+      },
+      {
         source: '/admin',
         destination: '/admin-portal',
       },

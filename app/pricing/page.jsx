@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppState } from '../../src/context/StateContext';
 
-export default function PricingRedirectRoute() {
+function PricingRedirectContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setCurrentView } = useAppState();
@@ -28,3 +28,12 @@ export default function PricingRedirectRoute() {
     </div>
   );
 }
+
+export default function PricingRedirectRoute() {
+  return (
+    <Suspense fallback={<div style={{ padding: '5rem', textAlign: 'center', color: '#94a3b8' }}>Loading Pricing...</div>}>
+      <PricingRedirectContent />
+    </Suspense>
+  );
+}
+

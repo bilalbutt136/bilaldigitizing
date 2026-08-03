@@ -561,9 +561,13 @@ export const AuthModal = () => {
                       if (res?.success) {
                         setIsAuthModalOpen(false);
                         navigate('/client-portal');
+                      } else if (res?.error) {
+                        setErrorModalText(res.error);
+                        showToast(res.error, 'error');
                       }
-                    } catch {
+                    } catch (err) {
                       setIsLoading(false);
+                      showToast(err?.message || 'Google Sign-In failed.', 'error');
                     }
                   }}
                   style={{
@@ -606,9 +610,13 @@ export const AuthModal = () => {
                       if (res?.success) {
                         setIsAuthModalOpen(false);
                         navigate('/client-portal');
+                      } else if (res?.error) {
+                        setErrorModalText(res.error);
+                        showToast(res.error, 'error');
                       }
-                    } catch {
+                    } catch (err) {
                       setIsLoading(false);
+                      showToast(err?.message || 'Apple Sign-In failed.', 'error');
                     }
                   }}
                   style={{
@@ -778,9 +786,13 @@ export const AuthModal = () => {
                       if (res?.success) {
                         setIsAuthModalOpen(false);
                         navigate('/client-portal');
+                      } else if (res?.error) {
+                        setErrorModalText(res.error);
+                        showToast(res.error, 'error');
                       }
-                    } catch {
+                    } catch (err) {
                       setIsLoading(false);
+                      showToast(err?.message || 'Google Sign-In failed.', 'error');
                     }
                   }}
                   style={{
@@ -823,9 +835,13 @@ export const AuthModal = () => {
                       if (res?.success) {
                         setIsAuthModalOpen(false);
                         navigate('/client-portal');
+                      } else if (res?.error) {
+                        setErrorModalText(res.error);
+                        showToast(res.error, 'error');
                       }
-                    } catch {
+                    } catch (err) {
                       setIsLoading(false);
+                      showToast(err?.message || 'Apple Sign-In failed.', 'error');
                     }
                   }}
                   style={{

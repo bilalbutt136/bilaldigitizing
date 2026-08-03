@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 export function useNavigate() {
@@ -20,17 +20,12 @@ export function useNavigate() {
 
 export function useLocation() {
   const pathname = usePathname() || '/';
-  let search = '';
-  try {
-    const searchParams = useSearchParams();
-    search = searchParams ? `?${searchParams.toString()}` : '';
-  } catch {
-    search = '';
-  }
+  const search = typeof window !== 'undefined' ? (window.location.search || '') : '';
+  const hash = typeof window !== 'undefined' ? (window.location.hash || '') : '';
   return {
     pathname,
     search,
-    hash: ''
+    hash
   };
 }
 

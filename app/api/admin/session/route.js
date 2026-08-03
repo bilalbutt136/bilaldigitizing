@@ -26,7 +26,7 @@ export async function POST(request) {
       });
     }
 
-    if (!hasServiceRole) {
+    if (!hasServiceRole || !supabaseAdmin) {
       return NextResponse.json(
         { success: true, isAdmin: false },
         { status: 200 }

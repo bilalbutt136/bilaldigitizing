@@ -10,48 +10,60 @@ export { isSupabaseConfigured };
 
 // Supabase Google OAuth Provider Handler
 export async function signInWithGoogleOAuth() {
-  if (!isSupabaseConfigured) return { success: false, error: 'Supabase URL/Key not configured yet.' };
+  if (!isSupabaseConfigured || !supabase) {
+    return { success: false, error: 'Supabase is not configured.' };
+  }
 
   try {
+    const siteUrl = getSiteUrl();
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: getSiteUrl()
+        redirectTo: siteUrl,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent'
+        }
       }
     });
 
     if (error) return { success: false, error: error.message };
     return { success: true, data };
   } catch (err) {
-    return { success: false, error: err.message || 'Google Auth Error' };
+    return { success: false, error: err?.message || 'Google Authentication error.' };
   }
 }
 
 // Supabase Apple OAuth Provider Handler
 export async function signInWithAppleOAuth() {
-  if (!isSupabaseConfigured) return { success: false, error: 'Supabase URL/Key not configured yet.' };
+  if (!isSupabaseConfigured || !supabase) {
+    return { success: false, error: 'Supabase is not configured.' };
+  }
 
   try {
+    const siteUrl = getSiteUrl();
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'apple',
       options: {
-        redirectTo: getSiteUrl()
+        redirectTo: siteUrl
       }
     });
 
     if (error) return { success: false, error: error.message };
     return { success: true, data };
   } catch (err) {
-    return { success: false, error: err.message || 'Apple Auth Error' };
+    return { success: false, error: err?.message || 'Apple Authentication error.' };
   }
 }
 
 // Supabase Email & Password Authentication Handler
 export async function signInWithSupabaseAuth(email, password) {
-  if (!isSupabaseConfigured) return { success: false, error: 'Supabase URL/Key not configured.' };
+  if (!isSupabaseConfigured || !supabase) {
+    return { success: false, error: 'Supabase is not configured.' };
+  }
 
   try {
-    const cleanEmail = email.toLowerCase().trim();
+    const cleanEmail = (email || '').toLowerCase().trim();
     const { data, error } = await supabase.auth.signInWithPassword({
       email: cleanEmail,
       password: password
@@ -63,93 +75,76 @@ export async function signInWithSupabaseAuth(email, password) {
 
     return { success: true, user: data.user, session: data.session, source: 'supabase_auth' };
   } catch (err) {
-    return { success: false, error: err.message || 'Authentication error.' };
+    return { success: false, error: err?.message || 'Authentication error.' };
   }
 }
 
-// Supabase Email & Password Sign Up Handler (Bypasses SMTP Auth Rate Limits)
+// Supabase Email & Password Sign Up Handler
 export async function signUpWithSupabaseAuth(name, email, password, company) {
-  if (!isSupabaseConfigured) return { success: true };
+  if (!isSupabaseConfigured || !supabase) {
+    return { success: false, error: 'Supabase is not configured.' };
+  }
 
   try {
-    const cleanEmail = email.toLowerCase().trim();
-    const cleanName = name.trim();
+    const cleanEmail = (email || '').toLowerCase().trim();
+    const cleanName = (name || '').trim();
     const cleanCompany = company ? company.trim() : `${cleanName}'s Custom Apparel`;
 
-    // Check custom clients table directly to prevent duplicate email registrations
-    const { data: existing } = await supabase
-      .from('clients')
-      .select('*')
-      .eq('email', cleanEmail)
-      .maybeSingle();
+    // Execute Supabase Auth signUp
+    const { data: authData, error: authErr } = await supabase.auth.signUp({
+      email: cleanEmail,
+      password: password,
+      options: {
+        data: {
+          full_name: cleanName,
+          name: cleanName,
+          company: cleanCompany
+        }
+      }
+    });
 
-    if (existing) {
-      return { 
-        success: false, 
-        error: 'An account with this email already exists. Please sign in instead.' 
-      };
+    if (authErr) {
+      return { success: false, error: authErr.message || 'Account registration failed.' };
     }
 
-    // Direct insert into public.clients table matching schema columns
-    const payload = {
-      name: cleanName,
-      email: cleanEmail,
-      company: cleanCompany,
-      role: 'customer',
-      wallet_balance: 0,
-      orders_count: 0
-    };
+    const createdUser = authData?.user;
 
-    let insertedUser = null;
-
-    const { data, error } = await supabase
-      .from('clients')
-      .insert([payload])
-      .select()
-      .maybeSingle();
-
-    if (!error && data) {
-      insertedUser = data;
-    } else {
-      // Fallback insert with full_name / company_name if schema uses alias column names
-      const { data: fallbackData } = await supabase
-        .from('clients')
-        .insert([{
-          full_name: cleanName,
-          email: cleanEmail,
-          company_name: cleanCompany,
-          role: 'customer',
-          wallet_balance: 0,
-          orders_count: 0
-        }])
-        .select()
-        .maybeSingle();
-
-      insertedUser = fallbackData;
+    // Upsert into public.clients table
+    try {
+      await upsertClientInSupabase({
+        name: cleanName,
+        email: cleanEmail,
+        company: cleanCompany,
+        role: 'customer'
+      });
+    } catch (dbErr) {
+      console.warn('Upsert client table notice during signup:', dbErr);
     }
 
     return { 
       success: true, 
       user: {
-        id: insertedUser?.id || `client-${Date.now()}`,
+        id: createdUser?.id || `client-${Date.now()}`,
         email: cleanEmail,
         name: cleanName,
         company: cleanCompany,
         role: 'customer'
-      } 
+      },
+      session: authData?.session
     };
   } catch (err) {
-    console.warn('Direct client registration fallback triggered:', err);
-    return { success: true };
+    return { success: false, error: err?.message || 'Registration exception occurred.' };
   }
 }
 
 // Supabase Reset Password for Email Handler
 export async function sendPasswordResetEmail(email) {
-  if (!isSupabaseConfigured) return { success: true };
+  if (!isSupabaseConfigured || !supabase) {
+    return { success: false, error: 'Supabase is not configured.' };
+  }
 
   try {
-    const cleanEmail = email.toLowerCase().trim();
+    const cleanEmail = (email || '').toLowerCase().trim();
     const redirectToUrl = `${getSiteUrl()}/reset-password`;
     const { data, error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
       redirectTo: redirectToUrl
@@ -158,13 +153,15 @@ export async function sendPasswordResetEmail(email) {
     if (error) return { success: false, error: error.message };
     return { success: true, data };
   } catch (err) {
-    return { success: false, error: err.message || 'Password reset request error' };
+    return { success: false, error: err?.message || 'Password reset request error.' };
   }
 }
 
 // Supabase Update Password Handler (called after user clicks recovery link)
 export async function updateUserPassword(newPassword) {
-  if (!isSupabaseConfigured) return { success: true };
+  if (!isSupabaseConfigured || !supabase) {
+    return { success: false, error: 'Supabase is not configured.' };
+  }
 
   try {
     const { data, error } = await supabase.auth.updateUser({
@@ -174,9 +171,10 @@ export async function updateUserPassword(newPassword) {
     if (error) return { success: false, error: error.message };
     return { success: true, data };
   } catch (err) {
-    return { success: false, error: err.message || 'Update password error' };
+    return { success: false, error: err?.message || 'Update password error.' };
   }
 }
+
 
 // Helper to upload files to Supabase Storage Bucket
 export async function uploadFileToSupabaseStorage(fileObj, bucketName = 'client-uploads', folderPath = 'artwork') {

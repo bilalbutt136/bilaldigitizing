@@ -19,10 +19,10 @@ async function isCallerAdmin(body) {
 // Returns the whitelisted admin emails (server-side, admins only).
 export async function GET(request) {
   try {
-    if (!hasServiceRole) {
+    if (!hasServiceRole || !supabaseAdmin) {
       return NextResponse.json(
-        { success: false, error: 'Server is missing SUPABASE_SERVICE_ROLE_KEY.' },
-        { status: 500 }
+        { success: true, admins: [], notice: 'Server is missing SUPABASE_SERVICE_ROLE_KEY.' },
+        { status: 200 }
       );
     }
 
@@ -58,10 +58,10 @@ export async function GET(request) {
 // configured master admin email) may add new admins.
 export async function POST(request) {
   try {
-    if (!hasServiceRole) {
+    if (!hasServiceRole || !supabaseAdmin) {
       return NextResponse.json(
         { success: false, error: 'Server is missing SUPABASE_SERVICE_ROLE_KEY.' },
-        { status: 500 }
+        { status: 400 }
       );
     }
 
@@ -108,10 +108,10 @@ export async function POST(request) {
 // Removes admin access. Master admin cannot be removed.
 export async function DELETE(request) {
   try {
-    if (!hasServiceRole) {
+    if (!hasServiceRole || !supabaseAdmin) {
       return NextResponse.json(
         { success: false, error: 'Server is missing SUPABASE_SERVICE_ROLE_KEY.' },
-        { status: 500 }
+        { status: 400 }
       );
     }
 

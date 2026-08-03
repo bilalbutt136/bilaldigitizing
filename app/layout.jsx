@@ -12,8 +12,19 @@ import { DepositModal } from '../src/components/customer/DepositModal';
 import { ClientLiveChatWidget } from '../src/components/customer/ClientLiveChatWidget';
 import ToastContainer from './ToastContainer';
 
+const getMetadataBase = () => {
+  const envUrl = (process.env.NEXT_PUBLIC_SITE_URL || '').trim();
+  if (envUrl) {
+    try {
+      const valid = envUrl.startsWith('http://') || envUrl.startsWith('https://') ? envUrl : `https://${envUrl}`;
+      return new URL(valid);
+    } catch {}
+  }
+  return new URL('https://bdigitizing.pro');
+};
+
 export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.pro'),
+  metadataBase: getMetadataBase(),
   title: {
     default: 'B Digitizing & Vector Studio | Custom Embroidery & Vector Art',
     template: '%s | B Digitizing Studio'
@@ -76,7 +87,9 @@ export default function RootLayout({ children }) {
       <body suppressHydrationWarning style={{ fontFamily: "'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
         <StateProvider>
           <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <HeaderNav />
+            <Suspense fallback={<header style={{ minHeight: '60px', background: '#ffffff' }} />}>
+              <HeaderNav />
+            </Suspense>
             <main style={{ flex: 1 }}>
               <Suspense fallback={<div style={{ padding: '4rem', textAlign: 'center', color: '#94a3b8' }}>Loading Studio Content...</div>}>
                 {children}

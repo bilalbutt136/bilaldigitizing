@@ -5,6 +5,7 @@ async function getAuthUser(request) {
   const authHeader = request.headers.get('authorization') || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
   if (!token) return { user: null, error: 'Missing authentication token.' };
+  if (!supabaseAdmin) return { user: null, error: 'Supabase admin is not configured.' };
 
   const { data, error } = await supabaseAdmin.auth.getUser(token);
   if (error || !data?.user) {
@@ -18,7 +19,7 @@ async function getAuthUser(request) {
 // spoofed from the client. Operates on the authenticated user's record.
 export async function POST(request) {
   try {
-    if (!hasServiceRole) {
+    if (!hasServiceRole || !supabaseAdmin) {
       const body = await request.json().catch(() => ({}));
       const amount = parseFloat(body?.amount || 0);
       return NextResponse.json(

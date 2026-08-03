@@ -584,48 +584,52 @@ export const StateProvider = ({ children }) => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (cancelled) return;
 
-      if (event === 'PASSWORD_RECOVERY') {
-        setAuthModalMode('update_password');
-        setIsAuthModalOpen(true);
-        return;
-      }
-
-      if (event === 'SIGNED_OUT') {
-        setIsAuthenticated(false);
-        setAuthUser(null);
-        setCurrentView('public');
-        setWalletBalance(0);
-        try {
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('bdigi_auth_user');
-            localStorage.removeItem('bdigi_current_view');
-          }
-        } catch {}
-        return;
-      }
-
-      if (session?.user) {
-        const role = await resolveRole(session.user.email);
-        const uData = buildAuthUser(session.user, role);
-        setAuthUser(uData);
-        setIsAuthenticated(true);
-        setIsAuthModalOpen(false);
-        setCurrentView(role === 'admin' ? 'admin' : 'customer');
-        try {
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('bdigi_auth_user', JSON.stringify(uData));
-            localStorage.setItem('bdigi_current_view', role === 'admin' ? 'admin' : 'customer');
-          }
-        } catch {}
-
-        const balance = await fetchWalletBalanceFromSupabase(session.user.email);
-        if (!cancelled) setWalletBalance(balance);
-
-        try {
-          await upsertClientInSupabase({ ...uData, role });
-        } catch (err) {
-          console.warn('Client upsert notice:', err);
+      try {
+        if (event === 'PASSWORD_RECOVERY') {
+          setAuthModalMode('update_password');
+          setIsAuthModalOpen(true);
+          return;
         }
+
+        if (event === 'SIGNED_OUT') {
+          setIsAuthenticated(false);
+          setAuthUser(null);
+          setCurrentView('public');
+          setWalletBalance(0);
+          try {
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('bdigi_auth_user');
+              localStorage.removeItem('bdigi_current_view');
+            }
+          } catch {}
+          return;
+        }
+
+        if (session?.user) {
+          const role = await resolveRole(session.user.email);
+          const uData = buildAuthUser(session.user, role);
+          setAuthUser(uData);
+          setIsAuthenticated(true);
+          setIsAuthModalOpen(false);
+          setCurrentView(role === 'admin' ? 'admin' : 'customer');
+          try {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('bdigi_auth_user', JSON.stringify(uData));
+              localStorage.setItem('bdigi_current_view', role === 'admin' ? 'admin' : 'customer');
+            }
+          } catch {}
+
+          const balance = await fetchWalletBalanceFromSupabase(session.user.email);
+          if (!cancelled) setWalletBalance(balance);
+
+          try {
+            await upsertClientInSupabase({ ...uData, role });
+          } catch (err) {
+            console.warn('Client upsert notice:', err);
+          }
+        }
+      } catch (authErr) {
+        console.warn('onAuthStateChange exception:', authErr);
       }
     });
 
@@ -662,7 +666,7 @@ export const StateProvider = ({ children }) => {
     return { success: true, role, user: uData };
   };
 
-  // Auth Operations (Supabase backed with seamless local fallback)
+  // Auth Operations (Supabase backed with local fallback when unconfigured)
   const login = async (email, password, roleHint) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanPass = (password || '').trim();
@@ -701,13 +705,15 @@ export const StateProvider = ({ children }) => {
           const result = await finishAuth(sbRes.user);
           showToast(`Welcome back ${result.user.name}!`, 'success');
           return result;
+        } else if (sbRes && !sbRes.success) {
+          return { success: false, error: sbRes.error || 'Invalid email or password.' };
         }
       } catch (sbErr) {
-        console.warn('Supabase Auth verification notice:', sbErr);
+        return { success: false, error: sbErr?.message || 'Authentication error.' };
       }
     }
 
-    // 3. Seamless Customer Sign-In / Auto-Registration Fallback
+    // 3. Customer Sign-In Fallback (only when Supabase is not configured)
     const formattedName = cleanEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     const customerUser = {
       id: `user-${Date.now()}`,
@@ -744,29 +750,9 @@ export const StateProvider = ({ children }) => {
         showToast('Redirecting to Google Sign-In...', 'info');
         return oauthRes;
       }
-      const fallbackUser = {
-        id: `google-${Date.now()}`,
-        name: 'Google User',
-        email: 'user.google@bdigitizing.pro',
-        company: 'Google Connected Account',
-        role: 'customer',
-        provider: 'google'
-      };
-      persistAuth(fallbackUser, 'customer');
-      showToast('Signed in with Google!', 'success');
-      return { success: true, role: 'customer', user: fallbackUser };
-    } catch {
-      const fallbackUser = {
-        id: `google-${Date.now()}`,
-        name: 'Google User',
-        email: 'user.google@bdigitizing.pro',
-        company: 'Google Connected Account',
-        role: 'customer',
-        provider: 'google'
-      };
-      persistAuth(fallbackUser, 'customer');
-      showToast('Signed in with Google!', 'success');
-      return { success: true, role: 'customer', user: fallbackUser };
+      return { success: false, error: oauthRes?.error || 'Google Sign-In failed.' };
+    } catch (err) {
+      return { success: false, error: err?.message || 'Google Sign-In error.' };
     }
   };
 
@@ -791,29 +777,9 @@ export const StateProvider = ({ children }) => {
         showToast('Redirecting to Apple Sign-In...', 'info');
         return oauthRes;
       }
-      const fallbackUser = {
-        id: `apple-${Date.now()}`,
-        name: 'Apple User',
-        email: 'user.apple@bdigitizing.pro',
-        company: 'Apple Connected Account',
-        role: 'customer',
-        provider: 'apple'
-      };
-      persistAuth(fallbackUser, 'customer');
-      showToast('Signed in with Apple!', 'success');
-      return { success: true, role: 'customer', user: fallbackUser };
-    } catch {
-      const fallbackUser = {
-        id: `apple-${Date.now()}`,
-        name: 'Apple User',
-        email: 'user.apple@bdigitizing.pro',
-        company: 'Apple Connected Account',
-        role: 'customer',
-        provider: 'apple'
-      };
-      persistAuth(fallbackUser, 'customer');
-      showToast('Signed in with Apple!', 'success');
-      return { success: true, role: 'customer', user: fallbackUser };
+      return { success: false, error: oauthRes?.error || 'Apple Sign-In failed.' };
+    } catch (err) {
+      return { success: false, error: err?.message || 'Apple Sign-In error.' };
     }
   };
 
@@ -832,50 +798,28 @@ export const StateProvider = ({ children }) => {
 
     if (isSupabaseConfigured) {
       try {
-        await supabase.auth.signUp({
-          email: cleanEmail,
-          password: cleanPass,
-          options: {
-            data: {
-              full_name: cleanName,
-              name: cleanName,
-              company: cleanCompany
-            }
-          }
-        });
+        const sbRes = await signUpWithSupabaseAuth(cleanName, cleanEmail, cleanPass, cleanCompany);
+        if (sbRes && sbRes.success) {
+          const uData = sbRes.user || {
+            id: `user-${Date.now()}`,
+            name: cleanName,
+            email: cleanEmail,
+            company: cleanCompany,
+            role: targetRole,
+            provider: 'supabase'
+          };
+          persistAuth(uData, targetRole === 'admin' ? 'admin' : 'customer');
+          showToast(`Account registered successfully! Welcome ${cleanName}.`, 'success');
+          return { success: true, role: targetRole, user: uData };
+        } else if (sbRes && !sbRes.success) {
+          return { success: false, error: sbRes.error || 'Registration failed.' };
+        }
       } catch (err) {
-        console.warn('Supabase signUp notice:', err);
+        return { success: false, error: err?.message || 'Registration exception.' };
       }
     }
 
-    try {
-      let localUsers = [];
-      const stored = typeof window !== 'undefined' ? localStorage.getItem('bdigi_registered_users') : null;
-      if (stored) localUsers = JSON.parse(stored);
-      
-      const existingIdx = localUsers.findIndex(u => u.email === cleanEmail);
-      const newUserRecord = {
-        id: existingIdx >= 0 ? localUsers[existingIdx].id : `user-${Date.now()}`,
-        name: cleanName,
-        email: cleanEmail,
-        password: cleanPass,
-        company: cleanCompany,
-        role: targetRole,
-        registeredAt: new Date().toISOString()
-      };
-
-      if (existingIdx >= 0) {
-        localUsers[existingIdx] = newUserRecord;
-      } else {
-        localUsers.push(newUserRecord);
-      }
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('bdigi_registered_users', JSON.stringify(localUsers));
-      }
-    } catch (e) {
-      console.warn('LocalStorage save notice:', e);
-    }
-
+    // Local fallback when Supabase is not configured
     const uData = {
       id: `user-${Date.now()}`,
       name: cleanName,
@@ -890,6 +834,7 @@ export const StateProvider = ({ children }) => {
     showToast(`Account registered successfully! Welcome ${cleanName}.`, 'success');
     return { success: true, role: targetRole, user: uData };
   };
+
 
   const logout = async () => {
     setIsAuthenticated(false);

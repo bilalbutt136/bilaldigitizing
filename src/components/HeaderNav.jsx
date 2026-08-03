@@ -46,6 +46,7 @@ export const HeaderNav = () => {
 
   const safeCurrentView = mounted ? currentView : 'public';
   const safeIsAuthenticated = mounted ? isAuthenticated : false;
+  const safeAuthUser = mounted ? authUser : null;
   const currentPath = mounted ? (location?.pathname || '') : '';
 
   const [isServicesOpen, setIsServicesOpen] = useState(false);
