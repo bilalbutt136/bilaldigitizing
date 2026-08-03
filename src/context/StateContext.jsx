@@ -1090,26 +1090,37 @@ export const StateProvider = ({ children }) => {
 
   const updatePricingCards = (newCards) => {
     setPricingCards(newCards);
+    saveCmsConfigToSupabase('pricing_cards', newCards);
   };
 
   const updatePatchCards = (newCards) => {
     setPatchCards(newCards);
+    saveCmsConfigToSupabase('patch_cards', newCards);
+  };
+
+  const updateStoreProducts = (newProducts) => {
+    setStoreProducts(newProducts);
+    saveCmsConfigToSupabase('store_products', newProducts);
   };
 
   const updatePortfolioSamples = (newPortfolio) => {
     setPortfolioSamples(newPortfolio);
+    saveCmsConfigToSupabase('portfolio_samples', newPortfolio);
   };
 
   const updateSewOuts = (newSewOuts) => {
     setSewOuts(newSewOuts);
+    saveCmsConfigToSupabase('sew_outs', newSewOuts);
   };
 
   const updateServicesList = (newServices) => {
     setServicesList(newServices);
+    saveCmsConfigToSupabase('services_list', newServices);
   };
 
   const updateHeroSlides = (newSlides) => {
     setHeroSlides(newSlides);
+    saveCmsConfigToSupabase('hero_slides', newSlides);
   };
 
   const updateSiteSettings = (newSettings) => {

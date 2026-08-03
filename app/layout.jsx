@@ -13,8 +13,56 @@ import { ClientLiveChatWidget } from '../src/components/customer/ClientLiveChatW
 import ToastContainer from './ToastContainer';
 
 export const metadata = {
-  title: 'B Digitizing & Vector Studio | Custom Embroidery & Vector Art',
-  description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Turnaround.',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.pro'),
+  title: {
+    default: 'B Digitizing & Vector Studio | Custom Embroidery & Vector Art',
+    template: '%s | B Digitizing Studio'
+  },
+  description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.',
+  keywords: [
+    'Embroidery Digitizing',
+    'Machine Embroidery Files',
+    'DST Format',
+    'PES Format',
+    'Wilcom EMB Source',
+    'Vector Art Tracing',
+    'Raster to Vector',
+    'Custom Patches',
+    '3D Puff Embroidery',
+    'Cap Embroidery'
+  ],
+  authors: [{ name: 'B Digitizing Studio', url: 'https://bdigitizing.pro' }],
+  creator: 'B Digitizing Studio',
+  publisher: 'B Digitizing Studio',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false
+  },
+  openGraph: {
+    title: 'B Digitizing & Vector Studio | Custom Embroidery & Vector Art',
+    description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.',
+    url: 'https://bdigitizing.pro',
+    siteName: 'B Digitizing Studio',
+    locale: 'en_US',
+    type: 'website'
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'B Digitizing & Vector Studio | Custom Embroidery & Vector Art',
+    description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.'
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1
+    }
+  }
 };
 
 export default function RootLayout({ children }) {
