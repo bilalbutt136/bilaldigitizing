@@ -8,14 +8,7 @@ import {
   Copy, 
   Check, 
   Trash2, 
-  Plus, 
-  ExternalLink, 
-  Sparkles,
-  Layers,
-  Search,
-  Filter,
-  Eye,
-  FileCode
+  Search
 } from 'lucide-react';
 
 const INITIAL_MEDIA_ASSETS = [
@@ -48,7 +41,7 @@ export const MediaLibraryManager = () => {
     setMediaAssets(newList);
     try {
       localStorage.setItem('bdigi_media_assets', JSON.stringify(newList));
-    } catch (_) {}
+    } catch {}
   };
 
   const handleFileUpload = (e) => {

@@ -9,8 +9,7 @@ import {
   Zap, 
   ExternalLink,
   CheckCircle2,
-  Lock,
-  ArrowRight
+  Lock
 } from 'lucide-react';
 
 export const DepositModal = () => {
@@ -45,7 +44,7 @@ export const DepositModal = () => {
     // Launch BoltPayouts secure checkout interface immediately
     try {
       window.open(boltGatewayUrl, '_blank');
-    } catch (_) {
+    } catch {
       window.location.href = boltGatewayUrl;
     }
 

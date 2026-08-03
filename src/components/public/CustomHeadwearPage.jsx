@@ -4,15 +4,9 @@ import React, { useEffect } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { 
-  ShoppingBag, 
   CheckCircle2, 
-  Sparkles, 
-  ShieldCheck, 
   ArrowRight, 
   ChevronRight, 
-  Layers, 
-  Award,
-  Zap,
   Target
 } from 'lucide-react';
 

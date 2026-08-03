@@ -2,17 +2,14 @@
 
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { CheckCircle2, ArrowRight, ShieldCheck, Sparkles, Layers, Eye } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 export const CustomerSewOutsSection = () => {
   const { 
-    protectedNavigate, 
     activeHomeServiceTab = 'embroidery', 
-    serviceCmsContent = {}, 
-    portfolioSamples = [] 
+    serviceCmsContent = {} 
   } = useAppState();
   
-  const [activeCard, setActiveCard] = useState(null);
   const [isMounted, setIsMounted] = useState(false);
 
   React.useEffect(() => {

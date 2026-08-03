@@ -15,7 +15,6 @@ import {
 export const OrderManagementTable = () => {
   const { 
     orders = [], 
-    updateOrderStatus,
     setSelectedOrderForDrawer 
   } = useAppState();
 

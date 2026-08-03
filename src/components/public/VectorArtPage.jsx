@@ -16,10 +16,7 @@ import {
   Trash2, 
   ArrowRight,
   Wallet,
-  CreditCard,
-  Lock,
-  Layers,
-  FileCheck
+  CreditCard
 } from 'lucide-react';
 
 export const VectorArtPage = () => {

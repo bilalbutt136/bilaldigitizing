@@ -6,19 +6,9 @@ import {
   ShoppingBag, 
   Plus, 
   Trash2, 
-  Edit, 
   Save, 
-  CheckCircle2, 
-  AlertCircle, 
   Package, 
-  Tag, 
-  Clock, 
-  FileText, 
   Upload,
-  Eye,
-  UserCheck,
-  CreditCard,
-  Layers,
   Filter
 } from 'lucide-react';
 

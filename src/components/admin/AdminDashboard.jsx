@@ -21,7 +21,6 @@ import {
   Layers, 
   AlertCircle, 
   RefreshCw,
-  Bell,
   Menu,
   X,
   ShieldCheck,
@@ -60,8 +59,6 @@ export const AdminDashboard = () => {
     setActiveTabState(tab);
     if (setActiveAdminTab) setActiveAdminTab(tab);
   };
-  const [isHeaderNotificationOpen, setIsHeaderNotificationOpen] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState(4);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // New Admin Modal & Form State
@@ -135,7 +132,6 @@ export const AdminDashboard = () => {
 
   const totalRevenue = safeOrders.reduce((acc, curr) => acc + (parseFloat(curr?.price) || 0), 0);
   const activeJobsCount = safeOrders.filter(o => o?.status !== 'completed').length;
-  const newSubmissionsCount = safeOrders.filter(o => o?.status === 'submitted').length;
   const completedJobsCount = safeOrders.filter(o => o?.status === 'completed').length;
 
   const handleSignOut = () => {

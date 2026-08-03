@@ -8,12 +8,6 @@ import {
   X,
   Send,
   Paperclip,
-  User,
-  Zap,
-  Clock,
-  CheckCheck,
-  Sparkles,
-  ShieldCheck,
   Minimize2,
   Maximize2
 } from 'lucide-react';
@@ -25,7 +19,7 @@ export const ClientLiveChatWidget = () => {
     setMounted(true);
   }, []);
 
-  const { authUser, currentUser, isAuthenticated, showToast } = useAppState();
+  const { authUser, currentUser, showToast } = useAppState();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -54,7 +48,7 @@ export const ClientLiveChatWidget = () => {
         try {
           setChats(JSON.parse(e.newValue));
           playNotificationSound('receive');
-        } catch (_) { }
+        } catch { }
       }
     };
 
@@ -156,7 +150,7 @@ export const ClientLiveChatWidget = () => {
     try {
       localStorage.setItem('bdigi_admin_chats', JSON.stringify(updatedChats));
       window.dispatchEvent(new CustomEvent('bdigi_chat_update', { detail: updatedChats }));
-    } catch (_) { }
+    } catch { }
 
     playNotificationSound('message');
     setMessageInput('');

@@ -9,28 +9,17 @@ import {
   Clock, 
   CheckCircle2, 
   RotateCcw, 
-  Download, 
   Search, 
   FileText, 
   ChevronRight,
-  Zap,
-  Filter,
   DollarSign,
   ZoomIn,
   Wallet,
   Layers,
   Package,
-  ShoppingBag,
   User,
   MessageSquare,
   Settings,
-  ShieldCheck,
-  CreditCard,
-  Building,
-  Mail,
-  Sliders,
-  Bell,
-  ArrowRight,
   LogOut,
   Menu,
   Sun,
@@ -38,7 +27,6 @@ import {
   PenTool,
   X
 } from 'lucide-react';
-import { UserMenuDropdown } from '../common/UserMenuDropdown';
 import { ClientLiveChatWidget } from './ClientLiveChatWidget';
 import { ClientSidebar } from './ClientSidebar';
 import { EmbroideryDigitizingPage } from '../public/EmbroideryDigitizingPage';
@@ -72,12 +60,10 @@ export const CustomerDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [lightboxOrder, setLightboxOrder] = useState(null);
   const [isServiceSelectorOpen, setIsServiceSelectorOpen] = useState(false);
-  const [isHeaderNotificationOpen, setIsHeaderNotificationOpen] = useState(false);
 
   // Mobile App UI State
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState(2);
   // Client-side mounting guard for hydration safety
   const [mounted, setMounted] = React.useState(false);
 
@@ -134,19 +120,8 @@ export const CustomerDashboard = () => {
   const revisionOrders = digitizingOrders.filter(o => o?.revisions && o.revisions.length > 0);
 
   const totalSpent = myOrders.reduce((acc, curr) => acc + (parseFloat(curr?.price) || 0), 0);
-  const digitizingSpent = digitizingOrders.reduce((acc, curr) => acc + (parseFloat(curr?.price) || 0), 0);
 
   const filteredDigitizingOrders = digitizingOrders.filter(o => {
-    const titleMatch = (o?.title || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const idMatch = (o?.id || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSearch = titleMatch || idMatch;
-    
-    if (filterStatus === 'active') return matchesSearch && o?.status !== 'completed';
-    if (filterStatus === 'completed') return matchesSearch && o?.status === 'completed';
-    return matchesSearch;
-  });
-
-  const filteredVectorOrders = vectorOrders.filter(o => {
     const titleMatch = (o?.title || '').toLowerCase().includes(searchTerm.toLowerCase());
     const idMatch = (o?.id || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSearch = titleMatch || idMatch;

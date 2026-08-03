@@ -1,27 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useAppState, formatOrderId } from '../../context/StateContext';
+import { useAppState } from '../../context/StateContext';
 import { playNotificationSound } from '../../utils/audioNotification';
 import {
   MessageSquare,
   Send,
   Search,
-  User,
-  CheckCheck,
   Paperclip,
-  Clock,
-  Sparkles,
-  ShieldCheck,
-  FileText,
-  Image as ImageIcon,
-  MoreVertical,
   ChevronRight,
-  Zap,
-  CheckCircle2,
-  RefreshCw,
-  X,
-  Filter
+  X
 } from 'lucide-react';
 
 const INITIAL_CONVERSATIONS = [];
@@ -110,7 +98,7 @@ export const AdminChatInbox = () => {
         try {
           setConversations(deduplicateThreads(JSON.parse(e.newValue)));
           playNotificationSound('receive');
-        } catch (_) { }
+        } catch { }
       }
     };
 
@@ -201,10 +189,6 @@ export const AdminChatInbox = () => {
       });
       showToast(`Attached ${file.name} to message`, 'info');
     }
-  };
-
-  const handleApplyQuickResponse = (text) => {
-    setReplyInput(text);
   };
 
   return (

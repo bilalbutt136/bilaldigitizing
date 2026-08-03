@@ -201,7 +201,7 @@ export async function uploadFileToSupabaseStorage(fileObj, bucketName = 'client-
 
     const filePath = `${folderPath}/${Date.now()}_${fileName.replace(/\s+/g, '_')}`;
 
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from(bucketName)
       .upload(filePath, fileBody, {
         cacheControl: '3600',
@@ -1070,7 +1070,7 @@ export async function getCurrentSupabaseUser() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return null;
     return session.user;
-  } catch (err) {
+  } catch {
     return null;
   }
 }
@@ -1087,7 +1087,7 @@ export async function fetchWalletBalanceFromSupabase(email) {
 
     if (error || !data) return 0;
     return parseFloat(data.wallet_balance || 0);
-  } catch (err) {
+  } catch {
     return 0;
   }
 }

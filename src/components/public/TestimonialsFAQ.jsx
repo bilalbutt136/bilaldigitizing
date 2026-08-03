@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { FAQS } from '../../data/mockData';
-import { Star, ChevronDown, ChevronUp, MessageSquare, Quote } from 'lucide-react';
+import { Star, ChevronDown, ChevronUp, Quote } from 'lucide-react';
 
 export const TestimonialsFAQ = () => {
   const [openFaqIndex, setOpenFaqIndex] = useState(0);

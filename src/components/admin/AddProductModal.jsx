@@ -7,11 +7,7 @@ import {
   Package, 
   Upload, 
   Check, 
-  Save, 
-  Tag, 
-  Plus, 
-  Sparkles,
-  Image as ImageIcon
+  Save
 } from 'lucide-react';
 
 const STANDARD_SIZES = ['S', 'M', 'L', 'XL', '2XL', '3XL', 'Adjustable', 'Custom Shape'];

@@ -1,12 +1,11 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { useNavigate, Link } from '../../utils/navigation';
+import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { MerchandiseStore } from './MerchandiseStore';
 import { 
   ShoppingBag, 
-  ArrowLeft, 
   Sparkles, 
   ShieldCheck, 
   Truck, 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { formatOrderId } from '../../context/StateContext';
 import { triggerFileDownload } from '../../utils/fileDownloader';
-import { X, Download, ZoomIn, FileText, CheckCircle2, Scissors } from 'lucide-react';
+import { X, Download, Scissors } from 'lucide-react';
 
 export const ArtworkLightboxModal = ({ order, onClose }) => {
   if (!order) return null;

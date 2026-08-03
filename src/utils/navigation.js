@@ -24,7 +24,7 @@ export function useLocation() {
   try {
     const searchParams = useSearchParams();
     search = searchParams ? `?${searchParams.toString()}` : '';
-  } catch (_) {
+  } catch {
     search = '';
   }
   return {

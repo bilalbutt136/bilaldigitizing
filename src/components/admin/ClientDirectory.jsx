@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useAppState } from '../../context/StateContext';
-import { Building2, Mail, Award, DollarSign, FileText } from 'lucide-react';
+import { Building2 } from 'lucide-react';
 
 export const ClientDirectory = () => {
   const { clients } = useAppState();

@@ -10,17 +10,9 @@ import {
   Save, 
   Plus, 
   Trash2, 
-  CheckCircle2, 
-  RefreshCw, 
-  Sliders, 
   Sparkles,
-  Mail,
-  Phone,
-  Info,
-  Clock,
   Tag,
   Eye,
-  EyeOff,
   Zap
 } from 'lucide-react';
 import { MediaLibraryManager } from './MediaLibraryManager';
@@ -94,8 +86,8 @@ export const SiteCmsEditor = () => {
   const [draftPricingCards, setDraftPricingCards] = useState([...(pricingCards || [])]);
   const [draftPatchCards, setDraftPatchCards] = useState([...(patchCards || [])]);
   const [draftPortfolio, setDraftPortfolio] = useState([...(portfolioSamples || [])]);
-  const [draftSewOuts, setDraftSewOuts] = useState([...(sewOuts || [])]);
-  const [draftServices, setDraftServices] = useState([...(servicesList || [])]);
+  const [draftSewOuts] = useState([...(sewOuts || [])]);
+  const [draftServices] = useState([...(servicesList || [])]);
   const [draftHeroSlides, setDraftHeroSlides] = useState([...(heroSlides || [])]);
   const [draftSettings, setDraftSettings] = useState({ ...siteSettings });
   const [draftServiceCms, setDraftServiceCms] = useState(JSON.parse(JSON.stringify(serviceCmsContent)));
@@ -112,39 +104,6 @@ export const SiteCmsEditor = () => {
       }
     };
     reader.readAsDataURL(file);
-  };
-
-  // Handle Sew-Out Card Changes
-  const handleSewOutChange = (id, field, value) => {
-    setDraftSewOuts(prev => prev.map(item => {
-      if (item.id === id) {
-        if (field === 'features') {
-          return { ...item, features: typeof value === 'string' ? value.split('\n').filter(f => f.trim() !== '') : value };
-        }
-        return { ...item, [field]: value };
-      }
-      return item;
-    }));
-  };
-
-  const handleAddSewOut = () => {
-    const newSewOut = {
-      id: `sewout-${Date.now()}`,
-      title: 'New Digitizing Sew-Out Proof',
-      category: 'Cap & Apparel Logo',
-      beforeImg: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80',
-      afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
-      stitchCount: '10,000 Stitches',
-      formats: 'DST, PES, EMB, EXP',
-      features: ['Center-out embroidery pathing', '3D foam raised thread depth', 'Zero needle breaks']
-    };
-    setDraftSewOuts(prev => [...prev, newSewOut]);
-    showToast('New Sew-Out Card added to draft!', 'info');
-  };
-
-  const handleRemoveSewOut = (idToRemove) => {
-    setDraftSewOuts(prev => prev.filter(item => item.id !== idToRemove));
-    showToast('Sew-Out Card removed from draft', 'info');
   };
 
   // Handle Pricing Inputs
@@ -217,34 +176,6 @@ export const SiteCmsEditor = () => {
       showToast(`Uploaded ${field === 'originalImage' ? 'Before Artwork' : 'After Digitized Result'} image!`, 'success');
     };
     reader.readAsDataURL(file);
-  };
-
-  // Handle Service Card Edit
-  const handleServiceChange = (id, field, value) => {
-    setDraftServices(prev => prev.map(srv => {
-      if (srv.id === id) {
-        return { ...srv, [field]: value };
-      }
-      return srv;
-    }));
-  };
-
-  const handleAddService = () => {
-    const newId = `srv-${Date.now()}`;
-    const newServiceItem = {
-      id: newId,
-      title: 'New Embroidery / Vector Service',
-      price: 'Starting $15.00',
-      stitches: 'Custom Pathing',
-      time: '12 - 24 Hours',
-      icon: 'Shirt',
-      desc: 'Enter service description here to display on public landing page.'
-    };
-    setDraftServices(prev => [...prev, newServiceItem]);
-  };
-
-  const handleRemoveService = (idToRemove) => {
-    setDraftServices(prev => prev.filter(srv => srv.id !== idToRemove));
   };
 
   // Publish changes live to context & localStorage & Supabase DB
@@ -722,7 +653,6 @@ export const SiteCmsEditor = () => {
               const srvData = draftServiceCms[srvKey] || {};
               const hero = srvData.hero || {};
               const showcase = srvData.showcase || {};
-              const advantages = srvData.advantages || {};
 
               const updateHeroField = (field, val) => {
                 setDraftServiceCms(prev => ({
@@ -740,16 +670,6 @@ export const SiteCmsEditor = () => {
                   [srvKey]: {
                     ...prev[srvKey],
                     showcase: { ...prev[srvKey]?.showcase, [field]: val }
-                  }
-                }));
-              };
-
-              const updateAdvantageField = (field, val) => {
-                setDraftServiceCms(prev => ({
-                  ...prev,
-                  [srvKey]: {
-                    ...prev[srvKey],
-                    advantages: { ...prev[srvKey]?.advantages, [field]: val }
                   }
                 }));
               };

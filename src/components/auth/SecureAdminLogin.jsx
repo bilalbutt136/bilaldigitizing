@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
-import { ShieldCheck, Lock, Mail, ArrowRight, Home, AlertCircle, Loader2 } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, ArrowRight, Home, AlertCircle } from 'lucide-react';
 
 export const SecureAdminLogin = () => {
   const navigate = useNavigate();
@@ -36,7 +36,7 @@ export const SecureAdminLogin = () => {
 
       navigate('/admin-portal');
       showToast('Authenticated as Master Studio Manager!', 'success');
-    } catch (err) {
+    } catch {
       setIsLoading(false);
       setAdminError('An unexpected authentication error occurred.');
     }

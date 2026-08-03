@@ -5,19 +5,13 @@ import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { 
   Sparkles, 
-  Layers, 
-  Eye, 
-  CheckCircle, 
   ArrowRight, 
   ChevronRight, 
   Zap, 
-  Scissors, 
-  Tag, 
   Maximize2, 
   X, 
   Filter,
   CheckCircle2,
-  FileCode,
   UploadCloud
 } from 'lucide-react';
 
@@ -208,7 +202,7 @@ const PORTFOLIO_ITEMS = [
 
 export const PortfolioPage = () => {
   const navigate = useNavigate();
-  const { protectedNavigate, portfolioSamples = [] } = useAppState();
+  const { portfolioSamples = [] } = useAppState();
 
   const [activeFilter, setActiveFilter] = useState('embroidery');
   const [activeItemModal, setActiveItemModal] = useState(null);

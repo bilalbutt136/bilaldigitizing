@@ -22,7 +22,7 @@ export const ClientSidebar = ({
   digitizingCount = 0,
   vectorCount = 0,
   patchCount = 0,
-  storeCount = 0,
+  _storeCount = 0,
   onOpenDepositModal,
   onOpenLiveSupport,
   onLogout

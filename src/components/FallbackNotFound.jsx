@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { useAppState } from '../context/StateContext';
-import { Construction, ArrowLeft, Home, UserCheck } from 'lucide-react';
+import { Construction, Home, UserCheck } from 'lucide-react';
 
 export const FallbackNotFound = () => {
-  const { setCurrentView, protectedNavigate } = useAppState();
+  const { protectedNavigate } = useAppState();
 
   return (
     <div style={{

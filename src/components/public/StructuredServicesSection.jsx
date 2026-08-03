@@ -7,15 +7,10 @@ import {
   Layers, 
   Tag, 
   PenTool, 
-  CheckCircle2, 
   ArrowRight, 
   Upload, 
   Sparkles, 
-  ShieldCheck, 
-  Clock, 
-  Download,
   Truck,
-  FileCode,
   Check
 } from 'lucide-react';
 

@@ -1,41 +1,36 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { 
   Layers, 
   PenTool, 
   Tag, 
-  Shirt, 
-  HardHat, 
   Upload, 
   Trash2, 
-  CheckCircle2, 
   Sparkles, 
   Clock, 
   ArrowRight,
   ShieldCheck,
   FileCode,
-  DollarSign,
   Plus,
-  Minus,
   Zap,
   Check
 } from 'lucide-react';
 
 export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTabs = false, initialTier = 'standard' }) => {
   const navigate = useNavigate();
-  const { pricing = {}, createOrder, isAuthenticated, protectedNavigate, showToast } = useAppState();
+  const { pricing = {}, createOrder, protectedNavigate, showToast } = useAppState();
 
   const [activeService, setActiveService] = useState(defaultService);
   const [isOrderViewOpen, setIsOrderViewOpen] = useState(false);
 
   // Common Order State
-  const [title, setTitle] = useState('');
+  const [title] = useState('');
   const [notes, setNotes] = useState('');
   const [isRush, setIsRush] = useState(false);
-  const [selectedAssets, setSelectedAssets] = useState([]);
+  const [selectedAssets] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Service 1: Embroidery Digitizing State with Itemized Placement Cart Flow
@@ -54,7 +49,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
 
   // Service 2: Vector Tracing State
   const [vectorComplexity, setVectorComplexity] = useState('simple'); // 'simple' | 'complex'
-  const [vectorFormats, setVectorFormats] = useState(['ai', 'eps', 'svg', 'pdf']);
+  const [vectorFormats] = useState(['ai', 'eps', 'svg', 'pdf']);
   const [vectorQuantity, setVectorQuantity] = useState(1);
   const [vectorQuantityInput, setVectorQuantityInput] = useState('1');
 
@@ -68,7 +63,6 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
   const [patchBacking, setPatchBacking] = useState('Iron-On'); // 'Iron-On' | 'Velcro' | 'Sew-On' | 'Adhesive'
   const [patchQuantity, setPatchQuantity] = useState(100);
   const [patchQuantityInput, setPatchQuantityInput] = useState('100');
-  const [patchSize, setPatchSize] = useState('3.0 inches');
 
   // Sync patchQuantity state with input string
   React.useEffect(() => {
@@ -76,15 +70,14 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
   }, [patchQuantity]);
 
   // Service 4: Custom T-Shirts State
-  const [tshirtColor, setTshirtColor] = useState('Black');
-  const [tshirtPlacement, setTshirtPlacement] = useState('Left Chest Embroidery');
-  const [tshirtSizes, setTshirtSizes] = useState({ S: 2, M: 5, L: 5, XL: 3, '2XL': 0, '3XL': 0 });
+  const [tshirtColor] = useState('Black');
+  const [tshirtSizes] = useState({ S: 2, M: 5, L: 5, XL: 3, '2XL': 0, '3XL': 0 });
 
   // Service 5: Custom Caps & 3D Puff Hats State
-  const [capStyle, setCapStyle] = useState('Structured Snapback'); // 'Structured Snapback' | 'Dad Hat' | 'Beanie'
-  const [capColor, setCapColor] = useState('Black / White Mesh');
-  const [is3dPuff, setIs3dPuff] = useState(true);
-  const [capQuantity, setCapQuantity] = useState(12);
+  const [capStyle] = useState('Structured Snapback'); // 'Structured Snapback' | 'Dad Hat' | 'Beanie'
+  const [capColor] = useState('Black / White Mesh');
+  const [is3dPuff] = useState(true);
+  const [capQuantity] = useState(12);
 
   // Multi-Placement Options Definition
   const PLACEMENT_OPTIONS = [
@@ -302,27 +295,6 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
     return (base + rushFee).toFixed(2);
   };
 
-  // File Upload Handlers
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-
-    const newAssets = files.map(file => ({
-      id: `asset-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-      name: file.name,
-      size: (file.size / 1024).toFixed(1) + ' KB',
-      type: file.type || 'Artwork Image',
-      previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : null
-    }));
-
-    setSelectedAssets(prev => [...prev, ...newAssets]);
-    showToast(`${files.length} file(s) attached successfully!`, 'success');
-  };
-
-  const removeAsset = (id) => {
-    setSelectedAssets(prev => prev.filter(ast => ast.id !== id));
-  };
-
   // Order Submission Handler
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
@@ -395,7 +367,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
       showToast('Order submitted successfully!', 'success');
       protectedNavigate('customer', true);
       navigate('/client-portal');
-    } catch (err) {
+    } catch {
       setIsSubmitting(false);
       showToast('Order created in guest preview session', 'info');
       protectedNavigate('customer', true);

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import {
   CheckCircle,
@@ -12,22 +11,13 @@ import {
   FileCheck,
   Zap,
   Trophy,
-  UploadCloud,
-  Layers,
   Package,
-  ShieldCheck,
-  Check,
   Tag,
-  Star,
-  Flame,
-  Award,
-  ChevronRight,
   Image as ImageIcon
 } from 'lucide-react';
 
 export const CustomPatchesSection = () => {
-  const navigate = useNavigate();
-  const { patchCards = [], protectedNavigate, createOrder, showToast, openOrderWizard, setIsOrderWizardOpen } = useAppState();
+  const { openOrderWizard, setIsOrderWizardOpen } = useAppState();
 
   const [selectedTier, setSelectedTier] = useState('standard');
 

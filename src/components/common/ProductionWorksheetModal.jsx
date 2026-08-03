@@ -5,11 +5,6 @@ import {
   X, 
   Printer, 
   Download, 
-  Scissors, 
-  CheckCircle2, 
-  Layers, 
-  Sparkles,
-  ShieldCheck,
   FileText
 } from 'lucide-react';
 

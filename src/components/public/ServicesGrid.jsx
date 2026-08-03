@@ -7,27 +7,16 @@ import {
   Layers, 
   PenTool, 
   Tag, 
-  Shirt, 
-  HardHat, 
   ArrowRight,
   Clock,
-  Sparkles,
   CheckCircle2,
   Truck,
-  Download,
-  ShieldCheck,
-  Package,
-  FileCode
+  Download
 } from 'lucide-react';
 
 export const ServicesGrid = () => {
   const navigate = useNavigate();
-  const { protectedNavigate, openOrderWizard, pricingCards = [], servicesList = [], patchCards = [] } = useAppState();
-
-  // Dynamic overrides from Admin CMS
-  const embMinPrice = pricingCards[0]?.rate || 'Starting $10.00';
-  const vecMinPrice = servicesList[0]?.rate || 'Starting $15.00';
-  const patchMinPrice = patchCards[0]?.rate || 'Starting $1.50 / patch';
+  const { protectedNavigate, openOrderWizard } = useAppState();
 
   const handleOrderRedirect = (serviceType, route) => {
     if (route) {

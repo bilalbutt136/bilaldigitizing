@@ -13,7 +13,6 @@ import {
   Truck, 
   PenTool, 
   Palette, 
-  ArrowRight,
   ShieldCheck
 } from 'lucide-react';
 

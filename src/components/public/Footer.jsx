@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Scissors, ShieldCheck, Mail, Phone, MapPin, Heart } from 'lucide-react';
+import { Scissors, ShieldCheck, Mail, Phone, MapPin } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 
 export const Footer = () => {

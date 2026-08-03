@@ -6,11 +6,9 @@ import {
   X, 
   ShoppingBag, 
   Upload, 
-  CheckCircle2, 
   CreditCard, 
   Wallet, 
   AlertCircle, 
-  ArrowRight,
   Plus,
   Minus,
   FileCheck

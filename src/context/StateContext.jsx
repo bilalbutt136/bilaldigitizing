@@ -4,12 +4,10 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { INITIAL_PRICING, DIGITIZERS, SERVICES, PORTFOLIO_SAMPLES, DEFAULT_HERO_SLIDES } from '../data/mockData';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import {
-  fetchOrdersFromSupabase,
   createOrderInSupabase,
   updateOrderStatusInSupabase,
   addRevisionInSupabase,
   upsertClientInSupabase,
-  fetchClientsFromSupabase,
   signInWithGoogleOAuth,
   signInWithAppleOAuth,
   signInWithSupabaseAuth,
@@ -458,7 +456,7 @@ export const StateProvider = ({ children }) => {
     setNotifications(prev => [newNotif, ...prev]);
     try {
       playNotificationSound('notification');
-    } catch (_) {}
+    } catch {}
   };
 
   const markNotificationAsRead = (id) => {
@@ -475,7 +473,7 @@ export const StateProvider = ({ children }) => {
     setToast({ message, type, id: Date.now() });
     try {
       playNotificationSound('notification');
-    } catch (_) {}
+    } catch {}
     setTimeout(() => {
       setToast(null);
     }, 4000);
@@ -620,7 +618,7 @@ export const StateProvider = ({ children }) => {
   };
 
   // Auth Operations (Supabase backed only — no hardcoded credentials)
-  const login = async (email, password, role) => {
+  const login = async (email, password, _role) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanPass = (password || '').trim();
 
@@ -680,7 +678,7 @@ export const StateProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password, company, role) => {
+  const register = async (name, email, password, company, _role) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanName = (name || '').trim();
     const cleanCompany = (company || '').trim() || `${cleanName || 'Valued'}'s Custom Apparel`;
@@ -694,7 +692,7 @@ export const StateProvider = ({ children }) => {
     }
 
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
         options: {
@@ -1086,7 +1084,7 @@ export const StateProvider = ({ children }) => {
     }
   };
 
-  const addAdminUser = async (name, email, password) => {
+  const addAdminUser = async (name, email, _password) => {
     const cleanName = (name || '').trim();
     const cleanEmail = (email || '').toLowerCase().trim();
 

@@ -1,26 +1,16 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation, Link } from '../utils/navigation';
+import { useNavigate, useLocation } from '../utils/navigation';
 import { useAppState } from '../context/StateContext';
 import { 
-  Phone, 
-  Mail, 
-  Clock, 
   Scissors, 
   PlusCircle, 
-  ShieldCheck, 
   UserCheck, 
   Globe, 
-  LogOut,
   LogIn,
-  TrendingUp,
   User,
-  ShoppingBag,
   ChevronDown,
-  Sparkles,
-  Zap,
-  Layers,
   Menu,
   X,
   MessageSquare,
@@ -42,12 +32,10 @@ export const HeaderNav = () => {
     setCurrentView,
     isAuthenticated,
     authUser,
-    logout,
     protectedNavigate,
     setIsAuthModalOpen,
     setAuthModalMode,
     openOrderWizard,
-    showToast,
     setActiveAdminTab,
     setActiveCustomerTab,
     notifications = [],
@@ -59,10 +47,9 @@ export const HeaderNav = () => {
   const safeCurrentView = mounted ? currentView : 'public';
   const safeIsAuthenticated = mounted ? isAuthenticated : false;
   const currentPath = mounted ? (location?.pathname || '') : '';
-  const isStoreActive = currentPath === '/store';
 
   const [isServicesOpen, setIsServicesOpen] = useState(false);
-  const [isStoreOpen, setIsStoreOpen] = useState(false);
+  const [, setIsStoreOpen] = useState(false);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
@@ -134,28 +121,9 @@ export const HeaderNav = () => {
     }
   };
 
-  const handleGoStore = () => {
-    setCurrentView('public');
-    navigate('/store');
-  };
-
   const handleGoHome = () => {
     setCurrentView('public');
     navigate('/');
-  };
-
-  const handleGoClientPortal = () => {
-    protectedNavigate('customer');
-    if (safeIsAuthenticated) {
-      navigate('/client-portal');
-    }
-  };
-
-  const handleGoAdminPortal = () => {
-    protectedNavigate('admin');
-    if (safeIsAuthenticated && authUser?.role === 'admin') {
-      navigate('/admin-portal');
-    }
   };
 
   return (

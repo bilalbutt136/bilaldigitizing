@@ -11,9 +11,7 @@ import {
   Settings, 
   Plus, 
   Trash2, 
-  Tag, 
-  Clock, 
-  Globe 
+  Tag
 } from 'lucide-react';
 
 export const PricingSettingsModal = () => {

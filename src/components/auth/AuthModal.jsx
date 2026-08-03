@@ -8,7 +8,6 @@ import {
   Lock, 
   Mail, 
   User, 
-  Building2, 
   ArrowRight, 
   CheckCircle2,
   AlertCircle,
@@ -39,14 +38,14 @@ export const AuthModal = () => {
   const [loginPassword, setLoginPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [authError, setAuthError] = useState('');
+  const [, setAuthError] = useState('');
 
   // Signup form state
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
-  const [signupCompany, setSignupCompany] = useState('');
+  const [signupCompany] = useState('');
 
   // Forgot & Update password state
   const [forgotEmail, setForgotEmail] = useState('');
@@ -101,7 +100,7 @@ export const AuthModal = () => {
           }, 150);
         }
       }
-    } catch (err) {
+    } catch {
       setIsLoading(false);
       const errText = 'An unexpected authentication error occurred. Please try again.';
       setErrorModalText(errText);
@@ -139,7 +138,7 @@ export const AuthModal = () => {
           if (openOrderWizard) openOrderWizard();
         }, 150);
       }
-    } catch (err) {
+    } catch {
       setIsLoading(false);
       showToast('An unexpected registration error occurred. Please try again.', 'error');
     }

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { 
   Layers, 
@@ -11,27 +10,17 @@ import {
   Trophy, 
   Tag, 
   Clock, 
-  ArrowRight, 
-  UploadCloud, 
-  ShieldCheck, 
-  CheckCircle2, 
-  HelpCircle,
-  Scissors,
-  Flame,
-  Award
+  ArrowRight 
 } from 'lucide-react';
 
 export const EmbroideryDigitizingPage = () => {
-  const navigate = useNavigate();
-  const { pricing = {}, pricingCards = [], protectedNavigate, setIsOrderWizardOpen, openOrderWizard } = useAppState();
+  const { setIsOrderWizardOpen, openOrderWizard } = useAppState();
 
   const [selectedTier, setSelectedTier] = useState('standard');
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
-
-  const minFee = pricing.minOrderFee !== undefined ? parseFloat(pricing.minOrderFee).toFixed(2) : '5.00';
 
   const defaultCards = [
     {

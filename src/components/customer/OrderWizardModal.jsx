@@ -4,27 +4,14 @@ import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { 
   X, 
-  UploadCloud, 
   Upload,
-  Check, 
-  Scissors, 
   Zap, 
   ArrowRight, 
-  ArrowLeft,
   FileCheck,
-  Image as ImageIcon,
   FileCode,
-  FileText,
   Trash2,
-  Wallet,
-  CreditCard,
-  Lock,
-  ExternalLink,
-  ShieldCheck,
   Sparkles,
-  Clock,
-  Plus,
-  Minus
+  Plus
 } from 'lucide-react';
 export const OrderWizardModal = () => {
   const { 
@@ -32,16 +19,9 @@ export const OrderWizardModal = () => {
     setIsOrderWizardOpen, 
     orderWizardInitialData,
     createOrder,
-    pricing,
-    walletBalance = 0,
-    deductWalletBalance,
-    setIsDepositModalOpen,
-    authUser
+    pricing
   } = useAppState();
 
-  const [step, setStep] = useState(1); // 1: Upload & Service | 2: Specs | 3: Review | 4: Payment
-
-  // Package Tier State with safe fallback default
   const [selectedPackageTier, setSelectedPackageTier] = useState('standard'); // 'basic' | 'standard' | 'premium'
   
   // Itemized Placements Cart State with default initial placement item
@@ -50,34 +30,26 @@ export const OrderWizardModal = () => {
   ]);
 
   const [type, setType] = useState('embroidery'); // 'embroidery' | 'vector' | 'patch'
-  const [title, setTitle] = useState('');
+  const [title] = useState('');
   
   // Multi-File Upload Selected Assets Array State
-  const [selectedAssets, setSelectedAssets] = useState([]);
-  const uploadedFilesList = selectedAssets; // Alias for submit & order creation
+  const [selectedAssets] = useState([]);
   
-  const [isDragOver, setIsDragOver] = useState(false);
-
-  const [selectedPlacements, setSelectedPlacements] = useState(['left_chest']);
-  const [placementType, setPlacementType] = useState('Left Chest / Polo');
-  const [serviceCategory, setServiceCategory] = useState('Left Chest Digitizing');
-  const [width, setWidth] = useState(3.5);
-  const [height, setHeight] = useState(3.0);
+  const [, setPlacementType] = useState('Left Chest / Polo');
+  const [, setServiceCategory] = useState('Left Chest Digitizing');
   const [fabricType, setFabricType] = useState('Pique Cotton Polo');
-  const [colorsCount, setColorsCount] = useState(4);
   const [requestedFormats, setRequestedFormats] = useState(['dst', 'pes', 'emb', 'svg']);
   const [isRush, setIsRush] = useState(false);
   const [notes, setNotes] = useState('');
-  const [paymentOption, setPaymentOption] = useState('bolt'); // 'bolt' | 'wallet' | 'card'
 
   // Custom Patches State Variables with safe defaults
   const [patchStyle, setPatchStyle] = useState('Embroidered'); // 'Embroidered' | 'Woven' | 'PVC' | 'Leather'
   const [patchBacking, setPatchBacking] = useState('Iron-On'); // 'Iron-On' | 'Velcro' | 'Sew-On' | 'Adhesive'
-  const [patchBorderStyle, setPatchBorderStyle] = useState('Merrowed'); // 'Merrowed' | 'Die-Cut'
-  const [patchWidth, setPatchWidth] = useState(3.0);
-  const [patchHeight, setPatchHeight] = useState(3.0);
+  const [patchBorderStyle] = useState('Merrowed'); // 'Merrowed' | 'Die-Cut'
+  const [patchWidth] = useState(3.0);
+  const [patchHeight] = useState(3.0);
   const [patchQuantity, setPatchQuantity] = useState(50);
-  const [patchQuantityInput, setPatchQuantityInput] = useState('50');
+  const [, setPatchQuantityInput] = useState('50');
 
   // Multi-Item Custom Patch List State
   const [patchItems, setPatchItems] = useState([
@@ -203,28 +175,6 @@ export const OrderWizardModal = () => {
     { id: 'jacket_back', label: 'Jacket Back / Full Back', desc: 'Large crest (9"-12"+ high stitch count)', isJacketBack: true }
   ];
 
-  const togglePlacement = (placementId) => {
-    setSelectedPlacements(prev => {
-      if (prev.includes(placementId)) {
-        if (prev.length === 1) return prev;
-        return prev.filter(p => p !== placementId);
-      } else {
-        return [...prev, placementId];
-      }
-    });
-  };
-
-  const FORMAT_OPTIONS = [
-    { id: 'dst', label: '.DST', desc: 'Tajima / Universal' },
-    { id: 'pes', label: '.PES', desc: 'Brother / Baby Lock' },
-    { id: 'exp', label: '.EXP', desc: 'Melco / Bernina' },
-    { id: 'jef', label: '.JEF', desc: 'Janome / Elna' },
-    { id: 'hus', label: '.HUS', desc: 'Husqvarna Viking' },
-    { id: 'emb', label: '.EMB', desc: 'Wilcom Source File' },
-    { id: 'vp3', label: '.VP3', desc: 'PFAFF / Viking' },
-    { id: 'xxx', label: '.XXX', desc: 'Singer' }
-  ];
-
   const addPlacementItem = () => {
     setPlacementItems(prev => [
       ...prev,
@@ -290,14 +240,6 @@ export const OrderWizardModal = () => {
       }
       return item;
     }));
-  };
-
-  const selectAllFormats = () => {
-    if (requestedFormats.length === FORMAT_OPTIONS.length) {
-      setRequestedFormats(['dst', 'pes', 'emb']);
-    } else {
-      setRequestedFormats(FORMAT_OPTIONS.map(f => f.id));
-    }
   };
 
   const toggleFormat = (fmtId) => {
@@ -479,21 +421,6 @@ export const OrderWizardModal = () => {
   };
 
   const pricingDetails = getServicePricingDetails();
-
-  const handleFileChange = (e) => {
-    if (e.target.files) {
-      const newAssets = Array.from(e.target.files).map(file => ({
-        id: Date.now() + Math.random(),
-        name: file.name,
-        preview: URL.createObjectURL(file)
-      }));
-      setSelectedAssets(prev => [...prev, ...newAssets]);
-    }
-  };
-
-  const handleRemoveAsset = (id) => {
-    setSelectedAssets(prev => prev.filter(a => a.id !== id));
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -954,8 +881,6 @@ export const OrderWizardModal = () => {
                       {/* Patch Rows Container */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {patchItems.map((item, index) => {
-                          const w = parseFloat(item.patchWidth) || 3.0;
-                          const h = parseFloat(item.patchHeight) || 3.0;
                           const itemQty = Math.max(0, parseInt(item.quantityInput !== undefined ? item.quantityInput : item.quantity, 10) || 0);
 
                           let materialBase = 2.50;

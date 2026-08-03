@@ -10,11 +10,8 @@ import {
   Star,
   Tag,
   Layers,
-  Sparkles,
   PenTool,
-  MoveHorizontal,
-  Eye,
-  Scissors
+  MoveHorizontal
 } from 'lucide-react';
 
 const SERVICE_HERO_DATA = {

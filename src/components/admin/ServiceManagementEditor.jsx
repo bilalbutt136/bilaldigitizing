@@ -3,26 +3,15 @@
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { 
-  Sliders, 
   Plus, 
   Trash2, 
   Edit3, 
   Save, 
-  CheckCircle, 
   Clock, 
-  Tag, 
-  Layers, 
-  ShoppingBag, 
   Sparkles, 
-  Zap, 
-  Scissors, 
-  FileCode,
   DollarSign,
-  AlertCircle,
-  Eye,
   Check,
-  X,
-  Upload
+  X
 } from 'lucide-react';
 
 export const ServiceManagementEditor = () => {
@@ -33,7 +22,6 @@ export const ServiceManagementEditor = () => {
     setPricingCards, 
     patchCards = [], 
     setPatchCards, 
-    storeProducts = [], 
     setStoreProducts, 
     servicesList = [], 
     setServicesList,
@@ -78,7 +66,7 @@ export const ServiceManagementEditor = () => {
     }));
     try {
       localStorage.setItem('bdigi_pricing', JSON.stringify({ ...pricing, ...basePricing }));
-    } catch (_) {}
+    } catch {}
     showToast('Base pricing rates updated successfully!', 'success');
   };
 
@@ -148,28 +136,28 @@ export const ServiceManagementEditor = () => {
       setPricingCards(prev => {
         const exists = prev.some(p => p.id === updatedObj.id);
         const next = exists ? prev.map(p => p.id === updatedObj.id ? updatedObj : p) : [...prev, updatedObj];
-        try { localStorage.setItem('bdigi_pricing_cards', JSON.stringify(next)); } catch (_) {}
+        try { localStorage.setItem('bdigi_pricing_cards', JSON.stringify(next)); } catch {}
         return next;
       });
     } else if (activeCategory === 'patches') {
       setPatchCards(prev => {
         const exists = prev.some(p => p.id === updatedObj.id);
         const next = exists ? prev.map(p => p.id === updatedObj.id ? updatedObj : p) : [...prev, updatedObj];
-        try { localStorage.setItem('bdigi_patch_cards', JSON.stringify(next)); } catch (_) {}
+        try { localStorage.setItem('bdigi_patch_cards', JSON.stringify(next)); } catch {}
         return next;
       });
     } else if (activeCategory === 'store') {
       setStoreProducts(prev => {
         const exists = prev.some(p => p.id === updatedObj.id);
         const next = exists ? prev.map(p => p.id === updatedObj.id ? updatedObj : p) : [...prev, updatedObj];
-        try { localStorage.setItem('bdigi_store_products', JSON.stringify(next)); } catch (_) {}
+        try { localStorage.setItem('bdigi_store_products', JSON.stringify(next)); } catch {}
         return next;
       });
     } else {
       setServicesList(prev => {
         const exists = prev.some(p => p.id === updatedObj.id);
         const next = exists ? prev.map(p => p.id === updatedObj.id ? updatedObj : p) : [...prev, updatedObj];
-        try { localStorage.setItem('bdigi_services_list', JSON.stringify(next)); } catch (_) {}
+        try { localStorage.setItem('bdigi_services_list', JSON.stringify(next)); } catch {}
         return next;
       });
     }

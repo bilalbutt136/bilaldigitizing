@@ -9,11 +9,7 @@ import {
   Sun, 
   Moon, 
   LogOut, 
-  ChevronDown, 
   Wallet, 
-  ShieldCheck, 
-  Sparkles,
-  ShoppingBag,
   PlusCircle
 } from 'lucide-react';
 

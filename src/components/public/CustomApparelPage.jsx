@@ -1,29 +1,19 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { 
   ShoppingBag, 
   CheckCircle2, 
-  Sparkles, 
-  Truck, 
-  ShieldCheck, 
   ArrowRight, 
   ChevronRight, 
-  Layers, 
-  Clock, 
-  Award,
-  Zap,
-  Tag
+  Layers 
 } from 'lucide-react';
 
 export const CustomApparelPage = () => {
   const navigate = useNavigate();
   const { openStoreOrderModal, storeProducts = [], protectedNavigate } = useAppState();
-
-  const [selectedColor, setSelectedColor] = useState('Classic Black');
-  const [selectedSize, setSelectedSize] = useState('L');
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });

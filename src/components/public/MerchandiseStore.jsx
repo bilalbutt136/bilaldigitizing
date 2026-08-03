@@ -4,10 +4,8 @@ import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { 
   ShoppingBag, 
-  Tag, 
   CheckCircle, 
   ArrowRight, 
-  Sparkles, 
   Shirt, 
   Layers, 
   HardHat, 
@@ -16,9 +14,7 @@ import {
   ShieldCheck,
   Truck,
   Award,
-  RefreshCw,
-  HelpCircle,
-  FileCheck
+  HelpCircle
 } from 'lucide-react';
 
 import { useLocation } from '../../utils/navigation';
