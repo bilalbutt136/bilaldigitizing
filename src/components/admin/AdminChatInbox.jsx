@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/StateContext';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase/client';
+import { fetchConversations, addChatMessage } from '../../services/supabaseService';
 import { playNotificationSound } from '../../utils/audioNotification';
 import {
   MessageSquare,
@@ -79,35 +81,27 @@ export const AdminChatInbox = () => {
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Save & Broadcast to localStorage and real-time custom event listeners
   useEffect(() => {
-    try {
-      localStorage.setItem('bdigi_admin_chats', JSON.stringify(conversations));
-      window.dispatchEvent(new CustomEvent('bdigi_chat_update', { detail: conversations }));
-    } catch (err) {
-      console.warn('Error saving chats to storage:', err);
-    }
-  }, [conversations]);
-
-  // Real-time Event Listener for incoming client messages across tabs and windows
-  useEffect(() => {
-    const syncChats = (e) => {
-      if (e.type === 'bdigi_chat_update' && e.detail) {
-        setConversations(deduplicateThreads(e.detail));
-        playNotificationSound('receive');
-      } else if (e.key === 'bdigi_admin_chats' && e.newValue) {
-        try {
-          setConversations(deduplicateThreads(JSON.parse(e.newValue)));
-          playNotificationSound('receive');
-        } catch { }
+    let channel;
+    const loadChats = async () => {
+      const data = await fetchConversations();
+      if (data && data.length > 0) {
+        setConversations(deduplicateThreads(data));
       }
     };
-
-    window.addEventListener('storage', syncChats);
-    window.addEventListener('bdigi_chat_update', syncChats);
+    
+    if (isSupabaseConfigured && supabase) {
+      loadChats();
+      channel = supabase
+        .channel('public:messages')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+          loadChats();
+          playNotificationSound('receive');
+        })
+        .subscribe();
+    }
     return () => {
-      window.removeEventListener('storage', syncChats);
-      window.removeEventListener('bdigi_chat_update', syncChats);
+      if (channel) supabase.removeChannel(channel);
     };
   }, []);
 
@@ -150,7 +144,7 @@ export const AdminChatInbox = () => {
     }));
   };
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e?.preventDefault();
     if (!replyInput.trim() && !attachedFile) return;
     if (!currentActiveChatId) return;
@@ -163,6 +157,12 @@ export const AdminChatInbox = () => {
       attachment: attachedFile ? attachedFile.name : null,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
+
+    const saved = await addChatMessage(currentActiveChatId, newMsg);
+    if (!saved) {
+      showToast('Error sending message', 'error');
+      return;
+    }
 
     setConversations(prev => prev.map(conv => {
       if (conv.id === currentActiveChatId) {

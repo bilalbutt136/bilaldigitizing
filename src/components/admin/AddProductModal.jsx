@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
+import { addStoreProduct } from '../../services/supabaseService';
 import { 
   X, 
   Package, 
@@ -48,7 +49,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!title.trim()) {
@@ -71,6 +72,12 @@ export const AddProductModal = ({ isOpen, onClose }) => {
       colors: colorsText.split(',').map(c => c.trim()).filter(Boolean),
       features: featuresText.split('\n').map(f => f.trim()).filter(Boolean)
     };
+
+    const savedProduct = await addStoreProduct(newProd);
+    if (!savedProduct) {
+      showToast('Error saving product to database', 'error');
+      return;
+    }
 
     const updatedCatalog = [newProd, ...storeProducts];
     updateStoreProducts(updatedCatalog);

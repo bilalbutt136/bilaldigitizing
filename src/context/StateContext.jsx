@@ -8,14 +8,15 @@ import {
   updateOrderStatusInSupabase,
   addRevisionInSupabase,
   upsertClientInSupabase,
-  signInWithGoogleOAuth,
-  signInWithAppleOAuth,
+  signInWithGoogleIdToken,
+  signInWithAppleIdToken,
   signInWithSupabaseAuth,
   sendPasswordResetEmail,
   updateUserPassword,
   saveCmsConfigToSupabase,
   fetchCatalogFromSupabase,
   fetchClientsFromSupabase,
+  fetchOrdersFromSupabase,
   addOrderMessageInSupabase,
   verifyAdminSession,
   fetchAdminUsers,
@@ -513,18 +514,7 @@ export const StateProvider = ({ children }) => {
     let cancelled = false;
 
     const loadInitialData = async () => {
-      // 1. Load clients from localStorage first so registered users are preserved
-      try {
-        if (typeof window !== 'undefined') {
-          const localClients = localStorage.getItem('bdigi_clients');
-          if (localClients) {
-            const parsed = JSON.parse(localClients);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              setClients(parsed);
-            }
-          }
-        }
-      } catch (e) {}
+      // 1. (Removed local clients loading)
 
       // 2. Fetch catalog & DB clients if Supabase is configured
       if (isSupabaseConfigured && supabase) {
@@ -549,7 +539,7 @@ export const StateProvider = ({ children }) => {
             if (catalog.serviceCms) setServiceCmsContent(catalog.serviceCms);
           }
 
-          // Load DB clients from Supabase clients table
+          // Load DB clients from Supabase users table
           const dbClients = await fetchClientsFromSupabase();
           if (!cancelled && dbClients && dbClients.length > 0) {
             setClients(prev => {
@@ -557,14 +547,14 @@ export const StateProvider = ({ children }) => {
               [...dbClients, ...prev].forEach(c => {
                 if (c && c.email) mergedMap.set(c.email.toLowerCase(), c);
               });
-              const merged = Array.from(mergedMap.values());
-              try {
-                if (typeof window !== 'undefined') {
-                  localStorage.setItem('bdigi_clients', JSON.stringify(merged));
-                }
-              } catch {}
-              return merged;
+              return Array.from(mergedMap.values());
             });
+          }
+
+          // Fetch orders from Supabase DB
+          const dbOrders = await fetchOrdersFromSupabase();
+          if (!cancelled && dbOrders) {
+            setOrders(dbOrders);
           }
 
           // Load current Supabase session
@@ -739,20 +729,24 @@ export const StateProvider = ({ children }) => {
     }
   };
 
-  const loginWithGoogle = async () => {
-    showToast('Redirecting to Google Sign-In...', 'info');
-    const res = await signInWithGoogleOAuth();
+  const loginWithGoogle = async (idToken) => {
+    showToast('Authenticating with Google...', 'info');
+    const res = await signInWithGoogleIdToken(idToken);
     if (!res.success) {
       showToast(res.error || 'Google Sign-In failed.', 'error');
+    } else {
+      await finishAuth(res.data.user);
     }
     return res;
   };
 
-  const loginWithApple = async () => {
-    showToast('Redirecting to Apple Sign-In...', 'info');
-    const res = await signInWithAppleOAuth();
+  const loginWithApple = async (idToken) => {
+    showToast('Authenticating with Apple...', 'info');
+    const res = await signInWithAppleIdToken(idToken);
     if (!res.success) {
       showToast(res.error || 'Apple Sign-In failed.', 'error');
+    } else {
+      await finishAuth(res.data.user);
     }
     return res;
   };

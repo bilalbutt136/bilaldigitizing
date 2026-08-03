@@ -7,41 +7,32 @@ export { isSupabaseConfigured };
  * Service layer for Supabase Database, Auth & Storage Operations.
  */
 
-export async function signInWithGoogleOAuth(customRedirect) {
-  const targetRedirectUrl = customRedirect || (typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : getSiteUrl());
-
+export async function signInWithGoogleIdToken(idToken) {
+  if (!isSupabaseConfigured) return { success: false, error: 'Database not configured.' };
   try {
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithIdToken({
       provider: 'google',
-      options: {
-        redirectTo: targetRedirectUrl,
-        queryParams: {
-          prompt: 'select_account'
-        }
-      }
+      token: idToken,
     });
-
     if (error) return { success: false, error: error.message };
     return { success: true, data };
   } catch (err) {
+    console.error('Google ID Token auth error:', err);
     return { success: false, error: err?.message || 'Google Authentication error.' };
   }
 }
 
-export async function signInWithAppleOAuth(customRedirect) {
-  const targetRedirectUrl = customRedirect || (typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : getSiteUrl());
-
+export async function signInWithAppleIdToken(idToken) {
+  if (!isSupabaseConfigured) return { success: false, error: 'Database not configured.' };
   try {
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithIdToken({
       provider: 'apple',
-      options: {
-        redirectTo: targetRedirectUrl
-      }
+      token: idToken,
     });
-
     if (error) return { success: false, error: error.message };
     return { success: true, data };
   } catch (err) {
+    console.error('Apple ID Token auth error:', err);
     return { success: false, error: err?.message || 'Apple Authentication error.' };
   }
 }
@@ -208,16 +199,11 @@ export async function fetchOrdersFromSupabase() {
       .select('*, order_files(*)')
       .order('created_at', { ascending: false });
 
-    if (!joinedErr && joinedOrders) {
-      ordersData = joinedOrders;
-    } else {
-      // Fallback separate select queries
-      const { data: fallbackOrders } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
-      ordersData = fallbackOrders;
+    if (joinedErr) {
+      console.warn('Supabase fetch orders error:', joinedErr.message);
+      return null;
     }
+    ordersData = joinedOrders;
 
     const { data: allFiles } = await supabase.from('order_files').select('*');
     filesData = allFiles || [];
@@ -349,29 +335,7 @@ export async function createOrderInSupabase(newOrder) {
     const { data, error } = await supabase.from('orders').insert([primaryDbRow]).select();
     if (error) {
       console.error('[Supabase Order Insert Error]:', error.message, error.details, error.hint, error);
-
-      // Clean fallback payload with core universal columns
-      const fallbackDbRow = {
-        id: newOrder.id,
-        title: resolvedTitle,
-        client_name: resolvedName,
-        client_email: resolvedEmail,
-        service_category: resolvedCategory,
-        price: resolvedPrice,
-        status: newOrder.status || 'submitted',
-        notes: newOrder.notes || '',
-        artwork_url: uploadedArtworkUrl || '',
-        image_url: uploadedArtworkUrl || '',
-        logo: uploadedArtworkUrl || ''
-      };
-
-      console.log('[Supabase Order Insert Fallback] Attempting fallback insert:', fallbackDbRow);
-      const { error: fallbackErr } = await supabase.from('orders').insert([fallbackDbRow]);
-      if (fallbackErr) {
-        console.error('[Supabase Order Fallback Insert Error]:', fallbackErr.message, fallbackErr);
-      } else {
-        console.log('[Supabase Order Insert Fallback] Successfully saved order via fallback payload!');
-      }
+      throw error;
     } else {
       console.log('[Supabase Order Insert Success]: Order saved successfully in DB!', data);
     }
@@ -572,7 +536,7 @@ export async function fetchClientsFromSupabase() {
 
   try {
     const { data, error } = await supabase
-      .from('clients')
+      .from('users')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -1059,5 +1023,70 @@ export async function fetchWalletBalanceFromSupabase(email) {
     return parseFloat(data.wallet_balance || 0);
   } catch {
     return 0;
+  }
+}
+
+
+export async function addStoreProduct(product) {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const { data, error } = await supabase.from('store_products').insert([{
+      id: product.id,
+      category: product.category,
+      title: product.title,
+      price: product.price,
+      unit: product.unit || '',
+      min_quantity: product.minQuantity || 1,
+      badge: product.badge || '',
+      status: product.status || 'active',
+      image: product.image || '',
+      description: product.description || '',
+      sizes: product.sizes || [],
+      colors: product.colors || [],
+      features: product.features || []
+    }]).select();
+    if (error) throw error;
+    return data[0];
+  } catch (err) {
+    console.error('Error adding store product:', err);
+    return null;
+  }
+}
+
+
+export async function fetchConversations() {
+  if (!isSupabaseConfigured) return [];
+  try {
+    const { data: convs, error: convErr } = await supabase.from('conversations').select('*');
+    if (convErr) throw convErr;
+    const { data: msgs, error: msgErr } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
+    if (msgErr) throw msgErr;
+    return convs.map(c => ({
+      ...c,
+      messages: msgs.filter(m => m.conversation_id === c.id)
+    }));
+  } catch (err) {
+    console.error('Error fetching conversations:', err);
+    return [];
+  }
+}
+
+export async function addChatMessage(conversationId, message) {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const { data, error } = await supabase.from('messages').insert([{
+      id: message.id,
+      conversation_id: conversationId,
+      sender: message.sender,
+      sender_name: message.senderName || '',
+      text: message.text || '',
+      attachment: message.attachment || '',
+      timestamp: message.timestamp || new Date().toISOString()
+    }]).select();
+    if (error) throw error;
+    return data[0];
+  } catch (err) {
+    console.error('Error adding message:', err);
+    return null;
   }
 }

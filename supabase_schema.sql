@@ -149,3 +149,64 @@ USING (bucket_id = 'client-uploads') WITH CHECK (bucket_id = 'client-uploads');
 
 CREATE POLICY "Public Read/Write Finished Packages" ON storage.objects FOR ALL 
 USING (bucket_id = 'finished-packages') WITH CHECK (bucket_id = 'finished-packages');
+
+
+
+-- 6. STORE PRODUCTS TABLE
+CREATE TABLE IF NOT EXISTS public.store_products (
+    id TEXT PRIMARY KEY,
+    category TEXT NOT NULL,
+    title TEXT NOT NULL,
+    price TEXT NOT NULL,
+    unit TEXT,
+    min_quantity INT DEFAULT 1,
+    badge TEXT,
+    status TEXT DEFAULT 'active',
+    image TEXT,
+    description TEXT,
+    sizes TEXT[] DEFAULT ARRAY['Standard'],
+    colors TEXT[],
+    features TEXT[],
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 7. CONVERSATIONS TABLE
+CREATE TABLE IF NOT EXISTS public.conversations (
+    id TEXT PRIMARY KEY,
+    client_name TEXT NOT NULL,
+    client_email TEXT NOT NULL,
+    client_company TEXT,
+    order_id TEXT,
+    order_title TEXT,
+    avatar TEXT,
+    status TEXT DEFAULT 'offline',
+    unread_count INT DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 8. MESSAGES TABLE
+CREATE TABLE IF NOT EXISTS public.messages (
+    id TEXT PRIMARY KEY,
+    conversation_id TEXT REFERENCES public.conversations(id) ON DELETE CASCADE,
+    sender TEXT NOT NULL,
+    sender_name TEXT,
+    text TEXT,
+    attachment TEXT,
+    timestamp TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE public.store_products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow public read/write on store_products" ON public.store_products;
+DROP POLICY IF EXISTS "Allow public read/write on conversations" ON public.conversations;
+DROP POLICY IF EXISTS "Allow public read/write on messages" ON public.messages;
+
+CREATE POLICY "Allow public read/write on store_products" ON public.store_products FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read/write on conversations" ON public.conversations FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read/write on messages" ON public.messages FOR ALL USING (true) WITH CHECK (true);
