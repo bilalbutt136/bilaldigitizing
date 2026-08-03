@@ -305,7 +305,6 @@ export async function createOrderInSupabase(newOrder) {
 
     const primaryDbRow = {
       id: newOrder.id,
-      user_id: currentUserId,
       title: resolvedTitle,
       description: newOrder.notes || resolvedTitle,
       client_id: newOrder.clientId || resolvedEmail,
@@ -344,7 +343,6 @@ export async function createOrderInSupabase(newOrder) {
     try {
       const fileRow = {
         order_id: newOrder.id,
-        user_id: currentUserId,
         file_name: newOrder.artworkFileName || `${newOrder.id}_artwork.png`,
         file_format: 'png',
         file_type: 'client_artwork',
