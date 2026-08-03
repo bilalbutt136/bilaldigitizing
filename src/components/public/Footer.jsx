@@ -3,18 +3,31 @@
 import React, { useState, useEffect } from 'react';
 import { Scissors, ShieldCheck, Mail, Phone, MapPin } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
+import { useLocation } from '../../utils/navigation';
 
 export const Footer = () => {
   const [mounted, setMounted] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const { setCurrentView, isAuthenticated, authUser, siteSettings = {} } = useAppState();
+  const { currentView, setCurrentView, isAuthenticated, authUser, siteSettings = {} } = useAppState();
 
   const safeIsAuthenticated = mounted ? isAuthenticated : false;
   const safeAuthUser = mounted ? authUser : null;
+  const pathname = mounted ? (location?.pathname || '') : '';
+
+  if (mounted && (
+    pathname.includes('/admin-portal') ||
+    pathname.includes('/client-portal') ||
+    pathname.includes('/secure-admin-login') ||
+    currentView === 'admin' ||
+    currentView === 'customer'
+  )) {
+    return null;
+  }
 
   const phone = siteSettings.contactPhone || '+1 (800) 555-DIGI (3444)';
   const email = siteSettings.supportEmail || 'orders@bdigitizing-pro.com';

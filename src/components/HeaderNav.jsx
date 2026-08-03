@@ -608,10 +608,10 @@ export const HeaderNav = () => {
                 </button>
               )}
               
-              {/* TOP HEADER CHAT & NOTIFICATIONS (CLIENT PORTAL ONLY) */}
-              {safeCurrentView === 'customer' && (
+              {/* TOP HEADER CHAT & NOTIFICATIONS FOR ALL AUTHENTICATED USERS */}
+              {safeIsAuthenticated && (
                 <>
-                  {/* TOP HEADER CHAT BUTTON */}
+                  {/* TOP HEADER CHAT / INBOX BUTTON */}
                   <button
                     type="button"
                     onClick={handleOpenLiveSupport}
@@ -632,10 +632,10 @@ export const HeaderNav = () => {
                     }}
                     onMouseOver={(e) => { e.currentTarget.style.background = '#ff7a00'; e.currentTarget.style.color = '#ffffff'; }}
                     onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255, 122, 0, 0.1)'; e.currentTarget.style.color = 'var(--orange-600)'; }}
-                    title="Open 24/7 Live Support Chat"
+                    title={safeAuthUser?.role === 'admin' ? 'Open Admin Chat Inbox' : 'Open 24/7 Live Support Chat'}
                   >
                     <MessageSquare size={16} />
-                    <span>Chat</span>
+                    <span>Inbox</span>
                   </button>
 
                   {/* TOP HEADER NOTIFICATION BELL WITH DROPDOWN SUPPORT */}
@@ -739,7 +739,7 @@ export const HeaderNav = () => {
                                 style={{ 
                                   padding: '0.55rem 0.65rem', 
                                   background: item.read ? '#f8fafc' : '#fff7ed', 
-                                  borderRadius: '9px', 
+                                  borderRadius: '99px', 
                                   borderLeft: item.read ? '3px solid #cbd5e1' : '3px solid #ff7a00',
                                   cursor: 'pointer',
                                   transition: 'background 0.15s ease'
