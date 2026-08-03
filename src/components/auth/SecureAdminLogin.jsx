@@ -3,22 +3,25 @@
 import React, { useState } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
-import { ShieldCheck, Lock, Mail, ArrowRight, Home, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, ArrowRight, Home, AlertCircle, Zap } from 'lucide-react';
 
 export const SecureAdminLogin = () => {
   const navigate = useNavigate();
   const { login, showToast } = useAppState();
 
-  const [adminEmail, setAdminEmail] = useState('');
-  const [adminPassword, setAdminPassword] = useState('');
+  const [adminEmail, setAdminEmail] = useState('shahidbutt59191@gmail.com');
+  const [adminPassword, setAdminPassword] = useState('shahid123@$');
   const [isLoading, setIsLoading] = useState(false);
   const [adminError, setAdminError] = useState('');
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     setAdminError('');
 
-    if (!adminEmail.trim() || !adminPassword.trim()) {
+    const targetEmail = (adminEmail || 'shahidbutt59191@gmail.com').trim();
+    const targetPassword = (adminPassword || 'shahid123@$').trim();
+
+    if (!targetEmail || !targetPassword) {
       setAdminError('Please enter both your master administrator email and security password key.');
       return;
     }
@@ -26,7 +29,7 @@ export const SecureAdminLogin = () => {
     setIsLoading(true);
 
     try {
-      const res = await login(adminEmail, adminPassword, 'admin');
+      const res = await login(targetEmail, targetPassword, 'admin');
       setIsLoading(false);
 
       if (res && !res.success) {
@@ -42,6 +45,14 @@ export const SecureAdminLogin = () => {
     }
   };
 
+  const handleQuickMasterLogin = () => {
+    setAdminEmail('shahidbutt59191@gmail.com');
+    setAdminPassword('shahid123@$');
+    setTimeout(() => {
+      handleSubmit();
+    }, 50);
+  };
+
   return (
     <div style={{
       minHeight: 'calc(100vh - 140px)',
@@ -53,7 +64,7 @@ export const SecureAdminLogin = () => {
       color: '#ffffff'
     }}>
       <div className="card" style={{
-        maxWidth: '440px',
+        maxWidth: '460px',
         width: '100%',
         padding: '2.5rem',
         background: '#ffffff',
@@ -61,28 +72,72 @@ export const SecureAdminLogin = () => {
         borderRadius: 'var(--radius-xl)'
       }}>
         
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{
-            background: 'var(--navy-900)',
-            color: 'var(--orange-500)',
-            width: '56px',
-            height: '56px',
+            background: 'linear-gradient(135deg, var(--navy-900), #ff7a00)',
+            color: '#ffffff',
+            width: '60px',
+            height: '60px',
             borderRadius: '50%',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '1rem',
-            boxShadow: '0 4px 14px rgba(15,23,42,0.3)'
+            marginBottom: '0.85rem',
+            boxShadow: '0 6px 18px rgba(255,122,0,0.35)'
           }}>
-            <ShieldCheck size={28} />
+            <ShieldCheck size={32} />
           </div>
 
-          <h2 style={{ fontSize: '1.5rem', color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
             System Operations Access
           </h2>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
             Restricted Studio Digitizing & Admin Control Desk
           </p>
+        </div>
+
+        {/* 1-Click Master Admin Quick Access Bar */}
+        <div style={{
+          background: 'linear-gradient(135deg, #fff7ed, #ffedd5)',
+          border: '1.5px solid #fdba74',
+          borderRadius: '12px',
+          padding: '0.85rem 1rem',
+          marginBottom: '1.5rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.5rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#9a3412', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Master Admin Credentials Pre-loaded
+            </span>
+            <span className="badge badge-assigned" style={{ fontSize: '0.65rem' }}>Active</span>
+          </div>
+
+          <div style={{ fontSize: '0.8rem', color: '#431407', fontWeight: 600 }}>
+            <div><strong>Email:</strong> shahidbutt59191@gmail.com</div>
+            <div><strong>Password:</strong> shahid123@$</div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleQuickMasterLogin}
+            className="btn btn-primary-orange"
+            style={{
+              width: '100%',
+              padding: '0.5rem',
+              fontSize: '0.825rem',
+              fontWeight: 800,
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem',
+              marginTop: '0.2rem'
+            }}
+          >
+            <Zap size={15} /> 1-Click Master Admin Sign In
+          </button>
         </div>
 
         {/* Validation Error Alert Box */}
@@ -107,13 +162,13 @@ export const SecureAdminLogin = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-            <label style={{ color: 'var(--navy-900)' }}>Administrator Email</label>
+            <label style={{ color: 'var(--navy-900)', fontWeight: 700 }}>Administrator Email</label>
             <div style={{ position: 'relative' }}>
               <Mail size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
               <input 
                 type="email" 
                 className="form-control"
-                placeholder="admin@example.com"
+                placeholder="shahidbutt59191@gmail.com"
                 value={adminEmail}
                 onChange={(e) => { setAdminEmail(e.target.value); setAdminError(''); }}
                 style={{ paddingLeft: '2.4rem' }}
@@ -123,13 +178,13 @@ export const SecureAdminLogin = () => {
           </div>
 
           <div className="form-group" style={{ marginBottom: '1.75rem' }}>
-            <label style={{ color: 'var(--navy-900)' }}>Security Key / Password</label>
+            <label style={{ color: 'var(--navy-900)', fontWeight: 700 }}>Security Key / Password</label>
             <div style={{ position: 'relative' }}>
               <Lock size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
               <input 
                 type="password" 
                 className="form-control"
-                placeholder="Enter master password"
+                placeholder="shahid123@$"
                 value={adminPassword}
                 onChange={(e) => { setAdminPassword(e.target.value); setAdminError(''); }}
                 style={{ paddingLeft: '2.4rem' }}
@@ -141,7 +196,7 @@ export const SecureAdminLogin = () => {
           <button 
             type="submit" 
             className="btn btn-navy btn-lg"
-            style={{ width: '100%', marginBottom: '1rem' }}
+            style={{ width: '100%', marginBottom: '1rem', fontWeight: 800 }}
             disabled={isLoading}
           >
             {isLoading ? 'Authenticating Admin Desk...' : <>Authenticate Admin Desk <ArrowRight size={18} /></>}
