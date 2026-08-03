@@ -552,11 +552,19 @@ export const AuthModal = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <button
                   type="button"
-                  onClick={async () => {
+                  onClick={async (e) => {
+                    if (e && e.preventDefault) e.preventDefault();
                     setIsLoading(true);
-                    const res = await loginWithGoogle();
-                    setIsLoading(false);
-                    if (res?.success) navigate('/client-portal');
+                    try {
+                      const res = await loginWithGoogle();
+                      setIsLoading(false);
+                      if (res?.success) {
+                        setIsAuthModalOpen(false);
+                        navigate('/client-portal');
+                      }
+                    } catch {
+                      setIsLoading(false);
+                    }
                   }}
                   style={{
                     display: 'flex',
@@ -589,11 +597,19 @@ export const AuthModal = () => {
 
                 <button
                   type="button"
-                  onClick={async () => {
+                  onClick={async (e) => {
+                    if (e && e.preventDefault) e.preventDefault();
                     setIsLoading(true);
-                    const res = await loginWithApple();
-                    setIsLoading(false);
-                    if (res?.success) navigate('/client-portal');
+                    try {
+                      const res = await loginWithApple();
+                      setIsLoading(false);
+                      if (res?.success) {
+                        setIsAuthModalOpen(false);
+                        navigate('/client-portal');
+                      }
+                    } catch {
+                      setIsLoading(false);
+                    }
                   }}
                   style={{
                     display: 'flex',
@@ -753,11 +769,19 @@ export const AuthModal = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <button
                   type="button"
-                  onClick={async () => {
+                  onClick={async (e) => {
+                    if (e && e.preventDefault) e.preventDefault();
                     setIsLoading(true);
-                    const res = await loginWithGoogle();
-                    setIsLoading(false);
-                    if (res?.success) navigate('/client-portal');
+                    try {
+                      const res = await loginWithGoogle();
+                      setIsLoading(false);
+                      if (res?.success) {
+                        setIsAuthModalOpen(false);
+                        navigate('/client-portal');
+                      }
+                    } catch {
+                      setIsLoading(false);
+                    }
                   }}
                   style={{
                     display: 'flex',
@@ -790,11 +814,19 @@ export const AuthModal = () => {
 
                 <button
                   type="button"
-                  onClick={async () => {
+                  onClick={async (e) => {
+                    if (e && e.preventDefault) e.preventDefault();
                     setIsLoading(true);
-                    const res = await loginWithApple();
-                    setIsLoading(false);
-                    if (res?.success) navigate('/client-portal');
+                    try {
+                      const res = await loginWithApple();
+                      setIsLoading(false);
+                      if (res?.success) {
+                        setIsAuthModalOpen(false);
+                        navigate('/client-portal');
+                      }
+                    } catch {
+                      setIsLoading(false);
+                    }
                   }}
                   style={{
                     display: 'flex',
