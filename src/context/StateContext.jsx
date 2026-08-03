@@ -709,13 +709,22 @@ export const StateProvider = ({ children }) => {
     let balance = 0;
     
     try {
+      // Check if user is an admin
+      const { data: adminData, error: adminError } = await supabase.from('admins').select('email').eq('email', sbUser.email).single();
+      if (!adminError && adminData) {
+        role = 'admin';
+      }
+
+      // Check client profile for wallet balance and fallback role
       const { data, error } = await supabase.from('clients').select('role, wallet_balance, name').eq('email', sbUser.email).single();
       if (!error && data) {
-        role = data.role;
+        if (role !== 'admin') {
+          role = data.role || 'customer';
+        }
         balance = data.wallet_balance;
       }
     } catch (e) {
-      console.warn("Error fetching user data from public.users");
+      console.warn("Error fetching user data from public tables");
     }
 
     const uData = buildAuthUser(sbUser, role);
