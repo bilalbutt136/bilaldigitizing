@@ -75,12 +75,12 @@ export const PricingCalculator = () => {
       title: 'Basic Digitizing',
       subTitle: 'Ideal for simple left-chest & small logos up to 4"',
       icon: Zap,
-      discountTag: 'ESSENTIAL',
+      discountTag: 'ESSENTIAL TIER',
       strikePrice: '$15.00',
-      rate: `$${minFee}`,
+      rate: '$10.00',
       unit: '/ design',
       delivery: '8 - 12 Hours Delivery',
-      btnText: `Order Basic (${minFee === '10.00' ? '$10.00' : '$' + minFee})`,
+      btnText: 'Order Basic ($10.00)',
       badge: '',
       popular: false,
       features: [
@@ -98,10 +98,10 @@ export const PricingCalculator = () => {
       icon: Trophy,
       discountTag: 'MOST POPULAR',
       strikePrice: '$20.00',
-      rate: `$${(parseFloat(minFee) + 5).toFixed(2)}`,
+      rate: '$15.00',
       unit: '/ design',
       delivery: '4 - 12 Hours Express',
-      btnText: `Order Standard ($${(parseFloat(minFee) + 5).toFixed(2)})`,
+      btnText: 'Order Standard ($15.00)',
       badge: 'MOST POPULAR',
       popular: true,
       features: [
@@ -118,11 +118,11 @@ export const PricingCalculator = () => {
       subTitle: 'Ideal for jacket backs & full-back crests',
       icon: Sparkles,
       discountTag: 'FULL BACK',
-      strikePrice: '$35.00',
-      rate: `$${(parseFloat(minFee) + 15).toFixed(2)}`,
+      strikePrice: '$45.00',
+      rate: '$35.00',
       unit: '/ design',
       delivery: '12 - 24 Hours Priority',
-      btnText: `Order Premium ($${(parseFloat(minFee) + 15).toFixed(2)})`,
+      btnText: 'Order Premium ($35.00)',
       badge: '',
       popular: false,
       features: [
@@ -130,48 +130,6 @@ export const PricingCalculator = () => {
         'Master pathing for complex gradient shading',
         'High density underlay pathing',
         'VIP priority studio desk'
-      ]
-    },
-    {
-      id: 'pcard-vector-simple',
-      category: 'vector',
-      title: 'Vector Tracing',
-      subTitle: 'Ideal for raster image to scalable vector redraw',
-      icon: Zap,
-      discountTag: 'VECTOR ART',
-      strikePrice: '$25.00',
-      rate: `$${vectorFee}`,
-      unit: '/ artwork',
-      delivery: '6 - 12 Hours Delivery',
-      btnText: `Order Vector ($${vectorFee})`,
-      badge: '',
-      popular: false,
-      features: [
-        'Clean logo & raster JPEG/PNG redraws',
-        'Hand-drawn 100% scalable vector paths',
-        'Deliverables: .AI, .EPS, .SVG, .PDF, .CDR',
-        'Spot Pantone & CMYK print color separations'
-      ]
-    },
-    {
-      id: 'pcard-patch-tier',
-      category: 'patches',
-      title: 'Custom Patches',
-      subTitle: 'Ideal for embroidered, leather & PVC emblems',
-      icon: Trophy,
-      discountTag: 'PHYSICAL PATCHES',
-      strikePrice: '$3.50',
-      rate: `$${patchesFee}`,
-      unit: '/ patch',
-      delivery: '3 - 5 Days Shipping',
-      btnText: `Order Patches ($${patchesFee}/ea)`,
-      badge: '',
-      popular: false,
-      features: [
-        'Classic merrowed border & die-cut edge',
-        'Iron-on, velcro, or sew-on backing options',
-        'Free pre-production digital sew-out proof',
-        'Volume tier discounts for 25 to 1000+ pcs'
       ]
     }
   ];

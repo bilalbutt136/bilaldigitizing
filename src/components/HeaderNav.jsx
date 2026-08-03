@@ -368,94 +368,118 @@ export const HeaderNav = () => {
                   zIndex: 2000
                 }}>
                   <div style={{
-                    width: '220px',
+                    width: '240px',
                     background: '#ffffff',
                     border: '1.5px solid var(--border-color)',
                     borderRadius: '12px',
                     boxShadow: '0 12px 32px rgba(15, 23, 42, 0.15)',
-                    padding: '0.4rem',
+                    padding: '0.5rem',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.15rem',
+                    gap: '0.2rem',
                     animation: 'fadeIn 0.15s ease-out'
                   }}>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0.4rem 0.85rem 0.2rem' }}>
-                      Rates & Pricing Tiers
+                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0.4rem 0.6rem 0.2rem' }}>
+                      Primary Package Tiers
                     </div>
 
+                    {/* Tier 1: Basic */}
                     <button
                       type="button"
                       onClick={() => {
-                        setCurrentView('public');
-                        navigate('/services/embroidery-digitizing');
+                        if (openOrderWizard) {
+                          openOrderWizard({ tierKey: 'basic', type: 'embroidery', title: 'Basic Digitizing', rate: '$10.00' });
+                        } else {
+                          navigate('/pricing');
+                        }
                         setIsPricingOpen(false);
                       }}
                       style={{
                         width: '100%',
                         textAlign: 'left',
-                        padding: '0.55rem 0.85rem',
+                        padding: '0.6rem 0.75rem',
                         background: 'transparent',
                         border: 'none',
                         borderRadius: '8px',
                         cursor: 'pointer',
-                        color: 'var(--navy-900)',
-                        fontSize: '0.875rem',
-                        fontWeight: 700
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
                       }}
-                      onMouseOver={(e) => { e.currentTarget.style.background = '#fff7ed'; e.currentTarget.style.color = 'var(--orange-600)'; }}
-                      onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--navy-900)'; }}
+                      onMouseOver={(e) => { e.currentTarget.style.background = '#fff7ed'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}
                     >
-                      Embroidery Digitizing Rates
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--navy-900)' }}>Basic Tier</div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Simple Left-Chest Logos</div>
+                      </div>
+                      <span style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--orange-600)' }}>$10.00</span>
                     </button>
 
+                    {/* Tier 2: Standard */}
                     <button
                       type="button"
                       onClick={() => {
-                        setCurrentView('public');
-                        navigate('/services/vector-tracing');
+                        if (openOrderWizard) {
+                          openOrderWizard({ tierKey: 'standard', type: 'embroidery', title: 'Standard Digitizing', rate: '$15.00' });
+                        } else {
+                          navigate('/pricing');
+                        }
                         setIsPricingOpen(false);
                       }}
                       style={{
                         width: '100%',
                         textAlign: 'left',
-                        padding: '0.55rem 0.85rem',
+                        padding: '0.6rem 0.75rem',
                         background: 'transparent',
                         border: 'none',
                         borderRadius: '8px',
                         cursor: 'pointer',
-                        color: 'var(--navy-900)',
-                        fontSize: '0.875rem',
-                        fontWeight: 700
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
                       }}
-                      onMouseOver={(e) => { e.currentTarget.style.background = '#fff7ed'; e.currentTarget.style.color = 'var(--orange-600)'; }}
-                      onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--navy-900)'; }}
+                      onMouseOver={(e) => { e.currentTarget.style.background = '#fff7ed'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}
                     >
-                      Vector Tracing Rates
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--navy-900)' }}>Standard Tier</div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Chest, Caps & Sleeves</div>
+                      </div>
+                      <span style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--orange-600)' }}>$15.00</span>
                     </button>
 
+                    {/* Tier 3: Premium */}
                     <button
                       type="button"
                       onClick={() => {
-                        setCurrentView('public');
-                        navigate('/custom-patches');
+                        if (openOrderWizard) {
+                          openOrderWizard({ tierKey: 'premium', type: 'embroidery', title: 'Premium Digitizing', rate: '$35.00' });
+                        } else {
+                          navigate('/pricing');
+                        }
                         setIsPricingOpen(false);
                       }}
                       style={{
                         width: '100%',
                         textAlign: 'left',
-                        padding: '0.55rem 0.85rem',
+                        padding: '0.6rem 0.75rem',
                         background: 'transparent',
                         border: 'none',
                         borderRadius: '8px',
                         cursor: 'pointer',
-                        color: 'var(--navy-900)',
-                        fontSize: '0.875rem',
-                        fontWeight: 700
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
                       }}
-                      onMouseOver={(e) => { e.currentTarget.style.background = '#fff7ed'; e.currentTarget.style.color = 'var(--orange-600)'; }}
-                      onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--navy-900)'; }}
+                      onMouseOver={(e) => { e.currentTarget.style.background = '#fff7ed'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}
                     >
-                      Custom Patches Tiers
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--navy-900)' }}>Premium Tier</div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Jacket Back Crests</div>
+                      </div>
+                      <span style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--orange-600)' }}>$35.00</span>
                     </button>
                   </div>
                 </div>
