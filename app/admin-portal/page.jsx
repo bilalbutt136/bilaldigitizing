@@ -1,27 +1,15 @@
-'use client';
+import React from 'react';
+import { AdminPortalClient } from './AdminPortalClient';
 
-import React, { useEffect } from 'react';
-import { useAppState } from '../../src/context/StateContext';
-import { AdminDashboard } from '../../src/components/admin/AdminDashboard';
-import { useRouter } from 'next/navigation';
+export const metadata = {
+  title: 'Master Admin Operations Control Desk | B Digitizing Studio',
+  description: 'Manage digitizing orders, client directories, vector artwork processing, catalog CMS, and live support chat.',
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 export default function AdminPortalRoute() {
-  const { setCurrentView, isAuthenticated, authUser } = useAppState();
-  const router = useRouter();
-
-  useEffect(() => {
-    const isMasterAdmin = isAuthenticated && authUser?.role === 'admin';
-
-    if (!isMasterAdmin) {
-      if (isAuthenticated) {
-        router.replace('/client-portal');
-      } else {
-        router.replace('/secure-admin-login');
-      }
-    } else {
-      setCurrentView('admin');
-    }
-  }, [isAuthenticated, authUser, setCurrentView, router]);
-
-  return <AdminDashboard />;
+  return <AdminPortalClient />;
 }

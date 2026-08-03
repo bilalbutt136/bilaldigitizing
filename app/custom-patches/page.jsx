@@ -1,15 +1,15 @@
-'use client';
+import React from 'react';
+import { CustomPatchesClient } from './CustomPatchesClient';
 
-import React, { useEffect } from 'react';
-import { useAppState } from '../../src/context/StateContext';
-import { CustomPatchesSection } from '../../src/components/public/CustomPatchesSection';
+export const metadata = {
+  title: 'Custom Embroidered, Woven & PVC Patches | B Digitizing Studio',
+  description: 'Order custom physical embroidered emblems, merrowed border patches, 3D raised PVC rubber, and debossed genuine leather emblems.',
+  openGraph: {
+    title: 'Custom Embroidered, Woven & PVC Patches | B Digitizing Studio',
+    description: 'Order custom physical embroidered emblems, merrowed border patches, 3D raised PVC rubber, and debossed genuine leather emblems.'
+  }
+};
 
 export default function CustomPatchesRoute() {
-  const { setCurrentView } = useAppState();
-
-  useEffect(() => {
-    setCurrentView('public');
-  }, [setCurrentView]);
-
-  return <CustomPatchesSection />;
+  return <CustomPatchesClient />;
 }

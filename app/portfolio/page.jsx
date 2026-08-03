@@ -1,15 +1,15 @@
-'use client';
+import React from 'react';
+import { PortfolioClient } from './PortfolioClient';
 
-import React, { useEffect } from 'react';
-import { useAppState } from '../../src/context/StateContext';
-import { PortfolioPage } from '../../src/components/public/PortfolioPage';
+export const metadata = {
+  title: 'Embroidery & Vector Portfolio Showcase | B Digitizing Studio',
+  description: 'Explore high-density embroidery digitizing sew-outs, 3D raised cap foam samples, and crisp vector artwork transformations.',
+  openGraph: {
+    title: 'Embroidery & Vector Portfolio Showcase | B Digitizing Studio',
+    description: 'Explore high-density embroidery digitizing sew-outs, 3D raised cap foam samples, and crisp vector artwork transformations.'
+  }
+};
 
 export default function PortfolioRoute() {
-  const { setCurrentView } = useAppState();
-
-  useEffect(() => {
-    setCurrentView('public');
-  }, [setCurrentView]);
-
-  return <PortfolioPage />;
+  return <PortfolioClient />;
 }

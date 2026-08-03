@@ -1,21 +1,15 @@
-'use client';
+import React from 'react';
+import { ClientPortalClient } from './ClientPortalClient';
 
-import React, { useEffect } from 'react';
-import { useAppState } from '../../src/context/StateContext';
-import { CustomerDashboard } from '../../src/components/customer/CustomerDashboard';
+export const metadata = {
+  title: 'Client Dashboard & Order Manager | B Digitizing Studio',
+  description: 'Track embroidery digitizing orders, download machine files (.DST, .PES, .EMB), request revisions, and manage studio wallet credit.',
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 export default function ClientPortalRoute() {
-  const { setCurrentView, isAuthenticated, setIsAuthModalOpen, setAuthModalMode } = useAppState();
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setAuthModalMode('login');
-      setIsAuthModalOpen(true);
-      setCurrentView('public');
-    } else {
-      setCurrentView('customer');
-    }
-  }, [isAuthenticated, setCurrentView, setIsAuthModalOpen, setAuthModalMode]);
-
-  return <CustomerDashboard />;
+  return <ClientPortalClient />;
 }

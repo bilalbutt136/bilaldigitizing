@@ -1,15 +1,15 @@
-'use client';
+import React from 'react';
+import { StoreClient } from './StoreClient';
 
-import React, { useEffect } from 'react';
-import { useAppState } from '../../src/context/StateContext';
-import { StorePage } from '../../src/components/public/StorePage';
+export const metadata = {
+  title: 'Apparel & Patch Store | B Digitizing Studio',
+  description: 'Shop custom embroidered heavyweight t-shirts, performance polos, and wholesale custom emblems.',
+  openGraph: {
+    title: 'Apparel & Patch Store | B Digitizing Studio',
+    description: 'Shop custom embroidered heavyweight t-shirts, performance polos, and wholesale custom emblems.'
+  }
+};
 
 export default function StoreRoute() {
-  const { setCurrentView } = useAppState();
-
-  useEffect(() => {
-    setCurrentView('public');
-  }, [setCurrentView]);
-
-  return <StorePage />;
+  return <StoreClient />;
 }

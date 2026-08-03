@@ -1,15 +1,15 @@
-'use client';
+import React from 'react';
+import { EmbroideryClient } from './EmbroideryClient';
 
-import React, { useEffect } from 'react';
-import { useAppState } from '../../../src/context/StateContext';
-import { EmbroideryDigitizingPage } from '../../../src/components/public/EmbroideryDigitizingPage';
+export const metadata = {
+  title: 'Commercial Embroidery Digitizing Services | B Digitizing Studio',
+  description: 'Production-ready embroidery machine files engineered for Tajima, Brother, Melco, Janome & Barudan machines with 4-12 hour turnaround.',
+  openGraph: {
+    title: 'Commercial Embroidery Digitizing Services | B Digitizing Studio',
+    description: 'Production-ready embroidery machine files engineered for Tajima, Brother, Melco, Janome & Barudan machines with 4-12 hour turnaround.'
+  }
+};
 
 export default function EmbroideryDigitizingRoute() {
-  const { setCurrentView } = useAppState();
-
-  useEffect(() => {
-    setCurrentView('public');
-  }, [setCurrentView]);
-
-  return <EmbroideryDigitizingPage />;
+  return <EmbroideryClient />;
 }
