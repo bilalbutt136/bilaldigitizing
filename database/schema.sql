@@ -47,7 +47,20 @@ as $$
   select lower((auth.jwt() ->> 'email'))
 $$;
 
--- Is the current user an admin?
+
+-- ============================================================
+-- ADMINS
+-- ============================================================-- ADMINS TABLE
+create table if not exists public.admins (
+  email text primary key,
+  name text,
+  created_at timestamptz not null default now()
+);
+
+-- ============================================================
+-- 4b. is_admin() function (depends on admins table)
+-- ============================================================
+
 create or replace function public.is_admin()
 returns boolean
 language sql
@@ -60,14 +73,6 @@ as $$
   )
 $$;
 
--- ============================================================
--- ADMINS
--- ============================================================
-create table if not exists public.admins (
-  email text primary key,
-  name text,
-  created_at timestamptz not null default now()
-);
 
 -- ============================================================
 -- CATALOG TABLES (public read, admin write)
