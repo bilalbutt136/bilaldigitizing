@@ -3,6 +3,14 @@
 import React from 'react';
 
 export default function GlobalError({ error, reset }) {
+  const handleReload = () => {
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    } else {
+      reset();
+    }
+  };
+
   return (
     <html lang="en">
       <body style={{
@@ -28,16 +36,16 @@ export default function GlobalError({ error, reset }) {
             Application State Restored
           </h2>
           <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
-            An unexpected error occurred. Please click below to refresh the page.
+            An unexpected session state occurred. Click below to reload the page.
           </p>
           <button
-            onClick={() => reset()}
+            onClick={handleReload}
             style={{
               background: '#f97316',
               color: '#ffffff',
               border: 'none',
               borderRadius: '8px',
-              padding: '0.6rem 1.25rem',
+              padding: '0.65rem 1.4rem',
               fontWeight: 800,
               fontSize: '0.875rem',
               cursor: 'pointer'

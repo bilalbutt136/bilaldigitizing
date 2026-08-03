@@ -502,53 +502,58 @@ export const StateProvider = ({ children }) => {
   useEffect(() => {
     let cancelled = false;
 
+    if (!isSupabaseConfigured || !supabase) return;
+
     const loadInitialData = async () => {
-      if (!isSupabaseConfigured) return;
-
-      const catalog = await fetchCatalogFromSupabase();
-      if (!cancelled && catalog) {
-        if (catalog.servicesList?.length) setServicesList(catalog.servicesList);
-        if (catalog.pricingCards?.length) setPricingCards(catalog.pricingCards);
-        if (catalog.patchCards?.length) setPatchCards(catalog.patchCards);
-        if (catalog.storeProducts?.length) setStoreProducts(catalog.storeProducts);
-        if (catalog.portfolioSamples?.length) setPortfolioSamples(catalog.portfolioSamples);
-        if (catalog.sewOuts?.length) setSewOuts(catalog.sewOuts);
-        if (catalog.heroSlides?.length) setHeroSlides(catalog.heroSlides);
-        if (catalog.digitizers?.length) {
-          setDigitizers(prev => prev.map(d => {
-            const fresh = catalog.digitizers.find(x => x.id === d.id);
-            return fresh ? { ...d, ...fresh } : d;
-          }));
+      try {
+        const catalog = await fetchCatalogFromSupabase();
+        if (!cancelled && catalog) {
+          if (catalog.servicesList?.length) setServicesList(catalog.servicesList);
+          if (catalog.pricingCards?.length) setPricingCards(catalog.pricingCards);
+          if (catalog.patchCards?.length) setPatchCards(catalog.patchCards);
+          if (catalog.storeProducts?.length) setStoreProducts(catalog.storeProducts);
+          if (catalog.portfolioSamples?.length) setPortfolioSamples(catalog.portfolioSamples);
+          if (catalog.sewOuts?.length) setSewOuts(catalog.sewOuts);
+          if (catalog.heroSlides?.length) setHeroSlides(catalog.heroSlides);
+          if (catalog.digitizers?.length) {
+            setDigitizers(prev => prev.map(d => {
+              const fresh = catalog.digitizers.find(x => x.id === d.id);
+              return fresh ? { ...d, ...fresh } : d;
+            }));
+          }
+          if (catalog.siteSettings) setSiteSettings(catalog.siteSettings);
+          if (catalog.pricing) setPricing(catalog.pricing);
+          if (catalog.serviceCms) setServiceCmsContent(catalog.serviceCms);
         }
-        if (catalog.siteSettings) setSiteSettings(catalog.siteSettings);
-        if (catalog.pricing) setPricing(catalog.pricing);
-        if (catalog.serviceCms) setServiceCmsContent(catalog.serviceCms);
-      }
 
-      // Load current session (restores persistent login)
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!cancelled && session?.user) {
-        const role = await resolveRole(session.user.email);
-        const uData = buildAuthUser(session.user, role);
-        setAuthUser(uData);
-        setIsAuthenticated(true);
-        setCurrentView(role === 'admin' ? 'admin' : 'customer');
+        // Load current session (restores persistent login)
+        const { data: sessionData } = await supabase.auth.getSession();
+        const session = sessionData?.session;
+        if (!cancelled && session?.user) {
+          const role = await resolveRole(session.user.email);
+          const uData = buildAuthUser(session.user, role);
+          setAuthUser(uData);
+          setIsAuthenticated(true);
+          setCurrentView(role === 'admin' ? 'admin' : 'customer');
 
-        const balance = await fetchWalletBalanceFromSupabase(session.user.email);
-        if (!cancelled) setWalletBalance(balance);
+          const balance = await fetchWalletBalanceFromSupabase(session.user.email);
+          if (!cancelled) setWalletBalance(balance);
 
-        try {
-          await upsertClientInSupabase({ ...uData, role });
-        } catch (err) {
-          console.warn('Client upsert notice:', err);
+          try {
+            await upsertClientInSupabase({ ...uData, role });
+          } catch (err) {
+            console.warn('Client upsert notice:', err);
+          }
         }
-      }
 
-      if (!cancelled) {
-        const adminList = await fetchAdminUsers();
-        if (adminList?.length) {
-          setAdminUsers(adminList.map(a => ({ email: a.email, name: a.name || a.email })));
+        if (!cancelled) {
+          const adminList = await fetchAdminUsers();
+          if (adminList?.length) {
+            setAdminUsers(adminList.map(a => ({ email: a.email, name: a.name || a.email })));
+          }
         }
+      } catch (err) {
+        console.warn('Initial data load notice:', err);
       }
     };
 
@@ -739,7 +744,7 @@ export const StateProvider = ({ children }) => {
       console.warn('Storage clearance notice:', e);
     }
 
-    if (isSupabaseConfigured) {
+    if (isSupabaseConfigured && supabase) {
       try {
         await supabase.auth.signOut();
       } catch (err) {
