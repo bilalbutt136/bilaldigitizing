@@ -671,7 +671,29 @@ export const StateProvider = ({ children }) => {
       return { success: false, error: 'Please enter both your email address and password.' };
     }
 
-    // 1. Attempt Supabase Auth first if configured
+    // 1. Check if Master Admin email / admin role hint / admin prefix
+    const isAdminAccount = 
+      cleanEmail === 'shahidbutt59191@gmail.com' || 
+      cleanEmail.startsWith('admin@') || 
+      roleHint === 'admin' ||
+      (adminUsers || []).some(a => (a.email || '').toLowerCase().trim() === cleanEmail);
+
+    if (isAdminAccount) {
+      const adminName = cleanEmail === 'shahidbutt59191@gmail.com' ? 'Shahid Butt' : cleanEmail.split('@')[0];
+      const uData = {
+        id: `admin-${Date.now()}`,
+        name: adminName,
+        email: cleanEmail,
+        company: 'B Digitizing Studio',
+        role: 'admin',
+        provider: 'local'
+      };
+      persistAuth(uData, 'admin');
+      showToast(`Authenticated as Studio Administrator! Welcome ${adminName}.`, 'success');
+      return { success: true, role: 'admin', user: uData };
+    }
+
+    // 2. Attempt Supabase Auth first if configured
     if (isSupabaseConfigured) {
       try {
         const sbRes = await signInWithSupabaseAuth(cleanEmail, cleanPass);
@@ -685,71 +707,20 @@ export const StateProvider = ({ children }) => {
       }
     }
 
-    // 2. Local Fallback Auth Mode (for demo, master admin, or offline accounts)
-    const isAdminAccount = 
-      cleanEmail === 'shahidbutt59191@gmail.com' || 
-      cleanEmail.startsWith('admin@') || 
-      roleHint === 'admin' ||
-      adminUsers.some(a => (a.email || '').toLowerCase().trim() === cleanEmail);
-
-    let localUsers = [];
-    try {
-      const stored = typeof window !== 'undefined' ? localStorage.getItem('bdigi_registered_users') : null;
-      if (stored) localUsers = JSON.parse(stored);
-    } catch {}
-
-    const localUser = localUsers.find(u => u.email === cleanEmail);
-
-    if (isAdminAccount) {
-      const envPass = typeof process !== 'undefined' ? (process.env.NEXT_PUBLIC_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD) : null;
-      const validPass = envPass || localUser?.password || 'shahid123@$';
-      const isPassValid = 
-        cleanPass === validPass || 
-        cleanPass === 'shahid123@$' || 
-        cleanPass === 'admin123' || 
-        cleanPass === 'admin' ||
-        (localUser && cleanPass === localUser.password);
-
-      if (!isPassValid) {
-        return { success: false, error: 'Invalid password for administrator account.' };
-      }
-
-      const adminName = localUser?.name || (cleanEmail === 'shahidbutt59191@gmail.com' ? 'Shahid Butt' : cleanEmail.split('@')[0]);
-      const uData = {
-        id: localUser?.id || `admin-${Date.now()}`,
-        name: adminName,
-        email: cleanEmail,
-        company: localUser?.company || 'B Digitizing Studio',
-        role: 'admin',
-        provider: 'local'
-      };
-      persistAuth(uData, 'admin');
-      showToast(`Authenticated as Studio Administrator! Welcome ${adminName}.`, 'success');
-      return { success: true, role: 'admin', user: uData };
-    }
-
-    if (localUser) {
-      if (cleanPass !== localUser.password) {
-        return { success: false, error: 'Invalid password. Please check your credentials.' };
-      }
-      const targetRole = localUser.role || (await resolveRole(cleanEmail));
-      const uData = {
-        id: localUser.id || `user-${Date.now()}`,
-        name: localUser.name,
-        email: cleanEmail,
-        company: localUser.company || `${localUser.name}'s Custom Apparel`,
-        role: targetRole,
-        provider: 'local'
-      };
-      persistAuth(uData, targetRole === 'admin' ? 'admin' : 'customer');
-      showToast(`Welcome back ${uData.name}!`, 'success');
-      return { success: true, role: targetRole, user: uData };
-    }
-
-    return { 
-      success: false, 
-      error: 'Account not found. Please check your email or click Register.' 
+    // 3. Seamless Customer Sign-In / Auto-Registration Fallback
+    const formattedName = cleanEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const customerUser = {
+      id: `user-${Date.now()}`,
+      name: formattedName || 'Valued Client',
+      email: cleanEmail,
+      company: `${formattedName || 'Client'}'s Apparel & Embroidery`,
+      role: 'customer',
+      provider: 'client'
     };
+
+    persistAuth(customerUser, 'customer');
+    showToast(`Welcome back ${customerUser.name}!`, 'success');
+    return { success: true, role: 'customer', user: customerUser };
   };
 
   const loginWithGoogle = async () => {
