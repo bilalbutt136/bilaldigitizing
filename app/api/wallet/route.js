@@ -44,6 +44,20 @@ export async function POST(request) {
     if (!action || !['deposit', 'deduct'].includes(action)) {
       return NextResponse.json({ success: false, error: 'Invalid wallet action.' }, { status: 400 });
     }
+
+    if (action === 'deposit') {
+      // Secure deposits: only admins can manually deposit through this route now.
+      // Customers must use BoltPayouts webhooks.
+      const { data: adminData } = await supabaseAdmin
+        .from('admins')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (!adminData) {
+        return NextResponse.json({ success: false, error: 'Direct deposits are disabled. Please use BoltPayouts checkout.' }, { status: 403 });
+      }
+    }
     if (isNaN(amount) || amount <= 0) {
       return NextResponse.json({ success: false, error: 'Amount must be a positive number.' }, { status: 400 });
     }

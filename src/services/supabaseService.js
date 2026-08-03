@@ -305,6 +305,7 @@ export async function createOrderInSupabase(newOrder) {
 
     const primaryDbRow = {
       id: newOrder.id,
+      user_id: currentUserId,
       title: resolvedTitle,
       description: newOrder.notes || resolvedTitle,
       client_id: newOrder.clientId || resolvedEmail,
@@ -449,6 +450,28 @@ export async function addRevisionInSupabase(orderId, note, requestedBy = 'Client
   }
 }
 
+export async function cancelOrderInSupabase(orderId) {
+  if (!isSupabaseConfigured) return { success: false, error: 'Supabase not configured' };
+  try {
+    const { error } = await supabase.from('orders').update({ status: 'cancelled' }).eq('id', orderId);
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function deleteOrderInSupabase(orderId) {
+  if (!isSupabaseConfigured) return { success: false, error: 'Supabase not configured' };
+  try {
+    const { error } = await supabase.from('orders').delete().eq('id', orderId);
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
 // Upsert Client Profile in Supabase DB (Automatic Save on Login & Order Submission)
 export async function upsertClientInSupabase(userData) {
   if (!isSupabaseConfigured || !userData || !userData.email) return { success: false, error: 'Supabase or user email missing.' };
@@ -470,6 +493,7 @@ export async function upsertClientInSupabase(userData) {
     const clientCompany = userData.company || `${clientName}'s Apparel`;
 
     const primaryPayload = {
+      user_id: userData.id,
       name: clientName,
       full_name: clientName,
       email: cleanEmail,
@@ -507,6 +531,7 @@ export async function upsertClientInSupabase(userData) {
         const { error: fallbackErr } = await supabase
           .from('clients')
           .insert([{
+            user_id: userData.id,
             full_name: clientName,
             email: cleanEmail,
             company_name: clientCompany,
@@ -534,7 +559,7 @@ export async function fetchClientsFromSupabase() {
 
   try {
     const { data, error } = await supabase
-      .from('users')
+      .from('clients')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -666,7 +691,7 @@ export async function fetchCmsConfigFromSupabase() {
   }
 }
 
-// Save/Upsert CMS Configuration to Supabase
+// Save/Upsert CMS Configuration to Supabase (only for key-value settings)
 export async function saveCmsConfigToSupabase(key, value) {
   if (!isSupabaseConfigured || !key) return false;
 
@@ -682,6 +707,32 @@ export async function saveCmsConfigToSupabase(key, value) {
     return true;
   } catch (err) {
     console.warn(`Supabase upsert site_config [${key}] exception:`, err);
+    return false;
+  }
+}
+
+// Upsert array of catalog items to a dedicated table
+export async function upsertCatalogDataToSupabase(tableName, dataArray) {
+  if (!isSupabaseConfigured || !tableName || !dataArray || !dataArray.length) return false;
+
+  try {
+    // Add updated_at to each item
+    const payload = dataArray.map(item => ({
+      ...item,
+      updated_at: new Date().toISOString()
+    }));
+    
+    const { error } = await supabase
+      .from(tableName)
+      .upsert(payload, { onConflict: 'id' });
+
+    if (error) {
+      console.warn(`Supabase upsert ${tableName} warning:`, error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn(`Supabase upsert ${tableName} exception:`, err);
     return false;
   }
 }

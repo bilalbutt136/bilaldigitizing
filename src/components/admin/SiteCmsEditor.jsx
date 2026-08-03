@@ -1548,6 +1548,46 @@ export const SiteCmsEditor = () => {
               </div>
 
             </div>
+
+            {/* BoltPayouts Payment Gateway Integration */}
+            <div style={{ marginTop: '2.5rem', marginBottom: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '2rem' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <DollarSign size={20} style={{ color: '#10b981' }} /> BoltPayouts Payment Gateway Configuration
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Securely configure your API keys to accept crypto and card payments. <b>Never share these secrets.</b>
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
+              <div className="form-group">
+                <label>BoltPayouts Server-Side API Key</label>
+                <input 
+                  type="password" 
+                  className="form-control"
+                  placeholder="bolt_pk_..."
+                  value={draftSettings.boltpayoutsConfig?.apiKey || ''}
+                  onChange={(e) => setDraftSettings(prev => ({ 
+                    ...prev, 
+                    boltpayoutsConfig: { ...prev.boltpayoutsConfig, apiKey: e.target.value } 
+                  }))}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Webhook Signing Secret</label>
+                <input 
+                  type="password" 
+                  className="form-control"
+                  placeholder="whsec_..."
+                  value={draftSettings.boltpayoutsConfig?.webhookSecret || ''}
+                  onChange={(e) => setDraftSettings(prev => ({ 
+                    ...prev, 
+                    boltpayoutsConfig: { ...prev.boltpayoutsConfig, webhookSecret: e.target.value } 
+                  }))}
+                />
+              </div>
+            </div>
           </div>
         )}
 

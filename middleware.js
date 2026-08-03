@@ -16,11 +16,13 @@ export async function middleware(request) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (
-    !user &&
-    request.nextUrl.pathname.startsWith('/admin')
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
+  const isProtectedRoute =
+    request.nextUrl.pathname.startsWith('/admin') ||
+    request.nextUrl.pathname.startsWith('/admin-portal') ||
+    request.nextUrl.pathname.startsWith('/client-portal') ||
+    request.nextUrl.pathname.startsWith('/client');
+
+  if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)

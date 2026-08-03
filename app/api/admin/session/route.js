@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
+import { createClient } from '../../../../src/lib/supabase/server';
 
 // POST /api/admin/session
 // Verifies that the caller is an authenticated Supabase user whose email
@@ -7,8 +8,16 @@ import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin
 // using the service role, so admin status can never be spoofed client-side.
 export async function POST(request) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
     const body = await request.json().catch(() => ({}));
-    const email = (body?.email || '').toLowerCase().trim();
+    let email = (body?.email || '').toLowerCase().trim();
+
+    // Prefer the securely verified session email over the client-provided one
+    if (user && user.email) {
+      email = user.email.toLowerCase().trim();
+    }
 
     if (!email) {
       return NextResponse.json(
@@ -17,12 +26,12 @@ export async function POST(request) {
       );
     }
 
-    const masterAdmin = (process.env.MASTER_ADMIN_EMAIL || 'shahidbutt59191@gmail.com').toLowerCase().trim();
-    if (email === masterAdmin || email === 'shahidbutt59191@gmail.com' || email.startsWith('admin@')) {
+    const masterAdmin = (process.env.MASTER_ADMIN_EMAIL || '').toLowerCase().trim();
+    if (masterAdmin && email === masterAdmin) {
       return NextResponse.json({
         success: true,
         isAdmin: true,
-        admin: { email, name: 'Shahid Butt (Master Admin)' }
+        admin: { email, name: 'Master Admin' }
       });
     }
 

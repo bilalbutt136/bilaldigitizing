@@ -338,6 +338,41 @@ create table if not exists public.site_config (
 );
 
 -- ============================================================
+-- INVOICES (BoltPayouts)
+-- ============================================================
+create table if not exists public.invoices (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users (id) on delete set null,
+  client_email text,
+  amount numeric not null,
+  method text,
+  status text not null default 'pending',
+  bolt_order_id text,
+  payment_url text,
+  reference_id text,
+  description text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists invoices_client_email_idx on public.invoices (client_email);
+
+-- ============================================================
+-- RECEIPTS (BoltPayouts)
+-- ============================================================
+create table if not exists public.receipts (
+  id uuid primary key default gen_random_uuid(),
+  invoice_id uuid references public.invoices (id) on delete cascade,
+  user_id uuid references auth.users (id) on delete set null,
+  client_email text,
+  amount numeric not null,
+  method text,
+  bolt_order_id text,
+  transaction_id uuid references public.transactions (id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create index if not exists receipts_client_email_idx on public.receipts (client_email);
+
+-- ============================================================
 -- ROW LEVEL SECURITY
 -- ============================================================
 
@@ -357,6 +392,8 @@ alter table public.order_files enable row level security;
 alter table public.revisions enable row level security;
 alter table public.order_messages enable row level security;
 alter table public.transactions enable row level security;
+alter table public.invoices enable row level security;
+alter table public.receipts enable row level security;
 
 -- Catalog read for everyone (anon + authenticated)
 create policy catalog_read_all on public.services for select using (true);
@@ -459,6 +496,16 @@ create policy order_messages_admin_update on public.order_messages for update us
 
 -- transactions: users read their own, admins read all. Writes via service role only.
 create policy transactions_select_own on public.transactions for select using (
+  public.is_admin() or lower(client_email) = public.current_user_email()
+);
+
+-- invoices: users read their own, admins read all.
+create policy invoices_select_own on public.invoices for select using (
+  public.is_admin() or lower(client_email) = public.current_user_email()
+);
+
+-- receipts: users read their own, admins read all.
+create policy receipts_select_own on public.receipts for select using (
   public.is_admin() or lower(client_email) = public.current_user_email()
 );
 

@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
+import { createClient } from '../../../../src/lib/supabase/server';
 
 async function isCallerAdmin(body) {
   if (!body?.callerEmail) return false;
   const clean = String(body.callerEmail).toLowerCase().trim();
-  const master = (process.env.MASTER_ADMIN_EMAIL || 'shahidbutt59191@gmail.com').toLowerCase().trim();
-  if (clean === master || clean === 'shahidbutt59191@gmail.com' || clean.startsWith('admin@')) return true;
+  const master = (process.env.MASTER_ADMIN_EMAIL || '').toLowerCase().trim();
+  if (master && clean === master) return true;
   if (!hasServiceRole) return false;
   const { data } = await supabaseAdmin
     .from('admins')
@@ -26,7 +27,11 @@ export async function GET(request) {
       );
     }
 
-    const callerEmail = (request.headers.get('x-admin-email') || '').toLowerCase().trim();
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    let callerEmail = (request.headers.get('x-admin-email') || '').toLowerCase().trim();
+    if (user && user.email) callerEmail = user.email.toLowerCase().trim();
+
     if (!callerEmail || !(await isCallerAdmin({ callerEmail }))) {
       return NextResponse.json(
         { success: false, error: 'Access denied. Admin privileges required.' },
@@ -68,7 +73,11 @@ export async function POST(request) {
     const body = await request.json().catch(() => ({}));
     const newEmail = (body?.email || '').toLowerCase().trim();
     const newName = (body?.name || '').trim();
-    const callerEmail = (body?.callerEmail || '').toLowerCase().trim();
+    
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    let callerEmail = (body?.callerEmail || '').toLowerCase().trim();
+    if (user && user.email) callerEmail = user.email.toLowerCase().trim();
 
     if (!newEmail) {
       return NextResponse.json({ success: false, error: 'Admin email is required.' }, { status: 400 });
@@ -116,7 +125,11 @@ export async function DELETE(request) {
     }
 
     const email = (request.nextUrl.searchParams.get('email') || '').toLowerCase().trim();
-    const callerEmail = (request.headers.get('x-admin-email') || '').toLowerCase().trim();
+    
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    let callerEmail = (request.headers.get('x-admin-email') || '').toLowerCase().trim();
+    if (user && user.email) callerEmail = user.email.toLowerCase().trim();
 
     if (!email) {
       return NextResponse.json({ success: false, error: 'Email is required.' }, { status: 400 });

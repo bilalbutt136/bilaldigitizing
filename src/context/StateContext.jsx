@@ -21,9 +21,13 @@ import {
   verifyAdminSession,
   fetchAdminUsers,
   addAdminUserInSupabase,
+  removeAdminUserInSupabase,
   depositWalletViaApi,
   deductWalletViaApi,
-  fetchWalletBalanceFromSupabase
+  fetchWalletBalanceFromSupabase,
+  cancelOrderInSupabase,
+  deleteOrderInSupabase,
+  upsertCatalogDataToSupabase
 } from '../services/supabaseService';
 import { playNotificationSound } from '../utils/audioNotification';
 
@@ -705,7 +709,7 @@ export const StateProvider = ({ children }) => {
     let balance = 0;
     
     try {
-      const { data, error } = await supabase.from('users').select('role, wallet_balance, name').eq('id', sbUser.id).single();
+      const { data, error } = await supabase.from('clients').select('role, wallet_balance, name').eq('email', sbUser.email).single();
       if (!error && data) {
         role = data.role;
         balance = data.wallet_balance;
@@ -985,19 +989,16 @@ export const StateProvider = ({ children }) => {
     }));
   };
 
-  const cancelOrder = (orderId, reason = 'Cancelled by Admin') => {
-    setOrders(prev => prev.map(ord => {
-      if (ord.id === orderId) {
-        return {
-          ...ord,
-          status: 'cancelled',
-          updatedAt: new Date().toISOString(),
-          history: [{ timestamp: new Date().toISOString(), label: `Order Cancelled: ${reason}` }, ...ord.history]
-        };
-      }
-      return ord;
-    }));
+  const cancelOrder = async (orderId) => {
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'cancelled' } : o));
+    await cancelOrderInSupabase(orderId);
     showToast(`Order ${formatOrderId(orderId)} marked as CANCELLED`, 'warning');
+  };
+
+  const deleteOrder = async (orderId) => {
+    setOrders(prev => prev.filter(o => o.id !== orderId));
+    await deleteOrderInSupabase(orderId);
+    showToast(`Order ${formatOrderId(orderId)} DELETED`, 'error');
   };
 
   const depositFunds = async (amount) => {
@@ -1060,37 +1061,37 @@ export const StateProvider = ({ children }) => {
 
   const updatePricingCards = (newCards) => {
     setPricingCards(newCards);
-    saveCmsConfigToSupabase('pricing_cards', newCards);
+    upsertCatalogDataToSupabase('pricing_cards', newCards);
   };
 
   const updatePatchCards = (newCards) => {
     setPatchCards(newCards);
-    saveCmsConfigToSupabase('patch_cards', newCards);
+    upsertCatalogDataToSupabase('patch_cards', newCards);
   };
 
   const updateStoreProducts = (newProducts) => {
     setStoreProducts(newProducts);
-    saveCmsConfigToSupabase('store_products', newProducts);
+    upsertCatalogDataToSupabase('store_products', newProducts);
   };
 
   const updatePortfolioSamples = (newPortfolio) => {
     setPortfolioSamples(newPortfolio);
-    saveCmsConfigToSupabase('portfolio_samples', newPortfolio);
+    upsertCatalogDataToSupabase('portfolio', newPortfolio);
   };
 
   const updateSewOuts = (newSewOuts) => {
     setSewOuts(newSewOuts);
-    saveCmsConfigToSupabase('sew_outs', newSewOuts);
+    upsertCatalogDataToSupabase('sew_outs', newSewOuts);
   };
 
   const updateServicesList = (newServices) => {
     setServicesList(newServices);
-    saveCmsConfigToSupabase('services_list', newServices);
+    upsertCatalogDataToSupabase('services', newServices);
   };
 
   const updateHeroSlides = (newSlides) => {
     setHeroSlides(newSlides);
-    saveCmsConfigToSupabase('hero_slides', newSlides);
+    upsertCatalogDataToSupabase('hero_slides', newSlides);
   };
 
   const updateSiteSettings = (newSettings) => {
