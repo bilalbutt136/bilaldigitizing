@@ -336,8 +336,8 @@ export async function createOrderInSupabase(newOrder) {
     let uploadedArtworkUrl = newOrder.artworkUrl || newOrder.image_url || newOrder.logo || newOrder.file_url || '';
 
     // Attach the authenticated user id (auth.users) for RLS ownership
-    const { data: { session } } = await supabase.auth.getSession();
-    const currentUserId = session?.user?.id || null;
+    const sessionRes = await supabase.auth.getSession().catch(() => null);
+    const currentUserId = sessionRes?.data?.session?.user?.id || null;
 
     // Upload artwork to Supabase Storage if dataURL or file
     if (uploadedArtworkUrl && uploadedArtworkUrl.startsWith('data:')) {
@@ -1025,8 +1025,8 @@ export async function removeAdminUserInSupabase(email, callerEmail) {
 
 export async function depositWalletViaApi(amount, paymentMethod = 'Card / Manual') {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
+    const sessionRes = await supabase.auth.getSession().catch(() => null);
+    const token = sessionRes?.data?.session?.access_token;
     if (!token) return { success: false, error: 'Not authenticated.' };
 
     const res = await fetch('/api/wallet', {
@@ -1047,8 +1047,8 @@ export async function depositWalletViaApi(amount, paymentMethod = 'Card / Manual
 
 export async function deductWalletViaApi(amount, paymentMethod = 'Studio Wallet Credit') {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
+    const sessionRes = await supabase.auth.getSession().catch(() => null);
+    const token = sessionRes?.data?.session?.access_token;
     if (!token) return { success: false, error: 'Not authenticated.' };
 
     const res = await fetch('/api/wallet', {
@@ -1075,9 +1075,9 @@ export async function deductWalletViaApi(amount, paymentMethod = 'Studio Wallet 
 export async function getCurrentSupabaseUser() {
   if (!isSupabaseConfigured) return null;
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return null;
-    return session.user;
+    const sessionRes = await supabase.auth.getSession().catch(() => null);
+    if (!sessionRes?.data?.session?.user) return null;
+    return sessionRes.data.session.user;
   } catch {
     return null;
   }

@@ -34,6 +34,5 @@ const initSupabase = () => {
   }
 };
 
-export const supabase = initSupabase();
-export const supabaseClient = supabase;
-
+export const supabaseClient = initSupabase();
+export const supabase = supabaseClient;

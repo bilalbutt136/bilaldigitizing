@@ -568,22 +568,28 @@ export const StateProvider = ({ children }) => {
           }
 
           // Load current Supabase session
-          const { data: sessionData } = await supabase.auth.getSession();
-          const session = sessionData?.session;
-          if (!cancelled && session?.user) {
-            const role = await resolveRole(session.user.email);
-            const uData = buildAuthUser(session.user, role);
-            setAuthUser(uData);
-            setIsAuthenticated(true);
-            setCurrentView(role === 'admin' ? 'admin' : 'customer');
-
-            const balance = await fetchWalletBalanceFromSupabase(session.user.email);
-            if (!cancelled) setWalletBalance(balance);
-
+          if (isSupabaseConfigured && supabase) {
             try {
-              await upsertClientInSupabase({ ...uData, role });
-            } catch (err) {
-              console.warn('Client upsert notice:', err);
+              const { data: sessionData } = await supabase.auth.getSession();
+              const session = sessionData?.session;
+              if (!cancelled && session?.user) {
+                const role = await resolveRole(session.user.email);
+                const uData = buildAuthUser(session.user, role);
+                setAuthUser(uData);
+                setIsAuthenticated(true);
+                setCurrentView(role === 'admin' ? 'admin' : 'customer');
+
+                const balance = await fetchWalletBalanceFromSupabase(session.user.email);
+                if (!cancelled) setWalletBalance(balance);
+
+                try {
+                  await upsertClientInSupabase({ ...uData, role });
+                } catch (err) {
+                  console.warn('Client upsert notice:', err);
+                }
+              }
+            } catch (sessErr) {
+              console.warn('Get session exception:', sessErr);
             }
           }
 
