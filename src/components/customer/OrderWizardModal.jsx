@@ -19,9 +19,16 @@ export const OrderWizardModal = () => {
     setIsOrderWizardOpen, 
     orderWizardInitialData,
     createOrder,
-    pricing
+    pricing,
+    updateOrderStatus,
+    showToast
   } = useAppState();
 
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [boltPaymentUrl, setBoltPaymentUrl] = useState('');
+  const [invoiceId, setInvoiceId] = useState('');
+  const [isPaid, setIsPaid] = useState(false);
+  const [pendingOrderId, setPendingOrderId] = useState('');
   const [selectedPackageTier, setSelectedPackageTier] = useState('standard'); // 'basic' | 'standard' | 'premium'
   
   // Itemized Placements Cart State with default initial placement item
@@ -422,14 +429,16 @@ export const OrderWizardModal = () => {
 
   const pricingDetails = getServicePricingDetails();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const orderTitle = title.trim() || `${pricingDetails.serviceTitle} Order`;
+    const orderTitle = title.trim() || `${pricingDetails?.serviceTitle || 'Service'} Order`;
+    const finalPrice = pricingDetails?.finalPrice || 15.00;
+    
     const orderData = {
       title: orderTitle,
       type,
       serviceCategory: pricingDetails?.serviceTitle || type || 'Embroidery Digitizing',
-      price: parseFloat(pricingDetails?.finalPrice || 15.00),
+      price: parseFloat(finalPrice),
       selectedPackageTier,
       placementItems,
       fabricType,
@@ -442,14 +451,44 @@ export const OrderWizardModal = () => {
       patchHeight,
       patchQuantity,
       notes: notes.trim(),
-      totalPrice: pricingDetails?.finalPrice || 15.00,
-      uploadedFiles: selectedAssets.map(a => a.name)
+      totalPrice: finalPrice,
+      uploadedFiles: selectedAssets.map(a => a.name),
+      paymentStatus: 'pending' // Enforce pending payment status
     };
-    if (createOrder) {
-      createOrder(orderData);
+    
+    setIsProcessingPayment(true);
+
+    try {
+      let createdOrder = null;
+      if (createOrder) {
+        createdOrder = await createOrder(orderData);
+      }
+      
+      const orderId = createdOrder?.id || `ORDER_${Date.now()}`;
+      setPendingOrderId(orderId);
+
+      // Hit BoltPayouts API
+      const res = await fetch('/api/boltpayouts/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: finalPrice,
+          method: 'card'
+        })
+      });
+      const data = await res.json();
+      
+      if (data.success && data.paymentUrl) {
+        setBoltPaymentUrl(data.paymentUrl);
+        setInvoiceId(data.invoice?.id);
+      } else {
+        throw new Error(data.error || 'Failed to initialize payment');
+      }
+    } catch (err) {
+       console.error("Payment setup error:", err);
+       alert("Error setting up payment: " + err.message);
+       setIsProcessingPayment(false);
     }
-    setIsOrderWizardOpen(false);
-    alert(`Order "${orderTitle}" placed successfully! Total: $${pricingDetails.finalPrice.toFixed(2)}`);
   };
 
   if (!isOrderWizardOpen) return null;
@@ -511,7 +550,21 @@ export const OrderWizardModal = () => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ padding: '1.75rem' }}>
+        {boltPaymentUrl && !isPaid ? (
+            <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: '500px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ color: '#fff', fontSize: '1.25rem', fontWeight: 800 }}>Complete Your Payment</h3>
+                <span style={{ fontSize: '0.85rem', color: '#10b981', background: 'rgba(16, 185, 129, 0.15)', padding: '0.2rem 0.6rem', borderRadius: '4px', fontWeight: 'bold' }}>Awaiting Payment...</span>
+              </div>
+              <iframe 
+                src={boltPaymentUrl} 
+                style={{ width: '100%', height: '550px', border: 'none', borderRadius: '12px', background: '#fff' }}
+                title="BoltPayouts Checkout"
+                allow="payment"
+              />
+            </div>
+          ) : (
+          <form onSubmit={handleSubmit} style={{ padding: '1.75rem' }}>
 
           <div className="configurator-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.75rem', alignItems: 'start' }}>
             
@@ -1314,7 +1367,8 @@ export const OrderWizardModal = () => {
             </div>
           </div>
         </form>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
 };

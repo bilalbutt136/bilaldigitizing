@@ -322,7 +322,7 @@ export async function createOrderInSupabase(newOrder) {
       is_rush: Boolean(newOrder.isRush),
       price: resolvedPrice,
       cost: resolvedPrice,
-      payment_status: 'Paid',
+      payment_status: newOrder.paymentStatus || 'pending',
       notes: newOrder.notes || '',
       artwork_url: uploadedArtworkUrl || '',
       image_url: uploadedArtworkUrl || '',
