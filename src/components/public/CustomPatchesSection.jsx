@@ -291,36 +291,8 @@ export const CustomPatchesSection = () => {
       </section>
 
       {/* Pricing Tiers Section */}
-      <section id="pricing-tiers" style={{ padding: '5rem 0', background: 'var(--navy-950)' }}>
+      <section id="pricing-tiers" style={{ padding: '3.5rem 0 5rem', background: 'var(--navy-950)' }}>
         <div className="container">
-          
-          <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 3.5rem' }}>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              background: 'rgba(255, 122, 0, 0.15)',
-              border: '1px solid rgba(255, 122, 0, 0.4)',
-              color: 'var(--orange-400)',
-              fontWeight: 800,
-              fontSize: '0.85rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              padding: '0.35rem 0.85rem',
-              borderRadius: '9999px',
-              marginBottom: '0.75rem'
-            }}>
-              <Tag size={16} /> Transparent Pricing Tiers & Crafts
-            </div>
-
-            <h2 style={{ fontSize: '2.4rem', color: '#ffffff', marginBottom: '0.85rem', fontWeight: 800 }}>
-              Custom Patch Craft Tiers & Rates
-            </h2>
-
-            <p style={{ color: '#94a3b8', fontSize: '1.05rem', lineHeight: 1.6 }}>
-              Simple transparent rates per patch with zero setup fees, free digital proofs, and physical sample photo confirmation before mass production.
-            </p>
-          </div>
 
           {/* Streamlined Compact Pricing Tiers Grid */}
           <div style={{

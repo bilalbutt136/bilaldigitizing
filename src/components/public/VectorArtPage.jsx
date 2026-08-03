@@ -378,15 +378,6 @@ export const VectorArtPage = () => {
       {/* 2. Pricing Tier Cards OR Order Configuration Form View */}
       {!isOrderViewOpen ? (
         <div id="pricing-tiers" className="container" style={{ marginTop: '2.5rem' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.5rem' }}>
-              Choose Your Vector Conversion Package Tier
-            </h2>
-            <p style={{ color: '#94a3b8', fontSize: '0.95rem' }}>
-              Select a package tier below to open the dedicated order configuration form
-            </p>
-          </div>
-
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
             
             {/* Card 1: Simple Vector Redraw */}

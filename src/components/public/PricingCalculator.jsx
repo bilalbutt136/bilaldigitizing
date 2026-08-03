@@ -280,59 +280,8 @@ export const PricingCalculator = () => {
     : allCards.filter(c => (c.category || '').toLowerCase() === activeCategory.toLowerCase() || (c.title || '').toLowerCase().includes(activeCategory.toLowerCase()));
 
   return (
-    <section id="pricing" style={{ padding: '5.5rem 0', background: 'var(--navy-950)', color: '#ffffff' }}>
+    <section id="pricing" style={{ padding: '3.5rem 0 5.5rem', background: 'var(--navy-950)', color: '#ffffff' }}>
       <div className="container">
-
-        {/* Header */}
-        <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 2.5rem' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            background: 'rgba(255, 122, 0, 0.15)',
-            border: '1px solid rgba(255, 122, 0, 0.4)',
-            color: 'var(--orange-400)',
-            fontWeight: 800,
-            fontSize: '0.85rem',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            padding: '0.35rem 0.85rem',
-            borderRadius: '9999px',
-            marginBottom: '0.75rem'
-          }}>
-            <Tag size={16} /> Streamlined Pricing Tier Packages
-          </div>
-
-          <h2 style={{ fontSize: '2.5rem', color: '#ffffff', marginBottom: '0.85rem', fontWeight: 800 }}>
-            Embroidery & Patch Pricing Packages
-          </h2>
-
-          <p style={{ color: '#94a3b8', fontSize: '1.05rem', lineHeight: 1.65, marginBottom: '1.5rem' }}>
-            Transparent flat-rate tier packages for embroidery digitizing, vector artwork redraws, and physical custom patches with zero hidden fees.
-          </p>
-
-          {/* Key Feature Bullets */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '1.5rem',
-            fontSize: '0.925rem',
-            fontWeight: 700,
-            color: '#e2e8f0',
-            marginBottom: '2rem'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <CheckCircle size={17} style={{ color: '#10b981' }} /> Machine-Tested Pathing
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <CheckCircle size={17} style={{ color: '#10b981' }} /> All Commercial Formats (.DST, .PES, .EXP, .EMB)
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <CheckCircle size={17} style={{ color: '#10b981' }} /> Free Unlimited Revisions
-            </div>
-          </div>
 
           {/* Category Filter Pills */}
           <div style={{
@@ -369,7 +318,6 @@ export const PricingCalculator = () => {
               </button>
             ))}
           </div>
-        </div>
 
         {/* Dynamic Pricing Category Cards Grid */}
         <div className="grid-responsive-3" style={{
