@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { INITIAL_PRICING, DIGITIZERS, SERVICES, PORTFOLIO_SAMPLES, DEFAULT_HERO_SLIDES } from '../data/mockData';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
 import {
   createOrderInSupabase,
   updateOrderStatusInSupabase,
@@ -698,21 +698,26 @@ export const StateProvider = ({ children }) => {
   };
 
   const finishAuth = async (sbUser) => {
-    const role = await resolveRole(sbUser?.email);
-    const uData = buildAuthUser(sbUser, role);
-    persistAuth(uData, role === 'admin' ? 'admin' : 'customer');
-    const balance = await fetchWalletBalanceFromSupabase(sbUser?.email);
-    if (balance) setWalletBalance(balance);
+    let role = 'customer';
+    let balance = 0;
+    
     try {
-      await upsertClientInSupabase({ ...uData, role });
-    } catch (err) {
-      console.warn('Client upsert notice:', err);
+      const { data, error } = await supabase.from('users').select('role, wallet_balance, name').eq('id', sbUser.id).single();
+      if (!error && data) {
+        role = data.role;
+        balance = data.wallet_balance;
+      }
+    } catch (e) {
+      console.warn("Error fetching user data from public.users");
     }
+
+    const uData = buildAuthUser(sbUser, role);
+    persistAuth(uData, role);
+    setWalletBalance(balance);
     return { success: true, role, user: uData };
   };
 
-  // Auth Operations (Supabase backed with local fallback when unconfigured)
-  const login = async (email, password, roleHint) => {
+  const login = async (email, password) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanPass = (password || '').trim();
 
@@ -720,185 +725,61 @@ export const StateProvider = ({ children }) => {
       return { success: false, error: 'Please enter both your email address and password.' };
     }
 
-    // 1. Check if Master Admin email / admin role hint / admin prefix
-    const isAdminAccount = 
-      cleanEmail === 'shahidbutt59191@gmail.com' || 
-      cleanEmail.startsWith('admin@') || 
-      roleHint === 'admin' ||
-      (adminUsers || []).some(a => (a.email || '').toLowerCase().trim() === cleanEmail);
-
-    if (isAdminAccount) {
-      const adminName = cleanEmail === 'shahidbutt59191@gmail.com' ? 'Shahid Butt' : cleanEmail.split('@')[0];
-      const uData = {
-        id: `admin-${Date.now()}`,
-        name: adminName,
-        email: cleanEmail,
-        company: 'B Digitizing Studio',
-        role: 'admin',
-        provider: 'local'
-      };
-      persistAuth(uData, 'admin');
-      showToast(`Authenticated as Studio Administrator! Welcome ${adminName}.`, 'success');
-      return { success: true, role: 'admin', user: uData };
-    }
-
-    // 2. Attempt Supabase Auth first if configured
-    if (isSupabaseConfigured) {
-      try {
-        const sbRes = await signInWithSupabaseAuth(cleanEmail, cleanPass);
-        if (sbRes && sbRes.success && sbRes.user) {
-          const result = await finishAuth(sbRes.user);
-          showToast(`Welcome back ${result.user.name}!`, 'success');
-          return result;
-        } else if (sbRes && !sbRes.success) {
-          return { success: false, error: sbRes.error || 'Invalid email or password.' };
-        }
-      } catch (sbErr) {
-        return { success: false, error: sbErr?.message || 'Authentication error.' };
+    try {
+      const sbRes = await signInWithSupabaseAuth(cleanEmail, cleanPass);
+      if (sbRes && sbRes.success && sbRes.user) {
+        const result = await finishAuth(sbRes.user);
+        showToast(`Welcome back ${result.user.name}!`, 'success');
+        return result;
+      } else {
+        return { success: false, error: sbRes?.error || 'Invalid email or password.' };
       }
+    } catch (sbErr) {
+      return { success: false, error: sbErr?.message || 'Authentication error.' };
     }
-
-    // 3. Customer Sign-In Fallback (only when Supabase is not configured)
-    const formattedName = cleanEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    const customerUser = {
-      id: `user-${Date.now()}`,
-      name: formattedName || 'Valued Client',
-      email: cleanEmail,
-      company: `${formattedName || 'Client'}'s Apparel & Embroidery`,
-      role: 'customer',
-      provider: 'client'
-    };
-
-    persistAuth(customerUser, 'customer');
-    showToast(`Welcome back ${customerUser.name}!`, 'success');
-    return { success: true, role: 'customer', user: customerUser };
   };
 
   const loginWithGoogle = async () => {
-    try {
-      const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : 'https://bdigitizing.pro/auth/callback';
-      showToast('Redirecting to Google Sign-In...', 'info');
-
-      if (isSupabaseConfigured && supabase) {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: redirectUrl,
-            queryParams: {
-              prompt: 'select_account'
-            }
-          }
-        });
-
-        if (error) {
-          showToast(error.message || 'Google Sign-In failed.', 'error');
-          return { success: false, error: error.message };
-        }
-        return { success: true, data };
-      } else {
-        const res = await signInWithGoogleOAuth(redirectUrl);
-        return res;
-      }
-    } catch (err) {
-      console.error('Google OAuth exception:', err);
-      showToast(err?.message || 'Google Sign-In error occurred.', 'error');
-      return { success: false, error: err?.message || 'Google Sign-In error.' };
+    showToast('Redirecting to Google Sign-In...', 'info');
+    const res = await signInWithGoogleOAuth();
+    if (!res.success) {
+      showToast(res.error || 'Google Sign-In failed.', 'error');
     }
+    return res;
   };
 
   const loginWithApple = async () => {
-    try {
-      const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : 'https://bdigitizing.pro/auth/callback';
-      showToast('Redirecting to Apple Sign-In...', 'info');
-
-      if (isSupabaseConfigured && supabase) {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'apple',
-          options: {
-            redirectTo: redirectUrl
-          }
-        });
-
-        if (error) {
-          showToast(error.message || 'Apple Sign-In failed.', 'error');
-          return { success: false, error: error.message };
-        }
-        return { success: true, data };
-      } else {
-        const res = await signInWithAppleOAuth(redirectUrl);
-        return res;
-      }
-    } catch (err) {
-      console.error('Apple OAuth exception:', err);
-      showToast(err?.message || 'Apple Sign-In error occurred.', 'error');
-      return { success: false, error: err?.message || 'Apple Sign-In error.' };
+    showToast('Redirecting to Apple Sign-In...', 'info');
+    const res = await signInWithAppleOAuth();
+    if (!res.success) {
+      showToast(res.error || 'Apple Sign-In failed.', 'error');
     }
+    return res;
   };
 
-
-  const register = async (name, email, password, company, roleHint) => {
+  const register = async (name, email, password, company) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanName = (name || '').trim();
-    const cleanCompany = (company || '').trim() || `${cleanName || 'Valued'}'s Custom Apparel`;
+    const cleanCompany = (company || '').trim();
     const cleanPass = (password || '').trim();
 
     if (!cleanName || !cleanEmail || !cleanPass) {
       return { success: false, error: 'Please fill in your name, email, and password.' };
     }
 
-    const isMasterAdmin = cleanEmail === 'shahidbutt59191@gmail.com' || cleanEmail.startsWith('admin@') || roleHint === 'admin';
-    const targetRole = isMasterAdmin ? 'admin' : 'customer';
-
-    let uData = {
-      id: `user-${Date.now()}`,
-      name: cleanName,
-      email: cleanEmail,
-      company: cleanCompany,
-      role: targetRole,
-      provider: 'local'
-    };
-
-    if (isSupabaseConfigured) {
-      try {
-        const sbRes = await signUpWithSupabaseAuth(cleanName, cleanEmail, cleanPass, cleanCompany);
-        if (sbRes && sbRes.success) {
-          uData = {
-            ...uData,
-            ...(sbRes.user || {}),
-            provider: 'supabase'
-          };
-        } else if (sbRes && !sbRes.success) {
-          return { success: false, error: sbRes.error || 'Registration failed.' };
-        }
-      } catch (err) {
-        return { success: false, error: err?.message || 'Registration exception.' };
-      }
-    }
-
-    // Always update local clients state & localStorage
-    setClients(prev => {
-      const exists = prev.some(c => c.email?.toLowerCase() === cleanEmail);
-      const updated = exists ? prev : [uData, ...prev];
-      try {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('bdigi_clients', JSON.stringify(updated));
-        }
-      } catch {}
-      return updated;
-    });
-
-    // Save client record in public.clients database table
     try {
-      await upsertClientInSupabase(uData);
+      const sbRes = await signUpWithSupabaseAuth(cleanName, cleanEmail, cleanPass, cleanCompany);
+      if (sbRes && sbRes.success) {
+        showToast(`Account registered successfully! Welcome ${cleanName}.`, 'success');
+        const result = await finishAuth(sbRes.user);
+        return { success: true, role: 'customer', user: result.user };
+      } else {
+        return { success: false, error: sbRes?.error || 'Registration failed.' };
+      }
     } catch (err) {
-      console.warn('Client DB save notice:', err);
+      return { success: false, error: err?.message || 'Registration exception.' };
     }
-
-    persistAuth(uData, targetRole === 'admin' ? 'admin' : 'customer');
-    showToast(`Account registered successfully! Welcome ${cleanName}.`, 'success');
-    return { success: true, role: targetRole, user: uData };
   };
-
 
   const logout = async () => {
     setIsAuthenticated(false);
@@ -909,16 +790,16 @@ export const StateProvider = ({ children }) => {
 
     try {
       sessionStorage.clear();
+      localStorage.removeItem('bdigi_auth_user');
+      localStorage.removeItem('bdigi_current_view');
     } catch (e) {
       console.warn('Storage clearance notice:', e);
     }
 
-    if (isSupabaseConfigured && supabase) {
-      try {
-        await supabase.auth.signOut();
-      } catch (err) {
-        console.warn('Supabase signOut error:', err);
-      }
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn('Supabase signOut error:', err);
     }
 
     showToast('You have been logged out safely.', 'info');
@@ -928,13 +809,11 @@ export const StateProvider = ({ children }) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     if (!cleanEmail) return { success: false, error: 'Please enter a valid email address.' };
 
-    if (isSupabaseConfigured) {
-      try {
-        const res = await sendPasswordResetEmail(cleanEmail);
-        if (res && !res.success) return res;
-      } catch (err) {
-        return { success: false, error: err.message || 'Failed to dispatch reset email.' };
-      }
+    try {
+      const res = await sendPasswordResetEmail(cleanEmail);
+      if (res && !res.success) return res;
+    } catch (err) {
+      return { success: false, error: err.message || 'Failed to dispatch reset email.' };
     }
 
     showToast(`Password reset link dispatched to ${cleanEmail}`, 'info');
@@ -946,13 +825,11 @@ export const StateProvider = ({ children }) => {
       return { success: false, error: 'Password must be at least 6 characters long.' };
     }
 
-    if (isSupabaseConfigured) {
-      try {
-        const res = await updateUserPassword(newPassword);
-        if (res && !res.success) return res;
-      } catch (err) {
-        return { success: false, error: err.message || 'Failed to update password.' };
-      }
+    try {
+      const res = await updateUserPassword(newPassword);
+      if (res && !res.success) return res;
+    } catch (err) {
+      return { success: false, error: err.message || 'Failed to update password.' };
     }
 
     showToast('Password updated successfully! Please sign in with your new password.', 'success');

@@ -59,20 +59,42 @@ CREATE TABLE IF NOT EXISTS public.revisions (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. REGISTERED CLIENT SHOPS TABLE
-CREATE TABLE IF NOT EXISTS public.clients (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+-- 4. REGISTERED USERS TABLE (Linked to Supabase Auth)
+CREATE TABLE IF NOT EXISTS public.users (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     full_name TEXT,
     email TEXT UNIQUE NOT NULL,
     company TEXT,
     company_name TEXT,
-    password TEXT,
     role TEXT DEFAULT 'customer',
     wallet_balance NUMERIC(10, 2) DEFAULT 150.00,
     orders_count INT DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Function to handle new user signups
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.users (id, name, full_name, email, company, company_name)
+  VALUES (
+    new.id,
+    COALESCE(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
+    COALESCE(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
+    new.email,
+    COALESCE(new.raw_user_meta_data->>'company', ''),
+    COALESCE(new.raw_user_meta_data->>'company_name', '')
+  );
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger for new user signups
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
 -- 5. WALLET TRANSACTIONS TABLE
 CREATE TABLE IF NOT EXISTS public.transactions (
@@ -92,19 +114,19 @@ CREATE TABLE IF NOT EXISTS public.transactions (
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_files ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.revisions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow public read/write on orders" ON public.orders;
 DROP POLICY IF EXISTS "Allow public read/write on order_files" ON public.order_files;
 DROP POLICY IF EXISTS "Allow public read/write on revisions" ON public.revisions;
-DROP POLICY IF EXISTS "Allow public read/write on clients" ON public.clients;
+DROP POLICY IF EXISTS "Allow public read/write on users" ON public.users;
 DROP POLICY IF EXISTS "Allow public read/write on transactions" ON public.transactions;
 
 CREATE POLICY "Allow public read/write on orders" ON public.orders FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow public read/write on order_files" ON public.order_files FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow public read/write on revisions" ON public.revisions FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow public read/write on clients" ON public.clients FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read/write on users" ON public.users FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow public read/write on transactions" ON public.transactions FOR ALL USING (true) WITH CHECK (true);
 
 -- ====================================================================

@@ -1,24 +1,14 @@
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
 import { getSiteUrl } from '../utils/siteUrl';
 
 export { isSupabaseConfigured };
 
 /**
  * Service layer for Supabase Database, Auth & Storage Operations.
- * Operates gracefully with active Supabase credentials or falls back cleanly.
  */
 
-// Supabase Google OAuth Provider Handler
-// Supabase Google OAuth Provider Handler
 export async function signInWithGoogleOAuth(customRedirect) {
   const targetRedirectUrl = customRedirect || (typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : getSiteUrl());
-
-  if (!isSupabaseConfigured || !supabase) {
-    if (typeof window !== 'undefined') {
-      window.location.href = targetRedirectUrl;
-    }
-    return { success: true };
-  }
 
   try {
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -38,16 +28,8 @@ export async function signInWithGoogleOAuth(customRedirect) {
   }
 }
 
-// Supabase Apple OAuth Provider Handler
 export async function signInWithAppleOAuth(customRedirect) {
   const targetRedirectUrl = customRedirect || (typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : getSiteUrl());
-
-  if (!isSupabaseConfigured || !supabase) {
-    if (typeof window !== 'undefined') {
-      window.location.href = targetRedirectUrl;
-    }
-    return { success: true };
-  }
 
   try {
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -64,13 +46,7 @@ export async function signInWithAppleOAuth(customRedirect) {
   }
 }
 
-
-// Supabase Email & Password Authentication Handler
 export async function signInWithSupabaseAuth(email, password) {
-  if (!isSupabaseConfigured || !supabase) {
-    return { success: false, error: 'Supabase is not configured.' };
-  }
-
   try {
     const cleanEmail = (email || '').toLowerCase().trim();
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -88,18 +64,12 @@ export async function signInWithSupabaseAuth(email, password) {
   }
 }
 
-// Supabase Email & Password Sign Up Handler
 export async function signUpWithSupabaseAuth(name, email, password, company) {
-  if (!isSupabaseConfigured || !supabase) {
-    return { success: false, error: 'Supabase is not configured.' };
-  }
-
   try {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanName = (name || '').trim();
     const cleanCompany = company ? company.trim() : `${cleanName}'s Custom Apparel`;
 
-    // Execute Supabase Auth signUp
     const { data: authData, error: authErr } = await supabase.auth.signUp({
       email: cleanEmail,
       password: password,
@@ -107,7 +77,8 @@ export async function signUpWithSupabaseAuth(name, email, password, company) {
         data: {
           full_name: cleanName,
           name: cleanName,
-          company: cleanCompany
+          company: cleanCompany,
+          company_name: cleanCompany
         }
       }
     });
@@ -118,7 +89,7 @@ export async function signUpWithSupabaseAuth(name, email, password, company) {
 
     const createdUser = authData?.user;
 
-    // Detect duplicate email (Supabase Auth returns user with empty identities array when email is already registered)
+    // Detect duplicate email
     if (createdUser && Array.isArray(createdUser.identities) && createdUser.identities.length === 0) {
       return { 
         success: false, 
@@ -126,27 +97,9 @@ export async function signUpWithSupabaseAuth(name, email, password, company) {
       };
     }
 
-    // Upsert into public.clients table
-    try {
-      await upsertClientInSupabase({
-        name: cleanName,
-        email: cleanEmail,
-        company: cleanCompany,
-        role: 'customer'
-      });
-    } catch (dbErr) {
-      console.warn('Upsert client table notice during signup:', dbErr);
-    }
-
     return { 
       success: true, 
-      user: {
-        id: createdUser?.id || `client-${Date.now()}`,
-        email: cleanEmail,
-        name: cleanName,
-        company: cleanCompany,
-        role: 'customer'
-      },
+      user: createdUser,
       session: authData?.session
     };
   } catch (err) {
