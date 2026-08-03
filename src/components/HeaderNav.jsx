@@ -368,10 +368,10 @@ export const HeaderNav = () => {
                   zIndex: 2000
                 }}>
                   <div style={{
-                    width: '240px',
+                    width: '260px',
                     background: '#ffffff',
                     border: '1.5px solid var(--border-color)',
-                    borderRadius: '12px',
+                    borderRadius: '14px',
                     boxShadow: '0 12px 32px rgba(15, 23, 42, 0.15)',
                     padding: '0.5rem',
                     display: 'flex',
@@ -379,25 +379,26 @@ export const HeaderNav = () => {
                     gap: '0.2rem',
                     animation: 'fadeIn 0.15s ease-out'
                   }}>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0.4rem 0.6rem 0.2rem' }}>
-                      Primary Package Tiers
+                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0.4rem 0.75rem 0.25rem' }}>
+                      Select Service Pricing
                     </div>
 
-                    {/* Tier 1: Basic */}
+                    {/* Service 1: Embroidery Digitizing Pricing */}
                     <button
                       type="button"
                       onClick={() => {
-                        if (openOrderWizard) {
-                          openOrderWizard({ tierKey: 'basic', type: 'embroidery', title: 'Basic Digitizing', rate: '$10.00' });
-                        } else {
-                          navigate('/pricing');
-                        }
+                        setCurrentView('public');
+                        navigate('/services/embroidery-digitizing#pricing-tiers');
                         setIsPricingOpen(false);
+                        setTimeout(() => {
+                          const el = document.getElementById('pricing-tiers');
+                          if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        }, 100);
                       }}
                       style={{
                         width: '100%',
                         textAlign: 'left',
-                        padding: '0.6rem 0.75rem',
+                        padding: '0.65rem 0.75rem',
                         background: 'transparent',
                         border: 'none',
                         borderRadius: '8px',
@@ -410,27 +411,28 @@ export const HeaderNav = () => {
                       onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}
                     >
                       <div>
-                        <div style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--navy-900)' }}>Basic Tier</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Simple Left-Chest Logos</div>
+                        <div style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--navy-900)' }}>Embroidery Digitizing</div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>From $10.00 / design</div>
                       </div>
-                      <span style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--orange-600)' }}>$10.00</span>
+                      <span style={{ fontWeight: 800, fontSize: '0.78rem', color: 'var(--orange-600)' }}>3 Tiers →</span>
                     </button>
 
-                    {/* Tier 2: Standard */}
+                    {/* Service 2: Vector Tracing Pricing */}
                     <button
                       type="button"
                       onClick={() => {
-                        if (openOrderWizard) {
-                          openOrderWizard({ tierKey: 'standard', type: 'embroidery', title: 'Standard Digitizing', rate: '$15.00' });
-                        } else {
-                          navigate('/pricing');
-                        }
+                        setCurrentView('public');
+                        navigate('/services/vector-tracing#pricing-tiers');
                         setIsPricingOpen(false);
+                        setTimeout(() => {
+                          const el = document.getElementById('pricing-tiers');
+                          if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        }, 100);
                       }}
                       style={{
                         width: '100%',
                         textAlign: 'left',
-                        padding: '0.6rem 0.75rem',
+                        padding: '0.65rem 0.75rem',
                         background: 'transparent',
                         border: 'none',
                         borderRadius: '8px',
@@ -443,27 +445,28 @@ export const HeaderNav = () => {
                       onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}
                     >
                       <div>
-                        <div style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--navy-900)' }}>Standard Tier</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Chest, Caps & Sleeves</div>
+                        <div style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--navy-900)' }}>Vector Tracing & Redraw</div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>From $15.00 / artwork</div>
                       </div>
-                      <span style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--orange-600)' }}>$15.00</span>
+                      <span style={{ fontWeight: 800, fontSize: '0.78rem', color: 'var(--orange-600)' }}>3 Tiers →</span>
                     </button>
 
-                    {/* Tier 3: Premium */}
+                    {/* Service 3: Custom Patches Pricing */}
                     <button
                       type="button"
                       onClick={() => {
-                        if (openOrderWizard) {
-                          openOrderWizard({ tierKey: 'premium', type: 'embroidery', title: 'Premium Digitizing', rate: '$35.00' });
-                        } else {
-                          navigate('/pricing');
-                        }
+                        setCurrentView('public');
+                        navigate('/custom-patches#pricing-tiers');
                         setIsPricingOpen(false);
+                        setTimeout(() => {
+                          const el = document.getElementById('pricing-tiers');
+                          if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        }, 100);
                       }}
                       style={{
                         width: '100%',
                         textAlign: 'left',
-                        padding: '0.6rem 0.75rem',
+                        padding: '0.65rem 0.75rem',
                         background: 'transparent',
                         border: 'none',
                         borderRadius: '8px',
@@ -476,10 +479,10 @@ export const HeaderNav = () => {
                       onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}
                     >
                       <div>
-                        <div style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--navy-900)' }}>Premium Tier</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Jacket Back Crests</div>
+                        <div style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--navy-900)' }}>Custom Physical Patches</div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>From $1.50 / patch</div>
                       </div>
-                      <span style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--orange-600)' }}>$35.00</span>
+                      <span style={{ fontWeight: 800, fontSize: '0.78rem', color: 'var(--orange-600)' }}>3 Tiers →</span>
                     </button>
                   </div>
                 </div>

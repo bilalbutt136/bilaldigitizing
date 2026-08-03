@@ -377,7 +377,7 @@ export const VectorArtPage = () => {
 
       {/* 2. Pricing Tier Cards OR Order Configuration Form View */}
       {!isOrderViewOpen ? (
-        <div className="container" style={{ marginTop: '2.5rem' }}>
+        <div id="pricing-tiers" className="container" style={{ marginTop: '2.5rem' }}>
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
             <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.5rem' }}>
               Choose Your Vector Conversion Package Tier
