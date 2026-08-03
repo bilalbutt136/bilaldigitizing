@@ -72,20 +72,20 @@ export const PricingCalculator = () => {
     {
       id: 'pcard-basic',
       category: 'embroidery',
-      title: 'Basic Digitizing Tier',
-      subTitle: 'Simple Left-Chest & Small Logos',
+      title: 'Basic Digitizing',
+      subTitle: 'Ideal for simple left-chest & small logos up to 4"',
       icon: Zap,
-      discountTag: 'FAST TURNAROUND',
+      discountTag: 'ESSENTIAL',
       strikePrice: '$15.00',
       rate: `$${minFee}`,
       unit: '/ design',
       delivery: '8 - 12 Hours Delivery',
-      btnText: 'Order Basic Tier',
-      badge: 'ESSENTIAL TIER',
+      btnText: `Order Basic (${minFee === '10.00' ? '$10.00' : '$' + minFee})`,
+      badge: '',
       popular: false,
       features: [
         'Logos up to 4" x 4"',
-        'All commercial formats (.DST, .PES, .EXP, .EMB)',
+        'All commercial formats (.DST, .PES, .EXP)',
         'Free machine stitch simulation proof',
         '100% Free Unlimited Revisions'
       ]
@@ -93,58 +93,58 @@ export const PricingCalculator = () => {
     {
       id: 'pcard-standard',
       category: 'embroidery',
-      title: 'Standard Digitizing Tier',
-      subTitle: 'Medium Chest & Cap Crests',
+      title: 'Standard Digitizing',
+      subTitle: 'Ideal for standard chest, caps & sleeves',
       icon: Trophy,
-      discountTag: 'EXPRESS RUSH AVAILABLE',
+      discountTag: 'MOST POPULAR',
       strikePrice: '$20.00',
       rate: `$${(parseFloat(minFee) + 5).toFixed(2)}`,
       unit: '/ design',
-      delivery: '4 - 12 Hours Delivery',
-      btnText: 'Order Standard Tier',
-      badge: 'MOST POPULAR TIER',
+      delivery: '4 - 12 Hours Express',
+      btnText: `Order Standard ($${(parseFloat(minFee) + 5).toFixed(2)})`,
+      badge: 'MOST POPULAR',
       popular: true,
       features: [
-        'Medium logos up to 8" x 8"',
-        'Includes free native .EMB Wilcom source file',
-        '3D Foam cap pathing & distortion compensation',
-        '24/7 Priority studio support'
+        'Logos up to 8" x 8"',
+        'Free native .EMB Wilcom source file',
+        '3D Foam cap pathing & compensation',
+        '100% Free Unlimited Revisions'
       ]
     },
     {
       id: 'pcard-premium',
       category: 'embroidery',
-      title: 'Premium Digitizing Tier',
-      subTitle: 'Jacket Backs & Large Masterpiece Crests',
+      title: 'Premium Digitizing',
+      subTitle: 'Ideal for jacket backs & full-back crests',
       icon: Sparkles,
-      discountTag: 'HIGH STITCH COUNT',
+      discountTag: 'FULL BACK',
       strikePrice: '$35.00',
       rate: `$${(parseFloat(minFee) + 15).toFixed(2)}`,
       unit: '/ design',
-      delivery: '12 - 24 Hours Delivery',
-      btnText: 'Order Premium Tier',
-      badge: 'JACKET BACK TIER',
+      delivery: '12 - 24 Hours Priority',
+      btnText: `Order Premium ($${(parseFloat(minFee) + 15).toFixed(2)})`,
+      badge: '',
       popular: false,
       features: [
-        'Large jacket backs (9"-12"+ High Stitch Count)',
+        'Large jacket backs (9"-12"+ high stitch count)',
         'Master pathing for complex gradient shading',
-        'High density underlay & zero thread break pathing',
+        'High density underlay pathing',
         'VIP priority studio desk'
       ]
     },
     {
       id: 'pcard-vector-simple',
       category: 'vector',
-      title: 'Vector Tracing Tier',
-      subTitle: 'Hand-Drawn Vector Redraw',
+      title: 'Vector Tracing',
+      subTitle: 'Ideal for raster image to scalable vector redraw',
       icon: Zap,
-      discountTag: 'INFINITE RESOLUTION',
+      discountTag: 'VECTOR ART',
       strikePrice: '$25.00',
       rate: `$${vectorFee}`,
       unit: '/ artwork',
       delivery: '6 - 12 Hours Delivery',
-      btnText: 'Order Vector Tier',
-      badge: 'VECTOR TIER',
+      btnText: `Order Vector ($${vectorFee})`,
+      badge: '',
       popular: false,
       features: [
         'Clean logo & raster JPEG/PNG redraws',
@@ -156,16 +156,16 @@ export const PricingCalculator = () => {
     {
       id: 'pcard-patch-tier',
       category: 'patches',
-      title: 'Custom Patches Tier',
-      subTitle: 'Embroidered, Leather & PVC Emblems',
+      title: 'Custom Patches',
+      subTitle: 'Ideal for embroidered, leather & PVC emblems',
       icon: Trophy,
-      discountTag: 'WORLDWIDE SHIPPING',
+      discountTag: 'PHYSICAL PATCHES',
       strikePrice: '$3.50',
       rate: `$${patchesFee}`,
-      unit: '/ patch starting',
+      unit: '/ patch',
       delivery: '3 - 5 Days Shipping',
-      btnText: 'Order Patches Tier',
-      badge: 'BULK TIER PACKAGES',
+      btnText: `Order Patches ($${patchesFee}/ea)`,
+      badge: '',
       popular: false,
       features: [
         'Classic merrowed border & die-cut edge',
@@ -272,17 +272,17 @@ export const PricingCalculator = () => {
           </div>
         </div>
 
-        {/* Dynamic Pricing Category Cards */}
+        {/* Dynamic Pricing Category Cards Grid */}
         <div className="grid-responsive-3" style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
-          gap: '1.75rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '1.5rem',
           maxWidth: '1200px',
           margin: '0 auto',
           alignItems: 'stretch'
         }}>
           {cardsToRender.map((cat, idx) => {
-            const isPopular = cat.popular || cat.badge === 'MOST POPULAR';
+            const isPopular = cat.popular || cat.badge === 'MOST POPULAR' || cat.badge === 'MOST POPULAR TIER';
             const IconComp = cat.icon || (idx === 0 ? Zap : idx === 1 ? Trophy : Sparkles);
 
             const rawRate = (cat.rate || '$2.50').replace(/\/.*$/, '').trim();
@@ -293,142 +293,138 @@ export const PricingCalculator = () => {
                 key={cat.id || idx}
                 onClick={() => handleSelectPackage(cat)}
                 style={{
-                  background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
-                  border: isPopular ? '2px solid #ff7a00' : '1px solid rgba(255, 255, 255, 0.1)',
+                  background: isPopular
+                    ? 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)'
+                    : '#0f172a',
+                  border: isPopular ? '2px solid #ff7a00' : '1px solid rgba(255, 255, 255, 0.12)',
                   borderRadius: '16px',
-                  padding: '2.25rem 1.6rem 1.85rem',
+                  padding: '2rem 1.5rem 1.5rem',
                   position: 'relative',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
                   height: '100%',
-                  boxShadow: isPopular ? '0 12px 30px rgba(255, 122, 0, 0.25)' : 'none',
+                  boxShadow: isPopular ? '0 12px 30px rgba(255, 122, 0, 0.25)' : '0 4px 20px rgba(0, 0, 0, 0.2)',
                   transition: 'all 0.25s ease',
                   cursor: 'pointer'
                 }}
               >
                 {/* Top Badge Pill */}
-                {cat.badge && (
+                {isPopular && (
                   <div style={{
                     position: 'absolute',
-                    top: '-13px',
+                    top: '-14px',
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    background: isPopular ? 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)' : 'rgba(255, 255, 255, 0.15)',
+                    background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
                     color: '#ffffff',
-                    fontSize: '0.68rem',
-                    fontWeight: 700,
+                    fontSize: '0.725rem',
+                    fontWeight: 800,
                     padding: '0.25rem 0.95rem',
                     borderRadius: '9999px',
                     letterSpacing: '0.06em',
                     textTransform: 'uppercase',
-                    boxShadow: '0 4px 12px rgba(255, 122, 0, 0.25)',
+                    boxShadow: '0 4px 12px rgba(255, 122, 0, 0.35)',
                     whiteSpace: 'nowrap'
                   }}>
-                    {cat.badge}
+                    ★ MOST POPULAR
                   </div>
                 )}
 
                 <div>
                   {/* Card Title & Icon Header */}
-                  <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                      <IconComp size={18} style={{ color: '#ff9433' }} />
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#ffffff', letterSpacing: '-0.01em', margin: 0 }}>
+                  <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                      <IconComp size={20} style={{ color: '#ff7a00' }} />
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
                         {cat.title}
                       </h3>
                     </div>
                     {cat.subTitle && (
-                      <div style={{ fontSize: '0.825rem', fontWeight: 500, color: '#94a3b8', lineHeight: 1.35 }}>
+                      <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0, lineHeight: 1.4 }}>
                         {cat.subTitle}
-                      </div>
+                      </p>
                     )}
                   </div>
 
                   {/* Refined Pricing Box */}
-                  <div style={{ 
-                    textAlign: 'center', 
-                    padding: '0.85rem 1rem', 
-                    marginBottom: '1.25rem',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
-                    borderRadius: '12px'
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '0.85rem 0.5rem',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                    marginBottom: '1.25rem'
                   }}>
-                    {cat.discountTag && (
-                      <span style={{
-                        display: 'inline-block',
-                        background: 'rgba(16, 185, 129, 0.2)',
-                        border: '1px solid rgba(16, 185, 129, 0.4)',
-                        color: '#34d399',
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        padding: '0.15rem 0.5rem',
-                        borderRadius: '4px',
-                        marginBottom: '0.35rem'
-                      }}>
-                        {cat.discountTag}
-                      </span>
-                    )}
-
-                    {cat.strikePrice && (
-                      <div style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.15rem' }}>
-                        {cat.strikePrice} {cat.unit || '/ design'}
-                      </div>
-                    )}
-
-                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.35rem' }}>
-                      <span style={{ fontSize: '2.1rem', fontWeight: 700, color: '#ff7a00', lineHeight: 1, letterSpacing: '-0.02em' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.4rem' }}>
+                      <span style={{ fontSize: '2.3rem', fontWeight: 900, color: '#ff7a00', lineHeight: 1 }}>
                         {displayRate}
                       </span>
-                      <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 500 }}>
+                      <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 600 }}>
                         {cat.unit || (activeCategory === 'patches' ? '/ patch' : '/ design')}
                       </span>
+                      {cat.strikePrice && (
+                        <span style={{ fontSize: '0.85rem', color: '#64748b', textDecoration: 'line-through', marginLeft: '0.25rem' }}>
+                          {cat.strikePrice}
+                        </span>
+                      )}
                     </div>
 
                     {cat.delivery && (
-                      <div style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 500, marginTop: '0.35rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
-                        <Clock size={13} style={{ color: '#ff7a00' }} /> {cat.delivery}
+                      <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        fontSize: '0.775rem',
+                        fontWeight: 700,
+                        color: '#38bdf8',
+                        background: 'rgba(56, 189, 248, 0.1)',
+                        padding: '0.2rem 0.65rem',
+                        borderRadius: '9999px',
+                        marginTop: '0.5rem'
+                      }}>
+                        <Clock size={13} /> {cat.delivery}
                       </div>
                     )}
                   </div>
 
-                  {/* Action CTA Button */}
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <button
-                      className="btn btn-block"
-                      style={{
-                        width: '100%',
-                        justifyContent: 'center',
-                        fontWeight: 700,
-                        fontSize: '0.875rem',
-                        background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
-                        color: '#ffffff',
-                        borderRadius: '9999px',
-                        padding: '0.75rem 1.25rem',
-                        boxShadow: isPopular ? '0 4px 16px rgba(255, 122, 0, 0.35)' : '0 2px 8px rgba(0, 0, 0, 0.2)',
-                        cursor: 'pointer'
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectPackage(cat);
-                      }}
-                    >
-                      {cat.btnText || 'Order Now'}
-                    </button>
-                  </div>
-
-                  {/* Divider line */}
-                  <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '1.15rem' }}></div>
-
                   {/* Feature Bullets List */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', marginBottom: '1.5rem' }}>
                     {(cat.features || []).map((feat, fIdx) => (
-                      <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#e2e8f0' }}>
-                        <CheckCircle size={16} style={{ color: '#10b981', flexShrink: 0 }} />
+                      <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#cbd5e1' }}>
+                        <CheckCircle size={15} style={{ color: '#10b981', flexShrink: 0 }} />
                         <span style={{ fontWeight: 500 }}>{feat}</span>
                       </div>
                     ))}
                   </div>
+                </div>
+
+                {/* Action CTA Button */}
+                <div>
+                  <button
+                    type="button"
+                    className="btn btn-block"
+                    style={{
+                      width: '100%',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      fontSize: '0.875rem',
+                      background: isPopular
+                        ? 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)'
+                        : 'rgba(255, 255, 255, 0.08)',
+                      color: '#ffffff',
+                      border: isPopular ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '9999px',
+                      padding: '0.75rem 1.25rem',
+                      boxShadow: isPopular ? '0 4px 16px rgba(255, 122, 0, 0.35)' : 'none',
+                      cursor: 'pointer'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectPackage(cat);
+                    }}
+                  >
+                    {cat.btnText || 'Order Now'}
+                  </button>
                 </div>
 
               </div>

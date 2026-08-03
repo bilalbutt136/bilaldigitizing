@@ -322,13 +322,14 @@ export const CustomPatchesSection = () => {
             </p>
           </div>
 
-          {/* Pricing Tiers Grid Cards */}
+          {/* Streamlined Compact Pricing Tiers Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '2rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '1.5rem',
             maxWidth: '1200px',
-            margin: '0 auto'
+            margin: '0 auto',
+            alignItems: 'stretch'
           }}>
             {cardsToRender.map((cat, idx) => {
               const isSelected = selectedTier === cat.tierKey;
@@ -340,107 +341,136 @@ export const CustomPatchesSection = () => {
                   key={cat.id || idx}
                   onClick={() => handleStartOrder(cat.tierKey, cat)}
                   style={{
-                    background: isSelected ? 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)' : '#0f172a',
-                    border: isSelected ? '3px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.12)',
+                    background: isSelected 
+                      ? 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)' 
+                      : '#0f172a',
+                    border: isSelected ? '2px solid #ff7a00' : '1px solid rgba(255, 255, 255, 0.12)',
                     borderRadius: '16px',
-                    padding: '2.5rem 1.85rem 2rem',
+                    padding: '2rem 1.5rem 1.5rem',
                     position: 'relative',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    boxShadow: isSelected ? '0 14px 40px rgba(255, 122, 0, 0.3)' : 'none',
-                    transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+                    height: '100%',
+                    boxShadow: isSelected ? '0 12px 30px rgba(255, 122, 0, 0.25)' : '0 4px 20px rgba(0, 0, 0, 0.2)',
                     transition: 'all 0.25s ease',
                     cursor: 'pointer'
                   }}
                 >
-                  {isSelected && (
+                  {isPopular && (
                     <div style={{
                       position: 'absolute',
                       top: '-14px',
                       left: '50%',
                       transform: 'translateX(-50%)',
-                      background: 'linear-gradient(135deg, var(--orange-500), #e66e00)',
+                      background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
                       color: '#ffffff',
+                      fontSize: '0.725rem',
                       fontWeight: 800,
-                      fontSize: '0.75rem',
-                      letterSpacing: '0.08em',
-                      padding: '0.3rem 0.95rem',
+                      padding: '0.25rem 0.95rem',
                       borderRadius: '9999px',
+                      letterSpacing: '0.06em',
                       textTransform: 'uppercase',
-                      boxShadow: '0 4px 14px rgba(255, 122, 0, 0.45)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.35rem'
+                      boxShadow: '0 4px 12px rgba(255, 122, 0, 0.35)',
+                      whiteSpace: 'nowrap'
                     }}>
-                      ⭐ {isPopular ? 'MOST POPULAR & SELECTED' : 'SELECTED PACKAGE'}
+                      ★ MOST POPULAR
                     </div>
                   )}
 
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                      <div style={{ background: 'rgba(255, 122, 0, 0.15)', color: 'var(--orange-400)', padding: '0.75rem', borderRadius: '12px', display: 'inline-flex' }}>
-                        <IconComp size={26} />
+                    {/* Card Title & Icon Header */}
+                    <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                        <IconComp size={20} style={{ color: '#ff7a00' }} />
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                          {cat.title}
+                        </h3>
                       </div>
-                      <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--orange-400)', background: 'rgba(255, 122, 0, 0.1)', padding: '0.3rem 0.7rem', borderRadius: '9999px', border: '1px solid rgba(255, 122, 0, 0.3)' }}>
-                        {cat.discountTag || 'ESSENTIAL'}
-                      </span>
+                      {cat.subTitle && (
+                        <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0, lineHeight: 1.4 }}>
+                          {cat.subTitle}
+                        </p>
+                      )}
                     </div>
 
-                    <h3 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.35rem' }}>
-                      {cat.title}
-                    </h3>
-
-                    <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '1.5rem', minHeight: '38px', lineHeight: 1.45 }}>
-                      {cat.subTitle}
-                    </p>
-
-                    {/* Price Header */}
-                    <div style={{ marginBottom: '1.75rem', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '1.25rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--orange-400)' }}>
+                    {/* Price & Delivery Header Box */}
+                    <div style={{
+                      textAlign: 'center',
+                      padding: '0.85rem 0.5rem',
+                      borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                      marginBottom: '1.25rem'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.4rem' }}>
+                        <span style={{ fontSize: '2.3rem', fontWeight: 900, color: '#ff7a00', lineHeight: 1 }}>
                           {cat.rate}
                         </span>
-                        <span style={{ fontSize: '0.85rem', color: '#94a3b8', textDecoration: 'line-through' }}>
-                          {cat.strikePrice}
+                        <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 600 }}>
+                          {cat.unit || '/ patch'}
                         </span>
-                        <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                          {cat.unit}
-                        </span>
+                        {cat.strikePrice && (
+                          <span style={{ fontSize: '0.85rem', color: '#64748b', textDecoration: 'line-through', marginLeft: '0.25rem' }}>
+                            {cat.strikePrice}
+                          </span>
+                        )}
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: '#cbd5e1', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <Clock size={14} style={{ color: 'var(--orange-400)' }} /> {cat.delivery}
-                      </div>
+
+                      {cat.delivery && (
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          fontSize: '0.775rem',
+                          fontWeight: 700,
+                          color: '#38bdf8',
+                          background: 'rgba(56, 189, 248, 0.1)',
+                          padding: '0.2rem 0.65rem',
+                          borderRadius: '9999px',
+                          marginTop: '0.5rem'
+                        }}>
+                          <Clock size={13} /> {cat.delivery}
+                        </div>
+                      )}
                     </div>
 
-                    {/* Features List */}
-                    <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 2rem 0', display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.875rem', color: '#e2e8f0' }}>
+                    {/* Key Features Bullet List */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', marginBottom: '1.5rem' }}>
                       {(cat.features || []).map((feat, fIdx) => (
-                        <li key={fIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.55rem', lineHeight: 1.4 }}>
-                          <CheckCircle size={16} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
-                          <span>{feat}</span>
-                        </li>
+                        <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#cbd5e1' }}>
+                          <CheckCircle size={15} style={{ color: '#10b981', flexShrink: 0 }} />
+                          <span style={{ fontWeight: 500 }}>{feat}</span>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
 
+                  {/* Primary CTA Button */}
                   <div>
                     <button
-                      className={isSelected ? "btn btn-primary-orange" : "btn btn-outline"}
+                      type="button"
+                      className="btn btn-block"
                       style={{
                         width: '100%',
                         justifyContent: 'center',
                         fontWeight: 800,
-                        padding: '0.85rem',
-                        color: isSelected ? '#ffffff' : '#ffffff',
-                        borderColor: isSelected ? 'transparent' : 'rgba(255,255,255,0.25)'
+                        fontSize: '0.875rem',
+                        background: isSelected || isPopular
+                          ? 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)'
+                          : 'rgba(255, 255, 255, 0.08)',
+                        color: '#ffffff',
+                        border: (isSelected || isPopular) ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '9999px',
+                        padding: '0.75rem 1.25rem',
+                        boxShadow: (isSelected || isPopular) ? '0 4px 16px rgba(255, 122, 0, 0.35)' : 'none',
+                        cursor: 'pointer'
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleStartOrder(cat.tierKey, cat);
                       }}
                     >
-                      {isSelected ? `✓ Selected (${cat.rate})` : cat.btnText} <ArrowRight size={17} />
+                      {cat.btnText} <ArrowRight size={16} style={{ marginLeft: '0.35rem' }} />
                     </button>
                   </div>
 
