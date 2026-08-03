@@ -3,14 +3,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
-import { ShieldCheck, Lock, Mail, ArrowRight, Home, AlertCircle, Zap } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, ArrowRight, Home, AlertCircle } from 'lucide-react';
 
 export const SecureAdminLogin = () => {
   const navigate = useNavigate();
   const { login, showToast } = useAppState();
 
-  const [adminEmail, setAdminEmail] = useState('shahidbutt59191@gmail.com');
-  const [adminPassword, setAdminPassword] = useState('shahid123@$');
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [adminError, setAdminError] = useState('');
 
@@ -18,11 +18,11 @@ export const SecureAdminLogin = () => {
     if (e && e.preventDefault) e.preventDefault();
     setAdminError('');
 
-    const targetEmail = (adminEmail || 'shahidbutt59191@gmail.com').trim();
-    const targetPassword = (adminPassword || 'shahid123@$').trim();
+    const targetEmail = (adminEmail || '').trim();
+    const targetPassword = (adminPassword || '').trim();
 
     if (!targetEmail || !targetPassword) {
-      setAdminError('Please enter both your master administrator email and security password key.');
+      setAdminError('Please enter both your administrator email and security password key.');
       return;
     }
 
@@ -38,19 +38,11 @@ export const SecureAdminLogin = () => {
       }
 
       navigate('/admin-portal');
-      showToast('Authenticated as Master Studio Manager!', 'success');
+      showToast('Authenticated as Studio Administrator!', 'success');
     } catch {
       setIsLoading(false);
       setAdminError('An unexpected authentication error occurred.');
     }
-  };
-
-  const handleQuickMasterLogin = () => {
-    setAdminEmail('shahidbutt59191@gmail.com');
-    setAdminPassword('shahid123@$');
-    setTimeout(() => {
-      handleSubmit();
-    }, 50);
   };
 
   return (
@@ -64,7 +56,7 @@ export const SecureAdminLogin = () => {
       color: '#ffffff'
     }}>
       <div className="card" style={{
-        maxWidth: '460px',
+        maxWidth: '440px',
         width: '100%',
         padding: '2.5rem',
         background: '#ffffff',
@@ -72,7 +64,7 @@ export const SecureAdminLogin = () => {
         borderRadius: 'var(--radius-xl)'
       }}>
         
-        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{
             background: 'linear-gradient(135deg, var(--navy-900), #ff7a00)',
             color: '#ffffff',
@@ -94,50 +86,6 @@ export const SecureAdminLogin = () => {
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
             Restricted Studio Digitizing & Admin Control Desk
           </p>
-        </div>
-
-        {/* 1-Click Master Admin Quick Access Bar */}
-        <div style={{
-          background: 'linear-gradient(135deg, #fff7ed, #ffedd5)',
-          border: '1.5px solid #fdba74',
-          borderRadius: '12px',
-          padding: '0.85rem 1rem',
-          marginBottom: '1.5rem',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.5rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#9a3412', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Master Admin Credentials Pre-loaded
-            </span>
-            <span className="badge badge-assigned" style={{ fontSize: '0.65rem' }}>Active</span>
-          </div>
-
-          <div style={{ fontSize: '0.8rem', color: '#431407', fontWeight: 600 }}>
-            <div><strong>Email:</strong> shahidbutt59191@gmail.com</div>
-            <div><strong>Password:</strong> shahid123@$</div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleQuickMasterLogin}
-            className="btn btn-primary-orange"
-            style={{
-              width: '100%',
-              padding: '0.5rem',
-              fontSize: '0.825rem',
-              fontWeight: 800,
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.4rem',
-              marginTop: '0.2rem'
-            }}
-          >
-            <Zap size={15} /> 1-Click Master Admin Sign In
-          </button>
         </div>
 
         {/* Validation Error Alert Box */}
@@ -168,7 +116,7 @@ export const SecureAdminLogin = () => {
               <input 
                 type="email" 
                 className="form-control"
-                placeholder="shahidbutt59191@gmail.com"
+                placeholder="admin@bdigitizing.pro"
                 value={adminEmail}
                 onChange={(e) => { setAdminEmail(e.target.value); setAdminError(''); }}
                 style={{ paddingLeft: '2.4rem' }}
@@ -184,7 +132,7 @@ export const SecureAdminLogin = () => {
               <input 
                 type="password" 
                 className="form-control"
-                placeholder="shahid123@$"
+                placeholder="••••••••••••"
                 value={adminPassword}
                 onChange={(e) => { setAdminPassword(e.target.value); setAdminError(''); }}
                 style={{ paddingLeft: '2.4rem' }}
@@ -206,7 +154,7 @@ export const SecureAdminLogin = () => {
         <div style={{ textAlign: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
           <button 
             onClick={() => navigate('/')}
-            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.825rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.825rem', cursor: 'pointer', display: 'inline-flex', fontStyle: 'italic', alignItems: 'center', gap: '0.35rem' }}
           >
             <Home size={13} /> Return to Public Website
           </button>
