@@ -775,84 +775,66 @@ export const StateProvider = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
-    if (isSupabaseConfigured && supabase) {
-      try {
-        const oauthRes = await signInWithGoogleOAuth();
-        if (oauthRes && oauthRes.success) {
-          showToast('Redirecting to Google Sign-In account selection...', 'info');
-          return oauthRes;
+    try {
+      const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : 'https://bdigitizing.pro/auth/callback';
+      showToast('Redirecting to Google Sign-In...', 'info');
+
+      if (isSupabaseConfigured && supabase) {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: redirectUrl,
+            queryParams: {
+              prompt: 'select_account'
+            }
+          }
+        });
+
+        if (error) {
+          showToast(error.message || 'Google Sign-In failed.', 'error');
+          return { success: false, error: error.message };
         }
-        return { success: false, error: oauthRes?.error || 'Google Sign-In failed.' };
-      } catch (err) {
-        return { success: false, error: err?.message || 'Google Sign-In error.' };
+        return { success: true, data };
+      } else {
+        const res = await signInWithGoogleOAuth(redirectUrl);
+        return res;
       }
+    } catch (err) {
+      console.error('Google OAuth exception:', err);
+      showToast(err?.message || 'Google Sign-In error occurred.', 'error');
+      return { success: false, error: err?.message || 'Google Sign-In error.' };
     }
-
-    // Interactive Verification for Google Account in unconfigured / local environment
-    const userGoogleEmail = typeof window !== 'undefined' ? window.prompt("Enter your Google Account email address to verify & sign in:") : null;
-    if (!userGoogleEmail || !userGoogleEmail.trim()) {
-      return { success: false, error: 'Google Account verification was cancelled.' };
-    }
-
-    const cleanEmail = userGoogleEmail.toLowerCase().trim();
-    if (!cleanEmail.includes('@') || !cleanEmail.includes('.')) {
-      return { success: false, error: 'Please enter a valid Google email address.' };
-    }
-
-    const formattedName = cleanEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    const googleAccountUser = {
-      id: `google-${Date.now()}`,
-      name: formattedName || 'Google User',
-      email: cleanEmail,
-      company: `${formattedName}'s Organization`,
-      role: 'customer',
-      provider: 'google'
-    };
-
-    persistAuth(googleAccountUser, 'customer');
-    showToast(`Verified Google Account (${cleanEmail})! Welcome ${googleAccountUser.name}.`, 'success');
-    return { success: true, role: 'customer', user: googleAccountUser };
   };
 
   const loginWithApple = async () => {
-    if (isSupabaseConfigured && supabase) {
-      try {
-        const oauthRes = await signInWithAppleOAuth();
-        if (oauthRes && oauthRes.success) {
-          showToast('Redirecting to Apple Sign-In...', 'info');
-          return oauthRes;
+    try {
+      const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : 'https://bdigitizing.pro/auth/callback';
+      showToast('Redirecting to Apple Sign-In...', 'info');
+
+      if (isSupabaseConfigured && supabase) {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'apple',
+          options: {
+            redirectTo: redirectUrl
+          }
+        });
+
+        if (error) {
+          showToast(error.message || 'Apple Sign-In failed.', 'error');
+          return { success: false, error: error.message };
         }
-        return { success: false, error: oauthRes?.error || 'Apple Sign-In failed.' };
-      } catch (err) {
-        return { success: false, error: err?.message || 'Apple Sign-In error.' };
+        return { success: true, data };
+      } else {
+        const res = await signInWithAppleOAuth(redirectUrl);
+        return res;
       }
+    } catch (err) {
+      console.error('Apple OAuth exception:', err);
+      showToast(err?.message || 'Apple Sign-In error occurred.', 'error');
+      return { success: false, error: err?.message || 'Apple Sign-In error.' };
     }
-
-    // Interactive Verification for Apple ID in unconfigured / local environment
-    const userAppleEmail = typeof window !== 'undefined' ? window.prompt("Enter your Apple ID email address to verify & sign in:") : null;
-    if (!userAppleEmail || !userAppleEmail.trim()) {
-      return { success: false, error: 'Apple ID verification was cancelled.' };
-    }
-
-    const cleanEmail = userAppleEmail.toLowerCase().trim();
-    if (!cleanEmail.includes('@') || !cleanEmail.includes('.')) {
-      return { success: false, error: 'Please enter a valid Apple ID email address.' };
-    }
-
-    const formattedName = cleanEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    const appleAccountUser = {
-      id: `apple-${Date.now()}`,
-      name: formattedName || 'Apple User',
-      email: cleanEmail,
-      company: `${formattedName}'s Organization`,
-      role: 'customer',
-      provider: 'apple'
-    };
-
-    persistAuth(appleAccountUser, 'customer');
-    showToast(`Verified Apple ID (${cleanEmail})! Welcome ${appleAccountUser.name}.`, 'success');
-    return { success: true, role: 'customer', user: appleAccountUser };
   };
+
 
   const register = async (name, email, password, company, roleHint) => {
     const cleanEmail = (email || '').toLowerCase().trim();

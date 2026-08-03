@@ -9,19 +9,23 @@ export { isSupabaseConfigured };
  */
 
 // Supabase Google OAuth Provider Handler
-export async function signInWithGoogleOAuth() {
+// Supabase Google OAuth Provider Handler
+export async function signInWithGoogleOAuth(customRedirect) {
+  const targetRedirectUrl = customRedirect || (typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : getSiteUrl());
+
   if (!isSupabaseConfigured || !supabase) {
-    return { success: false, error: 'Supabase is not configured.' };
+    if (typeof window !== 'undefined') {
+      window.location.href = targetRedirectUrl;
+    }
+    return { success: true };
   }
 
   try {
-    const siteUrl = getSiteUrl();
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: siteUrl,
+        redirectTo: targetRedirectUrl,
         queryParams: {
-          access_type: 'offline',
           prompt: 'select_account'
         }
       }
@@ -35,17 +39,21 @@ export async function signInWithGoogleOAuth() {
 }
 
 // Supabase Apple OAuth Provider Handler
-export async function signInWithAppleOAuth() {
+export async function signInWithAppleOAuth(customRedirect) {
+  const targetRedirectUrl = customRedirect || (typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : getSiteUrl());
+
   if (!isSupabaseConfigured || !supabase) {
-    return { success: false, error: 'Supabase is not configured.' };
+    if (typeof window !== 'undefined') {
+      window.location.href = targetRedirectUrl;
+    }
+    return { success: true };
   }
 
   try {
-    const siteUrl = getSiteUrl();
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'apple',
       options: {
-        redirectTo: siteUrl
+        redirectTo: targetRedirectUrl
       }
     });
 
@@ -55,6 +63,7 @@ export async function signInWithAppleOAuth() {
     return { success: false, error: err?.message || 'Apple Authentication error.' };
   }
 }
+
 
 // Supabase Email & Password Authentication Handler
 export async function signInWithSupabaseAuth(email, password) {
