@@ -474,8 +474,7 @@ export const OrderWizardModal = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: finalPrice,
-          method: 'card'
+          amount: finalPrice
         })
       });
       const data = await res.json();

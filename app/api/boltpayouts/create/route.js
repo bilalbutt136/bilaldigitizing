@@ -17,7 +17,7 @@ export async function POST(request) {
 
     const body = await request.json().catch(() => ({}));
     const amount = parseFloat(body.amount);
-    const method = body.method || 'card';
+    const method = body.method; // Don't default to 'card'
     
     if (isNaN(amount) || amount <= 0) {
       return NextResponse.json({ success: false, error: 'Invalid amount' }, { status: 400 });
@@ -37,6 +37,15 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Payment gateway not configured by administrator.' }, { status: 503 });
     }
 
+    const payload = {
+      amount: amount,
+      username: user.email,
+    };
+
+    if (method && method !== 'all') {
+      payload.method = method;
+    }
+
     // Call BoltPayouts API
     const boltResponse = await fetch('https://www.boltpayouts.xyz/api/create-payment', {
       method: 'POST',
@@ -44,11 +53,7 @@ export async function POST(request) {
         'Content-Type': 'application/json',
         'x-api-key': apiKey
       },
-      body: JSON.stringify({
-        amount: amount,
-        username: user.email,
-        method: method
-      })
+      body: JSON.stringify(payload)
     });
 
     const boltData = await boltResponse.json().catch(() => ({}));
