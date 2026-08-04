@@ -636,7 +636,7 @@ export const OrderWizardModal = () => {
                                       const value = card.id.replace('pcard-', '');
                                       return (
                                         <option key={card.id} value={value}>
-                                          {card.badge ? `${card.badge} • ` : ''}{card.title} ({card.rate})
+                                          {card.title.replace(' Digitizing', '').replace(' Patches', '')} ({card.rate.replace('Starting from ', '')})
                                         </option>
                                       );
                                     })
