@@ -580,6 +580,7 @@ export const AuthModal = () => {
                       showToast('Google Sign-In failed', 'error');
                     }}
                     auto_select={false}
+                    itp_support={false}
                     shape="rectangular"
                     theme="outline"
                     text="continue_with"
@@ -778,6 +779,7 @@ export const AuthModal = () => {
                       showToast('Google Sign-In failed', 'error');
                     }}
                     auto_select={false}
+                    itp_support={false}
                     shape="rectangular"
                     theme="outline"
                     text="continue_with"

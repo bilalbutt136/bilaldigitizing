@@ -597,7 +597,7 @@ export const OrderWizardModal = () => {
                 </h3>
 
                 {/* 1. EMBROIDERY DIGITIZING */}
-                {type === 'embroidery' && (
+                {['embroidery', 'vector'].includes(type) && (
                   <>
                     {/* Interactive Placements Cart */}
                     <div>
@@ -627,8 +627,9 @@ export const OrderWizardModal = () => {
                               <select value={item.packageTier || 'standard'} onChange={(e) => updatePlacementItem(item.id, 'packageTier', e.target.value)} className="form-control" style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem' }}>
                                 {type === 'vector' ? (
                                   <>
-                                    <option value="standard">⚡ Simple Redraw ($15.00)</option>
-                                    <option value="premium">✨ Complex Redraw ($25.00)</option>
+                                    <option value="basic">⚡ Simple Redraw ($15.00)</option>
+                                    <option value="standard">✨ Complex Redraw ($25.00)</option>
+                                    <option value="premium">🔥 Super Rush Express ($40.00)</option>
                                   </>
                                 ) : (
                                   pricingCards && pricingCards.length > 0 ? (
@@ -651,14 +652,21 @@ export const OrderWizardModal = () => {
                               </select>
                             </div>
 
-                            <div>
-                              <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Placement Location</label>
-                              <select value={item.placementType} onChange={(e) => updatePlacementItem(item.id, 'placementType', e.target.value)} className="form-control" style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem' }}>
-                                {PLACEMENT_OPTIONS.map(plc => (
-                                  <option key={plc.id} value={plc.id}>{plc.label}</option>
-                                ))}
-                              </select>
-                            </div>
+                            {type === 'embroidery' ? (
+                              <div>
+                                <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Placement Location</label>
+                                <select value={item.placementType} onChange={(e) => updatePlacementItem(item.id, 'placementType', e.target.value)} className="form-control" style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem' }}>
+                                  {PLACEMENT_OPTIONS.map(plc => (
+                                    <option key={plc.id} value={plc.id}>{plc.label}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            ) : (
+                              <div>
+                                <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Design Name *</label>
+                                <input type="text" value={item.placementType || ''} onChange={(e) => updatePlacementItem(item.id, 'placementType', e.target.value)} placeholder="e.g. Left Chest Logo" className="form-control" style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem' }} />
+                              </div>
+                            )}
 
                             <div>
                               <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Quantity</label>
@@ -723,31 +731,34 @@ export const OrderWizardModal = () => {
                           </div>
                         </div>
                       ))}
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Target Garment Fabric *</label>
-                      <select value={fabricType} onChange={(e) => setFabricType(e.target.value)} className="form-control" style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.15)', color: '#ffffff' }}>
-                        <option value="Pique Cotton Polo">Pique Polo Cotton</option>
-                        <option value="Fleece Hoodie">Fleece Hoodie / Sweatshirt</option>
-                        <option value="Structured Cap 3D Foam">Structured Cap / Hat (3D Foam)</option>
-                        <option value="Performance Dry-Fit">Performance Dry-Fit Polyester</option>
-                        <option value="Towel / Terry Cloth">Towel / Thick Plush Terry</option>
-                        <option value="Leather / Canvas">Leather / Heavy Canvas</option>
-                        <option value="Softshell Jacket">Softshell Jacket / Outerwear</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Required Machine File Formats</label>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.5rem' }}>
-                        {[{id: 'dst', label: '.DST'}, {id: 'pes', label: '.PES'}, {id: 'exp', label: '.EXP'}, {id: 'jef', label: '.JEF'}, {id: 'emb', label: '.EMB'}].map(fmt => (
-                          <div key={fmt.id} onClick={() => toggleFormat(fmt.id)} style={{ padding: '0.5rem', background: requestedFormats.includes(fmt.id) ? 'rgba(255, 122, 0, 0.2)' : '#0f172a', border: requestedFormats.includes(fmt.id) ? '1.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <input type="checkbox" checked={requestedFormats.includes(fmt.id)} onChange={() => {}} style={{ accentColor: 'var(--orange-500)' }} />
-                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffffff' }}>{fmt.label}</span>
+                      {type === 'embroidery' && (
+                        <>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Target Garment Fabric *</label>
+                            <select value={fabricType} onChange={(e) => setFabricType(e.target.value)} className="form-control" style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.15)', color: '#ffffff' }}>
+                              <option value="Pique Cotton Polo">Pique Polo Cotton</option>
+                              <option value="Fleece Hoodie">Fleece Hoodie / Sweatshirt</option>
+                              <option value="Structured Cap 3D Foam">Structured Cap / Hat (3D Foam)</option>
+                              <option value="Performance Dry-Fit">Performance Dry-Fit Polyester</option>
+                              <option value="Towel / Terry Cloth">Towel / Thick Plush Terry</option>
+                              <option value="Leather / Canvas">Leather / Heavy Canvas</option>
+                              <option value="Softshell Jacket">Softshell Jacket / Outerwear</option>
+                            </select>
                           </div>
-                        ))}
-                      </div>
+
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Required Machine File Formats</label>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.5rem' }}>
+                              {[{id: 'dst', label: '.DST'}, {id: 'pes', label: '.PES'}, {id: 'exp', label: '.EXP'}, {id: 'jef', label: '.JEF'}, {id: 'emb', label: '.EMB'}].map(fmt => (
+                                <div key={fmt.id} onClick={() => toggleFormat(fmt.id)} style={{ padding: '0.5rem', background: requestedFormats.includes(fmt.id) ? 'rgba(255, 122, 0, 0.2)' : '#0f172a', border: requestedFormats.includes(fmt.id) ? '1.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                  <input type="checkbox" checked={requestedFormats.includes(fmt.id)} onChange={() => {}} style={{ accentColor: 'var(--orange-500)' }} />
+                                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffffff' }}>{fmt.label}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </>
                 )}
