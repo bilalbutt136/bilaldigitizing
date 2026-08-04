@@ -48,26 +48,22 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
   const [digitizingPackageTier, setDigitizingPackageTier] = useState(initialTier || 'standard'); // 'basic' | 'standard' | 'premium'
 
   // Service 2: Vector Tracing State
-  const [vectorComplexity, setVectorComplexity] = useState('simple'); // 'simple' | 'complex'
   const [vectorFormats] = useState(['ai', 'eps', 'svg', 'pdf']);
-  const [vectorQuantity, setVectorQuantity] = useState(1);
-  const [vectorQuantityInput, setVectorQuantityInput] = useState('1');
-
-  // Sync vectorQuantity state with input display string
-  React.useEffect(() => {
-    setVectorQuantityInput(String(vectorQuantity));
-  }, [vectorQuantity]);
 
   // Service 3: Custom Patches State
-  const [patchStyle, setPatchStyle] = useState('Embroidered'); // 'Embroidered' | 'Leather' | 'PVC'
-  const [patchBacking, setPatchBacking] = useState('Iron-On'); // 'Iron-On' | 'Velcro' | 'Sew-On' | 'Adhesive'
-  const [patchQuantity, setPatchQuantity] = useState(100);
-  const [patchQuantityInput, setPatchQuantityInput] = useState('100');
-
-  // Sync patchQuantity state with input string
-  React.useEffect(() => {
-    setPatchQuantityInput(String(patchQuantity));
-  }, [patchQuantity]);
+  const [patchItems, setPatchItems] = useState([
+    {
+      id: 'pch-initial-1',
+      patchStyle: 'Embroidered',
+      patchBacking: 'Iron-On',
+      patchWidth: 3.0,
+      patchHeight: 3.0,
+      quantity: 50,
+      quantityInput: '50',
+      specificNotes: '',
+      files: []
+    }
+  ]);
 
   // Service 4: Custom T-Shirts State
   const [tshirtColor] = useState('Black');
@@ -175,6 +171,93 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
     }));
   };
 
+  const addPatchItem = () => {
+    setPatchItems(prev => [
+      ...prev,
+      {
+        id: `pch-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        patchStyle: 'Embroidered',
+        patchBacking: 'Iron-On',
+        patchWidth: 3.0,
+        patchHeight: 3.0,
+        quantity: 50,
+        quantityInput: '50',
+        specificNotes: '',
+        files: []
+      }
+    ]);
+  };
+
+  const removePatchItem = (id) => {
+    if (patchItems.length <= 1) return;
+    setPatchItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  const updatePatchItem = (id, field, value) => {
+    setPatchItems(prev => prev.map(item => {
+      if (item.id === id) {
+        if (field === 'quantity') {
+          const num = Math.max(1, parseInt(value, 10) || 1);
+          return { ...item, quantity: num, quantityInput: String(num) };
+        }
+        if (field === 'quantityInput') {
+          const raw = String(value);
+          if (raw === '') return { ...item, quantityInput: '', quantity: 0 };
+          const clean = raw.replace(/\D/g, '');
+          if (clean === '') return { ...item, quantityInput: '', quantity: 0 };
+          const parsed = parseInt(clean, 10);
+          return { ...item, quantityInput: String(parsed), quantity: parsed };
+        }
+        return { ...item, [field]: value };
+      }
+      return item;
+    }));
+  };
+
+  const handleBlurPatchQuantity = (id) => {
+    setPatchItems(prev => prev.map(item => {
+      if (item.id === id) {
+        if (!item.quantityInput || parseInt(item.quantityInput, 10) < 50) {
+          return { ...item, quantity: 50, quantityInput: '50' };
+        }
+      }
+      return item;
+    }));
+  };
+
+  const handlePatchFileUpload = (itemId, files) => {
+    if (!files || files.length === 0) return;
+    const fileArray = Array.from(files);
+    const newFiles = fileArray.map(file => {
+      const fileName = file.name || 'artwork_file';
+      const fileExt = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';
+      const previewUrl = (file.type && file.type.startsWith('image/')) ? URL.createObjectURL(file) : null;
+      return {
+        id: `file_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        name: fileName,
+        size: (file.size / 1024).toFixed(1) + ' KB',
+        type: fileExt.toUpperCase() || 'FILE',
+        previewUrl,
+        rawFile: file
+      };
+    });
+    setPatchItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return { ...item, files: [...(item.files || []), ...newFiles] };
+      }
+      return item;
+    }));
+  };
+
+  const removeFileFromPatch = (itemId, fileId) => {
+    setPatchItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return { ...item, files: (item.files || []).filter(f => f.id !== fileId) };
+      }
+      return item;
+    }));
+  };
+
   const totalPlacementQuantity = placementItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
   // Sync initialTier prop changes
@@ -272,16 +355,44 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
   // Dynamic Price Calculation
   const calculatePrice = () => {
     let base = 0;
-    const rushFee = isRush ? 10.00 : 0.00;
-
+    
     if (activeService === 'digitizing') {
       return getDigitizingPricingDetails().total;
     } else if (activeService === 'vector') {
-      const unitRate = vectorComplexity === 'complex' ? (parseFloat(pricing.vectorComplexRate) || 25.00) : (parseFloat(pricing.vectorSimpleRate) || 15.00);
-      base = vectorQuantity * unitRate;
+      let vectorSubtotal = 0;
+      placementItems.forEach(item => {
+        const itemTier = item.packageTier || 'standard';
+        const unitRate = itemTier === 'complex' || itemTier === 'premium' ? (parseFloat(pricing?.vectorComplexRate) || 25.00) : (parseFloat(pricing?.vectorSimpleRate) || 15.00);
+        vectorSubtotal += unitRate * (item.quantity || 1);
+      });
+      base = vectorSubtotal;
     } else if (activeService === 'patches') {
-      const unitRate = patchQuantity >= 100 ? 1.50 : patchQuantity >= 50 ? 2.20 : 3.00;
-      base = patchQuantity * unitRate;
+      let patchesSubtotal = 0;
+      patchItems.forEach(item => {
+        const w = parseFloat(item.patchWidth) || 3.0;
+        const h = parseFloat(item.patchHeight) || 3.0;
+        const sizeInches = (w + h) / 2;
+        const sizeMultiplier = sizeInches > 3.0 ? (1 + (sizeInches - 3.0) * 0.18) : 1.0;
+        
+        let materialBase = 2.50;
+        if (item.patchStyle === 'Woven') materialBase = 1.50;
+        if (item.patchStyle === 'Embroidered') materialBase = 2.50;
+        if (item.patchStyle === 'PVC' || item.patchStyle === 'Leather') materialBase = 3.50;
+        
+        let qtyDiscount = 1.0;
+        const q = item.quantity || 50;
+        if (q >= 500) qtyDiscount = 0.80;
+        else if (q >= 250) qtyDiscount = 0.88;
+        else if (q >= 100) qtyDiscount = 0.95;
+        
+        let backingAddon = 0;
+        if (item.patchBacking === 'Velcro') backingAddon = 0.40;
+        if (item.patchBacking === 'Adhesive') backingAddon = 0.25;
+        
+        const rateEach = parseFloat(((materialBase * sizeMultiplier * qtyDiscount) + backingAddon).toFixed(2));
+        patchesSubtotal += (rateEach * q);
+      });
+      base = patchesSubtotal;
     } else if (activeService === 'tshirts') {
       const totalShirts = Object.values(tshirtSizes).reduce((a, b) => a + Number(b), 0);
       const unitShirtRate = totalShirts >= 50 ? 12.00 : 14.00;
@@ -292,6 +403,15 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
       base = capQuantity * (unitCapRate + puffExtra);
     }
 
+    const totalQty = activeService === 'vector' 
+      ? placementItems.reduce((sum, item) => sum + (item.quantity || 1), 0)
+      : activeService === 'patches'
+      ? patchItems.reduce((sum, item) => sum + (item.quantity || 1), 0)
+      : 0;
+
+    const allowRush = activeService === 'vector' ? (totalQty === 1) : false;
+    const rushFee = (isRush && allowRush && activeService === 'vector') ? 10.00 : 0.00;
+    
     return (base + rushFee).toFixed(2);
   };
 
@@ -306,13 +426,15 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
         return;
       }
     } else if (activeService === 'vector') {
-      if (!vectorQuantityInput || parseInt(vectorQuantityInput, 10) < 1) {
-        showToast('Minimum order quantity for Vector Tracing is 1 Artwork.', 'error');
+      const invalidItem = placementItems.find(p => !p.quantityInput || parseInt(p.quantityInput, 10) < 1);
+      if (invalidItem) {
+        showToast('Minimum quantity per vector item is 1 Artwork.', 'error');
         return;
       }
     } else if (activeService === 'patches') {
-      if (!patchQuantityInput || parseInt(patchQuantityInput, 10) < 50) {
-        showToast('Minimum order quantity for Custom Patches is 50 Pcs.', 'error');
+      const invalidItem = patchItems.find(p => !p.quantityInput || parseInt(p.quantityInput, 10) < 50);
+      if (invalidItem) {
+        showToast('Minimum order quantity per patch item is 50 Pcs.', 'error');
         return;
       }
     }
@@ -320,13 +442,25 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
     setIsSubmitting(true);
     const totalPrice = calculatePrice();
 
-    const details = getDigitizingPricingDetails();
-    const placementsSummary = details.placementBreakdown.map(p => `${p.label} (x${p.quantity})`).join(', ');
+    let placementsSummary = '';
+    let totalPlacementCount = 0;
+    
+    if (activeService === 'digitizing') {
+      const details = getDigitizingPricingDetails();
+      placementsSummary = details.placementBreakdown.map(p => `${p.label} (x${p.quantity})`).join(', ');
+      totalPlacementCount = details.totalPlacementItemsCount;
+    } else if (activeService === 'vector') {
+      placementsSummary = placementItems.map((p, i) => `Artwork #${i+1} (x${p.quantity})`).join(', ');
+      totalPlacementCount = placementItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
+    } else if (activeService === 'patches') {
+      placementsSummary = patchItems.map((p, i) => `Patch #${i+1} (${p.patchStyle}) (x${p.quantity})`).join(', ');
+      totalPlacementCount = patchItems.reduce((acc, item) => acc + (item.quantity || 0), 0);
+    }
 
     const orderTitle = title.trim() || (
       activeService === 'digitizing' ? `Embroidery Digitizing (${placementsSummary || 'Standard Order'})` :
-      activeService === 'vector' ? `Vector Tracing (${vectorComplexity.toUpperCase()})` :
-      activeService === 'patches' ? `Custom Patches (${patchQuantity}x ${patchStyle})` :
+      activeService === 'vector' ? `Vector Tracing (${placementsSummary})` :
+      activeService === 'patches' ? `Custom Patches (${placementsSummary})` :
       `Custom Order`
     );
 
@@ -335,24 +469,21 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
       type: activeService,
       serviceCategory: 
         activeService === 'digitizing' ? `Embroidery Digitizing (${placementsSummary})` :
-        activeService === 'vector' ? `Vector Tracing (${vectorComplexity.toUpperCase()})` :
-        activeService === 'patches' ? `Custom Patches (${patchQuantity}x ${patchStyle})` :
+        activeService === 'vector' ? `Vector Tracing (${placementsSummary})` :
+        activeService === 'patches' ? `Custom Patches (${placementsSummary})` :
         activeService === 'tshirts' ? `Custom T-Shirts (${Object.values(tshirtSizes).reduce((a, b) => a + Number(b), 0)} Pcs)` :
         `Custom Caps & 3D Hats (${capQuantity}x ${capStyle})`,
       price: parseFloat(totalPrice),
-      isRush,
+      isRush: activeService === 'digitizing' ? isRush : (activeService === 'vector' ? (totalPlacementCount === 1 && isRush) : false),
       notes,
       requestedFormats: activeService === 'vector' ? vectorFormats : targetFormats,
-      uploadedFiles: selectedAssets,
+      uploadedFiles: selectedAssets, // Legacy global uploads if any
       specifications: {
         placementsSummary,
-        placementItems,
-        totalPlacementCount: details.totalPlacementItemsCount,
+        placementItems: activeService === 'digitizing' || activeService === 'vector' ? placementItems : undefined,
+        patchItems: activeService === 'patches' ? patchItems : undefined,
+        totalPlacementCount,
         fabricType,
-        vectorComplexity,
-        patchStyle,
-        patchBacking,
-        patchQuantity,
         tshirtColor,
         tshirtSizes,
         capStyle,
@@ -1171,277 +1302,239 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
               )}
 
               {/* 2. VECTOR TRACING */}
-              {activeService === 'vector' && (
+                            {activeService === 'vector' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  {/* Package Tier Dropdown Selection */}
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#cbd5e1', marginBottom: '0.65rem' }}>
-                      Vector Complexity Tier *
-                    </label>
-                    <select
-                      value={vectorComplexity}
-                      onChange={(e) => setVectorComplexity(e.target.value)}
-                      className="form-control"
-                      style={{
-                        background: '#1e293b',
-                        color: '#ffffff',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
-                        fontSize: '0.9rem',
-                        padding: '0.75rem 1rem',
-                        width: '100%',
-                        borderRadius: '8px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <option value="simple">⚡ Simple Redraw ($15.00)</option>
-                      <option value="complex">✨ Complex Redraw ($25.00)</option>
-                    </select>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {placementItems.map((item, index) => {
+                      const itemTier = item.packageTier || 'standard';
+                      const unitRate = itemTier === 'complex' || itemTier === 'premium' ? (parseFloat(pricing?.vectorComplexRate) || 25.00) : (parseFloat(pricing?.vectorSimpleRate) || 15.00);
+                      const itemQty = Math.max(1, parseInt(item.quantityInput !== undefined ? item.quantityInput : item.quantity, 10) || 1);
+                      const rowSubtotal = unitRate * itemQty;
+
+                      return (
+                        <div
+                          key={item.id}
+                          style={{
+                            background: '#0f172a',
+                            border: '1.5px solid rgba(255, 255, 255, 0.12)',
+                            borderRadius: '12px',
+                            padding: '1.15rem',
+                            position: 'relative'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', borderBottom: '1px dashed rgba(255, 255, 255, 0.1)', paddingBottom: '0.6rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ background: 'var(--orange-500)', color: '#ffffff', fontWeight: 800, fontSize: '0.72rem', width: '22px', height: '22px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {index + 1}
+                              </span>
+                              <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#ffffff' }}>
+                                Vector Item #{index + 1}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                              <span style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--orange-400)' }}>
+                                ${unitRate.toFixed(2)}/ea • Subtotal: ${rowSubtotal.toFixed(2)}
+                              </span>
+
+                              {placementItems.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removePlacementItem(item.id)}
+                                  title="Remove Vector Item"
+                                  style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', width: '28px', height: '28px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s ease' }}
+                                >
+                                  🗑️
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem', alignItems: 'end' }}>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>Package Tier *</label>
+                              <select value={item.packageTier || 'standard'} onChange={(e) => updatePlacementItem(item.id, 'packageTier', e.target.value)} className="form-control" style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.85rem', fontWeight: 700 }}>
+                                <option value="standard">⚡ Simple Redraw (${parseFloat(pricing?.vectorSimpleRate || 15).toFixed(2)})</option>
+                                <option value="premium">✨ Complex Redraw (${parseFloat(pricing?.vectorComplexRate || 25).toFixed(2)})</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>Quantity (Artworks) *</label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <button type="button" onClick={() => updatePlacementItem(item.id, 'quantity', Math.max(1, item.quantity - 1))} style={{ width: '32px', height: '36px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}>-</button>
+                                <input type="text" value={item.quantityInput !== undefined ? item.quantityInput : item.quantity} onChange={(e) => updatePlacementItem(item.id, 'quantityInput', e.target.value)} onBlur={() => handleBlurPlacementQuantity(item.id)} className="form-control" style={{ textAlign: 'center', background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800, padding: '0.35rem 0.5rem', fontSize: '0.85rem' }} />
+                                <button type="button" onClick={() => updatePlacementItem(item.id, 'quantity', item.quantity + 1)} style={{ width: '32px', height: '36px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}>+</button>
+                              </div>
+                            </div>
+                            
+                            {/* File Upload Zone */}
+                            <div style={{ gridColumn: 'span 2', background: '#1e293b', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', marginTop: '0.35rem' }}>
+                              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                                <span>📎 Reference Artwork File for Vector #{index + 1} *</span>
+                                {item.files && item.files.length > 0 && <span style={{ color: 'var(--orange-400)', fontWeight: 800 }}>{item.files.length} Attached</span>}
+                              </label>
+
+                              <div onClick={() => document.getElementById(`vec-file-${item.id}`)?.click()} style={{ border: '1.5px dashed rgba(255, 122, 0, 0.45)', background: '#0f172a', borderRadius: '8px', padding: '0.65rem', textAlign: 'center', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#e2e8f0' }}>Upload File for Vector #{index + 1}</span>
+                                <input type="file" id={`vec-file-${item.id}`} multiple style={{ display: 'none' }} onChange={(e) => handlePlacementFileUpload(item.id, e.target.files)} />
+                              </div>
+
+                              {item.files && item.files.length > 0 && (
+                                <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                                  {item.files.map(f => (
+                                    <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.35rem 0.6rem', background: '#0f172a', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.75rem' }}>
+                                      <span style={{ fontWeight: 700, color: '#ffffff' }}>{f.name}</span>
+                                      <button type="button" onClick={() => removeFileFromPlacement(item.id, f.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}>🗑️</button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
 
-                  {/* Dual Quantity Control: Dropdown + Manual Input */}
+                  <button type="button" onClick={addPlacementItem} style={{ marginTop: '1rem', width: '100%', padding: '0.75rem', background: 'rgba(255, 122, 0, 0.12)', border: '1.5px dashed var(--orange-500)', color: 'var(--orange-400)', fontWeight: 800, fontSize: '0.875rem', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                    + Add Another Vector Item
+                  </button>
+                  
+                  {/* Target Formats for Vector */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#cbd5e1', marginBottom: '0.4rem' }}>
-                      Quantity (Dropdown & Manual Entry)
-                    </label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.75rem', alignItems: 'center' }}>
-                      <select
-                        className="form-control"
-                        value={[1, 2, 3, 5, 10, 15, 25, 50].includes(vectorQuantity) ? vectorQuantity : 'custom'}
-                        onChange={(e) => {
-                          if (e.target.value !== 'custom') {
-                            setVectorQuantity(parseInt(e.target.value) || 1);
-                          }
-                        }}
-                        style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800 }}
-                      >
-                        <option value="1">1 Artwork (Single Order)</option>
-                        <option value="2">2 Artworks (Package)</option>
-                        <option value="3">3 Artworks (Package)</option>
-                        <option value="5">5 Artworks (Bulk Batch)</option>
-                        <option value="10">10 Artworks (Bulk Batch)</option>
-                        <option value="25">25 Artworks (Volume Tier)</option>
-                        <option value="custom">Custom Quantity...</option>
-                      </select>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <button
-                          type="button"
-                          onClick={() => setVectorQuantity(Math.max(1, vectorQuantity - 1))}
-                          style={{ width: '36px', height: '38px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}
-                        >
-                          -
-                        </button>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          value={vectorQuantityInput}
-                          onFocus={(e) => e.target.select()}
-                          onChange={(e) => {
-                            const rawVal = e.target.value;
-                            if (rawVal === '') {
-                              setVectorQuantityInput('');
-                              return;
-                            }
-                            const cleanVal = rawVal.replace(/\D/g, '');
-                            if (cleanVal === '') {
-                              setVectorQuantityInput('');
-                              return;
-                            }
-                            const parsed = parseInt(cleanVal, 10);
-                            setVectorQuantityInput(String(parsed));
-                            if (parsed > 0) {
-                              setVectorQuantity(parsed);
-                            }
-                          }}
-                          onBlur={() => {
-                            if (!vectorQuantityInput || parseInt(vectorQuantityInput, 10) < 1) {
-                              setVectorQuantity(1);
-                              setVectorQuantityInput('1');
-                            }
-                          }}
-                          className="form-control"
-                          style={{ textAlign: 'center', background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800, padding: '0.4rem 0.5rem' }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setVectorQuantity(vectorQuantity + 1)}
-                          style={{ width: '36px', height: '38px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}
-                        >
-                          +
-                        </button>
-                      </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: 800, color: '#cbd5e1' }}>Required Machine File Formats *</label>
                     </div>
-
-                    {(vectorQuantityInput === '' || parseInt(vectorQuantityInput, 10) < 1) && (
-                      <div style={{ fontSize: '0.78rem', color: '#fb923c', fontWeight: 800, marginTop: '0.35rem' }}>
-                        ⚠️ Minimum order quantity for Vector Tracing is 1 Artwork.
-                      </div>
-                    )}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.5rem' }}>
+                      {['ai', 'eps', 'svg', 'pdf'].map(fmt => (
+                        <div key={fmt} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.65rem', background: '#0f172a', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px' }}>
+                          <input type="checkbox" checked={vectorFormats.includes(fmt)} readOnly style={{ accentColor: 'var(--orange-500)' }} />
+                          <div style={{ fontSize: '0.825rem', fontWeight: 800, color: '#ffffff', textTransform: 'uppercase' }}>.{fmt}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* 3. PHYSICAL CUSTOM PATCHES */}
-              {activeService === 'patches' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-                  {/* Package Tier Dropdown Selection */}
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#cbd5e1', marginBottom: '0.45rem' }}>
-                      Select Pricing Tier Package *
-                    </label>
-                    <select
-                      value={patchStyle}
-                      onChange={(e) => setPatchStyle(e.target.value)}
-                      className="form-control"
-                      style={{
-                        background: '#1e293b',
-                        color: '#ffffff',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
-                        fontSize: '0.9rem',
-                        padding: '0.75rem 1rem',
-                        width: '100%',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        marginBottom: '1.15rem'
-                      }}
-                    >
-                      {patchCards && patchCards.length > 0 ? (
-                        patchCards.map(card => {
-                          const value = card.title.includes('Embroidered') ? 'Embroidered' : card.title.includes('Woven') ? 'Woven' : 'PVC';
-                          return (
-                            <option key={card.id} value={value}>
-                              {card.badge ? `${card.badge} • ` : ''}{card.title} ({card.rate})
-                            </option>
-                          );
-                        })
-                      ) : (
-                        <>
-                          <option value="Woven">ESSENTIAL • Micro Woven ($1.50/ea)</option>
-                          <option value="Embroidered">MOST POPULAR • Embroidered ($2.50/ea)</option>
-                          <option value="PVC">LUXURY & PVC • 3D PVC & Leather ($3.50/ea)</option>
-                        </>
-                      )}
-                    </select>
+                            {activeService === 'patches' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {patchItems.map((item, index) => {
+                      const itemQty = Math.max(0, parseInt(item.quantityInput !== undefined ? item.quantityInput : item.quantity, 10) || 0);
+
+                      let materialBase = 2.50;
+                      if (item.patchStyle === 'Woven') materialBase = 1.50;
+                      if (item.patchStyle === 'Embroidered') materialBase = 2.50;
+                      if (item.patchStyle === 'PVC' || item.patchStyle === 'Leather') materialBase = 3.50;
+
+                      let backingAddon = 0;
+                      if (item.patchBacking === 'Velcro') backingAddon = 0.40;
+                      if (item.patchBacking === 'Adhesive') backingAddon = 0.25;
+                      
+                      const w = parseFloat(item.patchWidth) || 3.0;
+                      const h = parseFloat(item.patchHeight) || 3.0;
+                      const sizeInches = (w + h) / 2;
+                      const sizeMultiplier = sizeInches > 3.0 ? (1 + (sizeInches - 3.0) * 0.18) : 1.0;
+                      
+                      let qtyDiscount = 1.0;
+                      if (itemQty >= 500) qtyDiscount = 0.80;
+                      else if (itemQty >= 250) qtyDiscount = 0.88;
+                      else if (itemQty >= 100) qtyDiscount = 0.95;
+
+                      const rateEach = ((materialBase * sizeMultiplier * qtyDiscount) + backingAddon).toFixed(2);
+                      const itemSubtotal = (parseFloat(rateEach) * itemQty).toFixed(2);
+
+                      return (
+                        <div key={item.id} style={{ background: '#0f172a', border: '1.5px solid rgba(255, 255, 255, 0.12)', borderRadius: '12px', padding: '1.15rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', borderBottom: '1px dashed rgba(255, 255, 255, 0.1)', paddingBottom: '0.6rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ background: 'var(--orange-500)', color: '#ffffff', fontWeight: 800, fontSize: '0.72rem', width: '22px', height: '22px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{index + 1}</span>
+                              <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#ffffff' }}>Patch Item #{index + 1}</span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                              <span style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--orange-400)' }}>${rateEach}/ea • Subtotal: ${itemSubtotal}</span>
+                              {patchItems.length > 1 && (
+                                <button type="button" onClick={() => removePatchItem(item.id)} style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', width: '28px', height: '28px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>🗑️</button>
+                              )}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem', alignItems: 'end' }}>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>Patch Style *</label>
+                              <select value={item.patchStyle} onChange={(e) => updatePatchItem(item.id, 'patchStyle', e.target.value)} className="form-control" style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.85rem', fontWeight: 700 }}>
+                                <option value="Embroidered">Classic Embroidered</option>
+                                <option value="Woven">Woven (High Detail)</option>
+                                <option value="Leather">Laser Engraved Leather</option>
+                                <option value="PVC">PVC / Rubber 3D</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>Backing Option *</label>
+                              <select value={item.patchBacking} onChange={(e) => updatePatchItem(item.id, 'patchBacking', e.target.value)} className="form-control" style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.85rem', fontWeight: 700 }}>
+                                <option value="Iron-On">Iron-On (Heat Seal)</option>
+                                <option value="Velcro">Velcro (Hook & Loop)</option>
+                                <option value="Sew-On">Sew-On (No Backing)</option>
+                                <option value="Adhesive">Peel & Stick (Adhesive)</option>
+                              </select>
+                            </div>
+                            
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <div style={{ flex: 1 }}>
+                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>Width (in)</label>
+                                <input type="number" step="0.1" value={item.patchWidth} onChange={(e) => updatePatchItem(item.id, 'patchWidth', e.target.value)} className="form-control" style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.85rem' }} />
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>Height (in)</label>
+                                <input type="number" step="0.1" value={item.patchHeight} onChange={(e) => updatePatchItem(item.id, 'patchHeight', e.target.value)} className="form-control" style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.85rem' }} />
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>Quantity (Min 50) *</label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <button type="button" onClick={() => updatePatchItem(item.id, 'quantity', Math.max(50, item.quantity - 10))} style={{ width: '32px', height: '36px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}>-</button>
+                                <input type="text" value={item.quantityInput !== undefined ? item.quantityInput : item.quantity} onChange={(e) => updatePatchItem(item.id, 'quantityInput', e.target.value)} onBlur={() => handleBlurPatchQuantity(item.id)} className="form-control" style={{ textAlign: 'center', background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800, padding: '0.35rem 0.5rem', fontSize: '0.85rem' }} />
+                                <button type="button" onClick={() => updatePatchItem(item.id, 'quantity', item.quantity + 10)} style={{ width: '32px', height: '36px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}>+</button>
+                              </div>
+                            </div>
+
+                            {/* File Upload Zone */}
+                            <div style={{ gridColumn: 'span 2', background: '#1e293b', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', marginTop: '0.35rem' }}>
+                              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                                <span>📎 Reference Artwork File for Patch #{index + 1} *</span>
+                                {item.files && item.files.length > 0 && <span style={{ color: 'var(--orange-400)', fontWeight: 800 }}>{item.files.length} Attached</span>}
+                              </label>
+
+                              <div onClick={() => document.getElementById(`pch-file-${item.id}`)?.click()} style={{ border: '1.5px dashed rgba(255, 122, 0, 0.45)', background: '#0f172a', borderRadius: '8px', padding: '0.65rem', textAlign: 'center', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#e2e8f0' }}>Upload File for Patch #{index + 1}</span>
+                                <input type="file" id={`pch-file-${item.id}`} multiple style={{ display: 'none' }} onChange={(e) => handlePatchFileUpload(item.id, e.target.files)} />
+                              </div>
+
+                              {item.files && item.files.length > 0 && (
+                                <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                                  {item.files.map(f => (
+                                    <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.35rem 0.6rem', background: '#0f172a', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.75rem' }}>
+                                      <span style={{ fontWeight: 700, color: '#ffffff' }}>{f.name}</span>
+                                      <button type="button" onClick={() => removeFileFromPatch(item.id, f.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}>🗑️</button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Patch Style / Material</label>
-                      <select value={patchStyle} onChange={(e) => setPatchStyle(e.target.value)} className="form-control" style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)' }}>
-                        <option value="Embroidered">Embroidered Patch (Classic Stitched)</option>
-                        <option value="Woven">Micro Woven Patch (Fine Detail)</option>
-                        <option value="PVC">3D Soft Rubber PVC Patch</option>
-                        <option value="Leather">Genuine / Faux Leather Patch</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Backing Option</label>
-                      <select value={patchBacking} onChange={(e) => setPatchBacking(e.target.value)} className="form-control" style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)' }}>
-                        <option value="Iron-On">Heat Seal / Iron-On</option>
-                        <option value="Velcro">Velcro Hook & Loop</option>
-                        <option value="Sew-On">Standard Sew-On</option>
-                        <option value="Adhesive">Peel & Stick Adhesive</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#cbd5e1', marginBottom: '0.4rem' }}>
-                      Select Patch Quantity (Preset Steps or Custom) *
-                    </label>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.75rem', alignItems: 'center', marginBottom: '0.65rem' }}>
-                      <select
-                        value={[100, 200, 300, 400, 500, 1000].includes(patchQuantity) ? patchQuantity : 'custom'}
-                        onChange={(e) => {
-                          if (e.target.value !== 'custom') {
-                            setPatchQuantity(parseInt(e.target.value, 10));
-                          }
-                        }}
-                        className="form-control"
-                        style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800 }}
-                      >
-                        <option value="100">100 Pcs (Standard Min Tier)</option>
-                        <option value="200">200 Pcs (Package Batch)</option>
-                        <option value="300">300 Pcs (Mid Tier)</option>
-                        <option value="400">400 Pcs (Bulk Tier)</option>
-                        <option value="500">500 Pcs (Volume Saver)</option>
-                        <option value="1000">1000 Pcs (Wholesale VIP)</option>
-                        <option value="custom">Custom Quantity...</option>
-                      </select>
-
-                      <input 
-                        type="text" 
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={patchQuantityInput} 
-                        onChange={(e) => {
-                          const rawVal = e.target.value;
-                          if (rawVal === '') {
-                            setPatchQuantityInput('');
-                            setPatchQuantity(0);
-                            return;
-                          }
-                          const cleanVal = rawVal.replace(/\D/g, '');
-                          setPatchQuantityInput(cleanVal);
-                          if (cleanVal !== '') {
-                            const parsed = parseInt(cleanVal, 10);
-                            setPatchQuantity(parsed);
-                          } else {
-                            setPatchQuantity(0);
-                          }
-                        }}
-                        onBlur={() => {
-                          if (!patchQuantityInput || parseInt(patchQuantityInput, 10) < 50) {
-                            setPatchQuantityInput('50');
-                            setPatchQuantity(50);
-                          }
-                        }}
-                        className="form-control" 
-                        placeholder="Custom Pcs (min. 50)"
-                        style={{
-                          background: '#0f172a',
-                          color: '#ffffff',
-                          border: (patchQuantityInput === '' || parseInt(patchQuantityInput, 10) < 50) ? '1.5px solid #fb923c' : '1px solid rgba(255,255,255,0.15)',
-                          fontWeight: 800
-                        }} 
-                      />
-                    </div>
-
-                    {(patchQuantityInput === '' || parseInt(patchQuantityInput, 10) < 50) && (
-                      <div style={{ fontSize: '0.78rem', color: '#fb923c', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                        ⚠️ Minimum order quantity for Custom Patches is 50 Pcs.
-                      </div>
-                    )}
-
-                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                      {[50, 100, 200, 300, 500, 1000].map(qty => (
-                        <button
-                          key={qty}
-                          type="button"
-                          onClick={() => {
-                            setPatchQuantity(qty);
-                            setPatchQuantityInput(String(qty));
-                          }}
-                          style={{
-                            padding: '0.3rem 0.65rem',
-                            borderRadius: '6px',
-                            border: patchQuantity === qty ? '1.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.15)',
-                            background: patchQuantity === qty ? 'var(--orange-500)' : 'rgba(255,255,255,0.05)',
-                            color: '#ffffff',
-                            fontWeight: 800,
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease'
-                          }}
-                        >
-                          {qty} Pcs
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <button type="button" onClick={addPatchItem} style={{ marginTop: '1rem', width: '100%', padding: '0.75rem', background: 'rgba(255, 122, 0, 0.12)', border: '1.5px dashed var(--orange-500)', color: 'var(--orange-400)', fontWeight: 800, fontSize: '0.875rem', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                    + Add Another Patch Item
+                  </button>
                 </div>
               )}
 
