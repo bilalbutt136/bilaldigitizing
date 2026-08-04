@@ -806,68 +806,23 @@ export const VectorArtPage = () => {
                           </div>
                         </div>
 
-                        {/* 3 Pricing Tier Cards Side-by-Side */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.65rem' }}>
-                          {/* Card 1: Simple Redraw */}
-                          <div
-                            onClick={() => updateVectorItem(item.id, 'complexity', 'Simple Vector Redraw')}
-                            style={{
-                              padding: '0.75rem 0.85rem',
-                              border: isSimple ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.12)',
-                              background: isSimple ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#1e293b',
-                              borderRadius: '10px',
-                              cursor: 'pointer',
-                              transition: 'all 0.15s ease'
-                            }}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <strong style={{ color: isSimple ? 'var(--orange-400)' : '#ffffff', fontSize: '0.825rem' }}>⚡ Simple</strong>
-                              <span style={{ fontWeight: 900, color: 'var(--orange-400)', fontSize: '0.85rem' }}>${simpleRate.toFixed(2)}</span>
-                            </div>
-                            <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.25rem' }}>Clean text, solid fills</div>
+                        {/* Streamlined Row: Package Tier, Name, and Quantity */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr', gap: '0.75rem', alignItems: 'center' }}>
+                          
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Package Tier *</label>
+                            <select 
+                              value={item.complexity || 'Simple Vector Redraw'} 
+                              onChange={(e) => updateVectorItem(item.id, 'complexity', e.target.value)} 
+                              className="form-control" 
+                              style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem', width: '100%' }}
+                            >
+                              <option value="Simple Vector Redraw">⚡ Simple Redraw (${simpleRate.toFixed(2)})</option>
+                              <option value="Complex Vector Redraw">⭐ Complex Redraw (${complexRate.toFixed(2)})</option>
+                              <option value="Super Rush Vector">✨ Super Rush (${superRushRate.toFixed(2)})</option>
+                            </select>
                           </div>
 
-                          {/* Card 2: Complex Redraw */}
-                          <div
-                            onClick={() => updateVectorItem(item.id, 'complexity', 'Complex Vector Redraw')}
-                            style={{
-                              padding: '0.75rem 0.85rem',
-                              border: isComplex ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.12)',
-                              background: isComplex ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#1e293b',
-                              borderRadius: '10px',
-                              cursor: 'pointer',
-                              transition: 'all 0.15s ease'
-                            }}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <strong style={{ color: isComplex ? 'var(--orange-400)' : '#ffffff', fontSize: '0.825rem' }}>⭐ Complex</strong>
-                              <span style={{ fontWeight: 900, color: 'var(--orange-400)', fontSize: '0.85rem' }}>${complexRate.toFixed(2)}</span>
-                            </div>
-                            <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.25rem' }}>Mascots, gradients, detailed</div>
-                          </div>
-
-                          {/* Card 3: Super Rush Express */}
-                          <div
-                            onClick={() => updateVectorItem(item.id, 'complexity', 'Super Rush Vector')}
-                            style={{
-                              padding: '0.75rem 0.85rem',
-                              border: isSuperRush ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.12)',
-                              background: isSuperRush ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#1e293b',
-                              borderRadius: '10px',
-                              cursor: 'pointer',
-                              transition: 'all 0.15s ease'
-                            }}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <strong style={{ color: isSuperRush ? 'var(--orange-400)' : '#ffffff', fontSize: '0.825rem' }}>✨ Super Rush</strong>
-                              <span style={{ fontWeight: 900, color: 'var(--orange-400)', fontSize: '0.85rem' }}>${superRushRate.toFixed(2)}</span>
-                            </div>
-                            <div style={{ fontSize: '0.7rem', color: '#10b981', marginTop: '0.25rem', fontWeight: 700 }}>2–4 Hrs Priority Express</div>
-                          </div>
-                        </div>
-
-                        {/* Quantity Controls */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.75rem', alignItems: 'center' }}>
                           <div>
                             <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Design Name / Label</label>
                             <input
@@ -875,7 +830,7 @@ export const VectorArtPage = () => {
                               value={item.name}
                               onChange={(e) => updateVectorItem(item.id, 'name', e.target.value)}
                               className="form-control"
-                              style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem' }}
+                              style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem', width: '100%' }}
                             />
                           </div>
 
@@ -883,7 +838,7 @@ export const VectorArtPage = () => {
                             <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Quantity</label>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                               <button type="button" onClick={() => updateVectorItem(item.id, 'quantity', Math.max(1, item.quantity - 1))} style={{ width: '32px', height: '34px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}>-</button>
-                              <input type="text" value={item.quantityInput !== undefined ? item.quantityInput : item.quantity} onChange={(e) => updateVectorItem(item.id, 'quantityInput', e.target.value)} className="form-control" style={{ textAlign: 'center', background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800, padding: '0.3rem' }} />
+                              <input type="text" value={item.quantityInput !== undefined ? item.quantityInput : item.quantity} onChange={(e) => updateVectorItem(item.id, 'quantityInput', e.target.value)} className="form-control" style={{ textAlign: 'center', background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800, padding: '0.3rem', width: '100%' }} />
                               <button type="button" onClick={() => updateVectorItem(item.id, 'quantity', item.quantity + 1)} style={{ width: '32px', height: '34px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}>+</button>
                             </div>
                           </div>

@@ -305,8 +305,8 @@ export const OrderWizardModal = () => {
 
       return {
         serviceTitle: 'Vector Art & Color Separation',
-        currentTier,
-        rateEach,
+        currentTier: 'mixed',
+        baseTierRate: 0,
         baseSubtotal,
         totalPlacementQuantity: totalQty,
         rushSurcharge,
