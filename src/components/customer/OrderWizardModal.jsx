@@ -469,30 +469,17 @@ export const OrderWizardModal = () => {
       const orderId = createdOrder?.id || `ORDER_${Date.now()}`;
       setPendingOrderId(orderId);
 
-      // Hit BoltPayouts API
-      const res = await fetch('/api/boltpayouts/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: finalPrice
-        })
+      // Pass the state to CheckoutModal to let the user select payment method
+      setCheckoutSession({
+        amount: finalPrice,
+        orderId: orderId,
+        // Invoice will be created by the CheckoutModal when method is selected
       });
-      const data = await res.json();
-      
-      if (data.success && data.paymentUrl) {
-        setCheckoutSession({
-          url: data.paymentUrl,
-          invoiceId: data.invoice?.id,
-          orderId: orderId
-        });
-        setIsCheckoutModalOpen(true);
-        setIsOrderWizardOpen(false); // Close the wizard
-      } else {
-        throw new Error(data.error || 'Failed to initialize payment');
-      }
+      setIsCheckoutModalOpen(true);
+      setIsOrderWizardOpen(false); // Close the wizard
     } catch (err) {
-       console.error("Payment setup error:", err);
-       alert("Error setting up payment: " + err.message);
+       console.error("Order creation error:", err);
+       alert("Error creating order: " + err.message);
        setIsProcessingPayment(false);
     }
   };

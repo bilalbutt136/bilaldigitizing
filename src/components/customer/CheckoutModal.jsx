@@ -17,6 +17,48 @@ export const CheckoutModal = () => {
 
   const [isPaid, setIsPaid] = useState(false);
   const [isIframeLoaded, setIsIframeLoaded] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState(null);
+  const [isInitializing, setIsInitializing] = useState(false);
+
+  const paymentMethods = [
+    { id: 'card', name: 'Credit / Debit Card', icon: '💳' },
+    { id: 'dollarpay_apple_pay', name: 'Apple Pay', icon: '🍎' },
+    { id: 'dollarpay_google_pay', name: 'Google Pay', icon: '🤖' },
+    { id: 'dollarpay_paypal', name: 'PayPal', icon: '🔵' },
+    { id: 'dollarpay_cashapp', name: 'Cash App', icon: '💲' },
+  ];
+
+  const handleSelectMethod = async (methodId) => {
+    setSelectedMethod(methodId);
+    setIsInitializing(true);
+    try {
+      const res = await fetch('/api/boltpayouts/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: checkoutSession.amount,
+          method: methodId
+        })
+      });
+      const data = await res.json();
+      
+      if (data.success && data.paymentUrl) {
+        setCheckoutSession({
+          ...checkoutSession,
+          url: data.paymentUrl,
+          invoiceId: data.invoice?.id
+        });
+      } else {
+        throw new Error(data.error || 'Failed to initialize payment');
+      }
+    } catch (err) {
+       console.error("Payment setup error:", err);
+       alert("Error setting up payment: " + err.message);
+       setSelectedMethod(null);
+    } finally {
+      setIsInitializing(false);
+    }
+  };
 
   useEffect(() => {
     let intervalId;
@@ -57,6 +99,8 @@ export const CheckoutModal = () => {
       setCheckoutSession(null);
       setIsPaid(false);
       setIsIframeLoaded(false);
+      setSelectedMethod(null);
+      setIsInitializing(false);
     }, 300); // Give time for animation to finish
   };
 
@@ -116,7 +160,7 @@ export const CheckoutModal = () => {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: isPaid ? '#10b981' : '#38bdf8'
             }}>
-              {isPaid ? <CheckCircle size={18} /> : <Loader2 size={18} style={{ animation: 'spin 2s linear infinite' }} />}
+              {isPaid ? <CheckCircle size={18} /> : <Loader2 size={18} style={{ animation: (isInitializing || (!isIframeLoaded && checkoutSession.url)) ? 'spin 2s linear infinite' : 'none' }} />}
             </div>
             <div>
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>
@@ -167,6 +211,53 @@ export const CheckoutModal = () => {
                 Return to Dashboard
               </button>
             </div>
+          ) : !checkoutSession.url ? (
+            <div style={{ padding: '2rem' }}>
+              <h4 style={{ color: '#fff', margin: '0 0 1.5rem 0', fontSize: '1.1rem', textAlign: 'center' }}>
+                Total to Pay: <span style={{ color: 'var(--orange-400)', fontWeight: 900 }}>${checkoutSession.amount?.toFixed(2)}</span>
+              </h4>
+              <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1.25rem', textAlign: 'center' }}>Select a payment method to continue</p>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
+                {paymentMethods.map(method => (
+                  <button
+                    key={method.id}
+                    onClick={() => handleSelectMethod(method.id)}
+                    disabled={isInitializing}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '12px',
+                      padding: '1rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '1rem',
+                      cursor: isInitializing ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s ease',
+                      opacity: isInitializing && selectedMethod !== method.id ? 0.5 : 1
+                    }}
+                    onMouseOver={(e) => {
+                      if (!isInitializing) {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                      }
+                    }}
+                    onMouseOut={(e) => {
+                      if (!isInitializing) {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                      }
+                    }}
+                  >
+                    <span style={{ fontSize: '1.5rem' }}>{method.icon}</span>
+                    <span style={{ color: '#fff', fontWeight: 600, fontSize: '1rem' }}>{method.name}</span>
+                    {isInitializing && selectedMethod === method.id && (
+                      <Loader2 size={18} style={{ animation: 'spin 1s linear infinite', color: '#fff', marginLeft: 'auto' }} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
           ) : (
             <>
               {!isIframeLoaded && (
@@ -176,7 +267,7 @@ export const CheckoutModal = () => {
                   background: '#0f172a', zIndex: 2 
                 }}>
                   <Loader2 size={32} style={{ color: 'var(--orange-400)', animation: 'spin 1s linear infinite', marginBottom: '1rem' }} />
-                  <span style={{ color: '#cbd5e1', fontSize: '0.85rem', fontWeight: 600 }}>Establishing secure connection...</span>
+                  <span style={{ color: '#cbd5e1', fontSize: '0.85rem', fontWeight: 600 }}>Loading secure payment portal...</span>
                 </div>
               )}
               

@@ -65,7 +65,8 @@ export async function POST(request) {
       }, { status: boltResponse.status === 200 ? 400 : boltResponse.status });
     }
 
-    const { orderId, paymentUrl } = boltData;
+    const orderId = boltData.orderId;
+    const paymentUrl = boltData.paymentUrl || boltData.taptapupRedirectUrl;
 
     // Create Invoice
     const { data: invoice, error: invoiceError } = await supabaseAdmin
