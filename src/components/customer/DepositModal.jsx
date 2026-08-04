@@ -110,7 +110,7 @@ export const DepositModal = () => {
       <div 
         className="modal-content" 
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '520px', padding: '0', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}
+        style={{ maxWidth: '520px', padding: '0', borderRadius: 'var(--radius-lg)', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}
       >
         
         {/* Header */}
@@ -151,6 +151,7 @@ export const DepositModal = () => {
         </div>
 
         {/* Dynamic Body */}
+        <div style={{ flex: 1, overflowY: 'auto' }}>
         {isPaid ? (
           <div style={{ padding: '3rem 2rem', textAlign: 'center' }}>
             <CheckCircle2 size={64} style={{ color: 'var(--green-500)', margin: '0 auto 1rem' }} />
@@ -359,6 +360,7 @@ export const DepositModal = () => {
             </button>
           </form>
         )}
+        </div>
       </div>
     </div>
   );
