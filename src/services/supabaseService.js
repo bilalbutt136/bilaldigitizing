@@ -221,11 +221,18 @@ export async function uploadFileToSupabaseStorage(fileObj, bucketName = 'client-
       return null;
     }
 
-    const { data: publicUrlData } = supabase.storage
+    // Use signed URL for privacy since buckets are no longer public
+    // We generate a long-lived signed URL for simplicity in the UI context (1 year)
+    // For a fully secure setup, the DB should store only the path, and UI fetches signed URLs on demand.
+    const { data: signedUrlData, error: signError } = await supabase.storage
       .from(bucketName)
-      .getPublicUrl(filePath);
+      .createSignedUrl(filePath, 31536000); // 1 year expiration
 
-    const publicUrl = publicUrlData?.publicUrl || null;
+    if (signError) {
+      console.warn('Supabase signed URL warning:', signError.message);
+    }
+
+    const publicUrl = signedUrlData?.signedUrl || null;
     console.log("Uploaded File URL:", publicUrl);
     return publicUrl;
   } catch (err) {
@@ -654,33 +661,17 @@ export async function depositFundsInSupabase(clientEmail, depositAmount, payment
     const cleanEmail = clientEmail.toLowerCase().trim();
     const amount = parseFloat(depositAmount);
 
-    // 1. Fetch current client record
-    const { data: client } = await supabase
-      .from('clients')
-      .select('id, wallet_balance')
-      .eq('email', cleanEmail)
-      .maybeSingle();
+    const { data: newBalance, error } = await supabase.rpc('deposit_funds', {
+      p_client_email: cleanEmail,
+      p_amount: amount,
+      p_payment_method: paymentMethod
+    });
 
-    const currentBal = client ? parseFloat(client.wallet_balance || 0) : 0;
-    const updatedBal = currentBal + amount;
-
-    if (client) {
-      await supabase
-        .from('clients')
-        .update({ wallet_balance: updatedBal })
-        .eq('id', client.id);
+    if (error) {
+      console.error('Supabase deposit funds error:', error.message);
+      return null;
     }
-
-    // 2. Log transaction in transactions table
-    await supabase.from('transactions').insert([{
-      client_email: cleanEmail,
-      type: 'deposit',
-      amount: amount,
-      payment_method: paymentMethod,
-      description: `Studio Wallet Deposit Top-up (+ $${amount.toFixed(2)})`
-    }]);
-
-    return updatedBal;
+    return newBalance;
   } catch (err) {
     console.warn('Supabase deposit funds exception:', err);
     return null;
@@ -695,33 +686,17 @@ export async function deductWalletInSupabase(clientEmail, orderAmount, orderId) 
     const cleanEmail = clientEmail.toLowerCase().trim();
     const amount = parseFloat(orderAmount);
 
-    const { data: client } = await supabase
-      .from('clients')
-      .select('id, wallet_balance')
-      .eq('email', cleanEmail)
-      .maybeSingle();
+    const { data: newBalance, error } = await supabase.rpc('deduct_wallet_balance', {
+      p_client_email: cleanEmail,
+      p_amount: amount,
+      p_order_id: orderId
+    });
 
-    if (client) {
-      const currentBal = parseFloat(client.wallet_balance || 0);
-      const updatedBal = Math.max(0, currentBal - amount);
-
-      await supabase
-        .from('clients')
-        .update({ wallet_balance: updatedBal })
-        .eq('id', client.id);
-
-      // Log transaction
-      await supabase.from('transactions').insert([{
-        client_email: cleanEmail,
-        type: 'order_payment',
-        amount: amount,
-        payment_method: 'Studio Wallet Credit',
-        description: `Order Brief Payment for ${orderId} (- $${amount.toFixed(2)})`
-      }]);
-
-      return updatedBal;
+    if (error) {
+      console.error('Supabase deduct wallet error:', error.message);
+      return null;
     }
-    return null;
+    return newBalance;
   } catch (err) {
     console.warn('Supabase deduct wallet exception:', err);
     return null;

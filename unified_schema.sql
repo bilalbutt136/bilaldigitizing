@@ -216,6 +216,124 @@ RETURNS BOOLEAN LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS
 $$$;
 
 -- ====================================================================
+-- SECURE WALLET & TRANSACTION FUNCTIONS (RPC)
+-- ====================================================================
+
+CREATE OR REPLACE FUNCTION public.deposit_funds(p_client_email TEXT, p_amount NUMERIC, p_payment_method TEXT)
+RETURNS NUMERIC
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_client_id UUID;
+    v_new_balance NUMERIC;
+BEGIN
+    -- Verify the caller is the owner or an admin
+    IF lower(p_client_email) != public.current_user_email() AND NOT public.is_admin() THEN
+        RAISE EXCEPTION 'Unauthorized to deposit funds for this email';
+    END IF;
+
+    -- Ensure amount is positive
+    IF p_amount <= 0 THEN
+        RAISE EXCEPTION 'Deposit amount must be positive';
+    END IF;
+
+    -- Update balance and get new balance
+    UPDATE public.clients
+    SET wallet_balance = wallet_balance + p_amount
+    WHERE lower(email) = lower(p_client_email)
+    RETURNING id, wallet_balance INTO v_client_id, v_new_balance;
+
+    IF v_client_id IS NULL THEN
+        RAISE EXCEPTION 'Client not found';
+    END IF;
+
+    -- Insert transaction log
+    INSERT INTO public.transactions (client_email, type, amount, payment_method, description)
+    VALUES (lower(p_client_email), 'deposit', p_amount, p_payment_method, 'Studio Wallet Deposit Top-up (+ $' || ROUND(p_amount, 2) || ')');
+
+    RETURN v_new_balance;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.deduct_wallet_balance(p_client_email TEXT, p_amount NUMERIC, p_order_id TEXT)
+RETURNS NUMERIC
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_client_id UUID;
+    v_current_balance NUMERIC;
+    v_new_balance NUMERIC;
+BEGIN
+    -- Verify the caller is the owner or an admin
+    IF lower(p_client_email) != public.current_user_email() AND NOT public.is_admin() THEN
+        RAISE EXCEPTION 'Unauthorized to deduct funds for this email';
+    END IF;
+
+    -- Ensure amount is positive
+    IF p_amount <= 0 THEN
+        RAISE EXCEPTION 'Deduction amount must be positive';
+    END IF;
+
+    -- Get current balance
+    SELECT id, wallet_balance INTO v_client_id, v_current_balance
+    FROM public.clients
+    WHERE lower(email) = lower(p_client_email);
+
+    IF v_client_id IS NULL THEN
+        RAISE EXCEPTION 'Client not found';
+    END IF;
+
+    IF v_current_balance < p_amount THEN
+        RAISE EXCEPTION 'Insufficient funds in wallet';
+    END IF;
+
+    -- Deduct balance
+    UPDATE public.clients
+    SET wallet_balance = wallet_balance - p_amount
+    WHERE id = v_client_id
+    RETURNING wallet_balance INTO v_new_balance;
+
+    -- Insert transaction log
+    INSERT INTO public.transactions (client_email, type, amount, payment_method, description)
+    VALUES (lower(p_client_email), 'order_payment', p_amount, 'Studio Wallet Credit', 'Order Brief Payment for ' || p_order_id || ' (- $' || ROUND(p_amount, 2) || ')');
+
+    RETURN v_new_balance;
+END;
+$$;
+
+-- ====================================================================
+-- TRIGGERS FOR ORDER SECURITY & STATE MACHINE
+-- ====================================================================
+
+CREATE OR REPLACE FUNCTION public.enforce_order_security()
+RETURNS trigger AS $$
+BEGIN
+  -- If not an admin, prevent changing sensitive fields
+  IF NOT public.is_admin() THEN
+    IF NEW.price IS DISTINCT FROM OLD.price THEN
+      RAISE EXCEPTION 'Clients cannot modify the order price.';
+    END IF;
+    IF NEW.payment_status IS DISTINCT FROM OLD.payment_status THEN
+      RAISE EXCEPTION 'Clients cannot modify the payment status.';
+    END IF;
+    IF NEW.status IS DISTINCT FROM OLD.status THEN
+      RAISE EXCEPTION 'Clients cannot modify the order status directly.';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_enforce_order_security ON public.orders;
+CREATE TRIGGER trg_enforce_order_security
+  BEFORE UPDATE ON public.orders
+  FOR EACH ROW EXECUTE PROCEDURE public.enforce_order_security();
+
+-- ====================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ====================================================================
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
@@ -260,13 +378,27 @@ CREATE POLICY pricing_cards_read_all ON public.pricing_cards FOR SELECT USING (t
 -- ====================================================================
 -- STORAGE BUCKETS CONFIGURATION
 -- ====================================================================
-INSERT INTO storage.buckets (id, name, public) VALUES ('client-uploads', 'client-uploads', true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO storage.buckets (id, name, public) VALUES ('finished-packages', 'finished-packages', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO storage.buckets (id, name, public) VALUES ('client-uploads', 'client-uploads', false) ON CONFLICT (id) DO UPDATE SET public = false;
+INSERT INTO storage.buckets (id, name, public) VALUES ('finished-packages', 'finished-packages', false) ON CONFLICT (id) DO UPDATE SET public = false;
 
-DROP POLICY IF EXISTS storage_public_read ON storage.objects;
-CREATE POLICY storage_public_read ON storage.objects FOR SELECT USING (true);
+-- Admins can do everything in storage
+DROP POLICY IF EXISTS storage_admin_all ON storage.objects;
+CREATE POLICY storage_admin_all ON storage.objects FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+-- Client Uploads: Clients can read their own uploads and insert new ones
+DROP POLICY IF EXISTS storage_client_uploads_read ON storage.objects;
+CREATE POLICY storage_client_uploads_read ON storage.objects FOR SELECT USING (
+  bucket_id = 'client-uploads' AND auth.role() = 'authenticated'
+);
+
 DROP POLICY IF EXISTS storage_client_uploads_write ON storage.objects;
-CREATE POLICY storage_client_uploads_write ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'client-uploads' AND auth.role() = 'authenticated');
-DROP POLICY IF EXISTS storage_finished_packages_admin ON storage.objects;
-CREATE POLICY storage_finished_packages_admin ON storage.objects FOR ALL USING (bucket_id = 'finished-packages' AND public.is_admin()) WITH CHECK (bucket_id = 'finished-packages' AND public.is_admin());
+CREATE POLICY storage_client_uploads_write ON storage.objects FOR INSERT WITH CHECK (
+  bucket_id = 'client-uploads' AND auth.role() = 'authenticated'
+);
+
+-- Finished Packages: Clients can read them if they are authenticated
+DROP POLICY IF EXISTS storage_finished_packages_read ON storage.objects;
+CREATE POLICY storage_finished_packages_read ON storage.objects FOR SELECT USING (
+  bucket_id = 'finished-packages' AND auth.role() = 'authenticated'
+);
 
