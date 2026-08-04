@@ -57,6 +57,7 @@ export const OrderTrackerDrawer = () => {
   } = useAppState();
 
   const [revisionNote, setRevisionNote] = useState('');
+  const [revisionImage, setRevisionImage] = useState(null);
   const [chatMessageText, setChatMessageText] = useState('');
   const [activeTab, setActiveTab] = useState('timeline'); // timeline | downloads | messages | revisions
   const [showLightbox, setShowLightbox] = useState(false);
@@ -96,8 +97,14 @@ export const OrderTrackerDrawer = () => {
   const handleRevisionSubmit = (e) => {
     e.preventDefault();
     if (!revisionNote.trim()) return;
-    addRevisionRequest(ord.id, revisionNote);
+    let finalNote = revisionNote;
+    if (revisionImage) {
+      finalNote += `\n[Attached Reference File: ${revisionImage.name}]`;
+    }
+    addRevisionRequest(ord.id, finalNote);
     setRevisionNote('');
+    setRevisionImage(null);
+    showToast('Revision request submitted to master digitizer.', 'success');
   };
 
   const handleSendMessage = (e) => {
@@ -803,7 +810,7 @@ export const OrderTrackerDrawer = () => {
                       </p>
                     </div>
 
-                    {ord.status === 'delivered' && (
+                    {ord.status === 'delivered' && !isAdmin && (
                       <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap' }}>
                         <button
                           onClick={() => completeOrder(ord.id)}
@@ -822,9 +829,9 @@ export const OrderTrackerDrawer = () => {
                         </button>
                         <button
                           onClick={() => {
-                            const note = prompt('Describe the revision needed:');
-                            if (note && note.trim()) {
-                              addRevisionRequest(ord.id, note.trim());
+                            const revisionForm = document.getElementById('revision-form-section');
+                            if (revisionForm) {
+                              revisionForm.scrollIntoView({ behavior: 'smooth' });
                             }
                           }}
                           style={{
@@ -1133,7 +1140,7 @@ export const OrderTrackerDrawer = () => {
                   </p>
                 </div>
               ) : (
-                <div style={{ marginBottom: '1.5rem' }}>
+                <div id="revision-form-section" style={{ marginBottom: '1.5rem' }}>
                   <h4 style={{ fontSize: '1rem', color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
                     Request Free Revision Adjustment
                   </h4>
@@ -1141,8 +1148,8 @@ export const OrderTrackerDrawer = () => {
                     Need a size change, density adjustment, or color thread re-assignment? Describe your change below and our master digitizer will update it within 4 hours.
                   </p>
 
-                  <form onSubmit={handleRevisionSubmit}>
-                    <div className="form-group">
+                  <form onSubmit={handleRevisionSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
                       <textarea 
                         className="form-control"
                         rows="3"
@@ -1151,9 +1158,15 @@ export const OrderTrackerDrawer = () => {
                         onChange={(e) => setRevisionNote(e.target.value)}
                       />
                     </div>
-                    <button type="submit" className="btn btn-primary-orange btn-sm">
-                      <Send size={14} /> Submit Revision Brief
-                    </button>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label style={{ fontSize: '0.8rem', color: 'var(--navy-700)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', border: '1px solid var(--border-color)', padding: '0.4rem 0.75rem', borderRadius: '4px', background: '#f8fafc' }}>
+                        📎 {revisionImage ? revisionImage.name : 'Attach Reference Image'}
+                        <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => { if(e.target.files && e.target.files[0]) setRevisionImage(e.target.files[0]); }} />
+                      </label>
+                      <button type="submit" className="btn btn-primary-orange btn-sm" disabled={!revisionNote.trim()}>
+                        <Send size={14} /> Submit Revision Brief
+                      </button>
+                    </div>
                   </form>
                 </div>
               )}

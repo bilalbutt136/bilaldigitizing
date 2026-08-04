@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS public.clients (
 
 -- Function to handle new user signups
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger AS $$$
+RETURNS trigger AS $$
 BEGIN
   INSERT INTO public.clients (id, name, full_name, email, company, company_name)
   VALUES (
@@ -34,7 +34,7 @@ BEGIN
   );
   RETURN new;
 END;
-$$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Trigger for new user signups
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
@@ -204,16 +204,16 @@ CREATE TABLE IF NOT EXISTS public.receipts (
 -- HELPER FUNCTIONS FOR RLS
 -- ====================================================================
 CREATE OR REPLACE FUNCTION public.current_user_email()
-RETURNS TEXT LANGUAGE SQL STABLE AS $$$
+RETURNS TEXT LANGUAGE SQL STABLE AS $$
   SELECT lower((auth.jwt() ->> 'email'))
-$$$;
+$$;
 
 CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS BOOLEAN LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS $$$
+RETURNS BOOLEAN LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT public.current_user_email() IN (
     SELECT lower(email) FROM public.admins
   )
-$$$;
+$$;
 
 -- ====================================================================
 -- SECURE WALLET & TRANSACTION FUNCTIONS (RPC)
@@ -312,6 +312,19 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.mark_order_paid(p_order_id TEXT)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    UPDATE public.orders
+    SET payment_status = 'paid', status = 'in_progress'
+    WHERE id = p_order_id;
+END;
+$$;
+
 -- ====================================================================
 -- TRIGGERS FOR ORDER SECURITY & STATE MACHINE
 -- ====================================================================
@@ -358,22 +371,35 @@ DROP POLICY IF EXISTS revisions_anon_all ON public.revisions;
 DROP POLICY IF EXISTS clients_anon_all ON public.clients;
 DROP POLICY IF EXISTS transactions_anon_all ON public.transactions;
 
+DROP POLICY IF EXISTS orders_select_own ON public.orders;
+DROP POLICY IF EXISTS orders_insert_own ON public.orders;
+DROP POLICY IF EXISTS orders_update_own ON public.orders;
+DROP POLICY IF EXISTS orders_delete_own ON public.orders;
 CREATE POLICY orders_select_own ON public.orders FOR SELECT USING (lower(client_email) = public.current_user_email() OR public.is_admin());
 CREATE POLICY orders_insert_own ON public.orders FOR INSERT WITH CHECK (lower(client_email) = public.current_user_email() OR public.is_admin());
 CREATE POLICY orders_update_own ON public.orders FOR UPDATE USING (lower(client_email) = public.current_user_email() OR public.is_admin()) WITH CHECK (lower(client_email) = public.current_user_email() OR public.is_admin());
 CREATE POLICY orders_delete_own ON public.orders FOR DELETE USING (lower(client_email) = public.current_user_email() OR public.is_admin());
 
+DROP POLICY IF EXISTS order_files_select_own ON public.order_files;
+DROP POLICY IF EXISTS order_files_insert_own ON public.order_files;
 CREATE POLICY order_files_select_own ON public.order_files FOR SELECT USING (public.is_admin() OR EXISTS (SELECT 1 FROM public.orders o WHERE o.id = order_id AND lower(o.client_email) = public.current_user_email()));
 CREATE POLICY order_files_insert_own ON public.order_files FOR INSERT WITH CHECK (public.is_admin() OR EXISTS (SELECT 1 FROM public.orders o WHERE o.id = order_id AND lower(o.client_email) = public.current_user_email()));
 
+DROP POLICY IF EXISTS revisions_select_own ON public.revisions;
+DROP POLICY IF EXISTS revisions_insert_own ON public.revisions;
 CREATE POLICY revisions_select_own ON public.revisions FOR SELECT USING (public.is_admin() OR EXISTS (SELECT 1 FROM public.orders o WHERE o.id = order_id AND lower(o.client_email) = public.current_user_email()));
 CREATE POLICY revisions_insert_own ON public.revisions FOR INSERT WITH CHECK (public.is_admin() OR EXISTS (SELECT 1 FROM public.orders o WHERE o.id = order_id AND lower(o.client_email) = public.current_user_email()));
 
+DROP POLICY IF EXISTS clients_select_own ON public.clients;
+DROP POLICY IF EXISTS clients_update_own ON public.clients;
 CREATE POLICY clients_select_own ON public.clients FOR SELECT USING (id = auth.uid() OR public.is_admin());
 CREATE POLICY clients_update_own ON public.clients FOR UPDATE USING (id = auth.uid() OR public.is_admin()) WITH CHECK (id = auth.uid() OR public.is_admin());
 
+DROP POLICY IF EXISTS transactions_select_own ON public.transactions;
 CREATE POLICY transactions_select_own ON public.transactions FOR SELECT USING (public.is_admin() OR lower(client_email) = public.current_user_email());
 
+DROP POLICY IF EXISTS admins_read_only ON public.admins;
+DROP POLICY IF EXISTS admins_admin_write ON public.admins;
 CREATE POLICY admins_read_only ON public.admins FOR SELECT USING (public.is_admin());
 CREATE POLICY admins_admin_write ON public.admins FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 

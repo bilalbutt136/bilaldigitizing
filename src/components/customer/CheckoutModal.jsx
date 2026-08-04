@@ -111,13 +111,9 @@ export const CheckoutModal = () => {
             
             // Mark order as paid in DB if there is an orderId
             if (checkoutSession.orderId) {
-              const { error } = await supabase
-                .from('orders')
-                .update({ payment_status: 'paid' })
-                .eq('id', checkoutSession.orderId);
-                
-              if (!error && updateOrderStatus) {
-                updateOrderStatus(checkoutSession.orderId, 'Pending', 'paid');
+              const { error } = await supabase.rpc('mark_order_paid', { p_order_id: checkoutSession.orderId });
+              if (error) {
+                console.error("Failed to mark order as paid", error);
               }
             }
           }
