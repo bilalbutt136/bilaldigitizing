@@ -21,7 +21,9 @@ export const OrderWizardModal = () => {
     createOrder,
     pricing,
     updateOrderStatus,
-    showToast
+    showToast,
+    setIsCheckoutModalOpen,
+    setCheckoutSession
   } = useAppState();
 
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
