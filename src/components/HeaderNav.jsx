@@ -14,7 +14,13 @@ import {
   Menu,
   X,
   MessageSquare,
-  Bell
+  Bell,
+  PenTool,
+  Image as ImageIcon,
+  Award,
+  HelpCircle,
+  Truck,
+  ArrowRight
 } from 'lucide-react';
 import { UserMenuDropdown } from './common/UserMenuDropdown';
 
@@ -22,9 +28,13 @@ export const HeaderNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mounted, setMounted] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const { 
@@ -128,7 +138,7 @@ export const HeaderNav = () => {
   };
 
   return (
-    <header style={{ position: 'sticky', top: 0, zIndex: 1000, background: '#ffffff', boxShadow: 'var(--shadow-sm)' }}>
+    <header style={{ position: 'sticky', top: 0, zIndex: 1000, background: isScrolled ? 'rgba(255, 255, 255, 0.85)' : '#ffffff', backdropFilter: isScrolled ? 'blur(12px)' : 'none', borderBottom: '1px solid var(--border-color)', transition: 'all 0.3s ease', boxShadow: isScrolled ? 'var(--shadow-sm)' : 'none' }}>
       {/* Main Brand Navbar */}
 
       {/* 2. Main Brand Navbar */}
@@ -163,7 +173,7 @@ export const HeaderNav = () => {
 
         {/* Public Navigation Links (Desktop) */}
         {safeCurrentView === 'public' && (
-          <nav className="desktop-only" style={{ alignItems: 'center', gap: '1.75rem' }}>
+                    <nav className="desktop-only" style={{ alignItems: 'center', gap: '1.75rem' }}>
             {/* Home Link */}
             <button 
               onClick={handleGoHome}
@@ -195,8 +205,8 @@ export const HeaderNav = () => {
                 style={{ 
                   background: 'none', 
                   border: 'none', 
-                  color: isServicesOpen ? 'var(--orange-600)' : 'var(--navy-800)', 
-                  fontWeight: 600, 
+                  color: (currentPath.includes('/services') || currentPath === '/custom-patches') ? 'var(--orange-600)' : 'var(--navy-800)', 
+                  fontWeight: (currentPath.includes('/services') || currentPath === '/custom-patches') ? 800 : 600, 
                   fontSize: '0.925rem', 
                   cursor: 'pointer', 
                   padding: 0,
@@ -219,7 +229,7 @@ export const HeaderNav = () => {
                   zIndex: 2000
                 }}>
                   <div style={{
-                    width: '210px',
+                    width: '240px',
                     background: '#ffffff',
                     border: '1.5px solid var(--border-color)',
                     borderRadius: '12px',
@@ -230,10 +240,6 @@ export const HeaderNav = () => {
                     gap: '0.15rem',
                     animation: 'fadeIn 0.15s ease-out'
                   }}>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0.4rem 0.85rem 0.2rem' }}>
-                      Digital Studio Services
-                    </div>
-
                     {/* Option 1: Embroidery Digitizing */}
                     <button
                       type="button"
@@ -253,7 +259,10 @@ export const HeaderNav = () => {
                         color: 'var(--navy-900)',
                         fontSize: '0.875rem',
                         fontWeight: 700,
-                        transition: 'all 0.18s ease'
+                        transition: 'all 0.18s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
                       }}
                       onMouseOver={(e) => {
                         e.currentTarget.style.background = '#fff7ed';
@@ -264,10 +273,10 @@ export const HeaderNav = () => {
                         e.currentTarget.style.color = 'var(--navy-900)';
                       }}
                     >
-                      Embroidery Digitizing
+                      <PenTool size={16} /> Embroidery Digitizing
                     </button>
 
-                    {/* Option 3: Vector Tracing */}
+                    {/* Option 2: Vector Art */}
                     <button
                       type="button"
                       onClick={() => {
@@ -286,7 +295,10 @@ export const HeaderNav = () => {
                         color: 'var(--navy-900)',
                         fontSize: '0.875rem',
                         fontWeight: 700,
-                        transition: 'all 0.18s ease'
+                        transition: 'all 0.18s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
                       }}
                       onMouseOver={(e) => {
                         e.currentTarget.style.background = '#fff7ed';
@@ -297,192 +309,43 @@ export const HeaderNav = () => {
                         e.currentTarget.style.color = 'var(--navy-900)';
                       }}
                     >
-                      Vector Tracing & Redraw
+                      <ImageIcon size={16} /> Vector Art
                     </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Custom Patches & Emblems Nav Button */}
-            <button 
-              onClick={() => {
-                setCurrentView('public');
-                navigate('/custom-patches');
-              }}
-              style={{ 
-                background: 'none', 
-                border: 'none', 
-                color: location.pathname === '/custom-patches' ? 'var(--orange-600)' : 'var(--navy-800)', 
-                fontWeight: location.pathname === '/custom-patches' ? 800 : 600, 
-                fontSize: '0.925rem', 
-                cursor: 'pointer', 
-                padding: 0 
-              }}
-            >
-              Custom Patches
-            </button>
-
-            {/* Pricing Dropdown Item */}
-            <div 
-              ref={pricingDropdownRef}
-              style={{ position: 'relative', display: 'inline-block' }}
-              onMouseEnter={() => setIsPricingOpen(true)}
-              onMouseLeave={() => setIsPricingOpen(false)}
-            >
-              <button 
-                onClick={() => {
-                  setCurrentView('public');
-                  if (location.pathname !== '/') {
-                    navigate('/pricing');
-                  } else {
-                    const el = document.getElementById('pricing');
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  }
-                  setIsPricingOpen(!isPricingOpen);
-                }}
-                style={{ 
-                  background: 'none', 
-                  border: 'none', 
-                  color: isPricingOpen ? 'var(--orange-600)' : 'var(--navy-800)', 
-                  fontWeight: 600, 
-                  fontSize: '0.925rem', 
-                  cursor: 'pointer', 
-                  padding: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                  transition: 'color 0.15s ease'
-                }}
-              >
-                Pricing <ChevronDown size={13} style={{ transition: 'transform 0.2s', transform: isPricingOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
-              </button>
-
-              {/* Pricing Dropdown Popup Card Menu */}
-              {isPricingOpen && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: '-10px',
-                  paddingTop: '8px',
-                  zIndex: 2000
-                }}>
-                  <div style={{
-                    width: '260px',
-                    background: '#ffffff',
-                    border: '1.5px solid var(--border-color)',
-                    borderRadius: '14px',
-                    boxShadow: '0 12px 32px rgba(15, 23, 42, 0.15)',
-                    padding: '0.5rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.2rem',
-                    animation: 'fadeIn 0.15s ease-out'
-                  }}>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0.4rem 0.75rem 0.25rem' }}>
-                      Select Service Pricing
-                    </div>
-
-                    {/* Service 1: Embroidery Digitizing Pricing */}
+                    
+                    {/* Option 3: Custom Patches */}
                     <button
                       type="button"
                       onClick={() => {
                         setCurrentView('public');
-                        navigate('/services/embroidery-digitizing#pricing-tiers');
-                        setIsPricingOpen(false);
-                        setTimeout(() => {
-                          const el = document.getElementById('pricing-tiers');
-                          if (el) el.scrollIntoView({ behavior: 'smooth' });
-                        }, 100);
+                        navigate('/custom-patches');
+                        setIsServicesOpen(false);
                       }}
                       style={{
                         width: '100%',
                         textAlign: 'left',
-                        padding: '0.65rem 0.75rem',
+                        padding: '0.55rem 0.85rem',
                         background: 'transparent',
                         border: 'none',
                         borderRadius: '8px',
                         cursor: 'pointer',
+                        color: 'var(--navy-900)',
+                        fontSize: '0.875rem',
+                        fontWeight: 700,
+                        transition: 'all 0.18s ease',
                         display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
+                        alignItems: 'center',
+                        gap: '0.5rem'
                       }}
-                      onMouseOver={(e) => { e.currentTarget.style.background = '#fff7ed'; }}
-                      onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = '#fff7ed';
+                        e.currentTarget.style.color = 'var(--orange-600)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--navy-900)';
+                      }}
                     >
-                      <div>
-                        <div style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--navy-900)' }}>Embroidery Digitizing</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>From $10.00 / design</div>
-                      </div>
-                      <span style={{ fontWeight: 800, fontSize: '0.78rem', color: 'var(--orange-600)' }}>3 Tiers →</span>
-                    </button>
-
-                    {/* Service 2: Vector Tracing Pricing */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCurrentView('public');
-                        navigate('/services/vector-tracing#pricing-tiers');
-                        setIsPricingOpen(false);
-                        setTimeout(() => {
-                          const el = document.getElementById('pricing-tiers');
-                          if (el) el.scrollIntoView({ behavior: 'smooth' });
-                        }, 100);
-                      }}
-                      style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '0.65rem 0.75rem',
-                        background: 'transparent',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}
-                      onMouseOver={(e) => { e.currentTarget.style.background = '#fff7ed'; }}
-                      onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                    >
-                      <div>
-                        <div style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--navy-900)' }}>Vector Tracing & Redraw</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>From $15.00 / artwork</div>
-                      </div>
-                      <span style={{ fontWeight: 800, fontSize: '0.78rem', color: 'var(--orange-600)' }}>3 Tiers →</span>
-                    </button>
-
-                    {/* Service 3: Custom Patches Pricing */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCurrentView('public');
-                        navigate('/custom-patches#pricing-tiers');
-                        setIsPricingOpen(false);
-                        setTimeout(() => {
-                          const el = document.getElementById('pricing-tiers');
-                          if (el) el.scrollIntoView({ behavior: 'smooth' });
-                        }, 100);
-                      }}
-                      style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '0.65rem 0.75rem',
-                        background: 'transparent',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}
-                      onMouseOver={(e) => { e.currentTarget.style.background = '#fff7ed'; }}
-                      onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                    >
-                      <div>
-                        <div style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--navy-900)' }}>Custom Physical Patches</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>From $1.50 / patch</div>
-                      </div>
-                      <span style={{ fontWeight: 800, fontSize: '0.78rem', color: 'var(--orange-600)' }}>3 Tiers →</span>
+                      <Award size={16} /> Custom Patches
                     </button>
                   </div>
                 </div>
@@ -507,19 +370,76 @@ export const HeaderNav = () => {
             >
               Portfolio
             </button>
+            
+            {/* Pricing Link */}
+            <button 
+              onClick={() => {
+                setCurrentView('public');
+                navigate('/pricing');
+              }}
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                color: currentPath === '/pricing' ? 'var(--orange-600)' : 'var(--navy-800)', 
+                fontWeight: currentPath === '/pricing' ? 800 : 600, 
+                fontSize: '0.925rem', 
+                cursor: 'pointer', 
+                padding: 0 
+              }}
+            >
+              Pricing
+            </button>
+            
+            {/* FAQs Link */}
+            <button 
+              onClick={() => {
+                setCurrentView('public');
+                navigate('/faqs');
+              }}
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                color: currentPath === '/faqs' ? 'var(--orange-600)' : 'var(--navy-800)', 
+                fontWeight: currentPath === '/faqs' ? 800 : 600, 
+                fontSize: '0.925rem', 
+                cursor: 'pointer', 
+                padding: 0 
+              }}
+            >
+              FAQs
+            </button>
+            
+            {/* Track Order Link */}
+            <button 
+              onClick={() => {
+                setCurrentView('public');
+                navigate('/track-order');
+              }}
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                color: currentPath === '/track-order' ? 'var(--orange-600)' : 'var(--navy-800)', 
+                fontWeight: currentPath === '/track-order' ? 800 : 600, 
+                fontSize: '0.925rem', 
+                cursor: 'pointer', 
+                padding: 0 
+              }}
+            >
+              Track Order
+            </button>
           </nav>
         )}
 
 
 
-        {/* Right Action CTAs */}
+                {/* Right Action CTAs */}
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
           gap: '0.4rem',
           flexShrink: 0
         }}>
-          {/* Primary Order Now Button - Direct Navigation to Order Builder & Payment System */}
+          {/* Primary Get Started Button */}
           {safeCurrentView !== 'admin' && safeCurrentView !== 'customer' && !currentPath.includes('admin') && (
             <button 
               className="btn btn-primary-orange"
@@ -534,14 +454,14 @@ export const HeaderNav = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.3rem',
-                padding: '0.4rem 0.65rem',
-                fontSize: '0.8rem',
+                padding: '0.45rem 0.85rem',
+                fontSize: '0.85rem',
                 fontWeight: 800,
                 borderRadius: '8px',
                 whiteSpace: 'nowrap'
               }}
             >
-              <PlusCircle size={14} /> Order Now
+              Get Started <ArrowRight size={14} />
             </button>
           )}
 
@@ -551,11 +471,11 @@ export const HeaderNav = () => {
             className="mobile-only"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             style={{
-              background: '#f1f5f9',
+              background: 'transparent',
               border: '1px solid var(--border-color)',
               color: 'var(--navy-900)',
-              width: '36px',
-              height: '36px',
+              width: '38px',
+              height: '38px',
               borderRadius: '8px',
               cursor: 'pointer',
               alignItems: 'center',
@@ -577,30 +497,12 @@ export const HeaderNav = () => {
                   alignItems: 'center',
                   gap: '0.35rem',
                   fontWeight: 700,
-                  padding: '0.35rem 0.75rem',
-                  fontSize: '0.825rem'
-                }}
-                onClick={() => {
-                  setAuthModalMode('signup');
-                  setIsAuthModalOpen(true);
-                  navigate('/signup');
-                }}
-              >
-                <UserCheck size={14} /> Sign Up
-              </button>
-
-              <button 
-                className="btn btn-outline btn-sm"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  fontWeight: 700,
                   borderColor: 'var(--navy-300)',
                   color: 'var(--navy-800)',
                   background: 'transparent',
-                  padding: '0.35rem 0.75rem',
-                  fontSize: '0.825rem'
+                  padding: '0.45rem 0.85rem',
+                  fontSize: '0.85rem',
+                  borderRadius: '8px'
                 }}
                 onClick={() => {
                   setAuthModalMode('login');
@@ -608,7 +510,7 @@ export const HeaderNav = () => {
                   navigate('/login');
                 }}
               >
-                <LogIn size={14} /> Sign In
+                <User size={14} /> Client Login
               </button>
             </div>
           ) : (
@@ -803,33 +705,56 @@ export const HeaderNav = () => {
         </div>
       </div>
 
-      {/* Mobile Slide-Down Navigation Drawer */}
+            {/* Mobile Slide-Down / Overlay Navigation Drawer */}
       {isMobileMenuOpen && (
         <div 
           className="mobile-only"
           style={{
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(255, 255, 255, 0.98)',
+            backdropFilter: 'blur(16px)',
+            zIndex: 999,
+            display: 'flex',
             flexDirection: 'column',
-            background: '#ffffff',
-            borderTop: '1px solid var(--border-color)',
-            padding: '1.25rem 1.5rem',
-            gap: '0.85rem',
-            boxShadow: '0 12px 24px rgba(0,0,0,0.1)',
-            animation: 'fadeIn 0.2s ease-out'
+            padding: '5rem 1.5rem 2rem 1.5rem',
+            gap: '1rem',
+            animation: 'fadeIn 0.25s ease-out',
+            overflowY: 'auto'
           }}
         >
+          {/* Close button inside mobile menu */}
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            style={{
+              position: 'absolute',
+              top: '1.2rem',
+              right: '1.5rem',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--navy-900)'
+            }}
+          >
+            <X size={28} />
+          </button>
+
           <button
             type="button"
             onClick={() => {
               handleGoHome();
               setIsMobileMenuOpen(false);
             }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.25rem', color: 'var(--navy-900)', padding: '0.5rem 0', borderBottom: '1px solid var(--border-color)' }}
           >
             Home
           </button>
 
-          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>
-            Digital Studio Services
+          <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '1rem' }}>
+            Services
           </div>
 
           <button
@@ -838,9 +763,9 @@ export const HeaderNav = () => {
               navigate('/services/embroidery-digitizing');
               setIsMobileMenuOpen(false);
             }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.1rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
           >
-            Embroidery Digitizing
+            <PenTool size={18} /> Embroidery Digitizing
           </button>
 
           <button
@@ -849,25 +774,10 @@ export const HeaderNav = () => {
               navigate('/services/vector-tracing');
               setIsMobileMenuOpen(false);
             }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.1rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
           >
-            Vector Tracing & Redraw
+            <ImageIcon size={18} /> Vector Art
           </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              navigate('/portfolio');
-              setIsMobileMenuOpen(false);
-            }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
-          >
-            Portfolio Showcase
-          </button>
-
-          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.6rem', marginBottom: '0.2rem' }}>
-            Physical Custom Goods
-          </div>
 
           <button
             type="button"
@@ -875,51 +785,98 @@ export const HeaderNav = () => {
               navigate('/custom-patches');
               setIsMobileMenuOpen(false);
             }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy-900)', padding: '0.4rem 0' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.1rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
           >
-            Custom Patches & Emblems
+            <Award size={18} /> Custom Patches
+          </button>
+          
+          <div style={{ height: '1px', background: 'var(--border-color)', margin: '0.5rem 0' }}></div>
+
+          <button
+            type="button"
+            onClick={() => {
+              navigate('/portfolio');
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.25rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+          >
+            Portfolio
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => {
+              navigate('/pricing');
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.25rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+          >
+            Pricing
           </button>
 
-          <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '0.85rem', marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-            {!safeIsAuthenticated ? (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <button
-                  className="btn btn-outline btn-md"
-                  onClick={() => {
-                    setAuthModalMode('signup');
-                    setIsAuthModalOpen(true);
-                    setIsMobileMenuOpen(false);
-                    navigate('/signup');
-                  }}
-                  style={{ fontWeight: 700, justifyContent: 'center' }}
-                >
-                  <UserCheck size={16} /> Sign Up
-                </button>
+          <button
+            type="button"
+            onClick={() => {
+              navigate('/faqs');
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.25rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+          >
+            FAQs
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => {
+              navigate('/track-order');
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.25rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+          >
+            Track Order
+          </button>
 
+          <div style={{ marginTop: 'auto', paddingTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {!safeIsAuthenticated ? (
+              <>
                 <button
-                  className="btn btn-primary-orange btn-md"
+                  className="btn btn-primary-orange btn-lg"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    if (openOrderWizard) {
+                      openOrderWizard();
+                    } else {
+                      protectedNavigate('customer', true);
+                    }
+                  }}
+                  style={{ fontWeight: 800, justifyContent: 'center', width: '100%' }}
+                >
+                  Get Started <ArrowRight size={16} style={{marginLeft: '0.25rem'}}/>
+                </button>
+                <button
+                  className="btn btn-outline btn-lg"
                   onClick={() => {
                     setAuthModalMode('login');
                     setIsAuthModalOpen(true);
                     setIsMobileMenuOpen(false);
                     navigate('/login');
                   }}
-                  style={{ fontWeight: 800, justifyContent: 'center' }}
+                  style={{ fontWeight: 700, justifyContent: 'center', width: '100%', borderColor: 'var(--navy-300)' }}
                 >
-                  <LogIn size={16} /> Sign In
+                  <User size={16} /> Client Login
                 </button>
-              </div>
+              </>
             ) : (
               <button
-                className="btn btn-primary-orange btn-md"
+                className="btn btn-primary-orange btn-lg"
                 onClick={() => {
                   protectedNavigate('customer', false);
                   setIsMobileMenuOpen(false);
                   navigate('/client-portal');
                 }}
-                style={{ fontWeight: 800, justifyContent: 'center' }}
+                style={{ fontWeight: 800, justifyContent: 'center', width: '100%' }}
               >
-                <User size={16} /> Go to Client Dashboard
+                <User size={16} /> Go to Dashboard
               </button>
             )}
           </div>

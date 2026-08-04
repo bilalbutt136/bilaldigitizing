@@ -84,6 +84,27 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+        <link rel="canonical" href="https://bdigitizing.pro" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "B Digitizing Studio",
+              "url": "https://bdigitizing.pro",
+              "logo": "https://bdigitizing.pro/logo.png",
+              "description": "Premium Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches.",
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+1-800-000-0000",
+                "contactType": "Customer Service",
+                "areaServed": ["US", "GB", "CA", "AU"],
+                "availableLanguage": "English"
+              }
+            })
+          }}
+        />
       </head>
       <body suppressHydrationWarning style={{ fontFamily: "'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
         <StateProvider>

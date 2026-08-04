@@ -99,89 +99,111 @@ export const CustomerSewOutsSection = () => {
           {samplesList.map((item) => (
             <div 
               key={item.id}
-              className="card"
               style={{
-                background: '#ffffff',
-                border: '1.5px solid var(--border-color)',
-                borderRadius: 'var(--radius-lg)',
+                background: 'var(--bg-card, #ffffff)',
+                border: '1px solid var(--border-color, #e2e8f0)',
+                borderRadius: '16px',
                 overflow: 'hidden',
-                boxShadow: 'var(--shadow-md)',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'space-between',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-6px)';
+                e.currentTarget.style.boxShadow = '0 12px 24px -8px rgba(255, 122, 0, 0.15)';
+                e.currentTarget.style.borderColor = 'var(--orange-200, #fed7aa)';
+                const img = e.currentTarget.querySelector('img');
+                if (img) img.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)';
+                e.currentTarget.style.borderColor = 'var(--border-color, #e2e8f0)';
+                const img = e.currentTarget.querySelector('img');
+                if (img) img.style.transform = 'scale(1)';
               }}
             >
-              <div>
-                {/* Image Container with Before vs After Badge */}
-                <div className="w-full h-full relative overflow-hidden" style={{ position: 'relative', height: '230px', overflow: 'hidden', background: '#0f172a' }}>
-                  <img 
-                    src={item.image || item.afterImg || item.beforeImg || categoryFallback} 
-                    alt={item.title || 'Work Showcase Sample'}
-                    className="w-full h-full object-cover"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = categoryFallback;
-                    }}
-                    onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
-                    onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1.0)'}
-                  />
+              <div style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden', backgroundColor: 'var(--navy-950)' }}>
+                <img 
+                  src={item.image || item.afterImg || item.beforeImg || categoryFallback} 
+                  alt={item.title || 'Work Showcase Sample'}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)' }}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = categoryFallback;
+                  }}
+                />
+                
+                {/* Overlay gradient for premium feel */}
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'linear-gradient(to top, rgba(15, 23, 42, 0.4) 0%, transparent 40%)',
+                  pointerEvents: 'none'
+                }} />
 
-                  {/* Category Pill */}
-                  <span style={{
-                    position: 'absolute',
-                    top: '12px',
-                    left: '12px',
-                    background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-                    border: '1.5px solid #ffffff',
-                    color: '#ffffff',
-                    fontSize: '0.725rem',
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    padding: '0.35rem 0.85rem',
-                    borderRadius: '9999px',
-                    boxShadow: '0 4px 14px rgba(249, 115, 22, 0.45)'
-                  }}>
-                    {item.category}
-                  </span>
-
-                  {/* Stitch Count Badge */}
-                  <span style={{
-                    position: 'absolute',
-                    bottom: '12px',
-                    right: '12px',
-                    background: '#0f172a',
-                    border: '1px solid rgba(255, 255, 255, 0.25)',
-                    color: '#ffffff',
-                    fontSize: '0.725rem',
-                    fontWeight: 800,
-                    padding: '0.3rem 0.75rem',
-                    borderRadius: '9999px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)'
-                  }}>
-                    ⚡ {item.stitchCount}
-                  </span>
-                </div>
-
-                {/* Clean Card Caption Body */}
-                <div style={{ padding: '1.15rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0 0 0.25rem 0' }}>
-                      {item.title}
-                    </h3>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                      Formats: {item.formats}
-                    </div>
-                  </div>
-
-                  <span style={{ fontSize: '0.75rem', fontWeight: 800, background: '#ecfdf5', color: '#047857', padding: '0.25rem 0.65rem', borderRadius: '9999px', border: '1px solid #a7f3d0' }}>
-                    Verified Sew-Out
-                  </span>
+                {/* Category Badge Top Right */}
+                <div style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  background: 'var(--bg-card, #ffffff)',
+                  color: 'var(--navy-950)',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: '9999px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  zIndex: 2
+                }}>
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--orange-500)' }} />
+                  {item.category}
                 </div>
               </div>
 
+              <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                <h3 style={{ 
+                  fontSize: '1.125rem', 
+                  fontWeight: 800, 
+                  color: 'var(--navy-950)', 
+                  margin: '0 0 0.75rem 0',
+                  lineHeight: 1.3
+                }}>
+                  {item.title}
+                </h3>
+                
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  marginTop: 'auto',
+                  paddingTop: '1rem',
+                  borderTop: '1px solid var(--border-color, #e2e8f0)'
+                }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Details
+                    </span>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--navy-800)' }}>
+                      {item.stitchCount || item.stitches || 'N/A'}
+                    </span>
+                  </div>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', alignItems: 'flex-end' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Formats
+                    </span>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--navy-800)' }}>
+                      {item.formats}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           ))}
         </div>

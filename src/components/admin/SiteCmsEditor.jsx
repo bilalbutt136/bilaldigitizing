@@ -13,7 +13,10 @@ import {
   Sparkles,
   Tag,
   Eye,
-  Zap
+  Zap,
+  Star,
+  HelpCircle,
+  Shield
 } from 'lucide-react';
 import { MediaLibraryManager } from './MediaLibraryManager';
 
@@ -75,7 +78,10 @@ export const SiteCmsEditor = () => {
     updateSiteSettings,
     serviceCmsContent = {},
     updateServiceCmsContent,
-    showToast
+    showToast,
+    testimonials = [],
+    faqs = [],
+    saveCmsData
   } = useAppState();
 
   const [activeSection, setActiveSection] = useState('heroslider'); // 'heroslider' | 'serviceCms' | 'portfolio' | 'pricing' | 'vector' | 'settings'
@@ -91,6 +97,8 @@ export const SiteCmsEditor = () => {
   const [draftHeroSlides, setDraftHeroSlides] = useState([...(heroSlides || [])]);
   const [draftSettings, setDraftSettings] = useState({ ...siteSettings });
   const [draftServiceCms, setDraftServiceCms] = useState(JSON.parse(JSON.stringify(serviceCmsContent)));
+  const [draftTestimonials, setDraftTestimonials] = useState([...(testimonials || [])]);
+  const [draftFaqs, setDraftFaqs] = useState([...(faqs || [])]);
 
   // Handle Image Upload helper
   const handleImageUpload = (e, setUrlFn) => {
@@ -205,6 +213,11 @@ export const SiteCmsEditor = () => {
 
     if (typeof updateSiteSettings === 'function') updateSiteSettings(draftSettings);
     else if (typeof setSiteSettings === 'function') setSiteSettings(draftSettings);
+
+    if (typeof saveCmsData === 'function') {
+      saveCmsData('testimonials', draftTestimonials);
+      saveCmsData('faqs', draftFaqs);
+    }
 
     if (typeof updateServiceCmsContent === 'function' && draftServiceCms) {
       ['embroidery', 'patch', 'vector'].forEach(srvKey => {
@@ -404,10 +417,74 @@ export const SiteCmsEditor = () => {
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem'
+            gap: '0.5rem',
+            whiteSpace: 'nowrap'
           }}
         >
           <Settings size={18} /> Site Contact & Metadata
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSection('testimonials')}
+          style={{
+            padding: '1rem 1.25rem',
+            border: 'none',
+            borderBottom: activeSection === 'testimonials' ? '3px solid #ff7a00' : '3px solid transparent',
+            background: 'none',
+            fontWeight: 800,
+            fontSize: '0.9rem',
+            color: activeSection === 'testimonials' ? '#ff7a00' : '#64748b',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <Star size={18} /> Testimonials
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSection('faqs')}
+          style={{
+            padding: '1rem 1.25rem',
+            border: 'none',
+            borderBottom: activeSection === 'faqs' ? '3px solid #ff7a00' : '3px solid transparent',
+            background: 'none',
+            fontWeight: 800,
+            fontSize: '0.9rem',
+            color: activeSection === 'faqs' ? '#ff7a00' : '#64748b',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <HelpCircle size={18} /> FAQs
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSection('trustStats')}
+          style={{
+            padding: '1rem 1.25rem',
+            border: 'none',
+            borderBottom: activeSection === 'trustStats' ? '3px solid #ff7a00' : '3px solid transparent',
+            background: 'none',
+            fontWeight: 800,
+            fontSize: '0.9rem',
+            color: activeSection === 'trustStats' ? '#ff7a00' : '#64748b',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <Shield size={18} /> Trust Stats & Global
         </button>
       </div>
 
@@ -1547,6 +1624,215 @@ export const SiteCmsEditor = () => {
                 />
               </div>
 
+            </div>
+          </div>
+        )}
+
+        {/* SECTION: TESTIMONIALS */}
+        {activeSection === 'testimonials' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.25rem' }}>
+                  Client Testimonials & Reviews
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  Manage the customer reviews shown in the testimonials slider.
+                </p>
+              </div>
+              <button 
+                type="button" 
+                className="btn btn-outline btn-sm"
+                onClick={() => {
+                  setDraftTestimonials(prev => [...prev, { id: `test-${Date.now()}`, name: 'New Client', role: 'Owner', company: 'Company LLC', rating: 5, comment: 'Great service!', service_category: 'embroidery' }]);
+                }}
+                style={{ gap: '0.4rem', fontWeight: 700 }}
+              >
+                <Plus size={16} /> Add Testimonial
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {draftTestimonials.map((item, idx) => {
+                const updateTestimonial = (field, val) => {
+                  setDraftTestimonials(prev => prev.map((t, i) => i === idx ? { ...t, [field]: val } : t));
+                };
+                return (
+                  <div key={item.id || idx} className="card" style={{ padding: '1.5rem', border: '1px solid var(--border-color)', background: '#f8fafc' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                      <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Star size={16} style={{ color: 'var(--orange-500)' }} /> Testimonial #{idx + 1}
+                      </span>
+                      <button 
+                        type="button"
+                        onClick={() => setDraftTestimonials(prev => prev.filter((_, i) => i !== idx))}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                      >
+                        <Trash2 size={15} /> Remove
+                      </button>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.78rem' }}>Client Name</label>
+                        <input type="text" className="form-control" style={{ fontWeight: 700 }} value={item.name || ''} onChange={(e) => updateTestimonial('name', e.target.value)} />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.78rem' }}>Role</label>
+                        <input type="text" className="form-control" value={item.role || ''} onChange={(e) => updateTestimonial('role', e.target.value)} />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.78rem' }}>Company</label>
+                        <input type="text" className="form-control" value={item.company || ''} onChange={(e) => updateTestimonial('company', e.target.value)} />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.78rem' }}>Rating (1-5)</label>
+                        <input type="number" min="1" max="5" className="form-control" value={item.rating || 5} onChange={(e) => updateTestimonial('rating', parseInt(e.target.value))} />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.78rem' }}>Service Category</label>
+                        <select className="form-control" value={item.service_category || 'embroidery'} onChange={(e) => updateTestimonial('service_category', e.target.value)}>
+                          <option value="embroidery">Embroidery</option>
+                          <option value="patch">Patches</option>
+                          <option value="vector">Vector Art</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label style={{ fontSize: '0.78rem' }}>Comment</label>
+                      <textarea rows={2} className="form-control" value={item.comment || ''} onChange={(e) => updateTestimonial('comment', e.target.value)} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* SECTION: FAQS */}
+        {activeSection === 'faqs' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.25rem' }}>
+                  Frequently Asked Questions (FAQs)
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  Manage the FAQs grouped by category.
+                </p>
+              </div>
+              <button 
+                type="button" 
+                className="btn btn-outline btn-sm"
+                onClick={() => {
+                  setDraftFaqs(prev => [...prev, { id: `faq-${Date.now()}`, question: 'New Question?', answer: 'Answer goes here.', category: 'General' }]);
+                }}
+                style={{ gap: '0.4rem', fontWeight: 700 }}
+              >
+                <Plus size={16} /> Add FAQ
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {draftFaqs.map((item, idx) => {
+                const updateFaq = (field, val) => {
+                  setDraftFaqs(prev => prev.map((f, i) => i === idx ? { ...f, [field]: val } : f));
+                };
+                return (
+                  <div key={item.id || idx} className="card" style={{ padding: '1.5rem', border: '1px solid var(--border-color)', background: '#f8fafc' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                      <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <HelpCircle size={16} style={{ color: 'var(--orange-500)' }} /> FAQ #{idx + 1}
+                      </span>
+                      <button 
+                        type="button"
+                        onClick={() => setDraftFaqs(prev => prev.filter((_, i) => i !== idx))}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                      >
+                        <Trash2 size={15} /> Remove
+                      </button>
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '1rem' }}>
+                      <label style={{ fontSize: '0.78rem' }}>Category</label>
+                      <input type="text" className="form-control" value={item.category || ''} onChange={(e) => updateFaq('category', e.target.value)} />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '1rem' }}>
+                      <label style={{ fontSize: '0.78rem' }}>Question</label>
+                      <input type="text" className="form-control" style={{ fontWeight: 700 }} value={item.question || ''} onChange={(e) => updateFaq('question', e.target.value)} />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label style={{ fontSize: '0.78rem' }}>Answer</label>
+                      <textarea rows={2} className="form-control" value={item.answer || ''} onChange={(e) => updateFaq('answer', e.target.value)} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* SECTION: TRUST STATS & GLOBAL */}
+        {activeSection === 'trustStats' && (
+          <div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.25rem' }}>
+                Trust Stats & Contact Info
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Edit the 6 stats used in TrustStatsBar and footer contact info.
+              </p>
+            </div>
+
+            <div className="card" style={{ padding: '1.5rem', border: '1px solid var(--border-color)', background: '#ffffff', marginBottom: '2rem' }}>
+              <h4 style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-900)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Shield size={16} style={{ color: 'var(--orange-500)' }} /> Trust Stats
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
+                {[0, 1, 2, 3, 4, 5].map(i => {
+                  const stats = draftSettings.trustStats || [
+                    { label: 'Designs Delivered', value: '1M+' },
+                    { label: 'Happy Clients', value: '50k+' },
+                    { label: 'Countries Served', value: '120+' },
+                    { label: 'Expert Digitizers', value: '150+' },
+                    { label: 'Years Experience', value: '15+' },
+                    { label: 'Turnaround Time', value: '4-12 Hrs' }
+                  ];
+                  const stat = stats[i] || { label: '', value: '' };
+
+                  const updateStat = (field, val) => {
+                    const nextStats = [...stats];
+                    nextStats[i] = { ...stat, [field]: val };
+                    setDraftSettings(prev => ({ ...prev, trustStats: nextStats }));
+                  };
+
+                  return (
+                    <div key={i} className="form-group" style={{ marginBottom: 0, padding: '0.5rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--orange-600)' }}>Stat #{i + 1} Value</label>
+                      <input type="text" className="form-control" style={{ fontWeight: 800, fontSize: '1.1rem', marginBottom: '0.5rem' }} value={stat.value || ''} onChange={(e) => updateStat('value', e.target.value)} />
+                      
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>Label</label>
+                      <input type="text" className="form-control" style={{ fontSize: '0.85rem' }} value={stat.label || ''} onChange={(e) => updateStat('label', e.target.value)} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="card" style={{ padding: '1.5rem', border: '1px solid var(--border-color)', background: '#ffffff' }}>
+              <h4 style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-900)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Globe size={16} style={{ color: 'var(--orange-500)' }} /> Footer Contact Info
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label style={{ fontSize: '0.78rem' }}>Email Address</label>
+                  <input type="email" className="form-control" value={draftSettings.contactInfo?.email || ''} onChange={(e) => setDraftSettings(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, email: e.target.value } }))} />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label style={{ fontSize: '0.78rem' }}>Phone Number</label>
+                  <input type="text" className="form-control" value={draftSettings.contactInfo?.phone || ''} onChange={(e) => setDraftSettings(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, phone: e.target.value } }))} />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0, gridColumn: '1 / -1' }}>
+                  <label style={{ fontSize: '0.78rem' }}>Physical Address</label>
+                  <textarea rows={2} className="form-control" value={draftSettings.contactInfo?.address || ''} onChange={(e) => setDraftSettings(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, address: e.target.value } }))} />
+                </div>
+              </div>
             </div>
           </div>
         )}
