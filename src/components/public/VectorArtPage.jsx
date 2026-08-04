@@ -245,8 +245,9 @@ export const VectorArtPage = () => {
       return;
     }
 
-    if (selectedAssets.length === 0) {
-      alert('Please upload at least one raster image, scan, or artwork file to convert into vector.');
+    const allFiles = vectorItems.flatMap(item => item.files || []);
+    if (allFiles.length === 0) {
+      alert('Please upload at least one reference file for your designs.');
       return;
     }
 
@@ -274,8 +275,8 @@ export const VectorArtPage = () => {
         vectorBreakdown,
         totalQuantity: totalVectorQuantity,
         price: parseFloat(totalPrice),
-        uploadedFiles: selectedAssets.map(ast => ast.name),
-        artworkUrl: selectedAssets[0]?.previewUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=80',
+        uploadedFiles: allFiles.map(f => f.name),
+        artworkUrl: allFiles[0]?.previewUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=80',
         paymentMethod: paymentOption,
         estimatedDelivery: isRush ? '2-4 Hours (Super Rush)' : '8-12 Hours (Standard)'
       };
@@ -641,106 +642,11 @@ export const VectorArtPage = () => {
           {/* Main Order Form */}
           <form onSubmit={handleSubmitOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
             
-            {/* Step 1: Upload Artwork Files */}
-            <div style={{ padding: '2rem', background: '#1e293b', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255, 122, 0, 0.2)', border: '1px solid var(--orange-500)', color: 'var(--orange-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
-                  1
-                </div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
-                  Upload Source Image or Sketch
-                </h3>
-              </div>
-
-              {/* Drag and Drop Zone */}
-              <div
-                onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-                onDragLeave={() => setIsDragOver(false)}
-                onDrop={handleFileDrop}
-                style={{
-                  border: isDragOver ? '2px dashed var(--orange-500)' : '2px dashed rgba(255, 122, 0, 0.45)',
-                  background: isDragOver ? 'rgba(255, 122, 0, 0.18)' : '#0f172a',
-                  borderRadius: '10px',
-                  padding: '1.1rem 1.25rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.85rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-                onClick={() => document.getElementById('vector-file-input').click()}
-              >
-                <input
-                  id="vector-file-input"
-                  type="file"
-                  multiple
-                  accept="image/*,.pdf,.psd,.bmp,.ai,.svg"
-                  onChange={handleFileSelect}
-                  style={{ display: 'none' }}
-                />
-                
-                <UploadCloud size={24} style={{ color: 'var(--orange-400)', flexShrink: 0 }} />
-                <div style={{ textAlign: 'left' }}>
-                  <h4 style={{ fontSize: '0.875rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.15rem' }}>
-                    Click to Browse or Drag & Drop Artwork
-                  </h4>
-                  <p style={{ fontSize: '0.73rem', color: '#94a3b8', margin: 0 }}>
-                    Supports JPG, PNG, BMP, PSD, PDF, or mobile photos of hand sketches (Up to 50MB)
-                  </p>
-                </div>
-              </div>
-
-              {/* Uploaded File List Preview */}
-              {selectedAssets.length > 0 && (
-                <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1' }}>
-                    Uploaded Artwork ({selectedAssets.length} file{selectedAssets.length > 1 ? 's' : ''}):
-                  </div>
-                  {selectedAssets.map((ast) => (
-                    <div 
-                      key={ast.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '0.65rem 0.85rem',
-                        background: '#0f172a',
-                        borderRadius: '8px',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        fontSize: '0.85rem'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        {ast.previewUrl ? (
-                          <img src={ast.previewUrl} alt={ast.name} style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '6px' }} />
-                        ) : (
-                          <FileCode size={24} style={{ color: 'var(--orange-400)' }} />
-                        )}
-                        <div>
-                          <div style={{ fontWeight: 700, color: '#ffffff' }}>{ast.name}</div>
-                          <div style={{ fontSize: '0.73rem', color: '#94a3b8' }}>{ast.size} • {ast.type}</div>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => removeAsset(ast.id)}
-                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.2rem' }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Step 2: Artwork Specifications */}
+            {/* Step 1: Artwork Specifications */}
             <div style={{ padding: '2rem', background: '#1e293b', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
                 <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255, 122, 0, 0.2)', border: '1px solid var(--orange-500)', color: 'var(--orange-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
-                  2
+                  1
                 </div>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
                   Vector Conversion Specifications
