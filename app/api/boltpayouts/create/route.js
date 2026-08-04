@@ -40,11 +40,8 @@ export async function POST(request) {
     const payload = {
       amount: amount,
       username: user.email,
+      method: method === 'all' ? 'all' : (method || 'all')
     };
-
-    if (method && method !== 'all') {
-      payload.method = method;
-    }
 
     // Call BoltPayouts API
     const boltResponse = await fetch('https://www.boltpayouts.xyz/api/create-payment', {
@@ -59,11 +56,13 @@ export async function POST(request) {
     const boltData = await boltResponse.json().catch(() => ({}));
 
     if (!boltResponse.ok || !boltData.success) {
+      console.error("BoltPayouts API Error:", boltData);
+      const errorMessage = boltData.error || boltData.message || JSON.stringify(boltData) || 'Payment provider error';
       return NextResponse.json({ 
         success: false, 
-        error: boltData.error || 'Payment provider error',
+        error: errorMessage,
         details: boltData
-      }, { status: 502 });
+      }, { status: boltResponse.status === 200 ? 400 : boltResponse.status });
     }
 
     const { orderId, paymentUrl } = boltData;
