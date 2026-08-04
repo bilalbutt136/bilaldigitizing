@@ -314,52 +314,63 @@ export const OrderWizardModal = () => {
         placementBreakdown
       };
     } else if (type === 'patch') {
-      const safeQty = Math.max(0, parseInt(patchQuantity, 10) || 0);
-      const w = parseFloat(patchWidth) || 3.0;
-      const h = parseFloat(patchHeight) || 3.0;
-      const sizeInches = (w + h) / 2;
-      const sizeMultiplier = sizeInches > 3.0 ? (1 + (sizeInches - 3.0) * 0.18) : 1.0;
+      let baseSubtotal = 0;
+      let totalQty = 0;
+      
+      const safePatchItems = Array.isArray(patchItems) && patchItems.length > 0 
+        ? patchItems 
+        : [{ id: 1, patchStyle: 'Embroidered', patchBacking: 'Iron-On', patchWidth: 3.0, patchHeight: 3.0, quantity: 50, specificNotes: '', files: [] }];
 
-      // Base rate by patch material type and tier
-      let materialBase = 2.50;
-      if (patchStyle === 'Woven') materialBase = 1.50;
-      if (patchStyle === 'Embroidered') materialBase = 2.50;
-      if (patchStyle === 'PVC' || patchStyle === 'Leather') materialBase = 3.50;
+      const placementBreakdown = safePatchItems.map((item, idx) => {
+        const safeQty = Math.max(0, parseInt(item.quantity, 10) || 50);
+        const w = parseFloat(item.patchWidth) || 3.0;
+        const h = parseFloat(item.patchHeight) || 3.0;
+        const sizeInches = (w + h) / 2;
+        const sizeMultiplier = sizeInches > 3.0 ? (1 + (sizeInches - 3.0) * 0.18) : 1.0;
 
-      // Tiered quantity discount
-      let qtyDiscount = 1.0;
-      if (safeQty >= 500) qtyDiscount = 0.80;
-      else if (safeQty >= 250) qtyDiscount = 0.88;
-      else if (safeQty >= 100) qtyDiscount = 0.95;
+        let materialBase = 2.50;
+        if (item.patchStyle === 'Woven') materialBase = 1.50;
+        if (item.patchStyle === 'Embroidered') materialBase = 2.50;
+        if (item.patchStyle === 'PVC' || item.patchStyle === 'Leather') materialBase = 3.50;
 
-      // Backing addon
-      let backingAddon = 0;
-      if (patchBacking === 'Velcro') backingAddon = 0.40;
-      if (patchBacking === 'Adhesive') backingAddon = 0.25;
+        let qtyDiscount = 1.0;
+        if (safeQty >= 500) qtyDiscount = 0.80;
+        else if (safeQty >= 250) qtyDiscount = 0.88;
+        else if (safeQty >= 100) qtyDiscount = 0.95;
 
-      const rateEach = parseFloat(((materialBase * sizeMultiplier * qtyDiscount) + backingAddon).toFixed(2));
-      const baseSubtotal = parseFloat((rateEach * safeQty).toFixed(2));
+        let backingAddon = 0;
+        if (item.patchBacking === 'Velcro') backingAddon = 0.40;
+        if (item.patchBacking === 'Adhesive') backingAddon = 0.25;
+
+        const rateEach = parseFloat(((materialBase * sizeMultiplier * qtyDiscount) + backingAddon).toFixed(2));
+        const subtotal = parseFloat((rateEach * safeQty).toFixed(2));
+
+        baseSubtotal += subtotal;
+        totalQty += safeQty;
+
+        return {
+          index: idx + 1,
+          id: item.id || idx + 1,
+          label: `${item.patchStyle || 'Embroidered'} Patch (${w}"×${h}", ${item.patchBacking || 'Iron-On'} Backing)`,
+          quantity: safeQty,
+          priceEach: rateEach,
+          subtotal: subtotal,
+          notes: item.specificNotes || ''
+        };
+      });
 
       return {
         serviceTitle: 'Physical Custom Patches & Emblems',
-        patchStyle,
-        patchBacking,
-        patchWidth: w,
-        patchHeight: h,
-        rateEach,
+        patchStyle: safePatchItems[0]?.patchStyle || 'Embroidered',
+        patchBacking: safePatchItems[0]?.patchBacking || 'Iron-On',
+        patchWidth: parseFloat(safePatchItems[0]?.patchWidth) || 3.0,
+        patchHeight: parseFloat(safePatchItems[0]?.patchHeight) || 3.0,
+        rateEach: placementBreakdown[0]?.priceEach || 0,
         baseSubtotal,
-        totalPlacementQuantity: safeQty,
+        totalPlacementQuantity: totalQty,
         rushSurcharge: 0,
         finalPrice: baseSubtotal,
-        placementBreakdown: [{
-          index: 1,
-          id: 1,
-          label: `${patchStyle} Patch (${w}"×${h}", ${patchBacking} Backing)`,
-          quantity: safeQty,
-          priceEach: rateEach,
-          subtotal: baseSubtotal,
-          notes: ''
-        }]
+        placementBreakdown
       };
     } else {
       // Embroidery Digitizing
@@ -483,6 +494,7 @@ export const OrderWizardModal = () => {
       patchWidth,
       patchHeight,
       patchQuantity,
+      patchItems,
       notes: notes.trim(),
       totalPrice: finalPrice,
       uploadedFiles: allFiles.map(a => a.name),
