@@ -301,6 +301,13 @@ BEGIN
     INSERT INTO public.transactions (client_email, type, amount, payment_method, description)
     VALUES (lower(p_client_email), 'order_payment', p_amount, 'Studio Wallet Credit', 'Order Brief Payment for ' || p_order_id || ' (- $' || ROUND(p_amount, 2) || ')');
 
+    -- Update order to paid and in_progress
+    IF p_order_id IS NOT NULL THEN
+        UPDATE public.orders
+        SET payment_status = 'paid', status = 'in_progress'
+        WHERE id = p_order_id;
+    END IF;
+
     RETURN v_new_balance;
 END;
 $$;
@@ -313,7 +320,8 @@ CREATE OR REPLACE FUNCTION public.enforce_order_security()
 RETURNS trigger AS $$
 BEGIN
   -- If not an admin, prevent changing sensitive fields
-  IF NOT public.is_admin() THEN
+  -- Bypass if current_user is postgres or supabase_admin (e.g. running from a SECURITY DEFINER function)
+  IF NOT public.is_admin() AND current_user != 'postgres' AND current_user != 'supabase_admin' THEN
     IF NEW.price IS DISTINCT FROM OLD.price THEN
       RAISE EXCEPTION 'Clients cannot modify the order price.';
     END IF;

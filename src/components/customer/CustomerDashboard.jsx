@@ -131,9 +131,20 @@ export const CustomerDashboard = () => {
     return matchesSearch;
   });
 
+  const getPaymentStatusBadge = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'paid':
+        return <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)' }}>Paid</span>;
+      case 'wallet':
+        return <span className="badge" style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)' }}>Wallet Paid</span>;
+      default:
+        return <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>Pending</span>;
+    }
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'submitted':
+      case 'awaiting_payment':
         return <span className="badge badge-submitted">Brief Submitted</span>;
       case 'assigned':
         return <span className="badge badge-assigned">Digitizer Assigned</span>;
@@ -652,7 +663,7 @@ export const CustomerDashboard = () => {
                             <th style={{ padding: '0.75rem 1rem' }}>Uploaded Artwork & Design</th>
                             <th style={{ padding: '0.75rem 1rem' }}>Service Type</th>
                             <th style={{ padding: '0.75rem 1rem' }}>Date Submitted</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Live Status</th>
+                            <th style={{ padding: '0.75rem 1rem' }}>Payment Status</th>
                             <th style={{ padding: '0.75rem 1rem' }}>Cost</th>
                             <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Actions</th>
                           </tr>
@@ -730,7 +741,7 @@ export const CustomerDashboard = () => {
 
                               {/* Status */}
                               <td style={{ padding: '1rem' }}>
-                                {getStatusBadge(ord?.status)}
+                                {getPaymentStatusBadge(ord?.payment_status || ord?.paymentStatus)}
                               </td>
 
                               {/* Price */}
@@ -744,7 +755,7 @@ export const CustomerDashboard = () => {
                                   className="btn btn-outline btn-sm"
                                   onClick={() => setSelectedOrderForDrawer(ord)}
                                 >
-                                  View Brief & Files <ChevronRight size={16} />
+                                  View Order <ChevronRight size={16} />
                                 </button>
                               </td>
                             </tr>

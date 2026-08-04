@@ -267,71 +267,19 @@ export const OrderTrackerDrawer = () => {
               📦 Order Fulfillment & Shipping Details
             </button>
           ) : (
-            <>
-              <button
-                onClick={() => setActiveTab('timeline')}
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <div
                 style={{
                   padding: '0.85rem 1.25rem',
-                  border: 'none',
-                  background: 'transparent',
-                  borderBottom: `3px solid ${activeTab === 'timeline' ? 'var(--orange-600)' : 'transparent'}`,
-                  color: activeTab === 'timeline' ? 'var(--orange-600)' : 'var(--navy-700)',
-                  fontWeight: 700,
+                  color: 'var(--navy-900)',
+                  fontWeight: 800,
                   fontSize: '0.9rem',
-                  cursor: 'pointer'
+                  cursor: 'default'
                 }}
               >
-                📊 Live Progress & Specs
-              </button>
-
-              <button
-                onClick={() => setActiveTab('downloads')}
-                style={{
-                  padding: '0.85rem 1.25rem',
-                  border: 'none',
-                  background: 'transparent',
-                  borderBottom: `3px solid ${activeTab === 'downloads' ? 'var(--orange-600)' : 'transparent'}`,
-                  color: activeTab === 'downloads' ? 'var(--orange-600)' : 'var(--navy-700)',
-                  fontWeight: 700,
-                  fontSize: '0.9rem',
-                  cursor: 'pointer'
-                }}
-              >
-                📂 Files & Source Assets ({allDownloadFormats.length})
-              </button>
-
-              <button
-                onClick={() => setActiveTab('messages')}
-                style={{
-                  padding: '0.85rem 1.25rem',
-                  border: 'none',
-                  background: 'transparent',
-                  borderBottom: `3px solid ${activeTab === 'messages' ? 'var(--orange-600)' : 'transparent'}`,
-                  color: activeTab === 'messages' ? 'var(--orange-600)' : 'var(--navy-700)',
-                  fontWeight: 700,
-                  fontSize: '0.9rem',
-                  cursor: 'pointer'
-                }}
-              >
-                💬 Communication Log ({ord.messages?.length || 0})
-              </button>
-
-              <button
-                onClick={() => setActiveTab('revisions')}
-                style={{
-                  padding: '0.85rem 1.25rem',
-                  border: 'none',
-                  background: 'transparent',
-                  borderBottom: `3px solid ${activeTab === 'revisions' ? 'var(--orange-600)' : 'transparent'}`,
-                  color: activeTab === 'revisions' ? 'var(--orange-600)' : 'var(--navy-700)',
-                  fontWeight: 700,
-                  fontSize: '0.9rem',
-                  cursor: 'pointer'
-                }}
-              >
-                🔄 Request Revisions ({ord.revisions?.length || 0})
-              </button>
-            </>
+                📋 Order Requirements & Delivery
+              </div>
+            </div>
           )}
         </div>
 
@@ -496,8 +444,8 @@ export const OrderTrackerDrawer = () => {
             </div>
           ) : (
             <>
-              {/* TAB 1: Live Timeline for Digitizing & Vector Orders */}
-              {activeTab === 'timeline' && (
+              {/* SECTION: Live Timeline for Digitizing & Vector Orders */}
+              {true && (
             <div>
               {/* Visual 5-step progress bar */}
               <div style={{
@@ -680,8 +628,8 @@ export const OrderTrackerDrawer = () => {
             </div>
           )}
 
-          {/* TAB 2: Download Hub (Real-time Status Synchronization & Dynamic Unlocking Grid) */}
-          {activeTab === 'downloads' && (
+          {/* SECTION: Download Hub (Real-time Status Synchronization & Dynamic Unlocking Grid) */}
+          {true && (
             <div>
 
               {/* ADMIN ONLY MULTI-FILE UPLOADER DROPZONE - STRICTLY HIDDEN IN CLIENT PORTAL */}
@@ -1049,8 +997,8 @@ export const OrderTrackerDrawer = () => {
             </div>
           )}
 
-          {/* TAB: Fiverr Real-Time Activity & Communication Log */}
-          {activeTab === 'messages' && (
+          {/* SECTION: Fiverr Real-Time Activity & Communication Log */}
+          {true && (
             <div>
               <div style={{
                 background: 'var(--navy-950)',
@@ -1172,8 +1120,8 @@ export const OrderTrackerDrawer = () => {
             </div>
           )}
 
-          {/* TAB 3: Revisions Panel */}
-          {activeTab === 'revisions' && (
+          {/* SECTION: Revisions Panel */}
+          {true && (
             <div>
               {isAdmin ? (
                 <div style={{ marginBottom: '1.25rem', background: 'var(--navy-100)', padding: '1rem 1.25rem', borderRadius: 'var(--radius-md)' }}>

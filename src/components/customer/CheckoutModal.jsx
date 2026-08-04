@@ -47,9 +47,8 @@ export const CheckoutModal = () => {
         if (success) {
           setIsPaid(true);
           showToast('Payment successful! Funds deducted from your Studio Wallet.', 'success');
-          if (checkoutSession?.orderId) {
-            await updateOrderStatus(checkoutSession.orderId, 'in_progress', { paymentStatus: 'Paid' });
-          }
+          // Note: The order payment status and main status are now automatically 
+          // updated securely by the deduct_wallet_balance RPC on the server.
         } else {
           showToast('Wallet payment failed. Please try another method.', 'error');
           setSelectedMethod(null);
