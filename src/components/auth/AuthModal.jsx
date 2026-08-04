@@ -16,8 +16,8 @@ import {
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import AppleSignin from 'react-apple-signin-auth';
 
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'dummy-google-client-id.apps.googleusercontent.com';
-const APPLE_CLIENT_ID = process.env.NEXT_PUBLIC_APPLE_CLIENT_ID || 'com.dummy.apple.client.id';
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+const APPLE_CLIENT_ID = process.env.NEXT_PUBLIC_APPLE_CLIENT_ID || '';
 
 export const AuthModal = () => {
   const navigate = useNavigate();
@@ -579,7 +579,7 @@ export const AuthModal = () => {
                     onError={() => {
                       showToast('Google Sign-In failed', 'error');
                     }}
-                    useOneTap
+                    auto_select={false}
                     shape="rectangular"
                     theme="outline"
                     text="continue_with"
@@ -777,7 +777,7 @@ export const AuthModal = () => {
                     onError={() => {
                       showToast('Google Sign-In failed', 'error');
                     }}
-                    useOneTap
+                    auto_select={false}
                     shape="rectangular"
                     theme="outline"
                     text="continue_with"

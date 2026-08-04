@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FAQS } from '../../data/mockData';
+import { FAQS } from '../../data/catalogDefaults';
 import { Star, ChevronDown, ChevronUp, Quote } from 'lucide-react';
 
 export const TestimonialsFAQ = () => {

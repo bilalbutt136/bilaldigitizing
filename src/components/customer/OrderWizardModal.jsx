@@ -23,7 +23,11 @@ export const OrderWizardModal = () => {
     updateOrderStatus,
     showToast,
     setIsCheckoutModalOpen,
-    setCheckoutSession
+    setCheckoutSession,
+    walletBalance,
+    setIsDepositModalOpen,
+    pricingCards = [],
+    patchCards = []
   } = useAppState();
 
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -31,18 +35,14 @@ export const OrderWizardModal = () => {
   const [invoiceId, setInvoiceId] = useState('');
   const [isPaid, setIsPaid] = useState(false);
   const [pendingOrderId, setPendingOrderId] = useState('');
-  const [selectedPackageTier, setSelectedPackageTier] = useState('standard'); // 'basic' | 'standard' | 'premium'
   
   // Itemized Placements Cart State with default initial placement item
   const [placementItems, setPlacementItems] = useState([
-    { id: 1, placementType: 'left_chest', quantity: 1, quantityInput: '1', specificNotes: '' }
+    { id: 1, packageTier: 'standard', placementType: 'left_chest', quantity: 1, quantityInput: '1', specificNotes: '', files: [] }
   ]);
 
   const [type, setType] = useState('embroidery'); // 'embroidery' | 'vector' | 'patch'
   const [title] = useState('');
-  
-  // Multi-File Upload Selected Assets Array State
-  const [selectedAssets] = useState([]);
   
   const [, setPlacementType] = useState('Left Chest / Polo');
   const [, setServiceCategory] = useState('Left Chest Digitizing');
@@ -81,10 +81,11 @@ export const OrderWizardModal = () => {
 
   React.useEffect(() => {
     if (isOrderWizardOpen && orderWizardInitialData) {
-      if (orderWizardInitialData.tierKey) {
-        setSelectedPackageTier(orderWizardInitialData.tierKey);
-      } else if (orderWizardInitialData.tier) {
-        setSelectedPackageTier(orderWizardInitialData.tier);
+      if (orderWizardInitialData.tierKey || orderWizardInitialData.tier) {
+        setPlacementItems(prev => prev.map((item, idx) => {
+          if (idx === 0) return { ...item, packageTier: orderWizardInitialData.tierKey || orderWizardInitialData.tier };
+          return item;
+        }));
       }
       if (orderWizardInitialData.type) {
         setType(orderWizardInitialData.type);
@@ -187,7 +188,7 @@ export const OrderWizardModal = () => {
   const addPlacementItem = () => {
     setPlacementItems(prev => [
       ...prev,
-      { id: Date.now(), placementType: 'left_chest', quantity: 1, quantityInput: '1', specificNotes: '' }
+      { id: Date.now(), packageTier: 'standard', placementType: 'left_chest', quantity: 1, quantityInput: '1', specificNotes: '', files: [] }
     ]);
   };
 
@@ -269,27 +270,27 @@ export const OrderWizardModal = () => {
     }
 
     if (type === 'vector') {
-      const currentTier = selectedPackageTier || 'standard';
-      const basicRate = (customRateVal && currentTier === 'basic') ? customRateVal : 15.00;
-      const standardRate = (customRateVal && currentTier === 'standard') ? customRateVal : 25.00;
-      const premiumRate = (customRateVal && currentTier === 'premium') ? customRateVal : 40.00;
-      
-      let rateEach = standardRate;
-      if (currentTier === 'basic') rateEach = basicRate;
-      if (currentTier === 'premium') rateEach = premiumRate;
-
       const safePlacementItems = Array.isArray(placementItems) && placementItems.length > 0 
         ? placementItems 
-        : [{ id: 1, placementType: 'vector_redraw', quantity: 1, quantityInput: '1', specificNotes: '' }];
+        : [{ id: 1, packageTier: 'standard', placementType: 'vector_redraw', quantity: 1, quantityInput: '1', specificNotes: '', files: [] }];
 
       let baseSubtotal = 0;
       const placementBreakdown = safePlacementItems.map((item, idx) => {
+        const itemTier = item.packageTier || 'standard';
+        const basicRate = (customRateVal && itemTier === 'basic') ? customRateVal : 15.00;
+        const standardRate = (customRateVal && itemTier === 'standard') ? customRateVal : 25.00;
+        const premiumRate = (customRateVal && itemTier === 'premium') ? customRateVal : 40.00;
+        
+        let rateEach = standardRate;
+        if (itemTier === 'basic') rateEach = basicRate;
+        if (itemTier === 'premium') rateEach = premiumRate;
+
         const subtotal = rateEach * (item.quantity || 1);
         baseSubtotal += subtotal;
         return {
           index: idx + 1,
           id: item.id || idx + 1,
-          label: `Vector Artwork #${idx + 1}`,
+          label: `Vector Artwork #${idx + 1} (${itemTier.toUpperCase()})`,
           quantity: item.quantity || 1,
           priceEach: rateEach,
           subtotal,
@@ -321,9 +322,9 @@ export const OrderWizardModal = () => {
 
       // Base rate by patch material type and tier
       let materialBase = 2.50;
-      if (patchStyle === 'Woven' || selectedPackageTier === 'basic') materialBase = 1.50;
-      if (patchStyle === 'Embroidered' || selectedPackageTier === 'standard') materialBase = 2.50;
-      if (patchStyle === 'PVC' || patchStyle === 'Leather' || selectedPackageTier === 'premium') materialBase = 3.50;
+      if (patchStyle === 'Woven') materialBase = 1.50;
+      if (patchStyle === 'Embroidered') materialBase = 2.50;
+      if (patchStyle === 'PVC' || patchStyle === 'Leather') materialBase = 3.50;
 
       // Tiered quantity discount
       let qtyDiscount = 1.0;
@@ -362,23 +363,24 @@ export const OrderWizardModal = () => {
       };
     } else {
       // Embroidery Digitizing
-      const currentTier = selectedPackageTier || 'standard';
-      const basicRate = (customRateVal && currentTier === 'basic') ? customRateVal : (parseFloat(pricing?.minOrderFee) || 10.00);
-      const standardRate = (customRateVal && currentTier === 'standard') ? customRateVal : (parseFloat(pricing?.vectorSimpleRate) || 15.00);
-      const premiumRate = (customRateVal && currentTier === 'premium') ? customRateVal : (parseFloat(pricing?.vectorComplexRate) || 25.00);
-
-      let baseTierRate = basicRate;
-      if (currentTier === 'standard') baseTierRate = standardRate;
-      if (currentTier === 'premium') baseTierRate = premiumRate;
-
       const safePlacementItems = Array.isArray(placementItems) && placementItems.length > 0 
         ? placementItems 
-        : [{ id: 1, placementType: 'left_chest', quantity: 1, quantityInput: '1', specificNotes: '' }];
+        : [{ id: 1, packageTier: 'standard', placementType: 'left_chest', quantity: 1, quantityInput: '1', specificNotes: '', files: [] }];
 
       let baseSubtotal = 0;
       const placementBreakdown = safePlacementItems.map((item, idx) => {
+        const itemTier = item.packageTier || 'standard';
+        const basicRate = (customRateVal && itemTier === 'basic') ? customRateVal : (parseFloat(pricing?.minOrderFee) || 10.00);
+        const standardRate = (customRateVal && itemTier === 'standard') ? customRateVal : (parseFloat(pricing?.vectorSimpleRate) || 15.00);
+        const premiumRate = (customRateVal && itemTier === 'premium') ? customRateVal : (parseFloat(pricing?.vectorComplexRate) || 25.00);
+
+        let itemPriceEach = standardRate;
+        if (itemTier === 'basic') itemPriceEach = basicRate;
+        if (itemTier === 'premium') itemPriceEach = premiumRate;
+
         const isJacket = item.placementType === 'jacket_back' || item.placementType === 'Jacket Back Crest';
-        const itemPriceEach = isJacket ? 20.00 : baseTierRate;
+        if (isJacket) itemPriceEach = 20.00; // Overwrite for jacket back if needed
+
         const subtotal = itemPriceEach * (item.quantity || 1);
         baseSubtotal += subtotal;
         
@@ -389,7 +391,7 @@ export const OrderWizardModal = () => {
           index: idx + 1,
           id: item.id || idx + 1,
           placementType: item.placementType,
-          label,
+          label: `${label} (${itemTier.toUpperCase()})`,
           quantity: item.quantity || 1,
           priceEach: itemPriceEach,
           subtotal,
@@ -415,8 +417,8 @@ export const OrderWizardModal = () => {
 
       return {
         serviceTitle: 'Embroidery Digitizing',
-        currentTier,
-        baseTierRate,
+        currentTier: 'mixed',
+        baseTierRate: 0,
         baseSubtotal,
         discountPercent,
         discountAmount,
@@ -433,15 +435,44 @@ export const OrderWizardModal = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ENFORCE COMPULSORY IMAGE ATTACHMENTS
+    let hasMissingFiles = false;
+    if (type === 'patch') {
+      for (const item of patchItems) {
+        if (!item.files || item.files.length === 0) {
+          hasMissingFiles = true;
+          break;
+        }
+      }
+    } else {
+      for (const item of placementItems) {
+        if (!item.files || item.files.length === 0) {
+          hasMissingFiles = true;
+          break;
+        }
+      }
+    }
+
+    if (hasMissingFiles) {
+      if (showToast) showToast('Please attach at least one image/artwork file for ALL items.', 'error');
+      else alert('Please attach at least one image/artwork file for ALL items.');
+      return; // Block submission
+    }
+
     const orderTitle = title.trim() || `${pricingDetails?.serviceTitle || 'Service'} Order`;
     const finalPrice = pricingDetails?.finalPrice || 15.00;
     
+    // Flatten files for the legacy uploadedFiles array just in case
+    const allFiles = type === 'patch' 
+      ? patchItems.flatMap(item => item.files || []) 
+      : placementItems.flatMap(item => item.files || []);
+
     const orderData = {
       title: orderTitle,
       type,
       serviceCategory: pricingDetails?.serviceTitle || type || 'Embroidery Digitizing',
       price: parseFloat(finalPrice),
-      selectedPackageTier,
       placementItems,
       fabricType,
       requestedFormats,
@@ -454,10 +485,20 @@ export const OrderWizardModal = () => {
       patchQuantity,
       notes: notes.trim(),
       totalPrice: finalPrice,
-      uploadedFiles: selectedAssets.map(a => a.name),
+      uploadedFiles: allFiles.map(a => a.name),
       paymentStatus: 'pending' // Enforce pending payment status
     };
     
+    // Wallet balance gate: block order if insufficient funds
+    if (walletBalance < parseFloat(finalPrice)) {
+      showToast(
+        `Insufficient wallet balance. You need $${(parseFloat(finalPrice) - walletBalance).toFixed(2)} more. Please fund your account.`,
+        'error'
+      );
+      setIsDepositModalOpen(true);
+      return;
+    }
+
     setIsProcessingPayment(true);
 
     try {
@@ -479,7 +520,7 @@ export const OrderWizardModal = () => {
       setIsOrderWizardOpen(false); // Close the wizard
     } catch (err) {
        console.error("Order creation error:", err);
-       alert("Error creating order: " + err.message);
+       showToast('Error creating order: ' + (err.message || 'Unknown error'), 'error');
        setIsProcessingPayment(false);
     }
   };
@@ -558,79 +599,6 @@ export const OrderWizardModal = () => {
                 {/* 1. EMBROIDERY DIGITIZING */}
                 {type === 'embroidery' && (
                   <>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#cbd5e1', marginBottom: '0.65rem' }}>
-                        Select Pricing Package Tier *
-                      </label>
-
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
-                        
-                        <div
-                          onClick={() => setSelectedPackageTier('basic')}
-                          style={{
-                            border: selectedPackageTier === 'basic' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
-                            background: selectedPackageTier === 'basic' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
-                            padding: '1rem 0.85rem',
-                            borderRadius: '10px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase' }}>⚡ BASIC</span>
-                            {selectedPackageTier === 'basic' && (
-                              <span style={{ fontSize: '0.63rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>Selected</span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$10.00 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ design</span></div>
-                          <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>Simple Left Chest / Small Logo (up to 4")</div>
-                        </div>
-
-                        <div
-                          onClick={() => setSelectedPackageTier('standard')}
-                          style={{
-                            border: selectedPackageTier === 'standard' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
-                            background: selectedPackageTier === 'standard' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
-                            padding: '1rem 0.85rem',
-                            borderRadius: '10px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase' }}>⭐ STANDARD</span>
-                            {selectedPackageTier === 'standard' && (
-                              <span style={{ fontSize: '0.63rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>Selected</span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$15.00 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ design</span></div>
-                          <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>Standard Left Chest, Cap & Sleeve Logos</div>
-                        </div>
-
-                        <div
-                          onClick={() => setSelectedPackageTier('premium')}
-                          style={{
-                            border: selectedPackageTier === 'premium' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
-                            background: selectedPackageTier === 'premium' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
-                            padding: '1rem 0.85rem',
-                            borderRadius: '10px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#a855f7', textTransform: 'uppercase' }}>✨ PREMIUM</span>
-                            {selectedPackageTier === 'premium' && (
-                              <span style={{ fontSize: '0.63rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>Selected</span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$25.00 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ design</span></div>
-                          <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>Jacket Back, Large Crest & 3D Puff</div>
-                        </div>
-
-                      </div>
-                    </div>
-
                     {/* Interactive Placements Cart */}
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
@@ -653,7 +621,36 @@ export const OrderWizardModal = () => {
                             )}
                           </div>
 
-                          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.75rem' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Package Tier *</label>
+                              <select value={item.packageTier || 'standard'} onChange={(e) => updatePlacementItem(item.id, 'packageTier', e.target.value)} className="form-control" style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem' }}>
+                                {type === 'vector' ? (
+                                  <>
+                                    <option value="standard">⚡ Simple Redraw ($15.00)</option>
+                                    <option value="premium">✨ Complex Redraw ($25.00)</option>
+                                  </>
+                                ) : (
+                                  pricingCards && pricingCards.length > 0 ? (
+                                    pricingCards.map(card => {
+                                      const value = card.id.replace('pcard-', '');
+                                      return (
+                                        <option key={card.id} value={value}>
+                                          {card.badge ? `${card.badge} • ` : ''}{card.title} ({card.rate})
+                                        </option>
+                                      );
+                                    })
+                                  ) : (
+                                    <>
+                                      <option value="basic">⚡ Basic</option>
+                                      <option value="standard">⭐ Standard</option>
+                                      <option value="premium">✨ Premium</option>
+                                    </>
+                                  )
+                                )}
+                              </select>
+                            </div>
+
                             <div>
                               <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Placement Location</label>
                               <select value={item.placementType} onChange={(e) => updatePlacementItem(item.id, 'placementType', e.target.value)} className="form-control" style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem' }}>
@@ -758,78 +755,6 @@ export const OrderWizardModal = () => {
                 {/* 2. VECTOR ART & COLOR SEPARATION */}
                 {type === 'vector' && (
                   <>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#cbd5e1', marginBottom: '0.65rem' }}>
-                        Select Pricing Package Tier *
-                      </label>
-
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
-                        
-                        <div
-                          onClick={() => setSelectedPackageTier('basic')}
-                          style={{
-                            border: selectedPackageTier === 'basic' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
-                            background: selectedPackageTier === 'basic' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
-                            padding: '1rem 0.85rem',
-                            borderRadius: '10px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase' }}>⚡ BASIC REDRAW</span>
-                            {selectedPackageTier === 'basic' && (
-                              <span style={{ fontSize: '0.63rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>Selected</span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$15.00 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ artwork</span></div>
-                          <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>Clean text, simple logos, 1-3 colors</div>
-                        </div>
-
-                        <div
-                          onClick={() => setSelectedPackageTier('standard')}
-                          style={{
-                            border: selectedPackageTier === 'standard' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
-                            background: selectedPackageTier === 'standard' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
-                            padding: '1rem 0.85rem',
-                            borderRadius: '10px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase' }}>⭐ COLOR SEPARATION</span>
-                            {selectedPackageTier === 'standard' && (
-                              <span style={{ fontSize: '0.63rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>Selected</span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$25.00 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ artwork</span></div>
-                          <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>Multi-color screen print prep & vector tracing</div>
-                        </div>
-
-                        <div
-                          onClick={() => setSelectedPackageTier('premium')}
-                          style={{
-                            border: selectedPackageTier === 'premium' ? '2.5px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
-                            background: selectedPackageTier === 'premium' ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
-                            padding: '1rem 0.85rem',
-                            borderRadius: '10px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#a855f7', textTransform: 'uppercase' }}>✨ COMPLEX ART</span>
-                            {selectedPackageTier === 'premium' && (
-                              <span style={{ fontSize: '0.63rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>Selected</span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', margin: '0.2rem 0' }}>$40.00 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ artwork</span></div>
-                          <div style={{ fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.3 }}>Mascots, gradients, detailed hand art</div>
-                        </div>
-
-                      </div>
-                    </div>
 
                     <div>
                       <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Required Vector Formats</label>
@@ -848,52 +773,6 @@ export const OrderWizardModal = () => {
                 {/* 3. PHYSICAL CUSTOM PATCHES */}
                 {type === 'patch' && (
                   <>
-                    {/* 1. 3 Pricing Tier Quick-Select Buttons */}
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#cbd5e1', marginBottom: '0.5rem' }}>
-                        1. Select Pricing Tier Package *
-                      </label>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.65rem', marginBottom: '1.25rem' }}>
-                        {[
-                          { id: 'basic', label: 'ESSENTIAL', title: 'Micro Woven', rate: '$1.50/ea', style: 'Woven' },
-                          { id: 'standard', label: 'MOST POPULAR', title: 'Embroidered', rate: '$2.50/ea', style: 'Embroidered' },
-                          { id: 'premium', label: 'LUXURY & PVC', title: '3D PVC & Leather', rate: '$3.50/ea', style: 'PVC' }
-                        ].map(tier => {
-                          const isActive = selectedPackageTier === tier.id || patchStyle === tier.style;
-                          return (
-                            <button
-                              key={tier.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedPackageTier(tier.id);
-                                setPatchStyle(tier.style);
-                              }}
-                              style={{
-                                padding: '0.65rem 0.85rem',
-                                borderRadius: '10px',
-                                border: isActive ? '2px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.15)',
-                                background: isActive ? 'linear-gradient(180deg, rgba(255, 122, 0, 0.22) 0%, rgba(15, 23, 42, 0.95) 100%)' : '#0f172a',
-                                color: '#ffffff',
-                                textAlign: 'left',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease'
-                              }}
-                            >
-                              <div style={{ fontSize: '0.68rem', fontWeight: 800, color: isActive ? 'var(--orange-400)' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                {tier.label}
-                              </div>
-                              <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#ffffff', margin: '0.1rem 0' }}>
-                                {tier.title}
-                              </div>
-                              <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--orange-400)' }}>
-                                Starting at {tier.rate}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
                     {/* 2. Configure Multi-Item Custom Patch List */}
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
@@ -916,9 +795,9 @@ export const OrderWizardModal = () => {
                           const itemQty = Math.max(0, parseInt(item.quantityInput !== undefined ? item.quantityInput : item.quantity, 10) || 0);
 
                           let materialBase = 2.50;
-                          if (item.patchStyle === 'Woven' || selectedPackageTier === 'basic') materialBase = 1.50;
-                          if (item.patchStyle === 'Embroidered' || selectedPackageTier === 'standard') materialBase = 2.50;
-                          if (item.patchStyle === 'PVC' || item.patchStyle === 'Leather' || selectedPackageTier === 'premium') materialBase = 3.50;
+                          if (item.patchStyle === 'Woven') materialBase = 1.50;
+                          if (item.patchStyle === 'Embroidered') materialBase = 2.50;
+                          if (item.patchStyle === 'PVC' || item.patchStyle === 'Leather') materialBase = 3.50;
 
                           let backingAddon = 0;
                           if (item.patchBacking === 'Velcro') backingAddon = 0.40;
@@ -992,10 +871,23 @@ export const OrderWizardModal = () => {
                                     className="form-control"
                                     style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.85rem', fontWeight: 700 }}
                                   >
-                                    <option value="Embroidered">🧵 Embroidered Patch ($2.50/ea)</option>
-                                    <option value="Woven">🌐 Micro Woven Patch ($1.50/ea)</option>
-                                    <option value="PVC">⚡ 3D Rubber PVC Patch ($3.50/ea)</option>
-                                    <option value="Leather">🪵 Debossed Leather Patch ($3.50/ea)</option>
+                                    {patchCards && patchCards.length > 0 ? (
+                                      patchCards.map(card => {
+                                        const value = card.title.includes('Embroidered') ? 'Embroidered' : card.title.includes('Woven') ? 'Woven' : 'PVC';
+                                        return (
+                                          <option key={card.id} value={value}>
+                                            {card.badge ? `${card.badge} • ` : ''}{card.title} ({card.rate})
+                                          </option>
+                                        );
+                                      })
+                                    ) : (
+                                      <>
+                                        <option value="Embroidered">🧵 Embroidered Patch ($2.50/ea)</option>
+                                        <option value="Woven">🌐 Micro Woven Patch ($1.50/ea)</option>
+                                        <option value="PVC">⚡ 3D Rubber PVC Patch ($3.50/ea)</option>
+                                        <option value="Leather">🪵 Debossed Leather Patch ($3.50/ea)</option>
+                                      </>
+                                    )}
                                   </select>
                                 </div>
 

@@ -12,10 +12,41 @@ import {
   MessageSquare
 } from 'lucide-react';
 
+const getNextStatuses = (currentStatus) => {
+  const transitions = {
+    'awaiting_payment': ['in_progress', 'cancelled'],
+    'submitted': ['in_progress', 'digitizing', 'cancelled'],
+    'in_progress': ['digitizing', 'delivered', 'cancelled'],
+    'digitizing': ['delivered', 'in_progress', 'cancelled'],
+    'assigned': ['digitizing', 'delivered', 'cancelled'],
+    'qc': ['delivered', 'in_progress', 'cancelled'],
+    'delivered': ['completed', 'revision'],
+    'revision': ['in_progress', 'delivered', 'cancelled'],
+    'completed': [],
+    'cancelled': []
+  };
+  return transitions[currentStatus] || ['in_progress', 'delivered', 'completed', 'cancelled'];
+};
+
+const statusLabels = {
+  'awaiting_payment': 'Awaiting Payment',
+  'submitted': 'Submitted',
+  'in_progress': 'In Progress',
+  'digitizing': 'Digitizing',
+  'assigned': 'Assigned',
+  'qc': 'Quality Check',
+  'delivered': 'Delivered',
+  'completed': 'Completed',
+  'revision': 'Revision',
+  'cancelled': 'Cancelled'
+};
+
 export const OrderManagementTable = () => {
   const { 
     orders = [], 
-    setSelectedOrderForDrawer 
+    setSelectedOrderForDrawer,
+    ORDER_STATUSES,
+    updateOrderStatus
   } = useAppState();
 
   const [filterStatus, setFilterStatus] = useState('all');
@@ -393,7 +424,22 @@ export const OrderManagementTable = () => {
 
                     {/* 6. STATUS */}
                     <td style={{ padding: '1rem' }}>
-                      {getStatusBadge(ord.status)}
+                      <select 
+                        value={ord.status || 'submitted'} 
+                        onChange={(e) => updateOrderStatus(ord.id, e.target.value)}
+                        className="form-control"
+                        style={{ fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem', marginBottom: '0.5rem', width: '100%' }}
+                      >
+                        <option value={ord.status || 'submitted'} disabled>
+                          {statusLabels[ord.status] || ord.status || 'Submitted'}
+                        </option>
+                        {getNextStatuses(ord.status || 'submitted').map(st => (
+                          <option key={st} value={st}>{statusLabels[st]}</option>
+                        ))}
+                      </select>
+                      <div>
+                        {getStatusBadge(ord.status)}
+                      </div>
                     </td>
 
                     {/* 7. ARTWORK */}

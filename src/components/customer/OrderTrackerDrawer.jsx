@@ -51,7 +51,9 @@ export const OrderTrackerDrawer = () => {
     orders,
     authUser,
     currentView,
-    showToast
+    showToast,
+    completeOrder,
+    ORDER_STATUSES
   } = useAppState();
 
   const [revisionNote, setRevisionNote] = useState('');
@@ -78,16 +80,17 @@ export const OrderTrackerDrawer = () => {
   const isPhysicalStoreOrder = isPhysicalPatchOrder || ord.type === 'store' || ord.type === 'merchandise' || ord.type === 'digital_product' || Boolean(ord.isStoreItem) || ord.serviceCategory?.toLowerCase().includes('store') || ord.serviceCategory?.toLowerCase().includes('merchandise');
 
   // Fiverr-style granular stages
-  const stages = [
-    { key: 'submitted', label: '🔴 New / Pending' },
-    { key: 'digitizing', label: '⚡ In Progress' },
-    { key: 'revision', label: '🔄 In Revision' },
-    { key: 'delivered', label: '📦 Delivered' },
-    { key: 'completed', label: '✅ Completed' }
-  ];
+  const stageKeys = ['awaiting_payment', 'in_progress', 'digitizing', 'delivered', 'completed'];
+  const stageLabels = {
+    awaiting_payment: 'Awaiting Payment',
+    in_progress: 'In Progress',
+    digitizing: 'Digitizing',
+    delivered: 'Delivered',
+    completed: 'Completed'
+  };
 
-  const stageKeys = ['submitted', 'digitizing', 'revision', 'delivered', 'completed'];
-  const currentStageIndex = ord.status === 'cancelled' ? -1 : stageKeys.indexOf(ord.status === 'assigned' ? 'digitizing' : ord.status === 'qc' ? 'delivered' : ord.status || 'submitted');
+  const stages = stageKeys.map(key => ({ key, label: stageLabels[key] }));
+  const currentStageIndex = ord.status === 'cancelled' ? -1 : stageKeys.indexOf(ord.status === 'assigned' ? 'digitizing' : ord.status === 'qc' ? 'delivered' : ord.status || 'awaiting_payment');
   const isCompletedOrUnlocked = ord.status === 'completed' || (ord.uploadedMachineFiles && ord.uploadedMachineFiles.length > 0);
 
   const handleRevisionSubmit = (e) => {
@@ -442,7 +445,7 @@ export const OrderTrackerDrawer = () => {
                   </div>
                   <button
                     className="btn btn-outline btn-sm"
-                    onClick={() => alert(`Carrier status for ${ord.trackingNumber || 'TRK-99482019482'}: In Transit to Destination`)}
+                    onClick={() => showToast(`Tracking: ${ord.trackingNumber || 'Tracking info will be available when shipped'}`, 'info')}
                     style={{ gap: '0.4rem' }}
                   >
                     <ExternalLink size={14} /> Track Package Live
@@ -852,46 +855,45 @@ export const OrderTrackerDrawer = () => {
                       </p>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                      {ord.status !== 'completed' && (
-                        <>
-                          <button
-                            type="button"
-                            className="btn btn-primary-orange"
-                            onClick={() => {
-                              updateOrderStatus(ord.id, 'completed', { isPaid: true, paymentStatus: 'Paid' });
-                              showToast(`Order ${formatOrderId(ord.id)} completed & accepted! Thank you for choosing Bilal Digitizing.`, 'success');
-                            }}
-                            style={{
-                              fontWeight: 800,
-                              fontSize: '0.85rem',
-                              padding: '0.55rem 1.15rem',
-                              gap: '0.4rem',
-                              boxShadow: '0 4px 14px rgba(249, 115, 22, 0.4)'
-                            }}
-                          >
-                            <CheckCircle2 size={16} /> Complete Order
-                          </button>
-
-                          <button
-                            type="button"
-                            className="btn btn-outline"
-                            onClick={() => setActiveTab('revisions')}
-                            style={{
-                              background: 'rgba(255, 255, 255, 0.1)',
-                              color: '#ffffff',
-                              borderColor: 'rgba(255, 255, 255, 0.3)',
-                              fontWeight: 700,
-                              fontSize: '0.85rem',
-                              padding: '0.55rem 1.15rem',
-                              gap: '0.4rem'
-                            }}
-                          >
-                            <RotateCcw size={16} /> Request Modification / Revision
-                          </button>
-                        </>
-                      )}
-                    </div>
+                    {ord.status === 'delivered' && (
+                      <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => completeOrder(ord.id)}
+                          style={{
+                            padding: '0.75rem 1.5rem',
+                            background: 'linear-gradient(135deg, #10b981, #059669)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '10px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            fontSize: '0.9rem'
+                          }}
+                        >
+                          ✅ Mark as Complete
+                        </button>
+                        <button
+                          onClick={() => {
+                            const note = prompt('Describe the revision needed:');
+                            if (note && note.trim()) {
+                              addRevisionRequest(ord.id, note.trim());
+                            }
+                          }}
+                          style={{
+                            padding: '0.75rem 1.5rem',
+                            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '10px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            fontSize: '0.9rem'
+                          }}
+                        >
+                          🔄 Request Revision
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

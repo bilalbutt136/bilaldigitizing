@@ -7,6 +7,55 @@ export { isSupabaseConfigured };
  * Service layer for Supabase Database, Auth & Storage Operations.
  */
 
+// ============================================================
+// ORDER LIFECYCLE STATE MACHINE
+// ============================================================
+
+export const ORDER_STATUSES = {
+  AWAITING_PAYMENT: 'awaiting_payment',
+  SUBMITTED: 'submitted',
+  IN_PROGRESS: 'in_progress',
+  DIGITIZING: 'digitizing',
+  ASSIGNED: 'assigned',
+  QC: 'qc',
+  DELIVERED: 'delivered',
+  COMPLETED: 'completed',
+  REVISION: 'revision',
+  CANCELLED: 'cancelled'
+};
+
+// Valid status transitions: { currentStatus: [allowedNextStatuses] }
+const VALID_TRANSITIONS = {
+  [ORDER_STATUSES.AWAITING_PAYMENT]: [ORDER_STATUSES.SUBMITTED, ORDER_STATUSES.IN_PROGRESS, ORDER_STATUSES.CANCELLED],
+  [ORDER_STATUSES.SUBMITTED]: [ORDER_STATUSES.IN_PROGRESS, ORDER_STATUSES.DIGITIZING, ORDER_STATUSES.ASSIGNED, ORDER_STATUSES.CANCELLED],
+  [ORDER_STATUSES.IN_PROGRESS]: [ORDER_STATUSES.DIGITIZING, ORDER_STATUSES.ASSIGNED, ORDER_STATUSES.QC, ORDER_STATUSES.DELIVERED, ORDER_STATUSES.CANCELLED],
+  [ORDER_STATUSES.DIGITIZING]: [ORDER_STATUSES.QC, ORDER_STATUSES.DELIVERED, ORDER_STATUSES.IN_PROGRESS, ORDER_STATUSES.CANCELLED],
+  [ORDER_STATUSES.ASSIGNED]: [ORDER_STATUSES.DIGITIZING, ORDER_STATUSES.IN_PROGRESS, ORDER_STATUSES.QC, ORDER_STATUSES.DELIVERED, ORDER_STATUSES.CANCELLED],
+  [ORDER_STATUSES.QC]: [ORDER_STATUSES.DELIVERED, ORDER_STATUSES.IN_PROGRESS, ORDER_STATUSES.CANCELLED],
+  [ORDER_STATUSES.DELIVERED]: [ORDER_STATUSES.COMPLETED, ORDER_STATUSES.REVISION],
+  [ORDER_STATUSES.REVISION]: [ORDER_STATUSES.IN_PROGRESS, ORDER_STATUSES.DIGITIZING, ORDER_STATUSES.DELIVERED, ORDER_STATUSES.CANCELLED],
+  [ORDER_STATUSES.COMPLETED]: [], // Terminal state
+  [ORDER_STATUSES.CANCELLED]: []  // Terminal state
+};
+
+export function validateStatusTransition(currentStatus, newStatus) {
+  const allowed = VALID_TRANSITIONS[currentStatus];
+  if (!allowed) {
+    // Unknown current status — allow the transition (backward compat)
+    console.warn(`[Order Lifecycle] Unknown current status '${currentStatus}', allowing transition to '${newStatus}'.`);
+    return true;
+  }
+  if (allowed.length === 0) {
+    console.warn(`[Order Lifecycle] Cannot transition from terminal status '${currentStatus}'.`);
+    return false;
+  }
+  if (!allowed.includes(newStatus)) {
+    console.warn(`[Order Lifecycle] Invalid transition: '${currentStatus}' → '${newStatus}'. Allowed: [${allowed.join(', ')}]`);
+    return false;
+  }
+  return true;
+}
+
 export async function signInWithGoogleIdToken(idToken) {
   if (!isSupabaseConfigured) return { success: false, error: 'Database not configured.' };
   try {
@@ -327,7 +376,7 @@ export async function createOrderInSupabase(newOrder) {
       artwork_url: uploadedArtworkUrl || '',
       image_url: uploadedArtworkUrl || '',
       logo: uploadedArtworkUrl || '',
-      status: newOrder.status || 'submitted'
+      status: newOrder.status || 'awaiting_payment'
     };
 
     console.log("Saving Order Payload to Supabase DB:", primaryDbRow);
@@ -373,6 +422,20 @@ export async function updateOrderStatusInSupabase(orderId, newStatus, extraData 
   if (!isSupabaseConfigured) return { success: false, error: 'Supabase not configured' };
 
   try {
+    // Fetch current status for lifecycle validation
+    const { data: currentOrder } = await supabase
+      .from('orders')
+      .select('status')
+      .eq('id', orderId)
+      .maybeSingle();
+
+    if (currentOrder?.status) {
+      const isValid = validateStatusTransition(currentOrder.status, newStatus);
+      if (!isValid) {
+        return { success: false, error: `Invalid status transition: '${currentOrder.status}' → '${newStatus}'` };
+      }
+    }
+
     const updateObj = {
       status: newStatus,
       updated_at: new Date().toISOString()

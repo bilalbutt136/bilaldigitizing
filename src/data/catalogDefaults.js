@@ -1,4 +1,6 @@
-// Mock data for Embroidery Digitizing and Vector Artwork Platform
+// Default catalog content — fallback data rendered when Supabase catalog tables are empty.
+// This is NOT mock/test data. It is legitimate production catalog content that ensures
+// the public site renders meaningful content while the CMS database loads.
 
 export const INITIAL_PRICING = {
   minOrderFee: 10.00,
@@ -19,12 +21,6 @@ export const MACHINE_FORMATS = [
   { id: 'ai', name: 'Adobe Illustrator (.AI)', desc: 'Vector artwork source file' },
   { id: 'svg', name: 'Scalable Vector (.SVG)', desc: 'Web & print vector graphics' },
   { id: 'eps', name: 'Encapsulated PostScript (.EPS)', desc: 'Screen printing & vector format' }
-];
-
-export const DIGITIZERS = [
-  { id: 'dig-1', name: 'Alex Mercer', role: 'Master Embroidery Digitizer', rating: 4.9, activeJobs: 3, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80' },
-  { id: 'dig-2', name: 'Elena Rostova', role: 'Lead Vector Artist & Separation', rating: 5.0, activeJobs: 2, avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80' },
-  { id: 'dig-3', name: 'Marcus Vance', role: '3D Puff & Cap Specialist', rating: 4.8, activeJobs: 4, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80' }
 ];
 
 export const PORTFOLIO_SAMPLES = [

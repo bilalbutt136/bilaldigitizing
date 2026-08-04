@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { INITIAL_PRICING, DIGITIZERS, SERVICES, PORTFOLIO_SAMPLES, DEFAULT_HERO_SLIDES } from '../data/mockData';
+import { INITIAL_PRICING, SERVICES, PORTFOLIO_SAMPLES, DEFAULT_HERO_SLIDES } from '../data/catalogDefaults';
 import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
 import {
   createOrderInSupabase,
@@ -27,14 +27,16 @@ import {
   fetchWalletBalanceFromSupabase,
   cancelOrderInSupabase,
   deleteOrderInSupabase,
-  upsertCatalogDataToSupabase
+  upsertCatalogDataToSupabase,
+  ORDER_STATUSES,
+  validateStatusTransition
 } from '../services/supabaseService';
 import { playNotificationSound } from '../utils/audioNotification';
 
 const StateContext = createContext();
 
 export const formatOrderId = (rawId) => {
-  if (!rawId) return '#3839';
+  if (!rawId) return '#0000';
   const cleanId = String(rawId).replace(/^(EMB-|VEC-)/i, '').replace(/^#/, '');
   return `#${cleanId}`;
 };
@@ -434,7 +436,7 @@ export const StateProvider = ({ children }) => {
   const [servicesList, setServicesList] = useState(SERVICES);
   const [heroSlides, setHeroSlides] = useState(DEFAULT_HERO_SLIDES);
   const [siteSettings, setSiteSettings] = useState(DEFAULT_SITE_SETTINGS);
-  const [digitizers, setDigitizers] = useState(DIGITIZERS);
+  const [digitizers, setDigitizers] = useState([]);
 
   // Admin whitelist (server-managed via public.admins table)
   const [adminUsers, setAdminUsers] = useState([]);
@@ -611,20 +613,8 @@ export const StateProvider = ({ children }) => {
         }
       }
 
-      // 3. Restore persistent local session if active
-      if (!cancelled && typeof window !== 'undefined') {
-        try {
-          const stored = localStorage.getItem('bdigi_auth_user');
-          if (stored) {
-            const uData = JSON.parse(stored);
-            if (uData && uData.email) {
-              setAuthUser(prev => prev || uData);
-              setIsAuthenticated(prev => prev || true);
-              setCurrentView(prev => (prev === 'public' ? (uData.role === 'admin' ? 'admin' : 'customer') : prev));
-            }
-          }
-        } catch (e) {}
-      }
+      // Note: localStorage session restoration removed — auth state
+      // must always be validated via Supabase auth.getSession()
 
       if (!cancelled) {
         setIsAuthInitialized(true);
@@ -632,6 +622,48 @@ export const StateProvider = ({ children }) => {
     };
 
     loadInitialData();
+
+    // Supabase Realtime: Sync catalog when Admin updates it
+    let catalogChannel = null;
+    if (isSupabaseConfigured && supabase) {
+      catalogChannel = supabase.channel('catalog-sync-channel');
+      
+      const tablesToSync = [
+        'services', 'pricing_cards', 'patch_cards', 'store_products', 
+        'portfolio', 'sew_outs', 'hero_slides', 'digitizers', 'site_config'
+      ];
+      
+      tablesToSync.forEach(table => {
+        catalogChannel.on('postgres_changes', { event: '*', schema: 'public', table: table }, async () => {
+          try {
+            const catalog = await fetchCatalogFromSupabase();
+            if (catalog) {
+              if (catalog.servicesList?.length) setServicesList(catalog.servicesList);
+              if (catalog.pricingCards?.length) setPricingCards(catalog.pricingCards);
+              if (catalog.patchCards?.length) setPatchCards(catalog.patchCards);
+              if (catalog.storeProducts?.length) setStoreProducts(catalog.storeProducts);
+              if (catalog.portfolioSamples?.length) setPortfolioSamples(catalog.portfolioSamples);
+              if (catalog.sewOuts?.length) setSewOuts(catalog.sewOuts);
+              if (catalog.heroSlides?.length) setHeroSlides(catalog.heroSlides);
+              if (catalog.siteSettings) setSiteSettings(catalog.siteSettings);
+              if (catalog.pricing) setPricing(catalog.pricing);
+              if (catalog.serviceCms) setServiceCmsContent(catalog.serviceCms);
+              if (catalog.digitizers?.length) {
+                setDigitizers(prev => prev.map(d => {
+                  const fresh = catalog.digitizers.find(x => x.id === d.id);
+                  return fresh ? { ...d, ...fresh } : d;
+                }));
+              }
+            }
+          } catch (err) {
+            console.warn('Realtime catalog sync error:', err);
+          }
+        });
+      });
+      
+      catalogChannel.subscribe();
+    }
+
 
     let authSubscription = null;
     if (isSupabaseConfigured && supabase) {
@@ -692,6 +724,9 @@ export const StateProvider = ({ children }) => {
     return () => {
       cancelled = true;
       authSubscription?.unsubscribe();
+      if (catalogChannel && supabase) {
+        supabase.removeChannel(catalogChannel);
+      }
     };
   }, []);
 
@@ -899,8 +934,8 @@ export const StateProvider = ({ children }) => {
       clientName: authUser?.company || authUser?.name || 'Valued Client',
       clientEmail: authUser?.email || '',
       createdAt: new Date().toISOString(),
-      status: 'submitted',
-      history: [{ timestamp: new Date().toISOString(), label: 'Order Submitted by Client' }],
+      status: 'awaiting_payment',
+      history: [{ timestamp: new Date().toISOString(), label: 'Order Submitted — Awaiting Payment' }],
       revisions: []
     };
 
@@ -941,6 +976,20 @@ export const StateProvider = ({ children }) => {
       return ord;
     }));
     showToast(`Order ${formatOrderId(orderId)} status updated to ${newStatus.toUpperCase()}`, 'success');
+  };
+
+  const completeOrder = async (orderId) => {
+    const order = orders.find(o => o.id === orderId);
+    if (order && !validateStatusTransition(order.status, ORDER_STATUSES.COMPLETED)) {
+      showToast(`Cannot complete order — current status is '${order.status}'. Order must be in 'delivered' status first.`, 'error');
+      return;
+    }
+    await updateOrderStatus(orderId, ORDER_STATUSES.COMPLETED);
+    addNotification({
+      title: 'Order Completed',
+      message: `Order ${formatOrderId(orderId)} has been marked as complete.`,
+      type: 'success'
+    });
   };
 
   const addRevisionRequest = async (orderId, revisionNote) => {
@@ -1237,7 +1286,8 @@ export const StateProvider = ({ children }) => {
       depositFunds, deductWalletBalance,
       toast, showToast,
       notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead, unreadNotificationsCount,
-      createOrder, updateOrderStatus, addRevisionRequest, addOrderMessage, cancelOrder
+      createOrder, updateOrderStatus, addRevisionRequest, addOrderMessage, cancelOrder,
+      completeOrder, deleteOrder, ORDER_STATUSES
     }}>
       {children}
     </StateContext.Provider>

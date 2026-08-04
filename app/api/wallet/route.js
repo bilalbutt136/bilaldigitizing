@@ -20,11 +20,9 @@ async function getAuthUser(request) {
 export async function POST(request) {
   try {
     if (!hasServiceRole || !supabaseAdmin) {
-      const body = await request.json().catch(() => ({}));
-      const amount = parseFloat(body?.amount || 0);
       return NextResponse.json(
-        { success: true, balance: amount, notice: 'Running in local mode. Connect Supabase service role for server ledger.' },
-        { status: 200 }
+        { success: false, error: 'Wallet service is unavailable. Supabase service role is not configured.' },
+        { status: 503 }
       );
     }
 
