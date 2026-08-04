@@ -417,6 +417,10 @@ export const StateProvider = ({ children }) => {
   const [authModalTarget, setAuthModalTarget] = useState('customer');
   const [activeAdminTab, setActiveAdminTab] = useState('dashboard');
   const [activeCustomerTab, setActiveCustomerTab] = useState('dashboard');
+  
+  // Checkout & Payment states
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [checkoutSession, setCheckoutSession] = useState(null);
 
   // Core Data Arrays (seeded from the database catalog on load)
   const [orders, setOrders] = useState([]);
@@ -1204,6 +1208,8 @@ export const StateProvider = ({ children }) => {
       authModalTarget, setAuthModalTarget,
       activeAdminTab, setActiveAdminTab,
       activeCustomerTab, setActiveCustomerTab,
+      isCheckoutModalOpen, setIsCheckoutModalOpen,
+      checkoutSession, setCheckoutSession,
       orders, setOrders,
       clients, setClients,
       pricing, setPricing, updatePricing,

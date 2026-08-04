@@ -9,6 +9,7 @@ import { OrderWizardModal } from '../src/components/customer/OrderWizardModal';
 import { StoreOrderModal } from '../src/components/customer/StoreOrderModal';
 import { OrderTrackerDrawer } from '../src/components/customer/OrderTrackerDrawer';
 import { DepositModal } from '../src/components/customer/DepositModal';
+import { CheckoutModal } from '../src/components/customer/CheckoutModal';
 import { ClientLiveChatWidget } from '../src/components/customer/ClientLiveChatWidget';
 import ToastContainer from './ToastContainer';
 
@@ -101,6 +102,7 @@ export default function RootLayout({ children }) {
             <AuthModal />
             <OrderWizardModal />
             <StoreOrderModal />
+            <CheckoutModal />
             <OrderTrackerDrawer />
             <DepositModal />
             <ClientLiveChatWidget />

@@ -25,7 +25,7 @@ export const OrderWizardModal = () => {
   } = useAppState();
 
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [boltPaymentUrl, setBoltPaymentUrl] = useState('');
+
   const [invoiceId, setInvoiceId] = useState('');
   const [isPaid, setIsPaid] = useState(false);
   const [pendingOrderId, setPendingOrderId] = useState('');
@@ -479,8 +479,13 @@ export const OrderWizardModal = () => {
       const data = await res.json();
       
       if (data.success && data.paymentUrl) {
-        setBoltPaymentUrl(data.paymentUrl);
-        setInvoiceId(data.invoice?.id);
+        setCheckoutSession({
+          url: data.paymentUrl,
+          invoiceId: data.invoice?.id,
+          orderId: orderId
+        });
+        setIsCheckoutModalOpen(true);
+        setIsOrderWizardOpen(false); // Close the wizard
       } else {
         throw new Error(data.error || 'Failed to initialize payment');
       }
@@ -550,21 +555,7 @@ export const OrderWizardModal = () => {
           </button>
         </div>
 
-        {boltPaymentUrl && !isPaid ? (
-            <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: '500px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 style={{ color: '#fff', fontSize: '1.25rem', fontWeight: 800 }}>Complete Your Payment</h3>
-                <span style={{ fontSize: '0.85rem', color: '#10b981', background: 'rgba(16, 185, 129, 0.15)', padding: '0.2rem 0.6rem', borderRadius: '4px', fontWeight: 'bold' }}>Awaiting Payment...</span>
-              </div>
-              <iframe 
-                src={boltPaymentUrl} 
-                style={{ width: '100%', height: '550px', border: 'none', borderRadius: '12px', background: '#fff' }}
-                title="BoltPayouts Checkout"
-                allow="payment"
-              />
-            </div>
-          ) : (
-          <form onSubmit={handleSubmit} style={{ padding: '1.75rem' }}>
+        <form onSubmit={handleSubmit} style={{ padding: '1.75rem' }}>
 
           <div className="configurator-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.75rem', alignItems: 'start' }}>
             
@@ -1367,8 +1358,7 @@ export const OrderWizardModal = () => {
             </div>
           </div>
         </form>
-          )}
-        </div>
       </div>
-    );
+    </div>
+  );
 };
