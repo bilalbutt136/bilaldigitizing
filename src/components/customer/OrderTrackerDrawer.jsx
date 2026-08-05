@@ -218,9 +218,29 @@ export const OrderTrackerDrawer = () => {
   const userFormats = ord.requestedFormats || ['dst', 'pes', 'emb'];
   const allDownloadFormats = Array.from(new Set([...userFormats, 'pdf']));
 
+  // Deduplicate existing files to prevent old double-upload bugs from showing
+  const uniqueFiles = (ord.uploadedMachineFiles || []).reduce((acc, file) => {
+    if (!acc.some(f => f.name === file.name)) acc.push(file);
+    return acc;
+  }, []);
+
+  const handleDownloadAll = () => {
+    const filesToDownload = uniqueFiles.length > 0 ? uniqueFiles : allDownloadFormats.map(fmt => ({ name: null, format: fmt }));
+    filesToDownload.forEach((file, index) => {
+      setTimeout(() => {
+        if (file.name === null) {
+          handleDownloadFileAsset(null, file.format);
+        } else {
+          const ext = file.format || (file.name && file.name.split('.').pop().toLowerCase()) || 'dst';
+          handleDownloadFileAsset(file, ext);
+        }
+      }, index * 400); // Stagger to prevent browser blocking
+    });
+  };
+
   return (
     <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '850px', maxHeight: '92vh' }}>
+      <div className="modal-content" style={{ maxWidth: '850px', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
         
         {/* Drawer Header */}
         <div style={{
@@ -291,7 +311,7 @@ export const OrderTrackerDrawer = () => {
         </div>
 
         {/* Drawer Body Content */}
-        <div style={{ padding: '1.75rem', overflowY: 'auto' }}>
+        <div style={{ padding: '1.75rem', overflowY: 'auto', flex: 1 }}>
           
           {/* PHYSICAL STORE & MERCHANDISE FULFILLMENT VIEW */}
           {isPhysicalStoreOrder ? (
@@ -462,25 +482,26 @@ export const OrderTrackerDrawer = () => {
                   <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                     <div 
                       onClick={() => setShowLightbox(true)}
-                      style={{ cursor: 'pointer', flexShrink: 0, textAlign: 'center' }}
+                      style={{ cursor: 'pointer', flexShrink: 0, textAlign: 'center', background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}
                     >
                       <img 
                         src={ord.artworkUrl || ord.image_url || ord.logo || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80'} 
                         alt="Artwork"
-                        style={{ width: '140px', height: '140px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)' }}
+                        style={{ width: '160px', height: '160px', objectFit: 'contain', borderRadius: '8px' }}
                       />
-                      <div style={{ fontSize: '0.75rem', color: 'var(--orange-600)', marginTop: '0.5rem', fontWeight: 600 }}>🔍 View Artwork</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--orange-600)', marginTop: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}><Sparkles size={14} /> Inspect Source</div>
                     </div>
                     
-                    <div style={{ fontSize: '0.9rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', flex: 1 }}>
-                      <div><strong style={{ color: 'var(--text-muted)' }}>Status</strong><br/><span style={{ textTransform: 'capitalize', fontWeight: 600, color: 'var(--navy-900)' }}>{ord.status || 'Pending'}</span></div>
-                      <div><strong style={{ color: 'var(--text-muted)' }}>Client</strong><br/><span style={{ fontWeight: 600, color: 'var(--navy-900)' }}>{ord.clientName}</span></div>
-                      <div><strong style={{ color: 'var(--text-muted)' }}>Category</strong><br/><span style={{ fontWeight: 600, color: 'var(--navy-900)' }}>{ord.serviceCategory}</span></div>
-                      <div><strong style={{ color: 'var(--text-muted)' }}>Price</strong><br/><span style={{ fontWeight: 600, color: 'var(--navy-900)' }}>${parseFloat(ord.price || 0).toFixed(2)}</span></div>
-                      {ord.fabricType && <div><strong style={{ color: 'var(--text-muted)' }}>Garment</strong><br/><span style={{ fontWeight: 600, color: 'var(--navy-900)' }}>{ord.fabricType}</span></div>}
-                      {ord.dimensions && <div><strong style={{ color: 'var(--text-muted)' }}>Dimensions</strong><br/><span style={{ fontWeight: 600, color: 'var(--navy-900)' }}>{ord.dimensions.width} x {ord.dimensions.height} inches</span></div>}
-                      {ord.estimatedStitches && <div><strong style={{ color: 'var(--text-muted)' }}>Est. Stitches</strong><br/><span style={{ fontWeight: 600, color: 'var(--navy-900)' }}>{ord.estimatedStitches.toLocaleString()}</span></div>}
-                      <div style={{ gridColumn: '1 / -1' }}><strong style={{ color: 'var(--text-muted)' }}>Instructions / Notes</strong><br/><span style={{ color: 'var(--navy-900)' }}>{ord.notes || 'None'}</span></div>
+                    <div style={{ flex: 1, background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border-color)' }}>
+                        <div style={{ background: '#fff', padding: '1rem' }}><div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.25rem' }}>Current Status</div><div style={{ textTransform: 'capitalize', fontWeight: 800, color: 'var(--orange-600)', fontSize: '1rem' }}>{ord.status || 'Pending'}</div></div>
+                        <div style={{ background: '#fff', padding: '1rem' }}><div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.25rem' }}>Client Profile</div><div style={{ fontWeight: 700, color: 'var(--navy-900)', fontSize: '1rem' }}>{ord.clientName}</div></div>
+                        <div style={{ background: '#fff', padding: '1rem' }}><div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.25rem' }}>Service Category</div><div style={{ fontWeight: 600, color: 'var(--navy-900)' }}>{ord.serviceCategory}</div></div>
+                        <div style={{ background: '#fff', padding: '1rem' }}><div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.25rem' }}>Project Total</div><div style={{ fontWeight: 800, color: 'var(--green-600)' }}>${parseFloat(ord.price || 0).toFixed(2)}</div></div>
+                        {ord.fabricType && <div style={{ background: '#fff', padding: '1rem' }}><div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.25rem' }}>Target Garment</div><div style={{ fontWeight: 600, color: 'var(--navy-900)' }}>{ord.fabricType}</div></div>}
+                        {ord.dimensions && <div style={{ background: '#fff', padding: '1rem' }}><div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.25rem' }}>Dimensions</div><div style={{ fontWeight: 600, color: 'var(--navy-900)' }}>{ord.dimensions.width} x {ord.dimensions.height} inches</div></div>}
+                        <div style={{ gridColumn: '1 / -1', background: '#f8fafc', padding: '1rem' }}><div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.4rem' }}>Digitizing Instructions</div><div style={{ color: 'var(--navy-900)', fontSize: '0.9rem', lineHeight: 1.5 }}>{ord.notes || 'No specific instructions provided.'}</div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -492,41 +513,67 @@ export const OrderTrackerDrawer = () => {
                   </h4>
 
                   {isAdmin && (
-                    <div style={{ marginBottom: '1.5rem', padding: '1.25rem', background: 'var(--navy-50)', borderRadius: '8px', border: '1px dashed var(--border-color)' }}>
-                      <div style={{ fontWeight: 700, marginBottom: '0.75rem', color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <UploadCloud size={18} /> Admin File Upload
-                      </div>
+                    <div 
+                      onDragOver={(e) => { e.preventDefault(); setAdminDragOver(true); }}
+                      onDragLeave={() => setAdminDragOver(false)}
+                      onDrop={(e) => { e.preventDefault(); setAdminDragOver(false); processAdminFilesList(e.dataTransfer.files); }}
+                      style={{ marginBottom: '1.5rem', padding: '2rem', background: adminDragOver ? 'var(--orange-50)' : '#f8fafc', borderRadius: '12px', border: `2px dashed ${adminDragOver ? 'var(--orange-500)' : 'var(--border-color)'}`, textAlign: 'center', transition: 'all 0.2s' }}
+                    >
+                      <UploadCloud size={32} style={{ color: 'var(--orange-500)', margin: '0 auto 1rem' }} />
+                      <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Secure Admin Dropzone</div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>Drag & drop finished machine files (.DST, .PES, .PDF) here, or click to browse.</div>
+                      
                       <form onSubmit={handleAdminFileSubmit}>
-                        <input type="file" multiple accept="*/*" onChange={handleAdminFileChange} style={{ marginBottom: '1rem', fontSize: '0.85rem' }} />
+                        <label style={{ display: 'inline-block', padding: '0.6rem 1.25rem', background: 'var(--navy-900)', color: '#fff', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', marginBottom: '1rem' }}>
+                          Browse Files
+                          <input type="file" multiple accept="*/*" onChange={handleAdminFileChange} style={{ display: 'none' }} />
+                        </label>
+
                         {adminFilesList.length > 0 && (
-                          <div style={{ marginBottom: '1rem', fontSize: '0.85rem', background: '#fff', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                          <div style={{ textAlign: 'left', background: '#ffffff', borderRadius: '8px', border: '1px solid var(--border-color)', padding: '0.5rem', marginBottom: '1.5rem' }}>
                             {adminFilesList.map((f, i) => (
-                              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0', alignItems: 'center' }}>
-                                <span style={{ fontWeight: 600, color: 'var(--navy-900)' }}>{f.name}</span>
-                                <button type="button" onClick={() => removeAdminFile(i)} style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer', padding: '4px' }}><Trash2 size={14}/></button>
+                              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', alignItems: 'center', borderBottom: i < adminFilesList.length - 1 ? '1px solid var(--border-color)' : 'none' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                  <FileCheck size={16} style={{ color: 'var(--green-500)' }} />
+                                  <span style={{ fontWeight: 600, color: 'var(--navy-900)', fontSize: '0.85rem' }}>{f.name}</span>
+                                </div>
+                                <button type="button" onClick={() => removeAdminFile(i)} style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer', padding: '4px' }}><Trash2 size={16}/></button>
                               </div>
                             ))}
                           </div>
                         )}
-                        <button type="submit" className="btn btn-primary-orange btn-sm" disabled={adminFilesList.length === 0}>
-                          Upload & Deliver to Client
-                        </button>
+                        
+                        {adminFilesList.length > 0 && (
+                          <button type="submit" className="btn btn-primary-orange" style={{ width: '100%', gap: '0.5rem' }}>
+                            <Send size={18} /> Deliver Package to Client
+                          </button>
+                        )}
                       </form>
                     </div>
                   )}
 
                   {!isCompletedOrUnlocked ? (
-                    <div style={{ padding: '1.5rem', background: '#f8fafc', borderRadius: '8px', color: 'var(--text-muted)', textAlign: 'center', border: '1px solid var(--border-color)' }}>
-                      <Clock size={24} style={{ margin: '0 auto 0.5rem', color: 'var(--orange-400)' }} />
-                      <div style={{ fontWeight: 600, color: 'var(--navy-900)', marginBottom: '0.25rem' }}>Files in Production</div>
-                      <div style={{ fontSize: '0.85rem' }}>Finished machine files will appear here once digitizing is complete.</div>
+                    <div style={{ padding: '2rem', background: '#f8fafc', borderRadius: '12px', color: 'var(--text-muted)', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+                      <Clock size={32} style={{ margin: '0 auto 1rem', color: 'var(--orange-400)' }} />
+                      <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Files in Production</div>
+                      <div style={{ fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>Your digitizing package is currently being worked on by our experts. Finished machine files will appear here once quality checked.</div>
                     </div>
                   ) : (
-                    <div>
-                      {ord.uploadedMachineFiles && ord.uploadedMachineFiles.length > 0 ? (
-                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-                          {ord.uploadedMachineFiles.map((upFile, idx) => {
-                            const ext = (upFile.format || upFile.name.split('.').pop() || 'dst').toUpperCase();
+                    <div style={{ border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden' }}>
+                      <div style={{ background: '#f8fafc', padding: '1.25rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                        <div>
+                          <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><PackageCheck size={18} style={{ color: 'var(--green-600)' }}/> Completed Assets</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>All requested formats and worksheets</div>
+                        </div>
+                        <button onClick={handleDownloadAll} className="btn btn-primary-orange" style={{ gap: '0.5rem' }}>
+                          <Download size={16} /> Download All Files
+                        </button>
+                      </div>
+                      
+                      <div style={{ padding: '1.25rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap', background: '#ffffff' }}>
+                      {uniqueFiles.length > 0 ? (
+                          uniqueFiles.map((upFile, idx) => {
+                            const ext = (upFile.format || (upFile.name && upFile.name.split('.').pop()) || 'dst').toUpperCase();
                             return (
                               <button
                                 key={idx}
@@ -534,37 +581,23 @@ export const OrderTrackerDrawer = () => {
                                 className="btn btn-outline"
                                 style={{ gap: '0.5rem', background: '#fff' }}
                               >
-                                <Download size={16} /> {upFile.name}
+                                <Download size={14} /> {upFile.name || `Asset.${ext}`}
                               </button>
                             );
-                          })}
-                        </div>
+                          })
                       ) : (
-                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-                           {allDownloadFormats.map(fmtKey => (
+                           allDownloadFormats.map(fmtKey => (
                              <button
                                key={fmtKey}
                                onClick={() => handleDownloadFileAsset(null, fmtKey)}
                                className="btn btn-outline"
                                style={{ gap: '0.5rem', background: '#fff' }}
                              >
-                               <Download size={16} /> Download .{fmtKey.toUpperCase()}
+                               <Download size={14} /> Download .{fmtKey.toUpperCase()}
                              </button>
-                           ))}
-                        </div>
+                           ))
                       )}
-
-                      {ord.status === 'delivered' && !isAdmin && (
-                        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', padding: '1.25rem', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-                          <div>
-                            <div style={{ fontWeight: 700, color: '#166534', marginBottom: '0.25rem' }}>Review & Accept</div>
-                            <div style={{ fontSize: '0.85rem', color: '#15803d' }}>Please review your files and mark the order as complete.</div>
-                          </div>
-                          <button onClick={() => completeOrder(ord.id)} className="btn" style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px' }}>
-                            ✅ Accept & Complete Order
-                          </button>
-                        </div>
-                      )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -655,6 +688,28 @@ export const OrderTrackerDrawer = () => {
           )}
 
         </div>
+
+        {/* Sticky Action Footer (Digital Orders Only) */}
+        {!isPhysicalStoreOrder && ord.status === 'delivered' && !isAdmin && (
+          <div style={{
+            padding: '1.25rem 1.75rem',
+            background: '#ffffff',
+            borderTop: '1px solid var(--border-color)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderRadius: '0 0 var(--radius-lg) var(--radius-lg)',
+            boxShadow: '0 -4px 10px rgba(0,0,0,0.03)'
+          }}>
+            <div>
+              <div style={{ fontWeight: 800, color: 'var(--green-700)', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ShieldCheck size={18}/> Review & Accept</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Please review your files. If everything looks good, complete the order.</div>
+            </div>
+            <button onClick={() => completeOrder(ord.id)} className="btn btn-primary-orange" style={{ background: 'var(--green-600)', borderColor: 'var(--green-600)', gap: '0.5rem' }}>
+              ✅ Accept & Complete Order
+            </button>
+          </div>
+        )}
 
       </div>
 

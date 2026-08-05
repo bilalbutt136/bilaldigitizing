@@ -470,29 +470,28 @@ export async function updateOrderStatusInSupabase(orderId, newStatus, extraData 
     // If new finished machine files were uploaded
     if (extraData.uploadedMachineFiles && Array.isArray(extraData.uploadedMachineFiles)) {
       for (const f of extraData.uploadedMachineFiles) {
-        let filePublicUrl = f.url;
-
-        // Upload to finished-packages bucket if base64
+        // Only process and insert files that are new uploads (base64 data URL)
         if (f.url && f.url.startsWith('data:')) {
+          let filePublicUrl = f.url;
           const storageUrl = await uploadFileToSupabaseStorage(
             f.url,
             'finished-packages',
             `orders/${orderId}`
           );
           if (storageUrl) filePublicUrl = storageUrl;
-        }
 
-        await supabase.from('order_files').insert([{
-          order_id: orderId,
-          file_name: f.name,
-          file_format: f.format || f.name.split('.').pop().toLowerCase(),
-          file_type: 'finished_machine_file',
-          bucket_name: 'finished-packages',
-          file_path: `orders/${orderId}/${f.name}`,
-          file_url: filePublicUrl,
-          public_url: filePublicUrl,
-          uploaded_by: 'Admin'
-        }]);
+          await supabase.from('order_files').insert([{
+            order_id: orderId,
+            file_name: f.name,
+            file_format: f.format || f.name.split('.').pop().toLowerCase(),
+            file_type: 'finished_machine_file',
+            bucket_name: 'finished-packages',
+            file_path: `orders/${orderId}/${f.name}`,
+            file_url: filePublicUrl,
+            public_url: filePublicUrl,
+            uploaded_by: 'Admin'
+          }]);
+        }
       }
     }
 
