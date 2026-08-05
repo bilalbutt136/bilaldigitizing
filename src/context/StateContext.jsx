@@ -925,6 +925,24 @@ export const StateProvider = ({ children }) => {
     }
   };
 
+  // Helper to trigger email notifications
+  const triggerEmailNotification = async (type, orderObj) => {
+    try {
+      await fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type,
+          orderId: orderObj.id,
+          clientEmail: orderObj.clientEmail,
+          // adminEmail can be picked up by env variable on server side
+        })
+      });
+    } catch (err) {
+      console.warn('Failed to trigger email notification:', err);
+    }
+  };
+
   // Order Operations connected to Supabase DB
   const createOrder = async (newOrderData) => {
     const localId = newOrderData.id || `#${Math.floor(1000 + Math.random() * 9000)}`;
@@ -944,6 +962,7 @@ export const StateProvider = ({ children }) => {
         await createOrderInSupabase(fullOrderPayload);
         setOrders(prev => [fullOrderPayload, ...prev]);
         showToast(`Order ${formatOrderId(localId)} created successfully!`, 'success');
+        triggerEmailNotification('NEW_ORDER', fullOrderPayload);
         return fullOrderPayload;
       } catch (sbErr) {
         console.warn('Supabase create order notice:', sbErr);
@@ -952,10 +971,13 @@ export const StateProvider = ({ children }) => {
 
     setOrders(prev => [fullOrderPayload, ...prev]);
     showToast(`Order ${formatOrderId(localId)} created successfully!`, 'success');
+    triggerEmailNotification('NEW_ORDER', fullOrderPayload);
     return fullOrderPayload;
   };
 
   const updateOrderStatus = async (orderId, newStatus, extraData = {}) => {
+    const targetOrder = orders.find(o => o.id === orderId);
+    
     if (isSupabaseConfigured) {
       try {
         await updateOrderStatusInSupabase(orderId, newStatus, extraData);
@@ -976,6 +998,15 @@ export const StateProvider = ({ children }) => {
       return ord;
     }));
     showToast(`Order ${formatOrderId(orderId)} status updated to ${newStatus.toUpperCase()}`, 'success');
+
+    // Trigger email based on new status
+    if (targetOrder) {
+      if (newStatus === 'delivered') {
+        triggerEmailNotification('ORDER_DELIVERED', { ...targetOrder, ...extraData });
+      } else if (newStatus === 'completed') {
+        triggerEmailNotification('ORDER_COMPLETED', { ...targetOrder, ...extraData });
+      }
+    }
   };
 
   const completeOrder = async (orderId) => {

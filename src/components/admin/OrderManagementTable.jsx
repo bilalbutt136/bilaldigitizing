@@ -424,21 +424,13 @@ export const OrderManagementTable = () => {
 
                     {/* 6. STATUS */}
                     <td style={{ padding: '1rem' }}>
-                      <select 
-                        value={ord.status || 'submitted'} 
-                        onChange={(e) => updateOrderStatus(ord.id, e.target.value)}
-                        className="form-control"
-                        style={{ fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem', marginBottom: '0.5rem', width: '100%' }}
-                      >
-                        <option value={ord.status || 'submitted'} disabled>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--navy-900)' }}>
                           {statusLabels[ord.status] || ord.status || 'Submitted'}
-                        </option>
-                        {getNextStatuses(ord.status || 'submitted').map(st => (
-                          <option key={st} value={st}>{statusLabels[st]}</option>
-                        ))}
-                      </select>
-                      <div>
-                        {getStatusBadge(ord.status)}
+                        </div>
+                        <div>
+                          {getStatusBadge(ord.status)}
+                        </div>
                       </div>
                     </td>
 
