@@ -102,53 +102,55 @@ const AnimatedNumber = ({ end, duration = 2000, suffix = '', isStatic = false, s
 export const TrustStatsBar = () => {
   const { siteSettings } = useAppState();
 
+  const cmsStats = siteSettings?.trustStats || [];
+
   const defaultStats = [
     {
       id: 'designs',
       icon: <FileCheck size={24} color="var(--orange-500, #ff7a00)" />,
-      value: siteSettings?.designsDelivered || '15000',
+      value: cmsStats[0]?.value || siteSettings?.designsDelivered || '15000',
       suffix: '+',
-      label: 'Designs Delivered',
+      label: cmsStats[0]?.label || 'Designs Delivered',
       isStatic: false
     },
     {
       id: 'clients',
       icon: <Users size={24} color="var(--orange-500, #ff7a00)" />,
-      value: siteSettings?.happyClients || '1200',
+      value: cmsStats[1]?.value || siteSettings?.happyClients || '1200',
       suffix: '+',
-      label: 'Happy Clients',
+      label: cmsStats[1]?.label || 'Happy Clients',
       isStatic: false
     },
     {
       id: 'countries',
       icon: <Globe size={24} color="var(--orange-500, #ff7a00)" />,
-      value: siteSettings?.countriesServed || '45',
+      value: cmsStats[2]?.value || siteSettings?.countriesServed || '45',
       suffix: '+',
-      label: 'Countries Served',
+      label: cmsStats[2]?.label || 'Countries Served',
       isStatic: false
     },
     {
       id: 'turnaround',
       icon: <Zap size={24} color="var(--orange-500, #ff7a00)" />,
       value: null,
-      staticText: siteSettings?.turnaround || '4-Hour',
-      label: 'Express Turnaround',
+      staticText: cmsStats[5]?.value || siteSettings?.turnaround || '4-Hour',
+      label: cmsStats[5]?.label || 'Express Turnaround',
       isStatic: true
     },
     {
       id: 'satisfaction',
       icon: <ShieldCheck size={24} color="var(--orange-500, #ff7a00)" />,
-      value: siteSettings?.satisfactionRate || '100',
+      value: cmsStats[3]?.value || siteSettings?.satisfactionRate || '100',
       suffix: '%',
-      label: 'Satisfaction Rate',
+      label: cmsStats[3]?.label || 'Satisfaction Rate',
       isStatic: false
     },
     {
       id: 'support',
       icon: <Headphones size={24} color="var(--orange-500, #ff7a00)" />,
       value: null,
-      staticText: siteSettings?.studioSupport || '24/7',
-      label: 'Studio Support',
+      staticText: cmsStats[4]?.value || siteSettings?.studioSupport || '24/7',
+      label: cmsStats[4]?.label || 'Studio Support',
       isStatic: true
     }
   ];

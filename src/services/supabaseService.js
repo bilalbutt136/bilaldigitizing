@@ -887,7 +887,9 @@ export async function fetchCatalogFromSupabase() {
       siteConfig: configMap,
       siteSettings: configMap.site_settings || null,
       pricing: configMap.pricing || null,
-      serviceCms: configMap.service_cms || null
+      serviceCms: configMap.service_cms || null,
+      testimonials: configMap.testimonials || null,
+      faqs: configMap.faqs || null
     };
   } catch (err) {
     console.warn('Supabase fetch catalog exception:', err);

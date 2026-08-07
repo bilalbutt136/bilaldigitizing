@@ -443,6 +443,8 @@ export const StateProvider = ({ children }) => {
   // Dynamic Service-Driven Homepage & CMS Content State
   const [activeHomeServiceTab, setActiveHomeServiceTab] = useState('all');
   const [serviceCmsContent, setServiceCmsContent] = useState(DEFAULT_SERVICE_CMS_CONTENT);
+  const [testimonials, setTestimonials] = useState([]);
+  const [faqs, setFaqs] = useState([]);
 
   // Wallet & Modals State
   const [walletBalance, setWalletBalance] = useState(0);
@@ -1191,6 +1193,12 @@ export const StateProvider = ({ children }) => {
     saveCmsConfigToSupabase('site_settings', newSettings);
   };
 
+  const saveCmsData = (key, value) => {
+    if (key === 'testimonials') setTestimonials(value);
+    if (key === 'faqs') setFaqs(value);
+    saveCmsConfigToSupabase(key, value);
+  };
+
   const updateServiceCmsContent = (serviceKey, sectionKey, updatedData) => {
     setServiceCmsContent(prev => {
       const nextState = {
@@ -1231,6 +1239,8 @@ export const StateProvider = ({ children }) => {
         if (catalog.siteSettings) setSiteSettings(catalog.siteSettings);
         if (catalog.pricing) setPricing(catalog.pricing);
         if (catalog.serviceCms) setServiceCmsContent(catalog.serviceCms);
+        if (catalog.testimonials) setTestimonials(catalog.testimonials);
+        if (catalog.faqs) setFaqs(catalog.faqs);
       }
 
       const adminList = await fetchAdminUsers(authUser?.email);
@@ -1303,6 +1313,9 @@ export const StateProvider = ({ children }) => {
       adminUsers, setAdminUsers, addAdminUser,
       activeHomeServiceTab, setActiveHomeServiceTab,
       serviceCmsContent, setServiceCmsContent, updateServiceCmsContent,
+      testimonials, setTestimonials,
+      faqs, setFaqs,
+      saveCmsData,
       resetAllData,
       digitizers,
       isOrderWizardOpen, setIsOrderWizardOpen,

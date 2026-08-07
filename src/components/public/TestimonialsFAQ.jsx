@@ -108,7 +108,7 @@ export const TestimonialsFAQ = () => {
   const testimonials = (appState.testimonials || defaultTestimonials).filter(
     (t) => t.service === currentServiceKey
   );
-  const faqs = appState.faqs || defaultFaqs;
+  const faqs = appState.faqs?.length > 0 ? appState.faqs : defaultFaqs;
 
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
   const [activeFaqTab, setActiveFaqTab] = useState(currentServiceKey);
