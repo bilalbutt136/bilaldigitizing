@@ -413,7 +413,7 @@ export const PortfolioPage = () => {
                   }}
                 >
                   <div>
-                    {/* Interactive Split Comparison / Preview */}
+                    {/* Interactive Image Preview */}
                     <div 
                       style={{ 
                         position: 'relative', 
@@ -424,72 +424,18 @@ export const PortfolioPage = () => {
                       }}
                       onClick={() => setActiveItemModal(item)}
                     >
-                      {/* After Image (Full width background) */}
+                      {/* Final Finished Image */}
                       <img 
                         src={item.afterImg || item.image || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80'} 
-                        alt={`${item.title || 'Portfolio'} Finished Stitchout`}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        alt={`${item.title || 'Portfolio'} Finished Artwork`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s ease' }}
+                        onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+                        onMouseOut={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
                         onError={(e) => {
                           e.currentTarget.onerror = null;
                           e.currentTarget.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80';
                         }}
                       />
-
-                      {/* Before Image (Clipped overlay) */}
-                      <div 
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          bottom: 0,
-                          width: `${posPercent}%`,
-                          overflow: 'hidden',
-                          borderRight: '2px solid #ffffff',
-                          boxShadow: '4px 0 12px rgba(0,0,0,0.4)'
-                        }}
-                      >
-                        <img 
-                          src={item.beforeImg || item.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'} 
-                          alt={`${item.title || 'Portfolio'} Original Artwork`}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover', maxWidth: 'none' }}
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80';
-                          }}
-                        />
-                        <span style={{
-                          position: 'absolute',
-                          top: '10px',
-                          left: '10px',
-                          background: 'rgba(15, 23, 42, 0.85)',
-                          color: '#ffffff',
-                          fontSize: '0.675rem',
-                          fontWeight: 800,
-                          padding: '0.2rem 0.6rem',
-                          borderRadius: '4px',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.06em'
-                        }}>
-                          Before: Art
-                        </span>
-                      </div>
-
-                      <span style={{
-                        position: 'absolute',
-                        top: '10px',
-                        right: '10px',
-                        background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-                        color: '#ffffff',
-                        fontSize: '0.675rem',
-                        fontWeight: 800,
-                        padding: '0.2rem 0.65rem',
-                        borderRadius: '4px',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.06em',
-                        boxShadow: '0 2px 8px rgba(249, 115, 22, 0.4)'
-                      }}>
-                        After: Stitchout
-                      </span>
 
                       {/* Category Pill */}
                       <span style={{
@@ -502,7 +448,8 @@ export const PortfolioPage = () => {
                         fontSize: '0.725rem',
                         fontWeight: 800,
                         padding: '0.25rem 0.75rem',
-                        borderRadius: '9999px'
+                        borderRadius: '9999px',
+                        pointerEvents: 'none'
                       }}>
                         {item.categoryLabel}
                       </span>
@@ -520,25 +467,11 @@ export const PortfolioPage = () => {
                         fontWeight: 700,
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.3rem'
+                        gap: '0.3rem',
+                        pointerEvents: 'none'
                       }}>
                         <Maximize2 size={13} /> Inspect
                       </div>
-                    </div>
-
-                    {/* Interactive Range Drag Slider Control */}
-                    <div style={{ padding: '0.65rem 1.25rem', background: '#f8fafc', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <span style={{ fontSize: '0.725rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', flexShrink: 0 }}>
-                        Art vs Stitch
-                      </span>
-                      <input 
-                        type="range"
-                        min="5"
-                        max="95"
-                        value={posPercent}
-                        onChange={(e) => handleSliderMove(item.id, parseFloat(e.target.value))}
-                        style={{ width: '100%', accentColor: 'var(--orange-500)', cursor: 'ew-resize' }}
-                      />
                     </div>
 
                     {/* Clean Card Body Caption */}
