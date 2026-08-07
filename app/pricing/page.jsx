@@ -26,29 +26,31 @@ export default function PricingPage() {
   };
 
   return (
-    <main style={{ padding: '8rem 2rem 6rem', background: 'var(--navy-950)', minHeight: '100vh', color: '#fff', fontFamily: 'var(--font-body, "Inter", sans-serif)' }}>
+    <main style={{ padding: '8rem 2rem 6rem', background: 'var(--navy-100)', minHeight: '100vh', color: 'var(--text-main)', fontFamily: 'var(--font-body, "Inter", sans-serif)' }}>
       <div className="container" style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
           <div style={{
-            display: 'inline-block',
-            backgroundColor: 'rgba(255, 122, 0, 0.1)',
-            color: '#ff7a00',
-            padding: '6px 16px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            background: 'var(--orange-50)',
+            border: '1px solid var(--orange-200)',
+            color: 'var(--orange-700)',
+            padding: '0.35rem 0.95rem',
             borderRadius: '9999px',
-            fontSize: '0.875rem',
-            fontWeight: '700',
+            fontSize: '0.85rem',
+            fontWeight: '800',
             textTransform: 'uppercase',
-            letterSpacing: '0.05em',
+            letterSpacing: '0.08em',
             marginBottom: '1rem',
-            border: '1px solid rgba(255, 122, 0, 0.2)',
           }}>
-            <Sparkles size={14} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />
+            <Sparkles size={16} />
             Clear & Transparent Pricing
           </div>
-          <h1 style={{ fontSize: 'clamp(2.5rem, 5vw, 3.5rem)', fontFamily: 'var(--font-heading, "Plus Jakarta Sans", sans-serif)', fontWeight: 800, color: '#fff', marginBottom: '1.25rem', lineHeight: 1.1 }}>
+          <h1 style={{ fontSize: 'clamp(2.5rem, 5vw, 3.5rem)', fontFamily: 'var(--font-heading)', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1.25rem', lineHeight: 1.1 }}>
             Choose Your <span style={{ color: '#ff7a00' }}>Service</span>
           </h1>
-          <p style={{ fontSize: '1.15rem', color: '#94a3b8', maxWidth: '650px', margin: '0 auto', lineHeight: 1.6 }}>
+          <p style={{ fontSize: '1.15rem', color: 'var(--text-muted)', maxWidth: '650px', margin: '0 auto', lineHeight: 1.6 }}>
             Select from our three core studio services below. Simple, flat-rate starting prices with zero hidden fees and no surprises.
           </p>
         </div>
@@ -56,34 +58,39 @@ export default function PricingPage() {
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: '2rem',
+          gap: '2.5rem',
           alignItems: 'stretch'
         }}>
           {/* Card 1: Embroidery */}
-          <div className="glass-panel" style={{
-            background: '#0f172a',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+          <div className="card" style={{
+            background: '#ffffff',
+            border: '1.5px solid var(--border-color)',
             borderRadius: '20px',
-            padding: '2.5rem 2rem',
+            padding: '2.75rem 2rem',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+            boxShadow: 'var(--shadow-md)',
             transition: 'transform 0.3s ease, box-shadow 0.3s ease'
           }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                <Layers size={32} style={{ color: '#ff7a00' }} />
-                <h3 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-heading)', fontWeight: 800, margin: 0, color: '#fff' }}>Embroidery Digitizing</h3>
+                <div style={{ background: 'rgba(249, 115, 22, 0.12)', color: 'var(--orange-600)', padding: '0.75rem', borderRadius: '12px', display: 'flex' }}>
+                  <Layers size={28} />
+                </div>
+                <h3 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-heading)', fontWeight: 800, margin: 0, color: 'var(--navy-900)' }}>Embroidery Digitizing</h3>
               </div>
               <div style={{ marginBottom: '2rem' }}>
-                <div style={{ fontSize: '3rem', fontWeight: 900, color: '#ff7a00', lineHeight: 1 }}>${minFee}</div>
-                <div style={{ fontSize: '0.9rem', color: '#e2e8f0', fontWeight: 600, marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Starting rate per design</div>
+                <div style={{ fontSize: '3rem', fontWeight: 900, color: 'var(--orange-600)', lineHeight: 1 }}>${minFee}</div>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 700, marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Starting rate per design</div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2.5rem' }}>
                 {['DST, PES, EMB machine formats', 'Free unlimited revisions', 'Standard 12-24 hr turnaround', 'Custom underlay & pull compensation'].map((feat, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', color: '#ffffff', fontSize: '0.95rem', lineHeight: 1.4, fontWeight: 500 }}>
-                    <CheckCircle size={18} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} /> <span>{feat}</span>
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
+                    <div style={{ background: '#dcfce7', color: '#16a34a', padding: '0.25rem', borderRadius: '50%', marginTop: '2px', flexShrink: 0 }}>
+                      <CheckCircle size={14} />
+                    </div>
+                    <span style={{ fontSize: '0.95rem', color: 'var(--navy-800)', fontWeight: 600 }}>{feat}</span>
                   </div>
                 ))}
               </div>
@@ -91,39 +98,15 @@ export default function PricingPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <button 
                 onClick={() => handleOrder('embroidery', 'Standard Digitizing', `$${minFee}`, 'embroidery')}
-                style={{
-                  background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '1.1rem',
-                  borderRadius: '9999px',
-                  fontWeight: 800,
-                  fontSize: '1rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  boxShadow: '0 4px 14px rgba(255, 122, 0, 0.25)'
-                }}
+                className="btn btn-primary-orange btn-md"
+                style={{ width: '100%', justifyContent: 'center', fontWeight: 800, padding: '1.1rem' }}
               >
                 Order Digitizing <ArrowRight size={18} />
               </button>
               <button
                 onClick={() => router.push('/services/embroidery-digitizing')}
-                style={{
-                  background: 'transparent',
-                  color: '#fff',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  padding: '1.1rem',
-                  borderRadius: '9999px',
-                  fontWeight: 700,
-                  fontSize: '1rem',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
-                onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                className="btn btn-outline btn-md"
+                style={{ width: '100%', justifyContent: 'center', fontWeight: 700, padding: '1.1rem' }}
               >
                 View Full Tiers
               </button>
@@ -131,30 +114,35 @@ export default function PricingPage() {
           </div>
 
           {/* Card 2: Vector */}
-          <div className="glass-panel" style={{
-            background: '#0f172a',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+          <div className="card" style={{
+            background: '#ffffff',
+            border: '1.5px solid var(--border-color)',
             borderRadius: '20px',
-            padding: '2.5rem 2rem',
+            padding: '2.75rem 2rem',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+            boxShadow: 'var(--shadow-md)',
             transition: 'transform 0.3s ease, box-shadow 0.3s ease'
           }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                <PenTool size={32} style={{ color: '#3b82f6' }} />
-                <h3 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-heading)', fontWeight: 800, margin: 0, color: '#fff' }}>Vector Art Conversion</h3>
+                <div style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', padding: '0.75rem', borderRadius: '12px', display: 'flex' }}>
+                  <PenTool size={28} />
+                </div>
+                <h3 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-heading)', fontWeight: 800, margin: 0, color: 'var(--navy-900)' }}>Vector Art Conversion</h3>
               </div>
               <div style={{ marginBottom: '2rem' }}>
-                <div style={{ fontSize: '3rem', fontWeight: 900, color: '#3b82f6', lineHeight: 1 }}>${vectorFee}</div>
-                <div style={{ fontSize: '0.9rem', color: '#e2e8f0', fontWeight: 600, marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Starting flat rate</div>
+                <div style={{ fontSize: '3rem', fontWeight: 900, color: '#1d4ed8', lineHeight: 1 }}>${vectorFee}</div>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 700, marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Starting flat rate</div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2.5rem' }}>
                 {['AI, EPS, SVG, PDF master formats', '100% Hand-drawn node paths', 'Pantone spot color separation', 'Zero auto-trace distortion'].map((feat, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', color: '#ffffff', fontSize: '0.95rem', lineHeight: 1.4, fontWeight: 500 }}>
-                    <CheckCircle size={18} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} /> <span>{feat}</span>
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
+                    <div style={{ background: '#dcfce7', color: '#16a34a', padding: '0.25rem', borderRadius: '50%', marginTop: '2px', flexShrink: 0 }}>
+                      <CheckCircle size={14} />
+                    </div>
+                    <span style={{ fontSize: '0.95rem', color: 'var(--navy-800)', fontWeight: 600 }}>{feat}</span>
                   </div>
                 ))}
               </div>
@@ -162,19 +150,15 @@ export default function PricingPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <button 
                 onClick={() => handleOrder('vector', 'Vector Conversion', `$${vectorFee}`, 'vector')}
+                className="btn btn-md"
                 style={{
                   background: '#3b82f6',
                   color: '#fff',
                   border: 'none',
-                  padding: '1.1rem',
-                  borderRadius: '9999px',
-                  fontWeight: 800,
-                  fontSize: '1rem',
-                  cursor: 'pointer',
-                  display: 'flex',
+                  width: '100%',
                   justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: '0.5rem',
+                  fontWeight: 800,
+                  padding: '1.1rem',
                   boxShadow: '0 4px 14px rgba(59, 130, 246, 0.25)'
                 }}
               >
@@ -182,19 +166,8 @@ export default function PricingPage() {
               </button>
               <button
                 onClick={() => router.push('/services/vector-tracing')}
-                style={{
-                  background: 'transparent',
-                  color: '#fff',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  padding: '1.1rem',
-                  borderRadius: '9999px',
-                  fontWeight: 700,
-                  fontSize: '1rem',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
-                onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                className="btn btn-outline btn-md"
+                style={{ width: '100%', justifyContent: 'center', fontWeight: 700, padding: '1.1rem' }}
               >
                 View Full Tiers
               </button>
@@ -202,30 +175,35 @@ export default function PricingPage() {
           </div>
 
           {/* Card 3: Patches */}
-          <div className="glass-panel" style={{
-            background: '#0f172a',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+          <div className="card" style={{
+            background: '#ffffff',
+            border: '1.5px solid var(--border-color)',
             borderRadius: '20px',
-            padding: '2.5rem 2rem',
+            padding: '2.75rem 2rem',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+            boxShadow: 'var(--shadow-md)',
             transition: 'transform 0.3s ease, box-shadow 0.3s ease'
           }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                <Tag size={32} style={{ color: '#10b981' }} />
-                <h3 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-heading)', fontWeight: 800, margin: 0, color: '#fff' }}>Custom Patches</h3>
+                <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', padding: '0.75rem', borderRadius: '12px', display: 'flex' }}>
+                  <Tag size={28} />
+                </div>
+                <h3 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-heading)', fontWeight: 800, margin: 0, color: 'var(--navy-900)' }}>Custom Patches</h3>
               </div>
               <div style={{ marginBottom: '2rem' }}>
-                <div style={{ fontSize: '3rem', fontWeight: 900, color: '#10b981', lineHeight: 1 }}>${patchesFee}</div>
-                <div style={{ fontSize: '0.9rem', color: '#e2e8f0', fontWeight: 600, marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Starting rate per patch</div>
+                <div style={{ fontSize: '3rem', fontWeight: 900, color: '#047857', lineHeight: 1 }}>${patchesFee}</div>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 700, marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Starting rate per patch</div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2.5rem' }}>
                 {['Embroidered, Woven, PVC & Leather', 'Velcro, Iron-On, or Sew-On backing', 'Free physical sample photo', 'Express physical shipping worldwide'].map((feat, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', color: '#ffffff', fontSize: '0.95rem', lineHeight: 1.4, fontWeight: 500 }}>
-                    <CheckCircle size={18} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} /> <span>{feat}</span>
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
+                    <div style={{ background: '#dcfce7', color: '#16a34a', padding: '0.25rem', borderRadius: '50%', marginTop: '2px', flexShrink: 0 }}>
+                      <CheckCircle size={14} />
+                    </div>
+                    <span style={{ fontSize: '0.95rem', color: 'var(--navy-800)', fontWeight: 600 }}>{feat}</span>
                   </div>
                 ))}
               </div>
@@ -233,19 +211,15 @@ export default function PricingPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <button 
                 onClick={() => handleOrder('patch', 'Custom Patches', `$${patchesFee}`, 'patch')}
+                className="btn btn-md"
                 style={{
                   background: '#10b981',
                   color: '#fff',
                   border: 'none',
-                  padding: '1.1rem',
-                  borderRadius: '9999px',
-                  fontWeight: 800,
-                  fontSize: '1rem',
-                  cursor: 'pointer',
-                  display: 'flex',
+                  width: '100%',
                   justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: '0.5rem',
+                  fontWeight: 800,
+                  padding: '1.1rem',
                   boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)'
                 }}
               >
@@ -253,19 +227,8 @@ export default function PricingPage() {
               </button>
               <button
                 onClick={() => router.push('/custom-patches')}
-                style={{
-                  background: 'transparent',
-                  color: '#fff',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  padding: '1.1rem',
-                  borderRadius: '9999px',
-                  fontWeight: 700,
-                  fontSize: '1rem',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
-                onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                className="btn btn-outline btn-md"
+                style={{ width: '100%', justifyContent: 'center', fontWeight: 700, padding: '1.1rem' }}
               >
                 View Full Tiers
               </button>
