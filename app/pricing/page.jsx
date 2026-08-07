@@ -78,11 +78,11 @@ export default function PricingPage() {
               </div>
               <div style={{ marginBottom: '2rem' }}>
                 <div style={{ fontSize: '3rem', fontWeight: 900, color: '#ff7a00', lineHeight: 1 }}>${minFee}</div>
-                <div style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: 600, marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Starting rate per design</div>
+                <div style={{ fontSize: '0.9rem', color: '#e2e8f0', fontWeight: 600, marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Starting rate per design</div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2.5rem' }}>
                 {['DST, PES, EMB machine formats', 'Free unlimited revisions', 'Standard 12-24 hr turnaround', 'Custom underlay & pull compensation'].map((feat, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', color: '#cbd5e1', fontSize: '0.95rem', lineHeight: 1.4 }}>
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', color: '#ffffff', fontSize: '0.95rem', lineHeight: 1.4, fontWeight: 500 }}>
                     <CheckCircle size={18} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} /> <span>{feat}</span>
                   </div>
                 ))}
@@ -149,11 +149,11 @@ export default function PricingPage() {
               </div>
               <div style={{ marginBottom: '2rem' }}>
                 <div style={{ fontSize: '3rem', fontWeight: 900, color: '#3b82f6', lineHeight: 1 }}>${vectorFee}</div>
-                <div style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: 600, marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Starting flat rate</div>
+                <div style={{ fontSize: '0.9rem', color: '#e2e8f0', fontWeight: 600, marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Starting flat rate</div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2.5rem' }}>
                 {['AI, EPS, SVG, PDF master formats', '100% Hand-drawn node paths', 'Pantone spot color separation', 'Zero auto-trace distortion'].map((feat, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', color: '#cbd5e1', fontSize: '0.95rem', lineHeight: 1.4 }}>
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', color: '#ffffff', fontSize: '0.95rem', lineHeight: 1.4, fontWeight: 500 }}>
                     <CheckCircle size={18} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} /> <span>{feat}</span>
                   </div>
                 ))}
@@ -220,11 +220,11 @@ export default function PricingPage() {
               </div>
               <div style={{ marginBottom: '2rem' }}>
                 <div style={{ fontSize: '3rem', fontWeight: 900, color: '#10b981', lineHeight: 1 }}>${patchesFee}</div>
-                <div style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: 600, marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Starting rate per patch</div>
+                <div style={{ fontSize: '0.9rem', color: '#e2e8f0', fontWeight: 600, marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Starting rate per patch</div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2.5rem' }}>
                 {['Embroidered, Woven, PVC & Leather', 'Velcro, Iron-On, or Sew-On backing', 'Free physical sample photo', 'Express physical shipping worldwide'].map((feat, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', color: '#cbd5e1', fontSize: '0.95rem', lineHeight: 1.4 }}>
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', color: '#ffffff', fontSize: '0.95rem', lineHeight: 1.4, fontWeight: 500 }}>
                     <CheckCircle size={18} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} /> <span>{feat}</span>
                   </div>
                 ))}
