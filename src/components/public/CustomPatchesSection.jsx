@@ -15,8 +15,9 @@ import {
   Tag,
   Image as ImageIcon
 } from 'lucide-react';
+import { PackageCard } from './PackageCard';
 
-export const CustomPatchesSection = () => {
+export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => {
   const { openOrderWizard, setIsOrderWizardOpen, patchCards } = useAppState();
 
   const [selectedTier, setSelectedTier] = useState('standard');
@@ -217,8 +218,37 @@ export const CustomPatchesSection = () => {
     <div style={{ background: 'var(--navy-950)', color: '#ffffff', minHeight: '100vh', paddingBottom: '5rem' }}>
       
       {/* SECTION 1: High-Impact Hero & Overview Banner */}
-      <section style={{ padding: '5rem 0 4rem', background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="container" style={{ textAlign: 'center', maxWidth: '850px' }}>
+      {!hideHero && (
+        <section style={{ 
+          padding: '5rem 0 4rem', 
+          background: 'linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%)', 
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {/* Glowing Background Orbs */}
+          <div style={{
+          position: 'absolute',
+          top: '-10%',
+          left: '-5%',
+          width: '500px',
+          height: '500px',
+          background: 'radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%)',
+          pointerEvents: 'none',
+          zIndex: 0
+        }} />
+        <div style={{
+          position: 'absolute',
+          bottom: '-10%',
+          right: '-5%',
+          width: '500px',
+          height: '500px',
+          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%)',
+          pointerEvents: 'none',
+          zIndex: 0
+        }} />
+
+        <div className="container" style={{ textAlign: 'center', maxWidth: '850px', position: 'relative', zIndex: 1 }}>
           
           <div style={{
             display: 'inline-flex',
@@ -288,7 +318,8 @@ export const CustomPatchesSection = () => {
           </div>
 
         </div>
-      </section>
+        </section>
+      )}
 
       {/* Pricing Tiers Section */}
       <section id="pricing-tiers" style={{ padding: '3.5rem 0 5rem', background: 'var(--navy-950)' }}>
@@ -303,152 +334,15 @@ export const CustomPatchesSection = () => {
             margin: '0 auto',
             alignItems: 'stretch'
           }}>
-            {cardsToRender.map((cat, idx) => {
-              const isSelected = selectedTier === cat.tierKey;
-              const isPopular = cat.popular || cat.badge === 'MOST POPULAR';
-              const IconComp = cat.icon || (idx === 0 ? Zap : idx === 1 ? Trophy : Sparkles);
-
-              return (
-                <div
-                  key={cat.id || idx}
-                  onClick={() => handleStartOrder(cat.tierKey, cat)}
-                  style={{
-                    background: isSelected 
-                      ? 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)' 
-                      : '#0f172a',
-                    border: isSelected ? '2px solid #ff7a00' : '1px solid rgba(255, 255, 255, 0.12)',
-                    borderRadius: '16px',
-                    padding: '2rem 1.5rem 1.5rem',
-                    position: 'relative',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    height: '100%',
-                    boxShadow: isSelected ? '0 12px 30px rgba(255, 122, 0, 0.25)' : '0 4px 20px rgba(0, 0, 0, 0.2)',
-                    transition: 'all 0.25s ease',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {isPopular && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '-14px',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
-                      color: '#ffffff',
-                      fontSize: '0.725rem',
-                      fontWeight: 800,
-                      padding: '0.25rem 0.95rem',
-                      borderRadius: '9999px',
-                      letterSpacing: '0.06em',
-                      textTransform: 'uppercase',
-                      boxShadow: '0 4px 12px rgba(255, 122, 0, 0.35)',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      ★ MOST POPULAR
-                    </div>
-                  )}
-
-                  <div>
-                    {/* Card Title & Icon Header */}
-                    <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                        <IconComp size={20} style={{ color: '#ff7a00' }} />
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
-                          {cat.title}
-                        </h3>
-                      </div>
-                      {cat.subTitle && (
-                        <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0, lineHeight: 1.4 }}>
-                          {cat.subTitle}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Price & Delivery Header Box */}
-                    <div style={{
-                      textAlign: 'center',
-                      padding: '0.85rem 0.5rem',
-                      borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                      marginBottom: '1.25rem'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.4rem' }}>
-                        <span style={{ fontSize: '2.3rem', fontWeight: 900, color: '#ff7a00', lineHeight: 1 }}>
-                          {cat.rate}
-                        </span>
-                        <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 600 }}>
-                          {cat.unit || '/ patch'}
-                        </span>
-                        {cat.strikePrice && (
-                          <span style={{ fontSize: '0.85rem', color: '#64748b', textDecoration: 'line-through', marginLeft: '0.25rem' }}>
-                            {cat.strikePrice}
-                          </span>
-                        )}
-                      </div>
-
-                      {cat.delivery && (
-                        <div style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          fontSize: '0.775rem',
-                          fontWeight: 700,
-                          color: '#38bdf8',
-                          background: 'rgba(56, 189, 248, 0.1)',
-                          padding: '0.2rem 0.65rem',
-                          borderRadius: '9999px',
-                          marginTop: '0.5rem'
-                        }}>
-                          <Clock size={13} /> {cat.delivery}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Key Features Bullet List */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', marginBottom: '1.5rem' }}>
-                      {(cat.features || []).map((feat, fIdx) => (
-                        <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#cbd5e1' }}>
-                          <CheckCircle size={15} style={{ color: '#10b981', flexShrink: 0 }} />
-                          <span style={{ fontWeight: 500 }}>{feat}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Primary CTA Button */}
-                  <div>
-                    <button
-                      type="button"
-                      className="btn btn-block"
-                      style={{
-                        width: '100%',
-                        justifyContent: 'center',
-                        fontWeight: 800,
-                        fontSize: '0.875rem',
-                        background: isSelected || isPopular
-                          ? 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)'
-                          : 'rgba(255, 255, 255, 0.08)',
-                        color: '#ffffff',
-                        border: (isSelected || isPopular) ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
-                        borderRadius: '9999px',
-                        padding: '0.75rem 1.25rem',
-                        boxShadow: (isSelected || isPopular) ? '0 4px 16px rgba(255, 122, 0, 0.35)' : 'none',
-                        cursor: 'pointer'
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleStartOrder(cat.tierKey, cat);
-                      }}
-                    >
-                      {cat.btnText} <ArrowRight size={16} style={{ marginLeft: '0.35rem' }} />
-                    </button>
-                  </div>
-
-                </div>
-              );
-            })}
+            {cardsToRender.map((cat, idx) => (
+              <PackageCard
+                key={cat.id || idx}
+                cat={cat}
+                idx={idx}
+                onSelect={(selectedCat) => handleStartOrder(selectedCat.tierKey, selectedCat)}
+                forceCategory="patch"
+              />
+            ))}
           </div>
 
           <div style={{ textAlign: 'center', marginTop: '2.5rem', color: '#94a3b8', fontSize: '0.9rem' }}>

@@ -18,8 +18,9 @@ import {
   Wallet,
   CreditCard
 } from 'lucide-react';
+import { PackageCard } from './PackageCard';
 
-export const VectorArtPage = () => {
+export const VectorArtPage = ({ hideHero = false }) => {
   const navigate = useNavigate();
   const { 
     createOrder, 
@@ -301,15 +302,16 @@ export const VectorArtPage = () => {
     <div style={{ background: '#0b1329', minHeight: '100vh', paddingBottom: '5rem', color: '#ffffff' }}>
       
       {/* 1. Studio Header Banner */}
-      <section style={{
-        background: 'linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%)',
-        color: '#ffffff',
-        padding: '4.5rem 0 3.5rem',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <div style={{
+      {!hideHero && (
+        <section style={{
+          background: 'linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%)',
+          color: '#ffffff',
+          padding: '4.5rem 0 3.5rem',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{
           position: 'absolute',
           top: '-20%',
           right: '-5%',
@@ -374,226 +376,96 @@ export const VectorArtPage = () => {
 
           </div>
         </div>
-      </section>
+        </section>
+      )}
 
       {/* 2. Pricing Tier Cards OR Order Configuration Form View */}
       {!isOrderViewOpen ? (
         <div id="pricing-tiers" className="container" style={{ marginTop: '2.5rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
             
-            {/* Card 1: Simple Vector Redraw */}
-            <div
-              onClick={() => {
-                updateVectorItem(vectorItems[0]?.id || 1, 'complexity', 'Simple Vector Redraw');
-                setIsRush(false);
+            {(() => {
+              const handleSelectVectorTier = (cat) => {
+                updateVectorItem(vectorItems[0]?.id || 1, 'complexity', cat.complexityValue);
+                setIsRush(cat.isRushValue);
                 setIsOrderViewOpen(true);
-              }}
-              style={{
-                background: '#1e293b',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                borderRadius: '16px',
-                padding: '1.5rem',
-                cursor: 'pointer',
-                transition: 'all 0.25s ease',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.25)'
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#38bdf8', background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '0.25rem 0.6rem', borderRadius: '9999px', textTransform: 'uppercase' }}>
-                    ⚡ SIMPLE REDRAW
-                  </span>
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>Standard</span>
-                </div>
+              };
 
-                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.35rem 0' }}>
-                  Simple Vector Redraw
-                </h3>
+              const vectorCards = [
+                {
+                  id: 'vec-simple',
+                  title: 'Simple Vector Redraw',
+                  subTitle: 'Logos with clean lines, solid color fills, text vectorization, and 1–3 solid color elements.',
+                  discountTag: '⚡ SIMPLE REDRAW',
+                  rate: `$${simpleRate.toFixed(2)}`,
+                  unit: '/ design',
+                  delivery: '8–12 Hours Standard Delivery',
+                  complexityValue: 'Simple Vector Redraw',
+                  isRushValue: false,
+                  tierKey: 'basic',
+                  category: 'vector',
+                  features: [
+                    '100% Hand-drawn vector paths',
+                    'All formats (.AI, .EPS, .SVG, .PDF)',
+                    'Clean node reduction & pantone colors',
+                    'Free Unlimited Revisions'
+                  ],
+                  btnText: 'Configure Simple Order'
+                },
+                {
+                  id: 'vec-complex',
+                  title: 'Complex Vector Redraw',
+                  subTitle: 'Mascots, intricate crests, gradient shading, fine line details, and multi-color illustrations.',
+                  discountTag: '⭐ MOST POPULAR • COMPLEX',
+                  badge: 'MOST POPULAR',
+                  popular: true,
+                  rate: `$${complexRate.toFixed(2)}`,
+                  unit: '/ design',
+                  delivery: '8–12 Hours Standard Delivery',
+                  complexityValue: 'Complex Vector Redraw',
+                  isRushValue: false,
+                  tierKey: 'standard',
+                  category: 'vector',
+                  features: [
+                    'Multi-layer artwork & gradient meshes',
+                    'Precise color separations (Pantone/CMYK)',
+                    'High detail line art & mascot tracing',
+                    'Free Unlimited Revisions'
+                  ],
+                  btnText: 'Configure Complex Order'
+                },
+                {
+                  id: 'vec-rush',
+                  title: 'Super Rush Vector',
+                  subTitle: 'Urgent deadline delivery. Dedicated vector artist assigned immediately for 2-4 hour express turnaround.',
+                  discountTag: '✨ EXPRESS • SUPER RUSH',
+                  rate: `$${(complexRate + rushFeeAmount).toFixed(2)}`,
+                  unit: '/ design',
+                  delivery: '2–4 Hours Express Priority',
+                  complexityValue: 'Complex Vector Redraw',
+                  isRushValue: true,
+                  tierKey: 'premium',
+                  category: 'vector',
+                  features: [
+                    '2–4 Hours Express Priority Delivery',
+                    'Dedicated lead vector artist assigned',
+                    'All formats (.AI, .EPS, .SVG, .PDF, .CDR)',
+                    'Priority revision turnaround'
+                  ],
+                  btnText: 'Configure Super Rush'
+                }
+              ];
 
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.75rem' }}>
-                  <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--orange-400)' }}>${simpleRate.toFixed(2)}</span>
-                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>/ design</span>
-                </div>
-
-                <div style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <Clock size={14} style={{ color: 'var(--orange-400)' }} /> 8–12 Hours Standard Delivery
-                </div>
-
-                <p style={{ fontSize: '0.825rem', color: '#94a3b8', lineHeight: 1.45, marginBottom: '1.25rem' }}>
-                  Logos with clean lines, solid color fills, text vectorization, and 1–3 solid color elements.
-                </p>
-
-                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem', color: '#cbd5e1' }}>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Check size={14} style={{ color: '#10b981' }} /> 100% Hand-drawn vector paths
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Check size={14} style={{ color: '#10b981' }} /> All formats (.AI, .EPS, .SVG, .PDF)
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Check size={14} style={{ color: '#10b981' }} /> Clean node reduction & pantone colors
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Check size={14} style={{ color: '#10b981' }} /> Free Unlimited Revisions
-                  </li>
-                </ul>
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-primary-orange"
-                style={{ width: '100%', height: '42px', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
-              >
-                Configure Simple Order <ArrowRight size={16} />
-              </button>
-            </div>
-
-            {/* Card 2: Complex Vector Redraw */}
-            <div
-              onClick={() => {
-                updateVectorItem(vectorItems[0]?.id || 1, 'complexity', 'Complex Vector Redraw');
-                setIsRush(false);
-                setIsOrderViewOpen(true);
-              }}
-              style={{
-                background: '#1e293b',
-                border: '2.5px solid var(--orange-500)',
-                borderRadius: '16px',
-                padding: '1.5rem',
-                cursor: 'pointer',
-                transition: 'all 0.25s ease',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                boxShadow: '0 12px 36px rgba(255, 122, 0, 0.22)',
-                position: 'relative'
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#fb923c', background: 'rgba(251, 146, 60, 0.15)', border: '1px solid rgba(251, 146, 60, 0.3)', padding: '0.25rem 0.6rem', borderRadius: '9999px', textTransform: 'uppercase' }}>
-                    ⭐ MOST POPULAR • COMPLEX
-                  </span>
-                  <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>
-                    POPULAR
-                  </span>
-                </div>
-
-                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.35rem 0' }}>
-                  Complex Vector Redraw
-                </h3>
-
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.75rem' }}>
-                  <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--orange-400)' }}>${complexRate.toFixed(2)}</span>
-                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>/ design</span>
-                </div>
-
-                <div style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <Clock size={14} style={{ color: 'var(--orange-400)' }} /> 8–12 Hours Standard Delivery
-                </div>
-
-                <p style={{ fontSize: '0.825rem', color: '#94a3b8', lineHeight: 1.45, marginBottom: '1.25rem' }}>
-                  Mascots, intricate crests, gradient shading, fine line details, and multi-color illustrations.
-                </p>
-
-                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem', color: '#cbd5e1' }}>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Check size={14} style={{ color: '#10b981' }} /> Multi-layer artwork & gradient meshes
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Check size={14} style={{ color: '#10b981' }} /> Precise color separations (Pantone/CMYK)
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Check size={14} style={{ color: '#10b981' }} /> High detail line art & mascot tracing
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Check size={14} style={{ color: '#10b981' }} /> Free Unlimited Revisions
-                  </li>
-                </ul>
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-primary-orange"
-                style={{ width: '100%', height: '42px', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
-              >
-                Configure Complex Order <ArrowRight size={16} />
-              </button>
-            </div>
-
-            {/* Card 3: Super Rush Vector */}
-            <div
-              onClick={() => {
-                updateVectorItem(vectorItems[0]?.id || 1, 'complexity', 'Complex Vector Redraw');
-                setIsRush(true);
-                setIsOrderViewOpen(true);
-              }}
-              style={{
-                background: '#1e293b',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                borderRadius: '16px',
-                padding: '1.5rem',
-                cursor: 'pointer',
-                transition: 'all 0.25s ease',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.25)'
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#a855f7', background: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)', padding: '0.25rem 0.6rem', borderRadius: '9999px', textTransform: 'uppercase' }}>
-                    ✨ EXPRESS • SUPER RUSH
-                  </span>
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>Priority</span>
-                </div>
-
-                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.35rem 0' }}>
-                  Super Rush Vector
-                </h3>
-
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.75rem' }}>
-                  <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--orange-400)' }}>${(complexRate + rushFeeAmount).toFixed(2)}</span>
-                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>/ design</span>
-                </div>
-
-                <div style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <Clock size={14} style={{ color: '#10b981' }} /> 2–4 Hours Express Priority
-                </div>
-
-                <p style={{ fontSize: '0.825rem', color: '#94a3b8', lineHeight: 1.45, marginBottom: '1.25rem' }}>
-                  Urgent deadline delivery. Dedicated vector artist assigned immediately for 2-4 hour express turnaround.
-                </p>
-
-                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem', color: '#cbd5e1' }}>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Check size={14} style={{ color: '#10b981' }} /> 2–4 Hours Express Priority Delivery
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Check size={14} style={{ color: '#10b981' }} /> Dedicated lead vector artist assigned
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Check size={14} style={{ color: '#10b981' }} /> All formats (.AI, .EPS, .SVG, .PDF, .CDR)
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Check size={14} style={{ color: '#10b981' }} /> Priority revision turnaround
-                  </li>
-                </ul>
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-primary-orange"
-                style={{ width: '100%', height: '42px', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
-              >
-                Configure Super Rush <ArrowRight size={16} />
-              </button>
-            </div>
-
+              return vectorCards.map((cat, idx) => (
+                <PackageCard
+                  key={cat.id || idx}
+                  cat={cat}
+                  idx={idx}
+                  onSelect={handleSelectVectorTier}
+                  forceCategory="vector"
+                />
+              ));
+            })()}
           </div>
         </div>
       ) : (

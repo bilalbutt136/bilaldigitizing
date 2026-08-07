@@ -33,18 +33,25 @@ export const WhyChooseUs = () => {
   const cmsWorkflow = serviceCmsContent[currentKey]?.workflow || serviceCmsContent[currentKey]?.advantages || {};
 
   const title = cmsWorkflow.title || (
+    currentKey === 'all' ? 'How It Works: Our Process' :
     currentKey === 'vector' ? 'How It Works: Vector Art Conversion' :
     currentKey === 'patch' ? 'How It Works: Custom Patches Production' :
     'How It Works: Embroidery Digitizing'
   );
 
   const subtext = cmsWorkflow.subtext || (
+    currentKey === 'all' ? 'From initial request to final delivery in 4 simple steps.' :
     currentKey === 'vector' ? 'Pixel-perfect node tracing and color separation for print and vinyl cutting.' :
     currentKey === 'patch' ? 'Crafting premium physical emblems from digital proofing to doorstep delivery.' :
     'From initial logo upload to machine-ready stitch file delivery in 4 simple steps.'
   );
 
-  const defaultSteps = currentKey === 'vector' ? [
+  const defaultSteps = currentKey === 'all' ? [
+    { step: '01', icon: Upload, title: 'Select Service & Upload', desc: 'Choose your desired service and upload your artwork with specifications.' },
+    { step: '02', icon: Layers, title: 'Expert Processing', desc: 'Our studio experts process your design via digitizing, vector tracing, or patch prototyping.' },
+    { step: '03', icon: FileCheck, title: 'Quality Assurance', desc: 'Every order undergoes strict quality checks and digital proofing before finalization.' },
+    { step: '04', icon: Download, title: 'Instant Delivery / Shipping', desc: 'Download digital files instantly or receive your physical patches via express shipping.' }
+  ] : currentKey === 'vector' ? [
     { step: '01', icon: Upload, title: 'Upload Low-Res Image', desc: 'Upload your pixelated JPEG, PNG, or hand sketch with target printing specifications.' },
     { step: '02', icon: PenTool, title: 'Manual Vector Tracing', desc: 'Vector artists redraw your logo node-by-node in Illustrator — zero auto-tracing.' },
     { step: '03', icon: Palette, title: 'Color Separation', desc: 'Clean Pantone spot color layer separation ready for screen printing films.' },

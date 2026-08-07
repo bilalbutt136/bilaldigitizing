@@ -14,10 +14,10 @@ import {
   ArrowRight,
   ShieldCheck,
   FileCode,
-  Plus,
   Zap,
   Check
 } from 'lucide-react';
+import { PackageCard } from './PackageCard';
 
 export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTabs = false, initialTier = 'standard' }) => {
   const navigate = useNavigate();
@@ -507,8 +507,36 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
   };
 
   return (
-    <section id="order-builder" style={{ padding: '5.5rem 0', background: 'var(--navy-950)', color: '#ffffff' }}>
-      <div className="container">
+    <section id="order-builder" style={{ 
+      padding: '5.5rem 0', 
+      background: 'linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%)', 
+      color: '#ffffff',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Glowing Background Orbs */}
+      <div style={{
+        position: 'absolute',
+        top: '-10%',
+        left: '-5%',
+        width: '500px',
+        height: '500px',
+        background: 'radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%)',
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
+      <div style={{
+        position: 'absolute',
+        bottom: '-10%',
+        right: '-5%',
+        width: '500px',
+        height: '500px',
+        background: 'radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%)',
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
+
+      <div className="container" style={{ position: 'relative', zIndex: 1 }}>
         
         {/* Section Header */}
         <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 3rem' }}>
@@ -642,218 +670,31 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
               </p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+            <div className="grid-responsive-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
               
-              {/* Basic Tier Card */}
-              <div
-                onClick={() => {
-                  setDigitizingPackageTier('basic');
-                  setIsOrderViewOpen(true);
-                }}
-                style={{
-                  background: '#1e293b',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  borderRadius: '16px',
-                  padding: '1.5rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.25s ease',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.25)'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#38bdf8', background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '0.25rem 0.6rem', borderRadius: '9999px', textTransform: 'uppercase' }}>
-                      ⚡ BASIC DIGITIZING
-                    </span>
-                    <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>Small Logo</span>
-                  </div>
-
-                  <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.35rem 0' }}>
-                    Basic Digitizing
-                  </h3>
-
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.75rem' }}>
-                    <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--orange-400)' }}>$10.00</span>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>/ design</span>
-                  </div>
-
-                  <div style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Clock size={14} style={{ color: 'var(--orange-400)' }} /> 8–12 Hours Delivery
-                  </div>
-
-                  <p style={{ fontSize: '0.825rem', color: '#94a3b8', lineHeight: 1.45, marginBottom: '1.25rem' }}>
-                    Simple Left Chest / Small Logo up to 4.0". Ideal for simple text, monogramming, and clean logos.
-                  </p>
-
-                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem', color: '#cbd5e1' }}>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Check size={14} style={{ color: '#10b981' }} /> Up to 4" Left Chest / Hat Logo
-                    </li>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Check size={14} style={{ color: '#10b981' }} /> All machine formats (.DST, .PES, .EXP)
-                    </li>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Check size={14} style={{ color: '#10b981' }} /> Free native .EMB Wilcom source file
-                    </li>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Check size={14} style={{ color: '#10b981' }} /> 100% Free Unlimited Revisions
-                    </li>
-                  </ul>
+              {pricingCards && pricingCards.length > 0 ? (
+                pricingCards.map((cat, idx) => (
+                  <PackageCard
+                    key={cat.id || idx}
+                    cat={cat}
+                    idx={idx}
+                    onSelect={(selectedCat) => {
+                      let tierKey = 'standard';
+                      const cId = (selectedCat.id || '').toLowerCase();
+                      if (cId.includes('basic')) tierKey = 'basic';
+                      else if (cId.includes('premium')) tierKey = 'premium';
+                      
+                      setDigitizingPackageTier(tierKey);
+                      setIsOrderViewOpen(true);
+                    }}
+                    forceCategory="embroidery"
+                  />
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', gridColumn: '1 / -1', color: 'var(--text-muted)' }}>
+                  Loading pricing packages...
                 </div>
-
-                <button
-                  type="button"
-                  className="btn btn-primary-orange"
-                  style={{ width: '100%', height: '42px', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
-                >
-                  Configure Basic Order <ArrowRight size={16} />
-                </button>
-              </div>
-
-              {/* Standard Tier Card */}
-              <div
-                onClick={() => {
-                  setDigitizingPackageTier('standard');
-                  setIsOrderViewOpen(true);
-                }}
-                style={{
-                  background: '#1e293b',
-                  border: '2.5px solid var(--orange-500)',
-                  borderRadius: '16px',
-                  padding: '1.5rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.25s ease',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  boxShadow: '0 12px 36px rgba(255, 122, 0, 0.22)',
-                  position: 'relative'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#fb923c', background: 'rgba(251, 146, 60, 0.15)', border: '1px solid rgba(251, 146, 60, 0.3)', padding: '0.25rem 0.6rem', borderRadius: '9999px', textTransform: 'uppercase' }}>
-                      ⭐ MOST POPULAR • STANDARD
-                    </span>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#ffffff', background: 'var(--orange-500)', padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>
-                      POPULAR
-                    </span>
-                  </div>
-
-                  <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.35rem 0' }}>
-                    Standard Digitizing
-                  </h3>
-
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.75rem' }}>
-                    <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--orange-400)' }}>$15.00</span>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>/ design</span>
-                  </div>
-
-                  <div style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Clock size={14} style={{ color: 'var(--orange-400)' }} /> 8–12 Hours Standard Delivery
-                  </div>
-
-                  <p style={{ fontSize: '0.825rem', color: '#94a3b8', lineHeight: 1.45, marginBottom: '1.25rem' }}>
-                    Standard Left Chest, Cap & Sleeve Logos up to 5.0" with detailed pathing & density balance.
-                  </p>
-
-                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem', color: '#cbd5e1' }}>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Check size={14} style={{ color: '#10b981' }} /> Left Chest, Cap & Sleeve Logos up to 5.0"
-                    </li>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Check size={14} style={{ color: '#10b981' }} /> Optimized stitch density & fabric pathing
-                    </li>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Check size={14} style={{ color: '#10b981' }} /> Free 3D Puff / Flat cap pathing
-                    </li>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Check size={14} style={{ color: '#10b981' }} /> 100% Free Unlimited Revisions
-                    </li>
-                  </ul>
-                </div>
-
-                <button
-                  type="button"
-                  className="btn btn-primary-orange"
-                  style={{ width: '100%', height: '42px', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
-                >
-                  Configure Standard Order <ArrowRight size={16} />
-                </button>
-              </div>
-
-              {/* Premium Tier Card */}
-              <div
-                onClick={() => {
-                  setDigitizingPackageTier('premium');
-                  setIsOrderViewOpen(true);
-                }}
-                style={{
-                  background: '#1e293b',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  borderRadius: '16px',
-                  padding: '1.5rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.25s ease',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.25)'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#a855f7', background: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)', padding: '0.25rem 0.6rem', borderRadius: '9999px', textTransform: 'uppercase' }}>
-                      ✨ VIP & JACKET BACK • PREMIUM
-                    </span>
-                    <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>Jacket Back</span>
-                  </div>
-
-                  <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.35rem 0' }}>
-                    Premium Digitizing
-                  </h3>
-
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.75rem' }}>
-                    <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--orange-400)' }}>$25.00</span>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>/ design</span>
-                  </div>
-
-                  <div style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Clock size={14} style={{ color: '#10b981' }} /> 12–24 Hours Priority
-                  </div>
-
-                  <p style={{ fontSize: '0.825rem', color: '#94a3b8', lineHeight: 1.45, marginBottom: '1.25rem' }}>
-                    Large crests, full jacket backs (9"-12"+), complex 3D puff, and high stitch-count designs.
-                  </p>
-
-                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem', color: '#cbd5e1' }}>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Check size={14} style={{ color: '#10b981' }} /> Large crests & jacket backs (9"-12"+)
-                    </li>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Check size={14} style={{ color: '#10b981' }} /> Complex 3D Puff & multi-layer pathing
-                    </li>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Check size={14} style={{ color: '#10b981' }} /> Free machine simulation sew-out proof
-                    </li>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Check size={14} style={{ color: '#10b981' }} /> 24/7 Priority studio desk support
-                    </li>
-                  </ul>
-                </div>
-
-                <button
-                  type="button"
-                  className="btn btn-primary-orange"
-                  style={{ width: '100%', height: '42px', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
-                >
-                  Configure Premium Order <ArrowRight size={16} />
-                </button>
-              </div>
-
+              )}
             </div>
           </div>
         ) : (

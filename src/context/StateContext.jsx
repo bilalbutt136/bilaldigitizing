@@ -441,7 +441,7 @@ export const StateProvider = ({ children }) => {
   const [adminUsers, setAdminUsers] = useState([]);
 
   // Dynamic Service-Driven Homepage & CMS Content State
-  const [activeHomeServiceTab, setActiveHomeServiceTab] = useState('embroidery');
+  const [activeHomeServiceTab, setActiveHomeServiceTab] = useState('all');
   const [serviceCmsContent, setServiceCmsContent] = useState(DEFAULT_SERVICE_CMS_CONTENT);
 
   // Wallet & Modals State

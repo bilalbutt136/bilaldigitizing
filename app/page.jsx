@@ -9,6 +9,9 @@ import { PortfolioPreview } from '../src/components/public/PortfolioPreview';
 import { TestimonialsFAQ } from '../src/components/public/TestimonialsFAQ';
 import { PricingCalculator } from '../src/components/public/PricingCalculator';
 import { FinalCTA } from '../src/components/public/FinalCTA';
+import { EmbroideryDigitizingPage } from '../src/components/public/EmbroideryDigitizingPage';
+import { VectorArtPage } from '../src/components/public/VectorArtPage';
+import { CustomPatchesSection } from '../src/components/public/CustomPatchesSection';
 
 export default function HomePage() {
   const { setCurrentView, activeHomeServiceTab } = useAppState();
@@ -20,12 +23,23 @@ export default function HomePage() {
   return (
     <>
       <HeroSection />
-      <TrustStatsBar />
-      <WhyChooseUs />
-      <PortfolioPreview />
-      <PricingCalculator />
-      <TestimonialsFAQ />
-      <FinalCTA />
+      
+      {activeHomeServiceTab === 'embroidery' ? (
+        <EmbroideryDigitizingPage hideHero={true} />
+      ) : activeHomeServiceTab === 'vector' ? (
+        <VectorArtPage hideHero={true} />
+      ) : (activeHomeServiceTab === 'patch' || activeHomeServiceTab === 'patches') ? (
+        <CustomPatchesSection hideHero={true} />
+      ) : (
+        <>
+          <TrustStatsBar />
+          <WhyChooseUs />
+          <PortfolioPreview />
+          <PricingCalculator />
+          <TestimonialsFAQ />
+          <FinalCTA />
+        </>
+      )}
     </>
   );
 }
