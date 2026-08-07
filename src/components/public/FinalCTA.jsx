@@ -7,17 +7,41 @@ import { Upload, ArrowRight, Shield, Globe, Zap, CheckCircle2 } from 'lucide-rea
 
 export const FinalCTA = () => {
   const navigate = useNavigate();
-  const { protectedNavigate, openOrderWizard } = useAppState();
+  const { activeHomeServiceTab, openOrderWizard, protectedNavigate } = useAppState();
   
   const [hoveredBtn, setHoveredBtn] = useState(null);
 
-  const handleUploadClick = () => {
-    protectedNavigate('customer', true);
+  const handleCtaClick = () => {
+    if (openOrderWizard) {
+      const currentKey = activeHomeServiceTab === 'patches' ? 'patch' : (activeHomeServiceTab || 'embroidery');
+      openOrderWizard({ type: currentKey });
+    } else {
+      protectedNavigate('customer', true);
+    }
   };
 
-  const handleQuoteClick = () => {
-    navigate('/pricing');
+  const getDynamicContent = () => {
+    if (activeHomeServiceTab === 'vector') {
+      return {
+        title: 'Transform Your Designs Into Resolution-Independent Vector Art',
+        desc: 'Precision node tracing and Pantone spot color separation. Get clean, scalable vector files ready for high-quality printing.',
+        btnText: 'Start Vector Conversion'
+      };
+    } else if (activeHomeServiceTab === 'patch' || activeHomeServiceTab === 'patches') {
+      return {
+        title: 'Transform Your Designs Into Premium Custom Patches',
+        desc: 'High-density embroidered, woven, and PVC patches delivered to your door. Get a free digital proof and fast worldwide shipping.',
+        btnText: 'Order Custom Patches'
+      };
+    }
+    return {
+      title: 'Transform Your Designs Into Production-Ready Masterpieces',
+      desc: 'Precision embroidery digitizing with zero thread breaks. Get machine-ready stitch files engineered for your specific fabric and equipment.',
+      btnText: 'Start Digitizing Now'
+    };
   };
+
+  const content = getDynamicContent();
 
   const styles = {
     section: {
@@ -155,27 +179,27 @@ export const FinalCTA = () => {
         </div>
         
         <h2 style={styles.headline}>
-          Transform Your Designs Into Production-Ready Masterpieces
+          {content.title}
         </h2>
         
         <p style={styles.subtext}>
-          Whether you need precision embroidery digitizing, scalable vector artwork, or custom patches shipped to your door — our expert team delivers flawless results every time.
+          {content.desc}
         </p>
         
         <div style={styles.buttonContainer}>
           <button 
             style={styles.primaryBtn}
-            onClick={handleUploadClick}
+            onClick={handleCtaClick}
             onMouseEnter={() => setHoveredBtn('primary')}
             onMouseLeave={() => setHoveredBtn(null)}
           >
             <Upload size={20} />
-            Upload Your Design
+            {content.btnText}
           </button>
           
           <button 
             style={styles.secondaryBtn}
-            onClick={handleQuoteClick}
+            onClick={() => navigate('/pricing')}
             onMouseEnter={() => setHoveredBtn('secondary')}
             onMouseLeave={() => setHoveredBtn(null)}
           >

@@ -409,24 +409,6 @@ export const HeaderNav = () => {
               FAQs
             </button>
             
-            {/* Track Order Link */}
-            <button 
-              onClick={() => {
-                setCurrentView('public');
-                navigate('/track-order');
-              }}
-              style={{ 
-                background: 'none', 
-                border: 'none', 
-                color: currentPath === '/track-order' ? 'var(--orange-600)' : 'var(--navy-800)', 
-                fontWeight: currentPath === '/track-order' ? 800 : 600, 
-                fontSize: '0.925rem', 
-                cursor: 'pointer', 
-                padding: 0 
-              }}
-            >
-              Track Order
-            </button>
           </nav>
         )}
 
@@ -825,16 +807,7 @@ export const HeaderNav = () => {
             FAQs
           </button>
           
-          <button
-            type="button"
-            onClick={() => {
-              navigate('/track-order');
-              setIsMobileMenuOpen(false);
-            }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.25rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
-          >
-            Track Order
-          </button>
+
 
           <div style={{ marginTop: 'auto', paddingTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {!safeIsAuthenticated ? (

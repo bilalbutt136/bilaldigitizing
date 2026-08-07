@@ -53,10 +53,17 @@ const defaultPortfolioItems = [
 const categories = ['All', 'Embroidery', 'Vector Art', 'Custom Patches'];
 
 export const PortfolioPreview = () => {
-  const { state } = useAppState();
+  const { portfolioSamples, activeHomeServiceTab } = useAppState();
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('All');
   const [hoveredId, setHoveredId] = useState(null);
+
+  useEffect(() => {
+    if (activeHomeServiceTab === 'embroidery') setActiveCategory('Embroidery');
+    else if (activeHomeServiceTab === 'vector') setActiveCategory('Vector Art');
+    else if (activeHomeServiceTab === 'patch' || activeHomeServiceTab === 'patches') setActiveCategory('Custom Patches');
+    else setActiveCategory('All');
+  }, [activeHomeServiceTab]);
   
   // Responsive grid logic
   const [columns, setColumns] = useState(3);
@@ -77,8 +84,8 @@ export const PortfolioPreview = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const portfolioItems = state?.portfolioSamples?.length > 0 
-    ? state.portfolioSamples 
+  const portfolioItems = portfolioSamples?.length > 0 
+    ? portfolioSamples 
     : defaultPortfolioItems;
 
   const filteredItems = activeCategory === 'All'
@@ -124,36 +131,6 @@ export const PortfolioPreview = () => {
           }}>
             Explore a curated selection of our finest embroidery digitizing, vector art conversions, and custom patch creations.
           </p>
-        </div>
-
-        {/* Category Tabs */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          flexWrap: 'wrap',
-          gap: '12px',
-          marginBottom: '40px'
-        }}>
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              style={{
-                padding: '10px 24px',
-                borderRadius: '9999px',
-                fontSize: '16px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                backgroundColor: activeCategory === cat ? 'var(--orange-500, #ff7a00)' : 'transparent',
-                color: activeCategory === cat ? '#ffffff' : 'var(--text-muted, #64748b)',
-                border: `1px solid ${activeCategory === cat ? 'var(--orange-500, #ff7a00)' : 'var(--border-color, #e2e8f0)'}`,
-                outline: 'none',
-              }}
-            >
-              {cat}
-            </button>
-          ))}
         </div>
 
         {/* Grid */}

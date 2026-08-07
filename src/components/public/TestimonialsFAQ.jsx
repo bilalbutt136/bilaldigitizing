@@ -102,16 +102,26 @@ export const TestimonialsFAQ = () => {
     }
   ];
 
-  const testimonials = appState.testimonials || defaultTestimonials;
+  const { activeHomeServiceTab } = useAppState?.() || {};
+  const currentServiceKey = activeHomeServiceTab === 'vector' ? 'Vector' : activeHomeServiceTab === 'patches' || activeHomeServiceTab === 'patch' ? 'Patches' : 'Embroidery';
+
+  const testimonials = (appState.testimonials || defaultTestimonials).filter(
+    (t) => t.service === currentServiceKey
+  );
   const faqs = appState.faqs || defaultFaqs;
 
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
-  const [activeFaqTab, setActiveFaqTab] = useState('All');
+  const [activeFaqTab, setActiveFaqTab] = useState(currentServiceKey);
   const [hoveredTestimonial, setHoveredTestimonial] = useState(null);
 
-  const faqTabs = ['All', 'General', 'Embroidery', 'Vector', 'Patches'];
-  
-  const filteredFaqs = faqs.filter(faq => activeFaqTab === 'All' || faq.category === activeFaqTab);
+  // Sync activeFaqTab when global service changes
+  useEffect(() => {
+    setActiveFaqTab(currentServiceKey);
+  }, [currentServiceKey]);
+
+  // Optionally hide faqTabs if we want it fully synced with home tab
+  // Or just filter filteredFaqs to only the activeFaqTab (which tracks currentServiceKey)
+  const filteredFaqs = faqs.filter(faq => faq.category === activeFaqTab);
 
   // Responsive state for grid layout
   const [isMobile, setIsMobile] = useState(false);
@@ -239,39 +249,8 @@ export const TestimonialsFAQ = () => {
               Everything you need to know about files, turnaround times, and free revisions for our services.
             </p>
             
-            {/* Filter Tabs */}
-            <div style={{ 
-              display: 'flex', 
-              flexWrap: 'wrap', 
-              justifyContent: 'center', 
-              gap: '0.5rem',
-              marginBottom: '2rem'
-            }}>
-              {faqTabs.map(tab => {
-                const isActive = activeFaqTab === tab;
-                return (
-                  <button
-                    key={tab}
-                    onClick={() => {
-                      setActiveFaqTab(tab);
-                      setOpenFaqIndex(0); // reset open accordion when tab changes
-                    }}
-                    style={{
-                      padding: '0.5rem 1.25rem',
-                      borderRadius: '30px',
-                      fontSize: '0.9rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      border: isActive ? '1px solid var(--orange-500)' : '1px solid var(--border-color)',
-                      background: isActive ? 'var(--orange-500)' : 'transparent',
-                      color: isActive ? '#fff' : 'var(--text-muted)',
-                    }}
-                  >
-                    {tab}
-                  </button>
-                );
-              })}
+            {/* Filter Tabs - Hidden as it is controlled globally now */}
+            <div style={{ display: 'none' }}>
             </div>
           </div>
 

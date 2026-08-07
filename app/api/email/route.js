@@ -14,13 +14,26 @@ export async function POST(req) {
 
     const resend = new Resend(resendApiKey);
     const fromAddress = 'Bilal Digitizing <onboarding@resend.dev>'; // Using Resend testing domain
-    const fallbackAdmin = process.env.MASTER_ADMIN_EMAIL || 'admin@bdigitizing.pro';
+    let fallbackAdmin = process.env.MASTER_ADMIN_EMAIL || 'admin@bdigitizing.pro';
+    
+    // Determine the recipient dynamically
+    let targetAdminEmail = adminEmail || fallbackAdmin;
+    let targetClientEmail = clientEmail;
+
+    // Resend Testing Mode Override: When using onboarding@resend.dev, we can ONLY send to the registered email.
+    // We force all emails to route to bilalsadiq612@gmail.com to prevent 422 Validation Errors during testing.
+    if (fromAddress.includes('onboarding@resend.dev')) {
+      const testingEmail = 'bilalsadiq612@gmail.com';
+      console.log(`[Email Service] Testing Mode: Routing email away from ${targetAdminEmail} / ${targetClientEmail} to ${testingEmail}`);
+      targetAdminEmail = testingEmail;
+      targetClientEmail = testingEmail;
+    }
 
     if (type === 'NEW_ORDER') {
-      console.log(`[Email Service] Sending New Order Email to Admin (${fallbackAdmin}) for Order ${orderId}`);
+      console.log(`[Email Service] Sending New Order Email to Admin (${targetAdminEmail}) for Order ${orderId}`);
       await resend.emails.send({
         from: fromAddress,
-        to: adminEmail || fallbackAdmin,
+        to: targetAdminEmail,
         subject: `🚨 New Order Received: ${orderId}`,
         html: `
           <h2>New Order Placed</h2>
@@ -30,10 +43,10 @@ export async function POST(req) {
         `
       });
     } else if (type === 'ORDER_DELIVERED') {
-      console.log(`[Email Service] Sending Order Delivered Email to Client (${clientEmail}) for Order ${orderId}`);
+      console.log(`[Email Service] Sending Order Delivered Email to Client (${targetClientEmail}) for Order ${orderId}`);
       await resend.emails.send({
         from: fromAddress,
-        to: clientEmail,
+        to: targetClientEmail,
         subject: `📦 Your Order ${orderId} is Ready!`,
         html: `
           <h2>Good news! Your digitized files are ready.</h2>
@@ -44,10 +57,10 @@ export async function POST(req) {
         `
       });
     } else if (type === 'ORDER_COMPLETED') {
-      console.log(`[Email Service] Sending Order Completed Email to Admin (${fallbackAdmin}) for Order ${orderId}`);
+      console.log(`[Email Service] Sending Order Completed Email to Admin (${targetAdminEmail}) for Order ${orderId}`);
       await resend.emails.send({
         from: fromAddress,
-        to: fallbackAdmin,
+        to: targetAdminEmail,
         subject: `✅ Order ${orderId} Accepted by Client`,
         html: `
           <h2>Order Accepted</h2>

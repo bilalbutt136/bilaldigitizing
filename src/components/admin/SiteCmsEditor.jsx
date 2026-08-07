@@ -321,67 +321,7 @@ export const SiteCmsEditor = () => {
           <Sparkles size={18} /> Hero Slider & Banner CMS ({draftHeroSlides.length})
         </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveSection('serviceCms')}
-          style={{
-            padding: '1rem 1.25rem',
-            border: 'none',
-            borderBottom: activeSection === 'serviceCms' ? '3px solid #ff7a00' : '3px solid transparent',
-            background: 'none',
-            fontWeight: 800,
-            fontSize: '0.9rem',
-            color: activeSection === 'serviceCms' ? '#ff7a00' : '#64748b',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          <Sparkles size={18} /> 3-Service Homepage CMS Flow
-        </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveSection('pricing')}
-          style={{
-            padding: '1rem 1.25rem',
-            border: 'none',
-            borderBottom: activeSection === 'pricing' ? '3px solid #ff7a00' : '3px solid transparent',
-            background: 'none',
-            fontWeight: 800,
-            fontSize: '0.9rem',
-            color: activeSection === 'pricing' ? '#ff7a00' : '#64748b',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          <Tag size={18} /> Pricing Cards & Tiers
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveSection('vector')}
-          style={{
-            padding: '1rem 1.25rem',
-            border: 'none',
-            borderBottom: activeSection === 'vector' ? '3px solid #ff7a00' : '3px solid transparent',
-            background: 'none',
-            fontWeight: 800,
-            fontSize: '0.9rem',
-            color: activeSection === 'vector' ? '#ff7a00' : '#64748b',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}
-        >
-          <Zap size={18} /> Vector Art Service Module
-        </button>
 
         <button
           type="button"

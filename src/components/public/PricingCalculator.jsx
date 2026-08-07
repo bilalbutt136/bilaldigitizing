@@ -14,12 +14,21 @@ import {
 import { useLocation } from '../../utils/navigation';
 
 export const PricingCalculator = () => {
-  const { pricing = {}, pricingCards = [], protectedNavigate, openOrderWizard } = useAppState();
+  const { pricing = {}, pricingCards = [], protectedNavigate, openOrderWizard, activeHomeServiceTab } = useAppState();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const initialCategory = searchParams.get('cat') || searchParams.get('service') || 'embroidery';
+  
+  // Initialize with URL param or global state
+  const initialCategory = searchParams.get('cat') || searchParams.get('service') || (activeHomeServiceTab || 'embroidery');
 
   const [activeCategory, setActiveCategory] = React.useState(initialCategory);
+
+  // Sync with global tab changes
+  React.useEffect(() => {
+    if (activeHomeServiceTab) {
+      setActiveCategory(activeHomeServiceTab === 'patches' ? 'patch' : activeHomeServiceTab);
+    }
+  }, [activeHomeServiceTab]);
 
   const handleSelectPackage = (cat) => {
     const cId = (cat.id || '').toLowerCase();
@@ -316,64 +325,6 @@ export const PricingCalculator = () => {
             }}>
               Select a service below to view our affordable, high-quality packages.
             </p>
-          </div>
-
-          {/* Large Category Filter Buttons */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '1rem',
-            flexWrap: 'wrap',
-            marginBottom: '3rem'
-          }}>
-            {[
-              { id: 'embroidery', label: 'Embroidery Digitizing', icon: Zap },
-              { id: 'vector', label: 'Vector Art Conversion', icon: Sparkles },
-              { id: 'patches', label: 'Custom Patches', icon: Trophy }
-            ].map(tab => {
-              const isActive = activeCategory === tab.id;
-              const TabIcon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveCategory(tab.id)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    background: isActive ? 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)' : 'rgba(255, 255, 255, 0.05)',
-                    color: isActive ? '#ffffff' : '#cbd5e1',
-                    border: isActive ? '1px solid #ff7a00' : '1px solid rgba(255, 255, 255, 0.1)',
-                    fontWeight: 700,
-                    fontSize: '1.1rem',
-                    padding: '1rem 2rem',
-                    borderRadius: '12px',
-                    cursor: 'pointer',
-                    boxShadow: isActive ? '0 8px 20px rgba(255, 122, 0, 0.3)' : 'none',
-                    transition: 'all 0.3s ease',
-                    minWidth: '220px',
-                    justifyContent: 'center'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                      e.currentTarget.style.color = '#ffffff';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                      e.currentTarget.style.color = '#cbd5e1';
-                    }
-                  }}
-                >
-                  <TabIcon size={20} />
-                  {tab.label}
-                </button>
-              );
-            })}
           </div>
 
         {/* Dynamic Pricing Category Cards Grid */}
