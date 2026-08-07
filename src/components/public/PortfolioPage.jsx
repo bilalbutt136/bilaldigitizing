@@ -204,7 +204,7 @@ export const PortfolioPage = () => {
   const navigate = useNavigate();
   const { portfolioSamples = [] } = useAppState();
 
-  const [activeFilter, setActiveFilter] = useState('embroidery');
+  const [activeFilter, setActiveFilter] = useState('all');
   const [activeItemModal, setActiveItemModal] = useState(null);
   const [comparisonPositions, setComparisonPositions] = useState({});
 
@@ -228,9 +228,12 @@ export const PortfolioPage = () => {
       }))
     : PORTFOLIO_ITEMS;
 
-  const filteredItems = combinedItems.filter(item => item.category === activeFilter);
+  const filteredItems = activeFilter === 'all' 
+    ? combinedItems 
+    : combinedItems.filter(item => item.category === activeFilter);
 
   const filterTabs = [
+    { key: 'all', label: 'All Portfolio' },
     { key: 'embroidery', label: 'Embroidery Digitizing' },
     { key: 'vector', label: 'Vector Art Conversion' },
     { key: 'patches', label: 'Custom Patches' }

@@ -41,9 +41,16 @@ export const PortfolioPreview = () => {
 
   const portfolioItems = portfolioSamples || [];
 
+  const combinedItems = portfolioItems.map(item => ({
+    ...item,
+    mappedCategory: (item.category || '').toLowerCase().includes('vector') ? 'Vector Art' 
+                  : (item.category || '').toLowerCase().includes('patch') ? 'Custom Patches' 
+                  : 'Embroidery'
+  }));
+
   const filteredItems = activeCategory === 'All'
-    ? portfolioItems
-    : portfolioItems.filter(item => item.category === activeCategory);
+    ? combinedItems
+    : combinedItems.filter(item => item.mappedCategory === activeCategory);
 
   return (
     <section style={{ backgroundColor: '#ffffff', padding: '80px 20px', fontFamily: 'var(--font-body, "Inter", sans-serif)' }}>
@@ -161,10 +168,10 @@ export const PortfolioPreview = () => {
                   gap: '6px',
                   pointerEvents: 'none'
                 }}>
-                  {item.category === 'Embroidery' && <Layers size={14} style={{ color: 'var(--orange-500, #ff7a00)' }} />}
-                  {item.category === 'Vector Art' && <PenTool size={14} style={{ color: 'var(--orange-500, #ff7a00)' }} />}
-                  {item.category === 'Custom Patches' && <Hexagon size={14} style={{ color: 'var(--orange-500, #ff7a00)' }} />}
-                  {item.category}
+                  {item.mappedCategory === 'Embroidery' && <Layers size={14} style={{ color: 'var(--orange-500, #ff7a00)' }} />}
+                  {item.mappedCategory === 'Vector Art' && <PenTool size={14} style={{ color: 'var(--orange-500, #ff7a00)' }} />}
+                  {item.mappedCategory === 'Custom Patches' && <Hexagon size={14} style={{ color: 'var(--orange-500, #ff7a00)' }} />}
+                  {item.mappedCategory}
                 </div>
 
                 {/* Title and Details (Bottom) */}

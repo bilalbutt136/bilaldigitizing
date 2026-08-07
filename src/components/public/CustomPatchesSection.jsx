@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export const CustomPatchesSection = () => {
-  const { openOrderWizard, setIsOrderWizardOpen } = useAppState();
+  const { openOrderWizard, setIsOrderWizardOpen, patchCards } = useAppState();
 
   const [selectedTier, setSelectedTier] = useState('standard');
 
@@ -100,7 +100,7 @@ export const CustomPatchesSection = () => {
     }
   ];
 
-  const cardsToRender = defaultPatchCards;
+  const cardsToRender = patchCards && patchCards.length > 0 ? patchCards : defaultPatchCards;
 
   const handleStartOrder = (tierKey = 'standard', cardObj = null) => {
     setSelectedTier(tierKey);
