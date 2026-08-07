@@ -14,9 +14,12 @@ import {
   Check
 } from 'lucide-react';
 
-export const StructuredServicesSection = () => {
   const navigate = useNavigate();
-  const { protectedNavigate, openOrderWizard } = useAppState();
+  const { protectedNavigate, openOrderWizard, serviceCmsContent = {} } = useAppState();
+
+  const embHero = serviceCmsContent?.embroidery?.hero || {};
+  const vecHero = serviceCmsContent?.vector?.hero || {};
+  const patHero = serviceCmsContent?.patch?.hero || {};
 
   const handleOrderClick = (serviceType) => {
     if (openOrderWizard) {
@@ -87,32 +90,32 @@ export const StructuredServicesSection = () => {
                     SECTION 1 — DIGITAL FILES
                   </span>
                   <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--orange-600)', marginTop: '0.2rem' }}>
-                    STARTS $10.00 FLAT
+                    {embHero.badge || 'STARTS $10.00 FLAT'}
                   </div>
                 </div>
               </div>
 
               <h3 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.85rem', leading: 1.2 }}>
-                1. Commercial Embroidery Digitizing
+                {embHero.title || '1. Commercial Embroidery Digitizing'}
               </h3>
 
               <p style={{ color: 'var(--text-muted)', fontSize: '0.975rem', lineHeight: 1.65, marginBottom: '1.5rem' }}>
-                Engineered by master pathing technicians for Tajima, Brother, Melco, Janome, and Barudan machines. We map precise underlay foundations and pull compensation tailored specifically to your target fabric.
+                {embHero.subtext || 'Engineered by master pathing technicians for Tajima, Brother, Melco, Janome, and Barudan machines. We map precise underlay foundations and pull compensation tailored specifically to your target fabric.'}
               </p>
 
               {/* Feature Highlights Grid */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
-                {[
-                  'Machine Formats: Tajima (.DST), Brother (.PES), Melco (.EXP), Janome (.JEF), Wilcom (.EMB)',
-                  'Custom Underlay & Pull Compensation for pique cotton, fleece, jackets & structured caps',
-                  'Center-out sequencing for 3D puff foam caps with zero thread breaks',
-                  'High stitch-count jacket back crests & left-chest logos with free unlimited revisions'
-                ].map((feat, idx) => (
+                {(embHero.trustPoints || [
+                  { title: 'Machine Formats: Tajima (.DST), Brother (.PES), Melco (.EXP), Janome (.JEF), Wilcom (.EMB)' },
+                  { title: 'Custom Underlay & Pull Compensation for pique cotton, fleece, jackets & structured caps' },
+                  { title: 'Center-out sequencing for 3D puff foam caps with zero thread breaks' },
+                  { title: 'High stitch-count jacket back crests & left-chest logos with free unlimited revisions' }
+                ]).map((feat, idx) => (
                   <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
                     <div style={{ background: '#dcfce7', color: '#16a34a', padding: '0.25rem', borderRadius: '50%', marginTop: '2px', flexShrink: 0 }}>
                       <Check size={14} />
                     </div>
-                    <span style={{ fontSize: '0.875rem', color: 'var(--navy-800)', fontWeight: 600 }}>{feat}</span>
+                    <span style={{ fontSize: '0.875rem', color: 'var(--navy-800)', fontWeight: 600 }}>{feat.title || feat}</span>
                   </div>
                 ))}
               </div>
@@ -125,7 +128,7 @@ export const StructuredServicesSection = () => {
                   onClick={() => handleOrderClick('embroidery')}
                   style={{ fontWeight: 800 }}
                 >
-                  <Upload size={17} /> Order Embroidery Digitizing <ArrowRight size={16} />
+                  <Upload size={17} /> {embHero.primaryCta || 'Order Embroidery Digitizing'} <ArrowRight size={16} />
                 </button>
 
                 <button
@@ -134,7 +137,7 @@ export const StructuredServicesSection = () => {
                   onClick={() => navigate('/services/embroidery-digitizing')}
                   style={{ fontWeight: 700 }}
                 >
-                  Explore Digitizing Rates
+                  {embHero.secondaryCta || 'Explore Digitizing Rates'}
                 </button>
               </div>
             </div>
@@ -233,32 +236,32 @@ export const StructuredServicesSection = () => {
                     SECTION 2 — PHYSICAL PRODUCTS
                   </span>
                   <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#047857', marginTop: '0.2rem' }}>
-                    STARTS $1.50 / PATCH
+                    {patHero.badge || 'STARTS $1.50 / PATCH'}
                   </div>
                 </div>
               </div>
 
               <h3 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.85rem', leading: 1.2 }}>
-                2. Custom Patches & Physical Goods
+                {patHero.title || '2. Custom Patches & Physical Goods'}
               </h3>
 
               <p style={{ color: 'var(--text-muted)', fontSize: '0.975rem', lineHeight: 1.65, marginBottom: '1.5rem' }}>
-                From classic high-density embroidered patches to 3D molded waterproof PVC tactical emblems, woven labels, and laser-debossed genuine leather patches with physical shipping worldwide.
+                {patHero.subtext || 'From classic high-density embroidered patches to 3D molded waterproof PVC tactical emblems, woven labels, and laser-debossed genuine leather patches with physical shipping worldwide.'}
               </p>
 
               {/* Feature Highlights Grid */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
-                {[
-                  'Backing Options: Heavy-Duty Velcro (Hook & Loop), Iron-On Heat Seal, Sew-On Felt, Adhesive',
-                  'Border Finishes: Classic Merrowed Overlock Edge & Precision Laser Cut Shapes',
-                  '100% Waterproof 3D Molded Rubber PVC for tactical uniforms, outerwear & caps',
-                  'Rustic Genuine Leather Patches with laser engraving for denim, aprons & beanies'
-                ].map((feat, idx) => (
+                {(patHero.trustPoints || [
+                  { title: 'Backing Options: Heavy-Duty Velcro (Hook & Loop), Iron-On Heat Seal, Sew-On Felt, Adhesive' },
+                  { title: 'Border Finishes: Classic Merrowed Overlock Edge & Precision Laser Cut Shapes' },
+                  { title: '100% Waterproof 3D Molded Rubber PVC for tactical uniforms, outerwear & caps' },
+                  { title: 'Rustic Genuine Leather Patches with laser engraving for denim, aprons & beanies' }
+                ]).map((feat, idx) => (
                   <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
                     <div style={{ background: '#dcfce7', color: '#16a34a', padding: '0.25rem', borderRadius: '50%', marginTop: '2px', flexShrink: 0 }}>
                       <Check size={14} />
                     </div>
-                    <span style={{ fontSize: '0.875rem', color: 'var(--navy-800)', fontWeight: 600 }}>{feat}</span>
+                    <span style={{ fontSize: '0.875rem', color: 'var(--navy-800)', fontWeight: 600 }}>{feat.title || feat}</span>
                   </div>
                 ))}
               </div>
@@ -271,7 +274,7 @@ export const StructuredServicesSection = () => {
                   onClick={() => handleOrderClick('patch')}
                   style={{ fontWeight: 800 }}
                 >
-                  <Truck size={17} /> Order Custom Patches <ArrowRight size={16} />
+                  <Truck size={17} /> {patHero.primaryCta || 'Order Custom Patches'} <ArrowRight size={16} />
                 </button>
 
                 <button
@@ -280,7 +283,7 @@ export const StructuredServicesSection = () => {
                   onClick={() => navigate('/custom-patches')}
                   style={{ fontWeight: 700 }}
                 >
-                  Explore Patch Options
+                  {patHero.secondaryCta || 'Explore Patch Options'}
                 </button>
               </div>
             </div>
@@ -311,32 +314,32 @@ export const StructuredServicesSection = () => {
                     SECTION 3 — VECTOR GRAPHICS
                   </span>
                   <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1d4ed8', marginTop: '0.2rem' }}>
-                    STARTS $15.00 FLAT
+                    {vecHero.badge || 'STARTS $15.00 FLAT'}
                   </div>
                 </div>
               </div>
 
               <h3 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.85rem', leading: 1.2 }}>
-                3. Vector Art Conversion & Color Separation
+                {vecHero.title || '3. Vector Art Conversion & Color Separation'}
               </h3>
 
               <p style={{ color: 'var(--text-muted)', fontSize: '0.975rem', lineHeight: 1.65, marginBottom: '1.5rem' }}>
-                Transform pixelated low-resolution JPEGs, PNGs, and hand-drawn sketches into 100% scalable vector graphics ready for large format printing, screen printing, vinyl cutters, and laser engraving.
+                {vecHero.subtext || 'Transform pixelated low-resolution JPEGs, PNGs, and hand-drawn sketches into 100% scalable vector graphics ready for large format printing, screen printing, vinyl cutters, and laser engraving.'}
               </p>
 
               {/* Feature Highlights Grid */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
-                {[
-                  '100% Hand-Drawn Node-by-Node Vector Paths (Zero blurry auto-trace distortion)',
-                  'Pantone Spot Color Separation for 4-color screen printing & vinyl plotters',
-                  'Master Formats Included: Adobe Illustrator (.AI), Scalable Vector (.SVG), PostScript (.EPS), Print PDF',
-                  '6-12 Hour Same-Day Turnaround with free unlimited node path revisions'
-                ].map((feat, idx) => (
+                {(vecHero.trustPoints || [
+                  { title: '100% Hand-Drawn Node-by-Node Vector Paths (Zero blurry auto-trace distortion)' },
+                  { title: 'Pantone Spot Color Separation for 4-color screen printing & vinyl plotters' },
+                  { title: 'Master Formats Included: Adobe Illustrator (.AI), Scalable Vector (.SVG), PostScript (.EPS), Print PDF' },
+                  { title: '6-12 Hour Same-Day Turnaround with free unlimited node path revisions' }
+                ]).map((feat, idx) => (
                   <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
                     <div style={{ background: '#dcfce7', color: '#16a34a', padding: '0.25rem', borderRadius: '50%', marginTop: '2px', flexShrink: 0 }}>
                       <Check size={14} />
                     </div>
-                    <span style={{ fontSize: '0.875rem', color: 'var(--navy-800)', fontWeight: 600 }}>{feat}</span>
+                    <span style={{ fontSize: '0.875rem', color: 'var(--navy-800)', fontWeight: 600 }}>{feat.title || feat}</span>
                   </div>
                 ))}
               </div>
@@ -349,7 +352,7 @@ export const StructuredServicesSection = () => {
                   onClick={() => handleOrderClick('vector')}
                   style={{ fontWeight: 800 }}
                 >
-                  <PenTool size={17} /> Order Vector Conversion <ArrowRight size={16} />
+                  <PenTool size={17} /> {vecHero.primaryCta || 'Order Vector Conversion'} <ArrowRight size={16} />
                 </button>
 
                 <button
@@ -358,7 +361,7 @@ export const StructuredServicesSection = () => {
                   onClick={() => navigate('/services/vector-tracing')}
                   style={{ fontWeight: 700 }}
                 >
-                  View Vector Rates
+                  {vecHero.secondaryCta || 'View Vector Rates'}
                 </button>
               </div>
             </div>
