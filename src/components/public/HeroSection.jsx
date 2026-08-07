@@ -148,10 +148,32 @@ export const HeroSection = () => {
   };
 
   const handlePrimaryClick = () => {
-    if (openOrderWizard) {
-      openOrderWizard({ type: currentKey });
+    if (currentKey === 'all') {
+      // Primary button is "View All Services", scroll to pricing
+      const el = document.getElementById('pricing');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
     } else {
-      protectedNavigate('customer', true);
+      // Primary button is "Get Started", open order wizard
+      if (openOrderWizard) {
+        openOrderWizard({ type: currentKey });
+      } else {
+        protectedNavigate('customer', true);
+      }
+    }
+  };
+
+  const handleSecondaryClick = () => {
+    if (currentKey === 'all') {
+      // Secondary button is "Get Started", open order wizard for 'all'
+      if (openOrderWizard) {
+        openOrderWizard({ type: 'all' });
+      } else {
+        protectedNavigate('customer', true);
+      }
+    } else {
+      // Secondary button is "View Pricing", scroll to pricing
+      const el = document.getElementById('pricing');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -366,7 +388,7 @@ export const HeroSection = () => {
 
               <button 
                 type="button"
-                onClick={() => navigate(activeService.secondaryRoute)}
+                onClick={handleSecondaryClick}
                 style={{ 
                   background: 'transparent',
                   color: '#ffffff', 

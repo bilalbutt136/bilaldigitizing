@@ -580,10 +580,10 @@ export const OrderWizardModal = () => {
             <Sparkles size={22} style={{ color: 'var(--orange-400)' }} />
             <div>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
-                Configure {pricingDetails.serviceTitle} Order
+                {type === 'all' ? 'Choose Your Service' : `Configure ${pricingDetails?.serviceTitle || 'Order'}`}
               </h3>
               <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.1rem' }}>
-                Multi-step order configuration with live instant pricing calculation
+                {type === 'all' ? 'Select a service below to start your order configuration' : 'Multi-step order configuration with live instant pricing calculation'}
               </div>
             </div>
           </div>
@@ -596,6 +596,40 @@ export const OrderWizardModal = () => {
           </button>
         </div>
 
+        {type === 'all' ? (
+          <div style={{ padding: '4rem 2rem', textAlign: 'center', background: '#0f172a' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
+              
+              {/* Embroidery */}
+              <div onClick={() => setType('embroidery')} style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '2.5rem 1.5rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center' }} onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--orange-500)'; e.currentTarget.style.transform = 'translateY(-4px)'; }} onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.transform = 'none'; }}>
+                <div style={{ color: 'var(--orange-400)', marginBottom: '1.5rem', background: 'rgba(255,122,0,0.1)', padding: '1rem', borderRadius: '50%' }}>
+                  <Sparkles size={40} />
+                </div>
+                <h3 style={{ color: '#ffffff', fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.75rem' }}>Embroidery Digitizing</h3>
+                <p style={{ color: '#94a3b8', fontSize: '0.95rem', margin: 0, lineHeight: 1.5 }}>Convert logos to machine-ready files. Starting at $10.00.</p>
+              </div>
+
+              {/* Vector */}
+              <div onClick={() => setType('vector')} style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '2.5rem 1.5rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center' }} onMouseOver={e => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.transform = 'translateY(-4px)'; }} onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.transform = 'none'; }}>
+                <div style={{ color: '#3b82f6', marginBottom: '1.5rem', background: 'rgba(59,130,246,0.1)', padding: '1rem', borderRadius: '50%' }}>
+                  <FileCode size={40} />
+                </div>
+                <h3 style={{ color: '#ffffff', fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.75rem' }}>Vector Art Redraw</h3>
+                <p style={{ color: '#94a3b8', fontSize: '0.95rem', margin: 0, lineHeight: 1.5 }}>Scale raster images to crisp vectors. Starting at $15.00.</p>
+              </div>
+
+              {/* Patches */}
+              <div onClick={() => setType('patch')} style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '2.5rem 1.5rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center' }} onMouseOver={e => { e.currentTarget.style.borderColor = '#10b981'; e.currentTarget.style.transform = 'translateY(-4px)'; }} onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.transform = 'none'; }}>
+                <div style={{ color: '#10b981', marginBottom: '1.5rem', background: 'rgba(16,185,129,0.1)', padding: '1rem', borderRadius: '50%' }}>
+                  <FileCheck size={40} />
+                </div>
+                <h3 style={{ color: '#ffffff', fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.75rem' }}>Custom Patches</h3>
+                <p style={{ color: '#94a3b8', fontSize: '0.95rem', margin: 0, lineHeight: 1.5 }}>Physical embroidered or PVC patches. Starting at $1.50.</p>
+              </div>
+
+            </div>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} style={{ padding: '1.75rem' }}>
 
           <div className="configurator-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.75rem', alignItems: 'start' }}>
@@ -1261,6 +1295,7 @@ export const OrderWizardModal = () => {
             </div>
           </div>
         </form>
+        )}
       </div>
     </div>
   );
