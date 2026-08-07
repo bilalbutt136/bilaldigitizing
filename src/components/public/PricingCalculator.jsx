@@ -77,213 +77,7 @@ export const PricingCalculator = () => {
   const patchesFee = pricing.customPatchesStartingRate !== undefined ? parseFloat(pricing.customPatchesStartingRate).toFixed(2) : '1.50';
   const vectorFee = pricing.vectorSimpleRate !== undefined ? parseFloat(pricing.vectorSimpleRate).toFixed(2) : '15.00';
 
-  const defaultCards = [
-    // SERVICE 1: EMBROIDERY DIGITIZING
-    {
-      id: 'pcard-basic',
-      category: 'embroidery',
-      serviceGroup: '1. Embroidery Digitizing',
-      title: 'Basic Digitizing',
-      subTitle: 'Ideal for simple left-chest & small logos up to 4"',
-      icon: Zap,
-      discountTag: 'ESSENTIAL',
-      strikePrice: '$15.00',
-      rate: '$10.00',
-      unit: '/ design',
-      delivery: '8 - 12 Hours Delivery',
-      btnText: 'Order Basic ($10.00)',
-      badge: '',
-      popular: false,
-      features: [
-        'Logos up to 4" x 4"',
-        'All commercial formats (.DST, .PES, .EXP)',
-        'Free machine stitch simulation proof',
-        '100% Free Unlimited Revisions'
-      ]
-    },
-    {
-      id: 'pcard-standard',
-      category: 'embroidery',
-      serviceGroup: '1. Embroidery Digitizing',
-      title: 'Standard Digitizing',
-      subTitle: 'Ideal for standard chest, caps & sleeves',
-      icon: Trophy,
-      discountTag: 'MOST POPULAR',
-      strikePrice: '$20.00',
-      rate: '$15.00',
-      unit: '/ design',
-      delivery: '4 - 12 Hours Express',
-      btnText: 'Order Standard ($15.00)',
-      badge: 'MOST POPULAR',
-      popular: true,
-      features: [
-        'Logos up to 8" x 8"',
-        'Free native .EMB Wilcom source file',
-        '3D Foam cap pathing & compensation',
-        '100% Free Unlimited Revisions'
-      ]
-    },
-    {
-      id: 'pcard-premium',
-      category: 'embroidery',
-      serviceGroup: '1. Embroidery Digitizing',
-      title: 'Premium Digitizing',
-      subTitle: 'Ideal for jacket backs & full-back crests',
-      icon: Sparkles,
-      discountTag: 'FULL BACK',
-      strikePrice: '$45.00',
-      rate: '$35.00',
-      unit: '/ design',
-      delivery: '12 - 24 Hours Priority',
-      btnText: 'Order Premium ($35.00)',
-      badge: '',
-      popular: false,
-      features: [
-        'Large jacket backs (9"-12"+ high stitch count)',
-        'Master pathing for complex gradient shading',
-        'High density underlay pathing',
-        'VIP priority studio desk'
-      ]
-    },
-
-    // SERVICE 2: VECTOR TRACING
-    {
-      id: 'pcard-vector-simple',
-      category: 'vector',
-      serviceGroup: '2. Vector Tracing',
-      title: 'Simple Vector Redraw',
-      subTitle: 'Ideal for clean logo & raster image vector redraw',
-      icon: Zap,
-      discountTag: 'VECTOR ART',
-      strikePrice: '$25.00',
-      rate: '$15.00',
-      unit: '/ artwork',
-      delivery: '6 - 12 Hours Delivery',
-      btnText: 'Order Simple Vector ($15.00)',
-      badge: '',
-      popular: false,
-      features: [
-        'Clean logo & raster JPEG/PNG redraws',
-        'Hand-drawn 100% scalable vector paths',
-        'Deliverables: .AI, .EPS, .SVG, .PDF, .CDR',
-        'Spot Pantone & CMYK print color separations'
-      ]
-    },
-    {
-      id: 'pcard-vector-complex',
-      category: 'vector',
-      serviceGroup: '2. Vector Tracing',
-      title: 'Complex Vector Art',
-      subTitle: 'Ideal for detailed multi-layer illustrations & mascots',
-      icon: Trophy,
-      discountTag: 'HIGH DETAIL',
-      strikePrice: '$35.00',
-      rate: '$25.00',
-      unit: '/ artwork',
-      delivery: '6 - 12 Hours Delivery',
-      btnText: 'Order Complex Vector ($25.00)',
-      badge: '',
-      popular: true,
-      features: [
-        'Complex gradient shading & mascot redraws',
-        'Ultra-precise node placement & pathing',
-        'All vector deliverables included',
-        '100% Free Unlimited Revisions'
-      ]
-    },
-    {
-      id: 'pcard-vector-rush',
-      category: 'vector',
-      serviceGroup: '2. Vector Tracing',
-      title: 'Super Rush Vector',
-      subTitle: 'Ideal for express emergency deadlines (2-4 Hours)',
-      icon: Sparkles,
-      discountTag: 'EXPRESS RUSH',
-      strikePrice: '$50.00',
-      rate: '$35.00',
-      unit: '/ artwork',
-      delivery: '2 - 4 Hours Express',
-      btnText: 'Order Rush Vector ($35.00)',
-      badge: '',
-      popular: false,
-      features: [
-        'Guaranteed 2-4 Hours Turnaround',
-        'Top studio vector artist assigned',
-        'All print & cut vector formats',
-        '24/7 VIP priority support'
-      ]
-    },
-
-    // SERVICE 3: CUSTOM PATCHES
-    {
-      id: 'pcard-patch-woven',
-      category: 'patches',
-      serviceGroup: '3. Custom Patches',
-      title: 'Micro Woven Patches',
-      subTitle: 'Ideal for fine text, micro detail & high-density logos',
-      icon: Zap,
-      discountTag: 'WOVEN CRAFT',
-      strikePrice: '$2.50',
-      rate: '$1.50',
-      unit: '/ patch',
-      delivery: '7–10 Business Days',
-      btnText: 'Order Woven Patches ($1.50/ea)',
-      badge: '',
-      popular: false,
-      features: [
-        'Min. Quantity: 50 Patches',
-        'Flat ultra-high resolution thread weaving',
-        'Iron-on, sew-on, or velcro backing',
-        '100% Free Unlimited Revisions'
-      ]
-    },
-    {
-      id: 'pcard-patch-embroidered',
-      category: 'patches',
-      serviceGroup: '3. Custom Patches',
-      title: 'Embroidered Patches',
-      subTitle: 'Classic 3D raised thread texture & merrowed border',
-      icon: Trophy,
-      discountTag: 'MOST POPULAR',
-      strikePrice: '$3.80',
-      rate: '$2.50',
-      unit: '/ patch',
-      delivery: '7–10 Business Days',
-      btnText: 'Order Embroidered ($2.50/ea)',
-      badge: 'MOST POPULAR',
-      popular: true,
-      features: [
-        'Min. Quantity: 50 Patches',
-        'Classic merrowed border edge finishing',
-        'Heavy-duty velcro, heat-seal, or sew-on backing',
-        'Free digital proof & sample photo'
-      ]
-    },
-    {
-      id: 'pcard-patch-pvc',
-      category: 'patches',
-      serviceGroup: '3. Custom Patches',
-      title: '3D PVC & Leather Patches',
-      subTitle: 'Waterproof 3D molded rubber PVC or debossed leather',
-      icon: Sparkles,
-      discountTag: 'LUXURY & PVC',
-      strikePrice: '$5.00',
-      rate: '$3.50',
-      unit: '/ patch',
-      delivery: '7–10 Business Days',
-      btnText: 'Order 3D PVC / Leather ($3.50/ea)',
-      badge: '',
-      popular: false,
-      features: [
-        'Min. Quantity: 50 Patches',
-        'High-durability waterproof 3D molded PVC',
-        'Debossed & laser-engraved luxury leather',
-        'Tactical velcro hook & loop mounting'
-      ]
-    }
-  ];
-
-  const allCards = (pricingCards && pricingCards.length > 0) ? pricingCards.filter(c => (c.category || '').toLowerCase() !== 'store' && (c.category || '').toLowerCase() !== 'apparel') : defaultCards;
+  const allCards = pricingCards || [];
   const cardsToRender = activeCategory === 'all'
     ? allCards
     : allCards.filter(c => (c.category || '').toLowerCase() === activeCategory.toLowerCase() || (c.title || '').toLowerCase().includes(activeCategory.toLowerCase()));
@@ -327,15 +121,23 @@ export const PricingCalculator = () => {
             </p>
           </div>
 
+        {/* Empty State */}
+        {cardsToRender.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#94a3b8' }}>
+            <p style={{ fontSize: '1.1rem', fontWeight: 500 }}>No pricing packages available in this category yet.</p>
+          </div>
+        )}
+
         {/* Dynamic Pricing Category Cards Grid */}
-        <div className="grid-responsive-3" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '1.5rem',
-          maxWidth: '1200px',
-          margin: '0 auto',
-          alignItems: 'stretch'
-        }}>
+        {cardsToRender.length > 0 && (
+          <div className="grid-responsive-3" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '1.5rem',
+            maxWidth: '1200px',
+            margin: '0 auto',
+            alignItems: 'stretch'
+          }}>
           {cardsToRender.map((cat, idx) => {
             const isPopular = cat.popular || cat.badge === 'MOST POPULAR' || cat.badge === 'MOST POPULAR TIER';
             const IconComp = cat.icon || (idx === 0 ? Zap : idx === 1 ? Trophy : Sparkles);
@@ -486,6 +288,7 @@ export const PricingCalculator = () => {
             );
           })}
         </div>
+        )}
 
         {/* Closing Footer Note */}
         <div style={{

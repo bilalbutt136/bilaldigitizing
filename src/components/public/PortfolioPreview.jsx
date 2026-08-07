@@ -5,51 +5,6 @@ import { ArrowRight, Layers, PenTool, Hexagon } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
 
-const defaultPortfolioItems = [
-  {
-    id: 1,
-    title: 'Golden Eagle Sports Crest',
-    category: 'Embroidery',
-    image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
-    details: '15,000 Stitches • 6 Colors'
-  },
-  {
-    id: 2,
-    title: '3D Puff Cap Logo',
-    category: 'Embroidery',
-    image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80',
-    details: '12,500 Stitches • 3D Puff'
-  },
-  {
-    id: 3,
-    title: 'Vintage Logo Vector Redraw',
-    category: 'Vector Art',
-    image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
-    details: 'AI Format • 100% Scalable'
-  },
-  {
-    id: 4,
-    title: 'Corporate Crest Conversion',
-    category: 'Vector Art',
-    image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80',
-    details: 'EPS Format • CMYK Colors'
-  },
-  {
-    id: 5,
-    title: 'Tactical Embroidered Patch',
-    category: 'Custom Patches',
-    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
-    details: 'Iron-on Backing • Merrowed Border'
-  },
-  {
-    id: 6,
-    title: 'Molded PVC Emblem',
-    category: 'Custom Patches',
-    image: 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=800&q=80',
-    details: 'Velcro Backing • 3D Relief'
-  }
-];
-
 const categories = ['All', 'Embroidery', 'Vector Art', 'Custom Patches'];
 
 export const PortfolioPreview = () => {
@@ -84,9 +39,7 @@ export const PortfolioPreview = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const portfolioItems = portfolioSamples?.length > 0 
-    ? portfolioSamples 
-    : defaultPortfolioItems;
+  const portfolioItems = portfolioSamples || [];
 
   const filteredItems = activeCategory === 'All'
     ? portfolioItems
@@ -255,39 +208,48 @@ export const PortfolioPreview = () => {
           })}
         </div>
 
+        {/* Empty State */}
+        {filteredItems.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
+            <p style={{ fontSize: '1.1rem', fontWeight: 500 }}>No portfolio items available in this category yet.</p>
+          </div>
+        )}
+
         {/* CTA Button */}
-        <div style={{ textAlign: 'center' }}>
-          <button
-            onClick={() => navigate('/portfolio')}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--orange-500, #ff7a00)';
-              e.currentTarget.style.color = '#ffffff';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = 'var(--orange-500, #ff7a00)';
-            }}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              padding: '14px 32px',
-              border: '2px solid var(--orange-500, #ff7a00)',
-              borderRadius: '8px',
-              backgroundColor: 'transparent',
-              color: 'var(--orange-500, #ff7a00)',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              fontFamily: 'var(--font-body, "Inter", sans-serif)'
-            }}
-          >
-            View Full Portfolio
-            <ArrowRight size={20} />
-          </button>
-        </div>
+        {filteredItems.length > 0 && (
+          <div style={{ textAlign: 'center' }}>
+            <button
+              onClick={() => navigate('/portfolio')}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--orange-500, #ff7a00)';
+                e.currentTarget.style.color = '#ffffff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--orange-500, #ff7a00)';
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '14px 32px',
+                border: '2px solid var(--orange-500, #ff7a00)',
+                borderRadius: '8px',
+                backgroundColor: 'transparent',
+                color: 'var(--orange-500, #ff7a00)',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                fontFamily: 'var(--font-body, "Inter", sans-serif)'
+              }}
+            >
+              View Full Portfolio
+              <ArrowRight size={20} />
+            </button>
+          </div>
+        )}
 
       </div>
     </section>

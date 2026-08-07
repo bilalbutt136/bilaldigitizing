@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { INITIAL_PRICING, SERVICES, PORTFOLIO_SAMPLES, DEFAULT_HERO_SLIDES } from '../data/catalogDefaults';
 import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
 import {
   createOrderInSupabase,
@@ -427,14 +426,14 @@ export const StateProvider = ({ children }) => {
   // Core Data Arrays (seeded from the database catalog on load)
   const [orders, setOrders] = useState([]);
   const [clients, setClients] = useState([]);
-  const [pricing, setPricing] = useState(INITIAL_PRICING);
-  const [pricingCards, setPricingCards] = useState(DEFAULT_PRICING_CARDS);
-  const [portfolioSamples, setPortfolioSamples] = useState(PORTFOLIO_SAMPLES);
-  const [sewOuts, setSewOuts] = useState(DEFAULT_SEW_OUTS);
-  const [patchCards, setPatchCards] = useState(DEFAULT_PATCH_CARDS);
-  const [storeProducts, setStoreProducts] = useState(DEFAULT_STORE_PRODUCTS);
-  const [servicesList, setServicesList] = useState(SERVICES);
-  const [heroSlides, setHeroSlides] = useState(DEFAULT_HERO_SLIDES);
+  const [pricing, setPricing] = useState({});
+  const [pricingCards, setPricingCards] = useState([]);
+  const [portfolioSamples, setPortfolioSamples] = useState([]);
+  const [sewOuts, setSewOuts] = useState([]);
+  const [patchCards, setPatchCards] = useState([]);
+  const [storeProducts, setStoreProducts] = useState([]);
+  const [servicesList, setServicesList] = useState([]);
+  const [heroSlides, setHeroSlides] = useState([]);
   const [siteSettings, setSiteSettings] = useState(DEFAULT_SITE_SETTINGS);
   const [digitizers, setDigitizers] = useState([]);
 
