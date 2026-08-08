@@ -14,26 +14,12 @@ import {
   X
 } from 'lucide-react';
 
-const INITIAL_CONVERSATIONS = [];
-
 // Helper to clean and deduplicate conversation threads by client email
 const deduplicateThreads = (rawList) => {
   if (!Array.isArray(rawList)) return [];
   const map = new Map();
   rawList.forEach(conv => {
-    // Purge mock dummy contacts from legacy storage if they have no real messages
-    const name = (conv.clientName || '').toLowerCase();
-    const cleanMessages = (conv.messages || []).filter(m =>
-      m.id && !['m1', 'm2', 'm3', 'msg-welcome', 'msg-welcome-1'].includes(m.id)
-    );
-
-    if (['sarah jenkins', 'michael chang', 'david miller', 'elena rostova'].includes(name) && cleanMessages.length === 0) {
-      return;
-    }
-
-    if (cleanMessages.length === 0 && conv.id && ['chat-1', 'chat-2', 'chat-3', 'chat-4'].includes(conv.id)) {
-      return;
-    }
+    const cleanMessages = (conv.messages || []).filter(m => m.id);
 
     const key = (conv.clientEmail || conv.clientName || conv.id || '').toLowerCase().trim();
     if (!key) return;
@@ -61,16 +47,7 @@ const deduplicateThreads = (rawList) => {
 export const AdminChatInbox = () => {
   const { showToast, setSelectedOrderForDrawer, orders = [] } = useAppState();
 
-  const [conversations, setConversations] = useState(() => {
-    if (typeof window === 'undefined') return deduplicateThreads(INITIAL_CONVERSATIONS);
-    try {
-      const saved = localStorage.getItem('bdigi_admin_chats');
-      const parsed = saved ? JSON.parse(saved) : INITIAL_CONVERSATIONS;
-      return deduplicateThreads(parsed);
-    } catch {
-      return deduplicateThreads(INITIAL_CONVERSATIONS);
-    }
-  });
+  const [conversations, setConversations] = useState([]);
 
   const [activeChatId, setActiveChatId] = useState('chat-1');
   const [searchTerm, setSearchTerm] = useState('');

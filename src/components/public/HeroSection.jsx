@@ -18,18 +18,7 @@ import {
   LayoutGrid
 } from 'lucide-react';
 
-const FALLBACK_HERO = {
-  id: 'fallback',
-  label: 'Welcome',
-  badge: 'PREMIUM STUDIO',
-  title: 'Your Complete Digitizing & Patch Studio',
-  highlight: 'All Services',
-  description: 'From precision embroidery digitizing and scalable vector art conversions to high-quality physical custom patches shipped worldwide.',
-  primaryCta: 'Get Started',
-  secondaryCta: 'View Pricing',
-  previewBefore: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80',
-  previewAfter: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
-};
+// No fallback hero, data is dynamically fetched from DB
 
 const ROTATING_TEXTS = [
   "Commercial Embroidery",
@@ -62,23 +51,25 @@ export const HeroSection = () => {
   const targetKey = currentKey === 'patch' ? 'patches' : currentKey;
 
   // Real-time Database Driven Content Binding
-  let activeSlide = FALLBACK_HERO;
+  let activeSlide = null;
   if (heroSlides && heroSlides.length > 0) {
-    // If the admin has defined a slide for the active tab, use it. Otherwise fallback to the first slide.
-    const matchedSlide = heroSlides.find(s => s.label?.toLowerCase().includes(targetKey)) || heroSlides[0];
-    if (matchedSlide) {
-      activeSlide = {
-        ...activeSlide,
-        title: matchedSlide.title || activeSlide.title,
-        highlight: matchedSlide.highlight || activeSlide.highlight,
-        description: matchedSlide.description || activeSlide.description,
-        badge: matchedSlide.badge || activeSlide.badge,
-        previewAfter: matchedSlide.preview_after || activeSlide.previewAfter
-      };
-    }
+    activeSlide = heroSlides.find(s => s.label?.toLowerCase().includes(targetKey) || s.serviceKey?.toLowerCase().includes(targetKey)) || heroSlides[0];
   }
 
   const activeService = activeSlide;
+
+  if (!activeService) {
+    return (
+      <section style={{
+        background: 'linear-gradient(135deg, var(--navy-950, #0f172a) 0%, var(--navy-800, #1e293b) 100%)',
+        color: '#ffffff',
+        padding: '8rem 0',
+        textAlign: 'center'
+      }}>
+        <div style={{ opacity: 0.7, fontSize: '1.2rem' }}>Loading studio configuration...</div>
+      </section>
+    );
+  }
 
   const handlePrimaryClick = () => {
     if (currentKey === 'all') {

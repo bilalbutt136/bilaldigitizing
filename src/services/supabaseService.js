@@ -708,11 +708,11 @@ export async function fetchCmsConfigFromSupabase() {
 
   try {
     const { data, error } = await supabase
-      .from('cms_content')
+      .from('site_config')
       .select('key, value');
 
     if (error || !data) {
-      console.warn('Supabase fetch cms_content notice:', error?.message);
+      console.warn('Supabase fetch site_config notice:', error?.message);
       return null;
     }
 
@@ -723,7 +723,7 @@ export async function fetchCmsConfigFromSupabase() {
 
     return configMap;
   } catch (err) {
-    console.warn('Supabase fetch cms_content exception:', err);
+    console.warn('Supabase fetch site_config exception:', err);
     return null;
   }
 }
@@ -734,16 +734,16 @@ export async function saveCmsConfigToSupabase(key, value) {
 
   try {
     const { error } = await supabase
-      .from('cms_content')
+      .from('site_config')
       .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
 
     if (error) {
-      console.warn(`Supabase upsert cms_content [${key}] warning:`, error.message);
+      console.warn(`Supabase upsert site_config [${key}] warning:`, error.message);
       return false;
     }
     return true;
   } catch (err) {
-    console.warn(`Supabase upsert cms_content [${key}] exception:`, err);
+    console.warn(`Supabase upsert site_config [${key}] exception:`, err);
     return false;
   }
 }
@@ -775,8 +775,8 @@ export async function upsertCatalogDataToSupabase(tableName, dataArray) {
 }
 
 export const upsertHeroContent = (data) => upsertCatalogDataToSupabase('hero_slides', data);
-export const upsertPricingTiers = (data) => upsertCatalogDataToSupabase('pricing_tiers', data);
-export const upsertPortfolioItems = (data) => upsertCatalogDataToSupabase('portfolio_items', data);
+export const upsertPricingTiers = (data) => upsertCatalogDataToSupabase('pricing_cards', data);
+export const upsertPortfolioItems = (data) => upsertCatalogDataToSupabase('portfolio', data);
 export const upsertPatchCards = (data) => upsertCatalogDataToSupabase('patch_cards', data);
 
 // ============================================================
@@ -793,14 +793,14 @@ export async function fetchCatalogFromSupabase() {
     const [services, pricingTiers, patchCards, storeProducts, portfolioItems, sewOuts, heroSlides, digitizers, cmsContent] =
       await Promise.all([
         supabase.from('services').select('*').order('sort_order', { ascending: true }),
-        supabase.from('pricing_tiers').select('*').order('sort_order', { ascending: true }),
+        supabase.from('pricing_cards').select('*').order('sort_order', { ascending: true }),
         supabase.from('patch_cards').select('*').order('sort_order', { ascending: true }),
         supabase.from('store_products').select('*').order('sort_order', { ascending: true }),
-        supabase.from('portfolio_items').select('*').order('sort_order', { ascending: true }),
+        supabase.from('portfolio').select('*').order('sort_order', { ascending: true }),
         supabase.from('sew_outs').select('*').order('sort_order', { ascending: true }),
         supabase.from('hero_slides').select('*').order('sort_order', { ascending: true }),
         supabase.from('digitizers').select('*').order('sort_order', { ascending: true }),
-        supabase.from('cms_content').select('key, value')
+        supabase.from('site_config').select('key, value')
       ]);
 
     const mapServices = (rows) => (rows || []).map(s => ({
