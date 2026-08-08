@@ -708,11 +708,11 @@ export async function fetchCmsConfigFromSupabase() {
 
   try {
     const { data, error } = await supabase
-      .from('site_config')
+      .from('cms_content')
       .select('key, value');
 
     if (error || !data) {
-      console.warn('Supabase fetch site_config notice:', error?.message);
+      console.warn('Supabase fetch cms_content notice:', error?.message);
       return null;
     }
 
@@ -723,7 +723,7 @@ export async function fetchCmsConfigFromSupabase() {
 
     return configMap;
   } catch (err) {
-    console.warn('Supabase fetch site_config exception:', err);
+    console.warn('Supabase fetch cms_content exception:', err);
     return null;
   }
 }
@@ -734,16 +734,16 @@ export async function saveCmsConfigToSupabase(key, value) {
 
   try {
     const { error } = await supabase
-      .from('site_config')
+      .from('cms_content')
       .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
 
     if (error) {
-      console.warn(`Supabase upsert site_config [${key}] warning:`, error.message);
+      console.warn(`Supabase upsert cms_content [${key}] warning:`, error.message);
       return false;
     }
     return true;
   } catch (err) {
-    console.warn(`Supabase upsert site_config [${key}] exception:`, err);
+    console.warn(`Supabase upsert cms_content [${key}] exception:`, err);
     return false;
   }
 }
@@ -778,24 +778,24 @@ export async function upsertCatalogDataToSupabase(tableName, dataArray) {
 // CATALOG (DB-driven; replaces mock catalog defaults)
 // ============================================================
 
-// Fetch the full public catalog from Supabase (services, pricing cards,
-// patch cards, store products, portfolio, sew outs, hero slides, digitizers,
-// and the site_config key/value store). Returns null when not configured.
+// Fetch the full public catalog from Supabase (services, pricing tiers,
+// patch cards, store products, portfolio items, sew outs, hero slides, digitizers,
+// and the cms_content key/value store). Returns null when not configured.
 export async function fetchCatalogFromSupabase() {
   if (!isSupabaseConfigured) return null;
 
   try {
-    const [services, pricingCards, patchCards, storeProducts, portfolio, sewOuts, heroSlides, digitizers, siteConfig] =
+    const [services, pricingTiers, patchCards, storeProducts, portfolioItems, sewOuts, heroSlides, digitizers, cmsContent] =
       await Promise.all([
         supabase.from('services').select('*').order('sort_order', { ascending: true }),
-        supabase.from('pricing_cards').select('*').order('sort_order', { ascending: true }),
+        supabase.from('pricing_tiers').select('*').order('sort_order', { ascending: true }),
         supabase.from('patch_cards').select('*').order('sort_order', { ascending: true }),
         supabase.from('store_products').select('*').order('sort_order', { ascending: true }),
-        supabase.from('portfolio').select('*').order('sort_order', { ascending: true }),
+        supabase.from('portfolio_items').select('*').order('sort_order', { ascending: true }),
         supabase.from('sew_outs').select('*').order('sort_order', { ascending: true }),
         supabase.from('hero_slides').select('*').order('sort_order', { ascending: true }),
         supabase.from('digitizers').select('*').order('sort_order', { ascending: true }),
-        supabase.from('site_config').select('key, value')
+        supabase.from('cms_content').select('key, value')
       ]);
 
     const mapServices = (rows) => (rows || []).map(s => ({
@@ -822,11 +822,11 @@ export async function fetchCatalogFromSupabase() {
     }));
 
     const configMap = {};
-    (siteConfig.data || []).forEach(item => { configMap[item.key] = item.value; });
+    (cmsContent.data || []).forEach(item => { configMap[item.key] = item.value; });
 
     return {
       servicesList: mapServices(services.data),
-      pricingCards: mapCards(pricingCards.data),
+      pricingCards: mapCards(pricingTiers.data),
       patchCards: mapCards(patchCards.data),
       storeProducts: (storeProducts.data || []).map(p => ({
         id: p.id,
@@ -843,7 +843,7 @@ export async function fetchCatalogFromSupabase() {
         colors: p.colors || [],
         features: p.features || []
       })),
-      portfolioSamples: (portfolio.data || []).map(p => ({
+      portfolioSamples: (portfolioItems.data || []).map(p => ({
         id: p.id,
         title: p.title,
         category: p.category,

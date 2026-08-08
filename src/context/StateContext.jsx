@@ -539,14 +539,14 @@ export const StateProvider = ({ children }) => {
         try {
           const catalog = await fetchCatalogFromSupabase();
           if (!cancelled && catalog) {
-            if (catalog.servicesList?.length) setServicesList(catalog.servicesList);
-            if (catalog.pricingCards?.length) setPricingCards(catalog.pricingCards);
-            if (catalog.patchCards?.length) setPatchCards(catalog.patchCards);
-            if (catalog.storeProducts?.length) setStoreProducts(catalog.storeProducts);
-            if (catalog.portfolioSamples?.length) setPortfolioSamples(catalog.portfolioSamples);
-            if (catalog.sewOuts?.length) setSewOuts(catalog.sewOuts);
-            if (catalog.heroSlides?.length) setHeroSlides(catalog.heroSlides);
-            if (catalog.digitizers?.length) {
+            if (catalog.servicesList) setServicesList(catalog.servicesList);
+            if (catalog.pricingCards) setPricingCards(catalog.pricingCards);
+            if (catalog.patchCards) setPatchCards(catalog.patchCards);
+            if (catalog.storeProducts) setStoreProducts(catalog.storeProducts);
+            if (catalog.portfolioSamples) setPortfolioSamples(catalog.portfolioSamples);
+            if (catalog.sewOuts) setSewOuts(catalog.sewOuts);
+            if (catalog.heroSlides) setHeroSlides(catalog.heroSlides);
+            if (catalog.digitizers) {
               setDigitizers(prev => prev.map(d => {
                 const fresh = catalog.digitizers.find(x => x.id === d.id);
                 return fresh ? { ...d, ...fresh } : d;
@@ -630,8 +630,8 @@ export const StateProvider = ({ children }) => {
       catalogChannel = supabase.channel('catalog-sync-channel');
       
       const tablesToSync = [
-        'services', 'pricing_cards', 'patch_cards', 'store_products', 
-        'portfolio', 'sew_outs', 'hero_slides', 'digitizers', 'site_config'
+        'services', 'pricing_tiers', 'patch_cards', 'store_products', 
+        'portfolio_items', 'sew_outs', 'hero_slides', 'digitizers', 'cms_content'
       ];
       
       tablesToSync.forEach(table => {
@@ -639,13 +639,13 @@ export const StateProvider = ({ children }) => {
           try {
             const catalog = await fetchCatalogFromSupabase();
             if (catalog) {
-              if (catalog.servicesList?.length) setServicesList(catalog.servicesList);
-              if (catalog.pricingCards?.length) setPricingCards(catalog.pricingCards);
-              if (catalog.patchCards?.length) setPatchCards(catalog.patchCards);
-              if (catalog.storeProducts?.length) setStoreProducts(catalog.storeProducts);
-              if (catalog.portfolioSamples?.length) setPortfolioSamples(catalog.portfolioSamples);
-              if (catalog.sewOuts?.length) setSewOuts(catalog.sewOuts);
-              if (catalog.heroSlides?.length) setHeroSlides(catalog.heroSlides);
+              if (catalog.servicesList) setServicesList(catalog.servicesList);
+              if (catalog.pricingCards) setPricingCards(catalog.pricingCards);
+              if (catalog.patchCards) setPatchCards(catalog.patchCards);
+              if (catalog.storeProducts) setStoreProducts(catalog.storeProducts);
+              if (catalog.portfolioSamples) setPortfolioSamples(catalog.portfolioSamples);
+              if (catalog.sewOuts) setSewOuts(catalog.sewOuts);
+              if (catalog.heroSlides) setHeroSlides(catalog.heroSlides);
               if (catalog.siteSettings) setSiteSettings(catalog.siteSettings);
               if (catalog.pricing) setPricing(catalog.pricing);
               if (catalog.serviceCms) setServiceCmsContent(catalog.serviceCms);
@@ -1157,7 +1157,7 @@ export const StateProvider = ({ children }) => {
 
   const updatePricingCards = (newCards) => {
     setPricingCards(newCards);
-    upsertCatalogDataToSupabase('pricing_cards', newCards);
+    upsertCatalogDataToSupabase('pricing_tiers', newCards);
   };
 
   const updatePatchCards = (newCards) => {
@@ -1172,7 +1172,7 @@ export const StateProvider = ({ children }) => {
 
   const updatePortfolioSamples = (newPortfolio) => {
     setPortfolioSamples(newPortfolio);
-    upsertCatalogDataToSupabase('portfolio', newPortfolio);
+    upsertCatalogDataToSupabase('portfolio_items', newPortfolio);
   };
 
   const updateSewOuts = (newSewOuts) => {
@@ -1224,13 +1224,13 @@ export const StateProvider = ({ children }) => {
     try {
       const catalog = await fetchCatalogFromSupabase();
       if (catalog) {
-        if (catalog.servicesList?.length) setServicesList(catalog.servicesList);
-        if (catalog.pricingCards?.length) setPricingCards(catalog.pricingCards);
-        if (catalog.patchCards?.length) setPatchCards(catalog.patchCards);
-        if (catalog.storeProducts?.length) setStoreProducts(catalog.storeProducts);
-        if (catalog.portfolioSamples?.length) setPortfolioSamples(catalog.portfolioSamples);
-        if (catalog.sewOuts?.length) setSewOuts(catalog.sewOuts);
-        if (catalog.heroSlides?.length) setHeroSlides(catalog.heroSlides);
+        if (catalog.servicesList) setServicesList(catalog.servicesList);
+        if (catalog.pricingCards) setPricingCards(catalog.pricingCards);
+        if (catalog.patchCards) setPatchCards(catalog.patchCards);
+        if (catalog.storeProducts) setStoreProducts(catalog.storeProducts);
+        if (catalog.portfolioSamples) setPortfolioSamples(catalog.portfolioSamples);
+        if (catalog.sewOuts) setSewOuts(catalog.sewOuts);
+        if (catalog.heroSlides) setHeroSlides(catalog.heroSlides);
         if (catalog.digitizers?.length) {
           const merged = digitizers.map(d => {
             const fresh = catalog.digitizers.find(x => x.id === d.id);
