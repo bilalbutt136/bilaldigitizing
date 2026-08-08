@@ -1171,8 +1171,8 @@ export async function fetchConversations() {
     const { data: msgs, error: msgErr } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
     if (msgErr) throw msgErr;
     
-    return convs.map(c => {
-      const cMsgs = msgs.filter(m => m.conversation_id === c.id).map(m => ({
+    return (convs || []).map(c => {
+      const cMsgs = (msgs || []).filter(m => m.conversation_id === c.id).map(m => ({
         id: m.id,
         sender: m.sender,
         senderName: m.sender_name,

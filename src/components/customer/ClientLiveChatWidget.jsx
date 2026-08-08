@@ -101,7 +101,8 @@ export const ClientLiveChatWidget = () => {
   const avatarUrl = activeUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0f172a&color=fff`;
 
   // Safely resolve the active chat thread for the current user/guest
-  const clientThread = chats.find(c => (c.clientEmail || '').toLowerCase().trim() === clientEmail) || {
+  const safeChats = Array.isArray(chats) ? chats : [];
+  const clientThread = safeChats.find(c => (c.clientEmail || '').toLowerCase().trim() === clientEmail) || {
     messages: []
   };
 
@@ -381,7 +382,7 @@ export const ClientLiveChatWidget = () => {
                   </span>
                 </div>
 
-                {clientThread.messages.length === 0 && (
+                {(clientThread.messages || []).length === 0 && (
                   <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--text-muted)' }}>
                     <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#fff7ed', color: 'var(--orange-500)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
                       <MessageSquare size={20} />
@@ -395,7 +396,7 @@ export const ClientLiveChatWidget = () => {
                   </div>
                 )}
 
-                {clientThread.messages.map((msg) => {
+                {(clientThread.messages || []).map((msg) => {
                   const isClient = msg.sender === 'client';
                   return (
                     <div
