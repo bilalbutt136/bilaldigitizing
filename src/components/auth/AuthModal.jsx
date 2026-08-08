@@ -568,8 +568,9 @@ export const AuthModal = () => {
                           setIsAuthModalOpen(false);
                           navigate('/client-portal');
                         } else if (res?.error) {
-                          setErrorModalText(res.error);
-                          showToast(res.error, 'error');
+                          const errorMsg = typeof res.error === 'object' ? JSON.stringify(res.error) : res.error;
+                          setErrorModalText(errorMsg === '{}' ? 'Google Auth Provider is missing or misconfigured in Supabase.' : errorMsg);
+                          showToast('Authentication failed', 'error');
                         }
                       } catch (err) {
                         setIsLoading(false);
@@ -767,8 +768,9 @@ export const AuthModal = () => {
                           setIsAuthModalOpen(false);
                           navigate('/client-portal');
                         } else if (res?.error) {
-                          setErrorModalText(res.error);
-                          showToast(res.error, 'error');
+                          const errorMsg = typeof res.error === 'object' ? JSON.stringify(res.error) : res.error;
+                          setErrorModalText(errorMsg === '{}' ? 'Google Auth Provider is missing or misconfigured in Supabase.' : errorMsg);
+                          showToast('Authentication failed', 'error');
                         }
                       } catch (err) {
                         setIsLoading(false);
@@ -1053,7 +1055,7 @@ export const AuthModal = () => {
             </h3>
 
             <p style={{ fontSize: '0.925rem', color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: '1.75rem' }}>
-              {errorModalText}
+              {typeof errorModalText === 'object' ? JSON.stringify(errorModalText) : (errorModalText === '{}' ? 'Google Auth provider is not configured properly in Supabase.' : errorModalText)}
             </p>
 
             <button

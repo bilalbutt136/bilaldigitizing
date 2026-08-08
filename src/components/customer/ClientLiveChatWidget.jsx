@@ -172,18 +172,20 @@ export const ClientLiveChatWidget = () => {
   return (
     <>
       {/* Standalone Circular Floating Action Button (Hidden from bottom UI, triggered via top header Chat button) */}
-      <button
-        type="button"
-        className="live-chat-floating-button floating-chat-trigger"
-        onClick={() => setIsOpen(!isOpen)}
-        style={{
-          display: 'none',
-          position: 'fixed',
-          bottom: '24px',
-          right: '24px',
-          zIndex: 8500,
-          width: '56px',
-          height: '56px',
+      {!isOpen && (
+        <button
+          id="floating-chat-trigger"
+          type="button"
+          className="live-chat-floating-button floating-chat-trigger"
+          onClick={() => setIsOpen(!isOpen)}
+          style={{
+            display: 'none',
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            zIndex: 8500,
+            width: '56px',
+            height: '56px',
           borderRadius: '50%',
           background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
           color: '#ffffff',
