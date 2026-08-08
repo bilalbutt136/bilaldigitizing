@@ -302,6 +302,27 @@ export const SiteCmsEditor = () => {
 
         <button
           type="button"
+          onClick={() => setActiveSection('heroslider')}
+          style={{
+            padding: '1rem 1.25rem',
+            border: 'none',
+            borderBottom: activeSection === 'heroslider' ? '3px solid #ff7a00' : '3px solid transparent',
+            background: 'none',
+            fontWeight: 800,
+            fontSize: '0.9rem',
+            color: activeSection === 'heroslider' ? '#ff7a00' : '#64748b',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <Sparkles size={18} /> Hero Slider & Banner CMS ({draftHeroSlides.length})
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveSection('serviceCms')}
           style={{
             padding: '1rem 1.25rem',
@@ -432,6 +453,141 @@ export const SiteCmsEditor = () => {
         {/* SECTION: MEDIA LIBRARY & IMAGE ASSETS MANAGER */}
         {activeSection === 'mediamanager' && (
           <MediaLibraryManager />
+        )}
+
+        {/* SECTION: HERO SLIDER & ANNOUNCEMENT BANNER MANAGER */}
+        {activeSection === 'heroslider' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Globe size={20} style={{ color: '#ff7a00' }} /> Homepage Hero Slider & Banner Announcement Manager
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.25rem 0 0 0' }}>
+                  Create and edit hero slides, banner titles, call-to-action buttons, and trust badges dynamically.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() => {
+                  const newSlide = {
+                    id: `slide-${Date.now()}`,
+                    serviceKey: 'embroidery',
+                    title: 'New Digitizing Studio Highlight',
+                    highlight: '100% Guaranteed',
+                    description: 'Custom digitizing & vector artwork description.',
+                    rateLabel: 'Starting from $10.00',
+                    primaryCta: 'Order Now'
+                  };
+                  setDraftHeroSlides(prev => [...prev, newSlide]);
+                  showToast('Added new Hero Slide to draft!', 'info');
+                }}
+                style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              >
+                <Plus size={16} /> Add Hero Slide
+              </button>
+            </div>
+
+            {/* Announcement Banner Notice */}
+            <div className="card" style={{ padding: '1.25rem', marginBottom: '1.5rem', background: '#fff7ed', border: '1px solid var(--orange-200)', borderRadius: '12px' }}>
+              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--orange-800)', display: 'block', marginBottom: '0.35rem' }}>
+                📢 Top Announcement Bar Notice (Header Banner)
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                style={{ fontWeight: 700, color: 'var(--navy-900)' }}
+                value={draftSettings.bannerNotice || ''}
+                onChange={(e) => setDraftSettings(prev => ({ ...prev, bannerNotice: e.target.value }))}
+                placeholder="🔥 24/7 EXPRESS DIGITIZING DELIVERED IN 4 HOURS • WILCOM MASTER EMB & DST MACHINE FILES"
+              />
+            </div>
+
+            {/* Hero Slides List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {draftHeroSlides.map((slide, sIdx) => {
+                const updateSlide = (field, val) => {
+                  setDraftHeroSlides(prev => prev.map((item, idx) => idx === sIdx ? { ...item, [field]: val } : item));
+                };
+
+                return (
+                  <div key={slide.id || sIdx} className="card" style={{ padding: '1.5rem', border: '1.5px solid var(--border-color)', background: '#ffffff', borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+                      <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Sparkles size={16} style={{ color: '#ff7a00' }} /> Slide #{sIdx + 1}: {slide.title}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDraftHeroSlides(prev => prev.filter((_, idx) => idx !== sIdx));
+                          showToast('Slide removed from draft', 'info');
+                        }}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                      >
+                        <Trash2 size={15} /> Remove Slide
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Headline Title</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          style={{ fontWeight: 700 }}
+                          value={slide.title || ''}
+                          onChange={(e) => updateSlide('title', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Highlight Phrase</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          style={{ fontWeight: 700, color: '#ff7a00' }}
+                          value={slide.highlight || ''}
+                          onChange={(e) => updateSlide('highlight', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Rate Label</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={slide.rateLabel || ''}
+                          onChange={(e) => updateSlide('rateLabel', e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>CTA Button Text</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={slide.primaryCta || ''}
+                          onChange={(e) => updateSlide('primaryCta', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Description</label>
+                      <textarea
+                        className="form-control"
+                        rows={2}
+                        value={slide.description || ''}
+                        onChange={(e) => updateSlide('description', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
 
         {/* SECTION: 3-SERVICE HOMEPAGE CMS FLOW MANAGER */}
