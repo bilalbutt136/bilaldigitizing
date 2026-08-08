@@ -227,6 +227,7 @@ export const ClientLiveChatWidget = () => {
           )}
         </div>
       </button>
+      )}
 
       {/* Floating Chat Window Panel */}
       {isOpen && (
