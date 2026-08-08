@@ -774,6 +774,11 @@ export async function upsertCatalogDataToSupabase(tableName, dataArray) {
   }
 }
 
+export const upsertHeroContent = (data) => upsertCatalogDataToSupabase('hero_slides', data);
+export const upsertPricingTiers = (data) => upsertCatalogDataToSupabase('pricing_tiers', data);
+export const upsertPortfolioItems = (data) => upsertCatalogDataToSupabase('portfolio_items', data);
+export const upsertPatchCards = (data) => upsertCatalogDataToSupabase('patch_cards', data);
+
 // ============================================================
 // CATALOG (DB-driven; replaces mock catalog defaults)
 // ============================================================

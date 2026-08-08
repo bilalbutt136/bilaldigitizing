@@ -18,87 +18,17 @@ import {
   LayoutGrid
 } from 'lucide-react';
 
-const SERVICE_HERO_DATA = {
-  all: {
-    id: 'all',
-    label: 'All Services',
-    icon: LayoutGrid,
-    badge: 'PREMIUM STUDIO',
-    title: 'Your Complete Digitizing & Patch Studio',
-    highlight: 'All Services',
-    description: 'From precision embroidery digitizing and scalable vector art conversions to high-quality physical custom patches shipped worldwide.',
-    rateLabel: 'Professional quality guaranteed',
-    primaryCta: 'View All Services',
-    secondaryCta: 'Get Started',
-    primaryRoute: '/pricing',
-    secondaryRoute: 'customer',
-    previewTitle: 'Premium Digitizing, Vector Art & Patches',
-    previewDesc: 'Transforming ideas into physical and digital reality with our state-of-the-art studio.',
-    previewBefore: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80',
-    previewAfter: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
-    previewTag: 'BEFORE: YOUR ARTWORK',
-    previewTagAfter: 'AFTER: PRODUCTION READY'
-  },
-  embroidery: {
-    id: 'embroidery',
-    label: 'Embroidery',
-    icon: Layers,
-    badge: 'STARTS $10.00',
-    title: 'Commercial Embroidery Digitizing',
-    highlight: '100% Guaranteed',
-    description: 'Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks.',
-    rateLabel: 'Starting from $10.00',
-    primaryCta: 'Get Started',
-    secondaryCta: 'View Pricing',
-    primaryRoute: 'customer',
-    secondaryRoute: '/services/embroidery-digitizing',
-    previewTitle: 'Golden Eagle Sports Club Crest',
-    previewDesc: 'Precision satin stitching with density compensation for cotton pique knit polos. Clean pathing eliminates fabric puckering.',
-    previewBefore: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
-    previewAfter: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
-    previewTag: 'BEFORE: RASTER ART',
-    previewTagAfter: 'AFTER: STITCHOUT SHEET'
-  },
-  patches: {
-    id: 'patches',
-    label: 'Custom Patches',
-    icon: Tag,
-    badge: 'STARTS $1.50 / PATCH',
-    title: 'Physical Custom Patches & Emblems',
-    highlight: 'Physical Shipping',
-    description: 'Order high-density embroidered patches, 3D molded waterproof PVC emblems, woven labels, and genuine laser-engraved leather patches with physical shipping worldwide.',
-    rateLabel: 'Starting from $1.50 / patch',
-    primaryCta: 'Get Started',
-    secondaryCta: 'View Pricing',
-    primaryRoute: 'customer-patch',
-    secondaryRoute: '/custom-patches',
-    previewTitle: 'Tactical Merrowed Embroidered Patch',
-    previewDesc: 'High-density rayon thread embroidery with classic overlock merrowed border edges and heavy-duty velcro backing.',
-    previewBefore: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
-    previewAfter: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
-    previewTag: 'BEFORE: DESIGN SKETCH',
-    previewTagAfter: 'AFTER: FINISHED PHYSICAL PATCH'
-  },
-  vector: {
-    id: 'vector',
-    label: 'Vector Art',
-    icon: PenTool,
-    badge: 'STARTS $15.00',
-    title: 'Raster to Scalable Vector Redraw',
-    highlight: 'Hand-Traced Vector',
-    description: 'Transform pixelated JPEGs, PNGs, and hand sketches into 100% resolution-independent vector graphics (.AI, .EPS, .SVG, .PDF) with Pantone spot color separation.',
-    rateLabel: 'Starting from $15.00 flat',
-    primaryCta: 'Get Started',
-    secondaryCta: 'View Pricing',
-    primaryRoute: 'customer-vector',
-    secondaryRoute: '/services/vector-tracing',
-    previewTitle: 'Vintage Skull & Rose Vector Redraw',
-    previewDesc: 'Hand-traced raster JPG converted to resolution-independent vector graphics with Pantone spot color separation.',
-    previewBefore: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80',
-    previewAfter: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
-    previewTag: 'BEFORE: PIXELATED JPG',
-    previewTagAfter: 'AFTER: SCALABLE VECTOR .AI'
-  }
+const FALLBACK_HERO = {
+  id: 'fallback',
+  label: 'Welcome',
+  badge: 'PREMIUM STUDIO',
+  title: 'Your Complete Digitizing & Patch Studio',
+  highlight: 'All Services',
+  description: 'From precision embroidery digitizing and scalable vector art conversions to high-quality physical custom patches shipped worldwide.',
+  primaryCta: 'Get Started',
+  secondaryCta: 'View Pricing',
+  previewBefore: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80',
+  previewAfter: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
 };
 
 const ROTATING_TEXTS = [
@@ -128,30 +58,27 @@ export const HeroSection = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Map service key alias (e.g. 'patches' -> 'patch')
   const currentKey = activeHomeServiceTab === 'patches' ? 'patch' : (activeHomeServiceTab || 'all');
   const targetKey = currentKey === 'patch' ? 'patches' : currentKey;
-  let fallbackHero = SERVICE_HERO_DATA[targetKey] || SERVICE_HERO_DATA.all;
-  
-  if (Array.isArray(heroSlides)) {
-    const matchedSlide = heroSlides.find(s => s.serviceKey === targetKey || s.id === targetKey);
+
+  // Real-time Database Driven Content Binding
+  let activeSlide = FALLBACK_HERO;
+  if (heroSlides && heroSlides.length > 0) {
+    // If the admin has defined a slide for the active tab, use it. Otherwise fallback to the first slide.
+    const matchedSlide = heroSlides.find(s => s.label?.toLowerCase().includes(targetKey)) || heroSlides[0];
     if (matchedSlide) {
-      fallbackHero = { ...fallbackHero, ...matchedSlide };
+      activeSlide = {
+        ...activeSlide,
+        title: matchedSlide.title || activeSlide.title,
+        highlight: matchedSlide.highlight || activeSlide.highlight,
+        description: matchedSlide.description || activeSlide.description,
+        badge: matchedSlide.badge || activeSlide.badge,
+        previewAfter: matchedSlide.preview_after || activeSlide.previewAfter
+      };
     }
-  } else if (heroSlides && heroSlides[targetKey]) {
-     fallbackHero = { ...fallbackHero, ...heroSlides[targetKey] };
   }
 
-  const cmsHero = serviceCmsContent[currentKey]?.hero || {};
-  const activeService = {
-    ...fallbackHero,
-    title: cmsHero.title || fallbackHero.title,
-    highlight: cmsHero.highlight || fallbackHero.highlight,
-    description: cmsHero.subtext || fallbackHero.description,
-    badge: cmsHero.badge || fallbackHero.badge,
-    primaryCta: cmsHero.primaryCta || fallbackHero.primaryCta,
-    secondaryCta: cmsHero.secondaryCta || fallbackHero.secondaryCta
-  };
+  const activeService = activeSlide;
 
   const handlePrimaryClick = () => {
     if (currentKey === 'all') {

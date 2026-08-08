@@ -4,8 +4,7 @@ import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { OrderManagementTable } from './OrderManagementTable';
 import { ClientDirectory } from './ClientDirectory';
-import { PricingSettingsModal } from './PricingSettingsModal';
-import { SiteCmsEditor } from './SiteCmsEditor';
+import { UnifiedCmsManager } from './UnifiedCmsManager';
 import { BoltPayoutsAdmin } from './BoltPayoutsAdmin';
 import { ServiceManagementEditor } from './ServiceManagementEditor';
 import { AdminChatInbox } from './AdminChatInbox';
@@ -18,7 +17,7 @@ import {
   Image, 
   Settings, 
   LogOut, 
-  TrendingUp, 
+  TrendingUp,
   Layers, 
   AlertCircle, 
   RefreshCw,
@@ -157,7 +156,7 @@ export const AdminDashboard = () => {
       title: 'CONTENT & SUPPORT',
       items: [
         { id: 'chat', label: 'Live Chat', icon: MessageSquare, badge: 2 },
-        { id: 'heroslider', label: 'Hero Slider', icon: Image, tag: 'CMS' },
+        { id: 'cms', label: 'CMS Engine', icon: Image, tag: 'CMS' },
         { id: 'boltpayouts', label: 'Payment Hub', icon: DollarSign, tag: 'Gateway' }
       ]
     },
@@ -592,7 +591,7 @@ export const AdminDashboard = () => {
         {activeTab === 'services' && <ServiceManagementEditor />}
         {activeTab === 'clients' && <ClientDirectory />}
         {activeTab === 'chat' && <AdminChatInbox />}
-        {activeTab === 'heroslider' && <SiteCmsEditor />}
+        {activeTab === 'cms' && <UnifiedCmsManager />}
         {activeTab === 'boltpayouts' && <BoltPayoutsAdmin />}
 
         {(activeTab === 'settings' || activeTab === 'admintam') && (
@@ -798,7 +797,7 @@ export const AdminDashboard = () => {
         )}
 
         {/* Pricing Settings Modal */}
-        <PricingSettingsModal />
+
       </main>
 
     </div>

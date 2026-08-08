@@ -18,7 +18,7 @@ import { useLocation } from '../../utils/navigation';
 import { PackageCard } from './PackageCard';
 
 export const PricingCalculator = () => {
-  const { pricing = {}, pricingCards = [], protectedNavigate, openOrderWizard, activeHomeServiceTab, setActiveHomeServiceTab } = useAppState();
+  const { pricing = {}, pricingCards = [], patchCards = [], protectedNavigate, openOrderWizard, activeHomeServiceTab, setActiveHomeServiceTab } = useAppState();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   
@@ -81,62 +81,10 @@ export const PricingCalculator = () => {
   const patchesFee = pricing.customPatchesStartingRate !== undefined ? parseFloat(pricing.customPatchesStartingRate).toFixed(2) : '1.50';
   const vectorFee = pricing.vectorSimpleRate !== undefined ? parseFloat(pricing.vectorSimpleRate).toFixed(2) : '15.00';
 
-  const allCards = pricingCards || [];
+  const allCards = [...(pricingCards || []), ...(patchCards || [])];
   
-  const coreServiceCards = [
-    {
-      id: 'core-emb',
-      category: 'embroidery',
-      title: 'Commercial Embroidery Digitizing',
-      rate: `$10.00`,
-      unit: 'Starts at',
-      discountTag: 'STARTS $10.00',
-      icon: Layers,
-      subTitle: 'Production-ready machine files',
-      features: [
-        '100% Manual Digitizing',
-        'Free Revisions Included',
-        'Machine-Ready Formats',
-        'Super Fast 4-12 Hrs Delivery'
-      ]
-    },
-    {
-      id: 'core-vec',
-      category: 'vector',
-      title: 'Raster to Scalable Vector Redraw',
-      rate: `$15.00`,
-      unit: 'Flat rate',
-      strikePrice: '$30.00',
-      discountTag: 'STARTS $15.00 FLAT',
-      icon: PenTool,
-      subTitle: 'Perfect for printing & cutting',
-      features: [
-        '100% Hand-Drawn Node Paths',
-        'Pantone Spot Color Separation',
-        'Master Source Files Included',
-        '6-12 Hrs Turnaround'
-      ]
-    },
-    {
-      id: 'core-patch',
-      category: 'patches',
-      title: 'Physical Custom Patches & Emblems',
-      rate: `$1.50`,
-      unit: '/ patch',
-      discountTag: 'STARTS $1.50 / PATCH',
-      icon: Tag,
-      subTitle: 'Shipped to your doorstep',
-      features: [
-        'Velcro & Iron-On Backing',
-        'Classic Merrowed Borders',
-        'Waterproof 3D Molded PVC',
-        '3-5 Days Production'
-      ]
-    }
-  ];
-
   const cardsToRender = activeCategory === 'all'
-    ? coreServiceCards
+    ? allCards
     : allCards.filter(c => (c.category || '').toLowerCase() === activeCategory.toLowerCase() || (c.title || '').toLowerCase().includes(activeCategory.toLowerCase()));
 
   return (
