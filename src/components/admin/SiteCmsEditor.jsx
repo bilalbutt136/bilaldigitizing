@@ -475,20 +475,11 @@ export const SiteCmsEditor = () => {
                   const newSlide = {
                     id: `slide-${Date.now()}`,
                     serviceKey: 'embroidery',
-                    badge: 'NEW PROMO TIER',
                     title: 'New Digitizing Studio Highlight',
                     highlight: '100% Guaranteed',
                     description: 'Custom digitizing & vector artwork description.',
                     rateLabel: 'Starting from $10.00',
-                    primaryCta: 'Order Now',
-                    secondaryCta: 'Learn More',
-                    bannerImage: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1200&q=80',
-                    trustPoints: [
-                      { title: '100% Manual Digitizing', sub: 'Wilcom master pathing' },
-                      { title: 'Free Revisions', sub: 'Satisfaction guaranteed' },
-                      { title: 'Machine-Ready Formats', sub: 'DST, PES, EXP, EMB' },
-                      { title: '4-12 Hrs Delivery', sub: 'Express processing' }
-                    ]
+                    primaryCta: 'Order Now'
                   };
                   setDraftHeroSlides(prev => [...prev, newSlide]);
                   showToast('Added new Hero Slide to draft!', 'info');
@@ -541,17 +532,7 @@ export const SiteCmsEditor = () => {
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
                       <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Badge Label String</label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={slide.badge || ''}
-                          onChange={(e) => updateSlide('badge', e.target.value)}
-                        />
-                      </div>
-
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Slide Headline Title</label>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Headline Title</label>
                         <input
                           type="text"
                           className="form-control"
@@ -562,7 +543,7 @@ export const SiteCmsEditor = () => {
                       </div>
 
                       <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Highlighted Title Phrase</label>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Highlight Phrase</label>
                         <input
                           type="text"
                           className="form-control"
@@ -573,7 +554,7 @@ export const SiteCmsEditor = () => {
                       </div>
 
                       <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Rate Label Subtitle</label>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Rate Label</label>
                         <input
                           type="text"
                           className="form-control"
@@ -581,21 +562,9 @@ export const SiteCmsEditor = () => {
                           onChange={(e) => updateSlide('rateLabel', e.target.value)}
                         />
                       </div>
-                    </div>
-
-                    <div className="form-group" style={{ marginBottom: '1rem' }}>
-                      <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Slide Description Subtext</label>
-                      <textarea
-                        className="form-control"
-                        rows={2}
-                        value={slide.description || ''}
-                        onChange={(e) => updateSlide('description', e.target.value)}
-                      />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                      
                       <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Primary CTA Button Text</label>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>CTA Button Text</label>
                         <input
                           type="text"
                           className="form-control"
@@ -603,38 +572,16 @@ export const SiteCmsEditor = () => {
                           onChange={(e) => updateSlide('primaryCta', e.target.value)}
                         />
                       </div>
-
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Secondary CTA Button Text</label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={slide.secondaryCta || ''}
-                          onChange={(e) => updateSlide('secondaryCta', e.target.value)}
-                        />
-                      </div>
                     </div>
 
                     <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Banner Image URL</label>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={slide.bannerImage || ''}
-                          onChange={(e) => updateSlide('bannerImage', e.target.value)}
-                          placeholder="https://images.unsplash.com/... or upload"
-                        />
-                        <label className="btn btn-outline btn-sm" style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                          Upload Image
-                          <input
-                            type="file"
-                            accept="image/*"
-                            style={{ display: 'none' }}
-                            onChange={(e) => handleImageUpload(e, (url) => updateSlide('bannerImage', url))}
-                          />
-                        </label>
-                      </div>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Description</label>
+                      <textarea
+                        className="form-control"
+                        rows={2}
+                        value={slide.description || ''}
+                        onChange={(e) => updateSlide('description', e.target.value)}
+                      />
                     </div>
                   </div>
                 );

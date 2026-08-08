@@ -130,10 +130,16 @@ export const HeroSection = () => {
 
   // Map service key alias (e.g. 'patches' -> 'patch')
   const currentKey = activeHomeServiceTab === 'patches' ? 'patch' : (activeHomeServiceTab || 'all');
-  let fallbackHero = SERVICE_HERO_DATA[currentKey === 'patch' ? 'patches' : currentKey] || SERVICE_HERO_DATA.all;
+  const targetKey = currentKey === 'patch' ? 'patches' : currentKey;
+  let fallbackHero = SERVICE_HERO_DATA[targetKey] || SERVICE_HERO_DATA.all;
   
-  if (heroSlides && heroSlides[currentKey]) {
-     fallbackHero = { ...fallbackHero, ...heroSlides[currentKey] };
+  if (Array.isArray(heroSlides)) {
+    const matchedSlide = heroSlides.find(s => s.serviceKey === targetKey || s.id === targetKey);
+    if (matchedSlide) {
+      fallbackHero = { ...fallbackHero, ...matchedSlide };
+    }
+  } else if (heroSlides && heroSlides[targetKey]) {
+     fallbackHero = { ...fallbackHero, ...heroSlides[targetKey] };
   }
 
   const cmsHero = serviceCmsContent[currentKey]?.hero || {};

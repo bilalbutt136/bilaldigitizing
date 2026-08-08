@@ -649,6 +649,8 @@ export const StateProvider = ({ children }) => {
               if (catalog.siteSettings) setSiteSettings(catalog.siteSettings);
               if (catalog.pricing) setPricing(catalog.pricing);
               if (catalog.serviceCms) setServiceCmsContent(catalog.serviceCms);
+              if (catalog.testimonials) setTestimonials(catalog.testimonials);
+              if (catalog.faqs) setFaqs(catalog.faqs);
               if (catalog.digitizers?.length) {
                 setDigitizers(prev => prev.map(d => {
                   const fresh = catalog.digitizers.find(x => x.id === d.id);
