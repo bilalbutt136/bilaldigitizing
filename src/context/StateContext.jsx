@@ -670,7 +670,7 @@ export const StateProvider = ({ children }) => {
     // Supabase Realtime: Global Chat Notifications
     let messageChannel = null;
     if (isSupabaseConfigured && supabase) {
-      messageChannel = supabase.channel('global-messages-channel');
+      messageChannel = supabase.channel('global-messages-channel-state');
       messageChannel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const msg = payload.new;
         if (!msg) return;
@@ -761,6 +761,9 @@ export const StateProvider = ({ children }) => {
       authSubscription?.unsubscribe();
       if (catalogChannel && supabase) {
         supabase.removeChannel(catalogChannel);
+      }
+      if (messageChannel && supabase) {
+        supabase.removeChannel(messageChannel);
       }
     };
   }, []);

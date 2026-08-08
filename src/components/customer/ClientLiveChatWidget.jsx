@@ -46,8 +46,7 @@ export const ClientLiveChatWidget = () => {
     loadChats();
 
     if (isSupabaseConfigured && supabase) {
-      channel = supabase
-        .channel('public:messages')
+      channel = supabase.channel('global-messages-channel-client')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
           loadChats();
           playNotificationSound('receive');
