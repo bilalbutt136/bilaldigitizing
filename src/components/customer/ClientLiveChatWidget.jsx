@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { playNotificationSound } from '../../utils/audioNotification';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase/client';
+import { fetchConversations, addChatMessage, createConversation } from '../../services/supabaseService';
 import {
   MessageSquare,
   X,
@@ -28,14 +30,34 @@ export const ClientLiveChatWidget = () => {
   const [chats, setChats] = useState([]);
 
   useEffect(() => {
-    try {
-      const saved = typeof window !== 'undefined' && localStorage.getItem('bdigi_admin_chats');
-      if (saved) {
-        setChats(JSON.parse(saved));
+    let channel;
+    const loadChats = async () => {
+      if (isSupabaseConfigured) {
+        const data = await fetchConversations();
+        if (data && data.length > 0) setChats(data);
+      } else {
+        try {
+          const saved = typeof window !== 'undefined' && localStorage.getItem('bdigi_admin_chats');
+          if (saved) setChats(JSON.parse(saved));
+        } catch {}
       }
-    } catch {
-      // fallback
+    };
+
+    loadChats();
+
+    if (isSupabaseConfigured && supabase) {
+      channel = supabase
+        .channel('public:messages')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
+          loadChats();
+          playNotificationSound('receive');
+        })
+        .subscribe();
     }
+    
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
   }, []);
 
   // Real-time Event Listener for incoming admin replies across tabs and windows
@@ -151,6 +173,18 @@ export const ClientLiveChatWidget = () => {
       localStorage.setItem('bdigi_admin_chats', JSON.stringify(updatedChats));
       window.dispatchEvent(new CustomEvent('bdigi_chat_update', { detail: updatedChats }));
     } catch { }
+
+    if (isSupabaseConfigured) {
+      const persistMsg = async () => {
+        let convId = threadIdx >= 0 ? updatedChats[threadIdx].id : updatedChats[0].id;
+        if (threadIdx < 0) {
+           const newDbConv = await createConversation(updatedChats[0]);
+           if (newDbConv) convId = newDbConv.id;
+        }
+        await addChatMessage(convId, newMsg);
+      };
+      persistMsg();
+    }
 
     playNotificationSound('message');
     setMessageInput('');

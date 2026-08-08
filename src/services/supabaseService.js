@@ -1142,6 +1142,27 @@ export async function addStoreProduct(product) {
 }
 
 
+export async function createConversation(conversation) {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const dbConv = {
+      id: conversation.id,
+      client_name: conversation.clientName || '',
+      client_email: conversation.clientEmail || '',
+      company: conversation.company || '',
+      order_id: conversation.orderId || '',
+      status: conversation.status || 'active',
+      unread_count: conversation.unreadCount || 0
+    };
+    const { data, error } = await supabase.from('conversations').upsert([dbConv]).select();
+    if (error) throw error;
+    return data[0];
+  } catch (err) {
+    console.error('Error creating conversation:', err);
+    return null;
+  }
+}
+
 export async function fetchConversations() {
   if (!isSupabaseConfigured) return [];
   try {
@@ -1149,10 +1170,27 @@ export async function fetchConversations() {
     if (convErr) throw convErr;
     const { data: msgs, error: msgErr } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
     if (msgErr) throw msgErr;
-    return convs.map(c => ({
-      ...c,
-      messages: msgs.filter(m => m.conversation_id === c.id)
-    }));
+    
+    return convs.map(c => {
+      const cMsgs = msgs.filter(m => m.conversation_id === c.id).map(m => ({
+        id: m.id,
+        sender: m.sender,
+        senderName: m.sender_name,
+        text: m.text,
+        attachment: m.attachment,
+        timestamp: m.timestamp || m.created_at
+      }));
+      return {
+        id: c.id,
+        clientName: c.client_name,
+        clientEmail: c.client_email,
+        company: c.company,
+        orderId: c.order_id,
+        status: c.status,
+        unreadCount: c.unread_count,
+        messages: cMsgs
+      };
+    });
   } catch (err) {
     console.error('Error fetching conversations:', err);
     return [];

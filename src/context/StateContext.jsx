@@ -667,6 +667,38 @@ export const StateProvider = ({ children }) => {
       catalogChannel.subscribe();
     }
 
+    // Supabase Realtime: Global Chat Notifications
+    let messageChannel = null;
+    if (isSupabaseConfigured && supabase) {
+      messageChannel = supabase.channel('global-messages-channel');
+      messageChannel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        const msg = payload.new;
+        if (!msg) return;
+        
+        // Notify admin if a client sends a message
+        if (msg.sender === 'client') {
+          // Check role safely since this is inside a mount useEffect
+          let isAdmin = false;
+          try {
+            const savedUser = localStorage.getItem('bdigi_auth_user');
+            if (savedUser) isAdmin = JSON.parse(savedUser).role === 'admin';
+          } catch {}
+
+          if (isAdmin) {
+            addNotification({
+              id: `msg-${Date.now()}`,
+              title: `New Message from ${msg.sender_name || 'Client'}`,
+              message: msg.text || (msg.attachment ? 'Sent an attachment' : 'Sent a message'),
+              type: 'info',
+              read: false,
+              timestamp: msg.created_at || new Date().toISOString()
+            });
+          }
+        }
+      });
+      messageChannel.subscribe();
+    }
+
 
     let authSubscription = null;
     if (isSupabaseConfigured && supabase) {
