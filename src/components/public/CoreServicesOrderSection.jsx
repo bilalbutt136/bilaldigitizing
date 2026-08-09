@@ -15,7 +15,8 @@ import {
   ShieldCheck,
   FileCode,
   Zap,
-  Check
+  Check,
+  Plus
 } from 'lucide-react';
 import { PackageCard } from './PackageCard';
 
