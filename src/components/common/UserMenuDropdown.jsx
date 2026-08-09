@@ -30,7 +30,8 @@ export const UserMenuDropdown = () => {
     walletBalance = 0,
     setIsDepositModalOpen,
     setIsOrderWizardOpen,
-    showToast
+    showToast,
+    protectedNavigate
   } = useAppState();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -195,6 +196,37 @@ export const UserMenuDropdown = () => {
           {/* Menu Options List */}
           <div style={{ padding: '0.5rem 0' }}>
             
+            {/* Admin Portal Overview Option (Admins Only) */}
+            {authUser?.role === 'admin' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  protectedNavigate('admin', false);
+                  navigate('/admin-portal');
+                }}
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 1rem',
+                  border: 'none',
+                  background: 'transparent',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: 'var(--navy-900)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.65rem',
+                  cursor: 'pointer',
+                  transition: 'background 0.15s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <Settings size={16} style={{ color: 'var(--orange-500)' }} /> Admin Portal
+              </button>
+            )}
+
             {/* Client Dashboard Overview Option */}
             <button
               type="button"
