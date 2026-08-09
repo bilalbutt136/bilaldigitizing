@@ -7,7 +7,8 @@ import { Sparkles } from 'lucide-react';
 export const CustomerSewOutsSection = () => {
   const { 
     activeHomeServiceTab = 'embroidery', 
-    serviceCmsContent = {} 
+    serviceCmsContent = {},
+    sewOuts = []
   } = useAppState();
   
   const [isMounted, setIsMounted] = useState(false);
@@ -31,9 +32,26 @@ export const CustomerSewOutsSection = () => {
     'Real stitch-outs delivered to 1,200+ commercial embroidery shops and apparel decorators. Clean pathing, crisp satin fills, and zero thread breaks.'
   );
 
-  const samplesList = cmsShowcase.samples && cmsShowcase.samples.length > 0
-    ? cmsShowcase.samples
-    : (
+  const serviceCategoryMap = {
+    'embroidery': 'Embroidery',
+    'vector': 'Vector',
+    'patch': 'Patches',
+    'patches': 'Patches'
+  };
+  const mappedCategory = serviceCategoryMap[currentKey] || 'Embroidery';
+
+  const dynamicSamples = sewOuts.filter(s => s.service_category === mappedCategory && s.is_active !== false);
+
+  const samplesList = dynamicSamples.length > 0 
+    ? dynamicSamples.map(s => ({
+        id: s.id,
+        title: s.title,
+        category: s.service_category,
+        stitches: s.stitch_count,
+        formats: s.formats,
+        image: s.image_url
+      }))
+    : (cmsShowcase.samples && cmsShowcase.samples.length > 0 ? cmsShowcase.samples : (
       currentKey === 'vector' ? [
         { id: 'vec-s1', title: 'Vintage Skull & Rose Vector', category: 'Spot Color Sep', stitches: 'N/A (Scalable Vector)', formats: 'AI, EPS, SVG, PDF', image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80' },
         { id: 'vec-s2', title: 'Wildcat Athletic Team Mascot', category: 'Hand-Drawn Vector', stitches: 'N/A (Scalable Vector)', formats: 'AI, EPS, SVG', image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80' },
@@ -48,7 +66,7 @@ export const CustomerSewOutsSection = () => {
         { id: 'emb-s2', title: 'Tactical Flexfit Cap Front', category: '3D Puff Cap', stitches: '15,800 Stitches', formats: 'DST, PES, EMB, JEF', image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80' },
         { id: 'emb-s3', title: 'Heritage Apparel Jacket Crest', category: 'Jacket Back', stitches: '48,200 Stitches', formats: 'DST, PES, EMB, VP3', image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80' }
       ]
-    );
+    ));
 
   const categoryFallback = currentKey === 'vector' 
     ? 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80'

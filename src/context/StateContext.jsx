@@ -274,7 +274,8 @@ export const StateProvider = ({ children }) => {
       
       const tablesToSync = [
         'services', 'pricing_tiers', 'patch_cards', 'store_products', 
-        'portfolio_items', 'sew_outs', 'hero_slides', 'digitizers', 'cms_content'
+        'portfolio_items', 'sew_outs', 'hero_slides', 'digitizers', 'cms_content',
+        'faqs', 'testimonials'
       ];
       
       tablesToSync.forEach(table => {

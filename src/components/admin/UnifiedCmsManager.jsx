@@ -11,7 +11,10 @@ import {
   Save,
   UploadCloud,
   Layers,
-  LayoutGrid
+  LayoutGrid,
+  Users,
+  MessageSquare,
+  HelpCircle
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase/client';
 import { 
@@ -19,6 +22,10 @@ import {
   upsertPricingTiers, 
   upsertPortfolioItems,
   upsertPatchCards,
+  upsertSewOuts,
+  upsertDigitizers,
+  upsertFaqs,
+  upsertTestimonials,
   saveCmsConfigToSupabase
 } from '../../services/supabaseService';
 
@@ -28,6 +35,10 @@ export const UnifiedCmsManager = () => {
     pricingCards = [], 
     patchCards = [], 
     portfolioSamples = [],
+    sewOuts = [],
+    digitizers = [],
+    faqs = [],
+    testimonials = [],
     heroGlobalSettings,
     showToast 
   } = useAppState();
@@ -40,6 +51,10 @@ export const UnifiedCmsManager = () => {
   const [draftPricing, setDraftPricing] = useState([...(pricingCards.length ? pricingCards : [])]);
   const [draftPatches, setDraftPatches] = useState([...(patchCards.length ? patchCards : [])]);
   const [draftPortfolio, setDraftPortfolio] = useState([...(portfolioSamples.length ? portfolioSamples : [])]);
+  const [draftSewOuts, setDraftSewOuts] = useState([...(sewOuts?.length ? sewOuts : [])]);
+  const [draftDigitizers, setDraftDigitizers] = useState([...(digitizers?.length ? digitizers : [])]);
+  const [draftFaqs, setDraftFaqs] = useState([...(faqs?.length ? faqs : [])]);
+  const [draftTestimonials, setDraftTestimonials] = useState([...(testimonials?.length ? testimonials : [])]);
 
   // Handle Input Changes
   const handleHeroChange = (id, field, value) => {
@@ -56,6 +71,22 @@ export const UnifiedCmsManager = () => {
 
   const handlePortfolioChange = (id, field, value) => {
     setDraftPortfolio(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  };
+
+  const handleSewOutChange = (id, field, value) => {
+    setDraftSewOuts(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  };
+
+  const handleDigitizerChange = (id, field, value) => {
+    setDraftDigitizers(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  };
+
+  const handleFaqChange = (id, field, value) => {
+    setDraftFaqs(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  };
+
+  const handleTestimonialChange = (id, field, value) => {
+    setDraftTestimonials(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
 
   const handleImageUpload = (e, callback) => {
@@ -88,6 +119,22 @@ export const UnifiedCmsManager = () => {
         const res = await upsertPortfolioItems(draftPortfolio);
         if (!res) throw new Error("Failed to save portfolio");
       }
+      else if (activeTab === 'sewouts') {
+        const res = await upsertSewOuts(draftSewOuts);
+        if (!res) throw new Error("Failed to save sew outs");
+      }
+      else if (activeTab === 'team') {
+        const res = await upsertDigitizers(draftDigitizers);
+        if (!res) throw new Error("Failed to save team");
+      }
+      else if (activeTab === 'faqs') {
+        const res = await upsertFaqs(draftFaqs);
+        if (!res) throw new Error("Failed to save faqs");
+      }
+      else if (activeTab === 'testimonials') {
+        const res = await upsertTestimonials(draftTestimonials);
+        if (!res) throw new Error("Failed to save testimonials");
+      }
       showToast('Live Website Updated Successfully!', 'success');
     } catch (err) {
       showToast('Error saving data: ' + err.message, 'error');
@@ -113,7 +160,11 @@ export const UnifiedCmsManager = () => {
         {[
           { id: 'hero', label: 'Homepage Hero', icon: Globe },
           { id: 'pricing', label: 'Packages & Pricing', icon: DollarSign },
-          { id: 'portfolio', label: 'Portfolio Showcase', icon: ImageIcon }
+          { id: 'portfolio', label: 'Portfolio Showcase', icon: ImageIcon },
+          { id: 'sewouts', label: 'Sew-Outs Gallery', icon: ImageIcon },
+          { id: 'team', label: 'Team & Digitizers', icon: Users },
+          { id: 'faqs', label: 'FAQs', icon: HelpCircle },
+          { id: 'testimonials', label: 'Testimonials', icon: MessageSquare }
         ].map(tab => (
           <button
             key={tab.id}
@@ -358,6 +409,115 @@ export const UnifiedCmsManager = () => {
               <Plus size={18} /> Add New Portfolio Piece
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Sew-Outs Tab */}
+      {activeTab === 'sewouts' && (
+        <div className="card" style={{ padding: '2rem' }}>
+          <h3 style={{ fontSize: '1.4rem', marginBottom: '1.5rem' }}>Sew-Outs Gallery</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+            {draftSewOuts.map((item) => (
+              <div key={item.id} style={{ background: 'var(--bg-main)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', position: 'relative' }}>
+                <button onClick={() => setDraftSewOuts(draftSewOuts.filter(p => p.id !== item.id))} style={{ position: 'absolute', top: '10px', right: '10px', color: '#ef4444', background: '#fff', border: '1px solid #fecaca', borderRadius: '4px', cursor: 'pointer', padding: '4px' }}>
+                  <Trash2 size={14} />
+                </button>
+                <div className="form-group" style={{ marginTop: '1rem' }}>
+                  <label>Title</label>
+                  <input className="form-control" value={item.title || ''} onChange={e => handleSewOutChange(item.id, 'title', e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label>After Image URL (Base64 or Link)</label>
+                  <input className="form-control" value={item.afterImg || ''} onChange={e => handleSewOutChange(item.id, 'after_img', e.target.value)} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => setDraftSewOuts([...draftSewOuts, { id: 'sew-' + Date.now(), title: 'New Sew-Out' }])} className="btn btn-primary-orange" style={{ marginTop: '2rem' }}>
+            <Plus size={18} /> Add Sew-Out
+          </button>
+        </div>
+      )}
+
+      {/* Team Tab */}
+      {activeTab === 'team' && (
+        <div className="card" style={{ padding: '2rem' }}>
+          <h3 style={{ fontSize: '1.4rem', marginBottom: '1.5rem' }}>Team & Digitizers</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+            {draftDigitizers.map((item) => (
+              <div key={item.id} style={{ background: 'var(--bg-main)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', position: 'relative' }}>
+                <button onClick={() => setDraftDigitizers(draftDigitizers.filter(p => p.id !== item.id))} style={{ position: 'absolute', top: '10px', right: '10px', color: '#ef4444', background: '#fff', border: '1px solid #fecaca', borderRadius: '4px', cursor: 'pointer', padding: '4px' }}>
+                  <Trash2 size={14} />
+                </button>
+                <div className="form-group" style={{ marginTop: '1rem' }}>
+                  <label>Name</label>
+                  <input className="form-control" value={item.name || ''} onChange={e => handleDigitizerChange(item.id, 'name', e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label>Role</label>
+                  <input className="form-control" value={item.role || ''} onChange={e => handleDigitizerChange(item.id, 'role', e.target.value)} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => setDraftDigitizers([...draftDigitizers, { id: 'digi-' + Date.now(), name: 'New Team Member' }])} className="btn btn-primary-orange" style={{ marginTop: '2rem' }}>
+            <Plus size={18} /> Add Team Member
+          </button>
+        </div>
+      )}
+
+      {/* FAQs Tab */}
+      {activeTab === 'faqs' && (
+        <div className="card" style={{ padding: '2rem' }}>
+          <h3 style={{ fontSize: '1.4rem', marginBottom: '1.5rem' }}>Frequently Asked Questions</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {draftFaqs.map((item) => (
+              <div key={item.id} style={{ background: 'var(--bg-main)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                  <h4 style={{ margin: 0, color: 'var(--navy-800)' }}>{item.question || 'New FAQ'}</h4>
+                  <button onClick={() => setDraftFaqs(draftFaqs.filter(c => c.id !== item.id))} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={16} /></button>
+                </div>
+                <div className="form-group">
+                  <label>Question</label>
+                  <input className="form-control" value={item.question || ''} onChange={e => handleFaqChange(item.id, 'question', e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label>Answer</label>
+                  <textarea className="form-control" rows="3" value={item.answer || ''} onChange={e => handleFaqChange(item.id, 'answer', e.target.value)} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => setDraftFaqs([...draftFaqs, { id: 'faq-' + Date.now(), question: 'New Question', answer: '' }])} className="btn btn-primary-orange" style={{ marginTop: '2rem' }}>
+            <Plus size={18} /> Add FAQ
+          </button>
+        </div>
+      )}
+
+      {/* Testimonials Tab */}
+      {activeTab === 'testimonials' && (
+        <div className="card" style={{ padding: '2rem' }}>
+          <h3 style={{ fontSize: '1.4rem', marginBottom: '1.5rem' }}>Testimonials</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+            {draftTestimonials.map((item) => (
+              <div key={item.id} style={{ background: 'var(--bg-main)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', position: 'relative' }}>
+                <button onClick={() => setDraftTestimonials(draftTestimonials.filter(p => p.id !== item.id))} style={{ position: 'absolute', top: '10px', right: '10px', color: '#ef4444', background: '#fff', border: '1px solid #fecaca', borderRadius: '4px', cursor: 'pointer', padding: '4px' }}>
+                  <Trash2 size={14} />
+                </button>
+                <div className="form-group" style={{ marginTop: '1rem' }}>
+                  <label>Client Name</label>
+                  <input className="form-control" value={item.client_name || ''} onChange={e => handleTestimonialChange(item.id, 'client_name', e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label>Review Text</label>
+                  <textarea className="form-control" rows="3" value={item.review_text || ''} onChange={e => handleTestimonialChange(item.id, 'review_text', e.target.value)} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => setDraftTestimonials([...draftTestimonials, { id: 'test-' + Date.now(), client_name: 'New Client', review_text: '' }])} className="btn btn-primary-orange" style={{ marginTop: '2rem' }}>
+            <Plus size={18} /> Add Testimonial
+          </button>
         </div>
       )}
     </div>

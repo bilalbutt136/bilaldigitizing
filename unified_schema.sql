@@ -32,6 +32,15 @@ BEGIN
     COALESCE(new.raw_user_meta_data->>'company', ''),
     COALESCE(new.raw_user_meta_data->>'company_name', '')
   );
+
+  -- Bootstrap first user as admin if no admins exist
+  IF NOT EXISTS (SELECT 1 FROM public.admins) THEN
+    INSERT INTO public.admins (email, name)
+    VALUES (new.email, COALESCE(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)));
+    
+    UPDATE public.clients SET role = 'admin' WHERE id = new.id;
+  END IF;
+
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -185,12 +194,42 @@ CREATE TABLE IF NOT EXISTS public.site_config (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 9. CONTENT & MARKETING TABLES
+CREATE TABLE IF NOT EXISTS public.faqs (
+    id TEXT PRIMARY KEY,
+    question TEXT NOT NULL,
+    answer TEXT NOT NULL,
+    category TEXT DEFAULT 'General',
+    sort_order INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.testimonials (
+    id TEXT PRIMARY KEY,
+    client_name TEXT NOT NULL,
+    company TEXT,
+    review_text TEXT NOT NULL,
+    rating INT DEFAULT 5,
+    avatar TEXT,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- 9. INVOICES & RECEIPTS (BoltPayouts)
 CREATE TABLE IF NOT EXISTS public.invoices (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id TEXT REFERENCES public.orders(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    client_email TEXT,
     amount NUMERIC(10, 2),
+    method TEXT,
     status TEXT DEFAULT 'pending',
+    bolt_order_id TEXT,
+    payment_url TEXT,
+    description TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE TABLE IF NOT EXISTS public.receipts (
@@ -408,6 +447,24 @@ ALTER TABLE public.services ENABLE ROW LEVEL SECURITY;
 CREATE POLICY services_read_all ON public.services FOR SELECT USING (true);
 ALTER TABLE public.pricing_cards ENABLE ROW LEVEL SECURITY;
 CREATE POLICY pricing_cards_read_all ON public.pricing_cards FOR SELECT USING (true);
+ALTER TABLE public.patch_cards ENABLE ROW LEVEL SECURITY;
+CREATE POLICY patch_cards_read_all ON public.patch_cards FOR SELECT USING (true);
+ALTER TABLE public.portfolio ENABLE ROW LEVEL SECURITY;
+CREATE POLICY portfolio_read_all ON public.portfolio FOR SELECT USING (true);
+ALTER TABLE public.sew_outs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY sew_outs_read_all ON public.sew_outs FOR SELECT USING (true);
+ALTER TABLE public.hero_slides ENABLE ROW LEVEL SECURITY;
+CREATE POLICY hero_slides_read_all ON public.hero_slides FOR SELECT USING (true);
+ALTER TABLE public.digitizers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY digitizers_read_all ON public.digitizers FOR SELECT USING (true);
+
+ALTER TABLE public.faqs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY faqs_read_all ON public.faqs FOR SELECT USING (true);
+CREATE POLICY faqs_admin_write ON public.faqs FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+ALTER TABLE public.testimonials ENABLE ROW LEVEL SECURITY;
+CREATE POLICY testimonials_read_all ON public.testimonials FOR SELECT USING (true);
+CREATE POLICY testimonials_admin_write ON public.testimonials FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- ====================================================================
 -- STORAGE BUCKETS CONFIGURATION

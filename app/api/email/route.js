@@ -13,22 +13,23 @@ export async function POST(req) {
     }
 
     const resend = new Resend(resendApiKey);
-    const fromAddress = 'Bilal Digitizing <onboarding@resend.dev>'; // Using Resend testing domain
+    
+    // Default fallback from environment variables
+    let fallbackFromAddress = process.env.RESEND_FROM_ADDRESS || 'orders@bdigitizing.pro';
     let fallbackAdmin = process.env.MASTER_ADMIN_EMAIL || 'admin@bdigitizing.pro';
+    
+    // Optional: You could fetch from site_config here if needed, but for simplicity
+    // we will rely on ENV variables for core email domain settings in production.
+    const fromAddress = fallbackFromAddress;
     
     // Determine the recipient dynamically
     let targetAdminEmail = adminEmail || fallbackAdmin;
     let targetClientEmail = clientEmail;
 
-    // Resend Testing Mode Override: When using onboarding@resend.dev, we can ONLY send to the registered email.
-    // We force all emails to route to bilalsadiq612@gmail.com to prevent 422 Validation Errors during testing.
-    if (fromAddress.includes('onboarding@resend.dev')) {
-      const testingEmail = 'bilalsadiq612@gmail.com';
-      console.log(`[Email Service] Testing Mode: Routing email away from ${targetAdminEmail} / ${targetClientEmail} to ${testingEmail}`);
-      targetAdminEmail = testingEmail;
-      targetClientEmail = testingEmail;
-    }
-
+    // Remove the hardcoded onboarding@resend.dev testing intercept
+    // Production should use the verified domain set in RESEND_FROM_ADDRESS
+    // Ensure you have verified your domain in Resend (e.g., bdigitizing.pro)
+    
     if (type === 'NEW_ORDER') {
       console.log(`[Email Service] Sending New Order Email to Admin (${targetAdminEmail}) for Order ${orderId}`);
       await resend.emails.send({

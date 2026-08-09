@@ -186,57 +186,39 @@ export async function updateUserPassword(newPassword) {
 }
 
 
-// Helper to upload files to Supabase Storage Bucket
-export async function uploadFileToSupabaseStorage(fileObj, bucketName = 'client-uploads', folderPath = 'artwork') {
-  if (!isSupabaseConfigured || !fileObj) return null;
+// Helper to upload files to Cloudinary securely via backend
+export async function uploadFileToCloudinary(fileObj, bucketName = 'client-uploads', folderPath = 'artwork') {
+  if (!fileObj) return null;
 
   try {
-    let fileBody = fileObj;
-    let fileName = fileObj.name || `file_${Date.now()}`;
-
-    // If file is base64 Data URL, convert to Blob
-    if (typeof fileObj === 'string' && fileObj.startsWith('data:')) {
-      const arr = fileObj.split(',');
-      const mime = arr[0].match(/:(.*?);/)[1];
-      const bstr = atob(arr[1]);
-      let n = bstr.length;
-      const u8arr = new Uint8Array(n);
-      while (n--) {
-        u8arr[n] = bstr.charCodeAt(n);
-      }
-      fileBody = new Blob([u8arr], { type: mime });
+    const formData = new FormData();
+    formData.append('file', fileObj);
+    if (folderPath) {
+      formData.append('folder', folderPath);
     }
 
-    const filePath = `${folderPath}/${Date.now()}_${fileName.replace(/\s+/g, '_')}`;
+    const response = await fetch('/api/cloudinary/upload', {
+      method: 'POST',
+      body: formData,
+    });
 
-    const { error } = await supabase.storage
-      .from(bucketName)
-      .upload(filePath, fileBody, {
-        cacheControl: '3600',
-        upsert: true
-      });
-
-    if (error) {
-      console.warn('Supabase storage upload warning:', error.message);
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.warn('Cloudinary secure upload error:', errorData);
       return null;
     }
 
-    // Use signed URL for privacy since buckets are no longer public
-    // We generate a long-lived signed URL for simplicity in the UI context (1 year)
-    // For a fully secure setup, the DB should store only the path, and UI fetches signed URLs on demand.
-    const { data: signedUrlData, error: signError } = await supabase.storage
-      .from(bucketName)
-      .createSignedUrl(filePath, 31536000); // 1 year expiration
-
-    if (signError) {
-      console.warn('Supabase signed URL warning:', signError.message);
+    const data = await response.json();
+    if (!data.success) {
+      console.warn('Cloudinary secure upload failed:', data.error);
+      return null;
     }
 
-    const publicUrl = signedUrlData?.signedUrl || null;
-    console.log("Uploaded File URL:", publicUrl);
-    return publicUrl;
+    // The backend returns a permanently signed delivery URL for the authenticated asset
+    console.log("Uploaded Secure File to Cloudinary. Public ID:", data.public_id);
+    return data.url;
   } catch (err) {
-    console.warn('Supabase storage upload exception:', err);
+    console.warn('Cloudinary upload exception:', err);
     return null;
   }
 }
@@ -345,7 +327,7 @@ export async function createOrderInSupabase(newOrder) {
 
     // Upload artwork to Supabase Storage if dataURL or file
     if (uploadedArtworkUrl && uploadedArtworkUrl.startsWith('data:')) {
-      const storageUrl = await uploadFileToSupabaseStorage(
+      const storageUrl = await uploadFileToCloudinary(
         uploadedArtworkUrl,
         'client-uploads',
         'artwork'
@@ -398,20 +380,56 @@ export async function createOrderInSupabase(newOrder) {
 
     // Record artwork file entry in order_files table
     try {
-      const fileRow = {
-        order_id: newOrder.id,
-        file_name: newOrder.artworkFileName || `${newOrder.id}_artwork.png`,
-        file_format: 'png',
-        file_type: 'client_artwork',
-        bucket_name: 'client-uploads',
-        file_path: `artwork/${newOrder.id}`,
-        file_url: uploadedArtworkUrl || '',
-        public_url: uploadedArtworkUrl || '',
-        uploaded_by: newOrder.clientName || 'client'
-      };
-      const { error: fileErr } = await supabase.from('order_files').insert([fileRow]);
-      if (fileErr) {
-        console.warn('[Supabase Order File Insert Error]:', fileErr.message);
+      if (newOrder.rawFiles && newOrder.rawFiles.length > 0) {
+        for (const rawFile of newOrder.rawFiles) {
+          if (!rawFile) continue;
+          
+          const storageUrl = await uploadFileToCloudinary(
+            rawFile,
+            'client-uploads',
+            `artwork/${newOrder.id}`
+          );
+          
+          if (storageUrl) {
+            const fileName = rawFile.name || `artwork_${Date.now()}.png`;
+            const fileExt = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : 'png';
+            
+            const fileRow = {
+              order_id: newOrder.id,
+              file_name: fileName,
+              file_format: fileExt,
+              file_type: 'client_artwork',
+              bucket_name: 'client-uploads',
+              file_path: `artwork/${newOrder.id}`,
+              file_url: storageUrl,
+              public_url: storageUrl,
+              uploaded_by: newOrder.clientName || 'client'
+            };
+            
+            // Re-assign uploadedArtworkUrl to the first uploaded file just as a fallback
+            if (!uploadedArtworkUrl) uploadedArtworkUrl = storageUrl;
+            
+            const { error: fileErr } = await supabase.from('order_files').insert([fileRow]);
+            if (fileErr) {
+              console.warn('[Supabase Order File Insert Error]:', fileErr.message);
+            }
+          }
+        }
+      } else {
+        // Fallback for single data URL or empty
+        const fileRow = {
+          order_id: newOrder.id,
+          file_name: newOrder.artworkFileName || `${newOrder.id}_artwork.png`,
+          file_format: 'png',
+          file_type: 'client_artwork',
+          bucket_name: 'client-uploads',
+          file_path: `artwork/${newOrder.id}`,
+          file_url: uploadedArtworkUrl || '',
+          public_url: uploadedArtworkUrl || '',
+          uploaded_by: newOrder.clientName || 'client'
+        };
+        const { error: fileErr } = await supabase.from('order_files').insert([fileRow]);
+        if (fileErr) console.warn('[Supabase Order File Insert Error]:', fileErr.message);
       }
     } catch (fErr) {
       console.warn('[Supabase Order File Insert Exception]:', fErr);
@@ -473,7 +491,7 @@ export async function updateOrderStatusInSupabase(orderId, newStatus, extraData 
         // Only process and insert files that are new uploads (base64 data URL)
         if (f.url && f.url.startsWith('data:')) {
           let filePublicUrl = f.url;
-          const storageUrl = await uploadFileToSupabaseStorage(
+          const storageUrl = await uploadFileToCloudinary(
             f.url,
             'finished-packages',
             `orders/${orderId}`
@@ -778,6 +796,10 @@ export const upsertHeroContent = (data) => upsertCatalogDataToSupabase('hero_sli
 export const upsertPricingTiers = (data) => upsertCatalogDataToSupabase('pricing_cards', data);
 export const upsertPortfolioItems = (data) => upsertCatalogDataToSupabase('portfolio', data);
 export const upsertPatchCards = (data) => upsertCatalogDataToSupabase('patch_cards', data);
+export const upsertFaqs = (data) => upsertCatalogDataToSupabase('faqs', data);
+export const upsertTestimonials = (data) => upsertCatalogDataToSupabase('testimonials', data);
+export const upsertSewOuts = (data) => upsertCatalogDataToSupabase('sew_outs', data);
+export const upsertDigitizers = (data) => upsertCatalogDataToSupabase('digitizers', data);
 
 export async function upsertPricingTier(tierData) {
   if (!isSupabaseConfigured) return false;
@@ -829,7 +851,7 @@ export async function fetchCatalogFromSupabase() {
   if (!isSupabaseConfigured) return null;
 
   try {
-    const [services, pricingTiers, patchCards, storeProducts, portfolioItems, sewOuts, heroSlides, digitizers, cmsContent, dynamicPricingTiers] =
+    const [services, pricingTiers, patchCards, storeProducts, portfolioItems, sewOuts, heroSlides, digitizers, cmsContent, dynamicPricingTiers, faqs, testimonials] =
       await Promise.all([
         supabase.from('services').select('*').order('sort_order', { ascending: true }),
         supabase.from('pricing_cards').select('*').order('sort_order', { ascending: true }),
@@ -840,7 +862,9 @@ export async function fetchCatalogFromSupabase() {
         supabase.from('hero_slides').select('*').order('sort_order', { ascending: true }),
         supabase.from('digitizers').select('*').order('sort_order', { ascending: true }),
         supabase.from('site_config').select('key, value'),
-        supabase.from('pricing_tiers').select('*').order('display_order', { ascending: true })
+        supabase.from('pricing_tiers').select('*').order('display_order', { ascending: true }),
+        supabase.from('faqs').select('*').order('sort_order', { ascending: true }),
+        supabase.from('testimonials').select('*').order('created_at', { ascending: false })
       ]);
 
     const mapServices = (rows) => (rows || []).map(s => ({
@@ -936,13 +960,28 @@ export async function fetchCatalogFromSupabase() {
         activeJobs: d.active_jobs,
         avatar: d.avatar
       })),
+      faqs: (faqs.data || []).map(f => ({
+        id: f.id,
+        question: f.question,
+        answer: f.answer,
+        category: f.category,
+        sort_order: f.sort_order,
+        is_active: f.is_active
+      })),
+      testimonials: (testimonials.data || []).map(t => ({
+        id: t.id,
+        client_name: t.client_name,
+        company: t.company,
+        review_text: t.review_text,
+        rating: t.rating,
+        avatar: t.avatar,
+        is_active: t.is_active
+      })),
       siteConfig: configMap,
       siteSettings: configMap.site_settings || null,
       heroGlobalSettings: configMap.hero_global_settings || null,
       pricing: configMap.pricing || null,
-      serviceCms: configMap.service_cms || null,
-      testimonials: configMap.testimonials || null,
-      faqs: configMap.faqs || null
+      serviceCms: configMap.service_cms || null
     };
   } catch (err) {
     console.warn('Supabase fetch catalog exception:', err);

@@ -105,10 +105,20 @@ export const TestimonialsFAQ = () => {
   const { activeHomeServiceTab } = useAppState?.() || {};
   const currentServiceKey = activeHomeServiceTab === 'vector' ? 'Vector' : activeHomeServiceTab === 'patches' || activeHomeServiceTab === 'patch' ? 'Patches' : 'Embroidery';
 
-  const testimonials = (appState.testimonials || defaultTestimonials).filter(
-    (t) => t.service === currentServiceKey
+  const mappedTestimonials = (appState.testimonials && appState.testimonials.length > 0 ? appState.testimonials : defaultTestimonials).map(t => ({
+    name: t.client_name || t.name,
+    role: t.company || t.role,
+    rating: t.rating || 5,
+    comment: t.review_text || t.comment,
+    avatar: t.avatar_url || t.avatar,
+    service: t.service_category || t.service,
+    isActive: t.is_active !== false // default to true if undefined
+  }));
+
+  const testimonials = mappedTestimonials.filter(
+    (t) => t.service === currentServiceKey && t.isActive
   );
-  const faqs = appState.faqs?.length > 0 ? appState.faqs : defaultFaqs;
+  const faqs = appState.faqs?.length > 0 ? appState.faqs.filter(f => f.is_active !== false) : defaultFaqs;
 
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
   const [activeFaqTab, setActiveFaqTab] = useState(currentServiceKey);
@@ -287,7 +297,7 @@ export const TestimonialsFAQ = () => {
                         color: isOpen ? 'var(--orange-600)' : 'var(--navy-950)'
                       }}
                     >
-                      <span style={{ paddingRight: '1rem' }}>{faq.q}</span>
+                      <span style={{ paddingRight: '1rem' }}>{faq.question || faq.q}</span>
                       <div style={{ 
                         color: isOpen ? 'var(--orange-500)' : 'var(--text-muted)',
                         transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -309,7 +319,7 @@ export const TestimonialsFAQ = () => {
                         fontSize: '1rem',
                         lineHeight: 1.6,
                       }}>
-                        {faq.a}
+                        {faq.answer || faq.a}
                       </div>
                     </div>
                   </div>
