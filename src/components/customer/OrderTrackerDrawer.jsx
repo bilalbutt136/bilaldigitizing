@@ -53,7 +53,9 @@ export const OrderTrackerDrawer = () => {
     currentView,
     showToast,
     completeOrder,
-    ORDER_STATUSES
+    ORDER_STATUSES,
+    assignDigitizer,
+    digitizers
   } = useAppState();
 
   const [revisionNote, setRevisionNote] = useState('');
@@ -511,6 +513,25 @@ export const OrderTrackerDrawer = () => {
                   <h4 style={{ fontSize: '1.1rem', color: 'var(--navy-900)', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontWeight: 700 }}>
                     Files & Delivery
                   </h4>
+
+                  {isAdmin && !isPhysicalStoreOrder && (
+                    <div style={{ marginBottom: '1.5rem', padding: '1.5rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                      <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '1rem', marginBottom: '0.5rem' }}>Assign Production Staff</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <select
+                          className="form-control"
+                          style={{ width: '100%', fontSize: '0.9rem', fontWeight: 700 }}
+                          value={ord.digitizerId || ''}
+                          onChange={(e) => assignDigitizer(ord.id, e.target.value)}
+                        >
+                          <option value="">Unassigned</option>
+                          {(digitizers || []).map(d => (
+                            <option key={d.id} value={d.id}>{d.name} ({d.role})</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
 
                   {isAdmin && (
                     <div 

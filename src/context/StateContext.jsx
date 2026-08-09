@@ -692,6 +692,10 @@ export const StateProvider = ({ children }) => {
     }
   };
 
+  const assignDigitizer = async (orderId, digitizerId) => {
+    await updateOrderStatus(orderId, 'assigned', { digitizerId });
+  };
+
   const completeOrder = async (orderId) => {
     const order = orders.find(o => o.id === orderId);
     if (order && !validateStatusTransition(order.status, ORDER_STATUSES.COMPLETED)) {
@@ -1015,7 +1019,7 @@ export const StateProvider = ({ children }) => {
       toast, showToast,
       notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead, unreadNotificationsCount,
       createOrder, updateOrderStatus, addRevisionRequest, addOrderMessage, cancelOrder,
-      completeOrder, deleteOrder, ORDER_STATUSES
+      completeOrder, deleteOrder, ORDER_STATUSES, assignDigitizer
     }}>
       {children}
     </StateContext.Provider>
