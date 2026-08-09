@@ -70,6 +70,10 @@ export const StateProvider = ({ children }) => {
   const [storeProducts, setStoreProducts] = useState([]);
   const [servicesList, setServicesList] = useState([]);
   const [heroSlides, setHeroSlides] = useState([]);
+  const [heroGlobalSettings, setHeroGlobalSettings] = useState({
+    title: 'Premium Embroidery, Vector Art & Patches',
+    rotatingTexts: 'Commercial Embroidery, Scalable Vector Art, Custom Physical Patches'
+  });
   const [siteSettings, setSiteSettings] = useState({});
   const [digitizers, setDigitizers] = useState([]);
 
@@ -182,6 +186,7 @@ export const StateProvider = ({ children }) => {
             if (catalog.portfolioSamples) setPortfolioSamples(catalog.portfolioSamples);
             if (catalog.sewOuts) setSewOuts(catalog.sewOuts);
             if (catalog.heroSlides) setHeroSlides(catalog.heroSlides);
+            if (catalog.heroGlobalSettings) setHeroGlobalSettings(catalog.heroGlobalSettings);
             if (catalog.digitizers) {
               setDigitizers(prev => prev.map(d => {
                 const fresh = catalog.digitizers.find(x => x.id === d.id);
@@ -982,6 +987,8 @@ export const StateProvider = ({ children }) => {
       sewOuts, setSewOuts, updateSewOuts,
       servicesList, setServicesList, updateServicesList,
       heroSlides, setHeroSlides, updateHeroSlides,
+      heroGlobalSettings, setHeroGlobalSettings,
+      digitizers, setDigitizers,
       siteSettings, setSiteSettings, updateSiteSettings,
       adminUsers, setAdminUsers, addAdminUser,
       activeHomeServiceTab, setActiveHomeServiceTab,

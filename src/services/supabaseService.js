@@ -879,7 +879,13 @@ export async function fetchCatalogFromSupabase() {
         primaryCta: h.primary_cta,
         secondaryCta: h.secondary_cta,
         bannerImage: h.banner_image,
-        trustPoints: h.trust_points || []
+        trustPoints: h.trust_points || [],
+        label: h.label,
+        previewTitle: h.preview_title,
+        previewBefore: h.preview_before,
+        previewAfter: h.preview_after,
+        previewTag: h.preview_tag,
+        previewTagAfter: h.preview_tag_after
       })),
       digitizers: (digitizers.data || []).map(d => ({
         id: d.id,
@@ -891,6 +897,7 @@ export async function fetchCatalogFromSupabase() {
       })),
       siteConfig: configMap,
       siteSettings: configMap.site_settings || null,
+      heroGlobalSettings: configMap.hero_global_settings || null,
       pricing: configMap.pricing || null,
       serviceCms: configMap.service_cms || null,
       testimonials: configMap.testimonials || null,

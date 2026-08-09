@@ -20,11 +20,7 @@ import {
 
 // No fallback hero, data is dynamically fetched from DB
 
-const ROTATING_TEXTS = [
-  "Commercial Embroidery",
-  "Scalable Vector Art",
-  "Custom Physical Patches"
-];
+// No fallback hero, data is dynamically fetched from DB
 
 export const HeroSection = () => {
   const navigate = useNavigate();
@@ -34,18 +30,24 @@ export const HeroSection = () => {
     activeHomeServiceTab, 
     setActiveHomeServiceTab, 
     serviceCmsContent = {},
-    heroSlides
+    heroSlides,
+    heroGlobalSettings
   } = useAppState();
 
   const [sliderPos, setSliderPos] = useState(50);
   const [textIndex, setTextIndex] = useState(0);
 
+  // Fallback for global settings
+  const globalTitle = heroGlobalSettings?.title || "Premium Embroidery, Vector Art & Patches";
+  const rotatingStr = heroGlobalSettings?.rotatingTexts || "Commercial Embroidery, Scalable Vector Art, Custom Physical Patches";
+  const rotatingTextsArr = rotatingStr.split(',').map(s => s.trim());
+
   useEffect(() => {
     const interval = setInterval(() => {
-      setTextIndex((prev) => (prev + 1) % ROTATING_TEXTS.length);
+      setTextIndex((prev) => (prev + 1) % rotatingTextsArr.length);
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [rotatingTextsArr.length]);
 
   const currentKey = activeHomeServiceTab === 'patches' ? 'patch' : (activeHomeServiceTab || 'all');
   const targetKey = currentKey === 'patch' ? 'patches' : currentKey;
@@ -168,14 +170,13 @@ export const HeroSection = () => {
             borderRadius: '9999px',
             backdropFilter: 'blur(12px)'
           }}>
-            {[
-              { id: 'all', label: 'All Services', icon: LayoutGrid },
-              { id: 'embroidery', label: 'Embroidery', icon: Layers },
-              { id: 'vector', label: 'Vector Art', icon: PenTool },
-              { id: 'patch', label: 'Patches', icon: Tag }
-            ].map(tab => {
-              const Icon = tab.icon;
-              const isActive = (currentKey === 'patch' && tab.id === 'patch') || (currentKey === tab.id);
+            {heroSlides.map(tab => {
+              // Map icon dynamically based on id/label
+              let Icon = Layers;
+              if (tab.id === 'all' || tab.label?.toLowerCase().includes('all')) Icon = LayoutGrid;
+              if (tab.id === 'vector' || tab.label?.toLowerCase().includes('vector')) Icon = PenTool;
+              if (tab.id?.includes('patch') || tab.label?.toLowerCase().includes('patch')) Icon = Tag;
+              const isActive = (currentKey === 'patch' && tab.id?.includes('patch')) || (currentKey === tab.id);
               return (
                 <button
                   key={tab.id}
@@ -228,7 +229,7 @@ export const HeroSection = () => {
               letterSpacing: '-0.02em',
               fontFamily: 'var(--font-heading, "Plus Jakarta Sans", sans-serif)'
             }}>
-              Premium Embroidery, Vector Art & Patches
+              {globalTitle}
             </h1>
             
             {/* Animated Text Rotation */}
@@ -239,7 +240,7 @@ export const HeroSection = () => {
               color: 'var(--orange-400, #ff9433)',
               minHeight: '3rem'
             }}>
-              Precision <span key={textIndex} className="hero-text-rotate" style={{ color: 'var(--orange-500, #ff7a00)' }}>{ROTATING_TEXTS[textIndex]}</span>
+              Precision <span key={textIndex} className="hero-text-rotate" style={{ color: 'var(--orange-500, #ff7a00)' }}>{rotatingTextsArr[textIndex]}</span>
             </div>
 
             {/* Description tied to the active service */}

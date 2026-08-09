@@ -18,7 +18,8 @@ import {
   upsertHeroContent, 
   upsertPricingTiers, 
   upsertPortfolioItems,
-  upsertPatchCards 
+  upsertPatchCards,
+  saveCmsConfigToSupabase
 } from '../../services/supabaseService';
 
 export const UnifiedCmsManager = () => {
@@ -27,12 +28,14 @@ export const UnifiedCmsManager = () => {
     pricingCards = [], 
     patchCards = [], 
     portfolioSamples = [],
+    heroGlobalSettings,
     showToast 
   } = useAppState();
 
   const [activeTab, setActiveTab] = useState('hero'); 
   
   // Local Drafts
+  const [draftHeroGlobal, setDraftHeroGlobal] = useState(heroGlobalSettings || { title: 'Premium Embroidery, Vector Art & Patches', rotatingTexts: 'Commercial Embroidery, Scalable Vector Art, Custom Physical Patches' });
   const [draftHero, setDraftHero] = useState([...(heroSlides.length ? heroSlides : [])]);
   const [draftPricing, setDraftPricing] = useState([...(pricingCards.length ? pricingCards : [])]);
   const [draftPatches, setDraftPatches] = useState([...(patchCards.length ? patchCards : [])]);
@@ -72,8 +75,9 @@ export const UnifiedCmsManager = () => {
     showToast('Saving CMS configurations...', 'info');
     try {
       if (activeTab === 'hero') {
-        const res = await upsertHeroContent(draftHero);
-        if (!res) throw new Error("Failed to save hero content");
+        const res1 = await saveCmsConfigToSupabase('hero_global_settings', draftHeroGlobal);
+        const res2 = await upsertHeroContent(draftHero);
+        if (!res1 || !res2) throw new Error("Failed to save hero content");
       }
       else if (activeTab === 'pricing') {
         const resP = await upsertPricingTiers(draftPricing);
@@ -131,6 +135,31 @@ export const UnifiedCmsManager = () => {
       {/* Hero Tab */}
       {activeTab === 'hero' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          
+          <div className="card" style={{ padding: '2rem', borderTop: '4px solid var(--orange-500)' }}>
+            <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem' }}>Global Hero Settings</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
+              <div className="form-group">
+                <label>Main Headline Title</label>
+                <input 
+                  className="form-control" 
+                  value={draftHeroGlobal.title || ''} 
+                  onChange={e => setDraftHeroGlobal({...draftHeroGlobal, title: e.target.value})} 
+                />
+              </div>
+              <div className="form-group">
+                <label>Rotating Keywords (Comma-separated)</label>
+                <input 
+                  className="form-control" 
+                  value={draftHeroGlobal.rotatingTexts || ''} 
+                  onChange={e => setDraftHeroGlobal({...draftHeroGlobal, rotatingTexts: e.target.value})} 
+                />
+              </div>
+            </div>
+          </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '1rem 0' }}/>
+
           {draftHero.map((slide, idx) => (
             <div key={slide.id} className="card" style={{ padding: '2rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
@@ -138,19 +167,23 @@ export const UnifiedCmsManager = () => {
                   <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--orange-50)', color: 'var(--orange-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
                     {idx + 1}
                   </div>
-                  <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{slide.label || 'New Slide Section'}</h3>
+                  <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Service: {slide.label || 'New Service'}</h3>
                 </div>
                 <button onClick={() => setDraftHero(draftHero.filter(s => s.id !== slide.id))} className="btn btn-outline" style={{ borderColor: '#fca5a5', color: '#ef4444', padding: '0.5rem 1rem' }}>
-                  <Trash2 size={16} /> Delete Slide
+                  <Trash2 size={16} /> Delete Service
                 </button>
               </div>
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
                 <div className="form-group">
-                  <label>Internal Reference Label</label>
-                  <input className="form-control" placeholder="e.g. Embroidery Tab" value={slide.label || ''} onChange={e => handleHeroChange(slide.id, 'label', e.target.value)} />
+                  <label>Service ID (Used for URL/Routing)</label>
+                  <input className="form-control" placeholder="e.g. embroidery" value={slide.id || ''} onChange={e => handleHeroChange(slide.id, 'id', e.target.value)} />
                 </div>
                 <div className="form-group">
+                  <label>Tab Label (Appears on Switcher)</label>
+                  <input className="form-control" placeholder="e.g. Embroidery" value={slide.label || ''} onChange={e => handleHeroChange(slide.id, 'label', e.target.value)} />
+                </div>
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                   <label>Top Accent Badge</label>
                   <input className="form-control" placeholder="e.g. PREMIUM STUDIO" value={slide.badge || ''} onChange={e => handleHeroChange(slide.id, 'badge', e.target.value)} />
                 </div>
@@ -197,11 +230,11 @@ export const UnifiedCmsManager = () => {
             </div>
           ))}
           <button 
-            onClick={() => setDraftHero([...draftHero, { id: 'slide-' + Date.now(), label: 'New Slide', sort_order: draftHero.length + 1 }])}
+            onClick={() => setDraftHero([...draftHero, { id: 'service-' + Date.now(), label: 'New Service', sort_order: draftHero.length + 1 }])}
             className="btn btn-outline"
-            style={{ alignSelf: 'flex-start' }}
+            style={{ padding: '1rem', borderStyle: 'dashed', borderWidth: '2px', justifyContent: 'center' }}
           >
-            <Plus size={18} /> Add New Hero Slide
+            <Plus size={20} /> Add New Service Tab
           </button>
         </div>
       )}
