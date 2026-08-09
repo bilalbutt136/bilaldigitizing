@@ -66,7 +66,7 @@ export async function POST(request) {
       }, { status: boltResponse.status === 200 ? 400 : boltResponse.status });
     }
 
-    const orderId = boltData.orderId;
+    const boltOrderId = boltData.orderId;
     const paymentUrl = boltData.paymentUrl || boltData.taptapupRedirectUrl;
 
     // Create Invoice
@@ -78,7 +78,7 @@ export async function POST(request) {
         amount: amount,
         method: method,
         status: 'pending',
-        bolt_order_id: boltData.orderId,
+        bolt_order_id: boltOrderId,
         payment_url: paymentUrl,
         description: `Wallet Deposit ($${amount.toFixed(2)})`,
         order_id: orderId || null
