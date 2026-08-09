@@ -55,7 +55,7 @@ export const HeroSection = () => {
   // Real-time Database Driven Content Binding
   let activeSlide = null;
   if (heroSlides && heroSlides.length > 0) {
-    activeSlide = heroSlides.find(s => s.label?.toLowerCase().includes(targetKey) || s.serviceKey?.toLowerCase().includes(targetKey)) || heroSlides[0];
+    activeSlide = heroSlides.find(s => s.id?.toLowerCase()?.includes(targetKey) || s.serviceKey?.toLowerCase()?.includes(targetKey)) || heroSlides[0];
   }
 
   const activeService = activeSlide;
@@ -170,12 +170,13 @@ export const HeroSection = () => {
             borderRadius: '9999px',
             backdropFilter: 'blur(12px)'
           }}>
-            {heroSlides.map(tab => {
-              // Map icon dynamically based on id/label
-              let Icon = Layers;
-              if (tab.id === 'all' || tab.label?.toLowerCase().includes('all')) Icon = LayoutGrid;
-              if (tab.id === 'vector' || tab.label?.toLowerCase().includes('vector')) Icon = PenTool;
-              if (tab.id?.includes('patch') || tab.label?.toLowerCase().includes('patch')) Icon = Tag;
+            {[
+              { id: 'all', label: 'All Services', icon: LayoutGrid },
+              { id: 'embroidery', label: 'Embroidery', icon: Layers },
+              { id: 'vector', label: 'Vector Art', icon: PenTool },
+              { id: 'patch', label: 'Patches', icon: Tag }
+            ].map(tab => {
+              const Icon = tab.icon;
               const isActive = (currentKey === 'patch' && tab.id?.includes('patch')) || (currentKey === tab.id);
               return (
                 <button
