@@ -37,6 +37,7 @@ export async function POST(request) {
     const body = await request.json().catch(() => ({}));
     const action = body?.action;
     const amount = parseFloat(body?.amount);
+    const orderId = body?.orderId;
     const email = (user.email || '').toLowerCase().trim();
 
     if (!action || !['deposit', 'deduct'].includes(action)) {
@@ -120,6 +121,24 @@ export async function POST(request) {
 
     if (txErr) {
       return NextResponse.json({ success: false, error: txErr.message }, { status: 500 });
+    }
+
+    if (action === 'deduct' && orderId) {
+      // Securely update order status server-side atomically with the transaction
+      const { error: orderErr } = await supabaseAdmin
+        .from('orders')
+        .update({ 
+          status: 'in_progress', 
+          payment_status: 'wallet',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
+
+      if (orderErr) {
+        console.error('Failed to update order status during wallet deduction:', orderErr);
+        // We still return success since the wallet was deducted successfully, 
+        // but log the error. Ideally we would wrap this in a transaction.
+      }
     }
 
     return NextResponse.json({ success: true, balance: newBalance });

@@ -43,14 +43,11 @@ export const CheckoutModal = () => {
       setSelectedMethod(methodId);
       setIsInitializing(true);
       try {
-        const success = await deductWalletBalance(amount);
+        const success = await deductWalletBalance(amount, checkoutSession?.orderId);
         if (success) {
           setIsPaid(true);
           showToast('Payment successful! Funds deducted from your Studio Wallet.', 'success');
-          // Update the order in the database and local state
-          if (checkoutSession?.orderId) {
-            await updateOrderStatus(checkoutSession.orderId, 'in_progress', { payment_status: 'wallet' });
-          }
+          // Note: Order status is securely updated on the backend by the wallet API
         } else {
           showToast('Wallet payment failed. Please try another method.', 'error');
           setSelectedMethod(null);
@@ -72,7 +69,8 @@ export const CheckoutModal = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: checkoutSession.amount,
-          method: methodId
+          method: methodId,
+          orderId: checkoutSession?.orderId
         })
       });
       const data = await res.json();
@@ -110,15 +108,7 @@ export const CheckoutModal = () => {
           if (data.success && data.status === 'paid') {
             setIsPaid(true);
             showToast('Payment successful!', 'success');
-            
-            // Mark order as paid in DB if there is an orderId
-            if (checkoutSession.orderId) {
-              try {
-                await updateOrderStatus(checkoutSession.orderId, 'in_progress', { payment_status: 'paid' });
-              } catch (err) {
-                console.error("Failed to mark order as paid", err);
-              }
-            }
+            // Note: Order status is securely updated on the backend by the webhook
           }
         } catch (err) {
           console.error("Polling error:", err);

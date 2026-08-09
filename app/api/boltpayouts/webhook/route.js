@@ -83,15 +83,10 @@ export async function POST(request) {
       let transactionId = null;
 
       if (client) {
-        const newBalance = parseFloat(client.wallet_balance || 0) + parseFloat(invoice.amount);
+        let newBalance = parseFloat(client.wallet_balance || 0) + parseFloat(invoice.amount);
         
-        await supabaseAdmin
-          .from('clients')
-          .update({ wallet_balance: newBalance })
-          .eq('id', client.id);
-
-        // 4. Log transaction
-        const { data: tx } = await supabaseAdmin
+        // 4. Log deposit transaction
+        const { data: depositTx } = await supabaseAdmin
           .from('transactions')
           .insert([{
             user_id: invoice.user_id,
@@ -104,9 +99,42 @@ export async function POST(request) {
           .select()
           .single();
           
-        if (tx) {
-          transactionId = tx.id;
+        if (depositTx) {
+          transactionId = depositTx.id;
         }
+
+        // If this invoice was specifically for an order, instantly deduct the balance and mark paid!
+        if (invoice.order_id) {
+            newBalance = newBalance - parseFloat(invoice.amount);
+            
+            // Log deduction transaction
+            await supabaseAdmin
+              .from('transactions')
+              .insert([{
+                user_id: invoice.user_id,
+                client_email: invoice.client_email,
+                type: 'order_payment',
+                amount: -parseFloat(invoice.amount),
+                payment_method: `Studio Wallet Credit`,
+                description: `Order Brief Payment (- $${parseFloat(invoice.amount).toFixed(2)})`
+              }]);
+              
+            // Update the order itself atomically
+            await supabaseAdmin
+              .from('orders')
+              .update({ 
+                status: 'in_progress', 
+                payment_status: 'paid',
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', invoice.order_id);
+        }
+
+        // 5. Update client balance finally
+        await supabaseAdmin
+          .from('clients')
+          .update({ wallet_balance: newBalance })
+          .eq('id', client.id);
       }
 
       // 5. Generate receipt

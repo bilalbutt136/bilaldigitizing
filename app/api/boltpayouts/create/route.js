@@ -18,6 +18,7 @@ export async function POST(request) {
     const body = await request.json().catch(() => ({}));
     const amount = parseFloat(body.amount);
     const method = body.method; // Don't default to 'card'
+    const orderId = body.orderId;
     
     if (isNaN(amount) || amount <= 0) {
       return NextResponse.json({ success: false, error: 'Invalid amount' }, { status: 400 });
@@ -77,9 +78,10 @@ export async function POST(request) {
         amount: amount,
         method: method,
         status: 'pending',
-        bolt_order_id: orderId,
+        bolt_order_id: boltData.orderId,
         payment_url: paymentUrl,
-        description: `Wallet Deposit ($${amount.toFixed(2)})`
+        description: `Wallet Deposit ($${amount.toFixed(2)})`,
+        order_id: orderId || null
       }])
       .select()
       .single();

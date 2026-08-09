@@ -790,11 +790,11 @@ export const StateProvider = ({ children }) => {
     return false;
   };
 
-  const deductWalletBalance = async (amount) => {
+  const deductWalletBalance = async (amount, orderId = null) => {
     const num = parseFloat(amount);
     if (isNaN(num) || num <= 0 || walletBalance < num) return false;
 
-    const res = await deductWalletViaApi(num);
+    const res = await deductWalletViaApi(num, 'Studio Wallet Credit', orderId);
     if (res.success) {
       setWalletBalance(res.balance);
       return true;

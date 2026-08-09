@@ -1112,7 +1112,7 @@ export async function depositWalletViaApi(amount, paymentMethod = 'Card / Manual
   }
 }
 
-export async function deductWalletViaApi(amount, paymentMethod = 'Studio Wallet Credit') {
+export async function deductWalletViaApi(amount, paymentMethod = 'Studio Wallet Credit', orderId = null) {
   try {
     const sessionRes = await supabase.auth.getSession().catch(() => null);
     const token = sessionRes?.data?.session?.access_token;
@@ -1124,7 +1124,7 @@ export async function deductWalletViaApi(amount, paymentMethod = 'Studio Wallet 
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ action: 'deduct', amount, paymentMethod })
+      body: JSON.stringify({ action: 'deduct', amount, paymentMethod, orderId })
     });
     const json = await res.json();
     if (!json?.success) return { success: false, error: json?.error || 'Payment failed.' };
