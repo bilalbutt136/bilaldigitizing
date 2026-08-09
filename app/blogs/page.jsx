@@ -1,10 +1,8 @@
+'use client';
+
 import React from 'react';
 import { ChevronRight, Clock, User, Tag } from 'lucide-react';
 
-export const metadata = {
-  title: 'Blog & Resources | Bilal Digitizing',
-  description: 'Learn everything about embroidery digitizing, vector art conversion, and custom patches.',
-};
 
 const blogPosts = [
   {
