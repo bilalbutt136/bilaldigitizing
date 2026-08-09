@@ -47,8 +47,10 @@ export const CheckoutModal = () => {
         if (success) {
           setIsPaid(true);
           showToast('Payment successful! Funds deducted from your Studio Wallet.', 'success');
-          // Note: The order payment status and main status are now automatically 
-          // updated securely by the deduct_wallet_balance RPC on the server.
+          // Update the order in the database and local state
+          if (checkoutSession?.orderId) {
+            await updateOrderStatus(checkoutSession.orderId, 'in_progress', { payment_status: 'wallet' });
+          }
         } else {
           showToast('Wallet payment failed. Please try another method.', 'error');
           setSelectedMethod(null);
@@ -111,9 +113,10 @@ export const CheckoutModal = () => {
             
             // Mark order as paid in DB if there is an orderId
             if (checkoutSession.orderId) {
-              const { error } = await supabase.rpc('mark_order_paid', { p_order_id: checkoutSession.orderId });
-              if (error) {
-                console.error("Failed to mark order as paid", error);
+              try {
+                await updateOrderStatus(checkoutSession.orderId, 'in_progress', { payment_status: 'paid' });
+              } catch (err) {
+                console.error("Failed to mark order as paid", err);
               }
             }
           }
