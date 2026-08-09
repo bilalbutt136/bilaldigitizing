@@ -8,6 +8,7 @@ import { UnifiedCmsManager } from './UnifiedCmsManager';
 import { BoltPayoutsAdmin } from './BoltPayoutsAdmin';
 import { ServiceManagementEditor } from './ServiceManagementEditor';
 import { AdminChatInbox } from './AdminChatInbox';
+import { AdminMetaPixel } from './AdminMetaPixel';
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -18,6 +19,7 @@ import {
   Settings, 
   LogOut, 
   TrendingUp,
+  TrendingUp,
   Layers, 
   AlertCircle, 
   RefreshCw,
@@ -25,7 +27,8 @@ import {
   X,
   ShieldCheck,
   DollarSign,
-  UserPlus
+  UserPlus,
+  Activity
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -161,6 +164,12 @@ export const AdminDashboard = () => {
       ]
     },
     {
+      title: 'MARKETING & TRACKING',
+      items: [
+        { id: 'metapixel', label: 'Meta Pixel', icon: Activity, tag: 'Ads' }
+      ]
+    },
+    {
       title: 'SYSTEM',
       items: [
         { id: 'settings', label: 'Settings', icon: Settings },
@@ -221,6 +230,7 @@ export const AdminDashboard = () => {
               {activeTab === 'chat' && 'Inbox & Support'}
               {activeTab === 'settings' && 'Studio Settings'}
               {activeTab === 'boltpayouts' && 'BoltPayouts Gateway'}
+              {activeTab === 'metapixel' && 'Meta Pixel Setup'}
             </h3>
           </div>
         </div>
@@ -592,13 +602,6 @@ export const AdminDashboard = () => {
         {activeTab === 'clients' && <ClientDirectory />}
         {activeTab === 'chat' && <AdminChatInbox />}
         {activeTab === 'cms' && <UnifiedCmsManager />}
-        {activeTab === 'boltpayouts' && <BoltPayoutsAdmin />}
-
-        {(activeTab === 'settings' || activeTab === 'admintam') && (
-          <div className="card" style={{ padding: '2rem', maxWidth: '760px', background: '#ffffff', borderRadius: '16px' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--navy-900)' }}>
-              🛡️ Admin Team & Security Operations
-            </h3>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
               Manage master administrator settings, add new administrators, and configure system security.
             </p>
