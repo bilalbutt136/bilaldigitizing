@@ -63,7 +63,7 @@ export async function POST(request) {
     let { data: clientData, error: clientErr } = await supabaseAdmin
       .from('clients')
       .select('id, wallet_balance, name')
-      .eq('email', email)
+      .eq('id', user.id)
       .maybeSingle();
 
     if (clientErr) {
@@ -125,7 +125,7 @@ export async function POST(request) {
     return NextResponse.json({ success: true, balance: newBalance });
   } catch (err) {
     return NextResponse.json(
-      { success: false, error: err.message || 'Wallet operation failed.' },
+      { success: false, error: err.message || 'Wallet operation failed.', stack: err.stack },
       { status: 500 }
     );
   }

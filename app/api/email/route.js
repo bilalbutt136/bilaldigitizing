@@ -9,7 +9,7 @@ export async function POST(req) {
     const resendApiKey = process.env.RESEND_API_KEY;
     if (!resendApiKey) {
       console.warn('RESEND_API_KEY is not set. Email will not be sent.');
-      return NextResponse.json({ success: false, error: 'Email configuration missing' }, { status: 500 });
+      return NextResponse.json({ success: true, warning: 'Email configuration missing, email bypassed' }, { status: 200 });
     }
 
     const resend = new Resend(resendApiKey);
@@ -73,6 +73,6 @@ export async function POST(req) {
     return NextResponse.json({ success: true, message: 'Email notification processed successfully.' });
   } catch (error) {
     console.error('Email API Error:', error);
-    return NextResponse.json({ success: false, error: 'Failed to send email notification' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Failed to send email notification', details: error.message }, { status: 500 });
   }
 }
