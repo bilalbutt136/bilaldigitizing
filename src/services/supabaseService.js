@@ -1221,3 +1221,46 @@ export async function addChatMessage(conversationId, message) {
     return null;
   }
 }
+
+// ============================================================
+// META PIXEL / TRACKING LOGS
+// ============================================================
+
+export async function logTrackingEventToSupabase(eventData) {
+  if (!isSupabaseConfigured) return;
+  try {
+    const { error } = await supabase.from('tracking_events').insert([{
+      event_name: eventData.eventName || 'PageView',
+      user_role: eventData.userRole || 'Visitor',
+      source: eventData.source || 'Visitor browser',
+      traffic_source: eventData.trafficSource || 'Direct',
+      value: eventData.value || '—',
+      page_path: eventData.pagePath || '/'
+    }]);
+    if (error) {
+      console.warn('Supabase tracking event insert error:', error.message);
+    }
+  } catch (err) {
+    console.warn('Supabase tracking event exception:', err);
+  }
+}
+
+export async function fetchTrackingEventsFromSupabase() {
+  if (!isSupabaseConfigured) return [];
+  try {
+    const { data, error } = await supabase
+      .from('tracking_events')
+      .select('*')
+      .order('event_time', { ascending: false })
+      .limit(100);
+      
+    if (error) {
+      console.warn('Supabase fetch tracking events error:', error.message);
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    console.warn('Supabase fetch tracking events exception:', err);
+    return [];
+  }
+}

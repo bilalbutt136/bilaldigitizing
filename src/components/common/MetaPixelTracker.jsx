@@ -6,7 +6,7 @@ import { useLocation } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 
 export const MetaPixelTracker = () => {
-  const { siteSettings } = useAppState();
+  const { siteSettings, authUser } = useAppState();
   const location = useLocation();
   const pathname = location?.pathname || '';
   
@@ -18,8 +18,23 @@ export const MetaPixelTracker = () => {
   useEffect(() => {
     if (initialized && pixelId && typeof window !== 'undefined' && window.fbq) {
       window.fbq('track', 'PageView');
+      
+      // Also log the event to our Supabase database for the Activity Log
+      import('../../services/supabaseService').then(({ logTrackingEventToSupabase }) => {
+        const role = authUser?.role === 'admin' || authUser?.email === 'shahidbutt59191@gmail.com' ? 'Platform Admin' : 
+                     (authUser ? 'Authenticated User' : 'Guest Visitor');
+        
+        logTrackingEventToSupabase({
+          eventName: 'PageView',
+          userRole: role,
+          source: 'Visitor browser',
+          trafficSource: window.location.hostname || 'Direct',
+          value: '—',
+          pagePath: pathname
+        });
+      });
     }
-  }, [pathname, initialized, pixelId]);
+  }, [pathname, initialized, pixelId, authUser]);
 
   if (!pixelId) return null;
 
@@ -61,5 +76,17 @@ export const MetaPixelTracker = () => {
 export const trackMetaEvent = (eventName, data = {}) => {
   if (typeof window !== 'undefined' && window.fbq) {
     window.fbq('track', eventName, data);
+    
+    import('../../services/supabaseService').then(({ logTrackingEventToSupabase }) => {
+      // In standalone calls we might not have authUser easily available, default to Visitor or rely on context
+      logTrackingEventToSupabase({
+        eventName: eventName,
+        userRole: 'Platform Admin', // Usually admins trigger manual events like purchases in admin panel test
+        source: 'Visitor browser',
+        trafficSource: window.location.hostname || 'Direct',
+        value: data?.value || '—',
+        pagePath: window.location.pathname || '/'
+      });
+    });
   }
 };

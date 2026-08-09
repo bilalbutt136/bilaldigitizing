@@ -436,3 +436,23 @@ CREATE POLICY storage_finished_packages_read ON storage.objects FOR SELECT USING
   bucket_id = 'finished-packages' AND auth.role() = 'authenticated'
 );
 
+-- ====================================================================
+-- META PIXEL TRACKING LOGS
+-- ====================================================================
+CREATE TABLE IF NOT EXISTS public.tracking_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_time TIMESTAMPTZ DEFAULT NOW(),
+    user_role TEXT DEFAULT 'Visitor',
+    event_name TEXT NOT NULL,
+    source TEXT DEFAULT 'Visitor browser',
+    traffic_source TEXT,
+    value TEXT DEFAULT '—',
+    page_path TEXT
+);
+
+-- Allow anonymous inserts (since visitors aren't logged in)
+ALTER TABLE public.tracking_events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Enable insert for everyone" ON public.tracking_events FOR INSERT WITH CHECK (true);
+-- Allow select for authenticated admins only
+CREATE POLICY "Enable read for authenticated users" ON public.tracking_events FOR SELECT TO authenticated USING (true);
+

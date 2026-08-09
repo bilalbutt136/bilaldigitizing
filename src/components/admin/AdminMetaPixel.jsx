@@ -11,6 +11,27 @@ export const AdminMetaPixel = () => {
   const [pixelId, setPixelId] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('setup');
+  const [events, setEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  
+  useEffect(() => {
+    if (activeTab === 'log') {
+      loadEvents();
+    }
+  }, [activeTab]);
+
+  const loadEvents = async () => {
+    setLoadingEvents(true);
+    try {
+      const { fetchTrackingEventsFromSupabase } = await import('../../services/supabaseService');
+      const data = await fetchTrackingEventsFromSupabase();
+      setEvents(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingEvents(false);
+    }
+  };
   
   useEffect(() => {
     if (siteSettings?.metaPixelId) {
@@ -296,7 +317,67 @@ export const AdminMetaPixel = () => {
         </>
       )}
 
-      {activeTab !== 'setup' && (
+      {activeTab === 'log' && (
+        <div style={{ background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', background: '#ffffff', display: 'flex', gap: '1rem' }}>
+            <div style={{ flex: 1, background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+                WHAT THIS DOES
+              </div>
+              <div style={{ fontSize: '0.9rem', color: '#334155' }}>
+                Use this to debug setup issues — e.g. confirm a test event arrived after clicking "Simulate page visit".
+              </div>
+            </div>
+            <div style={{ flex: 1, background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+                WHEN TO USE IT
+              </div>
+              <div style={{ fontSize: '0.9rem', color: '#334155' }}>
+                Not for ad reporting. Meta Ads Manager has official spend and conversion reports.
+              </div>
+            </div>
+          </div>
+          
+          <div style={{ overflowX: 'auto', background: '#f8fafc', padding: '1rem' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+              <thead>
+                <tr>
+                  <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>When</th>
+                  <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Who</th>
+                  <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>What Happened</th>
+                  <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Source</th>
+                  <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Traffic Source</th>
+                  <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Value</th>
+                  <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Page</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loadingEvents ? (
+                  <tr><td colSpan="7" style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>Loading activity logs...</td></tr>
+                ) : events.length === 0 ? (
+                  <tr><td colSpan="7" style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>No events recorded yet. Try simulating a page visit.</td></tr>
+                ) : (
+                  events.map((ev) => (
+                    <tr key={ev.id} style={{ borderBottom: '1px solid #e2e8f0', background: '#ffffff' }}>
+                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#64748b' }}>
+                        {new Date(ev.event_time).toLocaleString()}
+                      </td>
+                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#64748b' }}>{ev.user_role}</td>
+                      <td style={{ padding: '1rem', fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>{ev.event_name}</td>
+                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#64748b' }}>{ev.source}</td>
+                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#64748b' }}>{ev.traffic_source}</td>
+                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#64748b' }}>{ev.value}</td>
+                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#64748b' }}>{ev.page_path}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {(activeTab !== 'setup' && activeTab !== 'log') && (
         <div style={{ padding: '4rem 2rem', textAlign: 'center', background: '#f8fafc', borderRadius: '16px', border: '1px dashed var(--border-color)' }}>
           <Activity size={48} style={{ color: '#94a3b8', margin: '0 auto 1rem' }} />
           <h3 style={{ fontSize: '1.25rem', color: 'var(--navy-900)', marginBottom: '0.5rem' }}>Data Gathering</h3>
