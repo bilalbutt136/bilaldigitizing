@@ -35,7 +35,7 @@ export const ServicesGrid = () => {
         {/* ==================================================================
             TOP SECTION: DIGITAL TURNAROUND SERVICES (FILE DOWNLOAD)
            ================================================================== */}
-        <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 3.5rem' }}>
+        <div className="text-center w-full max-w-[780px] px-4 mx-auto mb-14">
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -124,7 +124,7 @@ export const ServicesGrid = () => {
             </div>
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid var(--border-color)', fontSize: '0.825rem', color: 'var(--navy-700)', marginBottom: '1.25rem' }}>
+              <div className="flex flex-col md:flex-row gap-4 md:gap-0 md:justify-between md:items-center" style={{ paddingTop: '1rem', borderTop: '1px solid var(--border-color)', fontSize: '0.825rem', color: 'var(--navy-700)', marginBottom: '1.25rem' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}>
                   <Clock size={15} style={{ color: 'var(--orange-500)' }} /> 8 - 12 Hours Delivery
                 </span>
@@ -196,7 +196,7 @@ export const ServicesGrid = () => {
             </div>
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid var(--border-color)', fontSize: '0.825rem', color: 'var(--navy-700)', marginBottom: '1.25rem' }}>
+              <div className="flex flex-col md:flex-row gap-4 md:gap-0 md:justify-between md:items-center" style={{ paddingTop: '1rem', borderTop: '1px solid var(--border-color)', fontSize: '0.825rem', color: 'var(--navy-700)', marginBottom: '1.25rem' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}>
                   <Clock size={15} style={{ color: 'var(--orange-500)' }} /> 6 - 12 Hours Delivery
                 </span>
@@ -220,7 +220,7 @@ export const ServicesGrid = () => {
         {/* ==================================================================
             LOWER SECTION: PHYSICAL CUSTOM PATCHES & EMBLEMS
            ================================================================== */}
-        <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 3.5rem' }}>
+        <div className="text-center w-full max-w-[780px] px-4 mx-auto mb-14">
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -249,10 +249,7 @@ export const ServicesGrid = () => {
         </div>
 
         {/* Physical Patches Featured Card Container */}
-        <div style={{
-          maxWidth: '700px',
-          margin: '0 auto'
-        }}>
+        <div className="w-full max-w-[700px] px-4 mx-auto">
           
           {/* Physical Product: Custom Patches */}
           <div 

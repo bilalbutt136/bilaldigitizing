@@ -368,10 +368,8 @@ export const CustomerDashboard = () => {
 
         {/* Main Grid Layout: Left Vertical Sidebar + Right Content Workspace */}
         <div 
-          className="dashboard-layout-grid"
+          className="dashboard-layout-grid flex flex-col md:flex-row"
           style={{
-            display: 'grid',
-            gridTemplateColumns: '280px 1fr',
             gap: '2rem',
             alignItems: 'start'
           }}
@@ -656,7 +654,7 @@ export const CustomerDashboard = () => {
                       <p style={{ fontSize: '0.85rem' }}>Click "Upload New Design Brief" to place your first embroidery or vector job.</p>
                     </div>
                   ) : (
-                    <div style={{ overflowX: 'auto' }}>
+                    <div className="overflow-x-auto w-full">
                       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                         <thead>
                           <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--navy-700)' }}>

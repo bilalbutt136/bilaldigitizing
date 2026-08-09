@@ -179,7 +179,7 @@ export const AdminDashboard = () => {
   ];
 
   return (
-    <div className="admin-portal-wrapper" style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 73px)', background: 'var(--bg-main)', position: 'relative', width: '100%' }}>
+    <div className="admin-portal-wrapper flex flex-col md:flex-row" style={{ minHeight: 'calc(100vh - 73px)', background: 'var(--bg-main)', position: 'relative', width: '100%' }}>
       
       {/* MOBILE STICKY HEADER BAR FOR ADMIN PORTAL */}
       <div 

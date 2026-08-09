@@ -21,9 +21,13 @@
     "resend": "^6.18.1"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "oxlint": "^1.71.0"
+    "autoprefixer": "^10.5.4",
+    "oxlint": "^1.71.0",
+    "postcss": "^8.5.26",
+    "tailwindcss": "^4.3.3"
   }
 }
