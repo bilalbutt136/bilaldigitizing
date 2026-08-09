@@ -64,11 +64,13 @@ export const HeaderNav = () => {
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+  const [isSupportDropdownOpen, setIsSupportDropdownOpen] = useState(false);
 
   const servicesDropdownRef = useRef(null);
   const storeDropdownRef = useRef(null);
   const pricingDropdownRef = useRef(null);
   const notificationDropdownRef = useRef(null);
+  const supportDropdownRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -83,6 +85,9 @@ export const HeaderNav = () => {
       }
       if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(e.target)) {
         setIsNotificationDropdownOpen(false);
+      }
+      if (supportDropdownRef.current && !supportDropdownRef.current.contains(e.target)) {
+        setIsSupportDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -666,6 +671,88 @@ export const HeaderNav = () => {
                             ))
                           )}
                         </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* TOP HEADER SUPPORT DROPDOWN (?) */}
+                  <div ref={supportDropdownRef} style={{ position: 'relative' }}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsSupportDropdownOpen(!isSupportDropdownOpen);
+                      }}
+                      style={{
+                        position: 'relative',
+                        background: isSupportDropdownOpen ? '#f1f5f9' : 'transparent',
+                        border: '1px solid transparent',
+                        color: 'var(--navy-600)',
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '9999px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                      aria-label="Support & Help"
+                      title="Support & Help"
+                      onMouseOver={(e) => { if(!isSupportDropdownOpen) e.currentTarget.style.background = '#f1f5f9'; }}
+                      onMouseOut={(e) => { if(!isSupportDropdownOpen) e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <HelpCircle size={18} />
+                    </button>
+
+                    {/* SUPPORT POPUP DROPDOWN LIST */}
+                    {isSupportDropdownOpen && (
+                      <div style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 8px)',
+                        right: 0,
+                        width: '240px',
+                        background: '#ffffff',
+                        border: '1.5px solid var(--border-color)',
+                        borderRadius: '12px',
+                        boxShadow: '0 12px 32px rgba(15, 23, 42, 0.15)',
+                        padding: '0.5rem',
+                        zIndex: 3000,
+                        animation: 'fadeIn 0.15s ease-out'
+                      }}>
+                        <button 
+                          onClick={() => { setIsSupportDropdownOpen(false); navigate('/faqs'); }}
+                          style={{ width: '100%', textAlign: 'left', padding: '0.65rem 0.85rem', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--navy-900)', fontSize: '0.875rem', fontWeight: 600 }}
+                          onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                          onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                          Ask the Community / FAQs
+                        </button>
+                        <button 
+                          onClick={() => { setIsSupportDropdownOpen(false); navigate('/blogs'); }}
+                          style={{ width: '100%', textAlign: 'left', padding: '0.65rem 0.85rem', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--navy-900)', fontSize: '0.875rem', fontWeight: 600 }}
+                          onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                          onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                          Blogs
+                        </button>
+                        <button 
+                          onClick={() => { setIsSupportDropdownOpen(false); navigate('/terms'); }}
+                          style={{ width: '100%', textAlign: 'left', padding: '0.65rem 0.85rem', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--navy-900)', fontSize: '0.875rem', fontWeight: 600 }}
+                          onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                          onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                          Terms and Conditions
+                        </button>
+                        <div style={{ height: '1px', background: 'var(--border-color)', margin: '0.35rem 0' }}></div>
+                        <button 
+                          onClick={() => { setIsSupportDropdownOpen(false); handleOpenLiveSupport(); }}
+                          style={{ width: '100%', textAlign: 'left', padding: '0.65rem 0.85rem', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--orange-600)', fontSize: '0.875rem', fontWeight: 700 }}
+                          onMouseOver={(e) => e.currentTarget.style.background = '#fff7ed'}
+                          onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                          Support (24/7 Live Chat)
+                        </button>
                       </div>
                     )}
                   </div>
