@@ -779,6 +779,45 @@ export const upsertPricingTiers = (data) => upsertCatalogDataToSupabase('pricing
 export const upsertPortfolioItems = (data) => upsertCatalogDataToSupabase('portfolio', data);
 export const upsertPatchCards = (data) => upsertCatalogDataToSupabase('patch_cards', data);
 
+export async function upsertPricingTier(tierData) {
+  if (!isSupabaseConfigured) return false;
+  try {
+    const payload = {
+      ...tierData,
+      updated_at: new Date().toISOString()
+    };
+    if (!payload.id) {
+      delete payload.id;
+    }
+    const { error } = await supabase
+      .from('pricing_tiers')
+      .upsert(payload, { onConflict: 'id' });
+    if (error) {
+      console.warn('upsertPricingTier error:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('upsertPricingTier exception:', err);
+    return false;
+  }
+}
+
+export async function deletePricingTier(tierId) {
+  if (!isSupabaseConfigured) return false;
+  try {
+    const { error } = await supabase.from('pricing_tiers').delete().eq('id', tierId);
+    if (error) {
+      console.warn('deletePricingTier error:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('deletePricingTier exception:', err);
+    return false;
+  }
+}
+
 // ============================================================
 // CATALOG (DB-driven; replaces mock catalog defaults)
 // ============================================================
@@ -790,7 +829,7 @@ export async function fetchCatalogFromSupabase() {
   if (!isSupabaseConfigured) return null;
 
   try {
-    const [services, pricingTiers, patchCards, storeProducts, portfolioItems, sewOuts, heroSlides, digitizers, cmsContent] =
+    const [services, pricingTiers, patchCards, storeProducts, portfolioItems, sewOuts, heroSlides, digitizers, cmsContent, dynamicPricingTiers] =
       await Promise.all([
         supabase.from('services').select('*').order('sort_order', { ascending: true }),
         supabase.from('pricing_cards').select('*').order('sort_order', { ascending: true }),
@@ -800,7 +839,8 @@ export async function fetchCatalogFromSupabase() {
         supabase.from('sew_outs').select('*').order('sort_order', { ascending: true }),
         supabase.from('hero_slides').select('*').order('sort_order', { ascending: true }),
         supabase.from('digitizers').select('*').order('sort_order', { ascending: true }),
-        supabase.from('site_config').select('key, value')
+        supabase.from('site_config').select('key, value'),
+        supabase.from('pricing_tiers').select('*').order('display_order', { ascending: true })
       ]);
 
     const mapServices = (rows) => (rows || []).map(s => ({
@@ -832,6 +872,7 @@ export async function fetchCatalogFromSupabase() {
     return {
       servicesList: mapServices(services.data),
       pricingCards: mapCards(pricingTiers.data),
+      dynamicPricingTiers: dynamicPricingTiers.data || [],
       patchCards: mapCards(patchCards.data),
       storeProducts: (storeProducts.data || []).map(p => ({
         id: p.id,

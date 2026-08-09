@@ -150,7 +150,8 @@ export const AdminDashboard = () => {
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'orders', label: 'Orders', icon: ClipboardList, badge: safeOrders.length },
-        { id: 'services', label: 'Services & Pricing', icon: Sliders },
+        { id: 'services', label: 'Services (CMS)', icon: Sliders },
+        { id: 'pricing_tiers', label: 'Pricing Tiers', icon: DollarSign, onClick: () => window.location.href = '/admin/pricing' },
         { id: 'clients', label: 'Accounts & Wallets', icon: Users, badge: safeClients.length }
       ]
     },
@@ -400,7 +401,9 @@ export const AdminDashboard = () => {
                       key={item.id}
                       type="button"
                       onClick={() => {
-                        if (item.id === 'signout') {
+                        if (item.onClick) {
+                          item.onClick();
+                        } else if (item.id === 'signout') {
                           handleSignOut();
                         } else {
                           setActiveTab(item.id);

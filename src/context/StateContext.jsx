@@ -64,6 +64,7 @@ export const StateProvider = ({ children }) => {
   const [clients, setClients] = useState([]);
   const [pricing, setPricing] = useState({});
   const [pricingCards, setPricingCards] = useState([]);
+  const [dynamicPricingTiers, setDynamicPricingTiers] = useState([]);
   const [portfolioSamples, setPortfolioSamples] = useState([]);
   const [sewOuts, setSewOuts] = useState([]);
   const [patchCards, setPatchCards] = useState([]);
@@ -181,6 +182,7 @@ export const StateProvider = ({ children }) => {
           if (!cancelled && catalog) {
             if (catalog.servicesList) setServicesList(catalog.servicesList);
             if (catalog.pricingCards) setPricingCards(catalog.pricingCards);
+            if (catalog.dynamicPricingTiers) setDynamicPricingTiers(catalog.dynamicPricingTiers);
             if (catalog.patchCards) setPatchCards(catalog.patchCards);
             if (catalog.storeProducts) setStoreProducts(catalog.storeProducts);
             if (catalog.portfolioSamples) setPortfolioSamples(catalog.portfolioSamples);
@@ -282,6 +284,7 @@ export const StateProvider = ({ children }) => {
             if (catalog) {
               if (catalog.servicesList) setServicesList(catalog.servicesList);
               if (catalog.pricingCards) setPricingCards(catalog.pricingCards);
+              if (catalog.dynamicPricingTiers) setDynamicPricingTiers(catalog.dynamicPricingTiers);
               if (catalog.patchCards) setPatchCards(catalog.patchCards);
               if (catalog.storeProducts) setStoreProducts(catalog.storeProducts);
               if (catalog.portfolioSamples) setPortfolioSamples(catalog.portfolioSamples);
@@ -981,6 +984,7 @@ export const StateProvider = ({ children }) => {
       clients, setClients,
       pricing, setPricing, updatePricing,
       pricingCards, setPricingCards, updatePricingCards,
+      dynamicPricingTiers, setDynamicPricingTiers,
       patchCards, setPatchCards, updatePatchCards,
       storeProducts, setStoreProducts,
       portfolioSamples, setPortfolioSamples, updatePortfolioSamples,
