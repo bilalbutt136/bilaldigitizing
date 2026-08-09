@@ -112,7 +112,14 @@ export const PortfolioSlider = ({ isHero = false }) => {
     }}>
       {/* Visualizer Header / Tabs (Shown only when NOT in Hero mode) */}
       {!isHero && (
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 flex-wrap gap-2">
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '0.85rem',
+          flexWrap: 'wrap',
+          gap: '0.5rem'
+        }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -370,7 +377,16 @@ export const PortfolioSlider = ({ isHero = false }) => {
 
       {/* Sample Details (Shown only when NOT in Hero mode) */}
       {!isHero && (
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center mt-3 pt-3 border-t border-[rgba(255,255,255,0.08)] flex-wrap gap-3">
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginTop: '0.85rem',
+          paddingTop: '0.75rem',
+          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          flexWrap: 'wrap',
+          gap: '0.75rem'
+        }}>
           <div>
             <h4 style={{ fontSize: '0.925rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>{currentItem.title}</h4>
             <p style={{ color: '#94a3b8', fontSize: '0.78rem', margin: '2px 0 0' }}>{currentItem.description}</p>
@@ -396,7 +412,7 @@ export const PortfolioSlider = ({ isHero = false }) => {
     <section id="portfolio" style={{ padding: '5rem 0', background: 'var(--navy-950)', color: '#ffffff' }}>
       <div className="container">
         {/* Header */}
-        <div className="text-center w-full max-w-[680px] px-4 mx-auto mb-12">
+        <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 3rem' }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -420,7 +436,7 @@ export const PortfolioSlider = ({ isHero = false }) => {
           </p>
         </div>
 
-        <div className="w-full max-w-[900px] px-4 mx-auto">
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           {visualizerCard}
         </div>
       </div>

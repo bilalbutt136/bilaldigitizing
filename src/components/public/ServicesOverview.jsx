@@ -54,7 +54,7 @@ export const ServicesOverview = () => {
 
   return (
     <section style={styles.section}>
-      <div className="w-full max-w-[1200px] px-4 mx-auto">
+      <div style={styles.container}>
         <div style={styles.headerContainer}>
           <div style={styles.pillBadge}>Our Core Services</div>
           <h2 style={styles.heading}>Everything Your Brand Needs</h2>
@@ -134,7 +134,8 @@ const styles = {
     color: 'var(--text-main)',
   },
   container: {
-    /* Migrated to className w-full max-w-[1200px] px-4 mx-auto */
+    maxWidth: '1200px',
+    margin: '0 auto',
   },
   headerContainer: {
     textAlign: 'center',

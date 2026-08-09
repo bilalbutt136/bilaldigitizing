@@ -153,7 +153,7 @@ export const HeroSection = () => {
         }
       `}} />
 
-      <div className="container w-full max-w-[1280px] px-4 mx-auto" style={{ position: 'relative', zIndex: 2 }}>
+      <div className="container" style={{ position: 'relative', zIndex: 2, maxWidth: '1280px', margin: '0 auto', padding: '0 1.5rem' }}>
         
         {/* Service Switcher Tabs */}
         <div style={{
@@ -210,10 +210,15 @@ export const HeroSection = () => {
         </div>
 
         {/* Hero Content Grid */}
-        <div className="flex flex-col md:flex-row items-center gap-16">
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gap: '4rem',
+          alignItems: 'center'
+        }}>
           
           {/* Left Column Text Content */}
-          <div className="w-full md:w-1/2 text-left">
+          <div style={{ textAlign: 'left' }}>
             
             {/* Unified Headline */}
             <h1 style={{
@@ -277,7 +282,12 @@ export const HeroSection = () => {
             </div>
 
             {/* Dynamic CTAs */}
-            <div className="flex flex-col md:flex-row items-center gap-4 flex-wrap">
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '1rem', 
+              flexWrap: 'wrap'
+            }}>
               <button 
                 type="button"
                 onClick={handlePrimaryClick}
@@ -329,7 +339,7 @@ export const HeroSection = () => {
           </div>
 
           {/* Right Column Interactive Before/After Visualizer Card */}
-          <div className="w-full md:w-1/2 flex justify-center">
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
             <div style={{
               background: 'rgba(30, 41, 59, 0.7)',
               border: '1px solid rgba(255, 255, 255, 0.1)',

@@ -173,8 +173,8 @@ export const PricingCalculator = () => {
 
         {/* Dynamic Pricing Category Cards Grid */}
         {activeCategory === 'all' ? (
-          <div className="grid-responsive-3 w-full max-w-[1200px] px-4 mx-auto" style={{
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', alignItems: 'stretch'
+          <div className="grid-responsive-3" style={{
+            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', maxWidth: '1200px', margin: '0 auto', alignItems: 'stretch'
           }}>
             {/* Card 1: Embroidery */}
             <div style={{ background: '#ffffff', borderRadius: '24px', padding: '2.5rem 2rem', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' }}>
@@ -249,10 +249,12 @@ export const PricingCalculator = () => {
             </div>
           </div>
         ) : cardsToRender.length > 0 && (
-          <div className="grid-responsive-3 w-full max-w-[1200px] px-4 mx-auto" style={{
+          <div className="grid-responsive-3" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '1.5rem',
+            maxWidth: '1200px',
+            margin: '0 auto',
             alignItems: 'stretch'
           }}>
           {cardsToRender.map((cat, idx) => (

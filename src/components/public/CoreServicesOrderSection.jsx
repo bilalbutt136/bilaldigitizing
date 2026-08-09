@@ -540,7 +540,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
       <div className="container" style={{ position: 'relative', zIndex: 1 }}>
         
         {/* Section Header */}
-        <div className="text-center w-full max-w-[780px] px-4 mx-auto mb-12">
+        <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 3rem' }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -702,7 +702,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
           /* Dedicated Order Configuration View */
           <div>
             {/* Back Action Bar */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-0" style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
               <button
                 type="button"
                 onClick={() => setIsOrderViewOpen(false)}
@@ -791,7 +791,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                   </div>
                        {/* Multi-Placement Itemized Cart Configuration */}
                   <div>
-                    <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-0" style={{ marginBottom: '0.85rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
                       <div>
                         <label style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                           📍 Configure Order Placement Items ({placementItems.length} {placementItems.length === 1 ? 'Item' : 'Items'}) *
@@ -827,7 +827,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                             }}
                           >
                             {/* Row Header */}
-                            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-0" style={{ marginBottom: '0.85rem', borderBottom: '1px dashed rgba(255, 255, 255, 0.1)', paddingBottom: '0.6rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', borderBottom: '1px dashed rgba(255, 255, 255, 0.1)', paddingBottom: '0.6rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <span style={{ background: 'var(--orange-500)', color: '#ffffff', fontWeight: 800, fontSize: '0.72rem', width: '22px', height: '22px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                                   {index + 1}
@@ -1046,7 +1046,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
 
                   {/* Target Machine Formats Selection */}
                   <div>
-                    <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-0" style={{ marginBottom: '0.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                       <label style={{ fontSize: '0.85rem', fontWeight: 800, color: '#cbd5e1' }}>
                         Required Machine File Formats ({targetFormats.length} Selected) *
                       </label>

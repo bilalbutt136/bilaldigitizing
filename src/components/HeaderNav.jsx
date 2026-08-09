@@ -147,7 +147,7 @@ export const HeaderNav = () => {
       {/* Main Brand Navbar */}
 
       {/* 2. Main Brand Navbar */}
-      <div className="flex justify-between items-center px-4 md:px-8 py-3 w-full max-w-[1400px] mx-auto">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
         {/* Brand Logo */}
         <div 
           style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', flexShrink: 0 }}
@@ -178,7 +178,7 @@ export const HeaderNav = () => {
 
         {/* Public Navigation Links (Desktop) */}
         {safeCurrentView === 'public' && (
-          <nav className="hidden lg:flex items-center gap-7">
+                    <nav className="desktop-only" style={{ alignItems: 'center', gap: '1.75rem' }}>
             {/* Home Link */}
             <button 
               onClick={handleGoHome}
@@ -777,7 +777,23 @@ export const HeaderNav = () => {
             {/* Mobile Slide-Down / Overlay Navigation Drawer */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 w-full h-full bg-white/95 backdrop-blur-md z-[999] flex flex-col pt-20 px-6 pb-8 gap-4 overflow-y-auto lg:hidden animate-fadeIn"
+          className="mobile-only"
+          style={{
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(255, 255, 255, 0.98)',
+            backdropFilter: 'blur(16px)',
+            zIndex: 999,
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '5rem 1.5rem 2rem 1.5rem',
+            gap: '1rem',
+            animation: 'fadeIn 0.25s ease-out',
+            overflowY: 'auto'
+          }}
         >
           {/* Close button inside mobile menu */}
           <button
