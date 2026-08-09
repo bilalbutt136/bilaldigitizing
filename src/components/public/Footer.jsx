@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { Scissors, ShieldCheck, Mail, Phone, MapPin, MessageCircle, Clock } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
-import { useLocation } from '../../utils/navigation';
+import { useNavigate, useLocation } from '../../utils/navigation';
 
 export const Footer = () => {
   const [mounted, setMounted] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setMounted(true);
@@ -133,11 +134,11 @@ export const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="#faq" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s' }}
+                <button onClick={() => navigate('/faqs')} style={{ background: 'none', border: 'none', padding: 0, color: '#94a3b8', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   FAQ
-                </a>
+                </button>
               </li>
               <li>
                 <a href="#contact" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s' }}
@@ -237,11 +238,11 @@ export const Footer = () => {
                  onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}>
                 Privacy Policy
               </a>
-              <a href="#terms" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
+              <button onClick={() => navigate('/terms')} style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                  onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}>
                 Terms & Conditions
-              </a>
+              </button>
               
               {/* Admin/Portal Links */}
               {(!safeIsAuthenticated || safeAuthUser?.role !== 'admin') && (
