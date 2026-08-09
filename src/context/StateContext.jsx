@@ -268,7 +268,7 @@ export const StateProvider = ({ children }) => {
     // Supabase Realtime: Sync catalog when Admin updates it
     let catalogChannel = null;
     if (isSupabaseConfigured && supabase) {
-      catalogChannel = supabase.channel('catalog-sync-channel');
+      catalogChannel = supabase.channel(`catalog-sync-channel-${Date.now()}`);
       
       const tablesToSync = [
         'services', 'pricing_tiers', 'patch_cards', 'store_products', 
@@ -311,7 +311,7 @@ export const StateProvider = ({ children }) => {
     // Supabase Realtime: Global Chat Notifications
     let messageChannel = null;
     if (isSupabaseConfigured && supabase) {
-      messageChannel = supabase.channel('global-messages-channel-state');
+      messageChannel = supabase.channel(`global-messages-channel-state-${Date.now()}`);
       messageChannel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const msg = payload.new;
         if (!msg) return;

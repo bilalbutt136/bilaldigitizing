@@ -69,7 +69,7 @@ export const AdminChatInbox = () => {
     
     if (isSupabaseConfigured && supabase) {
       loadChats();
-      channel = supabase.channel('global-messages-channel-admin')
+      channel = supabase.channel(`global-messages-channel-admin-${Date.now()}`)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
           loadChats();
           playNotificationSound('receive');
