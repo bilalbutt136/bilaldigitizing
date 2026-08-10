@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
-import { createAdminClient } from '/supabase/admin';
+import { createAdminClient } from '../../../../src/lib/supabase/admin';
 
 async function isCallerAdmin(body) {
   if (!body?.callerEmail) return false;

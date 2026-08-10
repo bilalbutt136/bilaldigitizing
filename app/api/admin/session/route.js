@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
-import { createAdminClient } from '/supabase/admin';
+import { createAdminClient } from '../../../../src/lib/supabase/admin';
 
 // POST /api/admin/session
 // Verifies that the caller is an authenticated Supabase user whose email
