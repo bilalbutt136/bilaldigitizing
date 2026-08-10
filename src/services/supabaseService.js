@@ -509,13 +509,13 @@ export const upsertPortfolioItems = async (data) => {
       title: item.title || 'Untitled',
       category: item.category || 'general',
       image: item.image || item.digitizedImage || item.digitized_image || item.afterImg || item.after_img || '',
-      stitch_count: item.stitchCount !== undefined ? item.stitchCount : item.stitch_count,
+      stitch_count: item.stitchCount !== undefined ? item.stitchCount : (item.stitch_count || 0),
       dimensions: item.dimensions || '',
       colors: item.colors || '',
       turnaround: item.turnaround || '',
       tags: item.tags || [],
       featured: item.featured || false,
-      sort_order: item.sort_order || 0,
+      sort_order: item.sortOrder !== undefined ? item.sortOrder : (item.sort_order || 0),
       is_active: item.is_active !== undefined ? item.is_active : true
     }));
     const res = await fetch('/api/admin/cms/portfolio', {
@@ -540,10 +540,11 @@ export const upsertFaqs = async (data) => {
 export const upsertSewOuts = async (data) => {
   try {
     const dbPayload = data.map(item => ({
-      ...item,
-      before_img: item.beforeImg,
-      after_img: item.afterImg,
-      sort_order: item.sortOrder
+      id: item.id,
+      title: item.title || 'Untitled',
+      before_img: item.beforeImg || item.before_img || '',
+      after_img: item.afterImg || item.after_img || '',
+      sort_order: item.sortOrder !== undefined ? item.sortOrder : (item.sort_order || 0)
     }));
     const res = await fetch('/api/admin/cms/sewouts', {
       method: 'POST',

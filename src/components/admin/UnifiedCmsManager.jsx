@@ -26,7 +26,7 @@ import {
   upsertFaqs,
   upsertTestimonials,
   saveCmsConfigToSupabase,
-  uploadFileToCloudinary
+  uploadFileToCloudinaryFull
 } from '../../services/supabaseService';
 
 export const UnifiedCmsManager = () => {
@@ -93,44 +93,29 @@ export const UnifiedCmsManager = () => {
     setDraftTestimonials(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
 
-  const handleImageUpload = (e, callback) => {
+  const handleImageUpload = async (e, callback) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        callback(event.target.result);
-        showToast('Image uploaded to Draft (Base64)', 'success');
+
+    showToast('Uploading image securely...', 'info');
+    try {
+      const result = await uploadFileToCloudinaryFull(file, 'client-uploads', 'cms-assets');
+      if (result && result.url) {
+        callback(result.url);
+        showToast('Image uploaded successfully!', 'success');
+      } else {
+        showToast('Upload failed', 'error');
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      showToast('Error uploading: ' + err.message, 'error');
+    }
   };
 
   const handleSaveHero = async () => {
     showToast('Saving Hero configurations...', 'info');
     try {
-      const processedHero = await Promise.all(draftHero.map(async (slide) => {
-        let newSlide = { ...slide };
-        if (newSlide.previewBefore && newSlide.previewBefore.startsWith('data:image')) {
-          const uploadedUrl = await uploadFileToCloudinary(newSlide.previewBefore, 'client-uploads', 'hero');
-          if (uploadedUrl) newSlide.previewBefore = uploadedUrl;
-        }
-        if (newSlide.preview_before && newSlide.preview_before.startsWith('data:image')) {
-          const uploadedUrl = await uploadFileToCloudinary(newSlide.preview_before, 'client-uploads', 'hero');
-          if (uploadedUrl) newSlide.preview_before = uploadedUrl;
-        }
-        if (newSlide.previewAfter && newSlide.previewAfter.startsWith('data:image')) {
-          const uploadedUrl = await uploadFileToCloudinary(newSlide.previewAfter, 'client-uploads', 'hero');
-          if (uploadedUrl) newSlide.previewAfter = uploadedUrl;
-        }
-        if (newSlide.preview_after && newSlide.preview_after.startsWith('data:image')) {
-          const uploadedUrl = await uploadFileToCloudinary(newSlide.preview_after, 'client-uploads', 'hero');
-          if (uploadedUrl) newSlide.preview_after = uploadedUrl;
-        }
-        return newSlide;
-      }));
       const res1 = await saveCmsConfigToSupabase('hero_global_settings', draftHeroGlobal);
-      const res2 = await upsertHeroContent(processedHero);
+      const res2 = await upsertHeroContent(draftHero);
       if (!res1 || !res2) throw new Error('Failed to save hero content');
       showToast('Live Website Updated Successfully!', 'success');
     } catch (err) { showToast('Error saving data: ' + err.message, 'error'); }
@@ -139,27 +124,7 @@ export const UnifiedCmsManager = () => {
   const handleSavePortfolio = async () => {
     showToast('Saving Portfolio configurations...', 'info');
     try {
-      const processedPortfolio = await Promise.all(draftPortfolio.map(async (item) => {
-        let newItem = { ...item };
-        if (newItem.originalImage && newItem.originalImage.startsWith('data:image')) {
-          const uploadedUrl = await uploadFileToCloudinary(newItem.originalImage, 'client-uploads', 'portfolio');
-          if (uploadedUrl) newItem.originalImage = uploadedUrl;
-        }
-        if (newItem.digitizedImage && newItem.digitizedImage.startsWith('data:image')) {
-          const uploadedUrl = await uploadFileToCloudinary(newItem.digitizedImage, 'client-uploads', 'portfolio');
-          if (uploadedUrl) newItem.digitizedImage = uploadedUrl;
-        }
-        if (newItem.beforeImg && newItem.beforeImg.startsWith('data:image')) {
-          const uploadedUrl = await uploadFileToCloudinary(newItem.beforeImg, 'client-uploads', 'portfolio');
-          if (uploadedUrl) newItem.beforeImg = uploadedUrl;
-        }
-        if (newItem.afterImg && newItem.afterImg.startsWith('data:image')) {
-          const uploadedUrl = await uploadFileToCloudinary(newItem.afterImg, 'client-uploads', 'portfolio');
-          if (uploadedUrl) newItem.afterImg = uploadedUrl;
-        }
-        return newItem;
-      }));
-      const res = await upsertPortfolioItems(processedPortfolio);
+      const res = await upsertPortfolioItems(draftPortfolio);
       if (!res) throw new Error('Failed to save portfolio');
       showToast('Live Website Updated Successfully!', 'success');
     } catch (err) { showToast('Error saving data: ' + err.message, 'error'); }
@@ -168,19 +133,7 @@ export const UnifiedCmsManager = () => {
   const handleSaveSewOuts = async () => {
     showToast('Saving Sew Outs configurations...', 'info');
     try {
-      const processedSewOuts = await Promise.all(draftSewOuts.map(async (item) => {
-        let newItem = { ...item };
-        if (newItem.beforeImg && newItem.beforeImg.startsWith('data:image')) {
-          const uploadedUrl = await uploadFileToCloudinary(newItem.beforeImg, 'client-uploads', 'sewouts');
-          if (uploadedUrl) newItem.beforeImg = uploadedUrl;
-        }
-        if (newItem.afterImg && newItem.afterImg.startsWith('data:image')) {
-          const uploadedUrl = await uploadFileToCloudinary(newItem.afterImg, 'client-uploads', 'sewouts');
-          if (uploadedUrl) newItem.afterImg = uploadedUrl;
-        }
-        return newItem;
-      }));
-      const res = await upsertSewOuts(processedSewOuts);
+      const res = await upsertSewOuts(draftSewOuts);
       if (!res) throw new Error('Failed to save sew outs');
       showToast('Live Website Updated Successfully!', 'success');
     } catch (err) { showToast('Error saving data: ' + err.message, 'error'); }
