@@ -106,102 +106,123 @@ export const UnifiedCmsManager = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleSaveAll = async () => {
-    showToast('Saving CMS configurations...', 'info');
+  const handleSaveHero = async () => {
+    showToast('Saving Hero configurations...', 'info');
     try {
-      if (activeTab === 'hero') {
-        const processedHero = await Promise.all(draftHero.map(async (slide) => {
-          let newSlide = { ...slide };
-          if (newSlide.previewBefore && newSlide.previewBefore.startsWith('data:image')) {
-            const uploadedUrl = await uploadFileToCloudinary(newSlide.previewBefore, 'client-uploads', 'hero');
-            if (uploadedUrl) newSlide.previewBefore = uploadedUrl;
-          }
-          if (newSlide.preview_before && newSlide.preview_before.startsWith('data:image')) {
-            const uploadedUrl = await uploadFileToCloudinary(newSlide.preview_before, 'client-uploads', 'hero');
-            if (uploadedUrl) newSlide.preview_before = uploadedUrl;
-          }
-          if (newSlide.previewAfter && newSlide.previewAfter.startsWith('data:image')) {
-            const uploadedUrl = await uploadFileToCloudinary(newSlide.previewAfter, 'client-uploads', 'hero');
-            if (uploadedUrl) newSlide.previewAfter = uploadedUrl;
-          }
-          if (newSlide.preview_after && newSlide.preview_after.startsWith('data:image')) {
-            const uploadedUrl = await uploadFileToCloudinary(newSlide.preview_after, 'client-uploads', 'hero');
-            if (uploadedUrl) newSlide.preview_after = uploadedUrl;
-          }
-          return newSlide;
-        }));
-        
-        const res1 = await saveCmsConfigToSupabase('hero_global_settings', draftHeroGlobal);
-        const res2 = await upsertHeroContent(processedHero);
-        if (!res1 || !res2) throw new Error("Failed to save hero content");
-      }
-      else if (activeTab === 'portfolio') {
-        const processedPortfolio = await Promise.all(draftPortfolio.map(async (item) => {
-          let newItem = { ...item };
-          
-          if (newItem.originalImage && newItem.originalImage.startsWith('data:image')) {
-            const uploadedUrl = await uploadFileToCloudinary(newItem.originalImage, 'client-uploads', 'portfolio');
-            if (uploadedUrl) newItem.originalImage = uploadedUrl;
-          }
-          if (newItem.digitizedImage && newItem.digitizedImage.startsWith('data:image')) {
-            const uploadedUrl = await uploadFileToCloudinary(newItem.digitizedImage, 'client-uploads', 'portfolio');
-            if (uploadedUrl) newItem.digitizedImage = uploadedUrl;
-          }
-          if (newItem.beforeImg && newItem.beforeImg.startsWith('data:image')) {
-            const uploadedUrl = await uploadFileToCloudinary(newItem.beforeImg, 'client-uploads', 'portfolio');
-            if (uploadedUrl) newItem.beforeImg = uploadedUrl;
-          }
-          if (newItem.afterImg && newItem.afterImg.startsWith('data:image')) {
-            const uploadedUrl = await uploadFileToCloudinary(newItem.afterImg, 'client-uploads', 'portfolio');
-            if (uploadedUrl) newItem.afterImg = uploadedUrl;
-          }
-          
-          return newItem;
-        }));
-        
-        const res = await upsertPortfolioItems(processedPortfolio);
-        if (!res) throw new Error("Failed to save portfolio");
-      }
-      else if (activeTab === 'sewouts') {
-        const processedSewOuts = await Promise.all(draftSewOuts.map(async (item) => {
-          let newItem = { ...item };
-          if (newItem.beforeImg && newItem.beforeImg.startsWith('data:image')) {
-            const uploadedUrl = await uploadFileToCloudinary(newItem.beforeImg, 'client-uploads', 'sewouts');
-            if (uploadedUrl) newItem.beforeImg = uploadedUrl;
-          }
-          if (newItem.afterImg && newItem.afterImg.startsWith('data:image')) {
-            const uploadedUrl = await uploadFileToCloudinary(newItem.afterImg, 'client-uploads', 'sewouts');
-            if (uploadedUrl) newItem.afterImg = uploadedUrl;
-          }
-          return newItem;
-        }));
-        
-        const res = await upsertSewOuts(processedSewOuts);
-        if (!res) throw new Error("Failed to save sew outs");
-      }
-      else if (activeTab === 'team') {
-        const res = await upsertDigitizers(draftDigitizers);
-        if (!res) throw new Error("Failed to save team");
-      }
-      else if (activeTab === 'faqs') {
-        const res = await upsertFaqs(draftFaqs);
-        if (!res) throw new Error("Failed to save faqs");
-      }
-      else if (activeTab === 'testimonials') {
-        const res = await upsertTestimonials(draftTestimonials);
-        if (!res) throw new Error("Failed to save testimonials");
-      }
-      else if (activeTab === 'globals') {
-        await saveCmsConfigToSupabase('trust_features', JSON.parse(draftTrustFeatures));
-        await saveCmsConfigToSupabase('why_choose_us_steps', JSON.parse(draftWhySteps));
-        await saveCmsConfigToSupabase('vector_format_options', JSON.parse(draftVectorFormats));
-        await saveCmsConfigToSupabase('portfolio_categories', JSON.parse(draftPortfolioCats));
-        await saveCmsConfigToSupabase('order_wizard_formats', JSON.parse(draftOrderFormats));
-      }
+      const processedHero = await Promise.all(draftHero.map(async (slide) => {
+        let newSlide = { ...slide };
+        if (newSlide.previewBefore && newSlide.previewBefore.startsWith('data:image')) {
+          const uploadedUrl = await uploadFileToCloudinary(newSlide.previewBefore, 'client-uploads', 'hero');
+          if (uploadedUrl) newSlide.previewBefore = uploadedUrl;
+        }
+        if (newSlide.preview_before && newSlide.preview_before.startsWith('data:image')) {
+          const uploadedUrl = await uploadFileToCloudinary(newSlide.preview_before, 'client-uploads', 'hero');
+          if (uploadedUrl) newSlide.preview_before = uploadedUrl;
+        }
+        if (newSlide.previewAfter && newSlide.previewAfter.startsWith('data:image')) {
+          const uploadedUrl = await uploadFileToCloudinary(newSlide.previewAfter, 'client-uploads', 'hero');
+          if (uploadedUrl) newSlide.previewAfter = uploadedUrl;
+        }
+        if (newSlide.preview_after && newSlide.preview_after.startsWith('data:image')) {
+          const uploadedUrl = await uploadFileToCloudinary(newSlide.preview_after, 'client-uploads', 'hero');
+          if (uploadedUrl) newSlide.preview_after = uploadedUrl;
+        }
+        return newSlide;
+      }));
+      const res1 = await saveCmsConfigToSupabase('hero_global_settings', draftHeroGlobal);
+      const res2 = await upsertHeroContent(processedHero);
+      if (!res1 || !res2) throw new Error('Failed to save hero content');
       showToast('Live Website Updated Successfully!', 'success');
-    } catch (err) {
-      showToast('Error saving data: ' + err.message, 'error');
-    }
+    } catch (err) { showToast('Error saving data: ' + err.message, 'error'); }
+  };
+
+  const handleSavePortfolio = async () => {
+    showToast('Saving Portfolio configurations...', 'info');
+    try {
+      const processedPortfolio = await Promise.all(draftPortfolio.map(async (item) => {
+        let newItem = { ...item };
+        if (newItem.originalImage && newItem.originalImage.startsWith('data:image')) {
+          const uploadedUrl = await uploadFileToCloudinary(newItem.originalImage, 'client-uploads', 'portfolio');
+          if (uploadedUrl) newItem.originalImage = uploadedUrl;
+        }
+        if (newItem.digitizedImage && newItem.digitizedImage.startsWith('data:image')) {
+          const uploadedUrl = await uploadFileToCloudinary(newItem.digitizedImage, 'client-uploads', 'portfolio');
+          if (uploadedUrl) newItem.digitizedImage = uploadedUrl;
+        }
+        if (newItem.beforeImg && newItem.beforeImg.startsWith('data:image')) {
+          const uploadedUrl = await uploadFileToCloudinary(newItem.beforeImg, 'client-uploads', 'portfolio');
+          if (uploadedUrl) newItem.beforeImg = uploadedUrl;
+        }
+        if (newItem.afterImg && newItem.afterImg.startsWith('data:image')) {
+          const uploadedUrl = await uploadFileToCloudinary(newItem.afterImg, 'client-uploads', 'portfolio');
+          if (uploadedUrl) newItem.afterImg = uploadedUrl;
+        }
+        return newItem;
+      }));
+      const res = await upsertPortfolioItems(processedPortfolio);
+      if (!res) throw new Error('Failed to save portfolio');
+      showToast('Live Website Updated Successfully!', 'success');
+    } catch (err) { showToast('Error saving data: ' + err.message, 'error'); }
+  };
+
+  const handleSaveSewouts = async () => {
+    showToast('Saving Sew Outs configurations...', 'info');
+    try {
+      const processedSewOuts = await Promise.all(draftSewOuts.map(async (item) => {
+        let newItem = { ...item };
+        if (newItem.beforeImg && newItem.beforeImg.startsWith('data:image')) {
+          const uploadedUrl = await uploadFileToCloudinary(newItem.beforeImg, 'client-uploads', 'sewouts');
+          if (uploadedUrl) newItem.beforeImg = uploadedUrl;
+        }
+        if (newItem.afterImg && newItem.afterImg.startsWith('data:image')) {
+          const uploadedUrl = await uploadFileToCloudinary(newItem.afterImg, 'client-uploads', 'sewouts');
+          if (uploadedUrl) newItem.afterImg = uploadedUrl;
+        }
+        return newItem;
+      }));
+      const res = await upsertSewOuts(processedSewOuts);
+      if (!res) throw new Error('Failed to save sew outs');
+      showToast('Live Website Updated Successfully!', 'success');
+    } catch (err) { showToast('Error saving data: ' + err.message, 'error'); }
+  };
+
+  const handleSaveTeam = async () => {
+    showToast('Saving Team configurations...', 'info');
+    try {
+      const res = await upsertDigitizers(draftDigitizers);
+      if (!res) throw new Error('Failed to save team');
+      showToast('Live Website Updated Successfully!', 'success');
+    } catch (err) { showToast('Error saving data: ' + err.message, 'error'); }
+  };
+
+  const handleSaveFaqs = async () => {
+    showToast('Saving FAQs configurations...', 'info');
+    try {
+      const res = await upsertFaqs(draftFaqs);
+      if (!res) throw new Error('Failed to save faqs');
+      showToast('Live Website Updated Successfully!', 'success');
+    } catch (err) { showToast('Error saving data: ' + err.message, 'error'); }
+  };
+
+  const handleSaveTestimonials = async () => {
+    showToast('Saving Testimonials configurations...', 'info');
+    try {
+      const res = await upsertTestimonials(draftTestimonials);
+      if (!res) throw new Error('Failed to save testimonials');
+      showToast('Live Website Updated Successfully!', 'success');
+    } catch (err) { showToast('Error saving data: ' + err.message, 'error'); }
+  };
+
+  const handleSaveGlobals = async () => {
+    showToast('Saving Globals configurations...', 'info');
+    try {
+      await saveCmsConfigToSupabase('trust_features', JSON.parse(draftTrustFeatures));
+      await saveCmsConfigToSupabase('why_choose_us_steps', JSON.parse(draftWhySteps));
+      await saveCmsConfigToSupabase('vector_format_options', JSON.parse(draftVectorFormats));
+      await saveCmsConfigToSupabase('portfolio_categories', JSON.parse(draftPortfolioCats));
+      await saveCmsConfigToSupabase('order_wizard_formats', JSON.parse(draftOrderFormats));
+      showToast('Live Website Updated Successfully!', 'success');
+    } catch (err) { showToast('Error saving data: ' + err.message, 'error'); }
   };
 
   return (
