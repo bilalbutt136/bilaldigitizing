@@ -213,9 +213,7 @@ export const UnifiedCmsManager = () => {
           <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 0.5rem 0', color: 'var(--navy-950)' }}>Unified CMS Engine</h2>
           <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.95rem' }}>Edit live website content seamlessly.</p>
         </div>
-        <button onClick={handleSaveAll} className="btn btn-primary-orange">
-          <Save size={18} /> Save & Publish Live
-        </button>
+        
       </div>
 
       {/* Tab Navigation */}
@@ -247,7 +245,8 @@ export const UnifiedCmsManager = () => {
       </div>
 
       {/* Hero Tab */}
-      {activeTab === 'hero' && (
+      {activeTab === 'hero' && (<>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}><button onClick={handleSaveHero} className="btn btn-primary-orange"><Save size={18} /> Save Hero Settings</button></div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           <div className="card" style={{ padding: '2rem', borderTop: '4px solid var(--orange-500)' }}>
@@ -368,10 +367,11 @@ export const UnifiedCmsManager = () => {
             <Plus size={20} /> Add New Service Tab
           </button>
         </div>
-      )}
+      </>)}
 
       {/* Portfolio Tab */}
-      {activeTab === 'portfolio' && (
+      {activeTab === 'portfolio' && (<>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}><button onClick={handleSavePortfolio} className="btn btn-primary-orange"><Save size={18} /> Save Portfolio</button></div>
         <div className="card" style={{ padding: '2rem' }}>
           <h3 style={{ fontSize: '1.4rem', marginBottom: '1.5rem' }}>Portfolio Showcase Gallery</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
@@ -452,10 +452,11 @@ export const UnifiedCmsManager = () => {
             </button>
           </div>
         </div>
-      )}
+      </>)}
 
       {/* Sew-Outs Tab */}
-      {activeTab === 'sewouts' && (
+      {activeTab === 'sewouts' && (<>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}><button onClick={handleSaveSewOuts} className="btn btn-primary-orange"><Save size={18} /> Save Sew Outs</button></div>
         <div className="card" style={{ padding: '2rem' }}>
           <h3 style={{ fontSize: '1.4rem', marginBottom: '1.5rem' }}>Sew-Outs Gallery</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
@@ -495,10 +496,11 @@ export const UnifiedCmsManager = () => {
             <Plus size={18} /> Add Sew-Out
           </button>
         </div>
-      )}
+      </>)}
 
       {/* Team Tab */}
-      {activeTab === 'team' && (
+      {activeTab === 'team' && (<>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}><button onClick={handleSaveTeam} className="btn btn-primary-orange"><Save size={18} /> Save Team</button></div>
         <div className="card" style={{ padding: '2rem' }}>
           <h3 style={{ fontSize: '1.4rem', marginBottom: '1.5rem' }}>Team & Digitizers</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
@@ -522,10 +524,11 @@ export const UnifiedCmsManager = () => {
             <Plus size={18} /> Add Team Member
           </button>
         </div>
-      )}
+      </>)}
 
       {/* FAQs Tab */}
-      {activeTab === 'faqs' && (
+      {activeTab === 'faqs' && (<>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}><button onClick={handleSaveFaqs} className="btn btn-primary-orange"><Save size={18} /> Save FAQs</button></div>
         <div className="card" style={{ padding: '2rem' }}>
           <h3 style={{ fontSize: '1.4rem', marginBottom: '1.5rem' }}>Frequently Asked Questions</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -550,10 +553,11 @@ export const UnifiedCmsManager = () => {
             <Plus size={18} /> Add FAQ
           </button>
         </div>
-      )}
+      </>)}
 
       {/* Testimonials Tab */}
-      {activeTab === 'testimonials' && (
+      {activeTab === 'testimonials' && (<>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}><button onClick={handleSaveTestimonials} className="btn btn-primary-orange"><Save size={18} /> Save Testimonials</button></div>
         <div className="card" style={{ padding: '2rem' }}>
           <h3 style={{ fontSize: '1.4rem', marginBottom: '1.5rem' }}>Testimonials</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
@@ -577,10 +581,11 @@ export const UnifiedCmsManager = () => {
             <Plus size={18} /> Add Testimonial
           </button>
         </div>
-      )}
+      </>)}
 
       {/* Globals Tab */}
-      {activeTab === 'globals' && (
+      {activeTab === 'globals' && (<>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}><button onClick={handleSaveGlobals} className="btn btn-primary-orange"><Save size={18} /> Save Globals</button></div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div className="card" style={{ padding: '2rem' }}>
             <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem' }}>Global JSON Configuration Arrays</h3>
@@ -610,7 +615,7 @@ export const UnifiedCmsManager = () => {
             </div>
           </div>
         </div>
-      )}
+      </>)}
     </div>
   );
 }

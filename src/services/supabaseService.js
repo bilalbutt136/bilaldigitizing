@@ -229,91 +229,11 @@ export async function uploadFileToCloudinary(fileObj, bucketName = 'client-uploa
 
 // Fetch all orders from Supabase DB
 export async function fetchOrdersFromSupabase() {
-  if (!isSupabaseConfigured) return null;
-
   try {
-    let ordersData = null;
-    let filesData = null;
-
-    // Relational select query joining orders and order_files
-    const { data: joinedOrders, error: joinedErr } = await supabase
-      .from('orders')
-      .select('*, order_files(*)')
-      .order('created_at', { ascending: false });
-
-    if (joinedErr) {
-      console.warn('Supabase fetch orders error:', joinedErr.message);
-      return null;
-    }
-    ordersData = joinedOrders;
-
-    const { data: allFiles } = await supabase.from('order_files').select('*');
-    filesData = allFiles || [];
-
-    const { data: revsData } = await supabase.from('revisions').select('*');
-    const { data: msgsData } = await supabase.from('order_messages').select('*');
-
-    if (!ordersData) return null;
-
-    // Map DB rows to app state models
-    return ordersData.map(ord => {
-      const joinedFiles = ord.order_files && Array.isArray(ord.order_files) ? ord.order_files : [];
-      const queriedFiles = filesData ? filesData.filter(f => f.order_id === ord.id) : [];
-      const ordFiles = [...joinedFiles, ...queriedFiles];
-      const ordRevs = revsData ? revsData.filter(r => r.order_id === ord.id) : [];
-      const ordMsgs = (msgsData || [])
-        .filter(m => m.order_id === ord.id)
-        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-        .map(m => ({
-          id: m.id,
-          sender: m.sender,
-          senderRole: m.sender_role,
-          text: m.text,
-          attachments: m.attachments || [],
-          timestamp: m.created_at
-        }));
-
-      const machineFiles = ordFiles
-        .filter(f => f.file_type === 'finished_machine_file')
-        .map(f => ({ name: f.file_name, format: f.file_format, url: f.file_url || f.public_url }));
-
-      const clientArtwork = ordFiles.find(f => f.file_type === 'client_artwork');
-      const resolvedArtworkUrl = ord.artwork_url || ord.image_url || ord.logo || clientArtwork?.file_url || clientArtwork?.public_url || clientArtwork?.file_path || '';
-
-      return {
-        id: ord.id,
-        title: ord.order_name || `${ord.order_type} Order`,
-        clientEmail: ord.client_email,
-        serviceCategory: ord.service_type || ord.order_type,
-        placementType: ord.placement,
-        fabricType: ord.fabric_type,
-        dimensions: ord.dimensions || { width: ord.width, height: ord.height, unit: ord.unit },
-        estimatedStitches: ord.stitch_count,
-        colorsCount: ord.color_count,
-        requestedFormats: ord.format ? [ord.format] : ['dst', 'pes', 'emb', 'pdf'],
-        isRush: ord.turnaround_time === 'Rush',
-        price: parseFloat(ord.total_price || 15.00),
-        paymentStatus: ord.payment_status || 'unpaid',
-        notes: ord.instructions || '',
-        artworkUrl: resolvedArtworkUrl,
-        image_url: resolvedArtworkUrl,
-        logo: resolvedArtworkUrl,
-        file_url: resolvedArtworkUrl,
-        file_path: clientArtwork?.storage_path || resolvedArtworkUrl,
-        status: ord.status,
-        createdAt: ord.created_at,
-        uploadedMachineFiles: machineFiles,
-        revisions: ordRevs.map(r => ({ id: r.id, requestedBy: r.requested_by, note: r.note || r.notes, createdAt: r.created_at })),
-        messages: ordMsgs,
-        history: [
-          { timestamp: ord.created_at, label: `Order Created in Supabase DB` }
-        ]
-      };
-    });
-  } catch (err) {
-    console.warn('Supabase fetch orders exception:', err);
-    return null;
-  }
+    const res = await fetch('/api/orders?action=fetchAll');
+    const data = await res.json();
+    return data.orders || [];
+  } catch { return []; }
 }
 
 // Create new Order in Supabase DB & Storage
@@ -437,225 +357,71 @@ export async function createOrderInSupabase(newOrder) {
 
 // Update Order Status & Attach Machine Files in Supabase DB
 export async function updateOrderStatusInSupabase(orderId, newStatus, extraData = {}) {
-  if (!isSupabaseConfigured) return { success: false, error: 'Supabase not configured' };
-
   try {
-    // Fetch current status for lifecycle validation
-    const { data: currentOrder } = await supabase
-      .from('orders')
-      .select('status')
-      .eq('id', orderId)
-      .maybeSingle();
-
-    if (currentOrder?.status) {
-      const isValid = validateStatusTransition(currentOrder.status, newStatus);
-      if (!isValid) {
-        return { success: false, error: `Invalid status transition: '${currentOrder.status}' → '${newStatus}'` };
-      }
-    }
-
-    const updateObj = {
-      status: newStatus,
-      updated_at: new Date().toISOString()
-    };
-
-    if (extraData.outputFileUrl) {
-      // output_file_url doesn't exist on orders. If needed, this should go into order_files.
-      console.log('Skipping output_file_url on orders table, should be inserted into order_files');
-    }
-
-    console.log(`[Supabase Update Status] Executing database update on public.orders for id ${orderId}:`, updateObj);
-
-    const { data, error } = await supabase
-      .from('orders')
-      .update(updateObj)
-      .eq('id', orderId)
-      .select();
-
-    if (error) {
-      console.error(`[Supabase Update Status Error] Failed to update order ${orderId}:`, error.message, error);
-      return { success: false, error: error.message };
-    }
-
-    console.log(`[Supabase Update Status Success] Order ${orderId} status updated to '${newStatus}' in DB:`, data);
-
-    // If new finished machine files were uploaded
-    if (extraData.uploadedMachineFiles && Array.isArray(extraData.uploadedMachineFiles)) {
-      for (const f of extraData.uploadedMachineFiles) {
-        // Only process and insert files that are new uploads (base64 data URL)
-        if (f.url && f.url.startsWith('data:')) {
-          let filePublicUrl = f.url;
-          const storageUrl = await uploadFileToCloudinary(
-            f.url,
-            'finished-packages',
-            `orders/${orderId}`
-          );
-          if (storageUrl) filePublicUrl = storageUrl;
-
-          await supabase.from('order_files').insert([{
-            order_id: orderId,
-            file_name: f.name,
-            file_url: filePublicUrl,
-            file_type: 'finished_machine_file',
-            file_size: 0,
-            uploaded_by: 'Admin',
-            storage_path: `orders/${orderId}/${f.name}`
-          }]);
-        }
-      }
-    }
-
-    return { success: true, data };
-  } catch (err) {
-    console.error('Supabase update order status exception:', err);
-    return { success: false, error: err.message };
-  }
+    await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'updateStatus', payload: { orderId, newStatus, extraData } })
+    });
+    return true;
+  } catch { return false; }
 }
 
 // Add Revision Request in Supabase DB
 export async function addRevisionInSupabase(orderId, note, requestedBy = 'Client') {
-  if (!isSupabaseConfigured) return;
-
   try {
-    await supabase.from('revisions').insert([{
-      order_id: orderId,
-      requested_by: requestedBy,
-      note: note,
-      notes: note,
-      status: 'pending'
-    }]);
-  } catch (err) {
-    console.warn('Supabase add revision exception:', err);
-  }
+    await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'requestRevision', payload: { orderId, instructions: note, requestedBy } })
+    });
+    return { success: true };
+  } catch { return { success: false }; }
 }
 
 export async function cancelOrderInSupabase(orderId) {
-  if (!isSupabaseConfigured) return { success: false, error: 'Supabase not configured' };
   try {
-    const { error } = await supabase.from('orders').update({ status: 'cancelled' }).eq('id', orderId);
-    if (error) return { success: false, error: error.message };
-    return { success: true };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
+    await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'cancelOrder', payload: { orderId } })
+    });
+    return true;
+  } catch { return false; }
 }
 
 export async function deleteOrderInSupabase(orderId) {
-  if (!isSupabaseConfigured) return { success: false, error: 'Supabase not configured' };
   try {
-    const { error } = await supabase.from('orders').delete().eq('id', orderId);
-    if (error) return { success: false, error: error.message };
-    return { success: true };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
+    await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'deleteOrder', payload: { orderId } })
+    });
+    return true;
+  } catch { return false; }
 }
 
 // Upsert Client Profile in Supabase DB (Automatic Save on Login & Order Submission)
 export async function upsertClientInSupabase(userData) {
-  if (!isSupabaseConfigured || !userData || !userData.email) return { success: false, error: 'Supabase or user email missing.' };
-
   try {
-    const cleanEmail = userData.email.toLowerCase().trim();
-
-    const { data: existing, error: selectErr } = await supabase
-      .from('clients')
-      .select('*')
-      .eq('email', cleanEmail)
-      .maybeSingle();
-
-    if (selectErr) {
-      console.warn('[Supabase Client Select Warning]:', selectErr.message);
-    }
-
-    const clientName = userData.name || cleanEmail.split('@')[0];
-    const clientCompany = userData.company || `${clientName}'s Apparel`;
-
-    const primaryPayload = {
-      user_id: userData.id,
-      name: clientName,
-      email: cleanEmail,
-      company: clientCompany
-    };
-
-    if (existing) {
-      const { error: updateErr } = await supabase
-        .from('clients')
-        .update({
-          ...primaryPayload,
-          orders_count: (existing.orders_count || 0) + (userData.incrementOrder ? 1 : 0)
-        })
-        .eq('id', existing.id);
-
-      if (updateErr) {
-        console.error('[Supabase Client Update Error]:', updateErr.message);
-        return { success: false, error: updateErr.message };
-      }
-      return { success: true };
-    } else {
-      const { error: insertErr } = await supabase
-        .from('clients')
-        .insert([{
-          ...primaryPayload,
-          wallet_balance: 0,
-          orders_count: userData.incrementOrder ? 1 : 0
-        }]);
-
-      if (insertErr) {
-        console.error('[Supabase Client Insert Error]:', insertErr.message);
-        // Fallback insert with alternative payload structure
-        const { error: fallbackErr } = await supabase
-          .from('clients')
-          .insert([{
-            user_id: userData.id,
-            name: clientName,
-            email: cleanEmail,
-            company: clientCompany,
-            wallet_balance: 0,
-            orders_count: userData.incrementOrder ? 1 : 0
-          }]);
-        if (fallbackErr) {
-          console.error('[Supabase Client Fallback Insert Error]:', fallbackErr.message);
-          return { success: false, error: fallbackErr.message };
-        }
-        return { success: true };
-      }
-      return { success: true };
-    }
-  } catch (err) {
-    console.error('[Supabase Upsert Client Exception]:', err);
-    return { success: false, error: err?.message };
-  }
+    const res = await fetch('/api/clients', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'upsert', payload: userData })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    return { success: true };
+  } catch (err) { return { success: false, error: err.message }; }
 }
 
 // Fetch all registered clients from Supabase DB
 export async function fetchClientsFromSupabase() {
-  if (!isSupabaseConfigured) return null;
-
   try {
-    const { data, error } = await supabase
-      .from('clients')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.warn('Supabase fetch clients error:', error.message);
-      return null;
-    }
-
-    return data.map(c => ({
-      id: c.id,
-      name: c.full_name || c.name || c.email?.split('@')[0] || 'Client User',
-      email: c.email,
-      company: c.company_name || c.company || `${c.name || 'Client'}'s Apparel`,
-      walletBalance: parseFloat(c.wallet_balance || 0),
-      ordersCount: c.orders_count || 0,
-      createdAt: c.created_at
-    }));
-  } catch (err) {
-    console.warn('Supabase fetch clients exception:', err);
-    return null;
-  }
+    const res = await fetch('/api/clients?action=fetchAll');
+    const data = await res.json();
+    return data.clients || [];
+  } catch { return []; }
 }
 
 // Deposit Funds & Transaction Handler in Supabase
@@ -814,78 +580,88 @@ export async function upsertCatalogDataToSupabase(tableName, dataArray) {
   }
 }
 
-export const upsertHeroContent = (data) => {
-  const dbPayload = data.map(h => ({
-    id: h.id,
-    title: h.title || 'Default Title',
-    subtitle: h.subtitle || h.description || h.highlight || 'Default Subtitle',
-    badge: h.badge,
-    rating: h.rating || h.rate_label || '5.0',
-    reviews: h.reviews || '0',
-    primary_btn_text: h.primary_btn_text || h.primary_cta || 'Order Now',
-    primary_btn_action: h.primary_btn_action || '/order',
-    secondary_btn_text: h.secondary_btn_text || h.secondary_cta || 'Learn More',
-    secondary_btn_action: h.secondary_btn_action || '/services',
-    image: h.image || h.bannerImage || h.banner_image || '',
-    sort_order: h.sort_order || 0,
-    is_active: h.is_active !== undefined ? h.is_active : true
-  }));
-  return upsertCatalogDataToSupabase('hero_slides', dbPayload);
+export const upsertHeroContent = async (data) => {
+  try {
+    const dbPayload = data.map(h => ({
+      id: h.id,
+      title: h.title || 'Default Title',
+      subtitle: h.subtitle || h.description || h.highlight || 'Default Subtitle',
+      badge: h.badge,
+      rating: h.rating || h.rate_label || '5.0',
+      reviews: h.reviews || '0',
+      primary_btn_text: h.primary_btn_text || h.primary_cta || 'Order Now',
+      primary_btn_action: h.primary_btn_action || '/order',
+      secondary_btn_text: h.secondary_btn_text || h.secondary_cta || 'Learn More',
+      secondary_btn_action: h.secondary_btn_action || '/services',
+      image: h.image || h.bannerImage || h.banner_image || '',
+      sort_order: h.sort_order || 0,
+      is_active: h.is_active !== undefined ? h.is_active : true
+    }));
+    const res = await fetch('/api/admin/cms/hero', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dbPayload)
+    });
+    return res.ok;
+  } catch { return false; }
 };
 export const upsertPricingTiers = (data) => upsertCatalogDataToSupabase('pricing_cards', data);
-export const upsertPortfolioItems = (data) => {
-  const dbPayload = data.map(item => ({
-    id: item.id,
-    title: item.title || 'Untitled',
-    category: item.category || 'general',
-    image: item.image || item.digitizedImage || item.digitized_image || item.afterImg || item.after_img || '',
-    stitch_count: item.stitchCount !== undefined ? item.stitchCount : item.stitch_count,
-    dimensions: item.dimensions || '',
-    colors: item.colors || '',
-    turnaround: item.turnaround || '',
-    tags: item.tags || [],
-    featured: item.featured || false,
-    sort_order: item.sort_order || 0,
-    is_active: item.is_active !== undefined ? item.is_active : true
-  }));
-  return upsertCatalogDataToSupabase('portfolio', dbPayload);
+export const upsertPortfolioItems = async (data) => {
+  try {
+    const dbPayload = data.map(item => ({
+      id: item.id,
+      title: item.title || 'Untitled',
+      category: item.category || 'general',
+      image: item.image || item.digitizedImage || item.digitized_image || item.afterImg || item.after_img || '',
+      stitch_count: item.stitchCount !== undefined ? item.stitchCount : item.stitch_count,
+      dimensions: item.dimensions || '',
+      colors: item.colors || '',
+      turnaround: item.turnaround || '',
+      tags: item.tags || [],
+      featured: item.featured || false,
+      sort_order: item.sort_order || 0,
+      is_active: item.is_active !== undefined ? item.is_active : true
+    }));
+    const res = await fetch('/api/admin/cms/portfolio', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dbPayload)
+    });
+    return res.ok;
+  } catch { return false; }
 };
 export const upsertPatchCards = (data) => upsertCatalogDataToSupabase('patch_cards', data);
-export const upsertFaqs = (data) => upsertCatalogDataToSupabase('faqs', data);
-export const upsertTestimonials = (data) => upsertCatalogDataToSupabase('testimonials', data);
-export const upsertSewOuts = (data) => {
-  const dbPayload = data.map(item => ({
-    id: item.id,
-    title: item.title,
-    category: item.category,
-    before_img: item.beforeImg || item.before_img,
-    after_img: item.afterImg || item.after_img,
-    stitch_count: item.stitchCount !== undefined ? item.stitchCount : item.stitch_count,
-    formats: item.formats,
-    features: item.features
-  }));
-  return upsertCatalogDataToSupabase('sew_outs', dbPayload);
+export const upsertFaqs = async (data) => {
+  try {
+    const res = await fetch('/api/admin/cms/faqs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return res.ok;
+  } catch { return false; }
 };
-export const upsertDigitizers = (data) => upsertCatalogDataToSupabase('digitizers', data);
+export const upsertDigitizers = async (data) => {
+  try {
+    const res = await fetch('/api/admin/cms/team', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return res.ok;
+  } catch { return false; }
+};
 
 export async function upsertPricingTier(tierData) {
-  if (!isSupabaseConfigured) return false;
   try {
-    const payload = {
-      ...tierData,
-      updated_at: new Date().toISOString()
-    };
-    if (!payload.id) {
-      delete payload.id;
-    }
-    const { error } = await supabase
-      .from('pricing_tiers')
-      .upsert(payload, { onConflict: 'id' });
-    if (error) {
-      console.warn('upsertPricingTier error:', error);
-      return false;
-    }
-    return true;
+    const payload = { ...tierData, updated_at: new Date().toISOString() };
+    if (!payload.id) delete payload.id;
+    const res = await fetch('/api/catalog', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'upsert', tableName: 'pricing_tiers', payload })
+    });
+    return res.ok;
   } catch (err) {
     console.warn('upsertPricingTier exception:', err);
     return false;
@@ -893,14 +669,13 @@ export async function upsertPricingTier(tierData) {
 }
 
 export async function deletePricingTier(tierId) {
-  if (!isSupabaseConfigured) return false;
   try {
-    const { error } = await supabase.from('pricing_tiers').delete().eq('id', tierId);
-    if (error) {
-      console.warn('deletePricingTier error:', error);
-      return false;
-    }
-    return true;
+    const res = await fetch('/api/catalog', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', tableName: 'pricing_tiers', payload: { id: tierId } })
+    });
+    return res.ok;
   } catch (err) {
     console.warn('deletePricingTier exception:', err);
     return false;
@@ -1098,45 +873,17 @@ export async function fetchOrderMessagesFromSupabase(orderId) {
 }
 
 export async function addOrderMessageInSupabase(orderId, text, senderName, senderRole = 'client', attachments = []) {
-  if (!isSupabaseConfigured || !orderId) return null;
-
   try {
-    const resolvedSenderName = senderName || (senderRole === 'admin' ? 'Master Admin' : 'Client');
-    
-    const { data, error } = await supabase
-      .from('order_messages')
-      .insert([{
-        order_id: orderId,
-        sender_email: senderRole === 'admin' ? 'admin@bdigitizing.pro' : 'client@example.com',
-        sender_name: resolvedSenderName,
-        sender_role: senderRole,
-        content: text || '',
-        attachments: Array.isArray(attachments) ? attachments : []
-      }])
-      .select()
-      .single();
-
-    if (error) {
-      console.warn('Supabase add order message error:', error.message);
-      return null;
-    }
-
-    return {
-      id: data.id,
-      sender: data.sender_name || data.sender_email,
-      senderName: data.sender_name || data.sender_email,
-      senderEmail: data.sender_email,
-      senderRole: data.sender_role || senderRole,
-      text: data.content || '',
-      message: data.content || '',
-      attachment: Array.isArray(data.attachments) && data.attachments.length > 0 ? data.attachments[0] : null,
-      attachments: Array.isArray(data.attachments) ? data.attachments : [],
-      timestamp: data.created_at
-    };
-  } catch (err) {
-    console.warn('Supabase add order message exception:', err);
-    return null;
-  }
+    await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        action: 'addMessage', 
+        payload: { order_id: orderId, message: text, is_staff: senderRole === 'admin', sender_name: senderName }
+      })
+    });
+    return { success: true };
+  } catch { return { success: false }; }
 }
 
 // ============================================================
@@ -1316,86 +1063,35 @@ export async function addStoreProduct(product) {
 }
 
 
-export async function createConversation(conversation) {
-  if (!isSupabaseConfigured) return null;
+export async function createConversation(dbConv) {
   try {
-    const dbConv = {
-      id: conversation.id,
-      client_email: conversation.clientEmail || '',
-      admin_email: conversation.adminEmail || '',
-      subject: conversation.subject || conversation.orderId ? `Order ${conversation.orderId}` : 'New Conversation',
-      status: conversation.status || 'open',
-      unread_client: conversation.unreadCount || 0,
-      unread_admin: 0
-    };
-    const { data, error } = await supabase.from('conversations').upsert([dbConv]).select();
-    if (error) throw error;
-    return data[0];
-  } catch (err) {
-    console.error('Error creating conversation:', err);
-    return null;
-  }
+    const res = await fetch('/api/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'upsertConversation', payload: dbConv })
+    });
+    const data = await res.json();
+    return data.conversation;
+  } catch { return null; }
 }
 
 export async function fetchConversations() {
-  if (!isSupabaseConfigured) return [];
   try {
-    const { data: convs, error: convErr } = await supabase.from('conversations').select('*');
-    if (convErr) throw convErr;
-    const { data: msgs, error: msgErr } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
-    if (msgErr) throw msgErr;
-    
-    return (convs || []).map(c => {
-      const cMsgs = (msgs || []).filter(m => m.conversation_id === c.id).map(m => ({
-        id: m.id,
-        sender: m.sender_email,
-        senderName: m.sender_email,
-        senderEmail: m.sender_email,
-        senderRole: m.sender_role,
-        text: m.content,
-        attachment: m.attachments && m.attachments.length > 0 ? m.attachments[0] : null,
-        timestamp: m.created_at
-      }));
-      return {
-        id: c.id,
-        clientName: c.client_email,
-        clientEmail: c.client_email,
-        company: '',
-        orderId: '',
-        subject: c.subject,
-        status: c.status,
-        unreadCount: c.unread_client || c.unread_admin || 0,
-        messages: cMsgs
-      };
-    });
-  } catch (err) {
-    console.error('Error fetching conversations:', err);
-    return [];
-  }
+    const res = await fetch('/api/messages?action=fetchConversations');
+    const data = await res.json();
+    return data.conversations || [];
+  } catch { return []; }
 }
 
-export async function addChatMessage(conversationId, message) {
-  if (!isSupabaseConfigured) return null;
+export async function addChatMessage(chatId, messageObj) {
   try {
-    const { data, error } = await supabase.from('messages').insert([{
-      id: message.id,
-      conversation_id: conversationId,
-      sender_email: message.senderEmail || message.sender || 'unknown@example.com',
-      sender_role: message.senderRole || 'client',
-      content: message.text || message.content || '',
-      attachments: message.attachment ? [message.attachment] : [],
-      created_at: message.timestamp || new Date().toISOString()
-    }]).select();
-    if (error) throw error;
-    
-    // Attempt to increment unread count
-    await supabase.rpc('increment_unread_count', { conv_id: conversationId }).catch(() => {});
-    
-    return data[0];
-  } catch (err) {
-    console.error('Error adding message:', err);
-    return null;
-  }
+    await fetch('/api/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'insertMessage', payload: messageObj })
+    });
+    return true;
+  } catch { return false; }
 }
 
 // ============================================================
