@@ -151,21 +151,17 @@ export const OrderTrackerDrawer = () => {
     triggerFileDownload(ord.artworkUrl, fileName, ext);
   };
 
-  // Admin Multiple Files Processing & Handler
   const processAdminFilesList = (files) => {
     if (!files || files.length === 0) return;
     const fileArray = Array.from(files);
 
     fileArray.forEach((file) => {
       const ext = file.name.split('.').pop().toLowerCase();
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setAdminFilesList(prev => [
-          ...prev,
-          { name: file.name, format: ext, url: e.target.result, uploadedAt: new Date().toISOString() }
-        ]);
-      };
-      reader.readAsDataURL(file);
+      const tempUrl = URL.createObjectURL(file);
+      setAdminFilesList(prev => [
+        ...prev,
+        { name: file.name, format: ext, url: tempUrl, rawFile: file, uploadedAt: new Date().toISOString() }
+      ]);
     });
   };
 
@@ -185,12 +181,13 @@ export const OrderTrackerDrawer = () => {
     }
 
     const uploadedCloudinaryFiles = [];
-    for (const file of adminFilesList) {
-      const uploaded = await uploadFileToCloudinaryFull(file, 'admin-deliveries', 'deliveries');
+    for (const fileObj of adminFilesList) {
+      if (!fileObj.rawFile) continue;
+      const uploaded = await uploadFileToCloudinaryFull(fileObj.rawFile, 'admin-deliveries', 'deliveries');
       if (uploaded) {
         uploadedCloudinaryFiles.push(uploaded);
       } else {
-        uploadedCloudinaryFiles.push({ name: file.name, error: 'Upload failed' });
+        uploadedCloudinaryFiles.push({ name: fileObj.name, error: 'Upload failed' });
       }
     }
 

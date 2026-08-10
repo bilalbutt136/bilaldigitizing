@@ -30,6 +30,7 @@ export const StoreManagementEditor = () => {
   const [draftProducts, setDraftProducts] = useState([...(storeProducts || [])]);
   const [filterCategory, setFilterCategory] = useState('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
 
 
@@ -84,6 +85,10 @@ export const StoreManagementEditor = () => {
 
   const handleSaveCatalog = (e) => {
     e.preventDefault();
+    if (isUploading) {
+      showToast('Please wait for image uploads to finish', 'warning');
+      return;
+    }
     updateStoreProducts(draftProducts);
     showToast('Store products catalog updated and published live to /store page!', 'success');
   };
@@ -91,12 +96,11 @@ export const StoreManagementEditor = () => {
   const handleImageUpload = async (id, file) => {
     if (!file) return;
     
+    setIsUploading(true);
+    
     // Quick preview first
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      handleProductChange(id, 'image', e.target.result);
-    };
-    reader.readAsDataURL(file);
+    const tempUrl = URL.createObjectURL(file);
+    handleProductChange(id, 'image', tempUrl);
 
     // Upload to Cloudinary in background and replace preview with real URL
     try {
@@ -106,6 +110,9 @@ export const StoreManagementEditor = () => {
       }
     } catch (err) {
       console.error('Store image upload failed:', err);
+      showToast('Image upload failed', 'error');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -198,9 +205,10 @@ export const StoreManagementEditor = () => {
               <button
                 type="submit"
                 className="btn btn-primary-orange"
+                disabled={isUploading}
                 style={{ fontWeight: 800 }}
               >
-                <Save size={16} /> Save & Publish Live Store Catalog
+                <Save size={16} /> {isUploading ? 'Uploading Image...' : 'Save & Publish Live Store Catalog'}
               </button>
             </div>
           </div>

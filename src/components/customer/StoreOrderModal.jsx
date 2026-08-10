@@ -75,16 +75,13 @@ export const StoreOrderModal = () => {
   const handleArtworkUpload = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setUploadedArtwork({
-          name: file.name,
-          size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
-          url: event.target.result,
-          rawFile: file
-        });
-      };
-      reader.readAsDataURL(file);
+      const tempUrl = URL.createObjectURL(file);
+      setUploadedArtwork({
+        name: file.name,
+        size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
+        url: tempUrl,
+        rawFile: file
+      });
     }
   };
 
