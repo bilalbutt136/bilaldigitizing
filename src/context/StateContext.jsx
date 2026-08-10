@@ -10,6 +10,7 @@ import {
   signInWithGoogleIdToken,
   signInWithAppleIdToken,
   signInWithSupabaseAuth,
+  signUpWithSupabaseAuth,
   sendPasswordResetEmail,
   updateUserPassword,
   saveCmsConfigToSupabase,
