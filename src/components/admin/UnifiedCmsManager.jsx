@@ -353,9 +353,6 @@ export const UnifiedCmsManager = () => {
         </div>
       )}
 
-        </div>
-      )}
-
       {/* Portfolio Tab */}
       {activeTab === 'portfolio' && (
         <div className="card" style={{ padding: '2rem' }}>
