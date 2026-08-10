@@ -623,7 +623,16 @@ export async function fetchCatalogFromSupabase() {
   try {
     const res = await fetch('/api/catalog?action=fetchAll');
     const data = await res.json();
+    
+    // Parse site_config array into a map
+    const siteConfig = data.site_config || [];
+    const configMap = {};
+    siteConfig.forEach(item => {
+      configMap[item.key] = item.value;
+    });
+
     return {
+      // Original snake_case/raw keys
       services: data.services || [],
       pricing_tiers: data.pricing_tiers || [],
       patch_cards: data.patch_cards || [],
@@ -633,9 +642,29 @@ export async function fetchCatalogFromSupabase() {
       hero_slides: data.hero_slides || [],
       digitizers: data.digitizers || [],
       pricing_cards: data.pricing_cards || [],
-      site_config: data.site_config || [],
+      site_config: siteConfig,
       faqs: data.faqs || [],
-      testimonials: data.testimonials || []
+      testimonials: data.testimonials || [],
+      
+      // CamelCase aliases and config parsings required by StateContext.jsx
+      servicesList: data.services || [],
+      dynamicPricingTiers: data.pricing_tiers || [],
+      patchCards: data.patch_cards || [],
+      storeProducts: data.store_products || [],
+      portfolioSamples: data.portfolio || [],
+      sewOuts: data.sew_outs || [],
+      heroSlides: data.hero_slides || [],
+      pricingCards: data.pricing_cards || [],
+      heroGlobalSettings: configMap['hero_global_settings'] || null,
+      siteSettings: configMap['site_settings'] || null,
+      pricing: configMap['pricing'] || null,
+      serviceCms: {
+        trust_features: configMap['trust_features'] || [],
+        why_choose_us_steps: configMap['why_choose_us_steps'] || [],
+        vector_format_options: configMap['vector_format_options'] || [],
+        portfolio_categories: configMap['portfolio_categories'] || [],
+        order_wizard_formats: configMap['order_wizard_formats'] || []
+      }
     };
   } catch (err) {
     return null;
