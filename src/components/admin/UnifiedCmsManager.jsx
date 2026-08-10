@@ -165,7 +165,7 @@ export const UnifiedCmsManager = () => {
     } catch (err) { showToast('Error saving data: ' + err.message, 'error'); }
   };
 
-  const handleSaveSewouts = async () => {
+  const handleSaveSewOuts = async () => {
     showToast('Saving Sew Outs configurations...', 'info');
     try {
       const processedSewOuts = await Promise.all(draftSewOuts.map(async (item) => {
