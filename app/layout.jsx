@@ -12,6 +12,7 @@ import { DepositModal } from '../src/components/customer/DepositModal';
 import { CheckoutModal } from '../src/components/customer/CheckoutModal';
 import { ClientLiveChatWidget } from '../src/components/customer/ClientLiveChatWidget';
 import ToastContainer from './ToastContainer';
+import GlobalUploadModal from '../src/components/common/GlobalUploadModal';
 import { MetaPixelTracker } from '../src/components/common/MetaPixelTracker';
 
 const getMetadataBase = () => {
@@ -129,6 +130,7 @@ export default function RootLayout({ children }) {
             <DepositModal />
             <ClientLiveChatWidget />
             <ToastContainer />
+            <GlobalUploadModal />
             <MetaPixelTracker />
           </div>
         </StateProvider>

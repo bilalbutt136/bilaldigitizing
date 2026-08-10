@@ -935,38 +935,72 @@ export async function fetchMediaAssetsFromSupabase() {
   }
 }
 
-// Helper to upload files to Cloudinary and return full details (url, public_id, size)
-export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-uploads', folderPath = 'artwork') {
+// Helper to upload files directly to Cloudinary and return full details (url, public_id, size)
+export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-uploads', folderPath = 'artwork', onProgress) {
   if (!fileObj) return null;
 
   try {
+    // 1. Dispatch global start event
+    window.dispatchEvent(new CustomEvent('upload:start', { detail: { fileName: fileObj.name } }));
+
+    // 2. Get upload signature from our fast Next.js backend
+    const sigRes = await fetch(`/api/cloudinary/signature?folder=${encodeURIComponent(folderPath)}`);
+    if (!sigRes.ok) throw new Error('Failed to fetch signature');
+    const sigData = await sigRes.json();
+    
+    if (!sigData.success) throw new Error(sigData.error || 'Failed to sign upload');
+
+    // 3. Prepare FormData for direct Cloudinary upload
     const formData = new FormData();
     formData.append('file', fileObj);
-    if (folderPath) {
-      formData.append('folder', folderPath);
-    }
+    formData.append('folder', folderPath);
+    formData.append('api_key', sigData.api_key);
+    formData.append('timestamp', sigData.timestamp);
+    formData.append('signature', sigData.signature);
 
-    const response = await fetch('/api/cloudinary/upload', {
-      method: 'POST',
-      body: formData,
+    // 4. Upload directly to Cloudinary using XHR to track progress
+    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${sigData.cloud_name}/image/upload`;
+    
+    const data = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', cloudinaryUrl, true);
+
+      // Track progress
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = Math.round((event.loaded / event.total) * 100);
+          if (onProgress) onProgress(percentComplete);
+          
+          window.dispatchEvent(new CustomEvent('upload:progress', { 
+            detail: { progress: percentComplete, fileName: fileObj.name } 
+          }));
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(JSON.parse(xhr.responseText));
+        } else {
+          reject(new Error(xhr.responseText));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error('Network error during upload'));
+      xhr.send(formData);
     });
 
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    if (!data.success) {
-      return null;
-    }
+    // 5. Dispatch global end event
+    window.dispatchEvent(new CustomEvent('upload:end', { detail: { fileName: fileObj.name, success: true } }));
 
     return {
       name: fileObj.name,
-      url: data.url,
+      url: data.secure_url,
       public_id: data.public_id,
       size: `${(fileObj.size / (1024 * 1024)).toFixed(2)} MB`
     };
   } catch (err) {
+    console.error('Cloudinary Direct Upload Error:', err);
+    window.dispatchEvent(new CustomEvent('upload:end', { detail: { fileName: fileObj.name, success: false } }));
     return null;
   }
 }
