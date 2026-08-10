@@ -508,15 +508,15 @@ export const upsertPortfolioItems = async (data) => {
       id: item.id,
       title: item.title || 'Untitled',
       category: item.category || 'general',
-      image: item.image || item.digitizedImage || item.digitized_image || item.afterImg || item.after_img || '',
-      stitch_count: item.stitchCount !== undefined ? item.stitchCount : (item.stitch_count || 0),
-      dimensions: item.dimensions || '',
-      colors: item.colors || '',
-      turnaround: item.turnaround || '',
-      tags: item.tags || [],
-      featured: item.featured || false,
-      sort_order: item.sortOrder !== undefined ? item.sortOrder : (item.sort_order || 0),
-      is_active: item.is_active !== undefined ? item.is_active : true
+      original_image: item.originalImage || item.original_image || item.beforeImg || item.before_img || '',
+      digitized_image: item.digitizedImage || item.digitized_image || item.afterImg || item.after_img || item.image || '',
+      stitch_count: item.stitchCount !== undefined ? String(item.stitchCount) : (item.stitch_count || '0'),
+      colors: item.colors || 'Standard',
+      description: item.description || '',
+      sort_order: item.sortOrder !== undefined ? Number(item.sortOrder) : (item.sort_order || 0),
+      is_active: item.is_active !== undefined ? item.is_active : true,
+      formats: item.formats || 'DST, EMB',
+      client_type: item.clientType || item.client_type || 'regular'
     }));
     const res = await fetch('/api/admin/cms/portfolio', {
       method: 'POST',
@@ -542,9 +542,14 @@ export const upsertSewOuts = async (data) => {
     const dbPayload = data.map(item => ({
       id: item.id,
       title: item.title || 'Untitled',
+      category: item.category || 'general',
       before_img: item.beforeImg || item.before_img || '',
       after_img: item.afterImg || item.after_img || '',
-      sort_order: item.sortOrder !== undefined ? item.sortOrder : (item.sort_order || 0)
+      stitch_count: item.stitchCount !== undefined ? String(item.stitchCount) : (item.stitch_count || '0'),
+      formats: item.formats || 'DST, EMB',
+      features: item.features || {},
+      sort_order: item.sortOrder !== undefined ? Number(item.sortOrder) : (item.sort_order || 0),
+      is_active: item.is_active !== undefined ? item.is_active : true
     }));
     const res = await fetch('/api/admin/cms/sewouts', {
       method: 'POST',

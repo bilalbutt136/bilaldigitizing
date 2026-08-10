@@ -8,13 +8,9 @@ export async function POST(request, { params }) {
     const supabase = createAdminClient();
 
     const upsertCatalogData = async (tableName, payload) => {
-      await supabase.from(tableName).delete().neq('id', 0);
+      await supabase.from(tableName).delete().not('id', 'is', null);
       if (payload && payload.length > 0) {
-        const cleanData = payload.map(item => {
-          const { id, ...rest } = item;
-          return rest;
-        });
-        const { error } = await supabase.from(tableName).insert(cleanData);
+        const { error } = await supabase.from(tableName).insert(payload);
         if (error) throw error;
       }
       return true;
@@ -22,33 +18,15 @@ export async function POST(request, { params }) {
 
     switch (feature) {
       case 'hero':
-        await supabase.from('hero_content').delete().neq('id', 0);
-        if (data.length > 0) {
-          const { error } = await supabase.from('hero_content').insert(
-            data.map(({ id, ...rest }) => rest)
-          );
-          if (error) throw error;
-        }
+        await upsertCatalogData('hero_content', data);
         break;
       
       case 'portfolio':
-        await supabase.from('portfolio_samples').delete().neq('id', 0);
-        if (data.length > 0) {
-          const { error } = await supabase.from('portfolio_samples').insert(
-            data.map(({ id, ...rest }) => rest)
-          );
-          if (error) throw error;
-        }
+        await upsertCatalogData('portfolio', data);
         break;
 
       case 'sewouts':
-        await supabase.from('sew_outs').delete().neq('id', 0);
-        if (data.length > 0) {
-          const { error } = await supabase.from('sew_outs').insert(
-            data.map(({ id, ...rest }) => rest)
-          );
-          if (error) throw error;
-        }
+        await upsertCatalogData('sew_outs', data);
         break;
 
       case 'team':
