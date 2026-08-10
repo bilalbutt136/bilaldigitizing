@@ -641,6 +641,34 @@ export const upsertFaqs = async (data) => {
     return res.ok;
   } catch { return false; }
 };
+export const upsertSewOuts = async (data) => {
+  try {
+    const dbPayload = data.map(item => ({
+      ...item,
+      before_img: item.beforeImg,
+      after_img: item.afterImg,
+      sort_order: item.sortOrder
+    }));
+    const res = await fetch('/api/admin/cms/sewouts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dbPayload)
+    });
+    return res.ok;
+  } catch { return false; }
+};
+
+export const upsertTestimonials = async (data) => {
+  try {
+    const res = await fetch('/api/admin/cms/testimonials', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return res.ok;
+  } catch { return false; }
+};
+
 export const upsertDigitizers = async (data) => {
   try {
     const res = await fetch('/api/admin/cms/team', {
