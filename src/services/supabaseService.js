@@ -873,7 +873,19 @@ export const upsertPortfolioItems = (data) => {
 export const upsertPatchCards = (data) => upsertCatalogDataToSupabase('patch_cards', data);
 export const upsertFaqs = (data) => upsertCatalogDataToSupabase('faqs', data);
 export const upsertTestimonials = (data) => upsertCatalogDataToSupabase('testimonials', data);
-export const upsertSewOuts = (data) => upsertCatalogDataToSupabase('sew_outs', data);
+export const upsertSewOuts = (data) => {
+  const dbPayload = data.map(item => ({
+    id: item.id,
+    title: item.title,
+    category: item.category,
+    before_img: item.beforeImg || item.before_img,
+    after_img: item.afterImg || item.after_img,
+    stitch_count: item.stitchCount !== undefined ? item.stitchCount : item.stitch_count,
+    formats: item.formats,
+    features: item.features
+  }));
+  return upsertCatalogDataToSupabase('sew_outs', dbPayload);
+};
 export const upsertDigitizers = (data) => upsertCatalogDataToSupabase('digitizers', data);
 
 export async function upsertPricingTier(tierData) {

@@ -517,8 +517,13 @@ export const HeaderNav = () => {
                     padding: '0.35rem 0.85rem'
                   }}
                   onClick={() => {
-                    protectedNavigate('customer', false);
-                    navigate('/client-portal');
+                    if (safeAuthUser?.role === 'admin') {
+                      protectedNavigate('admin', false);
+                      navigate('/admin-portal');
+                    } else {
+                      protectedNavigate('customer', false);
+                      navigate('/client-portal');
+                    }
                   }}
                 >
                   <User size={14} style={{ color: 'var(--orange-500)' }} /> Dashboard
