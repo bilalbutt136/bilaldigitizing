@@ -53,8 +53,35 @@ export const StateProvider = ({ children }) => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('login');
   const [authModalTarget, setAuthModalTarget] = useState('customer');
-  const [activeAdminTab, setActiveAdminTab] = useState('dashboard');
-  const [activeCustomerTab, setActiveCustomerTab] = useState('dashboard');
+  const [activeAdminTabState, setActiveAdminTabState] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('bdigi_admin_tab') || 'dashboard';
+    }
+    return 'dashboard';
+  });
+  
+  const [activeCustomerTabState, setActiveCustomerTabState] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('bdigi_customer_tab') || 'dashboard';
+    }
+    return 'dashboard';
+  });
+
+  const activeAdminTab = activeAdminTabState;
+  const setActiveAdminTab = (tab) => {
+    setActiveAdminTabState(tab);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bdigi_admin_tab', tab);
+    }
+  };
+
+  const activeCustomerTab = activeCustomerTabState;
+  const setActiveCustomerTab = (tab) => {
+    setActiveCustomerTabState(tab);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bdigi_customer_tab', tab);
+    }
+  };
   
   // Checkout & Payment states
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
