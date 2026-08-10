@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { addStoreProduct } from '../../services/supabaseService';
+import { addStoreProduct, uploadFileToCloudinaryFull } from '../../services/supabaseService';
 import { 
   X, 
   Package, 
@@ -27,6 +27,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
   const [image, setImage] = useState('https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80');
   const [description, setDescription] = useState('Premium custom embroidered apparel with high stitch density artwork.');
   const [featuresText, setFeaturesText] = useState('100% Heavyweight Cotton\nHigh stitch count embroidery\nFree digital sew-out proof\nFast 5-7 day production');
+  const [isUploading, setIsUploading] = useState(false);
 
   if (!isOpen) return null;
 
@@ -38,14 +39,19 @@ export const AddProductModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleImageFileUpload = (e) => {
+  const handleImageFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setImage(event.target.result);
-      };
-      reader.readAsDataURL(file);
+      setImage(URL.createObjectURL(file));
+      setIsUploading(true);
+      const uploadedImage = await uploadFileToCloudinaryFull(file, 'media-gallery', 'store-products');
+      setIsUploading(false);
+      
+      if (uploadedImage) {
+        setImage(uploadedImage.url);
+      } else {
+        showToast('Image upload failed. Please try again.', 'error');
+      }
     }
   };
 
@@ -321,23 +327,25 @@ export const AddProductModal = ({ isOpen, onClose }) => {
                   onChange={(e) => setImage(e.target.value)}
                 />
                 <label style={{
-                  background: 'var(--navy-800)',
+                  background: isUploading ? 'var(--navy-600)' : 'var(--navy-800)',
                   color: '#ffffff',
                   padding: '0.55rem 0.85rem',
                   borderRadius: 'var(--radius-sm)',
-                  cursor: 'pointer',
+                  cursor: isUploading ? 'not-allowed' : 'pointer',
                   fontSize: '0.8rem',
                   fontWeight: 700,
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.35rem',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  opacity: isUploading ? 0.7 : 1
                 }}>
-                  <Upload size={14} /> Choose File
+                  {isUploading ? 'Uploading...' : <><Upload size={14} /> Choose File</>}
                   <input 
                     type="file" 
                     onChange={handleImageFileUpload} 
                     style={{ display: 'none' }} 
+                    disabled={isUploading}
                   />
                 </label>
               </div>
@@ -392,9 +400,10 @@ export const AddProductModal = ({ isOpen, onClose }) => {
             <button
               type="submit"
               className="btn btn-primary-orange"
-              style={{ fontWeight: 800 }}
+              style={{ fontWeight: 800, opacity: isUploading ? 0.7 : 1 }}
+              disabled={isUploading}
             >
-              <Save size={18} /> Save & Publish Product to Store
+              <Save size={18} /> {isUploading ? 'Uploading Image...' : 'Save & Publish Product to Store'}
             </button>
           </div>
         </form>

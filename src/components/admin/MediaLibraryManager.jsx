@@ -28,7 +28,62 @@ export const MediaLibraryManager = () => {
     setIsLoading(true);
     try {
       const data = await fetchMediaAssetsFromSupabase();
-      setMediaAssets(data || []);
+      const portfolio = data?.portfolio || [];
+      const sew_outs = data?.sew_outs || [];
+      
+      const mediaRes = await fetch('/api/admin/cms/media');
+      const mediaData = await mediaRes.json();
+      const dbMediaAssets = mediaData.assets || [];
+
+      const formattedAssets = [];
+
+      portfolio.forEach(item => {
+        if (item.original_image || item.beforeImg || item.before_img) {
+          formattedAssets.push({
+            id: `portfolio_before_${item.id}`,
+            name: item.title || 'Portfolio Item',
+            category: 'Portfolio Before',
+            url: item.original_image || item.beforeImg || item.before_img,
+            type: 'image',
+            size: 'Web Format'
+          });
+        }
+        if (item.digitized_image || item.afterImg || item.after_img) {
+          formattedAssets.push({
+            id: `portfolio_after_${item.id}`,
+            name: item.title || 'Portfolio Item',
+            category: 'Portfolio After',
+            url: item.digitized_image || item.afterImg || item.after_img,
+            type: 'image',
+            size: 'Web Format'
+          });
+        }
+      });
+
+      sew_outs.forEach(item => {
+        if (item.before_img || item.beforeImg) {
+          formattedAssets.push({
+            id: `sewout_before_${item.id}`,
+            name: item.title || 'Sew Out',
+            category: 'Portfolio Before',
+            url: item.before_img || item.beforeImg,
+            type: 'image',
+            size: 'Web Format'
+          });
+        }
+        if (item.after_img || item.afterImg) {
+          formattedAssets.push({
+            id: `sewout_after_${item.id}`,
+            name: item.title || 'Sew Out',
+            category: 'Portfolio After',
+            url: item.after_img || item.afterImg,
+            type: 'image',
+            size: 'Web Format'
+          });
+        }
+      });
+
+      setMediaAssets([...dbMediaAssets, ...formattedAssets]);
     } catch (err) {
       console.warn('Failed to load media assets from Supabase:', err);
       showToast('Could not load live media assets', 'error');
@@ -55,15 +110,35 @@ export const MediaLibraryManager = () => {
         
         if (uploaded && uploaded.url) {
           uploadedCount++;
-          setMediaAssets(prev => [{
-            id: `media_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+          const newAsset = {
             name: file.name,
-            category: 'Uploaded Asset',
             url: uploaded.url,
+            public_id: uploaded.public_id,
+            category: 'Uploaded Asset',
             type: file.type.startsWith('image/') ? 'image' : 'file',
-            size: uploaded.size || `${(file.size / 1024).toFixed(1)} KB`,
+            size: uploaded.size || `${(file.size / 1024).toFixed(1)} KB`
+          };
+
+          const tempId = `media_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+          setMediaAssets(prev => [{
+            id: tempId,
+            ...newAsset,
             createdAt: new Date().toISOString()
           }, ...prev]);
+
+          try {
+            const postRes = await fetch('/api/admin/cms/media', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(newAsset)
+            });
+            const postData = await postRes.json();
+            if (postData.success && postData.asset) {
+              setMediaAssets(prev => prev.map(a => a.id === tempId ? postData.asset : a));
+            }
+          } catch (postErr) {
+            console.error('Failed to post media asset to db:', postErr);
+          }
         }
       } catch (err) {
         console.error('Error uploading file to storage:', err);
@@ -87,8 +162,17 @@ export const MediaLibraryManager = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleDeleteAsset = (idToDelete) => {
+  const handleDeleteAsset = async (idToDelete) => {
     if (!window.confirm('Remove this image asset from gallery view?')) return;
+    
+    if (typeof idToDelete === 'number' || (!isNaN(idToDelete) && !String(idToDelete).includes('_'))) {
+      try {
+        await fetch(`/api/admin/cms/media?id=${idToDelete}`, { method: 'DELETE' });
+      } catch (err) {
+        console.error('Failed to delete asset from db:', err);
+      }
+    }
+    
     setMediaAssets(prev => prev.filter(item => item.id !== idToDelete));
     showToast('Image asset removed from view', 'info');
   };

@@ -945,10 +945,16 @@ export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-u
 
     // 2. Get upload signature from our fast Next.js backend
     const sigRes = await fetch(`/api/cloudinary/signature?folder=${encodeURIComponent(folderPath)}`);
-    if (!sigRes.ok) throw new Error('Failed to fetch signature');
+    if (!sigRes.ok) {
+      console.error('[Cloudinary Signature Error] Failed to fetch signature. Ensure NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME, NEXT_PUBLIC_CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET are set correctly.');
+      throw new Error('Failed to fetch signature');
+    }
     const sigData = await sigRes.json();
     
-    if (!sigData.success) throw new Error(sigData.error || 'Failed to sign upload');
+    if (!sigData.success) {
+      console.error('[Cloudinary Signature Error] Signature API returned failure:', sigData.error);
+      throw new Error(sigData.error || 'Failed to sign upload');
+    }
 
     // 3. Prepare FormData for direct Cloudinary upload
     const formData = new FormData();
@@ -999,7 +1005,8 @@ export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-u
       size: `${(fileObj.size / (1024 * 1024)).toFixed(2)} MB`
     };
   } catch (err) {
-    console.error('Cloudinary Direct Upload Error:', err);
+    console.error(`[Cloudinary Direct Upload Error] The upload process for "${fileObj.name}" failed. Details:`, err.message || err);
+    console.error('Please verify your internet connection, Cloudinary environment variables, and ensure the Cloudinary service is accessible.');
     window.dispatchEvent(new CustomEvent('upload:end', { detail: { fileName: fileObj.name, success: false } }));
     return null;
   }
