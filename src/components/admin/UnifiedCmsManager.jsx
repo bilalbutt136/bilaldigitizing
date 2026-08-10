@@ -19,9 +19,7 @@ import {
 import { supabase } from '../../lib/supabase/client';
 import { 
   upsertHeroContent, 
-  upsertPricingTiers, 
   upsertPortfolioItems,
-  upsertPatchCards,
   upsertSewOuts,
   upsertDigitizers,
   upsertFaqs,
@@ -33,8 +31,6 @@ import {
 export const UnifiedCmsManager = () => {
   const { 
     heroSlides = [], 
-    pricingCards = [], 
-    patchCards = [], 
     portfolioSamples = [],
     sewOuts = [],
     digitizers = [],
@@ -49,8 +45,6 @@ export const UnifiedCmsManager = () => {
   // Local Drafts
   const [draftHeroGlobal, setDraftHeroGlobal] = useState(heroGlobalSettings || { title: 'Premium Embroidery, Vector Art & Patches', rotatingTexts: 'Commercial Embroidery, Scalable Vector Art, Custom Physical Patches' });
   const [draftHero, setDraftHero] = useState([...(heroSlides.length ? heroSlides : [])]);
-  const [draftPricing, setDraftPricing] = useState([...(pricingCards.length ? pricingCards : [])]);
-  const [draftPatches, setDraftPatches] = useState([...(patchCards.length ? patchCards : [])]);
   const [draftPortfolio, setDraftPortfolio] = useState([...(portfolioSamples.length ? portfolioSamples : [])]);
   const [draftSewOuts, setDraftSewOuts] = useState([...(sewOuts?.length ? sewOuts : [])]);
   const [draftDigitizers, setDraftDigitizers] = useState([...(digitizers?.length ? digitizers : [])]);
@@ -132,11 +126,6 @@ export const UnifiedCmsManager = () => {
         const res2 = await upsertHeroContent(processedHero);
         if (!res1 || !res2) throw new Error("Failed to save hero content");
       }
-      else if (activeTab === 'pricing') {
-        const resP = await upsertPricingTiers(draftPricing);
-        const resPatch = await upsertPatchCards(draftPatches);
-        if (!resP || !resPatch) throw new Error("Failed to save pricing");
-      }
       else if (activeTab === 'portfolio') {
         const processedPortfolio = await Promise.all(draftPortfolio.map(async (item) => {
           let newItem = { ...item };
@@ -217,7 +206,6 @@ export const UnifiedCmsManager = () => {
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
         {[
           { id: 'hero', label: 'Homepage Hero', icon: Globe },
-          { id: 'pricing', label: 'Packages & Pricing', icon: DollarSign },
           { id: 'portfolio', label: 'Portfolio Showcase', icon: ImageIcon },
           { id: 'sewouts', label: 'Sew-Outs Gallery', icon: ImageIcon },
           { id: 'team', label: 'Team & Digitizers', icon: Users },
@@ -364,80 +352,6 @@ export const UnifiedCmsManager = () => {
           </button>
         </div>
       )}
-
-      {/* Pricing Tab */}
-      {activeTab === 'pricing' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
-          
-          {/* Digitizing & Vector */}
-          <div className="card" style={{ padding: '2rem' }}>
-            <h3 style={{ fontSize: '1.4rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Layers size={22} color="var(--orange-500)" /> Digitizing & Vector Packages
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              {draftPricing.map((card) => (
-                <div key={card.id} style={{ background: 'var(--bg-main)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                    <h4 style={{ margin: 0, color: 'var(--navy-800)' }}>{card.title || 'Untitled Tier'}</h4>
-                    <button onClick={() => setDraftPricing(draftPricing.filter(c => c.id !== card.id))} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={16} /></button>
-                  </div>
-                  <div className="form-group">
-                    <label>Tier Title</label>
-                    <input className="form-control" placeholder="e.g. Standard Digitizing" value={card.title || ''} onChange={e => handlePricingChange(card.id, 'title', e.target.value)} />
-                  </div>
-                  <div className="form-group">
-                    <label>Display Rate</label>
-                    <input className="form-control" placeholder="e.g. $10.00" value={card.rate || ''} onChange={e => handlePricingChange(card.id, 'rate', e.target.value)} />
-                  </div>
-                  <div className="form-group">
-                    <label>Features Bullet List (comma separated)</label>
-                    <textarea className="form-control" rows="3" placeholder="100% Manual, Free Revisions..." value={(card.features || []).join(', ')} onChange={e => handlePricingChange(card.id, 'features', e.target.value.split(',').map(s=>s.trim()))} />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button 
-              onClick={() => setDraftPricing([...draftPricing, { id: 'price-' + Date.now(), title: 'New Tier', rate: '$0', features: [] }])}
-              className="btn btn-outline" style={{ marginTop: '1.5rem', width: '100%' }}
-            >
-              <Plus size={16} /> Add Digitizing/Vector Tier
-            </button>
-          </div>
-
-          {/* Patches */}
-          <div className="card" style={{ padding: '2rem' }}>
-            <h3 style={{ fontSize: '1.4rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <LayoutGrid size={22} color="var(--orange-500)" /> Custom Patch Packages
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              {draftPatches.map((card) => (
-                <div key={card.id} style={{ background: 'var(--bg-main)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                    <h4 style={{ margin: 0, color: 'var(--navy-800)' }}>{card.title || 'Untitled Patch Tier'}</h4>
-                    <button onClick={() => setDraftPatches(draftPatches.filter(c => c.id !== card.id))} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={16} /></button>
-                  </div>
-                  <div className="form-group">
-                    <label>Patch Style Title</label>
-                    <input className="form-control" placeholder="e.g. 3D PVC Patches" value={card.title || ''} onChange={e => handlePatchChange(card.id, 'title', e.target.value)} />
-                  </div>
-                  <div className="form-group">
-                    <label>Base Rate</label>
-                    <input className="form-control" placeholder="e.g. $1.50" value={card.rate || ''} onChange={e => handlePatchChange(card.id, 'rate', e.target.value)} />
-                  </div>
-                  <div className="form-group">
-                    <label>Features Bullet List (comma separated)</label>
-                    <textarea className="form-control" rows="3" placeholder="Waterproof, Iron-on backing..." value={(card.features || []).join(', ')} onChange={e => handlePatchChange(card.id, 'features', e.target.value.split(',').map(s=>s.trim()))} />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button 
-              onClick={() => setDraftPatches([...draftPatches, { id: 'patch-' + Date.now(), title: 'New Patch', rate: '$0', features: [] }])}
-              className="btn btn-outline" style={{ marginTop: '1.5rem', width: '100%' }}
-            >
-              <Plus size={16} /> Add Patch Tier
-            </button>
-          </div>
 
         </div>
       )}
