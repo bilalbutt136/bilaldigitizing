@@ -451,9 +451,25 @@ export const UnifiedCmsManager = () => {
                   <label>Title</label>
                   <input className="form-control" value={item.title || ''} onChange={e => handleSewOutChange(item.id, 'title', e.target.value)} />
                 </div>
-                <div className="form-group">
-                  <label>After Image URL (Base64 or Link)</label>
-                  <input className="form-control" value={item.afterImg || ''} onChange={e => handleSewOutChange(item.id, 'after_img', e.target.value)} />
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.8rem' }}>Before Image (Original)</label>
+                    <label className="btn btn-outline btn-sm" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'center' }}>
+                      <UploadCloud size={14} /> Upload Before
+                      <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, (url) => handleSewOutChange(item.id, 'before_img', url))} style={{ display: 'none' }} />
+                    </label>
+                    {item.beforeImg && <img src={item.beforeImg} alt="Before" style={{ marginTop: '0.75rem', width: '100%', height: '120px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }} />}
+                  </div>
+                  
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.8rem' }}>After Image (Digitized)</label>
+                    <label className="btn btn-outline btn-sm" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'center' }}>
+                      <UploadCloud size={14} /> Upload After
+                      <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, (url) => handleSewOutChange(item.id, 'after_img', url))} style={{ display: 'none' }} />
+                    </label>
+                    {item.afterImg && <img src={item.afterImg} alt="After" style={{ marginTop: '0.75rem', width: '100%', height: '120px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }} />}
+                  </div>
                 </div>
               </div>
             ))}
