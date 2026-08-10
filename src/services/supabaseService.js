@@ -796,7 +796,28 @@ export async function upsertCatalogDataToSupabase(tableName, dataArray) {
   }
 }
 
-export const upsertHeroContent = (data) => upsertCatalogDataToSupabase('hero_slides', data);
+export const upsertHeroContent = (data) => {
+  const dbPayload = data.map(h => ({
+    id: h.id,
+    service_key: h.serviceKey || h.service_key,
+    badge: h.badge,
+    title: h.title,
+    highlight: h.highlight,
+    description: h.description,
+    rate_label: h.rateLabel || h.rate_label,
+    primary_cta: h.primaryCta || h.primary_cta,
+    secondary_cta: h.secondaryCta || h.secondary_cta,
+    banner_image: h.bannerImage || h.banner_image,
+    trust_points: h.trustPoints || h.trust_points,
+    label: h.label,
+    preview_title: h.previewTitle || h.preview_title,
+    preview_before: h.previewBefore || h.preview_before,
+    preview_after: h.previewAfter || h.preview_after,
+    preview_tag: h.previewTag || h.preview_tag,
+    preview_tag_after: h.previewTagAfter || h.preview_tag_after
+  }));
+  return upsertCatalogDataToSupabase('hero_slides', dbPayload);
+};
 export const upsertPricingTiers = (data) => upsertCatalogDataToSupabase('pricing_cards', data);
 export const upsertPortfolioItems = (data) => {
   const dbPayload = data.map(item => ({

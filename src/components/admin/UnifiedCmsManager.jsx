@@ -107,8 +107,29 @@ export const UnifiedCmsManager = () => {
     showToast('Saving CMS configurations...', 'info');
     try {
       if (activeTab === 'hero') {
+        const processedHero = await Promise.all(draftHero.map(async (slide) => {
+          let newSlide = { ...slide };
+          if (newSlide.previewBefore && newSlide.previewBefore.startsWith('data:image')) {
+            const uploadedUrl = await uploadFileToCloudinary(newSlide.previewBefore, 'client-uploads', 'hero');
+            if (uploadedUrl) newSlide.previewBefore = uploadedUrl;
+          }
+          if (newSlide.preview_before && newSlide.preview_before.startsWith('data:image')) {
+            const uploadedUrl = await uploadFileToCloudinary(newSlide.preview_before, 'client-uploads', 'hero');
+            if (uploadedUrl) newSlide.preview_before = uploadedUrl;
+          }
+          if (newSlide.previewAfter && newSlide.previewAfter.startsWith('data:image')) {
+            const uploadedUrl = await uploadFileToCloudinary(newSlide.previewAfter, 'client-uploads', 'hero');
+            if (uploadedUrl) newSlide.previewAfter = uploadedUrl;
+          }
+          if (newSlide.preview_after && newSlide.preview_after.startsWith('data:image')) {
+            const uploadedUrl = await uploadFileToCloudinary(newSlide.preview_after, 'client-uploads', 'hero');
+            if (uploadedUrl) newSlide.preview_after = uploadedUrl;
+          }
+          return newSlide;
+        }));
+        
         const res1 = await saveCmsConfigToSupabase('hero_global_settings', draftHeroGlobal);
-        const res2 = await upsertHeroContent(draftHero);
+        const res2 = await upsertHeroContent(processedHero);
         if (!res1 || !res2) throw new Error("Failed to save hero content");
       }
       else if (activeTab === 'pricing') {
@@ -299,19 +320,36 @@ export const UnifiedCmsManager = () => {
                 </div>
 
                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label>Hero Preview Image (Right side visual)</label>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem', background: 'var(--navy-50)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-color)' }}>
-                    <div style={{ flex: 1 }}>
+                  <label>Hero Preview Images (Before & After Slider)</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', background: 'var(--navy-50)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-color)' }}>
+                    
+                    {/* Before Image */}
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 600 }}>Before Image (Original)</label>
                       <label className="btn btn-outline" style={{ width: '100%', cursor: 'pointer', display: 'flex', justifyContent: 'center' }}>
-                        <UploadCloud size={18} /> Upload New Background
+                        <UploadCloud size={18} /> Upload Before
+                        <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, (url) => handleHeroChange(slide.id, 'preview_before', url))} style={{ display: 'none' }} />
+                      </label>
+                      {(slide.preview_before || slide.previewBefore) && (
+                        <div style={{ marginTop: '1rem' }}>
+                          <img src={slide.preview_before || slide.previewBefore} alt="preview before" style={{ width: '100%', maxHeight: '150px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-sm)' }} />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* After Image */}
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 600 }}>After Image (Result)</label>
+                      <label className="btn btn-outline" style={{ width: '100%', cursor: 'pointer', display: 'flex', justifyContent: 'center' }}>
+                        <UploadCloud size={18} /> Upload After
                         <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, (url) => handleHeroChange(slide.id, 'preview_after', url))} style={{ display: 'none' }} />
                       </label>
+                      {(slide.preview_after || slide.previewAfter) && (
+                        <div style={{ marginTop: '1rem' }}>
+                          <img src={slide.preview_after || slide.previewAfter} alt="preview after" style={{ width: '100%', maxHeight: '150px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-sm)' }} />
+                        </div>
+                      )}
                     </div>
-                    {slide.preview_after && (
-                      <div style={{ flex: 1 }}>
-                        <img src={slide.preview_after} alt="preview" style={{ width: '100%', maxHeight: '150px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-sm)' }} />
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>

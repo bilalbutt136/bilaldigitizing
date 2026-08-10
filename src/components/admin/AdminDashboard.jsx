@@ -6,9 +6,11 @@ import { OrderManagementTable } from './OrderManagementTable';
 import { ClientDirectory } from './ClientDirectory';
 import { UnifiedCmsManager } from './UnifiedCmsManager';
 import { BoltPayoutsAdmin } from './BoltPayoutsAdmin';
-import { ServiceManagementEditor } from './ServiceManagementEditor';
+import { StudioServicesManager } from './StudioServicesManager';
+import { SystemSettingsManager } from './SystemSettingsManager';
+import { StoreManagementEditor } from './StoreManagementEditor';
+import { MediaLibraryManager } from './MediaLibraryManager';
 import { AdminChatInbox } from './AdminChatInbox';
-import { AdminMetaPixel } from './AdminMetaPixel';
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -24,10 +26,7 @@ import {
   RefreshCw,
   Menu,
   X,
-  ShieldCheck,
-  DollarSign,
-  UserPlus,
-  Activity
+  DollarSign
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -41,9 +40,6 @@ export const AdminDashboard = () => {
     protectedNavigate,
     logout,
     siteSettings = {},
-    updateSiteSettings,
-    adminUsers = [],
-    addAdminUser,
     activeAdminTab = 'dashboard',
     setActiveAdminTab,
     showToast
@@ -63,21 +59,6 @@ export const AdminDashboard = () => {
     if (setActiveAdminTab) setActiveAdminTab(tab);
   };
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-
-  // New Admin Modal & Form State
-  const [showAddAdminModal, setShowAddAdminModal] = useState(false);
-  const [newAdminName, setNewAdminName] = useState('');
-  const [newAdminEmail, setNewAdminEmail] = useState('');
-
-  // Settings State Form
-  const [metaPixelId, setMetaPixelId] = useState(siteSettings.metaPixelId || '');
-  const [adminEmail, setAdminEmail] = useState(authUser?.email || '');
-
-  React.useEffect(() => {
-    if (siteSettings?.adminEmail) {
-      setAdminEmail(siteSettings.adminEmail);
-    }
-  }, [siteSettings?.adminEmail]);
 
   const [mounted, setMounted] = React.useState(false);
 
@@ -149,32 +130,29 @@ export const AdminDashboard = () => {
       title: 'CORE OPERATIONS',
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'orders', label: 'Orders', icon: ClipboardList, badge: safeOrders.length },
-        { id: 'services', label: 'Services (CMS)', icon: Sliders },
-        { id: 'pricing_tiers', label: 'Pricing Tiers', icon: DollarSign, onClick: () => window.location.href = '/admin/pricing' },
-        { id: 'clients', label: 'Accounts & Wallets', icon: Users, badge: safeClients.length }
+        { id: 'clients', label: 'Accounts & Wallets', icon: Users, badge: safeClients.length },
+        { id: 'boltpayouts', label: 'Payment Hub', icon: DollarSign, tag: 'Gateway' },
+        { id: 'chat', label: 'Live Chat', icon: MessageSquare, badge: 2 }
       ]
     },
     {
-      title: 'CONTENT & SUPPORT',
+      title: 'SERVICES & STORE',
       items: [
-        { id: 'chat', label: 'Live Chat', icon: MessageSquare, badge: 2 },
+        { id: 'services', label: 'Service Rates', icon: Sliders },
+        { id: 'store', label: 'Merchandise Store', icon: Layers }
+      ]
+    },
+    {
+      title: 'STUDIO CONTENT',
+      items: [
         { id: 'cms', label: 'CMS Engine', icon: Image, tag: 'CMS' },
-        { id: 'portfolio', label: 'Portfolio Upload', icon: Image, onClick: () => window.location.href = '/admin-portal/portfolio' },
-        { id: 'boltpayouts', label: 'Payment Hub', icon: DollarSign, tag: 'Gateway' }
-      ]
-    },
-    {
-      title: 'MARKETING & TRACKING',
-      items: [
-        { id: 'metapixel', label: 'Meta Pixel', icon: Activity, tag: 'Ads' }
+        { id: 'media', label: 'Media Gallery', icon: Image }
       ]
     },
     {
       title: 'SYSTEM',
       items: [
-        { id: 'settings', label: 'Settings', icon: Settings },
-        { id: 'admintam', label: 'Manage Admins', icon: ShieldCheck, tag: 'Master' },
+        { id: 'settings', label: 'System Settings', icon: Settings },
         { id: 'signout', label: 'Sign Out', icon: LogOut, danger: true }
       ]
     }
@@ -225,13 +203,14 @@ export const AdminDashboard = () => {
             </span>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0, lineHeight: 1.1 }}>
               {activeTab === 'dashboard' && 'Admin Operations'}
-              {activeTab === 'orders' && 'Order Pipeline'}
               {activeTab === 'services' && 'Service Rates'}
+              {activeTab === 'store' && 'Merchandise Store'}
               {activeTab === 'clients' && 'Client Directory'}
               {activeTab === 'chat' && 'Inbox & Support'}
+              {activeTab === 'cms' && 'CMS Engine'}
+              {activeTab === 'media' && 'Media Gallery'}
               {activeTab === 'settings' && 'Studio Settings'}
               {activeTab === 'boltpayouts' && 'BoltPayouts Gateway'}
-              {activeTab === 'metapixel' && 'Meta Pixel Setup'}
             </h3>
           </div>
         </div>
@@ -292,8 +271,14 @@ export const AdminDashboard = () => {
                             key={item.id}
                             type="button"
                             onClick={() => {
-                              setActiveTab(item.id);
-                              setIsMobileSidebarOpen(false);
+                              if (item.onClick) {
+                                item.onClick();
+                              } else if (item.id === 'signout') {
+                                handleSignOut();
+                              } else {
+                                setActiveTab(item.id);
+                                setIsMobileSidebarOpen(false);
+                              }
                             }}
                             style={{
                               display: 'flex',
@@ -600,217 +585,14 @@ export const AdminDashboard = () => {
           </div>
         )}
 
-        {activeTab === 'orders' && <OrderManagementTable />}
-        {activeTab === 'services' && <ServiceManagementEditor />}
+        {activeTab === 'services' && <StudioServicesManager />}
+        {activeTab === 'store' && <StoreManagementEditor />}
         {activeTab === 'clients' && <ClientDirectory />}
         {activeTab === 'chat' && <AdminChatInbox />}
         {activeTab === 'cms' && <UnifiedCmsManager />}
+        {activeTab === 'media' && <MediaLibraryManager />}
+        {activeTab === 'settings' && <SystemSettingsManager />}
         {activeTab === 'boltpayouts' && <BoltPayoutsAdmin />}
-        {activeTab === 'metapixel' && <AdminMetaPixel />}
-
-        {(activeTab === 'settings' || activeTab === 'admintam') && (
-          <div className="card" style={{ padding: '2rem', maxWidth: '760px', background: '#ffffff', borderRadius: '16px' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--navy-900)' }}>
-              🛡️ Admin Team & Security Operations
-            </h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-              Manage master administrator settings, add new administrators, and configure system security.
-            </p>
-            
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              updateSiteSettings({ metaPixelId, adminEmail });
-              showToast('Security settings saved successfully!', 'success');
-            }} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2rem' }}>
-              <div className="form-group">
-                <label style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.4rem', display: 'block' }}>
-                  Master Admin Email Address
-                </label>
-                <input 
-                  type="email" 
-                  className="form-control" 
-                  value={adminEmail}
-                  onChange={(e) => setAdminEmail(e.target.value)}
-                  placeholder="admin@example.com"
-                  required
-                />
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.3rem', display: 'block' }}>
-                  Contact / support email displayed across the studio.
-                </span>
-              </div>
-
-              <div className="form-group">
-                <label style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.4rem', display: 'block' }}>
-                  Meta Pixel ID (Facebook Ads Tracking)
-                </label>
-                <input 
-                  type="text" 
-                  className="form-control" 
-                  value={metaPixelId}
-                  onChange={(e) => setMetaPixelId(e.target.value)}
-                  placeholder="e.g. 123456789098765"
-                />
-              </div>
-
-              <button type="submit" className="btn btn-primary-orange" style={{ alignSelf: 'flex-start' }}>
-                <Settings size={16} /> Save Security Configuration
-              </button>
-            </form>
-
-            {/* DEDICATED ADMIN TEAM MANAGEMENT MODULE */}
-            <div style={{ paddingTop: '1.75rem', borderTop: '1.5px solid var(--border-color)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                <div>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
-                    👥 Authorized Administrator Team
-                  </h4>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, marginTop: '0.2rem' }}>
-                    Registered admins who can sign in and manage studio operations.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-primary-orange btn-sm"
-                  onClick={() => setShowAddAdminModal(true)}
-                  style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                >
-                  <UserPlus size={15} /> Add New Admin
-                </button>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {/* Master Admin Card */}
-                <div style={{ padding: '0.9rem 1.15rem', background: '#f8fafc', borderRadius: '12px', border: '1.5px solid #ff7a00', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span>{authUser?.name || 'Studio Administrator'}</span>
-                      <span style={{ background: '#ff7a00', color: '#fff', fontSize: '0.65rem', padding: '0.15rem 0.5rem', borderRadius: '10px', fontWeight: 900 }}>MASTER ADMIN</span>
-                    </div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>{authUser?.email || configuredAdminEmail}</div>
-                  </div>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#10b981', background: '#ecfdf5', padding: '0.25rem 0.65rem', borderRadius: '8px' }}>
-                    Active
-                  </span>
-                </div>
-
-                {/* Additional Registered Admins */}
-                {(adminUsers || []).filter(a => (a.email || '').toLowerCase().trim() !== (authUser?.email || '').toLowerCase().trim()).map((ad) => (
-                  <div key={ad.email || ad.id} style={{ padding: '0.9rem 1.15rem', background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span>{ad.name}</span>
-                        <span style={{ background: '#3b82f6', color: '#fff', fontSize: '0.65rem', padding: '0.15rem 0.5rem', borderRadius: '10px', fontWeight: 900 }}>ADMIN</span>
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>{ad.email}</div>
-                    </div>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#10b981', background: '#ecfdf5', padding: '0.25rem 0.65rem', borderRadius: '8px' }}>
-                      Active
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ADD NEW ADMIN MODAL DIALOG */}
-        {showAddAdminModal && (
-          <div 
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(15, 23, 42, 0.65)',
-              backdropFilter: 'blur(6px)',
-              zIndex: 30000,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '1.25rem'
-            }}
-            onClick={() => setShowAddAdminModal(false)}
-          >
-            <div 
-              style={{
-                maxWidth: '440px',
-                width: '100%',
-                background: '#ffffff',
-                borderRadius: '20px',
-                padding: '1.75rem',
-                boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
-                position: 'relative'
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <ShieldCheck size={22} style={{ color: '#ff7a00' }} />
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
-                    Add New Administrator
-                  </h3>
-                </div>
-                <button 
-                  type="button" 
-                  onClick={() => setShowAddAdminModal(false)} 
-                  style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              <form onSubmit={async (e) => {
-                e.preventDefault();
-                const res = await addAdminUser(newAdminName, newAdminEmail);
-                if (res && res.success) {
-                  setNewAdminName('');
-                  setNewAdminEmail('');
-                  setShowAddAdminModal(false);
-                }
-              }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.25rem', display: 'block' }}>
-                    Admin Full Name *
-                  </label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="e.g. Alex Rivera" 
-                    value={newAdminName} 
-                    onChange={(e) => setNewAdminName(e.target.value)} 
-                    required 
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.25rem', display: 'block' }}>
-                    Admin Email Address *
-                  </label>
-                  <input 
-                    type="email" 
-                    className="form-control" 
-                    placeholder="alex@bdigitizing.pro" 
-                    value={newAdminEmail} 
-                    onChange={(e) => setNewAdminEmail(e.target.value)} 
-                    required 
-                  />
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.3rem', display: 'block' }}>
-                    This email is whitelisted for admin access. The person signs in with their own Supabase account credentials.
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
-                  <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={() => setShowAddAdminModal(false)}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary-orange" style={{ flex: 1, fontWeight: 800 }}>
-                    Create Admin
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Pricing Settings Modal */}
 
       </main>
 
