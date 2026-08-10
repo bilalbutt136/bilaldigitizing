@@ -146,7 +146,7 @@ import {
             <div style={{ position: 'relative' }}>
               <div style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
                 <img 
-                  src="https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80" 
+                  src={embHero.previewAfter || embHero.preview_after || "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80"} 
                   alt="Embroidery Digitizing Sewout" 
                   style={{ width: '100%', height: '320px', objectFit: 'cover', display: 'block' }}
                 />
@@ -195,7 +195,7 @@ import {
             <div style={{ position: 'relative' }}>
               <div style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
                 <img 
-                  src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" 
+                  src={patHero.previewAfter || patHero.preview_after || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"} 
                   alt="Custom Patches & Emblems Showcase" 
                   style={{ width: '100%', height: '320px', objectFit: 'cover', display: 'block' }}
                 />
@@ -370,7 +370,7 @@ import {
             <div style={{ position: 'relative' }}>
               <div style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
                 <img 
-                  src="https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80" 
+                  src={vecHero.previewAfter || vecHero.preview_after || "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80"} 
                   alt="Vector Artwork Conversion Showcase" 
                   style={{ width: '100%', height: '320px', objectFit: 'cover', display: 'block' }}
                 />
