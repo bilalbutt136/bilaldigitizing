@@ -3,54 +3,22 @@
 import React, { useState } from 'react';
 import { Layers, PenTool, Tag, Check } from 'lucide-react';
 import { useNavigate } from '../../utils/navigation';
+import { useAppState } from '../../context/StateContext';
 
 export const ServicesOverview = () => {
   const navigate = useNavigate();
 
-  const services = [
-    {
-      id: 'embroidery',
-      title: 'Embroidery Digitizing',
-      description: 'Convert logos into flawless, production-ready machine embroidery files with precision stitching.',
-      icon: <Layers size={24} color="var(--orange-500)" />,
-      features: [
-        '100% Manual Digitizing',
-        'All Machine Formats (DST/PES/EMB/EXP)',
-        'Free Unlimited Revisions',
-        '4-12 Hour Turnaround'
-      ],
-      price: 'From $10.00',
-      link: '/services/embroidery-digitizing'
-    },
-    {
-      id: 'vector',
-      title: 'Vector Art Conversion',
-      description: 'Transform pixelated images into crisp, scalable vector graphics ready for premium printing.',
-      icon: <PenTool size={24} color="var(--orange-500)" />,
-      features: [
-        'Hand-Drawn Node Tracing',
-        'Pantone Color Separation',
-        'AI/EPS/SVG/PDF Formats',
-        'Print & Cut Ready'
-      ],
-      price: 'From $15.00',
-      link: '/services/vector-tracing'
-    },
-    {
-      id: 'patches',
-      title: 'Custom Patches',
-      description: 'Premium embroidered, woven, PVC & leather patches manufactured and shipped worldwide.',
-      icon: <Tag size={24} color="var(--orange-500)" />,
-      features: [
-        'Embroidered/Woven/PVC/Leather',
-        'Iron-On/Velcro/Sew-On Backing',
-        'Worldwide Shipping',
-        'Minimum 50 Pieces'
-      ],
-      price: 'From $1.50/patch',
-      link: '/custom-patches'
-    }
-  ];
+  const { servicesList = [] } = useAppState?.() || {};
+
+  const services = servicesList.map(s => ({
+    id: s.id,
+    title: s.title,
+    description: s.description,
+    icon: (s.title || '').toLowerCase().includes('vector') ? <PenTool size={24} color="var(--orange-500)" /> : (s.title || '').toLowerCase().includes('patch') ? <Tag size={24} color="var(--orange-500)" /> : <Layers size={24} color="var(--orange-500)" />,
+    features: s.features || [],
+    price: s.price || s.basePrice || '',
+    link: s.route || s.link || '/'
+  }));
 
   return (
     <section style={styles.section}>

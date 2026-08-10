@@ -1,71 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, MessageCircle } from 'lucide-react';
-
-const faqs = [
-  {
-    category: "Embroidery Digitizing",
-    questions: [
-      {
-        q: "What file formats do you provide for embroidery digitizing?",
-        a: "We provide all major machine formats including .DST, .PES, .EXP, .HUS, .JEF, .VIP, .VP3, and .XXX. If you need a specific format not listed here, just let us know in your order notes."
-      },
-      {
-        q: "What is the turnaround time for digitizing orders?",
-        a: "Our standard turnaround time is 12-24 hours. However, we also offer a Rush option for 2-4 hour delivery at an additional cost."
-      },
-      {
-        q: "Do you charge for revisions?",
-        a: "Minor revisions such as slight size adjustments (up to 10%), density changes, or sequence edits are completely free. Major revisions involving artwork changes or scaling up significantly may incur a small editing fee."
-      },
-      {
-        q: "How do I know my design will run well on my machine?",
-        a: "Every design goes through a strict Quality Assurance process where we digitally simulate the sew-out and, for complex designs, run physical test sew-outs to ensure zero thread breaks, correct density, and sharp details."
-      }
-    ]
-  },
-  {
-    category: "Vector Art Conversion",
-    questions: [
-      {
-        q: "What file formats will I receive for vector art?",
-        a: "You will receive print-ready, fully scalable vector files including .AI, .EPS, .SVG, .PDF, and high-resolution .PNG / .JPG for quick viewing."
-      },
-      {
-        q: "Can you convert low-resolution images or sketches into vectors?",
-        a: "Yes, our expert artists can manually trace low-resolution JPGs, PNGs, and even rough hand-drawn sketches into crisp, scalable vector artwork."
-      },
-      {
-        q: "Will the colors match my original artwork?",
-        a: "Absolutely. We match colors as closely as possible to your original image using Pantone matching systems. If you have specific color codes you need us to use, you can provide them during the order process."
-      }
-    ]
-  },
-  {
-    category: "Custom Patches",
-    questions: [
-      {
-        q: "What types of custom patches do you make?",
-        a: "We manufacture Embroidered, Woven, Leather, PVC (Rubber), Printed, and Chenille patches. We offer various backings including Iron-on, Velcro (Hook & Loop), Peel-and-Stick, and standard Sew-on."
-      },
-      {
-        q: "What is the Minimum Order Quantity (MOQ) for patches?",
-        a: "Our Minimum Order Quantity for custom patches is typically 50 pieces, though this may vary slightly depending on the patch material (e.g. PVC or Leather). Contact us for specific details based on your design."
-      },
-      {
-        q: "How long does it take to produce and ship custom patches?",
-        a: "Production usually takes 7-10 business days after the digital proof is approved. Shipping via DHL/FedEx takes an additional 3-5 business days depending on your location."
-      },
-      {
-        q: "Can I see a sample before full production?",
-        a: "Yes, we always provide a high-resolution digital photo of a physical sample (pre-production proof) for your approval before we proceed with the full bulk production run."
-      }
-    ]
-  }
-];
+import { useAppState } from '../../src/context/StateContext';
 
 export default function FAQsPage() {
+  const { faqs: dbFaqs = [] } = useAppState() || {};
+  const [faqs, setFaqs] = useState([]);
+
+  useEffect(() => {
+    const groupedFaqs = dbFaqs.reduce((acc, faq) => {
+      const cat = faq.category || 'General';
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push({ q: faq.question || faq.q, a: faq.answer || faq.a });
+      return acc;
+    }, {});
+    
+    setFaqs(Object.keys(groupedFaqs).map(cat => ({
+      category: cat,
+      questions: groupedFaqs[cat]
+    })));
+  }, [dbFaqs]);
+
   const [openIndex, setOpenIndex] = useState('0-0');
 
   const toggleAccordion = (index) => {

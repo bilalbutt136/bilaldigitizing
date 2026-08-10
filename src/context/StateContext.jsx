@@ -179,11 +179,7 @@ export const StateProvider = ({ children }) => {
   const resolveRole = async (email) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     if (!cleanEmail) return 'customer';
-    if (
-      cleanEmail === 'shahidbutt59191@gmail.com' ||
-      cleanEmail.startsWith('admin@') ||
-      adminUsers.some(a => (a.email || '').toLowerCase().trim() === cleanEmail)
-    ) {
+    if (adminUsers.some(a => (a.email || '').toLowerCase().trim() === cleanEmail)) {
       return 'admin';
     }
     

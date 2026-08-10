@@ -18,7 +18,7 @@ import {
 import { PackageCard } from './PackageCard';
 
 export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => {
-  const { openOrderWizard, setIsOrderWizardOpen, patchCards } = useAppState();
+  const { openOrderWizard, setIsOrderWizardOpen, patchCards, portfolioSamples } = useAppState();
 
   const [selectedTier, setSelectedTier] = useState('standard');
 
@@ -26,82 +26,7 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
-  const defaultPatchCards = [
-    {
-      id: 'pcard-patch-woven',
-      category: 'patches',
-      tierKey: 'basic',
-      title: 'Micro Woven Patches',
-      subTitle: 'Ideal for fine text, micro detail & high-density crisp logos',
-      icon: Zap,
-      discountTag: 'ESSENTIAL',
-      strikePrice: '$2.50',
-      rate: '$1.50',
-      unit: '/ patch',
-      delivery: '7–10 Business Days Turnaround',
-      btnText: 'Order Woven ($1.50)',
-      badge: 'ESSENTIAL',
-      popular: false,
-      features: [
-        'Min. Quantity: 50 Patches',
-        '7–10 Business Days Turnaround',
-        'Flat ultra-high resolution thread weaving',
-        'Iron-on, sew-on, or velcro backing',
-        'Free digital mockup & physical sample confirmation',
-        '100% Free Unlimited Revisions'
-      ]
-    },
-    {
-      id: 'pcard-patch-embroidered',
-      category: 'patches',
-      tierKey: 'standard',
-      title: 'Embroidered Patches',
-      subTitle: 'Classic 3D raised thread texture & merrowed overlock border',
-      icon: Trophy,
-      discountTag: 'MOST POPULAR',
-      strikePrice: '$3.80',
-      rate: '$2.50',
-      unit: '/ patch',
-      delivery: '7–10 Business Days Turnaround',
-      btnText: 'Order Embroidered ($2.50)',
-      badge: 'MOST POPULAR',
-      popular: true,
-      features: [
-        'Min. Quantity: 50 Patches',
-        '7–10 Business Days Turnaround',
-        'Classic merrowed border edge finishing',
-        'Heavy-duty velcro, heat-seal, or sew-on backing',
-        'Free digital mockup & physical sample photo',
-        '100% Free Unlimited Revisions'
-      ]
-    },
-    {
-      id: 'pcard-patch-pvc',
-      category: 'patches',
-      tierKey: 'premium',
-      title: '3D PVC & Leather Patches',
-      subTitle: 'Waterproof 3D molded rubber PVC or debossed genuine leather',
-      icon: Sparkles,
-      discountTag: 'LUXURY & PVC',
-      strikePrice: '$5.00',
-      rate: '$3.50',
-      unit: '/ patch',
-      delivery: '7–10 Business Days Turnaround',
-      btnText: 'Order PVC & Leather ($3.50)',
-      badge: 'LUXURY & PVC',
-      popular: false,
-      features: [
-        'Min. Quantity: 50 Patches',
-        '7–10 Business Days Turnaround',
-        'High-durability waterproof 3D molded PVC',
-        'Debossed & laser-engraved luxury leather',
-        'Tactical velcro hook & loop mounting',
-        '100% Free Unlimited Revisions'
-      ]
-    }
-  ];
-
-  const cardsToRender = patchCards && patchCards.length > 0 ? patchCards : defaultPatchCards;
+  const cardsToRender = patchCards && patchCards.length > 0 ? patchCards : [];
 
   const handleStartOrder = (tierKey = 'standard', cardObj = null) => {
     setSelectedTier(tierKey);
@@ -122,68 +47,20 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
     }
   };
 
-  const sampleShowcaseGrid = [
-    {
-      id: 'psamp-1',
-      title: 'Tactical Special Forces Crest',
-      category: '3D Rubber PVC',
-      badgeColor: '#38bdf8',
-      image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
-      specs: 'Molded Waterproof Rubber PVC • Tactical Velcro Backing',
-      rate: '$3.50/ea',
-      tierKey: 'premium'
-    },
-    {
-      id: 'psamp-2',
-      title: 'Apex Athletic Club Crest',
-      category: '100% Stitched Embroidered',
-      badgeColor: '#fb923c',
-      image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
-      specs: 'Rayon Thread Embroidery • Merrowed Overlock Edge',
-      rate: '$2.50/ea',
-      tierKey: 'standard'
-    },
-    {
-      id: 'psamp-3',
-      title: 'Heritage Denim Co. Insignia',
-      category: 'Debossed Leather',
-      badgeColor: '#a855f7',
-      image: 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=800&q=80',
-      specs: 'Debossed Tan Leather • Therma-Bond Heat-Seal',
-      rate: '$3.50/ea',
-      tierKey: 'premium'
-    },
-    {
-      id: 'psamp-4',
-      title: 'Cyber Security Shield',
-      category: 'Micro Woven Fine Detail',
-      badgeColor: '#34d399',
-      image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
-      specs: 'Micro-Fine Weave • Iron-On Adhesive Backing',
-      rate: '$1.50/ea',
-      tierKey: 'basic'
-    },
-    {
-      id: 'psamp-5',
-      title: 'Outdoor Explorer Badge',
-      category: '3D PVC Rubber',
-      badgeColor: '#38bdf8',
-      image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
-      specs: 'Waterproof All-Weather Rubber • Sew-On Channel',
-      rate: '$3.50/ea',
-      tierKey: 'premium'
-    },
-    {
-      id: 'psamp-6',
-      title: 'Motorcycle Club Wing Emblem',
-      category: 'Merrowed Embroidered',
-      badgeColor: '#fb923c',
-      image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
-      specs: 'Heavy Thread Density • Sew-On Heavy Felt',
-      rate: '$2.50/ea',
-      tierKey: 'standard'
-    }
-  ];
+  const sampleShowcaseGrid = portfolioSamples
+    ? portfolioSamples
+        .filter(s => (s.category || '').toLowerCase().includes('patch'))
+        .map((s, idx) => ({
+          id: s.id || `psamp-${idx}`,
+          title: s.title || 'Custom Patch',
+          category: s.categoryLabel || 'Custom Patch',
+          badgeColor: '#fb923c',
+          image: s.afterImg || s.originalImage || s.digitizedImage || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
+          specs: s.description || 'Custom patch specifications',
+          rate: '',
+          tierKey: 'standard'
+        }))
+    : [];
 
   const processSteps = [
     {

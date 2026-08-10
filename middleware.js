@@ -28,6 +28,17 @@ export async function middleware(request) {
     return NextResponse.redirect(url)
   }
 
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname.startsWith('/admin-portal');
+
+  if (user && isAdminRoute) {
+    const { data: adminData } = await supabase.from('admins').select('email').eq('email', user.email).single();
+    if (!adminData) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/client-portal'
+      return NextResponse.redirect(url)
+    }
+  }
+
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
   // creating a new response object with NextResponse.next() make sure to:
   // 1. Pass the request in it, like so:

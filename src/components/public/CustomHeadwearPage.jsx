@@ -20,44 +20,7 @@ export const CustomHeadwearPage = () => {
 
   const headwearProducts = (storeProducts || []).filter(p => p.category === 'caps' || p.category === 'headwear' || (p.title || '').toLowerCase().includes('cap') || (p.title || '').toLowerCase().includes('hat'));
 
-  const defaultCaps = [
-    {
-      id: 'store-cap-1',
-      category: 'caps',
-      title: '3D Puff Raised Snapback Cap',
-      price: '$14.50',
-      unit: 'per cap',
-      minQuantity: 5,
-      badge: '3D Raised Stitching',
-      image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80',
-      description: 'Classic 6-panel structured snapback hats customized with 3mm EVA foam raised 3D puff front embroidery.',
-      features: [
-        'Premium wool-blend 6-panel structured cap',
-        'High-density 3D EVA foam raised front stitching',
-        'Includes optional side/back custom text embroidery',
-        'Free digital proofing & sample review'
-      ]
-    },
-    {
-      id: 'store-cap-2',
-      category: 'caps',
-      title: 'Structured Mesh-Back Trucker Hat',
-      price: '$11.99',
-      unit: 'per hat',
-      minQuantity: 5,
-      badge: 'Popular',
-      image: 'https://images.unsplash.com/photo-1575428652377-a2d80e2277fc?auto=format&fit=crop&w=800&q=80',
-      description: 'Breathable mesh-back trucker caps with flat or curved visors & precision front emblem stitching.',
-      features: [
-        'Breathable polyester mesh side & back panels',
-        'Matching snapback closure',
-        'Custom center front embroidery or patch attachment',
-        'Fast 5-day turnaround'
-      ]
-    }
-  ];
-
-  const itemsToRender = headwearProducts.length > 0 ? headwearProducts : defaultCaps;
+  const itemsToRender = headwearProducts;
 
   return (
     <div style={{ background: 'var(--bg-main)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>

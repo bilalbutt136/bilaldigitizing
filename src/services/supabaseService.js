@@ -575,11 +575,9 @@ export async function upsertClientInSupabase(userData) {
     const primaryPayload = {
       user_id: userData.id,
       name: clientName,
-      full_name: clientName,
       email: cleanEmail,
       company: clientCompany,
-      company_name: clientCompany,
-      role: userData.role || 'customer'
+      country: userData.country || ''
     };
 
     if (existing) {
@@ -612,10 +610,9 @@ export async function upsertClientInSupabase(userData) {
           .from('clients')
           .insert([{
             user_id: userData.id,
-            full_name: clientName,
+            name: clientName,
             email: cleanEmail,
-            company_name: clientCompany,
-            role: userData.role || 'customer',
+            company: clientCompany,
             wallet_balance: 0,
             orders_count: userData.incrementOrder ? 1 : 0
           }]);
@@ -822,22 +819,18 @@ export async function upsertCatalogDataToSupabase(tableName, dataArray) {
 export const upsertHeroContent = (data) => {
   const dbPayload = data.map(h => ({
     id: h.id,
-    service_key: h.serviceKey || h.service_key,
+    title: h.title || 'Default Title',
+    subtitle: h.subtitle || h.description || h.highlight || 'Default Subtitle',
     badge: h.badge,
-    title: h.title,
-    highlight: h.highlight,
-    description: h.description,
-    rate_label: h.rateLabel || h.rate_label,
-    primary_cta: h.primaryCta || h.primary_cta,
-    secondary_cta: h.secondaryCta || h.secondary_cta,
-    banner_image: h.bannerImage || h.banner_image,
-    trust_points: h.trustPoints || h.trust_points,
-    label: h.label,
-    preview_title: h.previewTitle || h.preview_title,
-    preview_before: h.previewBefore || h.preview_before,
-    preview_after: h.previewAfter || h.preview_after,
-    preview_tag: h.previewTag || h.preview_tag,
-    preview_tag_after: h.previewTagAfter || h.preview_tag_after
+    rating: h.rating || h.rate_label || '5.0',
+    reviews: h.reviews || '0',
+    primary_btn_text: h.primary_btn_text || h.primary_cta || 'Order Now',
+    primary_btn_action: h.primary_btn_action || '/order',
+    secondary_btn_text: h.secondary_btn_text || h.secondary_cta || 'Learn More',
+    secondary_btn_action: h.secondary_btn_action || '/services',
+    image: h.image || h.bannerImage || h.banner_image || '',
+    sort_order: h.sort_order || 0,
+    is_active: h.is_active !== undefined ? h.is_active : true
   }));
   return upsertCatalogDataToSupabase('hero_slides', dbPayload);
 };
@@ -845,17 +838,17 @@ export const upsertPricingTiers = (data) => upsertCatalogDataToSupabase('pricing
 export const upsertPortfolioItems = (data) => {
   const dbPayload = data.map(item => ({
     id: item.id,
-    title: item.title,
-    category: item.category,
+    title: item.title || 'Untitled',
+    category: item.category || 'general',
+    image: item.image || item.digitizedImage || item.digitized_image || item.afterImg || item.after_img || '',
     stitch_count: item.stitchCount !== undefined ? item.stitchCount : item.stitch_count,
-    colors: item.colors,
-    original_image: item.originalImage || item.original_image,
-    digitized_image: item.digitizedImage || item.digitized_image,
-    before_img: item.beforeImg || item.before_img,
-    after_img: item.afterImg || item.after_img,
-    client_type: item.clientType || item.client_type,
-    formats: item.formats,
-    description: item.description,
+    dimensions: item.dimensions || '',
+    colors: item.colors || '',
+    turnaround: item.turnaround || '',
+    tags: item.tags || [],
+    featured: item.featured || false,
+    sort_order: item.sort_order || 0,
+    is_active: item.is_active !== undefined ? item.is_active : true
   }));
   return upsertCatalogDataToSupabase('portfolio', dbPayload);
 };
@@ -1090,13 +1083,14 @@ export async function fetchOrderMessagesFromSupabase(orderId) {
 
     return (data || []).map(m => ({
       id: m.id,
-      sender: m.sender_name || m.sender,
-      senderName: m.sender_name || m.sender,
-      senderRole: m.sender_role || (m.sender === 'Master Admin' ? 'admin' : 'client'),
-      text: m.message || m.text || '',
-      message: m.message || m.text || '',
-      attachment: m.attachment || null,
-      attachments: Array.isArray(m.attachments) ? m.attachments : (m.attachment ? [m.attachment] : []),
+      sender: m.sender_name || m.sender_email,
+      senderName: m.sender_name || m.sender_email,
+      senderEmail: m.sender_email,
+      senderRole: m.sender_role || 'client',
+      text: m.content || '',
+      message: m.content || '',
+      attachment: Array.isArray(m.attachments) && m.attachments.length > 0 ? m.attachments[0] : null,
+      attachments: Array.isArray(m.attachments) ? m.attachments : [],
       timestamp: m.created_at
     }));
   } catch (err) {
@@ -1110,19 +1104,15 @@ export async function addOrderMessageInSupabase(orderId, text, senderName, sende
 
   try {
     const resolvedSenderName = senderName || (senderRole === 'admin' ? 'Master Admin' : 'Client');
-    const mainAttachment = Array.isArray(attachments) && attachments.length > 0 
-      ? (typeof attachments[0] === 'string' ? attachments[0] : attachments[0]?.url || null) 
-      : null;
-
+    
     const { data, error } = await supabase
       .from('order_messages')
       .insert([{
         order_id: orderId,
-        sender: resolvedSenderName,
+        sender_email: senderRole === 'admin' ? 'admin@bdigitizing.pro' : 'client@example.com',
         sender_name: resolvedSenderName,
         sender_role: senderRole,
-        message: text || '',
-        attachment: mainAttachment,
+        content: text || '',
         attachments: Array.isArray(attachments) ? attachments : []
       }])
       .select()
@@ -1135,13 +1125,14 @@ export async function addOrderMessageInSupabase(orderId, text, senderName, sende
 
     return {
       id: data.id,
-      sender: data.sender_name || data.sender,
-      senderName: data.sender_name || data.sender,
+      sender: data.sender_name || data.sender_email,
+      senderName: data.sender_name || data.sender_email,
+      senderEmail: data.sender_email,
       senderRole: data.sender_role || senderRole,
-      text: data.message || '',
-      message: data.message || '',
-      attachment: data.attachment || null,
-      attachments: Array.isArray(data.attachments) ? data.attachments : (data.attachment ? [data.attachment] : []),
+      text: data.content || '',
+      message: data.content || '',
+      attachment: Array.isArray(data.attachments) && data.attachments.length > 0 ? data.attachments[0] : null,
+      attachments: Array.isArray(data.attachments) ? data.attachments : [],
       timestamp: data.created_at
     };
   } catch (err) {
@@ -1332,12 +1323,12 @@ export async function createConversation(conversation) {
   try {
     const dbConv = {
       id: conversation.id,
-      client_name: conversation.clientName || '',
       client_email: conversation.clientEmail || '',
-      company: conversation.company || '',
-      order_id: conversation.orderId || '',
-      status: conversation.status || 'active',
-      unread_count: conversation.unreadCount || 0
+      admin_email: conversation.adminEmail || '',
+      subject: conversation.subject || conversation.orderId ? `Order ${conversation.orderId}` : 'New Conversation',
+      status: conversation.status || 'open',
+      unread_client: conversation.unreadCount || 0,
+      unread_admin: 0
     };
     const { data, error } = await supabase.from('conversations').upsert([dbConv]).select();
     if (error) throw error;
@@ -1359,20 +1350,23 @@ export async function fetchConversations() {
     return (convs || []).map(c => {
       const cMsgs = (msgs || []).filter(m => m.conversation_id === c.id).map(m => ({
         id: m.id,
-        sender: m.sender,
-        senderName: m.sender_name,
-        text: m.text,
-        attachment: m.attachment,
-        timestamp: m.timestamp || m.created_at
+        sender: m.sender_email,
+        senderName: m.sender_email,
+        senderEmail: m.sender_email,
+        senderRole: m.sender_role,
+        text: m.content,
+        attachment: m.attachments && m.attachments.length > 0 ? m.attachments[0] : null,
+        timestamp: m.created_at
       }));
       return {
         id: c.id,
-        clientName: c.client_name,
+        clientName: c.client_email,
         clientEmail: c.client_email,
-        company: c.company,
-        orderId: c.order_id,
+        company: '',
+        orderId: '',
+        subject: c.subject,
         status: c.status,
-        unreadCount: c.unread_count,
+        unreadCount: c.unread_client || c.unread_admin || 0,
         messages: cMsgs
       };
     });
@@ -1388,11 +1382,11 @@ export async function addChatMessage(conversationId, message) {
     const { data, error } = await supabase.from('messages').insert([{
       id: message.id,
       conversation_id: conversationId,
-      sender: message.sender,
-      sender_name: message.senderName || '',
-      text: message.text || '',
-      attachment: message.attachment || '',
-      timestamp: message.timestamp || new Date().toISOString()
+      sender_email: message.senderEmail || message.sender || 'unknown@example.com',
+      sender_role: message.senderRole || 'client',
+      content: message.text || message.content || '',
+      attachments: message.attachment ? [message.attachment] : [],
+      created_at: message.timestamp || new Date().toISOString()
     }]).select();
     if (error) throw error;
     return data[0];

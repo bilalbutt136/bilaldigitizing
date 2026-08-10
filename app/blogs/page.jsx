@@ -1,102 +1,26 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronRight, Clock, User, Tag } from 'lucide-react';
-
-
-const blogPosts = [
-  {
-    id: 1,
-    title: 'The Art of Embroidery Digitizing: From Stitch to Perfection',
-    category: 'Embroidery',
-    author: 'Bilal Studio Team',
-    date: 'August 10, 2026',
-    readTime: '5 min read',
-    content: `
-      Embroidery digitizing is much more than just converting an image into a machine file. It is a highly skilled art form that requires an intimate understanding of thread types, fabric tension, and machine mechanics. 
-
-      At its core, digitizing is the process of mapping out the exact path a needle will take to recreate your artwork. A poor digitizer relies heavily on auto-tracing software, which often results in excessive thread breaks, puckered fabric, and muddy details. At Bilal Digitizing, our process is 100% manual.
-
-      ### Understanding Stitch Types
-      There are three primary stitch types used in commercial embroidery:
-      - **Run Stitches:** Used for outlines, fine details, and connecting elements without trimming the thread.
-      - **Satin Stitches:** Used for text, borders, and narrow columns (typically between 1mm and 8mm wide). They create a smooth, raised, and shiny effect.
-      - **Fill Stitches (Tatami):** Used for filling large areas of color. The angle and density of the fill stitch dramatically affect how light hits the final embroidery.
-
-      ### The Importance of Push and Pull Compensation
-      When a machine embroiders, the fabric inevitably shifts. Stitches push out horizontally and pull in vertically. A master digitizer proactively compensates for this distortion in the software, ensuring that circles stay perfectly round and outlines align flawlessly on the final garment. 
-
-      ### Machine Formats
-      Whether you run a single-head home machine or a massive 15-head commercial Tajima, we provide native files optimized for your exact setup. The most common format is .DST (Tajima), but we also supply .PES (Brother), .EXP (Melco), .HUS (Husqvarna), and many others.
-    `,
-    imageGradient: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)'
-  },
-  {
-    id: 2,
-    title: 'Why Vector Art is Essential for Scalable Printing',
-    category: 'Vector Art',
-    author: 'Bilal Studio Team',
-    date: 'August 8, 2026',
-    readTime: '4 min read',
-    content: `
-      Have you ever tried to print a small logo onto a large banner, only to find it turns into a blurry, pixelated mess? This is the fundamental flaw of raster images (like JPGs and PNGs). Raster images are built using a fixed grid of colored squares (pixels). If you enlarge them, you just get bigger squares.
-
-      This is where **Vector Art** saves the day.
-
-      ### The Math Behind the Magic
-      Vector files (such as .AI, .EPS, and .SVG) are fundamentally different. Instead of a grid of pixels, vectors use mathematical equations to define lines, curves, and shapes. Because it's math-based, a vector logo can be scaled up to fit a billboard or scaled down to fit a business card—and it will remain 100% razor-sharp with absolutely zero loss in quality.
-
-      ### Screen Printing & Color Separation
-      If you are in the screen printing or promotional products industry, vector art is mandatory. Screen printers require solid, distinct shapes to burn their screens. 
-      
-      At Bilal Digitizing, our vector conversion service doesn't just trace your image; we manually redraw it point-by-point. We ensure proper color separation, closed paths, and Pantone color matching so your design is perfectly prepped for DTG, screen printing, or vinyl cutting.
-
-      ### Common Vector Formats
-      - **.AI (Adobe Illustrator):** The industry standard working file.
-      - **.EPS:** The most universal vector format, accepted by almost all print shops.
-      - **.SVG:** Perfect for crisp, scalable web graphics.
-      - **.PDF:** A versatile format that can contain vector data while being easily viewable by clients.
-    `,
-    imageGradient: 'linear-gradient(135deg, #ff7a00 0%, #ff9d40 100%)'
-  },
-  {
-    id: 3,
-    title: 'Custom Patches 101: PVC, Embroidered, and Leather Options',
-    category: 'Custom Patches',
-    author: 'Bilal Studio Team',
-    date: 'August 5, 2026',
-    readTime: '6 min read',
-    content: `
-      Custom patches are the ultimate branding tool. They add a premium, tactile element to apparel, bags, and hats that flat printing simply cannot match. But with so many manufacturing options available, how do you choose the right patch for your brand?
-
-      Here is a breakdown of the three most popular patch types we manufacture:
-
-      ### 1. Traditional Embroidered Patches
-      The classic choice. Embroidered patches offer a traditional, textured look with high durability. They are perfect for military units, fire departments, scout troops, and vintage fashion brands. 
-      - **Pros:** Classic look, cost-effective at scale, highly durable.
-      - **Cons:** Cannot replicate extremely tiny text or photorealistic gradients.
-
-      ### 2. PVC (Rubber) Patches
-      If you want a rugged, modern, and tactical look, PVC is the answer. Made from soft, flexible rubber, these patches can be molded in 2D or 3D. They are entirely waterproof and will never fade, fray, or crack.
-      - **Pros:** Unmatched durability, waterproof, modern 3D aesthetic, crisp text.
-      - **Cons:** Slightly higher setup cost (requires a metal mold), heavier than woven patches.
-
-      ### 3. Custom Leather Patches
-      Nothing says "premium" quite like a debossed leather patch. Widely used on high-end trucker hats, denim, and outdoor gear. We offer both genuine top-grain leather and cruelty-free faux leather (leatherette). Designs are typically laser-engraved or heat-stamped (debossed) into the surface.
-      - **Pros:** High-end rustic aesthetic, excellent for subtle branding.
-      - **Cons:** Limited to monochromatic (single color) designs; not ideal for washing machines.
-
-      ### Choosing the Right Backing
-      The patch itself is only half the equation. You must also choose how to attach it:
-      - **Sew-On:** The most permanent solution.
-      - **Iron-On (Heat Seal):** Quick and easy application for casual wear.
-      - **Velcro (Hook & Loop):** Perfect for tactical gear, uniforms, and modular fashion where patches need to be swapped frequently.
-    `,
-    imageGradient: 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%)'
-  }
-];
+import { supabase } from '../../src/lib/supabase/client';
 
 export default function BlogsPage() {
+  // TODO: Fetch from public.blogs when the CMS endpoint is available
+  const [blogPosts, setBlogPosts] = useState([]);
+
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      try {
+        const { data, error } = await supabase.from('blogs').select('*').order('created_at', { ascending: false });
+        if (data && data.length > 0) {
+          setBlogPosts(data);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchBlogs();
+  }, []);
   return (
     <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: '6rem' }}>
       

@@ -21,48 +21,7 @@ export const CustomApparelPage = () => {
 
   const apparelProducts = (storeProducts || []).filter(p => p.category === 'tshirts' || p.category === 'apparel' || (p.title || '').toLowerCase().includes('shirt') || (p.title || '').toLowerCase().includes('polo'));
 
-  const defaultApparel = [
-    {
-      id: 'store-tshirt-1',
-      category: 'tshirts',
-      title: 'Custom Embroidered Heavyweight T-Shirt',
-      price: '$12.99',
-      unit: 'per shirt',
-      minQuantity: 10,
-      badge: 'Bestseller',
-      image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80',
-      description: '100% Ring-spun cotton tees customized with your logo in high-density left chest embroidery.',
-      sizes: ['S', 'M', 'L', 'XL', '2XL', '3XL'],
-      colors: ['Classic Black', 'Navy Blue', 'Pure White', 'Heather Gray'],
-      features: [
-        'Heavyweight 220 GSM 100% Ring-spun Cotton',
-        'Up to 10,000 stitches left chest embroidery included',
-        'Free pre-production sew-out proof',
-        'Individual poly-bagged & retail folded'
-      ]
-    },
-    {
-      id: 'store-tshirt-2',
-      category: 'tshirts',
-      title: 'Performance Athletic Dry-Fit Polo',
-      price: '$16.50',
-      unit: 'per polo',
-      minQuantity: 5,
-      badge: 'Moisture Wicking',
-      image: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=800&q=80',
-      description: 'Breathable dry-fit polyester performance polos ideal for staff uniforms & corporate teams.',
-      sizes: ['S', 'M', 'L', 'XL', '2XL'],
-      colors: ['Royal Blue', 'Charcoal', 'Forest Green'],
-      features: [
-        '100% Micro-polyester UV protection fabric',
-        'Precision collar & sleeve embroidery pathing',
-        'Wrinkle & stain resistant fabric',
-        '5-7 day express shipping'
-      ]
-    }
-  ];
-
-  const itemsToRender = apparelProducts.length > 0 ? apparelProducts : defaultApparel;
+  const itemsToRender = apparelProducts;
 
   const sizeChart = [
     { size: 'S', chest: '34" - 36"', length: '28"' },

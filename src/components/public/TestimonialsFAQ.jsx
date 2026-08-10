@@ -7,105 +7,10 @@ import { Star, ChevronDown, ChevronUp, Quote } from 'lucide-react';
 export const TestimonialsFAQ = () => {
   const appState = useAppState?.() || {};
 
-  // 6-8 default testimonials covering all 3 services
-  const defaultTestimonials = [
-    {
-      name: 'Dave Miller',
-      role: 'Owner, Custom Cap Crafters',
-      rating: 5,
-      comment: 'Bilal Digitizing is our go-to partner for 3D puff cap digitizing. The foam compensation and center-out pathing are flawless. Zero thread breaks on our Tajima 6-head machine!',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80',
-      service: 'Embroidery'
-    },
-    {
-      name: 'Marcus Thorne',
-      role: 'Art Director, Vintage Apparel Co.',
-      rating: 5,
-      comment: 'The vector artwork conversions are super clean. Low-resolution client PNGs get turned into crisp AI/SVG files ready for screen printing color separation within hours.',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80',
-      service: 'Vector'
-    },
-    {
-      name: 'James Wilson',
-      role: 'Operations Lead, Tactical Gear USA',
-      rating: 5,
-      comment: 'We ordered 5,000 custom 3D PVC patches and the quality is outstanding. Completely waterproof, sharp molded details, and they shipped faster than our local supplier.',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=120&q=80',
-      service: 'Patches'
-    },
-    {
-      name: 'Sarah Jenkins',
-      role: 'Production Manager, Apex Athletics',
-      rating: 5,
-      comment: 'Their 12-hour turnaround saved our team during high-season rush orders. The DST files sew clean on pique polos with zero puckering. Best digitizing service on the market.',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
-      service: 'Embroidery'
-    },
-    {
-      name: 'Elena Rodriguez',
-      role: 'Founder, Print Shop Express',
-      rating: 5,
-      comment: 'Absolutely blown away by the vector tracing quality. Hand-drawn nodes make a huge difference for our vinyl cutters. Perfectly separated Pantone spot colors every time.',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=120&q=80',
-      service: 'Vector'
-    },
-    {
-      name: 'Michael Chen',
-      role: 'Merchandise Coordinator, SoundWave Fest',
-      rating: 5,
-      comment: 'The merrowed border woven patches were a huge hit at our festival. Clean threads, perfect iron-on backing, and delivered right on schedule.',
-      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=120&q=80',
-      service: 'Patches'
-    }
-  ];
-
-  const defaultFaqs = [
-    {
-      category: 'General',
-      q: 'What is your turnaround time?',
-      a: 'Our standard turnaround time is 12 to 24 hours. We also offer Rush Service (4 to 8 hours) for a nominal fee if you have an urgent deadline.'
-    },
-    {
-      category: 'General',
-      q: 'What if I need revisions to my file?',
-      a: 'We offer FREE unlimited revisions on all orders! If you need size adjustments, color edits, or density tweaks, we will update it within 4-6 hours.'
-    },
-    {
-      category: 'Embroidery',
-      q: 'What machine format files will I receive?',
-      a: 'You will receive your digitized design in all standard formats including Tajima (.DST), Brother (.PES), Melco (.EXP), Janome (.JEF), Husqvarna (.HUS), and native Wilcom (.EMB).'
-    },
-    {
-      category: 'Embroidery',
-      q: 'How do you ensure stitch quality on different fabrics?',
-      a: 'Every design is custom pathing-mapped by master digitizers. We tailor the stitch underlay, pull compensation, and density specifically to your target fabric (Pique, Denim, Cap Frame).'
-    },
-    {
-      category: 'Vector',
-      q: 'Do you use auto-trace software for vectors?',
-      a: 'No. All our vector conversions are 100% hand-drawn in Adobe Illustrator using the pen tool to ensure crisp, node-perfect scalable files with zero distortion.'
-    },
-    {
-      category: 'Vector',
-      q: 'Will the colors be separated for screen printing?',
-      a: 'Yes, we provide clean Pantone spot color separation on distinct layers, making the vector files fully ready for screen printing films and vinyl plotters.'
-    },
-    {
-      category: 'Patches',
-      q: 'What patch backings do you offer?',
-      a: 'We offer iron-on (heat seal), hook-and-loop (velcro), adhesive peel-and-stick, and standard sew-on backings for all our embroidered, woven, and PVC patches.'
-    },
-    {
-      category: 'Patches',
-      q: 'Is there a minimum order quantity for custom patches?',
-      a: 'We have very low minimums. While bulk orders give you the best pricing, we can accommodate smaller runs starting at just 10 pieces for most patch types.'
-    }
-  ];
-
-  const { activeHomeServiceTab } = useAppState?.() || {};
+  const { activeHomeServiceTab } = appState;
   const currentServiceKey = activeHomeServiceTab === 'vector' ? 'Vector' : activeHomeServiceTab === 'patches' || activeHomeServiceTab === 'patch' ? 'Patches' : 'Embroidery';
 
-  const mappedTestimonials = (appState.testimonials && appState.testimonials.length > 0 ? appState.testimonials : defaultTestimonials).map(t => ({
+  const mappedTestimonials = (appState.testimonials || []).map(t => ({
     name: t.client_name || t.name,
     role: t.company || t.role,
     rating: t.rating || 5,
@@ -118,7 +23,7 @@ export const TestimonialsFAQ = () => {
   const testimonials = mappedTestimonials.filter(
     (t) => t.service === currentServiceKey && t.isActive
   );
-  const faqs = appState.faqs?.length > 0 ? appState.faqs.filter(f => f.is_active !== false) : defaultFaqs;
+  const faqs = (appState.faqs || []).filter(f => f.is_active !== false);
 
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
   const [activeFaqTab, setActiveFaqTab] = useState(currentServiceKey);

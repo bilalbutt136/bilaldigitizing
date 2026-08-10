@@ -21,7 +21,7 @@ export const MetaPixelTracker = () => {
       
       // Also log the event to our Supabase database for the Activity Log
       import('../../services/supabaseService').then(({ logTrackingEventToSupabase }) => {
-        const role = authUser?.role === 'admin' || authUser?.email === 'shahidbutt59191@gmail.com' ? 'Platform Admin' : 
+        const role = authUser?.role === 'admin' ? 'Platform Admin' : 
                      (authUser ? 'Authenticated User' : 'Guest Visitor');
         
         logTrackingEventToSupabase({
