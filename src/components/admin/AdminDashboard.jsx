@@ -5,7 +5,6 @@ import { useAppState } from '../../context/StateContext';
 import { OrderManagementTable } from './OrderManagementTable';
 import { ClientDirectory } from './ClientDirectory';
 import { UnifiedCmsManager } from './UnifiedCmsManager';
-import { BoltPayoutsAdmin } from './BoltPayoutsAdmin';
 import { StudioServicesManager } from './StudioServicesManager';
 import { SystemSettingsManager } from './SystemSettingsManager';
 import { StoreManagementEditor } from './StoreManagementEditor';
@@ -131,7 +130,6 @@ export const AdminDashboard = () => {
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'clients', label: 'Accounts & Wallets', icon: Users, badge: safeClients.length },
-        { id: 'boltpayouts', label: 'Payment Hub', icon: DollarSign, tag: 'Gateway' },
         { id: 'chat', label: 'Live Chat', icon: MessageSquare, badge: 2 }
       ]
     },
@@ -210,7 +208,6 @@ export const AdminDashboard = () => {
               {activeTab === 'cms' && 'CMS Engine'}
               {activeTab === 'media' && 'Media Gallery'}
               {activeTab === 'settings' && 'Studio Settings'}
-              {activeTab === 'boltpayouts' && 'BoltPayouts Gateway'}
             </h3>
           </div>
         </div>
@@ -592,7 +589,6 @@ export const AdminDashboard = () => {
         {activeTab === 'cms' && <UnifiedCmsManager />}
         {activeTab === 'media' && <MediaLibraryManager />}
         {activeTab === 'settings' && <SystemSettingsManager />}
-        {activeTab === 'boltpayouts' && <BoltPayoutsAdmin />}
 
       </main>
 

@@ -30,28 +30,7 @@ export const StoreManagementEditor = () => {
   const [filterCategory, setFilterCategory] = useState('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const [localStoreOrders, setLocalStoreOrders] = useState([]);
 
-  const loadLocalStoreOrders = () => {
-    try {
-      const stored = JSON.parse(localStorage.getItem('store_orders') || '[]');
-      setLocalStoreOrders(stored);
-    } catch (err) {
-      console.warn('Error reading store_orders from localStorage:', err);
-    }
-  };
-
-  React.useEffect(() => {
-    loadLocalStoreOrders();
-
-    window.addEventListener('focus', loadLocalStoreOrders);
-    window.addEventListener('store_orders_updated', loadLocalStoreOrders);
-
-    return () => {
-      window.removeEventListener('focus', loadLocalStoreOrders);
-      window.removeEventListener('store_orders_updated', loadLocalStoreOrders);
-    };
-  }, []);
 
   // Sync draftProducts when storeProducts updates
   React.useEffect(() => {
@@ -70,13 +49,12 @@ export const StoreManagementEditor = () => {
     (o.title || '').toLowerCase().includes('cap')
   );
 
-  // Deduplicate and combine state + localStorage store orders
+  // Deduplicate state store orders (if necessary) or simply use stateStoreOrders
   const storeOrders = React.useMemo(() => {
     const map = new Map();
     stateStoreOrders.forEach(o => map.set(o.id, o));
-    localStoreOrders.forEach(o => map.set(o.id, o));
     return Array.from(map.values());
-  }, [stateStoreOrders, localStoreOrders]);
+  }, [stateStoreOrders]);
 
   // Product Editing Handlers
   const handleProductChange = (id, field, value) => {
