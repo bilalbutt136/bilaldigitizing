@@ -26,7 +26,8 @@ import {
   upsertDigitizers,
   upsertFaqs,
   upsertTestimonials,
-  saveCmsConfigToSupabase
+  saveCmsConfigToSupabase,
+  uploadFileToCloudinary
 } from '../../services/supabaseService';
 
 export const UnifiedCmsManager = () => {
@@ -116,11 +117,47 @@ export const UnifiedCmsManager = () => {
         if (!resP || !resPatch) throw new Error("Failed to save pricing");
       }
       else if (activeTab === 'portfolio') {
-        const res = await upsertPortfolioItems(draftPortfolio);
+        const processedPortfolio = await Promise.all(draftPortfolio.map(async (item) => {
+          let newItem = { ...item };
+          
+          if (newItem.originalImage && newItem.originalImage.startsWith('data:image')) {
+            const uploadedUrl = await uploadFileToCloudinary(newItem.originalImage, 'client-uploads', 'portfolio');
+            if (uploadedUrl) newItem.originalImage = uploadedUrl;
+          }
+          if (newItem.digitizedImage && newItem.digitizedImage.startsWith('data:image')) {
+            const uploadedUrl = await uploadFileToCloudinary(newItem.digitizedImage, 'client-uploads', 'portfolio');
+            if (uploadedUrl) newItem.digitizedImage = uploadedUrl;
+          }
+          if (newItem.beforeImg && newItem.beforeImg.startsWith('data:image')) {
+            const uploadedUrl = await uploadFileToCloudinary(newItem.beforeImg, 'client-uploads', 'portfolio');
+            if (uploadedUrl) newItem.beforeImg = uploadedUrl;
+          }
+          if (newItem.afterImg && newItem.afterImg.startsWith('data:image')) {
+            const uploadedUrl = await uploadFileToCloudinary(newItem.afterImg, 'client-uploads', 'portfolio');
+            if (uploadedUrl) newItem.afterImg = uploadedUrl;
+          }
+          
+          return newItem;
+        }));
+        
+        const res = await upsertPortfolioItems(processedPortfolio);
         if (!res) throw new Error("Failed to save portfolio");
       }
       else if (activeTab === 'sewouts') {
-        const res = await upsertSewOuts(draftSewOuts);
+        const processedSewOuts = await Promise.all(draftSewOuts.map(async (item) => {
+          let newItem = { ...item };
+          if (newItem.beforeImg && newItem.beforeImg.startsWith('data:image')) {
+            const uploadedUrl = await uploadFileToCloudinary(newItem.beforeImg, 'client-uploads', 'sewouts');
+            if (uploadedUrl) newItem.beforeImg = uploadedUrl;
+          }
+          if (newItem.afterImg && newItem.afterImg.startsWith('data:image')) {
+            const uploadedUrl = await uploadFileToCloudinary(newItem.afterImg, 'client-uploads', 'sewouts');
+            if (uploadedUrl) newItem.afterImg = uploadedUrl;
+          }
+          return newItem;
+        }));
+        
+        const res = await upsertSewOuts(processedSewOuts);
         if (!res) throw new Error("Failed to save sew outs");
       }
       else if (activeTab === 'team') {
@@ -381,22 +418,61 @@ export const UnifiedCmsManager = () => {
                   <label>Showcase Title</label>
                   <input className="form-control" placeholder="e.g. Skull Leather Patch" value={item.title || ''} onChange={e => handlePortfolioChange(item.id, 'title', e.target.value)} />
                 </div>
-                <div className="form-group">
-                  <label>Filter Category</label>
-                  <select className="form-control" value={item.category || ''} onChange={e => handlePortfolioChange(item.id, 'category', e.target.value)}>
-                    <option value="">Select Category...</option>
-                    <option value="Embroidery">Embroidery Digitizing</option>
-                    <option value="Vector Art">Vector Art</option>
-                    <option value="Custom Patches">Custom Patches</option>
-                  </select>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label>Filter Category</label>
+                    <select className="form-control" value={item.category || ''} onChange={e => handlePortfolioChange(item.id, 'category', e.target.value)}>
+                      <option value="">Select Category...</option>
+                      <option value="Embroidery">Embroidery Digitizing</option>
+                      <option value="Vector Art">Vector Art</option>
+                      <option value="Custom Patches">Custom Patches</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Client Type</label>
+                    <select className="form-control" value={item.clientType || ''} onChange={e => handlePortfolioChange(item.id, 'clientType', e.target.value)}>
+                      <option value="">Select Client Type...</option>
+                      <option value="Commercial">Commercial</option>
+                      <option value="Boutique">Boutique</option>
+                      <option value="Individual">Individual</option>
+                      <option value="Apparel Brand">Apparel Brand</option>
+                    </select>
+                  </div>
                 </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label>Stitch Count</label>
+                    <input type="number" className="form-control" placeholder="e.g. 15000" value={item.stitchCount || ''} onChange={e => handlePortfolioChange(item.id, 'stitchCount', parseInt(e.target.value) || 0)} />
+                  </div>
+                  <div className="form-group">
+                    <label>Formats (comma-separated)</label>
+                    <input className="form-control" placeholder="e.g. DST, PES" value={Array.isArray(item.formats) ? item.formats.join(', ') : (item.formats || '')} onChange={e => handlePortfolioChange(item.id, 'formats', e.target.value.split(',').map(s=>s.trim()))} />
+                  </div>
+                </div>
+
                 <div className="form-group">
-                  <label>Artwork Image</label>
-                  <label className="btn btn-outline btn-sm" style={{ cursor: 'pointer', width: 'fit-content' }}>
-                    <UploadCloud size={14} /> Replace Image
-                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, (url) => handlePortfolioChange(item.id, 'image', url))} style={{ display: 'none' }} />
-                  </label>
-                  {item.image && <img src={item.image} alt="portfolio" style={{ marginTop: '0.75rem', width: '100%', height: '180px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }} />}
+                  <label>Description</label>
+                  <textarea className="form-control" rows="2" placeholder="Describe this portfolio item..." value={item.description || ''} onChange={e => handlePortfolioChange(item.id, 'description', e.target.value)} />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label>Original Image</label>
+                    <label className="btn btn-outline btn-sm" style={{ cursor: 'pointer', width: '100%', justifyContent: 'center' }}>
+                      <UploadCloud size={14} /> Upload Original
+                      <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, (url) => handlePortfolioChange(item.id, 'originalImage', url))} style={{ display: 'none' }} />
+                    </label>
+                    {(item.originalImage || item.beforeImg) && <img src={item.originalImage || item.beforeImg} alt="original" style={{ marginTop: '0.75rem', width: '100%', height: '120px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }} />}
+                  </div>
+                  <div className="form-group">
+                    <label>Digitized/Finished Image</label>
+                    <label className="btn btn-outline btn-sm" style={{ cursor: 'pointer', width: '100%', justifyContent: 'center' }}>
+                      <UploadCloud size={14} /> Upload Digitized
+                      <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, (url) => handlePortfolioChange(item.id, 'digitizedImage', url))} style={{ display: 'none' }} />
+                    </label>
+                    {(item.digitizedImage || item.afterImg) && <img src={item.digitizedImage || item.afterImg} alt="digitized" style={{ marginTop: '0.75rem', width: '100%', height: '120px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }} />}
+                  </div>
                 </div>
               </div>
             ))}

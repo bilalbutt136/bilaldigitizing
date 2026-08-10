@@ -223,8 +223,8 @@ export const PortfolioPage = () => {
         afterImg: s.digitizedImage || s.afterImg || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
         stitchCount: s.stitchCount || '10,500 Stitches',
         colors: s.colors || 'Multi-Color Thread',
-        formats: 'DST, PES, EMB, SVG',
-        clientType: 'Commercial Studio Client'
+        formats: Array.isArray(s.formats) ? s.formats.join(', ') : (s.formats || 'DST, PES, EMB, SVG'),
+        clientType: s.clientType || 'Commercial Studio Client'
       }))
     : PORTFOLIO_ITEMS;
 

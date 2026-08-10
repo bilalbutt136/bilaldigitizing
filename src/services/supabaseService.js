@@ -794,7 +794,23 @@ export async function upsertCatalogDataToSupabase(tableName, dataArray) {
 
 export const upsertHeroContent = (data) => upsertCatalogDataToSupabase('hero_slides', data);
 export const upsertPricingTiers = (data) => upsertCatalogDataToSupabase('pricing_cards', data);
-export const upsertPortfolioItems = (data) => upsertCatalogDataToSupabase('portfolio', data);
+export const upsertPortfolioItems = (data) => {
+  const dbPayload = data.map(item => ({
+    id: item.id,
+    title: item.title,
+    category: item.category,
+    stitch_count: item.stitchCount !== undefined ? item.stitchCount : item.stitch_count,
+    colors: item.colors,
+    original_image: item.originalImage || item.original_image,
+    digitized_image: item.digitizedImage || item.digitized_image,
+    before_img: item.beforeImg || item.before_img,
+    after_img: item.afterImg || item.after_img,
+    client_type: item.clientType || item.client_type,
+    formats: item.formats,
+    description: item.description,
+  }));
+  return upsertCatalogDataToSupabase('portfolio', dbPayload);
+};
 export const upsertPatchCards = (data) => upsertCatalogDataToSupabase('patch_cards', data);
 export const upsertFaqs = (data) => upsertCatalogDataToSupabase('faqs', data);
 export const upsertTestimonials = (data) => upsertCatalogDataToSupabase('testimonials', data);
@@ -921,6 +937,10 @@ export async function fetchCatalogFromSupabase() {
         colors: p.colors,
         originalImage: p.original_image,
         digitizedImage: p.digitized_image,
+        beforeImg: p.before_img,
+        afterImg: p.after_img,
+        clientType: p.client_type,
+        formats: p.formats,
         description: p.description
       })),
       sewOuts: (sewOuts.data || []).map(s => ({

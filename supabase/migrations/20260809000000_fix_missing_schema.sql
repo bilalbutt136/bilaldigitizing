@@ -36,9 +36,9 @@ CREATE TABLE IF NOT EXISTS public.tracking_events (
 
 ALTER TABLE public.tracking_events ENABLE ROW LEVEL SECURITY;
 -- Anyone can insert a tracking event (public analytics)
-CREATE POLICY tracking_events_insert_all ON public.tracking_events FOR INSERT WITH CHECK (true);
+-- CREATE POLICY tracking_events_insert_all ON public.tracking_events FOR INSERT WITH CHECK (true);
 -- Only admins can read tracking events
-CREATE POLICY tracking_events_read_admin ON public.tracking_events FOR SELECT USING (public.is_admin());
+-- CREATE POLICY tracking_events_read_admin ON public.tracking_events FOR SELECT USING (public.is_admin());
 
 -- Create Store Products Table (if not exists)
 CREATE TABLE IF NOT EXISTS public.store_products (
@@ -61,4 +61,4 @@ CREATE TABLE IF NOT EXISTS public.store_products (
 );
 
 ALTER TABLE public.store_products ENABLE ROW LEVEL SECURITY;
-CREATE POLICY store_products_read_all ON public.store_products FOR SELECT USING (true);
+-- CREATE POLICY store_products_read_all ON public.store_products FOR SELECT USING (true);
