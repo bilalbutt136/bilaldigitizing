@@ -19,6 +19,7 @@ import {
   CreditCard
 } from 'lucide-react';
 import { PackageCard } from './PackageCard';
+import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 
 export const VectorArtPage = ({ hideHero = false }) => {
   const navigate = useNavigate();
@@ -291,12 +292,26 @@ export const VectorArtPage = ({ hideHero = false }) => {
       setIsDepositModalOpen(true);
       return;
     }
-
     setIsSubmitting(true);
 
     try {
       const firstItemName = vectorItems[0]?.name || 'Vector Art Order';
       const orderTitle = title.trim() || `${firstItemName}${vectorItems.length > 1 ? ` (+${vectorItems.length - 1} more)` : ''}`;
+
+      // Upload to Cloudinary
+      const uploadedCloudinaryFiles = [];
+      for (const fileItem of allFiles) {
+        if (fileItem.rawFile) {
+          const uploaded = await uploadFileToCloudinaryFull(fileItem.rawFile, 'client-uploads', 'orders');
+          if (uploaded) {
+            uploadedCloudinaryFiles.push(uploaded);
+          } else {
+            uploadedCloudinaryFiles.push({ name: fileItem.name, error: 'Upload failed' });
+          }
+        } else {
+          uploadedCloudinaryFiles.push({ name: fileItem.name }); // Fallback
+        }
+      }
 
       const newVectorOrder = {
         type: 'vector',
@@ -310,8 +325,8 @@ export const VectorArtPage = ({ hideHero = false }) => {
         vectorBreakdown,
         totalQuantity: totalVectorQuantity,
         price: parseFloat(totalPrice),
-        uploadedFiles: allFiles.map(f => f.name),
-        artworkUrl: allFiles[0]?.previewUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=80',
+        uploadedFiles: uploadedCloudinaryFiles, // Replaced array of strings with Cloudinary objects
+        artworkUrl: uploadedCloudinaryFiles[0]?.url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=80',
         paymentMethod: paymentOption,
         estimatedDelivery: isRush ? '2-4 Hours (Super Rush)' : '8-12 Hours (Standard)'
       };

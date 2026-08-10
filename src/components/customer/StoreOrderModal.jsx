@@ -13,6 +13,7 @@ import {
   Minus,
   FileCheck
 } from 'lucide-react';
+import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 
 export const StoreOrderModal = () => {
   const { 
@@ -79,14 +80,15 @@ export const StoreOrderModal = () => {
         setUploadedArtwork({
           name: file.name,
           size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
-          url: event.target.result
+          url: event.target.result,
+          rawFile: file
         });
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleCompleteStoreOrder = (paymentMethod) => {
+  const handleCompleteStoreOrder = async (paymentMethod) => {
     if (!isAuthenticated) {
       showToast('Please sign in or register an account to complete your store order', 'info');
       setAuthModalMode('login');
@@ -113,9 +115,20 @@ export const StoreOrderModal = () => {
       window.open('https://www.boltpayouts.xyz/pay/boltpayouts', '_blank');
     }
 
+    let clientArtwork = uploadedArtwork?.url || null;
+
+    // Perform real Cloudinary upload if a rawFile exists
+    if (uploadedArtwork?.rawFile) {
+      const uploaded = await uploadFileToCloudinaryFull(uploadedArtwork.rawFile, 'client-uploads', 'store-orders');
+      if (uploaded && uploaded.url) {
+        clientArtwork = uploaded.url; // Use real remote URL instead of local Data URL
+      } else {
+        showToast('Artwork upload failed, proceeding with default order details.', 'warning');
+      }
+    }
+
     // Build store order object with explicit product image schema
     const productImage = selectedStoreItem.image || selectedStoreItem.artworkUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
-    const clientArtwork = uploadedArtwork?.url || null;
 
     const newStoreOrder = {
       title: `${selectedStoreItem.title} (${quantity} pcs - ${selectedSize})`,
@@ -151,23 +164,21 @@ export const StoreOrderModal = () => {
       }
     };
 
-    setTimeout(() => {
+    try {
       createOrder(newStoreOrder);
 
       // Save directly to localStorage store_orders array
-      try {
-        const existing = JSON.parse(localStorage.getItem('store_orders') || '[]');
-        const updated = [newStoreOrder, ...existing.filter(item => item.id !== newStoreOrder.id)];
-        localStorage.setItem('store_orders', JSON.stringify(updated));
-        window.dispatchEvent(new Event('store_orders_updated'));
-      } catch (err) {
-        console.warn('Error saving store_orders to localStorage:', err);
-      }
+      const existing = JSON.parse(localStorage.getItem('store_orders') || '[]');
+      const updated = [newStoreOrder, ...existing.filter(item => item.id !== newStoreOrder.id)];
+      localStorage.setItem('store_orders', JSON.stringify(updated));
+      window.dispatchEvent(new Event('store_orders_updated'));
+    } catch (err) {
+      console.warn('Error saving store_orders to localStorage:', err);
+    }
 
-      setIsSubmitting(false);
-      setIsStoreOrderModalOpen(false);
-      showToast(`Store Order #${Date.now().toString().slice(-6)} placed successfully!`, 'success');
-    }, 600);
+    setIsSubmitting(false);
+    setIsStoreOrderModalOpen(false);
+    showToast(`Store Order #${Date.now().toString().slice(-6)} placed successfully!`, 'success');
   };
 
   return (

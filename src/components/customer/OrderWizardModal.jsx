@@ -13,6 +13,8 @@ import {
   Sparkles,
   Plus
 } from 'lucide-react';
+import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
+
 export const OrderWizardModal = () => {
   const { 
     isOrderWizardOpen, 
@@ -488,34 +490,7 @@ export const OrderWizardModal = () => {
 
     const orderTitle = title.trim() || `${pricingDetails?.serviceTitle || 'Service'} Order`;
     const finalPrice = pricingDetails?.finalPrice || 15.00;
-    
-    // Flatten files for the legacy uploadedFiles array just in case
-    const allFiles = type === 'patch' 
-      ? patchItems.flatMap(item => item.files || []) 
-      : placementItems.flatMap(item => item.files || []);
 
-    const orderData = {
-      title: orderTitle,
-      type,
-      serviceCategory: pricingDetails?.serviceTitle || type || 'Embroidery Digitizing',
-      price: parseFloat(finalPrice),
-      placementItems,
-      fabricType,
-      requestedFormats,
-      isRush,
-      patchStyle,
-      patchBacking,
-      patchBorderStyle,
-      patchWidth,
-      patchHeight,
-      patchQuantity,
-      patchItems,
-      notes: notes.trim(),
-      totalPrice: finalPrice,
-      uploadedFiles: allFiles.map(a => a.name),
-      paymentStatus: 'pending' // Enforce pending payment status
-    };
-    
     // Wallet balance gate: block order if insufficient funds
     if (walletBalance < parseFloat(finalPrice)) {
       showToast(
@@ -529,6 +504,47 @@ export const OrderWizardModal = () => {
     setIsProcessingPayment(true);
 
     try {
+      // Upload all files to Cloudinary first
+      const allFiles = type === 'patch' 
+        ? patchItems.flatMap(item => item.files || []) 
+        : placementItems.flatMap(item => item.files || []);
+
+      const uploadedCloudinaryFiles = [];
+      for (const fileItem of allFiles) {
+        if (fileItem.rawFile) {
+          const uploaded = await uploadFileToCloudinaryFull(fileItem.rawFile, 'client-uploads', 'orders');
+          if (uploaded) {
+            uploadedCloudinaryFiles.push(uploaded);
+          } else {
+            uploadedCloudinaryFiles.push({ name: fileItem.name, error: 'Upload failed' });
+          }
+        } else {
+          uploadedCloudinaryFiles.push({ name: fileItem.name }); // Fallback if no rawFile
+        }
+      }
+
+      const orderData = {
+        title: orderTitle,
+        type,
+        serviceCategory: pricingDetails?.serviceTitle || type || 'Embroidery Digitizing',
+        price: parseFloat(finalPrice),
+        placementItems,
+        fabricType,
+        requestedFormats,
+        isRush,
+        patchStyle,
+        patchBacking,
+        patchBorderStyle,
+        patchWidth,
+        patchHeight,
+        patchQuantity,
+        patchItems,
+        notes: notes.trim(),
+        totalPrice: finalPrice,
+        uploadedFiles: uploadedCloudinaryFiles,
+        paymentStatus: 'pending' // Enforce pending payment status
+      };
+
       let createdOrder = null;
       if (createOrder) {
         createdOrder = await createOrder(orderData);

@@ -19,6 +19,7 @@ import {
   Plus
 } from 'lucide-react';
 import { PackageCard } from './PackageCard';
+import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 
 export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTabs = false, initialTier = 'standard' }) => {
   const navigate = useNavigate();
@@ -487,6 +488,25 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
       `Custom Order`
     );
 
+    // Upload files to Cloudinary first
+    const allFiles = activeService === 'patches' 
+      ? patchItems.flatMap(item => item.files || []) 
+      : placementItems.flatMap(item => item.files || []);
+
+    const uploadedCloudinaryFiles = [];
+    for (const fileItem of allFiles) {
+      if (fileItem.rawFile) {
+        const uploaded = await uploadFileToCloudinaryFull(fileItem.rawFile, 'client-uploads', 'orders');
+        if (uploaded) {
+          uploadedCloudinaryFiles.push(uploaded);
+        } else {
+          uploadedCloudinaryFiles.push({ name: fileItem.name, error: 'Upload failed' });
+        }
+      } else {
+        uploadedCloudinaryFiles.push({ name: fileItem.name }); // Fallback if no rawFile
+      }
+    }
+
     const newOrderPayload = {
       title: orderTitle,
       type: activeService,
@@ -500,7 +520,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
       isRush: activeService === 'digitizing' ? isRush : (activeService === 'vector' ? (totalPlacementCount === 1 && isRush) : false),
       notes,
       requestedFormats: activeService === 'vector' ? vectorFormats : targetFormats,
-      uploadedFiles: selectedAssets, // Legacy global uploads if any
+      uploadedFiles: uploadedCloudinaryFiles, // Replaced legacy global uploads with structured Cloudinary objects
       specifications: {
         placementsSummary,
         placementItems: activeService === 'digitizing' || activeService === 'vector' ? placementItems : undefined,

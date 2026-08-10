@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 
 import { AddProductModal } from './AddProductModal';
+import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 
 export const StoreManagementEditor = () => {
   const { 
@@ -87,13 +88,25 @@ export const StoreManagementEditor = () => {
     showToast('Store products catalog updated and published live to /store page!', 'success');
   };
 
-  const handleImageUpload = (id, file) => {
+  const handleImageUpload = async (id, file) => {
     if (!file) return;
+    
+    // Quick preview first
     const reader = new FileReader();
     reader.onload = (e) => {
       handleProductChange(id, 'image', e.target.result);
     };
     reader.readAsDataURL(file);
+
+    // Upload to Cloudinary in background and replace preview with real URL
+    try {
+      const uploaded = await uploadFileToCloudinaryFull(file, 'media-gallery', 'store-products');
+      if (uploaded && uploaded.url) {
+        handleProductChange(id, 'image', uploaded.url);
+      }
+    } catch (err) {
+      console.error('Store image upload failed:', err);
+    }
   };
 
   const filteredProducts = filterCategory === 'all' 

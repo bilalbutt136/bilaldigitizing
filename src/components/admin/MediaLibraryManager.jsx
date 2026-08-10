@@ -12,7 +12,7 @@ import {
   Loader2,
   RefreshCw
 } from 'lucide-react';
-import { fetchMediaAssetsFromSupabase, uploadMediaAssetToSupabaseStorage } from '../../services/supabaseService';
+import { fetchMediaAssetsFromSupabase, uploadFileToCloudinaryFull } from '../../services/supabaseService';
 
 export const MediaLibraryManager = () => {
   const { showToast } = useAppState();
@@ -48,17 +48,20 @@ export const MediaLibraryManager = () => {
     setIsUploading(true);
     let uploadedCount = 0;
 
-    for (const file of files) {
+    for (const file of e.target.files) {
       try {
-        const uploaded = await uploadMediaAssetToSupabaseStorage(file, 'media-gallery');
-        if (uploaded) {
+        // Upload to Cloudinary instead of Supabase storage
+        const uploaded = await uploadFileToCloudinaryFull(file, 'media-gallery', 'media');
+        
+        if (uploaded && uploaded.url) {
           uploadedCount++;
           setMediaAssets(prev => [{
-            id: `upload-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-            name: uploaded.name,
+            id: `media_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+            name: file.name,
             category: 'Uploaded Asset',
             url: uploaded.url,
-            size: uploaded.size,
+            type: file.type.startsWith('image/') ? 'image' : 'file',
+            size: uploaded.size || `${(file.size / 1024).toFixed(1)} KB`,
             createdAt: new Date().toISOString()
           }, ...prev]);
         }

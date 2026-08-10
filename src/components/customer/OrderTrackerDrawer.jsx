@@ -26,6 +26,7 @@ import {
   ExternalLink,
   Zap
 } from 'lucide-react';
+import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 
 const FORMAT_METADATA = {
   dst: { name: 'Tajima (.DST)', desc: 'Tajima Commercial Machine Pathing', icon: '🧵', type: 'Commercial' },
@@ -176,18 +177,28 @@ export const OrderTrackerDrawer = () => {
     setAdminFilesList(prev => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
-  const handleAdminFileSubmit = (e) => {
+  const handleAdminFileSubmit = async (e) => {
     e.preventDefault();
     if (adminFilesList.length === 0) {
       alert('Please select or drop at least one finished machine file (.DST, .PES, .EMB, .PDF) to upload.');
       return;
     }
 
+    const uploadedCloudinaryFiles = [];
+    for (const file of adminFilesList) {
+      const uploaded = await uploadFileToCloudinaryFull(file, 'admin-deliveries', 'deliveries');
+      if (uploaded) {
+        uploadedCloudinaryFiles.push(uploaded);
+      } else {
+        uploadedCloudinaryFiles.push({ name: file.name, error: 'Upload failed' });
+      }
+    }
+
     const existingFiles = ord.uploadedMachineFiles || [];
-    const updatedFiles = [...adminFilesList, ...existingFiles];
+    const updatedFiles = [...uploadedCloudinaryFiles, ...existingFiles];
 
     updateOrderStatus(ord.id, 'delivered', {
-      outputFileUrl: adminFilesList[0].name,
+      outputFileUrl: uploadedCloudinaryFiles.length > 0 ? uploadedCloudinaryFiles[0].url || uploadedCloudinaryFiles[0].name : '',
       uploadedMachineFiles: updatedFiles
     });
 

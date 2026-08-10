@@ -929,36 +929,38 @@ export async function fetchMediaAssetsFromSupabase() {
   }
 }
 
-export async function uploadMediaAssetToSupabaseStorage(file, folder = 'media') {
-  if (!isSupabaseConfigured || !file) return null;
+// Helper to upload files to Cloudinary and return full details (url, public_id, size)
+export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-uploads', folderPath = 'artwork') {
+  if (!fileObj) return null;
+
   try {
-    const cleanFileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const filePath = `${folder}/${cleanFileName}`;
+    const formData = new FormData();
+    formData.append('file', fileObj);
+    if (folderPath) {
+      formData.append('folder', folderPath);
+    }
 
-    const { data, error } = await supabase.storage
-      .from('client-uploads')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
+    const response = await fetch('/api/cloudinary/upload', {
+      method: 'POST',
+      body: formData,
+    });
 
-    if (error) {
-      console.error('Supabase storage upload error:', error.message);
+    if (!response.ok) {
       return null;
     }
 
-    const { data: publicUrlData } = supabase.storage
-      .from('client-uploads')
-      .getPublicUrl(filePath);
+    const data = await response.json();
+    if (!data.success) {
+      return null;
+    }
 
     return {
-      name: file.name,
-      url: publicUrlData.publicUrl,
-      path: filePath,
-      size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+      name: fileObj.name,
+      url: data.url,
+      public_id: data.public_id,
+      size: `${(fileObj.size / (1024 * 1024)).toFixed(2)} MB`
     };
   } catch (err) {
-    console.error('Supabase upload media asset exception:', err);
     return null;
   }
 }
