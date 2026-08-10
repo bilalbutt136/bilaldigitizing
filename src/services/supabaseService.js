@@ -124,7 +124,11 @@ export async function signUpWithSupabaseAuth(name, email, password, company) {
     });
 
     if (authErr) {
-      return { success: false, error: authErr.message || 'Account registration failed.' };
+      let msg = authErr.message;
+      if (msg === '{}' || !msg) {
+        msg = 'Registration failed. Please check if email confirmations are enabled or if your email is valid.';
+      }
+      return { success: false, error: msg };
     }
 
     const createdUser = authData?.user;

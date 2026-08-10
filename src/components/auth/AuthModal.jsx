@@ -1055,7 +1055,7 @@ export const AuthModal = () => {
             </h3>
 
             <p style={{ fontSize: '0.925rem', color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: '1.75rem' }}>
-              {typeof errorModalText === 'object' ? JSON.stringify(errorModalText) : (errorModalText === '{}' ? 'Google Auth provider is not configured properly in Supabase.' : errorModalText)}
+              {typeof errorModalText === 'object' ? JSON.stringify(errorModalText) : (errorModalText === '{}' ? 'Server returned a generic error. Please check if email confirmations or providers are configured properly in Supabase.' : errorModalText)}
             </p>
 
             <button
