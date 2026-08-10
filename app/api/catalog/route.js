@@ -13,15 +13,32 @@ export async function GET(request) {
         { data: pricing_cards },
         { data: patch_cards },
         { data: store_products },
-        { data: pricing_tiers }
+        { data: pricing_tiers },
+        { data: portfolio },
+        { data: sew_outs },
+        { data: hero_slides },
+        { data: digitizers },
+        { data: site_config },
+        { data: faqs },
+        { data: testimonials }
       ] = await Promise.all([
         supabase.from('services').select('*').order('sort_order', { ascending: true }),
         supabase.from('pricing_cards').select('*').order('sort_order', { ascending: true }),
         supabase.from('patch_cards').select('*').order('sort_order', { ascending: true }),
         supabase.from('store_products').select('*').order('sort_order', { ascending: true }),
-        supabase.from('pricing_tiers').select('*').order('display_order', { ascending: true })
+        supabase.from('pricing_tiers').select('*').order('display_order', { ascending: true }),
+        supabase.from('portfolio').select('*').order('sort_order', { ascending: true }),
+        supabase.from('sew_outs').select('*').order('sort_order', { ascending: true }),
+        supabase.from('hero_slides').select('*').order('sort_order', { ascending: true }),
+        supabase.from('digitizers').select('*').order('sort_order', { ascending: true }),
+        supabase.from('site_config').select('key, value'),
+        supabase.from('faqs').select('*').order('sort_order', { ascending: true }),
+        supabase.from('testimonials').select('*').order('created_at', { ascending: false })
       ]);
-      return NextResponse.json({ services, pricing_cards, patch_cards, store_products, pricing_tiers });
+      return NextResponse.json({ 
+        services, pricing_cards, patch_cards, store_products, pricing_tiers,
+        portfolio, sew_outs, hero_slides, digitizers, site_config, faqs, testimonials
+      });
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });

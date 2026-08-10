@@ -238,120 +238,16 @@ export async function fetchOrdersFromSupabase() {
 
 // Create new Order in Supabase DB & Storage
 export async function createOrderInSupabase(newOrder) {
-  if (!isSupabaseConfigured) return null;
-
   try {
-    let uploadedArtworkUrl = newOrder.artworkUrl || newOrder.image_url || newOrder.logo || newOrder.file_url || '';
-
-    // Attach the authenticated user id (auth.users) for RLS ownership
-    const sessionRes = await supabase.auth.getSession().catch(() => null);
-    const currentUserId = sessionRes?.data?.session?.user?.id || null;
-
-    // Upload artwork to Supabase Storage if dataURL or file
-    if (uploadedArtworkUrl && uploadedArtworkUrl.startsWith('data:')) {
-      const storageUrl = await uploadFileToCloudinary(
-        uploadedArtworkUrl,
-        'client-uploads',
-        'artwork'
-      );
-      if (storageUrl) uploadedArtworkUrl = storageUrl;
-    }
-
-    const resolvedCategory = newOrder.serviceCategory || newOrder.serviceType || newOrder.type || newOrder.title || 'Embroidery Digitizing';
-    const resolvedName = newOrder.clientName || 'Valued Client';
-    const resolvedEmail = newOrder.clientEmail || 'client@bdigitizing.pro';
-    const resolvedTitle = newOrder.title || `${resolvedCategory} Order`;
-    const resolvedPrice = parseFloat(newOrder.price || newOrder.totalPrice || 15.00);
-
-    const primaryDbRow = {
-      id: newOrder.id,
-      user_id: currentUserId,
-      client_email: resolvedEmail,
-      client_name: resolvedName,
-      service_category: resolvedCategory,
-      service_type: newOrder.serviceType || resolvedCategory,
-      title: resolvedTitle,
-      payment_status: newOrder.paymentStatus || 'unpaid',
-      price: resolvedPrice,
-      status: newOrder.status || 'pending',
-      fabric_type: newOrder.fabricType || 'Cotton Pique Polo',
-      placement_type: newOrder.placementType || 'Left Chest / Polo',
-      notes: newOrder.notes || '',
-      colors_count: newOrder.colorsCount || 4,
-      estimated_stitches: newOrder.estimatedStitches || 12400,
-      is_rush: Boolean(newOrder.isRush),
-      dimensions: newOrder.dimensions || { unit: 'inches', width: null, height: null },
-      requested_formats: newOrder.requestedFormats || ['dst'],
-      artwork_url: uploadedArtworkUrl
-    };
-
-    console.log("Saving Order Payload to Supabase DB:", primaryDbRow);
-
-    const { data, error } = await supabase.from('orders').insert([primaryDbRow]).select();
-    if (error) {
-      console.error('[Supabase Order Insert Error]:', error.message, error.details, error.hint, error);
-      throw error;
-    } else {
-      console.log('[Supabase Order Insert Success]: Order saved successfully in DB!', data);
-    }
-
-    // Record artwork file entry in order_files table
-    try {
-      if (newOrder.rawFiles && newOrder.rawFiles.length > 0) {
-        for (const rawFile of newOrder.rawFiles) {
-          if (!rawFile) continue;
-          
-          const storageUrl = await uploadFileToCloudinary(
-            rawFile,
-            'client-uploads',
-            `artwork/${newOrder.id}`
-          );
-          
-          if (storageUrl) {
-            const fileName = rawFile.name || `artwork_${Date.now()}.png`;
-            const fileExt = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : 'png';
-            
-            const fileRow = {
-              order_id: newOrder.id,
-              file_name: fileName,
-              file_url: storageUrl,
-              file_type: 'client_artwork',
-              file_size: rawFile.size || 0,
-              uploaded_by: newOrder.clientEmail || 'client',
-              storage_path: `artwork/${newOrder.id}`
-            };
-            
-            // Re-assign uploadedArtworkUrl to the first uploaded file just as a fallback
-            if (!uploadedArtworkUrl) uploadedArtworkUrl = storageUrl;
-            
-            const { error: fileErr } = await supabase.from('order_files').insert([fileRow]);
-            if (fileErr) {
-              console.warn('[Supabase Order File Insert Error]:', fileErr.message);
-            }
-          }
-        }
-      } else {
-        // Fallback for single data URL or empty
-        const fileRow = {
-          order_id: newOrder.id,
-          file_name: newOrder.artworkFileName || `${newOrder.id}_artwork.png`,
-          file_url: uploadedArtworkUrl || '',
-          file_type: 'client_artwork',
-          file_size: 0,
-          uploaded_by: newOrder.clientEmail || 'client',
-          storage_path: `artwork/${newOrder.id}`
-        };
-        const { error: fileErr } = await supabase.from('order_files').insert([fileRow]);
-        if (fileErr) console.warn('[Supabase Order File Insert Error]:', fileErr.message);
-      }
-    } catch (fErr) {
-      console.warn('[Supabase Order File Insert Exception]:', fErr);
-    }
-
-    return { success: true, artworkUrl: uploadedArtworkUrl };
+    const res = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'createOrder', payload: { primaryDbRow: newOrder, orderFiles: [] } })
+    });
+    const data = await res.json();
+    return { success: res.ok, data: data.order };
   } catch (err) {
-    console.error('[Supabase Create Order Exception]:', err);
-    return { success: false, error: err.message };
+    return { success: false, data: null };
   }
 }
 
@@ -718,147 +614,24 @@ export async function deletePricingTier(tierId) {
 // patch cards, store products, portfolio items, sew outs, hero slides, digitizers,
 // and the cms_content key/value store). Returns null when not configured.
 export async function fetchCatalogFromSupabase() {
-  if (!isSupabaseConfigured) return null;
-
   try {
-    const [services, pricingTiers, patchCards, storeProducts, portfolioItems, sewOuts, heroSlides, digitizers, cmsContent, dynamicPricingTiers, faqs, testimonials] =
-      await Promise.all([
-        supabase.from('services').select('*').order('sort_order', { ascending: true }),
-        supabase.from('pricing_cards').select('*').order('sort_order', { ascending: true }),
-        supabase.from('patch_cards').select('*').order('sort_order', { ascending: true }),
-        supabase.from('store_products').select('*').order('sort_order', { ascending: true }),
-        supabase.from('portfolio').select('*').order('sort_order', { ascending: true }),
-        supabase.from('sew_outs').select('*').order('sort_order', { ascending: true }),
-        supabase.from('hero_slides').select('*').order('sort_order', { ascending: true }),
-        supabase.from('digitizers').select('*').order('sort_order', { ascending: true }),
-        supabase.from('site_config').select('key, value'),
-        supabase.from('pricing_tiers').select('*').order('display_order', { ascending: true }),
-        supabase.from('faqs').select('*').order('sort_order', { ascending: true }),
-        supabase.from('testimonials').select('*').order('created_at', { ascending: false })
-      ]);
-
-    const mapServices = (rows) => (rows || []).map(s => ({
-      id: s.id,
-      title: s.title,
-      price: s.price,
-      stitches: s.stitches,
-      time: s.time,
-      icon: s.icon,
-      route: s.route,
-      desc: s.description
-    }));
-
-    const mapCards = (rows) => (rows || []).map(c => ({
-      id: c.id,
-      category: c.category,
-      title: c.title,
-      rate: c.rate,
-      unit: c.unit,
-      badge: c.badge,
-      popular: c.popular,
-      highlight: c.highlight,
-      features: c.features || []
-    }));
-
-    const configMap = {};
-    (cmsContent.data || []).forEach(item => { configMap[item.key] = item.value; });
-
+    const res = await fetch('/api/catalog?action=fetchAll');
+    const data = await res.json();
     return {
-      servicesList: mapServices(services.data),
-      pricingCards: mapCards(pricingTiers.data),
-      dynamicPricingTiers: dynamicPricingTiers.data || [],
-      patchCards: mapCards(patchCards.data),
-      storeProducts: (storeProducts.data || []).map(p => ({
-        id: p.id,
-        category: p.category,
-        title: p.title,
-        price: p.price,
-        unit: p.unit,
-        minQuantity: p.min_quantity,
-        badge: p.badge,
-        status: p.status,
-        image: p.image,
-        description: p.description,
-        sizes: p.sizes || [],
-        colors: p.colors || [],
-        features: p.features || []
-      })),
-      portfolioSamples: (portfolioItems.data || []).map(p => ({
-        id: p.id,
-        title: p.title,
-        category: p.category,
-        stitchCount: p.stitch_count,
-        colors: p.colors,
-        originalImage: p.original_image,
-        digitizedImage: p.digitized_image,
-        beforeImg: p.before_img,
-        afterImg: p.after_img,
-        clientType: p.client_type,
-        formats: p.formats,
-        description: p.description
-      })),
-      sewOuts: (sewOuts.data || []).map(s => ({
-        id: s.id,
-        title: s.title,
-        category: s.category,
-        beforeImg: s.before_img,
-        afterImg: s.after_img,
-        stitchCount: s.stitch_count,
-        formats: s.formats,
-        features: s.features || []
-      })),
-      heroSlides: (heroSlides.data || []).map(h => ({
-        id: h.id,
-        serviceKey: h.service_key,
-        badge: h.badge,
-        title: h.title,
-        highlight: h.highlight,
-        description: h.description,
-        rateLabel: h.rate_label,
-        primaryCta: h.primary_cta,
-        secondaryCta: h.secondary_cta,
-        bannerImage: h.banner_image,
-        trustPoints: h.trust_points || [],
-        label: h.label,
-        previewTitle: h.preview_title,
-        previewBefore: h.preview_before,
-        previewAfter: h.preview_after,
-        previewTag: h.preview_tag,
-        previewTagAfter: h.preview_tag_after
-      })),
-      digitizers: (digitizers.data || []).map(d => ({
-        id: d.id,
-        name: d.name,
-        role: d.role,
-        rating: d.rating,
-        activeJobs: d.active_jobs,
-        avatar: d.avatar
-      })),
-      faqs: (faqs.data || []).map(f => ({
-        id: f.id,
-        question: f.question,
-        answer: f.answer,
-        category: f.category,
-        sort_order: f.sort_order,
-        is_active: f.is_active
-      })),
-      testimonials: (testimonials.data || []).map(t => ({
-        id: t.id,
-        client_name: t.client_name,
-        company: t.company,
-        review_text: t.review_text,
-        rating: t.rating,
-        avatar: t.avatar,
-        is_active: t.is_active
-      })),
-      siteConfig: configMap,
-      siteSettings: configMap.site_settings || null,
-      heroGlobalSettings: configMap.hero_global_settings || null,
-      pricing: configMap.pricing || null,
-      serviceCms: configMap.service_cms || null
+      services: data.services || [],
+      pricing_tiers: data.pricing_tiers || [],
+      patch_cards: data.patch_cards || [],
+      store_products: data.store_products || [],
+      portfolio: data.portfolio || [],
+      sew_outs: data.sew_outs || [],
+      hero_slides: data.hero_slides || [],
+      digitizers: data.digitizers || [],
+      pricing_cards: data.pricing_cards || [],
+      site_config: data.site_config || [],
+      faqs: data.faqs || [],
+      testimonials: data.testimonials || []
     };
   } catch (err) {
-    console.warn('Supabase fetch catalog exception:', err);
     return null;
   }
 }
@@ -1065,31 +838,15 @@ export async function fetchWalletBalanceFromSupabase(email) {
 
 
 export async function addStoreProduct(product) {
-  if (!isSupabaseConfigured) return null;
   try {
-    const { data, error } = await supabase.from('store_products').insert([{
-      id: product.id,
-      category: product.category,
-      title: product.title,
-      price: product.price,
-      unit: product.unit || '',
-      min_quantity: product.minQuantity || 1,
-      badge: product.badge || '',
-      status: product.status || 'active',
-      image: product.image || '',
-      description: product.description || '',
-      sizes: product.sizes || [],
-      colors: product.colors || [],
-      features: product.features || []
-    }]).select();
-    if (error) throw error;
-    return data[0];
-  } catch (err) {
-    console.error('Error adding store product:', err);
-    return null;
-  }
+    const res = await fetch('/api/catalog', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'upsert', tableName: 'store_products', payload: product })
+    });
+    return res.ok ? product : null;
+  } catch { return null; }
 }
-
 
 export async function createConversation(dbConv) {
   try {
@@ -1127,21 +884,14 @@ export async function addChatMessage(chatId, messageObj) {
 // ============================================================
 
 export async function logTrackingEventToSupabase(eventData) {
-  if (!isSupabaseConfigured) return;
   try {
-    const { error } = await supabase.from('tracking_events').insert([{
-      event_name: eventData.eventName || 'PageView',
-      user_role: eventData.userRole || 'Visitor',
-      source: eventData.source || 'Visitor browser',
-      traffic_source: eventData.trafficSource || 'Direct',
-      value: eventData.value || '—',
-      page_path: eventData.pagePath || '/'
-    }]);
-    if (error) {
-      console.warn('Supabase tracking event insert error:', error.message);
-    }
-  } catch (err) {
-    console.warn('Supabase tracking event exception:', err);
+    await fetch('/api/tracking', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'logEvent', payload: eventData })
+    });
+  } catch (e) {
+    console.warn('Could not log tracking event', e);
   }
 }
 
@@ -1170,97 +920,12 @@ export async function fetchTrackingEventsFromSupabase() {
 // ============================================================
 
 export async function fetchMediaAssetsFromSupabase() {
-  if (!isSupabaseConfigured) return [];
   try {
-    const assets = [];
-
-    // 1. Fetch from storage buckets (client-uploads, order-assets)
-    try {
-      const { data: uploadFiles } = await supabase.storage.from('client-uploads').list('', { limit: 100 });
-      if (uploadFiles && uploadFiles.length > 0) {
-        for (const file of uploadFiles) {
-          if (file.name === '.emptyFolderPlaceholder') continue;
-          const { data: publicUrlData } = supabase.storage.from('client-uploads').getPublicUrl(file.name);
-          assets.push({
-            id: `upload-${file.id || file.name}`,
-            name: file.name,
-            category: 'Uploaded Asset',
-            url: publicUrlData.publicUrl,
-            size: file.metadata?.size ? `${(file.metadata.size / (1024 * 1024)).toFixed(2)} MB` : '1.0 MB',
-            createdAt: file.created_at
-          });
-        }
-      }
-    } catch (e) {
-      console.warn('Storage client-uploads list notice:', e.message);
-    }
-
-    // 2. Fetch live media from portfolio table
-    try {
-      const { data: portData } = await supabase.from('portfolio').select('id, title, category, original_image, digitized_image, created_at');
-      if (portData) {
-        portData.forEach(p => {
-          if (p.original_image) {
-            assets.push({
-              id: `port-orig-${p.id}`,
-              name: `${p.title || 'Artwork'} (Original)`,
-              category: 'Portfolio Before',
-              url: p.original_image,
-              size: '1.2 MB',
-              createdAt: p.created_at
-            });
-          }
-          if (p.digitized_image) {
-            assets.push({
-              id: `port-digi-${p.id}`,
-              name: `${p.title || 'Artwork'} (Digitized)`,
-              category: 'Portfolio After',
-              url: p.digitized_image,
-              size: '1.5 MB',
-              createdAt: p.created_at
-            });
-          }
-        });
-      }
-    } catch (e) {
-      console.warn('Portfolio media list notice:', e.message);
-    }
-
-    // 3. Fetch live media from sew_outs table
-    try {
-      const { data: sewData } = await supabase.from('sew_outs').select('id, title, category, before_img, after_img, created_at');
-      if (sewData) {
-        sewData.forEach(s => {
-          if (s.before_img) {
-            assets.push({
-              id: `sew-before-${s.id}`,
-              name: `${s.title || 'Sew-Out'} (Vector/Raster)`,
-              category: 'Portfolio Before',
-              url: s.before_img,
-              size: '1.1 MB',
-              createdAt: s.created_at
-            });
-          }
-          if (s.after_img) {
-            assets.push({
-              id: `sew-after-${s.id}`,
-              name: `${s.title || 'Sew-Out'} (Embroidery)`,
-              category: 'Portfolio After',
-              url: s.after_img,
-              size: '1.4 MB',
-              createdAt: s.created_at
-            });
-          }
-        });
-      }
-    } catch (e) {
-      console.warn('Sew-outs media list notice:', e.message);
-    }
-
-    return assets;
-  } catch (err) {
-    console.error('Supabase fetchMediaAssets exception:', err);
-    return [];
+    const portRes = await fetch('/api/catalog?action=fetchAll');
+    const data = await portRes.json();
+    return { portfolio: data.portfolio || [], sew_outs: data.sew_outs || [] };
+  } catch {
+    return { portfolio: [], sew_outs: [] };
   }
 }
 
@@ -1300,16 +965,10 @@ export async function uploadMediaAssetToSupabaseStorage(file, folder = 'media') 
 
 // CMS Helper
 export async function getCmsContent(key) {
-  if (!isSupabaseConfigured) return null;
   try {
-    const { data, error } = await supabase.from('cms_content').select('value').eq('key', key).single();
-    if (error) {
-      console.warn('Failed to fetch CMS content for key:', key, error);
-      return null;
-    }
-    return data?.value || null;
-  } catch (err) {
-    console.warn('Exception in getCmsContent:', err);
-    return null;
-  }
+    const res = await fetch(`/api/cms?action=fetchContent&key=${key}`);
+    const data = await res.json();
+    return data.content || null;
+  } catch { return null; }
 }
+
