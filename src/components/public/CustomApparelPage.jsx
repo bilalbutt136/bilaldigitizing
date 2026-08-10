@@ -26,7 +26,7 @@ export const CustomApparelPage = () => {
   const [sizeChart, setSizeChart] = React.useState([]);
 
   useEffect(() => {
-    import('../../../services/supabaseService').then(({ getCmsContent }) => {
+    import('../../services/supabaseService').then(({ getCmsContent }) => {
       getCmsContent('apparel_size_chart').then(data => {
         if (data && data.length > 0) {
           setSizeChart(data.map(item => ({

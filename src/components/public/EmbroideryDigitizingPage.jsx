@@ -20,7 +20,7 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
   const [cardsToRender, setCardsToRender] = useState([]);
   
   useEffect(() => {
-    import('../../../services/supabaseService').then(({ getCmsContent }) => {
+    import('../../services/supabaseService').then(({ getCmsContent }) => {
       getCmsContent('embroidery_cards').then(data => {
         if (data && data.length > 0) {
           // Map DB cards to include local icons since icons can't be stored in DB easily

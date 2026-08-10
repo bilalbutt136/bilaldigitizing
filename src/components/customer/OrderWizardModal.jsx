@@ -26,8 +26,9 @@ export const OrderWizardModal = () => {
     setCheckoutSession,
     walletBalance,
     setIsDepositModalOpen,
-    pricingCards = [],
-    patchCards = []
+    vectorCards = [],
+    patchCards = [],
+    serviceCmsContent = {}
   } = useAppState();
 
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -47,7 +48,8 @@ export const OrderWizardModal = () => {
   const [, setPlacementType] = useState('Left Chest / Polo');
   const [, setServiceCategory] = useState('Left Chest Digitizing');
   const [fabricType, setFabricType] = useState('Pique Cotton Polo');
-  const [requestedFormats, setRequestedFormats] = useState(['dst', 'pes', 'emb', 'svg']);
+  const defaultReqFormats = serviceCmsContent?.['order_wizard_formats'] || ['dst', 'pes', 'emb', 'svg'];
+  const [requestedFormats, setRequestedFormats] = useState(defaultReqFormats);
   const [isRush, setIsRush] = useState(false);
   const [notes, setNotes] = useState('');
 
@@ -186,7 +188,7 @@ export const OrderWizardModal = () => {
   ]);
 
   React.useEffect(() => {
-    import('../../../services/supabaseService').then(({ getCmsContent }) => {
+    import('../../services/supabaseService').then(({ getCmsContent }) => {
       getCmsContent('placement_options').then(data => {
         if (data && data.length > 0) {
           setPlacementOptions(data.map(item => ({
@@ -808,7 +810,7 @@ export const OrderWizardModal = () => {
                           <div>
                             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Required Machine File Formats</label>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.5rem' }}>
-                              {[{id: 'dst', label: '.DST'}, {id: 'pes', label: '.PES'}, {id: 'exp', label: '.EXP'}, {id: 'jef', label: '.JEF'}, {id: 'emb', label: '.EMB'}].map(fmt => (
+                              {(serviceCmsContent?.['format_options'] || [{id: 'dst', label: '.DST'}, {id: 'pes', label: '.PES'}, {id: 'exp', label: '.EXP'}, {id: 'jef', label: '.JEF'}, {id: 'emb', label: '.EMB'}]).map(fmt => (
                                 <div key={fmt.id} onClick={() => toggleFormat(fmt.id)} style={{ padding: '0.5rem', background: requestedFormats.includes(fmt.id) ? 'rgba(255, 122, 0, 0.2)' : '#0f172a', border: requestedFormats.includes(fmt.id) ? '1.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                   <input type="checkbox" checked={requestedFormats.includes(fmt.id)} onChange={() => {}} style={{ accentColor: 'var(--orange-500)' }} />
                                   <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffffff' }}>{fmt.label}</span>
@@ -829,10 +831,10 @@ export const OrderWizardModal = () => {
                     <div>
                       <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Required Vector Formats</label>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.5rem' }}>
-                        {['.AI', '.EPS', '.SVG', '.PDF', '.CDR', '.PSD'].map(fmt => (
-                          <div key={fmt} onClick={() => toggleFormat(fmt.toLowerCase())} style={{ padding: '0.5rem', background: requestedFormats.includes(fmt.toLowerCase()) ? 'rgba(255, 122, 0, 0.2)' : '#0f172a', border: requestedFormats.includes(fmt.toLowerCase()) ? '1.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <input type="checkbox" checked={requestedFormats.includes(fmt.toLowerCase())} onChange={() => {}} style={{ accentColor: 'var(--orange-500)' }} />
-                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffffff' }}>{fmt}</span>
+                        {(serviceCmsContent?.['vector_format_options'] || [{id: 'ai', ext: '.AI'}, {id: 'eps', ext: '.EPS'}, {id: 'svg', ext: '.SVG'}, {id: 'pdf', ext: '.PDF'}, {id: 'cdr', ext: '.CDR'}, {id: 'psd', ext: '.PSD'}]).map(fmt => (
+                          <div key={fmt.id || fmt.ext} onClick={() => toggleFormat((fmt.id || fmt.ext).toLowerCase())} style={{ padding: '0.5rem', background: requestedFormats.includes((fmt.id || fmt.ext).toLowerCase()) ? 'rgba(255, 122, 0, 0.2)' : '#0f172a', border: requestedFormats.includes((fmt.id || fmt.ext).toLowerCase()) ? '1.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <input type="checkbox" checked={requestedFormats.includes((fmt.id || fmt.ext).toLowerCase())} onChange={() => {}} style={{ accentColor: 'var(--orange-500)' }} />
+                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffffff' }}>{fmt.ext || fmt.name || fmt}</span>
                           </div>
                         ))}
                       </div>

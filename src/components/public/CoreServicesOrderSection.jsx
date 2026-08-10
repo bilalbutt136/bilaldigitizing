@@ -287,7 +287,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
   ]);
 
   useEffect(() => {
-    import('../../../services/supabaseService').then(({ getCmsContent }) => {
+    import('../../services/supabaseService').then(({ getCmsContent }) => {
       getCmsContent('placement_options').then(data => {
         if (data && data.length > 0) {
           setPlacementOptions(data.map(item => ({

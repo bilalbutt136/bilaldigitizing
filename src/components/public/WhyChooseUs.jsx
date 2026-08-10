@@ -46,7 +46,7 @@ export const WhyChooseUs = () => {
     'From initial logo upload to machine-ready stitch file delivery in 4 simple steps.'
   );
 
-  const defaultSteps = currentKey === 'all' ? [
+  const defaultSteps = serviceCmsContent['why_choose_us_steps'] || (currentKey === 'all' ? [
     { step: '01', icon: Upload, title: 'Select Service & Upload', desc: 'Choose your desired service and upload your artwork with specifications.' },
     { step: '02', icon: Layers, title: 'Expert Processing', desc: 'Our studio experts process your design via digitizing, vector tracing, or patch prototyping.' },
     { step: '03', icon: FileCheck, title: 'Quality Assurance', desc: 'Every order undergoes strict quality checks and digital proofing before finalization.' },
@@ -66,13 +66,18 @@ export const WhyChooseUs = () => {
     { step: '02', icon: Layers, title: 'Manual Pathing', desc: 'Master digitizers set Wilcom underlay density, satin stitch directions, and pull compensation.' },
     { step: '03', icon: Cpu, title: 'Virtual Simulation', desc: 'Every machine file undergoes pathing simulation to guarantee zero thread trims and breaks.' },
     { step: '04', icon: Download, title: 'Instant Download', desc: 'Download production-ready machine files (.DST, .PES, .EMB) with free revisions.' }
-  ];
+  ]);
 
   const stepsToRender = cmsWorkflow.steps && cmsWorkflow.steps.length > 0
     ? cmsWorkflow.steps.map((s, idx) => ({ ...s, icon: defaultSteps[idx]?.icon || CheckCircle2 }))
     : defaultSteps;
 
-  const trustFeatures = [
+  const ICONS = { Award, MousePointer2, RefreshCw, Globe, Headset, Shield, ThumbsUp, Upload, Layers, Cpu, Download, Sparkles, CheckCircle2, FileCheck, Truck, PenTool, Palette, ShieldCheck };
+
+  const trustFeatures = serviceCmsContent['trust_features']?.map(item => ({
+    ...item,
+    icon: ICONS[item.icon] || Award
+  })) || [
     { icon: Award, title: '15+ Years Experience', desc: 'Decades of expertise handling complex designs for global brands.' },
     { icon: MousePointer2, title: '100% Manual Digitizing', desc: 'No auto-tracing. Every stitch and node is manually plotted for perfection.' },
     { icon: RefreshCw, title: 'Free Unlimited Revisions', desc: 'We tweak and refine until you are 100% satisfied with the result.' },

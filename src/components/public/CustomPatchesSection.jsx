@@ -18,7 +18,7 @@ import {
 import { PackageCard } from './PackageCard';
 
 export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => {
-  const { openOrderWizard, setIsOrderWizardOpen, patchCards, portfolioSamples } = useAppState();
+  const { openOrderWizard, setIsOrderWizardOpen, patchCards = [], serviceCmsContent = {}, portfolioSamples } = useAppState();
 
   const [selectedTier, setSelectedTier] = useState('standard');
 
@@ -66,7 +66,7 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
   const [timelineSpecs, setTimelineSpecs] = useState([]);
 
   useEffect(() => {
-    import('../../../services/supabaseService').then(({ getCmsContent }) => {
+    import('../../services/supabaseService').then(({ getCmsContent }) => {
       getCmsContent('process_steps').then(data => {
         if (data && data.length > 0) {
           setProcessSteps(data.map((item, idx) => ({

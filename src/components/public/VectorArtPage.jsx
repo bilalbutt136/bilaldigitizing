@@ -31,7 +31,8 @@ export const VectorArtPage = ({ hideHero = false }) => {
     isAuthenticated,
     setIsAuthModalOpen,
     setAuthModalMode,
-    protectedNavigate
+    protectedNavigate,
+    serviceCmsContent = {}
   } = useAppState();
 
   // Multi-Item Vector Cart State
@@ -46,7 +47,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
   const [vectorCards, setVectorCards] = useState([]);
 
   React.useEffect(() => {
-    import('../../../services/supabaseService').then(({ getCmsContent }) => {
+    import('../../services/supabaseService').then(({ getCmsContent }) => {
       getCmsContent('vector_cards').then(data => {
         if (data && data.length > 0) {
           const mappedCards = data.map((card, idx) => {
@@ -157,7 +158,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const VECTOR_FORMAT_OPTIONS = [
+  const VECTOR_FORMAT_OPTIONS = serviceCmsContent['vector_format_options'] || [
     { id: 'ai', name: 'Adobe Illustrator (.AI)', ext: '.AI' },
     { id: 'eps', name: 'Encapsulated PostScript (.EPS)', ext: '.EPS' },
     { id: 'svg', name: 'Scalable Vector Graphics (.SVG)', ext: '.SVG' },

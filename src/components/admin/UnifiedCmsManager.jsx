@@ -37,6 +37,7 @@ export const UnifiedCmsManager = () => {
     faqs = [],
     testimonials = [],
     heroGlobalSettings,
+    serviceCmsContent = {},
     showToast 
   } = useAppState();
 
@@ -50,6 +51,13 @@ export const UnifiedCmsManager = () => {
   const [draftDigitizers, setDraftDigitizers] = useState([...(digitizers?.length ? digitizers : [])]);
   const [draftFaqs, setDraftFaqs] = useState([...(faqs?.length ? faqs : [])]);
   const [draftTestimonials, setDraftTestimonials] = useState([...(testimonials?.length ? testimonials : [])]);
+
+  // Global Config Arrays
+  const [draftTrustFeatures, setDraftTrustFeatures] = useState(JSON.stringify(serviceCmsContent['trust_features'] || [], null, 2));
+  const [draftWhySteps, setDraftWhySteps] = useState(JSON.stringify(serviceCmsContent['why_choose_us_steps'] || [], null, 2));
+  const [draftVectorFormats, setDraftVectorFormats] = useState(JSON.stringify(serviceCmsContent['vector_format_options'] || [], null, 2));
+  const [draftPortfolioCats, setDraftPortfolioCats] = useState(JSON.stringify(serviceCmsContent['portfolio_categories'] || [], null, 2));
+  const [draftOrderFormats, setDraftOrderFormats] = useState(JSON.stringify(serviceCmsContent['order_wizard_formats'] || [], null, 2));
 
   // Handle Input Changes
   const handleHeroChange = (id, field, value) => {
@@ -182,6 +190,13 @@ export const UnifiedCmsManager = () => {
         const res = await upsertTestimonials(draftTestimonials);
         if (!res) throw new Error("Failed to save testimonials");
       }
+      else if (activeTab === 'globals') {
+        await saveCmsConfigToSupabase('trust_features', JSON.parse(draftTrustFeatures));
+        await saveCmsConfigToSupabase('why_choose_us_steps', JSON.parse(draftWhySteps));
+        await saveCmsConfigToSupabase('vector_format_options', JSON.parse(draftVectorFormats));
+        await saveCmsConfigToSupabase('portfolio_categories', JSON.parse(draftPortfolioCats));
+        await saveCmsConfigToSupabase('order_wizard_formats', JSON.parse(draftOrderFormats));
+      }
       showToast('Live Website Updated Successfully!', 'success');
     } catch (err) {
       showToast('Error saving data: ' + err.message, 'error');
@@ -210,7 +225,8 @@ export const UnifiedCmsManager = () => {
           { id: 'sewouts', label: 'Sew-Outs Gallery', icon: ImageIcon },
           { id: 'team', label: 'Team & Digitizers', icon: Users },
           { id: 'faqs', label: 'FAQs', icon: HelpCircle },
-          { id: 'testimonials', label: 'Testimonials', icon: MessageSquare }
+          { id: 'testimonials', label: 'Testimonials', icon: MessageSquare },
+          { id: 'globals', label: 'Config Arrays', icon: Settings }
         ].map(tab => (
           <button
             key={tab.id}
@@ -559,6 +575,39 @@ export const UnifiedCmsManager = () => {
           <button onClick={() => setDraftTestimonials([...draftTestimonials, { id: 'test-' + Date.now(), client_name: 'New Client', review_text: '' }])} className="btn btn-primary-orange" style={{ marginTop: '2rem' }}>
             <Plus size={18} /> Add Testimonial
           </button>
+        </div>
+      )}
+
+      {/* Globals Tab */}
+      {activeTab === 'globals' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="card" style={{ padding: '2rem' }}>
+            <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem' }}>Global JSON Configuration Arrays</h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Edit the raw JSON arrays that drive various dynamic components across the site. Ensure the JSON is valid before saving.</p>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
+              <div className="form-group">
+                <label>Why Choose Us - Trust Features (trust_features)</label>
+                <textarea className="form-control" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} rows={10} value={draftTrustFeatures} onChange={e => setDraftTrustFeatures(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label>Why Choose Us - Steps (why_choose_us_steps)</label>
+                <textarea className="form-control" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} rows={10} value={draftWhySteps} onChange={e => setDraftWhySteps(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label>Vector Format Options (vector_format_options)</label>
+                <textarea className="form-control" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} rows={8} value={draftVectorFormats} onChange={e => setDraftVectorFormats(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label>Portfolio Categories (portfolio_categories)</label>
+                <textarea className="form-control" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} rows={8} value={draftPortfolioCats} onChange={e => setDraftPortfolioCats(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label>Order Wizard Formats (order_wizard_formats)</label>
+                <textarea className="form-control" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} rows={6} value={draftOrderFormats} onChange={e => setDraftOrderFormats(e.target.value)} />
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

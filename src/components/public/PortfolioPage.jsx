@@ -19,7 +19,7 @@ import {
 
 export const PortfolioPage = () => {
   const navigate = useNavigate();
-  const { portfolioSamples = [] } = useAppState();
+  const { portfolioSamples = [], serviceCmsContent = {} } = useAppState();
 
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeItemModal, setActiveItemModal] = useState(null);
@@ -49,7 +49,7 @@ export const PortfolioPage = () => {
     ? combinedItems 
     : combinedItems.filter(item => item.category === activeFilter);
 
-  const filterTabs = [
+  const filterTabs = serviceCmsContent?.['portfolio_categories'] || [
     { key: 'all', label: 'All Portfolio' },
     { key: 'embroidery', label: 'Embroidery Digitizing' },
     { key: 'vector', label: 'Vector Art Conversion' },

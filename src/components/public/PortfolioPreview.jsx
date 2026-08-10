@@ -5,10 +5,16 @@ import { ArrowRight, Layers, PenTool, Hexagon } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
 
-const categories = ['All', 'Embroidery', 'Vector Art', 'Custom Patches'];
-
 export const PortfolioPreview = () => {
-  const { portfolioSamples, activeHomeServiceTab } = useAppState();
+  const { portfolioSamples, activeHomeServiceTab, serviceCmsContent } = useAppState();
+  
+  const rawCategories = serviceCmsContent?.['portfolio_categories'] || [
+    { key: 'all', label: 'All Portfolio' },
+    { key: 'embroidery', label: 'Embroidery Digitizing' },
+    { key: 'vector', label: 'Vector Art Conversion' },
+    { key: 'patches', label: 'Custom Patches' }
+  ];
+  const categories = rawCategories.map(c => c.label);
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('All');
   const [hoveredId, setHoveredId] = useState(null);

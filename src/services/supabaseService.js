@@ -1575,21 +1575,18 @@ export async function uploadMediaAssetToSupabaseStorage(file, folder = 'media') 
   }
 }
 
-
- / /   C M S   H e l p e r 
- e x p o r t   a s y n c   f u n c t i o n   g e t C m s C o n t e n t ( k e y )   { 
-     i f   ( ! i s S u p a b a s e C o n f i g u r e d )   r e t u r n   n u l l ; 
-     t r y   { 
-         c o n s t   {   d a t a ,   e r r o r   }   =   a w a i t   s u p a b a s e . f r o m ( ' c m s _ c o n t e n t ' ) . s e l e c t ( ' v a l u e ' ) . e q ( ' k e y ' ,   k e y ) . s i n g l e ( ) ; 
-         i f   ( e r r o r )   { 
-             c o n s o l e . w a r n ( ' F a i l e d   t o   f e t c h   C M S   c o n t e n t   f o r   k e y : ' ,   k e y ,   e r r o r ) ; 
-             r e t u r n   n u l l ; 
-         } 
-         r e t u r n   d a t a ? . v a l u e   | |   n u l l ; 
-     }   c a t c h   ( e r r )   { 
-         c o n s o l e . w a r n ( ' E x c e p t i o n   i n   g e t C m s C o n t e n t : ' ,   e r r ) ; 
-         r e t u r n   n u l l ; 
-     } 
- } 
-  
- 
+// CMS Helper
+export async function getCmsContent(key) {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const { data, error } = await supabase.from('cms_content').select('value').eq('key', key).single();
+    if (error) {
+      console.warn('Failed to fetch CMS content for key:', key, error);
+      return null;
+    }
+    return data?.value || null;
+  } catch (err) {
+    console.warn('Exception in getCmsContent:', err);
+    return null;
+  }
+}

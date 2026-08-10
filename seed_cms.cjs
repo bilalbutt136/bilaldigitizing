@@ -160,6 +160,51 @@ async function seed() {
         { id: 'bag', label: 'Bag / Tote' },
         { id: 'other', label: 'Other (Specify in notes)' }
       ]
+    },
+    {
+      key: 'trust_features',
+      value: [
+        { icon: 'Award', title: '15+ Years Experience', desc: 'Decades of expertise handling complex designs for global brands.' },
+        { icon: 'MousePointer2', title: '100% Manual Digitizing', desc: 'No auto-tracing. Every stitch and node is manually plotted for perfection.' },
+        { icon: 'RefreshCw', title: 'Free Unlimited Revisions', desc: 'We tweak and refine until you are 100% satisfied with the result.' },
+        { icon: 'Globe', title: 'Worldwide Delivery', desc: 'Express shipping for patches, instant downloads for digital files globally.' },
+        { icon: 'Headset', title: '24/7 Support', desc: 'Round-the-clock customer service ready to answer technical queries.' },
+        { icon: 'Shield', title: 'Secure Payments', desc: 'Enterprise-grade encryption for all your transactions and files.' },
+        { icon: 'ThumbsUp', title: 'Satisfaction Guarantee', desc: 'Premium quality guaranteed on every single order, large or small.' }
+      ]
+    },
+    {
+      key: 'why_choose_us_steps',
+      value: [
+        { step: '01', icon: 'Upload', title: 'Select Service & Upload', desc: 'Choose your desired service and upload your artwork with specifications.' },
+        { step: '02', icon: 'Layers', title: 'Expert Processing', desc: 'Our studio experts process your design via digitizing, vector tracing, or patch prototyping.' },
+        { step: '03', icon: 'FileCheck', title: 'Quality Assurance', desc: 'Every order undergoes strict quality checks and digital proofing before finalization.' },
+        { step: '04', icon: 'Download', title: 'Instant Delivery / Shipping', desc: 'Download digital files instantly or receive your physical patches via express shipping.' }
+      ]
+    },
+    {
+      key: 'vector_format_options',
+      value: [
+        { id: 'ai', name: 'Adobe Illustrator (.AI)', ext: '.AI' },
+        { id: 'eps', name: 'Encapsulated PostScript (.EPS)', ext: '.EPS' },
+        { id: 'svg', name: 'Scalable Vector Graphics (.SVG)', ext: '.SVG' },
+        { id: 'pdf', name: 'Vector PDF Document (.PDF)', ext: '.PDF' },
+        { id: 'cdr', name: 'CorelDRAW (.CDR)', ext: '.CDR' },
+        { id: 'png', name: 'High-Res Transparent (.PNG)', ext: '.PNG (Transparent)' }
+      ]
+    },
+    {
+      key: 'portfolio_categories',
+      value: [
+        { key: 'all', label: 'All Portfolio' },
+        { key: 'embroidery', label: 'Embroidery Digitizing' },
+        { key: 'vector', label: 'Vector Art Conversion' },
+        { key: 'patches', label: 'Custom Patches' }
+      ]
+    },
+    {
+      key: 'order_wizard_formats',
+      value: ['dst', 'pes', 'emb', 'svg']
     }
   ];
 

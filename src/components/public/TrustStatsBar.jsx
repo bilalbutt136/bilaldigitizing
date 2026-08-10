@@ -104,7 +104,7 @@ export const TrustStatsBar = () => {
   const [cmsStats, setCmsStats] = useState([]);
 
   useEffect(() => {
-    import('../../../services/supabaseService').then(({ getCmsContent }) => {
+    import('../../services/supabaseService').then(({ getCmsContent }) => {
       getCmsContent('trust_stats').then(data => {
         if (data && data.length > 0) {
           setCmsStats(data);
