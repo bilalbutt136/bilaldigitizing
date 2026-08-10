@@ -160,6 +160,7 @@ export const AdminDashboard = () => {
       items: [
         { id: 'chat', label: 'Live Chat', icon: MessageSquare, badge: 2 },
         { id: 'cms', label: 'CMS Engine', icon: Image, tag: 'CMS' },
+        { id: 'portfolio', label: 'Portfolio Upload', icon: Image, onClick: () => window.location.href = '/admin-portal/portfolio' },
         { id: 'boltpayouts', label: 'Payment Hub', icon: DollarSign, tag: 'Gateway' }
       ]
     },
