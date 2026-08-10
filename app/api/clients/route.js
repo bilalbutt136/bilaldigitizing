@@ -27,7 +27,7 @@ export async function POST(request) {
     const supabase = createAdminClient();
 
     if (action === 'upsert') {
-      const { email, ...rest } = payload;
+      const { email, provider, ...rest } = payload;
       const { error } = await supabase
         .from('clients')
         .upsert({ email, ...rest, updated_at: new Date().toISOString() }, { onConflict: 'email' });
