@@ -41,7 +41,7 @@ export async function GET(request) {
 
     const { data, error } = await supabaseAdmin
       .from('admins')
-      .select('email, name, created_at')
+      .select('email, created_at')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -72,7 +72,6 @@ export async function POST(request) {
 
     const body = await request.json().catch(() => ({}));
     const newEmail = (body?.email || '').toLowerCase().trim();
-    const newName = (body?.name || '').trim();
     
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -96,7 +95,7 @@ export async function POST(request) {
 
     const { data, error } = await supabaseAdmin
       .from('admins')
-      .upsert({ email: newEmail, name: newName || null }, { onConflict: 'email' })
+      .upsert({ email: newEmail }, { onConflict: 'email' })
       .select()
       .single();
 

@@ -82,7 +82,6 @@ export async function POST(request) {
           name: clientName,
           full_name: clientName,
           company: user.user_metadata?.company || `${clientName}'s Apparel`,
-          role: 'customer',
           wallet_balance: 0,
           orders_count: 0
         })
@@ -99,13 +98,13 @@ export async function POST(request) {
     const newBalance =
       action === 'deposit' ? currentBalance + amount : Math.max(0, currentBalance - amount);
 
-    const { error: updateErr } = await supabaseAdmin
-      .from('clients')
-      .update({ wallet_balance: newBalance, updated_at: new Date().toISOString() })
-      .eq('id', clientData.id);
+    const { error: rpcErr } = await supabaseAdmin.rpc(
+      action === 'deposit' ? 'deposit_funds' : 'deduct_wallet_balance',
+      { p_user_id: user.id, p_amount: amount }
+    );
 
-    if (updateErr) {
-      return NextResponse.json({ success: false, error: updateErr.message }, { status: 500 });
+    if (rpcErr) {
+      return NextResponse.json({ success: false, error: rpcErr.message }, { status: 500 });
     }
 
     const { error: txErr } = await supabaseAdmin.from('transactions').insert({

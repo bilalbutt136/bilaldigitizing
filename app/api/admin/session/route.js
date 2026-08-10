@@ -31,7 +31,7 @@ export async function POST(request) {
       return NextResponse.json({
         success: true,
         isAdmin: true,
-        admin: { email, name: 'Master Admin' }
+        admin: { email }
       });
     }
 
@@ -44,7 +44,7 @@ export async function POST(request) {
 
     const { data: admin, error } = await supabaseAdmin
       .from('admins')
-      .select('email, name')
+      .select('email')
       .eq('email', email)
       .maybeSingle();
 
@@ -65,7 +65,7 @@ export async function POST(request) {
     return NextResponse.json({
       success: true,
       isAdmin: true,
-      admin: { email: admin.email, name: admin.name }
+      admin: { email: admin.email }
     });
   } catch (err) {
     return NextResponse.json(

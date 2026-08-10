@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict zXECJRH5jIi5qCeii01rXBOsOsNVdefQcOhfEC7CY64hBRazBFo04ZOYomMW6qL
+\restrict swMCzHxuKbCu3hrWdGlC1WcKmzBlWry7FxpNPZKO8qJWvTmc8bp5tAFD0bmGcQu
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.4
@@ -3617,8 +3617,8 @@ CREATE TABLE public.clients (
     wallet_balance numeric(10,2) DEFAULT 150.00,
     orders_count integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    user_id uuid
+    user_id uuid,
+    updated_at timestamp with time zone DEFAULT now()
 );
 
 
@@ -3734,9 +3734,9 @@ CREATE TABLE public.invoices (
     payment_url text,
     reference_id text,
     description text,
-    order_id text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    order_id text
 );
 
 
@@ -3791,12 +3791,12 @@ CREATE TABLE public.order_messages (
     order_id text,
     sender text NOT NULL,
     sender_name text DEFAULT 'Client'::text NOT NULL,
-    sender_role text DEFAULT 'client'::text,
     message text,
     attachment text,
-    attachments jsonb DEFAULT '[]'::jsonb,
     is_internal boolean DEFAULT false,
-    created_at timestamp with time zone DEFAULT now()
+    created_at timestamp with time zone DEFAULT now(),
+    sender_role text DEFAULT 'client'::text,
+    attachments jsonb DEFAULT '[]'::jsonb
 );
 
 
@@ -3885,23 +3885,6 @@ CREATE TABLE public.portfolio (
 
 
 ALTER TABLE public.portfolio OWNER TO postgres;
-
---
--- Name: portfolio_items; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.portfolio_items (
-    id text NOT NULL,
-    title text,
-    category text,
-    image text,
-    details text,
-    sort_order integer DEFAULT 0,
-    updated_at timestamp with time zone DEFAULT timezone('utc'::text, now())
-);
-
-
-ALTER TABLE public.portfolio_items OWNER TO postgres;
 
 --
 -- Name: pricing_cards; Type: TABLE; Schema: public; Owner: postgres
@@ -4070,17 +4053,6 @@ CREATE TABLE public.store_products (
 
 
 ALTER TABLE public.store_products OWNER TO postgres;
-
---
--- Name: test_table; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.test_table (
-    id integer
-);
-
-
-ALTER TABLE public.test_table OWNER TO postgres;
 
 --
 -- Name: testimonials; Type: TABLE; Schema: public; Owner: postgres
@@ -4971,14 +4943,6 @@ ALTER TABLE ONLY public.patch_cards
 
 
 --
--- Name: portfolio_items portfolio_items_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.portfolio_items
-    ADD CONSTRAINT portfolio_items_pkey PRIMARY KEY (id);
-
-
---
 -- Name: portfolio portfolio_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -5690,6 +5654,13 @@ CREATE INDEX clients_email_idx ON public.clients USING btree (email);
 --
 
 CREATE INDEX clients_user_id_idx ON public.clients USING btree (user_id);
+
+
+--
+-- Name: idx_invoices_order_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_invoices_order_id ON public.invoices USING btree (order_id);
 
 
 --
@@ -6448,38 +6419,10 @@ CREATE POLICY "Admin write access" ON public.patch_cards USING ((auth.role() = '
 
 
 --
--- Name: portfolio_items Admin write access; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Admin write access" ON public.portfolio_items USING ((auth.role() = 'authenticated'::text));
-
-
---
 -- Name: clients Admins have full access to clients; Type: POLICY; Schema: public; Owner: postgres
 --
 
 CREATE POLICY "Admins have full access to clients" ON public.clients USING ((auth.role() = 'authenticated'::text));
-
-
---
--- Name: conversations Allow public read/write on conversations; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow public read/write on conversations" ON public.conversations USING (true) WITH CHECK (true);
-
-
---
--- Name: messages Allow public read/write on messages; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow public read/write on messages" ON public.messages USING (true) WITH CHECK (true);
-
-
---
--- Name: order_messages Allow public read/write on order_messages; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow public read/write on order_messages" ON public.order_messages USING (true) WITH CHECK (true);
 
 
 --
@@ -6515,13 +6458,6 @@ CREATE POLICY "Public read access" ON public.hero_slides FOR SELECT USING (true)
 --
 
 CREATE POLICY "Public read access" ON public.patch_cards FOR SELECT USING (true);
-
-
---
--- Name: portfolio_items Public read access; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Public read access" ON public.portfolio_items FOR SELECT USING (true);
 
 
 --
@@ -6710,6 +6646,13 @@ ALTER TABLE public.cms_content ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: conversations conversations_access_policy; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY conversations_access_policy ON public.conversations USING ((public.is_admin() OR (lower(client_email) = public.current_user_email()))) WITH CHECK ((public.is_admin() OR (lower(client_email) = public.current_user_email())));
+
+
+--
 -- Name: digitizers; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
@@ -6761,6 +6704,17 @@ CREATE POLICY invoices_select_own ON public.invoices FOR SELECT USING ((public.i
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: messages messages_access_policy; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY messages_access_policy ON public.messages USING ((public.is_admin() OR (EXISTS ( SELECT 1
+   FROM public.conversations c
+  WHERE ((c.id = messages.conversation_id) AND ((lower(c.client_email) = public.current_user_email()) OR public.is_admin())))))) WITH CHECK ((public.is_admin() OR (EXISTS ( SELECT 1
+   FROM public.conversations c
+  WHERE ((c.id = messages.conversation_id) AND ((lower(c.client_email) = public.current_user_email()) OR public.is_admin()))))));
+
+
+--
 -- Name: order_files; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
@@ -6802,6 +6756,17 @@ CREATE POLICY order_messages_admin_update ON public.order_messages FOR UPDATE US
 --
 
 CREATE POLICY order_messages_insert_own ON public.order_messages FOR INSERT WITH CHECK ((public.is_admin() OR (EXISTS ( SELECT 1
+   FROM public.orders o
+  WHERE ((o.id = order_messages.order_id) AND ((o.user_id = auth.uid()) OR (lower(o.client_email) = public.current_user_email())))))));
+
+
+--
+-- Name: order_messages order_messages_secure_access; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY order_messages_secure_access ON public.order_messages USING ((public.is_admin() OR (EXISTS ( SELECT 1
+   FROM public.orders o
+  WHERE ((o.id = order_messages.order_id) AND ((o.user_id = auth.uid()) OR (lower(o.client_email) = public.current_user_email()))))))) WITH CHECK ((public.is_admin() OR (EXISTS ( SELECT 1
    FROM public.orders o
   WHERE ((o.id = order_messages.order_id) AND ((o.user_id = auth.uid()) OR (lower(o.client_email) = public.current_user_email())))))));
 
@@ -6860,12 +6825,6 @@ ALTER TABLE public.patch_cards ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.portfolio ENABLE ROW LEVEL SECURITY;
-
---
--- Name: portfolio_items; Type: ROW SECURITY; Schema: public; Owner: postgres
---
-
-ALTER TABLE public.portfolio_items ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: pricing_cards; Type: ROW SECURITY; Schema: public; Owner: postgres
@@ -8365,15 +8324,6 @@ GRANT ALL ON TABLE public.portfolio TO service_role;
 
 
 --
--- Name: TABLE portfolio_items; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.portfolio_items TO anon;
-GRANT ALL ON TABLE public.portfolio_items TO authenticated;
-GRANT ALL ON TABLE public.portfolio_items TO service_role;
-
-
---
 -- Name: TABLE pricing_cards; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -8443,15 +8393,6 @@ GRANT ALL ON TABLE public.site_config TO service_role;
 GRANT ALL ON TABLE public.store_products TO anon;
 GRANT ALL ON TABLE public.store_products TO authenticated;
 GRANT ALL ON TABLE public.store_products TO service_role;
-
-
---
--- Name: TABLE test_table; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.test_table TO anon;
-GRANT ALL ON TABLE public.test_table TO authenticated;
-GRANT ALL ON TABLE public.test_table TO service_role;
 
 
 --
@@ -8959,5 +8900,5 @@ ALTER EVENT TRIGGER pgrst_drop_watch OWNER TO supabase_admin;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict zXECJRH5jIi5qCeii01rXBOsOsNVdefQcOhfEC7CY64hBRazBFo04ZOYomMW6qL
+\unrestrict swMCzHxuKbCu3hrWdGlC1WcKmzBlWry7FxpNPZKO8qJWvTmc8bp5tAFD0bmGcQu
 

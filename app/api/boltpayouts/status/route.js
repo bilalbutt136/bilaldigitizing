@@ -24,7 +24,7 @@ export async function GET(request) {
 
     const { data: invoice } = await supabaseAdmin
       .from('invoices')
-      .select('status, amount, method')
+      .select('status, amount, payment_method')
       .eq('id', invoiceId)
       .eq('user_id', user.id)
       .maybeSingle();
@@ -36,7 +36,8 @@ export async function GET(request) {
     return NextResponse.json({
       success: true,
       status: invoice.status,
-      amount: invoice.amount
+      amount: invoice.amount,
+      payment_method: invoice.payment_method
     });
 
   } catch (err) {

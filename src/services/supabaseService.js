@@ -282,27 +282,25 @@ export async function fetchOrdersFromSupabase() {
 
       return {
         id: ord.id,
-        title: ord.title || ord.description,
-        clientName: ord.client_name,
+        title: ord.order_name || `${ord.order_type} Order`,
         clientEmail: ord.client_email,
-        serviceCategory: ord.service_category || ord.service_type,
-        placementType: ord.placement_type,
+        serviceCategory: ord.service_type || ord.order_type,
+        placementType: ord.placement,
         fabricType: ord.fabric_type,
-        dimensions: ord.dimensions || { width: 3.5, height: 3.0, unit: 'inches' },
-        estimatedStitches: ord.estimated_stitches,
-        colorsCount: ord.colors_count,
-        requestedFormats: ord.requested_formats || ['dst', 'pes', 'emb', 'pdf'],
-        isRush: ord.is_rush,
-        price: parseFloat(ord.price || ord.cost || 15.00),
-        paymentStatus: ord.payment_status || 'Paid',
-        notes: ord.notes || ord.description,
+        dimensions: ord.dimensions || { width: ord.width, height: ord.height, unit: ord.unit },
+        estimatedStitches: ord.stitch_count,
+        colorsCount: ord.color_count,
+        requestedFormats: ord.format ? [ord.format] : ['dst', 'pes', 'emb', 'pdf'],
+        isRush: ord.turnaround_time === 'Rush',
+        price: parseFloat(ord.total_price || 15.00),
+        paymentStatus: ord.payment_status || 'unpaid',
+        notes: ord.instructions || '',
         artworkUrl: resolvedArtworkUrl,
         image_url: resolvedArtworkUrl,
         logo: resolvedArtworkUrl,
         file_url: resolvedArtworkUrl,
-        file_path: clientArtwork?.file_path || resolvedArtworkUrl,
+        file_path: clientArtwork?.storage_path || resolvedArtworkUrl,
         status: ord.status,
-        outputFileUrl: ord.output_file_url,
         createdAt: ord.created_at,
         uploadedMachineFiles: machineFiles,
         revisions: ordRevs.map(r => ({ id: r.id, requestedBy: r.requested_by, note: r.note || r.notes, createdAt: r.created_at })),
@@ -348,28 +346,24 @@ export async function createOrderInSupabase(newOrder) {
     const primaryDbRow = {
       id: newOrder.id,
       user_id: currentUserId,
-      title: resolvedTitle,
-      description: newOrder.notes || resolvedTitle,
-      client_id: newOrder.clientId || resolvedEmail,
-      client_name: resolvedName,
       client_email: resolvedEmail,
-      service_category: resolvedCategory,
+      order_type: resolvedCategory,
+      order_name: resolvedTitle,
       service_type: resolvedCategory,
-      placement_type: newOrder.placementType || 'Left Chest / Polo',
+      payment_status: newOrder.paymentStatus || 'unpaid',
+      total_price: resolvedPrice,
+      status: newOrder.status || 'pending',
       fabric_type: newOrder.fabricType || 'Cotton Pique Polo',
-      dimensions: newOrder.dimensions || { width: 3.5, height: 3.0, unit: 'inches' },
-      estimated_stitches: newOrder.estimatedStitches || 12400,
-      colors_count: newOrder.colorsCount || 4,
-      requested_formats: newOrder.requestedFormats || ['dst', 'pes', 'emb', 'pdf'],
-      is_rush: Boolean(newOrder.isRush),
-      price: resolvedPrice,
-      cost: resolvedPrice,
-      payment_status: newOrder.paymentStatus || 'pending',
-      notes: newOrder.notes || '',
-      artwork_url: uploadedArtworkUrl || '',
-      image_url: uploadedArtworkUrl || '',
-      logo: uploadedArtworkUrl || '',
-      status: newOrder.status || 'awaiting_payment'
+      placement: newOrder.placementType || 'Left Chest / Polo',
+      instructions: newOrder.notes || '',
+      color_count: newOrder.colorsCount || 4,
+      stitch_count: newOrder.estimatedStitches || 12400,
+      turnaround_time: newOrder.isRush ? 'Rush' : 'Standard',
+      dimensions: typeof newOrder.dimensions === 'string' ? newOrder.dimensions : JSON.stringify(newOrder.dimensions || {}),
+      width: newOrder.dimensions?.width || null,
+      height: newOrder.dimensions?.height || null,
+      unit: newOrder.dimensions?.unit || 'inches',
+      format: (newOrder.requestedFormats && newOrder.requestedFormats.length > 0) ? newOrder.requestedFormats[0] : 'dst'
     };
 
     console.log("Saving Order Payload to Supabase DB:", primaryDbRow);
@@ -401,13 +395,11 @@ export async function createOrderInSupabase(newOrder) {
             const fileRow = {
               order_id: newOrder.id,
               file_name: fileName,
-              file_format: fileExt,
-              file_type: 'client_artwork',
-              bucket_name: 'client-uploads',
-              file_path: `artwork/${newOrder.id}`,
               file_url: storageUrl,
-              public_url: storageUrl,
-              uploaded_by: newOrder.clientName || 'client'
+              file_type: 'client_artwork',
+              file_size: rawFile.size || 0,
+              uploaded_by: newOrder.clientEmail || 'client',
+              storage_path: `artwork/${newOrder.id}`
             };
             
             // Re-assign uploadedArtworkUrl to the first uploaded file just as a fallback
@@ -424,13 +416,11 @@ export async function createOrderInSupabase(newOrder) {
         const fileRow = {
           order_id: newOrder.id,
           file_name: newOrder.artworkFileName || `${newOrder.id}_artwork.png`,
-          file_format: 'png',
-          file_type: 'client_artwork',
-          bucket_name: 'client-uploads',
-          file_path: `artwork/${newOrder.id}`,
           file_url: uploadedArtworkUrl || '',
-          public_url: uploadedArtworkUrl || '',
-          uploaded_by: newOrder.clientName || 'client'
+          file_type: 'client_artwork',
+          file_size: 0,
+          uploaded_by: newOrder.clientEmail || 'client',
+          storage_path: `artwork/${newOrder.id}`
         };
         const { error: fileErr } = await supabase.from('order_files').insert([fileRow]);
         if (fileErr) console.warn('[Supabase Order File Insert Error]:', fileErr.message);
@@ -471,7 +461,8 @@ export async function updateOrderStatusInSupabase(orderId, newStatus, extraData 
     };
 
     if (extraData.outputFileUrl) {
-      updateObj.output_file_url = extraData.outputFileUrl;
+      // output_file_url doesn't exist on orders. If needed, this should go into order_files.
+      console.log('Skipping output_file_url on orders table, should be inserted into order_files');
     }
 
     console.log(`[Supabase Update Status] Executing database update on public.orders for id ${orderId}:`, updateObj);
@@ -505,13 +496,11 @@ export async function updateOrderStatusInSupabase(orderId, newStatus, extraData 
           await supabase.from('order_files').insert([{
             order_id: orderId,
             file_name: f.name,
-            file_format: f.format || f.name.split('.').pop().toLowerCase(),
-            file_type: 'finished_machine_file',
-            bucket_name: 'finished-packages',
-            file_path: `orders/${orderId}/${f.name}`,
             file_url: filePublicUrl,
-            public_url: filePublicUrl,
-            uploaded_by: 'Admin'
+            file_type: 'finished_machine_file',
+            file_size: 0,
+            uploaded_by: 'Admin',
+            storage_path: `orders/${orderId}/${f.name}`
           }]);
         }
       }

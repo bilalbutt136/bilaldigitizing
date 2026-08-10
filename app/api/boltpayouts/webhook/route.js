@@ -59,7 +59,7 @@ export async function POST(request) {
         .from('invoices')
         .select('*')
         .eq('bolt_order_id', boltOrderId)
-        .eq('status', 'pending')
+        .in('status', ['pending', 'unpaid'])
         .maybeSingle();
 
       if (!invoice) {
@@ -70,21 +70,21 @@ export async function POST(request) {
       // 2. Mark invoice as paid
       await supabaseAdmin
         .from('invoices')
-        .update({ status: 'paid' })
+        .update({ 
+          status: 'paid',
+          paid_at: new Date().toISOString()
+        })
         .eq('id', invoice.id);
 
-      // 3. Fetch client wallet
-      const { data: client } = await supabaseAdmin
-        .from('clients')
-        .select('id, wallet_balance')
-        .eq('email', invoice.client_email)
-        .maybeSingle();
+      // 3. Deposit funds to wallet via RPC
+      const { error: depositError } = await supabaseAdmin.rpc('deposit_funds', {
+        p_user_id: invoice.user_id,
+        p_amount: invoice.amount
+      });
 
       let transactionId = null;
 
-      if (client) {
-        let newBalance = parseFloat(client.wallet_balance || 0) + parseFloat(invoice.amount);
-        
+      if (!depositError) {
         // 4. Log deposit transaction
         const { data: depositTx } = await supabaseAdmin
           .from('transactions')
@@ -93,7 +93,7 @@ export async function POST(request) {
             client_email: invoice.client_email,
             type: 'deposit',
             amount: invoice.amount,
-            payment_method: `BoltPayouts (${invoice.method})`,
+            payment_method: `BoltPayouts (${invoice.payment_method || 'unknown'})`,
             description: `Wallet Deposit (+ $${parseFloat(invoice.amount).toFixed(2)})`
           }])
           .select()
@@ -105,36 +105,35 @@ export async function POST(request) {
 
         // If this invoice was specifically for an order, instantly deduct the balance and mark paid!
         if (invoice.order_id) {
-            newBalance = newBalance - parseFloat(invoice.amount);
+            const { error: deductError } = await supabaseAdmin.rpc('deduct_wallet_balance', {
+              p_user_id: invoice.user_id,
+              p_amount: invoice.amount
+            });
             
-            // Log deduction transaction
-            await supabaseAdmin
-              .from('transactions')
-              .insert([{
-                user_id: invoice.user_id,
-                client_email: invoice.client_email,
-                type: 'order_payment',
-                amount: -parseFloat(invoice.amount),
-                payment_method: `Studio Wallet Credit`,
-                description: `Order Brief Payment (- $${parseFloat(invoice.amount).toFixed(2)})`
-              }]);
-              
-            // Update the order itself atomically
-            await supabaseAdmin
-              .from('orders')
-              .update({ 
-                status: 'in_progress', 
-                payment_status: 'paid',
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', invoice.order_id);
+            if (!deductError) {
+              // Log deduction transaction
+              await supabaseAdmin
+                .from('transactions')
+                .insert([{
+                  user_id: invoice.user_id,
+                  client_email: invoice.client_email,
+                  type: 'order_payment',
+                  amount: -parseFloat(invoice.amount),
+                  payment_method: `Studio Wallet Credit`,
+                  description: `Order Brief Payment (- $${parseFloat(invoice.amount).toFixed(2)})`
+                }]);
+                
+              // Update the order itself atomically
+              await supabaseAdmin
+                .from('orders')
+                .update({ 
+                  status: 'in_progress', 
+                  payment_status: 'paid',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', invoice.order_id);
+            }
         }
-
-        // 5. Update client balance finally
-        await supabaseAdmin
-          .from('clients')
-          .update({ wallet_balance: newBalance })
-          .eq('id', client.id);
       }
 
       // 5. Generate receipt
@@ -145,7 +144,7 @@ export async function POST(request) {
           user_id: invoice.user_id,
           client_email: invoice.client_email,
           amount: invoice.amount,
-          method: invoice.method,
+          payment_method: invoice.payment_method,
           bolt_order_id: boltOrderId,
           transaction_id: transactionId
         }]);

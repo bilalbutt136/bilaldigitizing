@@ -76,11 +76,10 @@ export async function POST(request) {
         user_id: user.id,
         client_email: user.email,
         amount: amount,
-        method: method,
+        payment_method: method,
         status: 'pending',
         bolt_order_id: boltOrderId,
-        payment_url: paymentUrl,
-        description: `Wallet Deposit ($${amount.toFixed(2)})`,
+        invoice_number: `INV-${Date.now()}`,
         order_id: orderId || null
       }])
       .select()
