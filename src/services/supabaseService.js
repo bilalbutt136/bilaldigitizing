@@ -775,11 +775,17 @@ export async function upsertCatalogDataToSupabase(tableName, dataArray) {
   if (!isSupabaseConfigured || !tableName || !dataArray || !dataArray.length) return false;
 
   try {
-    // Add updated_at to each item
-    const payload = dataArray.map(item => ({
-      ...item,
-      updated_at: new Date().toISOString()
-    }));
+    const payload = dataArray.map(item => {
+      const newItem = {
+        ...item,
+        updated_at: new Date().toISOString()
+      };
+      // Remove temporary frontend IDs so Supabase can auto-generate the real integer ID
+      if (typeof newItem.id === 'string' && newItem.id.includes('-')) {
+        delete newItem.id;
+      }
+      return newItem;
+    });
     
     const { error } = await supabase
       .from(tableName)
