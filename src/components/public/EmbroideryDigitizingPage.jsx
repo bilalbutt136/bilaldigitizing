@@ -17,79 +17,35 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
-  const defaultCards = [
-    {
-      id: 'pcard-basic',
-      category: 'embroidery',
-      tierKey: 'basic',
-      title: 'Basic Digitizing',
-      subTitle: 'Ideal for simple left chest / small logos up to 4"',
-      icon: Zap,
-      discountTag: 'ESSENTIAL',
-      strikePrice: '$10.00',
-      rate: `$5.00`,
-      unit: '/ design',
-      delivery: '8 - 12 Hours Express Delivery',
-      btnText: 'Order Basic ($5.00)',
-      badge: 'ESSENTIAL',
-      popular: false,
-      features: [
-        'Standard turnaround (8-12 Hours)',
-        '.DST / .PES machine files',
-        'Essential stitch paths & underlay',
-        'Free native .EMB source file',
-        '100% Free Unlimited Revisions'
-      ]
-    },
-    {
-      id: 'pcard-standard',
-      category: 'embroidery',
-      tierKey: 'standard',
-      title: 'Standard Digitizing',
-      subTitle: 'Ideal for standard left chest, caps & sleeves',
-      icon: Trophy,
-      discountTag: 'MOST POPULAR',
-      strikePrice: '$18.00',
-      rate: `$10.00`,
-      unit: '/ design',
-      delivery: '8 - 12 Hours Express Available',
-      btnText: 'Order Standard ($10.00)',
-      badge: 'MOST POPULAR',
-      popular: true,
-      features: [
-        '8-Hour Express Available',
-        'Free native .EMB source files',
-        '3D Puff Cap density pathing',
-        'All major machine formats',
-        '100% Free Unlimited Revisions'
-      ]
-    },
-    {
-      id: 'pcard-premium',
-      category: 'embroidery',
-      tierKey: 'premium',
-      title: 'Premium Digitizing',
-      subTitle: 'Ideal for Jacket Backs & Large Crests (Full Back)',
-      icon: Sparkles,
-      discountTag: 'VIP & COMPLEX',
-      strikePrice: '$35.00',
-      rate: `$20.00`,
-      unit: '/ design',
-      delivery: '12 - 24 Hours Priority Delivery',
-      btnText: 'Order Premium ($20.00)',
-      badge: 'VIP & COMPLEX',
-      popular: false,
-      features: [
-        'Jacket back high stitch count verification',
-        'Complex 3D Puff & multi-layer pathing',
-        '24/7 Priority studio support',
-        'Free machine simulation sew-out proof',
-        '100% Free Unlimited Revisions'
-      ]
-    }
-  ];
-
-  const cardsToRender = defaultCards;
+  const [cardsToRender, setCardsToRender] = useState([]);
+  
+  useEffect(() => {
+    import('../../../services/supabaseService').then(({ getCmsContent }) => {
+      getCmsContent('embroidery_cards').then(data => {
+        if (data && data.length > 0) {
+          // Map DB cards to include local icons since icons can't be stored in DB easily
+          const iconMap = { 'Zap': Zap, 'Trophy': Trophy, 'Sparkles': Sparkles };
+          const mappedCards = data.map((card, i) => ({
+            id: `pcard-${i}`,
+            category: 'embroidery',
+            tierKey: card.title.toLowerCase().includes('premium') ? 'premium' : (card.popular ? 'standard' : 'basic'),
+            title: card.title,
+            subTitle: card.description,
+            icon: i === 0 ? Zap : (i === 1 ? Trophy : Sparkles),
+            discountTag: card.popular ? 'MOST POPULAR' : '',
+            rate: card.price,
+            unit: '/ design',
+            delivery: card.turnaround,
+            btnText: `Order (${card.price})`,
+            badge: card.popular ? 'MOST POPULAR' : '',
+            popular: card.popular,
+            features: card.features
+          }));
+          setCardsToRender(mappedCards);
+        }
+      });
+    });
+  }, []);
 
   const handleSelectTier = (tierKey = 'standard', cardObj = null) => {
     setSelectedTier(tierKey);

@@ -43,6 +43,39 @@ export const VectorArtPage = ({ hideHero = false }) => {
   const [isRush, setIsRush] = useState(false);
   const [paymentOption, setPaymentOption] = useState('bolt'); // 'bolt' | 'wallet'
   const [isOrderViewOpen, setIsOrderViewOpen] = useState(false);
+  const [vectorCards, setVectorCards] = useState([]);
+
+  React.useEffect(() => {
+    import('../../../services/supabaseService').then(({ getCmsContent }) => {
+      getCmsContent('vector_cards').then(data => {
+        if (data && data.length > 0) {
+          const mappedCards = data.map((card, idx) => {
+            const isRush = card.title.toLowerCase().includes('rush');
+            const isComplex = card.title.toLowerCase().includes('complex');
+            
+            return {
+              id: `vec-${idx}`,
+              title: card.title,
+              subTitle: card.description,
+              discountTag: card.popular ? '⭐ MOST POPULAR' : (isRush ? '✨ EXPRESS' : ''),
+              badge: card.popular ? 'MOST POPULAR' : '',
+              popular: card.popular,
+              rate: card.price,
+              unit: '/ design',
+              delivery: card.turnaround,
+              complexityValue: isComplex ? 'Complex Vector Redraw' : 'Simple Vector Redraw',
+              isRushValue: isRush,
+              tierKey: isRush ? 'premium' : (card.popular ? 'standard' : 'basic'),
+              category: 'vector',
+              features: card.features,
+              btnText: `Configure Order (${card.price})`
+            };
+          });
+          setVectorCards(mappedCards);
+        }
+      });
+    });
+  }, []);
 
   const addVectorItem = () => {
     setVectorItems(prev => [
@@ -391,70 +424,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
                 setIsOrderViewOpen(true);
               };
 
-              const vectorCards = [
-                {
-                  id: 'vec-simple',
-                  title: 'Simple Vector Redraw',
-                  subTitle: 'Logos with clean lines, solid color fills, text vectorization, and 1–3 solid color elements.',
-                  discountTag: '⚡ SIMPLE REDRAW',
-                  rate: `$${simpleRate.toFixed(2)}`,
-                  unit: '/ design',
-                  delivery: '8–12 Hours Standard Delivery',
-                  complexityValue: 'Simple Vector Redraw',
-                  isRushValue: false,
-                  tierKey: 'basic',
-                  category: 'vector',
-                  features: [
-                    '100% Hand-drawn vector paths',
-                    'All formats (.AI, .EPS, .SVG, .PDF)',
-                    'Clean node reduction & pantone colors',
-                    'Free Unlimited Revisions'
-                  ],
-                  btnText: 'Configure Simple Order'
-                },
-                {
-                  id: 'vec-complex',
-                  title: 'Complex Vector Redraw',
-                  subTitle: 'Mascots, intricate crests, gradient shading, fine line details, and multi-color illustrations.',
-                  discountTag: '⭐ MOST POPULAR • COMPLEX',
-                  badge: 'MOST POPULAR',
-                  popular: true,
-                  rate: `$${complexRate.toFixed(2)}`,
-                  unit: '/ design',
-                  delivery: '8–12 Hours Standard Delivery',
-                  complexityValue: 'Complex Vector Redraw',
-                  isRushValue: false,
-                  tierKey: 'standard',
-                  category: 'vector',
-                  features: [
-                    'Multi-layer artwork & gradient meshes',
-                    'Precise color separations (Pantone/CMYK)',
-                    'High detail line art & mascot tracing',
-                    'Free Unlimited Revisions'
-                  ],
-                  btnText: 'Configure Complex Order'
-                },
-                {
-                  id: 'vec-rush',
-                  title: 'Super Rush Vector',
-                  subTitle: 'Urgent deadline delivery. Dedicated vector artist assigned immediately for 2-4 hour express turnaround.',
-                  discountTag: '✨ EXPRESS • SUPER RUSH',
-                  rate: `$${(complexRate + rushFeeAmount).toFixed(2)}`,
-                  unit: '/ design',
-                  delivery: '2–4 Hours Express Priority',
-                  complexityValue: 'Complex Vector Redraw',
-                  isRushValue: true,
-                  tierKey: 'premium',
-                  category: 'vector',
-                  features: [
-                    '2–4 Hours Express Priority Delivery',
-                    'Dedicated lead vector artist assigned',
-                    'All formats (.AI, .EPS, .SVG, .PDF, .CDR)',
-                    'Priority revision turnaround'
-                  ],
-                  btnText: 'Configure Super Rush'
-                }
-              ];
+              const fallbackVectorCards = [];
 
               return vectorCards.map((cat, idx) => (
                 <PackageCard

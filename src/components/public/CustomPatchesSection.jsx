@@ -62,34 +62,31 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
         }))
     : [];
 
-  const processSteps = [
-    {
-      step: '01',
-      title: 'Submit Artwork & Backing Specs',
-      desc: 'Send us your logo artwork, size dimensions, quantity, and preferred backing (Iron-On, Sew-On, or Velcro).'
-    },
-    {
-      step: '02',
-      title: '1:1 Scale Digital Mockup Approval',
-      desc: 'Our studio master patch artists generate a 1:1 scale digital patch proof showing exact stitch paths and thread color matches within 24 hours.'
-    },
-    {
-      step: '03',
-      title: 'Physical Sample Photo Confirmation',
-      desc: 'Upon digital approval, we produce an actual physical sample patch, capture high-res photographs, and share for final client sign-off.'
-    },
-    {
-      step: '04',
-      title: 'Mass Production & Express Delivery',
-      desc: 'Completed patches undergo 100% quality inspection, retail poly-bagging, and express shipment directly to your doorstep in 7-10 business days.'
-    }
-  ];
+  const [processSteps, setProcessSteps] = useState([]);
+  const [timelineSpecs, setTimelineSpecs] = useState([]);
 
-  const timelineSpecs = [
-    { label: 'Digital proof', time: '1–3 business days' },
-    { label: 'Production', time: '5–10 business days', note: '(depending on quantity and design complexity)' },
-    { label: 'Shipping', time: '3–5 business days' }
-  ];
+  useEffect(() => {
+    import('../../../services/supabaseService').then(({ getCmsContent }) => {
+      getCmsContent('process_steps').then(data => {
+        if (data && data.length > 0) {
+          setProcessSteps(data.map((item, idx) => ({
+            step: String(idx + 1).padStart(2, '0'),
+            title: item.title,
+            desc: item.description
+          })));
+        }
+      });
+      getCmsContent('patch_timeline').then(data => {
+        if (data && data.length > 0) {
+          setTimelineSpecs(data.map(item => ({
+            label: item.label,
+            time: item.value,
+            note: item.note || ''
+          })));
+        }
+      });
+    });
+  }, []);
 
   return (
     <div style={{ background: 'var(--navy-950)', color: '#ffffff', minHeight: '100vh', paddingBottom: '5rem' }}>

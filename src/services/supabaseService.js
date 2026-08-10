@@ -347,23 +347,22 @@ export async function createOrderInSupabase(newOrder) {
       id: newOrder.id,
       user_id: currentUserId,
       client_email: resolvedEmail,
-      order_type: resolvedCategory,
-      order_name: resolvedTitle,
-      service_type: resolvedCategory,
+      client_name: resolvedName,
+      service_category: resolvedCategory,
+      service_type: newOrder.serviceType || resolvedCategory,
+      title: resolvedTitle,
       payment_status: newOrder.paymentStatus || 'unpaid',
-      total_price: resolvedPrice,
+      price: resolvedPrice,
       status: newOrder.status || 'pending',
       fabric_type: newOrder.fabricType || 'Cotton Pique Polo',
-      placement: newOrder.placementType || 'Left Chest / Polo',
-      instructions: newOrder.notes || '',
-      color_count: newOrder.colorsCount || 4,
-      stitch_count: newOrder.estimatedStitches || 12400,
-      turnaround_time: newOrder.isRush ? 'Rush' : 'Standard',
-      dimensions: typeof newOrder.dimensions === 'string' ? newOrder.dimensions : JSON.stringify(newOrder.dimensions || {}),
-      width: newOrder.dimensions?.width || null,
-      height: newOrder.dimensions?.height || null,
-      unit: newOrder.dimensions?.unit || 'inches',
-      format: (newOrder.requestedFormats && newOrder.requestedFormats.length > 0) ? newOrder.requestedFormats[0] : 'dst'
+      placement_type: newOrder.placementType || 'Left Chest / Polo',
+      notes: newOrder.notes || '',
+      colors_count: newOrder.colorsCount || 4,
+      estimated_stitches: newOrder.estimatedStitches || 12400,
+      is_rush: Boolean(newOrder.isRush),
+      dimensions: newOrder.dimensions || { unit: 'inches', width: null, height: null },
+      requested_formats: newOrder.requestedFormats || ['dst'],
+      artwork_url: uploadedArtworkUrl
     };
 
     console.log("Saving Order Payload to Supabase DB:", primaryDbRow);
@@ -1389,6 +1388,10 @@ export async function addChatMessage(conversationId, message) {
       created_at: message.timestamp || new Date().toISOString()
     }]).select();
     if (error) throw error;
+    
+    // Attempt to increment unread count
+    await supabase.rpc('increment_unread_count', { conv_id: conversationId }).catch(() => {});
+    
     return data[0];
   } catch (err) {
     console.error('Error adding message:', err);
@@ -1572,3 +1575,21 @@ export async function uploadMediaAssetToSupabaseStorage(file, folder = 'media') 
   }
 }
 
+
+ / /   C M S   H e l p e r 
+ e x p o r t   a s y n c   f u n c t i o n   g e t C m s C o n t e n t ( k e y )   { 
+     i f   ( ! i s S u p a b a s e C o n f i g u r e d )   r e t u r n   n u l l ; 
+     t r y   { 
+         c o n s t   {   d a t a ,   e r r o r   }   =   a w a i t   s u p a b a s e . f r o m ( ' c m s _ c o n t e n t ' ) . s e l e c t ( ' v a l u e ' ) . e q ( ' k e y ' ,   k e y ) . s i n g l e ( ) ; 
+         i f   ( e r r o r )   { 
+             c o n s o l e . w a r n ( ' F a i l e d   t o   f e t c h   C M S   c o n t e n t   f o r   k e y : ' ,   k e y ,   e r r o r ) ; 
+             r e t u r n   n u l l ; 
+         } 
+         r e t u r n   d a t a ? . v a l u e   | |   n u l l ; 
+     }   c a t c h   ( e r r )   { 
+         c o n s o l e . w a r n ( ' E x c e p t i o n   i n   g e t C m s C o n t e n t : ' ,   e r r ) ; 
+         r e t u r n   n u l l ; 
+     } 
+ } 
+  
+ 

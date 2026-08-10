@@ -77,14 +77,14 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
   const [capQuantity] = useState(12);
 
   // Multi-Placement Options Definition
-  const PLACEMENT_OPTIONS = [
+  const [PLACEMENT_OPTIONS, setPlacementOptions] = useState([
     { id: 'left_chest', label: 'Left Chest / Polo Logo', desc: 'Standard logo up to 4.0"', isJacketBack: false },
     { id: 'cap_front', label: 'Cap / Hat Front', desc: 'Center-out pathing for 3D/flat caps', isJacketBack: false },
     { id: 'sleeve_cuff', label: 'Sleeve / Cuff Emblem', desc: 'Small side sleeve logo', isJacketBack: false },
     { id: 'full_front', label: 'Full Chest / Front', desc: 'Chest crest logo up to 8.0"', isJacketBack: false },
     { id: 'jacket_back', label: 'Jacket Back / Full Back', desc: 'Large crest (9"-12"+ high stitch count)', isJacketBack: true },
     { id: 'beanie_visor', label: 'Beanie / Visor / Pocket', desc: 'Knit beanie or visor crest', isJacketBack: false }
-  ];
+  ]);
 
   // Dynamic Placement Rows Handlers
   const addPlacementItem = () => {
@@ -275,7 +275,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
     }
   }, [totalPlacementQuantity, activeService, isRush]);
 
-  const FORMAT_OPTIONS = [
+  const [FORMAT_OPTIONS, setFormatOptions] = useState([
     { id: 'dst', label: '.DST', desc: 'Tajima / Universal' },
     { id: 'pes', label: '.PES', desc: 'Brother / Baby Lock' },
     { id: 'exp', label: '.EXP', desc: 'Melco / Bernina' },
@@ -284,7 +284,29 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
     { id: 'emb', label: '.EMB', desc: 'Wilcom Source File' },
     { id: 'vp3', label: '.VP3', desc: 'PFAFF / Viking' },
     { id: 'xxx', label: '.XXX', desc: 'Singer' }
-  ];
+  ]);
+
+  useEffect(() => {
+    import('../../../services/supabaseService').then(({ getCmsContent }) => {
+      getCmsContent('placement_options').then(data => {
+        if (data && data.length > 0) {
+          setPlacementOptions(data.map(item => ({
+            ...item,
+            isJacketBack: item.id === 'jacket_back'
+          })));
+        }
+      });
+      getCmsContent('format_options').then(data => {
+        if (data && data.length > 0) {
+          setFormatOptions(data.map(item => ({
+            id: item.id,
+            label: item.label.split(' ')[0], // '.DST'
+            desc: item.label.split(' ').slice(1).join(' ') // '(Tajima)'
+          })));
+        }
+      });
+    });
+  }, []);
 
   const toggleTargetFormat = (fmtId) => {
     setTargetFormats(prev => 

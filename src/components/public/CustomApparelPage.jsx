@@ -23,14 +23,21 @@ export const CustomApparelPage = () => {
 
   const itemsToRender = apparelProducts;
 
-  const sizeChart = [
-    { size: 'S', chest: '34" - 36"', length: '28"' },
-    { size: 'M', chest: '38" - 40"', length: '29"' },
-    { size: 'L', chest: '42" - 44"', length: '30"' },
-    { size: 'XL', chest: '46" - 48"', length: '31"' },
-    { size: '2XL', chest: '50" - 52"', length: '32"' },
-    { size: '3XL', chest: '54" - 56"', length: '33"' }
-  ];
+  const [sizeChart, setSizeChart] = React.useState([]);
+
+  useEffect(() => {
+    import('../../../services/supabaseService').then(({ getCmsContent }) => {
+      getCmsContent('apparel_size_chart').then(data => {
+        if (data && data.length > 0) {
+          setSizeChart(data.map(item => ({
+            size: item.size,
+            chest: item.chest,
+            length: item.length || item.waist || '' // fallback to waist since CMS might have waist instead of length
+          })));
+        }
+      });
+    });
+  }, []);
 
   return (
     <div style={{ background: 'var(--bg-main)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>

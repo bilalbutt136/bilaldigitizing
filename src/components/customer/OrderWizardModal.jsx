@@ -177,13 +177,26 @@ export const OrderWizardModal = () => {
     }));
   };
 
-  const PLACEMENT_OPTIONS = [
+  const [PLACEMENT_OPTIONS, setPlacementOptions] = useState([
     { id: 'left_chest', label: 'Left Chest / Polo', desc: 'Standard logo up to 4.0"', isJacketBack: false },
     { id: 'cap_front', label: 'Cap / Hat Front', desc: 'Center-out pathing', isJacketBack: false },
     { id: 'sleeve_cuff', label: 'Sleeve / Cuff / Visor', desc: 'Small side emblem', isJacketBack: false },
     { id: 'full_front', label: 'Full Front / Chest', desc: 'Chest crest logo up to 8.0"', isJacketBack: false },
     { id: 'jacket_back', label: 'Jacket Back / Full Back', desc: 'Large crest (9"-12"+ high stitch count)', isJacketBack: true }
-  ];
+  ]);
+
+  React.useEffect(() => {
+    import('../../../services/supabaseService').then(({ getCmsContent }) => {
+      getCmsContent('placement_options').then(data => {
+        if (data && data.length > 0) {
+          setPlacementOptions(data.map(item => ({
+            ...item,
+            isJacketBack: item.id === 'jacket_back'
+          })));
+        }
+      });
+    });
+  }, []);
 
   const addPlacementItem = () => {
     setPlacementItems(prev => [
