@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
-import { createClient } from '../../../../src/lib/supabase/server';
+import { createAdminClient } from '/supabase/admin';
 
 async function isCallerAdmin(body) {
   if (!body?.callerEmail) return false;
@@ -27,7 +27,7 @@ export async function GET(request) {
       );
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data: { user } } = await supabase.auth.getUser();
     let callerEmail = (request.headers.get('x-admin-email') || '').toLowerCase().trim();
     if (user && user.email) callerEmail = user.email.toLowerCase().trim();
@@ -73,7 +73,7 @@ export async function POST(request) {
     const body = await request.json().catch(() => ({}));
     const newEmail = (body?.email || '').toLowerCase().trim();
     
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data: { user } } = await supabase.auth.getUser();
     let callerEmail = (body?.callerEmail || '').toLowerCase().trim();
     if (user && user.email) callerEmail = user.email.toLowerCase().trim();
@@ -125,7 +125,7 @@ export async function DELETE(request) {
 
     const email = (request.nextUrl.searchParams.get('email') || '').toLowerCase().trim();
     
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data: { user } } = await supabase.auth.getUser();
     let callerEmail = (request.headers.get('x-admin-email') || '').toLowerCase().trim();
     if (user && user.email) callerEmail = user.email.toLowerCase().trim();

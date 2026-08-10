@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '../../../src/lib/supabase/server';
+import { createAdminClient } from '/supabase/admin';
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
     const chatId = searchParams.get('chatId');
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     if (action === 'fetchConversations') {
       const { data, error } = await supabase.from('conversations').select('*').order('updated_at', { ascending: false });
@@ -31,7 +31,7 @@ export async function POST(request) {
   try {
     const data = await request.json();
     const { action, payload } = data;
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     if (action === 'upsertConversation') {
       const { data: convData, error } = await supabase.from('conversations').upsert([payload]).select();

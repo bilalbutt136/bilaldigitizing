@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '../../../src/lib/supabase/server';
+import { createAdminClient } from '/supabase/admin';
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
     const orderId = searchParams.get('orderId');
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     if (action === 'fetchAll') {
       const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
@@ -44,7 +44,7 @@ export async function POST(request) {
   try {
     const data = await request.json();
     const { action, payload } = data;
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     if (action === 'createOrder') {
       const { primaryDbRow, orderFiles } = payload;

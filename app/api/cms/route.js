@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '../../../src/lib/supabase/server';
+import { createAdminClient } from '/supabase/admin';
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
     const key = searchParams.get('key');
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     if (action === 'fetchContent' && key) {
       const { data, error } = await supabase.from('cms_content').select('value').eq('key', key).single();

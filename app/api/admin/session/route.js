@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
-import { createClient } from '../../../../src/lib/supabase/server';
+import { createAdminClient } from '/supabase/admin';
 
 // POST /api/admin/session
 // Verifies that the caller is an authenticated Supabase user whose email
@@ -8,7 +8,7 @@ import { createClient } from '../../../../src/lib/supabase/server';
 // using the service role, so admin status can never be spoofed client-side.
 export async function POST(request) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     const body = await request.json().catch(() => ({}));

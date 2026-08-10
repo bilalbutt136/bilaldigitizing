@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '../../../src/lib/supabase/server';
+import { createAdminClient } from '/supabase/admin';
 
 export async function POST(request) {
   try {
     const data = await request.json();
     const { action, payload } = data;
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     if (action === 'logEvent') {
       const { error } = await supabase.from('tracking_events').insert([payload]);

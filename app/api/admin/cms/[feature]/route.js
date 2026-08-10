@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '../../../../../src/lib/supabase/server';
+import { createAdminClient } from '/supabase/admin';
 
 export async function POST(request, { params }) {
   try {
     const { feature } = await params;
     const data = await request.json();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const upsertCatalogData = async (tableName, payload) => {
       await supabase.from(tableName).delete().neq('id', 0);

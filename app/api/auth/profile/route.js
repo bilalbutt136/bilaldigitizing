@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '../../../../src/lib/supabase/server';
+import { createAdminClient } from '../../../../src/lib/supabase/admin';
 
 export async function GET(request) {
   try {
@@ -9,7 +9,7 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Email required' }, { status: 400 });
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     let role = 'customer';
     let balance = 0;

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '../../../../src/lib/supabase/server';
+import { createAdminClient } from '/supabase/admin';
 import { v2 as cloudinary } from 'cloudinary';
 
 export async function POST(request) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
