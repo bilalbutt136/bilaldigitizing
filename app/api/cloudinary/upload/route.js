@@ -5,11 +5,6 @@ import { v2 as cloudinary } from 'cloudinary';
 export async function POST(request) {
   try {
     const supabase = createAdminClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
 
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
     const apiKey = process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY;
