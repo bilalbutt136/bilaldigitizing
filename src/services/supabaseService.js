@@ -575,8 +575,7 @@ export async function upsertClientInSupabase(userData) {
       user_id: userData.id,
       name: clientName,
       email: cleanEmail,
-      company: clientCompany,
-      country: userData.country || ''
+      company: clientCompany
     };
 
     if (existing) {

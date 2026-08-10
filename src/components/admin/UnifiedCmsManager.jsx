@@ -14,7 +14,8 @@ import {
   LayoutGrid,
   Users,
   MessageSquare,
-  HelpCircle
+  HelpCircle,
+  Settings
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase/client';
 import { 
