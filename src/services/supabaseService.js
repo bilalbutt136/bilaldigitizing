@@ -772,21 +772,49 @@ export async function saveCmsConfigToSupabase(key, value) {
 
 // Upsert array of catalog items to a dedicated table
 export async function upsertCatalogDataToSupabase(tableName, dataArray) {
-  if (!isSupabaseConfigured || !tableName || !dataArray || !dataArray.length) return false;
+  if (!isSupabaseConfigured || !tableName || !Array.isArray(dataArray)) return false;
 
   try {
+    // 1. Identify valid existing IDs to KEEP
+    const validExistingIds = dataArray
+      .filter(item => item.id && !(typeof item.id === 'string' && item.id.includes('-')))
+      .map(item => item.id);
+
+    // 2. Delete rows that are no longer in our list
+    if (validExistingIds.length > 0) {
+      const { error: delError } = await supabase
+        .from(tableName)
+        .delete()
+        .not('id', 'in', `(${validExistingIds.join(',')})`);
+      if (delError) console.warn(`Supabase delete ${tableName} warning:`, delError.message);
+    } else {
+      // If we have no existing IDs to keep, delete all rows
+      const { error: delError } = await supabase
+        .from(tableName)
+        .delete()
+        .not('id', 'is', null);
+      if (delError) console.warn(`Supabase delete all ${tableName} warning:`, delError.message);
+    }
+
+    // If there's nothing to insert/update, we're done
+    if (dataArray.length === 0) {
+      return true;
+    }
+
+    // 3. Prepare payload for upsert
     const payload = dataArray.map(item => {
       const newItem = {
         ...item,
         updated_at: new Date().toISOString()
       };
-      // Remove temporary frontend IDs so Supabase can auto-generate the real integer ID
+      // Remove temporary frontend IDs so Supabase can auto-generate the real ID
       if (typeof newItem.id === 'string' && newItem.id.includes('-')) {
         delete newItem.id;
       }
       return newItem;
     });
     
+    // 4. Upsert the data
     const { error } = await supabase
       .from(tableName)
       .upsert(payload, { onConflict: 'id' });
@@ -797,7 +825,7 @@ export async function upsertCatalogDataToSupabase(tableName, dataArray) {
     }
     return true;
   } catch (err) {
-    console.warn(`Supabase upsert ${tableName} exception:`, err);
+    console.warn(`Supabase sync ${tableName} exception:`, err);
     return false;
   }
 }
