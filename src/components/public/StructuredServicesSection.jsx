@@ -14,6 +14,7 @@ import {
   Check
 } from 'lucide-react';
 
+export const StructuredServicesSection = () => {
   const navigate = useNavigate();
   const { protectedNavigate, openOrderWizard, serviceCmsContent = {} } = useAppState();
 

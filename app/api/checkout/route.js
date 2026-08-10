@@ -3,7 +3,15 @@ import Stripe from 'stripe';
 
 export async function POST(req) {
   try {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_fallback', {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Stripe payments are not configured. Please use BoltPayouts or contact studio support.' 
+      }, { status: 503 });
+    }
+
+    const stripe = new Stripe(stripeKey, {
       apiVersion: '2023-10-16',
     });
 

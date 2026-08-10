@@ -742,6 +742,7 @@ export const StateProvider = ({ children }) => {
     if (isSupabaseConfigured) {
       try {
         await addRevisionInSupabase(orderId, revisionNote, authUser?.name || 'Client');
+        await updateOrderStatusInSupabase(orderId, 'revision');
       } catch (sbErr) {
         console.warn('Supabase add revision notice:', sbErr);
       }
@@ -1034,7 +1035,6 @@ export const StateProvider = ({ children }) => {
       faqs, setFaqs,
       saveCmsData,
       resetAllData,
-      digitizers,
       isOrderWizardOpen, setIsOrderWizardOpen,
       orderWizardInitialData, openOrderWizard,
       isStoreOrderModalOpen, setIsStoreOrderModalOpen,

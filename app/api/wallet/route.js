@@ -109,6 +109,7 @@ export async function POST(request) {
     }
 
     const { error: txErr } = await supabaseAdmin.from('transactions').insert({
+      user_id: user.id,
       client_email: email,
       type: action === 'deposit' ? 'deposit' : 'order_payment',
       amount: action === 'deposit' ? amount : -amount,

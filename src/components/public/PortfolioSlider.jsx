@@ -4,67 +4,28 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { MoveHorizontal, Eye, Scissors, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const DEFAULT_COMPARISON_ITEMS = [
-  {
-    id: 'comp-1',
-    title: 'Heraldic Crest & Coat of Arms',
-    description: 'Crisp satin stitch outline with dense fill underlay optimized for smooth pique knit fabric.',
-    before: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
-    after: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
-    stitchCount: '12,450 Stitches',
-    colors: '5 Thread Colors'
-  },
-  {
-    id: 'comp-2',
-    title: 'Tactical Cap & Snapback Logo',
-    description: 'Precision capped ends for foam perforations with zero thread breaks on cap frames.',
-    before: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80',
-    after: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
-    stitchCount: '15,800 Stitches',
-    colors: '2 Thread Colors (3mm Foam)'
-  },
-  {
-    id: 'comp-3',
-    title: 'Corporate Polo Left Chest',
-    description: 'Knit fabric pull compensation with smooth underlay foundation and zero puckering.',
-    before: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80',
-    after: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=800&q=80',
-    stitchCount: '6,800 Stitches',
-    colors: '4 Thread Colors'
-  },
-  {
-    id: 'comp-4',
-    title: 'Vintage Skull & Rose Vector',
-    description: 'Raster JPG transformed into resolution-independent AI/SVG vector with pantone color matching.',
-    before: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80',
-    after: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
-    stitchCount: 'N/A (Clean Vector)',
-    colors: '4 Screen Separation Colors'
-  }
-];
-
 export const PortfolioSlider = ({ isHero = false }) => {
-  const { portfolioSamples = [] } = useAppState();
+  const { portfolioSamples = [], sewOuts = [] } = useAppState();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sliderPos, setSliderPos] = useState(50); // 0% to 100% split
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(600);
 
-  const comparisonItems = (portfolioSamples && portfolioSamples.length > 0)
-    ? portfolioSamples.map(item => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        before: item.originalImage || item.beforeImg || item.before,
-        after: item.digitizedImage || item.afterImg || item.after,
-        stitchCount: item.stitchCount || '8,500 Stitches',
-        colors: item.colors || 'Full Color'
-      }))
-    : DEFAULT_COMPARISON_ITEMS;
+  // Combine live sew-outs and portfolio samples from Supabase
+  const sourceList = sewOuts.length > 0 ? sewOuts : portfolioSamples;
+  const comparisonItems = sourceList.map(item => ({
+    id: item.id,
+    title: item.title || 'Custom Embroidery Artwork',
+    description: item.description || (item.features ? (Array.isArray(item.features) ? item.features.join(' • ') : '') : 'High-precision embroidery stitch-out sample.'),
+    before: item.before_img || item.beforeImg || item.original_image || item.originalImage || item.before || '',
+    after: item.after_img || item.afterImg || item.digitized_image || item.digitizedImage || item.after || '',
+    stitchCount: item.stitch_count || item.stitchCount || 'Production Stitchout',
+    colors: item.colors || (item.formats ? `Formats: ${item.formats}` : 'Full Color Separation')
+  })).filter(item => item.before && item.after);
 
-  const safeIndex = currentIndex < comparisonItems.length ? currentIndex : 0;
-  const currentItem = comparisonItems[safeIndex] || comparisonItems[0];
+  const safeIndex = comparisonItems.length > 0 && currentIndex < comparisonItems.length ? currentIndex : 0;
+  const currentItem = comparisonItems[safeIndex] || null;
 
   const handleNextImage = () => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % comparisonItems.length);

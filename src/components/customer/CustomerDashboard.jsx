@@ -33,13 +33,6 @@ import { EmbroideryDigitizingPage } from '../public/EmbroideryDigitizingPage';
 import { VectorArtPage } from '../public/VectorArtPage';
 import { CustomPatchesSection } from '../public/CustomPatchesSection';
 
-const DEFAULT_USER = {
-  name: 'Valued Client',
-  email: '',
-  company: '',
-  role: 'customer'
-};
-
 export const CustomerDashboard = () => {
   const navigate = useNavigate();
   const { 
@@ -69,11 +62,19 @@ export const CustomerDashboard = () => {
 
   React.useEffect(() => {
     setMounted(true);
-  }, []);
+    if (!authUser && !currentUser) {
+      navigate('/login');
+    }
+  }, [authUser, currentUser, navigate]);
 
-  // Safe User Resolution (SSR-safe initial state)
-  const activeUser = (mounted ? (authUser || currentUser) : null) || DEFAULT_USER;
-  const userEmail = activeUser?.email || DEFAULT_USER.email;
+  // Safe User Resolution
+  const activeUser = authUser || currentUser || {
+    name: 'Client',
+    email: '',
+    company: '',
+    role: 'customer'
+  };
+  const userEmail = activeUser?.email || '';
 
   // Strict Category Helper Functions
   const isStoreOrder = (o) => {
@@ -291,8 +292,8 @@ export const CustomerDashboard = () => {
 
                 {/* User Info Header */}
                 <div style={{ background: 'linear-gradient(135deg, var(--navy-950) 0%, #0f172a 100%)', borderRadius: '12px', padding: '0.85rem', color: '#ffffff', marginBottom: '1rem' }}>
-                  <div style={{ fontWeight: 800, fontSize: '0.9rem' }}>{activeUser?.name || DEFAULT_USER.name}</div>
-                  <div style={{ fontSize: '0.73rem', color: '#94a3b8' }}>{activeUser?.company || DEFAULT_USER.company}</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.9rem' }}>{activeUser?.name || 'Client'}</div>
+                  <div style={{ fontSize: '0.73rem', color: '#94a3b8' }}>{activeUser?.company || ''}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem', background: 'rgba(255,255,255,0.08)', padding: '0.35rem 0.6rem', borderRadius: '6px', fontSize: '0.73rem' }}>
                     <span style={{ color: '#cbd5e1' }}>Wallet Credit:</span>
                     <strong style={{ color: 'var(--orange-400)', fontWeight: 800 }}>${walletBalance.toFixed(2)}</strong>
@@ -426,7 +427,7 @@ export const CustomerDashboard = () => {
                       <span className="badge badge-assigned" style={{ fontSize: '0.725rem', background: 'rgba(255, 122, 0, 0.12)', color: '#ff7a00', border: '1px solid rgba(255, 122, 0, 0.3)' }}>CLIENT PORTAL</span>
                     </div>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.2rem 0 0' }}>
-                      Welcome back, <strong>{activeUser?.name || DEFAULT_USER.name}</strong> ({activeUser?.company || DEFAULT_USER.company})
+                      Welcome back, <strong>{activeUser?.name || 'Client'}</strong>{activeUser?.company ? ` (${activeUser.company})` : ''}
                     </p>
                   </div>
 
@@ -795,17 +796,17 @@ export const CustomerDashboard = () => {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
                     <div>
                       <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Account Name</label>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', marginTop: '0.2rem' }}>{activeUser?.name || DEFAULT_USER.name}</div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', marginTop: '0.2rem' }}>{activeUser?.name || 'Client'}</div>
                     </div>
 
                     <div>
                       <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email Address</label>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', marginTop: '0.2rem' }}>{activeUser?.email || DEFAULT_USER.email}</div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', marginTop: '0.2rem' }}>{activeUser?.email || '—'}</div>
                     </div>
 
                     <div>
                       <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Company / Brand</label>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', marginTop: '0.2rem' }}>{activeUser?.company || DEFAULT_USER.company}</div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', marginTop: '0.2rem' }}>{activeUser?.company || '—'}</div>
                     </div>
 
                     <div>

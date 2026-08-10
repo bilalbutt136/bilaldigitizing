@@ -1101,10 +1101,13 @@ export async function fetchOrderMessagesFromSupabase(orderId) {
 
     return (data || []).map(m => ({
       id: m.id,
-      sender: m.sender,
-      senderRole: m.sender_role,
-      text: m.text,
-      attachments: m.attachments || [],
+      sender: m.sender_name || m.sender,
+      senderName: m.sender_name || m.sender,
+      senderRole: m.sender_role || (m.sender === 'Master Admin' ? 'admin' : 'client'),
+      text: m.message || m.text || '',
+      message: m.message || m.text || '',
+      attachment: m.attachment || null,
+      attachments: Array.isArray(m.attachments) ? m.attachments : (m.attachment ? [m.attachment] : []),
       timestamp: m.created_at
     }));
   } catch (err) {
@@ -1117,14 +1120,21 @@ export async function addOrderMessageInSupabase(orderId, text, senderName, sende
   if (!isSupabaseConfigured || !orderId) return null;
 
   try {
+    const resolvedSenderName = senderName || (senderRole === 'admin' ? 'Master Admin' : 'Client');
+    const mainAttachment = Array.isArray(attachments) && attachments.length > 0 
+      ? (typeof attachments[0] === 'string' ? attachments[0] : attachments[0]?.url || null) 
+      : null;
+
     const { data, error } = await supabase
       .from('order_messages')
       .insert([{
         order_id: orderId,
-        sender: senderName || (senderRole === 'admin' ? 'Master Admin' : 'Client'),
+        sender: resolvedSenderName,
+        sender_name: resolvedSenderName,
         sender_role: senderRole,
-        text: text || '',
-        attachments: attachments || []
+        message: text || '',
+        attachment: mainAttachment,
+        attachments: Array.isArray(attachments) ? attachments : []
       }])
       .select()
       .single();
@@ -1136,10 +1146,13 @@ export async function addOrderMessageInSupabase(orderId, text, senderName, sende
 
     return {
       id: data.id,
-      sender: data.sender,
-      senderRole: data.sender_role,
-      text: data.text,
-      attachments: data.attachments || [],
+      sender: data.sender_name || data.sender,
+      senderName: data.sender_name || data.sender,
+      senderRole: data.sender_role || senderRole,
+      text: data.message || '',
+      message: data.message || '',
+      attachment: data.attachment || null,
+      attachments: Array.isArray(data.attachments) ? data.attachments : (data.attachment ? [data.attachment] : []),
       timestamp: data.created_at
     };
   } catch (err) {
@@ -1442,3 +1455,137 @@ export async function fetchTrackingEventsFromSupabase() {
     return [];
   }
 }
+
+// ============================================================
+// MEDIA ASSETS / STORAGE BUCKET MANAGEMENT
+// ============================================================
+
+export async function fetchMediaAssetsFromSupabase() {
+  if (!isSupabaseConfigured) return [];
+  try {
+    const assets = [];
+
+    // 1. Fetch from storage buckets (client-uploads, order-assets)
+    try {
+      const { data: uploadFiles } = await supabase.storage.from('client-uploads').list('', { limit: 100 });
+      if (uploadFiles && uploadFiles.length > 0) {
+        for (const file of uploadFiles) {
+          if (file.name === '.emptyFolderPlaceholder') continue;
+          const { data: publicUrlData } = supabase.storage.from('client-uploads').getPublicUrl(file.name);
+          assets.push({
+            id: `upload-${file.id || file.name}`,
+            name: file.name,
+            category: 'Uploaded Asset',
+            url: publicUrlData.publicUrl,
+            size: file.metadata?.size ? `${(file.metadata.size / (1024 * 1024)).toFixed(2)} MB` : '1.0 MB',
+            createdAt: file.created_at
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Storage client-uploads list notice:', e.message);
+    }
+
+    // 2. Fetch live media from portfolio table
+    try {
+      const { data: portData } = await supabase.from('portfolio').select('id, title, category, original_image, digitized_image, created_at');
+      if (portData) {
+        portData.forEach(p => {
+          if (p.original_image) {
+            assets.push({
+              id: `port-orig-${p.id}`,
+              name: `${p.title || 'Artwork'} (Original)`,
+              category: 'Portfolio Before',
+              url: p.original_image,
+              size: '1.2 MB',
+              createdAt: p.created_at
+            });
+          }
+          if (p.digitized_image) {
+            assets.push({
+              id: `port-digi-${p.id}`,
+              name: `${p.title || 'Artwork'} (Digitized)`,
+              category: 'Portfolio After',
+              url: p.digitized_image,
+              size: '1.5 MB',
+              createdAt: p.created_at
+            });
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('Portfolio media list notice:', e.message);
+    }
+
+    // 3. Fetch live media from sew_outs table
+    try {
+      const { data: sewData } = await supabase.from('sew_outs').select('id, title, category, before_img, after_img, created_at');
+      if (sewData) {
+        sewData.forEach(s => {
+          if (s.before_img) {
+            assets.push({
+              id: `sew-before-${s.id}`,
+              name: `${s.title || 'Sew-Out'} (Vector/Raster)`,
+              category: 'Portfolio Before',
+              url: s.before_img,
+              size: '1.1 MB',
+              createdAt: s.created_at
+            });
+          }
+          if (s.after_img) {
+            assets.push({
+              id: `sew-after-${s.id}`,
+              name: `${s.title || 'Sew-Out'} (Embroidery)`,
+              category: 'Portfolio After',
+              url: s.after_img,
+              size: '1.4 MB',
+              createdAt: s.created_at
+            });
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('Sew-outs media list notice:', e.message);
+    }
+
+    return assets;
+  } catch (err) {
+    console.error('Supabase fetchMediaAssets exception:', err);
+    return [];
+  }
+}
+
+export async function uploadMediaAssetToSupabaseStorage(file, folder = 'media') {
+  if (!isSupabaseConfigured || !file) return null;
+  try {
+    const cleanFileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const filePath = `${folder}/${cleanFileName}`;
+
+    const { data, error } = await supabase.storage
+      .from('client-uploads')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Supabase storage upload error:', error.message);
+      return null;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('client-uploads')
+      .getPublicUrl(filePath);
+
+    return {
+      name: file.name,
+      url: publicUrlData.publicUrl,
+      path: filePath,
+      size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+    };
+  } catch (err) {
+    console.error('Supabase upload media asset exception:', err);
+    return null;
+  }
+}
+
