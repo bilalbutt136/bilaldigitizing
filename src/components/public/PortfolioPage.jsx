@@ -30,18 +30,18 @@ export const PortfolioPage = () => {
   }, []);
 
   const combinedItems = portfolioSamples && portfolioSamples.length > 0
-    ? portfolioSamples.map((s, idx) => ({
+    ? portfolioSamples.filter(s => s.is_active !== false).map((s, idx) => ({
         id: s.id || `sample-${idx}`,
         category: (s.category || '').toLowerCase().includes('vector') ? 'vector' : (s.category || '').toLowerCase().includes('patch') ? 'patches' : 'embroidery',
-        categoryLabel: s.category || 'Embroidery Digitizing',
+        categoryLabel: s.category === 'general' ? 'Embroidery Digitizing' : (s.category || 'Embroidery Digitizing'),
         title: s.title || 'Custom Digitized Design',
         description: s.description || 'Commercial machine file pathing with smooth underlay foundation.',
-        beforeImg: s.originalImage || s.beforeImg || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
-        afterImg: s.digitizedImage || s.afterImg || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
-        stitchCount: s.stitchCount || '10,500 Stitches',
+        beforeImg: s.original_image || s.before_img || s.originalImage || s.beforeImg || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
+        afterImg: s.digitized_image || s.after_img || s.digitizedImage || s.afterImg || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
+        stitchCount: s.stitch_count || s.stitchCount || '10,500 Stitches',
         colors: s.colors || 'Multi-Color Thread',
         formats: Array.isArray(s.formats) ? s.formats.join(', ') : (s.formats || 'DST, PES, EMB, SVG'),
-        clientType: s.clientType || 'Commercial Studio Client'
+        clientType: s.client_type || s.clientType || 'Commercial Studio Client'
       }))
     : [];
 

@@ -51,7 +51,8 @@ export const PortfolioPreview = () => {
     ...item,
     mappedCategory: (item.category || '').toLowerCase().includes('vector') ? 'Vector Art' 
                   : (item.category || '').toLowerCase().includes('patch') ? 'Custom Patches' 
-                  : 'Embroidery'
+                  : 'Embroidery',
+    image: item.digitized_image || item.original_image || item.after_img || item.before_img || item.afterImg || item.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'
   }));
 
   const filteredItems = activeCategory === 'All'
