@@ -40,16 +40,17 @@ export const CustomerSewOutsSection = () => {
   };
   const mappedCategory = serviceCategoryMap[currentKey] || 'Embroidery';
 
-  const dynamicSamples = sewOuts.filter(s => s.service_category === mappedCategory && s.is_active !== false);
+  // Default to showing active sew outs, regardless of category since the CMS doesn't assign specific categories yet.
+  const dynamicSamples = sewOuts.filter(s => s.is_active !== false);
 
   const samplesList = dynamicSamples.length > 0 
     ? dynamicSamples.map(s => ({
         id: s.id,
         title: s.title,
-        category: s.service_category,
-        stitches: s.stitch_count,
-        formats: s.formats,
-        image: s.image_url
+        category: s.category === 'general' ? mappedCategory : (s.category || mappedCategory),
+        stitches: s.stitch_count || 'Varies',
+        formats: s.formats || 'DST, EMB',
+        image: s.after_img || s.before_img || s.afterImg || s.beforeImg
       }))
     : (cmsShowcase.samples && cmsShowcase.samples.length > 0 ? cmsShowcase.samples : (
       currentKey === 'vector' ? [

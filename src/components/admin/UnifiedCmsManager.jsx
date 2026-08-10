@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { 
   Globe, 
@@ -59,6 +59,30 @@ export const UnifiedCmsManager = () => {
   const [draftVectorFormats, setDraftVectorFormats] = useState(JSON.stringify(serviceCmsContent['vector_format_options'] || [], null, 2));
   const [draftPortfolioCats, setDraftPortfolioCats] = useState(JSON.stringify(serviceCmsContent['portfolio_categories'] || [], null, 2));
   const [draftOrderFormats, setDraftOrderFormats] = useState(JSON.stringify(serviceCmsContent['order_wizard_formats'] || [], null, 2));
+
+  // Sync state when data loads from DB
+  useEffect(() => {
+    if (heroSlides?.length) setDraftHero([...heroSlides]);
+    if (portfolioSamples?.length) setDraftPortfolio([...portfolioSamples]);
+    if (sewOuts?.length) setDraftSewOuts([...sewOuts]);
+    if (digitizers?.length) setDraftDigitizers([...digitizers]);
+    if (faqs?.length) setDraftFaqs([...faqs]);
+    if (testimonials?.length) setDraftTestimonials([...testimonials]);
+  }, [heroSlides, portfolioSamples, sewOuts, digitizers, faqs, testimonials]);
+
+  useEffect(() => {
+    if (serviceCmsContent) {
+      if (serviceCmsContent['trust_features']) setDraftTrustFeatures(JSON.stringify(serviceCmsContent['trust_features'], null, 2));
+      if (serviceCmsContent['why_choose_us_steps']) setDraftWhySteps(JSON.stringify(serviceCmsContent['why_choose_us_steps'], null, 2));
+      if (serviceCmsContent['vector_format_options']) setDraftVectorFormats(JSON.stringify(serviceCmsContent['vector_format_options'], null, 2));
+      if (serviceCmsContent['portfolio_categories']) setDraftPortfolioCats(JSON.stringify(serviceCmsContent['portfolio_categories'], null, 2));
+      if (serviceCmsContent['order_wizard_formats']) setDraftOrderFormats(JSON.stringify(serviceCmsContent['order_wizard_formats'], null, 2));
+    }
+  }, [serviceCmsContent]);
+
+  useEffect(() => {
+    if (heroGlobalSettings) setDraftHeroGlobal(heroGlobalSettings);
+  }, [heroGlobalSettings]);
 
   // Handle Input Changes
   const handleHeroChange = (id, field, value) => {
