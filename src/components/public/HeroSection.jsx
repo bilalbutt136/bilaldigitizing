@@ -75,21 +75,13 @@ export const HeroSection = () => {
       const el = document.getElementById('pricing');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     } else {
-      if (openOrderWizard) {
-        openOrderWizard({ type: currentKey });
-      } else {
-        protectedNavigate('customer', true);
-      }
+      window.open(`/order?type=${currentKey}`, '_blank');
     }
   };
 
   const handleSecondaryClick = () => {
     if (currentKey === 'all') {
-      if (openOrderWizard) {
-        openOrderWizard({ type: 'all' });
-      } else {
-        protectedNavigate('customer', true);
-      }
+      window.open(`/order?type=all`, '_blank');
     } else {
       const el = document.getElementById('pricing');
       if (el) el.scrollIntoView({ behavior: 'smooth' });

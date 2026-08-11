@@ -1239,7 +1239,7 @@ export const OrderWizardModal = () => {
 
             {/* Sticky Live Order Summary Panel */}
             <div style={{ position: 'sticky', top: '10px' }}>
-              <div style={{ padding: '1.5rem', background: '#1e293b', border: '2px solid var(--orange-500)', borderRadius: '16px', boxShadow: '0 12px 32px rgba(255, 122, 0, 0.18)' }}>
+              <div style={{ padding: '1.5rem', background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#ffffff', marginBottom: '1.15rem', borderBottom: '1px solid rgba(255,255,255,0.12)', paddingBottom: '0.75rem' }}>
                   Order Summary
                 </h3>
