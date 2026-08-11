@@ -261,7 +261,7 @@ export const HeroSection = () => {
             }}>
               {currentKey === 'embroidery' ? 'Embroidery Digitizing Logo' : 
                currentKey === 'vector-art' ? 'Vector Art Conversion' :
-               currentKey === 'patches' ? 'Custom Physical Patches' :
+               currentKey === 'patch' ? 'Custom Patches' :
                globalTitle}
             </h1>
             
