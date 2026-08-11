@@ -30,6 +30,7 @@ export const OrderWizardModal = () => {
     setIsDepositModalOpen,
     vectorCards = [],
     patchCards = [],
+    pricingCards = [],
     serviceCmsContent = {}
   } = useAppState();
 
