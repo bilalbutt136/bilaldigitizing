@@ -300,7 +300,7 @@ export const HeroSection = () => {
               fontFamily: 'var(--font-body, "Inter", sans-serif)'
             }}>
               {currentKey === 'embroidery' ? "Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks. Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally." :
-               currentKey === 'vector-art' ? "Transform pixelated JPEGs, PNGs, and sketches into 100% hand-drawn scalable vector files with Pantone color separation. Perfect for screen printing, DTG, and large format printing with zero quality loss." :
+               currentKey === 'vector-art' ? "Transform pixelated JPEGs, PNGs, and sketches into 100% hand-drawn scalable vector files (.AI, .EPS, .SVG, .PDF, .CDR) with Pantone color separation. Perfect for screen printing, DTG, and large format printing with zero quality loss." :
                currentKey === 'patch' ? "High-density embroidered, 3D molded waterproof PVC, woven, and laser-engraved leather patches with physical worldwide shipping. Premium quality backings including iron-on, velcro, and peel-and-stick." :
                (activeService.description || "Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.")}
             </p>
