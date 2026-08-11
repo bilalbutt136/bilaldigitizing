@@ -9,7 +9,7 @@ export async function GET(request) {
     const supabase = createAdminClient();
 
     if (action === 'fetchAll') {
-      const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('orders').select('*, order_files(*)').order('created_at', { ascending: false });
       if (error) throw error;
       return NextResponse.json({ orders: data });
     }
@@ -88,9 +88,44 @@ export async function POST(request) {
     }
 
     if (action === 'updateStatus') {
-      const { orderId, newStatus } = payload;
-      const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
+      const { orderId, newStatus, extraData } = payload;
+      
+      const updatePayload = { status: newStatus };
+      if (extraData?.outputFileUrl) {
+        updatePayload.output_file_url = extraData.outputFileUrl;
+      }
+
+      const { error } = await supabase.from('orders').update(updatePayload).eq('id', orderId);
       if (error) throw error;
+      
+      // Process uploaded machine files for admin delivery
+      if (extraData?.uploadedMachineFiles && Array.isArray(extraData.uploadedMachineFiles)) {
+        for (const file of extraData.uploadedMachineFiles) {
+          if (!file.url || file.error) continue;
+          
+          // Check if file already exists in DB to prevent duplicates
+          const { data: existing } = await supabase
+            .from('order_files')
+            .select('id')
+            .eq('file_url', file.url)
+            .single();
+            
+          if (!existing) {
+            await supabase.from('order_files').insert([{
+              order_id: orderId,
+              file_name: file.name || 'machine_file',
+              file_format: file.format || file.name?.split('.').pop() || 'unknown',
+              file_type: 'machine_file',
+              bucket_name: 'cloudinary',
+              file_path: file.public_id || file.url,
+              public_url: file.url,
+              file_url: file.url,
+              uploaded_by: 'admin'
+            }]);
+          }
+        }
+      }
+
       return NextResponse.json({ success: true });
     }
 

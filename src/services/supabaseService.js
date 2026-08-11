@@ -245,11 +245,32 @@ export async function fetchOrdersFromSupabase() {
         notesData.notes = order.notes;
       }
       
+      const allFiles = order.order_files || [];
+      const clientFiles = allFiles.filter(f => f.file_type === 'client_artwork').map(f => ({
+        id: f.id,
+        name: f.file_name,
+        format: f.file_format,
+        url: f.public_url || f.file_url,
+        public_id: f.file_path,
+        uploadedAt: f.created_at
+      }));
+      
+      const machineFiles = allFiles.filter(f => f.file_type === 'machine_file').map(f => ({
+        id: f.id,
+        name: f.file_name,
+        format: f.file_format,
+        url: f.public_url || f.file_url,
+        public_id: f.file_path,
+        uploadedAt: f.created_at
+      }));
+
       return {
         ...order,
         clientName: order.client_name,
         clientEmail: order.client_email,
         serviceCategory: order.service_category,
+        uploadedFiles: clientFiles,
+        uploadedMachineFiles: machineFiles,
         type: order.service_type || order.service_category,
         fabricType: order.fabric_type,
         requestedFormats: order.requested_formats,
