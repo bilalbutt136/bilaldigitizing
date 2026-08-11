@@ -259,19 +259,33 @@ export const HeroSection = () => {
               letterSpacing: '-0.02em',
               fontFamily: 'var(--font-heading, "Plus Jakarta Sans", sans-serif)'
             }}>
-              {globalTitle}
+              {currentKey === 'embroidery' ? 'Embroidery Digitizing Logo' : 
+               currentKey === 'vector-art' ? 'Vector Art Conversion' :
+               currentKey === 'patches' ? 'Custom Physical Patches' :
+               globalTitle}
             </h1>
             
-            {/* Animated Text Rotation */}
-            <div style={{ 
-              fontSize: 'clamp(1.5rem, 3vw, 2.2rem)',
-              fontWeight: 700,
-              marginBottom: '1.5rem',
-              color: 'var(--orange-400, #ff9433)',
-              minHeight: '3rem'
-            }}>
-              Precision <span key={textIndex} className="hero-text-rotate" style={{ color: 'var(--orange-500, #ff7a00)' }}>{rotatingTextsArr[textIndex]}</span>
-            </div>
+            {/* Animated Text Rotation or Static Subtitle */}
+            {currentKey === 'all' ? (
+              <div style={{ 
+                fontSize: 'clamp(1.5rem, 3vw, 2.2rem)',
+                fontWeight: 700,
+                marginBottom: '1.5rem',
+                color: 'var(--orange-400, #ff9433)',
+                minHeight: '3rem'
+              }}>
+                Precision <span key={textIndex} className="hero-text-rotate" style={{ color: 'var(--orange-500, #ff7a00)' }}>{rotatingTextsArr[textIndex]}</span>
+              </div>
+            ) : (
+              <div style={{ 
+                fontSize: 'clamp(1.5rem, 3vw, 2.2rem)',
+                fontWeight: 700,
+                marginBottom: '1.5rem',
+                color: 'var(--orange-500, #ff7a00)'
+              }}>
+                {activeService.title || (currentKey === 'embroidery' ? 'Precision Commercial Embroidery' : '')}
+              </div>
+            )}
 
             {/* Description tied to the active service */}
             <p style={{
@@ -282,7 +296,9 @@ export const HeroSection = () => {
               maxWidth: '600px',
               fontFamily: 'var(--font-body, "Inter", sans-serif)'
             }}>
-              {activeService.description} Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.
+              {currentKey === 'embroidery' 
+                ? "Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks. Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally." 
+                : activeService.description || "Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally."}
             </p>
 
             {/* Trust Badges Row */}
