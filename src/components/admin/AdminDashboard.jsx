@@ -7,7 +7,7 @@ import { ClientDirectory } from './ClientDirectory';
 import { UnifiedCmsManager } from './UnifiedCmsManager';
 import { StudioServicesManager } from './StudioServicesManager';
 import { SystemSettingsManager } from './SystemSettingsManager';
-import { StoreManagementEditor } from './StoreManagementEditor';
+
 import { MediaLibraryManager } from './MediaLibraryManager';
 import { AdminChatInbox } from './AdminChatInbox';
 import { 
@@ -134,10 +134,9 @@ export const AdminDashboard = () => {
       ]
     },
     {
-      title: 'SERVICES & STORE',
+      title: 'SERVICES',
       items: [
-        { id: 'services', label: 'Service Rates', icon: Sliders },
-        { id: 'store', label: 'Merchandise Store', icon: Layers }
+        { id: 'services', label: 'Service Rates', icon: Sliders }
       ]
     },
     {
@@ -202,7 +201,6 @@ export const AdminDashboard = () => {
             <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0, lineHeight: 1.1 }}>
               {activeTab === 'dashboard' && 'Admin Operations'}
               {activeTab === 'services' && 'Service Rates'}
-              {activeTab === 'store' && 'Merchandise Store'}
               {activeTab === 'clients' && 'Client Directory'}
               {activeTab === 'chat' && 'Inbox & Support'}
               {activeTab === 'cms' && 'CMS Engine'}
@@ -497,7 +495,7 @@ export const AdminDashboard = () => {
               <span className="badge badge-assigned" style={{ fontSize: '0.725rem' }}>MASTER ADMIN</span>
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.2rem 0 0' }}>
-              Centralized digitizing studio pipeline, client balances, store merchandise, and live CMS controls.
+              Centralized digitizing studio pipeline, client balances, and live CMS controls.
             </p>
           </div>
 
@@ -583,7 +581,6 @@ export const AdminDashboard = () => {
         )}
 
         {activeTab === 'services' && <StudioServicesManager />}
-        {activeTab === 'store' && <StoreManagementEditor />}
         {activeTab === 'clients' && <ClientDirectory />}
         {activeTab === 'chat' && <AdminChatInbox />}
         {activeTab === 'cms' && <UnifiedCmsManager />}

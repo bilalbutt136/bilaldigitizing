@@ -78,14 +78,7 @@ export const CustomApparelPage = () => {
             >
               Home
             </button>
-            <ChevronRight size={14} />
-            <button 
-              onClick={() => navigate('/store')} 
-              style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 0, fontWeight: 600 }}
-            >
-              Studio Store
-            </button>
-            <ChevronRight size={14} />
+
             <span style={{ color: 'var(--orange-400)', fontWeight: 700 }}>Custom T-Shirts & Apparel</span>
           </div>
 

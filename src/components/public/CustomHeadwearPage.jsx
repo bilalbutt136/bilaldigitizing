@@ -61,14 +61,7 @@ export const CustomHeadwearPage = () => {
             >
               Home
             </button>
-            <ChevronRight size={14} />
-            <button 
-              onClick={() => navigate('/store')} 
-              style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 0, fontWeight: 600 }}
-            >
-              Studio Store
-            </button>
-            <ChevronRight size={14} />
+
             <span style={{ color: 'var(--orange-400)', fontWeight: 700 }}>Headwear & 3D Puff Caps</span>
           </div>
 
