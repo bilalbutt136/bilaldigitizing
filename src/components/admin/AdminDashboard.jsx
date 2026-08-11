@@ -10,6 +10,8 @@ import { HomePageEditor } from './HomePageEditor';
 
 import { MediaLibraryManager } from './MediaLibraryManager';
 import { AdminChatInbox } from './AdminChatInbox';
+import { PromotionsManager } from './PromotionsManager';
+import { ContactInfoManager } from './ContactInfoManager';
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -25,7 +27,8 @@ import {
   RefreshCw,
   Menu,
   X,
-  DollarSign
+  DollarSign,
+  Phone
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -143,7 +146,9 @@ export const AdminDashboard = () => {
       title: 'STUDIO CONTENT',
       items: [
         { id: 'homepage', label: 'Home Page', icon: LayoutDashboard },
-        { id: 'media', label: 'Media Gallery', icon: Image }
+        { id: 'media', label: 'Media Gallery', icon: Image },
+        { id: 'promotions', label: 'Promotions', icon: TrendingUp },
+        { id: 'contact', label: 'Contact Info', icon: Phone }
       ]
     },
     {
@@ -205,6 +210,8 @@ export const AdminDashboard = () => {
               {activeTab === 'chat' && 'Inbox & Support'}
               {activeTab === 'homepage' && 'Home Page Editor'}
               {activeTab === 'media' && 'Media Gallery'}
+              {activeTab === 'promotions' && 'Promotions'}
+              {activeTab === 'contact' && 'Contact Info'}
               {activeTab === 'settings' && 'Studio Settings'}
             </h3>
           </div>
@@ -585,6 +592,8 @@ export const AdminDashboard = () => {
         {activeTab === 'chat' && <AdminChatInbox />}
         {activeTab === 'homepage' && <HomePageEditor />}
         {activeTab === 'media' && <MediaLibraryManager />}
+        {activeTab === 'promotions' && <PromotionsManager />}
+        {activeTab === 'contact' && <ContactInfoManager />}
         {activeTab === 'settings' && <SystemSettingsManager />}
 
       </main>

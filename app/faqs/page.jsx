@@ -28,8 +28,27 @@ export default function FAQsPage() {
     setOpenIndex(openIndex === index ? null : index);
   };
 
+  const schemaData = faqs.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.flatMap(section => section.questions.map(q => ({
+      "@type": "Question",
+      "name": q.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": q.a
+      }
+    })))
+  } : null;
+
   return (
     <div style={{ background: '#f8fafc', minHeight: '100vh', paddingTop: '4rem', paddingBottom: '6rem' }}>
+      {schemaData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
+        />
+      )}
       <div className="container" style={{ maxWidth: '900px', margin: '0 auto', padding: '0 1.5rem' }}>
         
         <div style={{ textAlign: 'center', marginBottom: '4rem' }}>

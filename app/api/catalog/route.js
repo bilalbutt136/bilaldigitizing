@@ -1,5 +1,34 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+
+const ALLOWED_TABLES = ['services', 'pricing_cards', 'patch_cards', 'store_products', 'pricing_tiers', 'portfolio', 'sew_outs', 'hero_slides', 'digitizers', 'site_config', 'faqs', 'testimonials'];
+
+async function getAuthenticatedUser() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            try { cookieStore.set(name, value, options); } catch {}
+          });
+        },
+      },
+    }
+  );
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) return { user: null, isAdmin: false };
+  
+  // Check admin status using the service role client
+  const adminClient = createAdminClient();
+  const { data: adminData } = await adminClient.from('admins').select('email').eq('email', user.email.toLowerCase()).maybeSingle();
+  return { user, isAdmin: !!adminData };
+}
 
 export async function GET(request) {
   try {
@@ -53,6 +82,15 @@ export async function POST(request) {
     const data = await request.json();
     const { action, payload, tableName } = data;
     const supabase = createAdminClient();
+    
+    const { isAdmin } = await getAuthenticatedUser();
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+    
+    if (!ALLOWED_TABLES.includes(tableName)) {
+      return NextResponse.json({ error: 'Invalid table name' }, { status: 400 });
+    }
 
     if (action === 'upsert') {
       const { error } = await supabase.from(tableName).upsert(payload, { onConflict: 'id' });

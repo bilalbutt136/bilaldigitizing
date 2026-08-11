@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { StateProvider } from '../src/context/StateContext';
 import { HeaderNav } from '../src/components/HeaderNav';
 import { Footer } from '../src/components/public/Footer';
+import { AnnouncementBar } from '../src/components/public/AnnouncementBar';
 import { AuthModal } from '../src/components/auth/AuthModal';
 import { OrderWizardModal } from '../src/components/customer/OrderWizardModal';
 import { StoreOrderModal } from '../src/components/customer/StoreOrderModal';
@@ -23,7 +24,7 @@ const getMetadataBase = () => {
       return new URL(valid);
     } catch {}
   }
-  return new URL('https://bdigitizing.pro');
+  return new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app');
 };
 
 export const metadata = {
@@ -86,7 +87,6 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-        <link rel="canonical" href="https://bdigitizing.pro" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -94,12 +94,12 @@ export default function RootLayout({ children }) {
               "@context": "https://schema.org",
               "@type": "Organization",
               "name": "B Digitizing Studio",
-              "url": "https://bdigitizing.pro",
-              "logo": "https://bdigitizing.pro/logo.png",
+              "url": process.env.NEXT_PUBLIC_SITE_URL || "https://bilaldigitizing.vercel.app",
+              "logo": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app'}/logo.png`,
               "description": "Premium Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches.",
               "contactPoint": {
                 "@type": "ContactPoint",
-                "telephone": "+1-800-000-0000",
+                "telephone": process.env.NEXT_PUBLIC_BUSINESS_PHONE || "+1 (347) 915-4498",
                 "contactType": "Customer Service",
                 "areaServed": ["US", "GB", "CA", "AU"],
                 "availableLanguage": "English"
@@ -111,6 +111,7 @@ export default function RootLayout({ children }) {
       <body suppressHydrationWarning style={{ fontFamily: "'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
         <StateProvider>
           <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <AnnouncementBar />
             <Suspense fallback={<header style={{ minHeight: '60px', background: '#ffffff' }} />}>
               <HeaderNav />
             </Suspense>

@@ -1,5 +1,32 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+
+async function getAuthenticatedUser() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            try { cookieStore.set(name, value, options); } catch {}
+          });
+        },
+      },
+    }
+  );
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) return { user: null, isAdmin: false };
+  
+  // Check admin status using the service role client
+  const adminClient = createAdminClient();
+  const { data: adminData } = await adminClient.from('admins').select('email').eq('email', user.email.toLowerCase()).maybeSingle();
+  return { user, isAdmin: !!adminData };
+}
 
 export async function GET(request) {
   try {
@@ -7,20 +34,40 @@ export async function GET(request) {
     const action = searchParams.get('action');
     const orderId = searchParams.get('orderId');
     const supabase = createAdminClient();
+    
+    const { user, isAdmin } = await getAuthenticatedUser();
 
     if (action === 'fetchAll') {
-      const { data, error } = await supabase.from('orders').select('*, order_files(*)').order('created_at', { ascending: false });
+      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      
+      let query = supabase.from('orders').select('*, order_files(*)').order('created_at', { ascending: false });
+      
+      if (!isAdmin) {
+        query = query.eq('client_email', user.email);
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       return NextResponse.json({ orders: data });
     }
     
     if (action === 'fetchPending') {
+      if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       const { data, error } = await supabase.from('orders').select('*').eq('status', 'pending').order('created_at', { ascending: false });
       if (error) throw error;
       return NextResponse.json({ orders: data });
     }
 
     if (action === 'fetchDetails') {
+      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      
+      if (!isAdmin) {
+        const { data: orderData, error: orderError } = await supabase.from('orders').select('client_email').eq('id', orderId).single();
+        if (orderError || orderData?.client_email !== user.email) {
+          return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        }
+      }
+
       const [
         { data: orderFiles },
         { data: revisions },
@@ -45,15 +92,18 @@ export async function POST(request) {
     const data = await request.json();
     const { action, payload } = data;
     const supabase = createAdminClient();
+    
+    const { user, isAdmin } = await getAuthenticatedUser();
 
     if (action === 'createOrder') {
+      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       const { primaryDbRow, orderFiles } = payload;
       
       const mappedDbRow = {
         id: primaryDbRow.id,
         title: primaryDbRow.title || 'Service Order',
         client_name: primaryDbRow.clientName || 'Valued Client',
-        client_email: primaryDbRow.clientEmail || '',
+        client_email: user.email,
         service_category: primaryDbRow.serviceCategory || primaryDbRow.type || 'Digitizing',
         service_type: primaryDbRow.type,
         fabric_type: primaryDbRow.fabricType || null,
@@ -88,6 +138,7 @@ export async function POST(request) {
     }
 
     if (action === 'updateStatus') {
+      if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       const { orderId, newStatus, extraData } = payload;
       
       const updatePayload = { status: newStatus };
@@ -130,26 +181,48 @@ export async function POST(request) {
     }
 
     if (action === 'addMessage') {
+      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      if (!isAdmin) {
+        const { data: orderData, error: orderError } = await supabase.from('orders').select('client_email').eq('id', payload.order_id).single();
+        if (orderError || orderData?.client_email !== user.email) {
+          return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        }
+      }
       const { error } = await supabase.from('order_messages').insert([payload]);
       if (error) throw error;
       return NextResponse.json({ success: true });
     }
     
     if (action === 'requestRevision') {
+      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       const { orderId, instructions } = payload;
+      if (!isAdmin) {
+        const { data: orderData, error: orderError } = await supabase.from('orders').select('client_email').eq('id', orderId).single();
+        if (orderError || orderData?.client_email !== user.email) {
+          return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        }
+      }
       await supabase.from('revisions').insert([{ order_id: orderId, details: instructions, status: 'pending' }]);
       await supabase.from('orders').update({ status: 'revision_requested' }).eq('id', orderId);
       return NextResponse.json({ success: true });
     }
 
     if (action === 'cancelOrder') {
+      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       const { orderId } = payload;
+      if (!isAdmin) {
+        const { data: orderData, error: orderError } = await supabase.from('orders').select('client_email').eq('id', orderId).single();
+        if (orderError || orderData?.client_email !== user.email) {
+          return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        }
+      }
       const { error } = await supabase.from('orders').update({ status: 'cancelled' }).eq('id', orderId);
       if (error) throw error;
       return NextResponse.json({ success: true });
     }
 
     if (action === 'deleteOrder') {
+      if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       const { orderId } = payload;
       const { error } = await supabase.from('orders').delete().eq('id', orderId);
       if (error) throw error;
