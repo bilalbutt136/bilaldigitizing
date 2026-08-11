@@ -10,7 +10,6 @@ export const HomePageEditor = () => {
   const [settings, setSettings] = useState({});
   const [trustStats, setTrustStats] = useState([]);
   const [trustFeatures, setTrustFeatures] = useState([]);
-  const [trustFeatures, setTrustFeatures] = useState([]);
   const [workflowSteps, setWorkflowSteps] = useState([]);
   const [pricingStaticCards, setPricingStaticCards] = useState([]);
 
@@ -682,9 +681,6 @@ export const HomePageEditor = () => {
           </div>
         </div>
       </div>
-
-    </div>
-
       {/* --- PORTFOLIO TITLES SECTION --- */}
       <div className="card" style={{ marginBottom: '2rem' }}>
         <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -711,8 +707,6 @@ export const HomePageEditor = () => {
           </div>
         </div>
       </div>
-
-    </div>
 
       {editModalOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
@@ -782,6 +776,6 @@ export const HomePageEditor = () => {
           </div>
         </div>
       )}
-
+    </div>
   );
 };
