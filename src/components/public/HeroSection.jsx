@@ -338,7 +338,7 @@ export const HeroSection = () => {
                 onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 122, 0, 0.6)'; }}
                 onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(255, 122, 0, 0.4)'; }}
               >
-                <Upload size={20} /> {activeService.primaryCta}
+                {activeService.primaryCta || 'Order Digitizing Design'} <ArrowRight size={20} />
               </button>
 
               <button 
@@ -346,22 +346,22 @@ export const HeroSection = () => {
                 onClick={handleSecondaryClick}
                 style={{ 
                   background: 'transparent',
-                  color: '#ffffff', 
-                  border: '2px solid rgba(255, 255, 255, 0.2)',
+                  color: 'var(--orange-500, #ff7a00)', 
+                  border: '1.5px solid rgba(255, 255, 255, 0.15)',
                   borderRadius: '8px',
                   padding: '0.9rem 1.8rem', 
                   fontSize: '1.05rem',
-                  fontWeight: 700,
+                  fontWeight: 800,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem',
+                  justifyContent: 'center',
                   transition: 'all 0.2s ease'
                 }}
-                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)'; }}
-                onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'; }}
+                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255, 122, 0, 0.05)'; e.currentTarget.style.borderColor = 'rgba(255, 122, 0, 0.3)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)'; }}
               >
-                 {activeService.secondaryCta} <ArrowRight size={18} />
+                 {activeService.secondaryCta || 'View Pricing Tiers'}
               </button>
             </div>
 
