@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { OrderManagementTable } from './OrderManagementTable';
 import { ClientDirectory } from './ClientDirectory';
-import { UnifiedCmsManager } from './UnifiedCmsManager';
 import { StudioServicesManager } from './StudioServicesManager';
 import { SystemSettingsManager } from './SystemSettingsManager';
 
@@ -142,7 +141,6 @@ export const AdminDashboard = () => {
     {
       title: 'STUDIO CONTENT',
       items: [
-        { id: 'cms', label: 'CMS Engine', icon: Image, tag: 'CMS' },
         { id: 'media', label: 'Media Gallery', icon: Image }
       ]
     },
@@ -203,7 +201,6 @@ export const AdminDashboard = () => {
               {activeTab === 'services' && 'Service Rates'}
               {activeTab === 'clients' && 'Client Directory'}
               {activeTab === 'chat' && 'Inbox & Support'}
-              {activeTab === 'cms' && 'CMS Engine'}
               {activeTab === 'media' && 'Media Gallery'}
               {activeTab === 'settings' && 'Studio Settings'}
             </h3>
@@ -583,7 +580,6 @@ export const AdminDashboard = () => {
         {activeTab === 'services' && <StudioServicesManager />}
         {activeTab === 'clients' && <ClientDirectory />}
         {activeTab === 'chat' && <AdminChatInbox />}
-        {activeTab === 'cms' && <UnifiedCmsManager />}
         {activeTab === 'media' && <MediaLibraryManager />}
         {activeTab === 'settings' && <SystemSettingsManager />}
 
