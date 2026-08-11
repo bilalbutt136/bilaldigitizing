@@ -3,7 +3,6 @@
 import React, { useEffect } from 'react';
 import { useAppState } from '../src/context/StateContext';
 import { HeroSection } from '../src/components/public/HeroSection';
-import { ServicesOverview } from '../src/components/public/ServicesOverview';
 import { TrustStatsBar } from '../src/components/public/TrustStatsBar';
 import { WhyChooseUs } from '../src/components/public/WhyChooseUs';
 import { PortfolioPreview } from '../src/components/public/PortfolioPreview';
@@ -33,7 +32,6 @@ export default function HomePage() {
         <CustomPatchesSection hideHero={false} />
       ) : (
         <>
-          <ServicesOverview />
           <TrustStatsBar />
           <WhyChooseUs />
           <PortfolioPreview />
