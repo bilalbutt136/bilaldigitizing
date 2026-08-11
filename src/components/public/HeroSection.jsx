@@ -283,7 +283,10 @@ export const HeroSection = () => {
                 marginBottom: '1.5rem',
                 color: 'var(--orange-500, #ff7a00)'
               }}>
-                {activeService.title || (currentKey === 'embroidery' ? 'Precision Commercial Embroidery' : '')}
+                {currentKey === 'embroidery' ? 'Precision Commercial Embroidery' : 
+                 currentKey === 'vector-art' ? 'Scalable Vector Art Redraw' : 
+                 currentKey === 'patch' ? 'Custom Physical Patches & Emblems' : 
+                 (activeService.title || 'Premium Services')}
               </div>
             )}
 
@@ -296,9 +299,10 @@ export const HeroSection = () => {
               maxWidth: '600px',
               fontFamily: 'var(--font-body, "Inter", sans-serif)'
             }}>
-              {currentKey === 'embroidery' 
-                ? "Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks. Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally." 
-                : activeService.description || "Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally."}
+              {currentKey === 'embroidery' ? "Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks. Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally." :
+               currentKey === 'vector-art' ? "Transform pixelated JPEGs, PNGs, and sketches into 100% hand-drawn scalable vector files with Pantone color separation. Perfect for screen printing, DTG, and large format printing with zero quality loss." :
+               currentKey === 'patch' ? "High-density embroidered, 3D molded waterproof PVC, woven, and laser-engraved leather patches with physical worldwide shipping. Premium quality backings including iron-on, velcro, and peel-and-stick." :
+               (activeService.description || "Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.")}
             </p>
 
             {/* Trust Badges Row */}
@@ -354,7 +358,10 @@ export const HeroSection = () => {
                 onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 122, 0, 0.6)'; }}
                 onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(255, 122, 0, 0.4)'; }}
               >
-                {activeService.primaryCta || 'Order Digitizing Design'} <ArrowRight size={20} />
+                {(activeService.primaryCta && activeService.primaryCta !== 'Order Now') ? activeService.primaryCta : 
+                 (currentKey === 'embroidery' ? 'Order Digitizing Design' :
+                  currentKey === 'vector-art' ? 'Order Vector Art' :
+                  currentKey === 'patch' ? 'Order Custom Patches' : 'Order Now')} <ArrowRight size={20} />
               </button>
 
               <button 
