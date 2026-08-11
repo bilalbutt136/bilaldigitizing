@@ -28,7 +28,73 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
-  const cardsToRender = patchCards && patchCards.length > 0 ? patchCards : [];
+  const defaultPatchCards = [
+    {
+      id: 'patch-basic',
+      category: 'patch',
+      tierKey: 'basic',
+      title: 'Basic Woven Patches',
+      subTitle: 'Ideal for simple logos and bulk orders',
+      icon: Zap,
+      discountTag: '',
+      rate: '$1.50',
+      unit: 'starting rate',
+      delivery: '7-10 Days',
+      btnText: 'Order Basic ($1.50)',
+      badge: 'ESSENTIAL',
+      popular: false,
+      features: [
+        'Flat stitched edge detail',
+        'Iron-on backing',
+        'Ideal for simple logos & high-volume bulk runs',
+        'Standard 7-10 day studio turnaround'
+      ]
+    },
+    {
+      id: 'patch-standard',
+      category: 'patch',
+      tierKey: 'standard',
+      title: 'Standard Embroidered Patches',
+      subTitle: '3D raised thread texture & merrowed border',
+      icon: Trophy,
+      discountTag: 'MOST POPULAR',
+      rate: '$2.50',
+      unit: 'starting rate',
+      delivery: '5-7 Days',
+      btnText: 'Order Standard ($2.50)',
+      badge: 'MOST POPULAR',
+      popular: true,
+      features: [
+        'Classic merrowed border edges',
+        '3D raised thread texture',
+        'Velcro or heat-seal backing options',
+        'Free pre-production digital proof'
+      ]
+    },
+    {
+      id: 'patch-premium',
+      category: 'patch',
+      tierKey: 'premium',
+      title: 'Premium 3D PVC & Leather Patches',
+      subTitle: 'Waterproof 3D molded PVC or genuine leather',
+      icon: Sparkles,
+      discountTag: 'LUXURY & PVC',
+      rate: '$3.50',
+      unit: 'starting rate',
+      delivery: '5-7 Days',
+      btnText: 'Order Premium ($3.50)',
+      badge: 'LUXURY & PVC',
+      popular: false,
+      features: [
+        'High-durability waterproof PVC or genuine leather',
+        'Laser-cut precision border outlines',
+        'Tactical velcro or adhesive mounting',
+        'VIP priority production'
+      ]
+    }
+  ];
+
+  const cardsToRender = patchCards && patchCards.length > 0 ? patchCards : defaultPatchCards;
 
   const handleStartOrder = (tierKey = 'standard', cardObj = null) => {
     setSelectedTier(tierKey);

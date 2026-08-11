@@ -48,6 +48,7 @@ export const HeaderNav = () => {
     openOrderWizard,
     setActiveAdminTab,
     setActiveCustomerTab,
+    setActiveHomeServiceTab,
     notifications = [],
     markNotificationAsRead,
     markAllNotificationsAsRead,
@@ -250,6 +251,7 @@ export const HeaderNav = () => {
                       type="button"
                       onClick={() => {
                         setCurrentView('public');
+                        if (setActiveHomeServiceTab) setActiveHomeServiceTab('embroidery');
                         navigate('/services/embroidery-digitizing');
                         setIsServicesOpen(false);
                       }}
@@ -286,6 +288,7 @@ export const HeaderNav = () => {
                       type="button"
                       onClick={() => {
                         setCurrentView('public');
+                        if (setActiveHomeServiceTab) setActiveHomeServiceTab('vector-art');
                         navigate('/services/vector-tracing');
                         setIsServicesOpen(false);
                       }}
@@ -322,6 +325,7 @@ export const HeaderNav = () => {
                       type="button"
                       onClick={() => {
                         setCurrentView('public');
+                        if (setActiveHomeServiceTab) setActiveHomeServiceTab('patches');
                         navigate('/custom-patches');
                         setIsServicesOpen(false);
                       }}

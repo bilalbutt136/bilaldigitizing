@@ -5,6 +5,7 @@ import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { 
   Zap, 
+  Trophy,
   Upload,
   UploadCloud, 
   Check, 
@@ -443,9 +444,79 @@ export const VectorArtPage = ({ hideHero = false }) => {
                 setIsOrderViewOpen(true);
               };
 
-              const fallbackVectorCards = [];
+              const defaultVectorCards = [
+                {
+                  id: 'vec-basic',
+                  category: 'vector',
+                  tierKey: 'basic',
+                  title: 'Basic Vector Redraw',
+                  subTitle: 'Ideal for simple logos, text, & icon redraws',
+                  icon: Zap,
+                  discountTag: '',
+                  rate: '$15.00',
+                  unit: '/ design',
+                  delivery: '8-12 Hours',
+                  complexityValue: 'Simple Vector Redraw',
+                  isRushValue: false,
+                  btnText: 'Order Basic ($15.00)',
+                  badge: 'ESSENTIAL',
+                  popular: false,
+                  features: [
+                    '100% Hand-Drawn Paths',
+                    'Master AI, EPS, SVG & PDF files',
+                    'Standard 8-12 hr turnaround'
+                  ]
+                },
+                {
+                  id: 'vec-standard',
+                  category: 'vector',
+                  tierKey: 'standard',
+                  title: 'Standard Vector Conversion',
+                  subTitle: 'Ideal for detailed artwork & color separations',
+                  icon: Trophy,
+                  discountTag: 'MOST POPULAR',
+                  rate: '$25.00',
+                  unit: '/ design',
+                  delivery: '4-8 Hours Express',
+                  complexityValue: 'Standard Vector Conversion',
+                  isRushValue: false,
+                  btnText: 'Order Standard ($25.00)',
+                  badge: 'MOST POPULAR',
+                  popular: true,
+                  features: [
+                    'Pantone Spot Color Separation',
+                    'Free Unlimited Revisions',
+                    'High-res Print-Ready Files',
+                    '4-8 hr turnaround'
+                  ]
+                },
+                {
+                  id: 'vec-premium',
+                  category: 'vector',
+                  tierKey: 'premium',
+                  title: 'Premium Mascot & Complex Vector',
+                  subTitle: 'Ideal for complex illustrations & intricate logos',
+                  icon: Sparkles,
+                  discountTag: 'COMPLEX & RUSH',
+                  rate: '$35.00',
+                  unit: '/ design',
+                  delivery: 'Super Rush Available',
+                  complexityValue: 'Complex Vector Redraw',
+                  isRushValue: true,
+                  btnText: 'Order Premium ($35.00)',
+                  badge: 'COMPLEX & RUSH',
+                  popular: false,
+                  features: [
+                    'Complex Mascot Node Pathing',
+                    'Super Rush Express Delivery',
+                    'VIP Studio Support'
+                  ]
+                }
+              ];
 
-              return vectorCards.map((cat, idx) => (
+              const activeVecCards = vectorCards.length > 0 ? vectorCards : defaultVectorCards;
+
+              return activeVecCards.map((cat, idx) => (
                 <PackageCard
                   key={cat.id || idx}
                   cat={cat}

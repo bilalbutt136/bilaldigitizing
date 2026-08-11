@@ -10,9 +10,12 @@ import { PortfolioPreview } from '../src/components/public/PortfolioPreview';
 import { TestimonialsFAQ } from '../src/components/public/TestimonialsFAQ';
 import { PricingCalculator } from '../src/components/public/PricingCalculator';
 import { FinalCTA } from '../src/components/public/FinalCTA';
+import { EmbroideryDigitizingPage } from '../src/components/public/EmbroideryDigitizingPage';
+import { VectorArtPage } from '../src/components/public/VectorArtPage';
+import { CustomPatchesSection } from '../src/components/public/CustomPatchesSection';
 
 export default function HomePage() {
-  const { setCurrentView } = useAppState();
+  const { setCurrentView, activeHomeServiceTab } = useAppState();
 
   useEffect(() => {
     setCurrentView('public');
@@ -21,13 +24,24 @@ export default function HomePage() {
   return (
     <>
       <HeroSection />
-      <ServicesOverview />
-      <TrustStatsBar />
-      <WhyChooseUs />
-      <PortfolioPreview />
-      <PricingCalculator />
-      <TestimonialsFAQ />
-      <FinalCTA />
+      
+      {activeHomeServiceTab === 'embroidery' ? (
+        <EmbroideryDigitizingPage hideHero={false} />
+      ) : (activeHomeServiceTab === 'vector' || activeHomeServiceTab === 'vector-art') ? (
+        <VectorArtPage hideHero={false} />
+      ) : (activeHomeServiceTab === 'patch' || activeHomeServiceTab === 'patches') ? (
+        <CustomPatchesSection hideHero={false} />
+      ) : (
+        <>
+          <ServicesOverview />
+          <TrustStatsBar />
+          <WhyChooseUs />
+          <PortfolioPreview />
+          <PricingCalculator />
+          <TestimonialsFAQ />
+          <FinalCTA />
+        </>
+      )}
     </>
   );
 }
