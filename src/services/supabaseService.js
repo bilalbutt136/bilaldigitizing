@@ -678,6 +678,29 @@ export async function deletePricingTier(tierId) {
 }
 
 // ============================================================
+// HOME PAGE CMS (DB-driven)
+// ============================================================
+
+export async function fetchHomePageContentFromSupabase() {
+  try {
+    const res = await fetch('/api/admin/homepage');
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    return data;
+  } catch (err) {
+    console.warn('Supabase fetch home page CMS exception:', err);
+    return {
+      settings: {},
+      trustStats: [],
+      trustFeatures: [],
+      workflowSteps: [],
+      pricingStaticCards: [],
+      pricingTiers: []
+    };
+  }
+}
+
+// ============================================================
 // CATALOG (DB-driven; replaces mock catalog defaults)
 // ============================================================
 

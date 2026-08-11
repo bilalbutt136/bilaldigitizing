@@ -6,7 +6,12 @@ import { useAppState } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
 
 export const PortfolioPreview = () => {
-  const { portfolioSamples, activeHomeServiceTab, serviceCmsContent } = useAppState();
+  const { portfolioSamples, activeHomeServiceTab, serviceCmsContent, homePageConfig = {} } = useAppState();
+  
+  const dbSettings = homePageConfig?.settings || {};
+  const badgeText = dbSettings.portfolio_badge || 'Our Work';
+  const titleText = dbSettings.portfolio_title || 'Crafted with Precision';
+  const subText = dbSettings.portfolio_sub || 'Explore a curated selection of our finest embroidery digitizing, vector art conversions, and custom patch creations.';
   
   const rawCategories = serviceCmsContent?.['portfolio_categories'] || [
     { key: 'all', label: 'All Portfolio' },
@@ -77,7 +82,7 @@ export const PortfolioPreview = () => {
             letterSpacing: '0.05em',
             textTransform: 'uppercase'
           }}>
-            Our Work
+            {badgeText}
           </div>
           <h2 style={{
             fontFamily: 'var(--font-heading, "Plus Jakarta Sans", sans-serif)',
@@ -87,7 +92,7 @@ export const PortfolioPreview = () => {
             marginBottom: '16px',
             lineHeight: '1.2'
           }}>
-            Crafted with Precision
+            {titleText}
           </h2>
           <p style={{
             fontSize: '18px',
@@ -96,7 +101,7 @@ export const PortfolioPreview = () => {
             margin: '0 auto',
             lineHeight: '1.6'
           }}>
-            Explore a curated selection of our finest embroidery digitizing, vector art conversions, and custom patch creations.
+            {subText}
           </p>
         </div>
 

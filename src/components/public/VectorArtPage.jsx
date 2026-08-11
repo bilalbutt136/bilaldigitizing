@@ -33,8 +33,11 @@ export const VectorArtPage = ({ hideHero = false }) => {
     setIsAuthModalOpen,
     setAuthModalMode,
     protectedNavigate,
-    serviceCmsContent = {}
+    serviceCmsContent = {},
+    homePageConfig = {}
   } = useAppState();
+
+  const dbSettings = homePageConfig?.settings || {};
 
   // Multi-Item Vector Cart State
   const [vectorItems, setVectorItems] = useState([
@@ -388,15 +391,15 @@ export const VectorArtPage = ({ hideHero = false }) => {
               borderRadius: '9999px',
               marginBottom: '1.25rem'
             }}>
-              <Zap size={16} /> Dedicated Vector Redraw Studio
+              <Zap size={16} /> {dbSettings.vector_hero_badge || 'Dedicated Vector Redraw Studio'}
             </div>
 
             <h1 style={{ fontSize: '2.8rem', fontWeight: 800, color: '#ffffff', marginBottom: '1rem', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
-              Custom Vector Art Conversion & Redraws
+              {dbSettings.vector_hero_title || 'Custom Vector Art Conversion & Redraws'}
             </h1>
 
             <p style={{ fontSize: '1.1rem', color: '#94a3b8', lineHeight: 1.6, marginBottom: '2rem' }}>
-              Transform low-resolution JPEGs, PNGs, hand-drawn sketches, or pixelated logos into 100% hand-drawn, razor-sharp scalable vector graphics (.AI, .EPS, .SVG, .PDF, .CDR).
+              {dbSettings.vector_hero_sub || 'Transform low-resolution JPEGs, PNGs, hand-drawn sketches, or pixelated logos into 100% hand-drawn, razor-sharp scalable vector graphics (.AI, .EPS, .SVG, .PDF, .CDR).'}
             </p>
 
             {/* Value Highlights Pill Bar */}
@@ -410,16 +413,16 @@ export const VectorArtPage = ({ hideHero = false }) => {
               color: '#e2e8f0'
             }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <CheckCircle2 size={16} style={{ color: 'var(--orange-500)' }} /> Hand-Drawn Clean Paths
+                <CheckCircle2 size={16} style={{ color: 'var(--orange-500)' }} /> {dbSettings.vector_hero_value_1 || 'Hand-Drawn Clean Paths'}
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Clock size={16} style={{ color: 'var(--orange-500)' }} /> 8–12 Hours Turnaround
+                <Clock size={16} style={{ color: 'var(--orange-500)' }} /> {dbSettings.vector_hero_value_2 || '8–12 Hours Turnaround'}
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <ShieldCheck size={16} style={{ color: 'var(--orange-500)' }} /> Unlimited Free Revisions
+                <ShieldCheck size={16} style={{ color: 'var(--orange-500)' }} /> {dbSettings.vector_hero_value_3 || 'Unlimited Free Revisions'}
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Sparkles size={16} style={{ color: 'var(--orange-500)' }} /> Starting from $15.00
+                <Sparkles size={16} style={{ color: 'var(--orange-500)' }} /> {dbSettings.vector_hero_value_4 || 'Starting from $15.00'}
               </span>
             </div>
 

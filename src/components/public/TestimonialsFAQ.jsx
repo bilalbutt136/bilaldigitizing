@@ -7,8 +7,15 @@ import { Star, ChevronDown, ChevronUp, Quote } from 'lucide-react';
 export const TestimonialsFAQ = () => {
   const appState = useAppState?.() || {};
 
-  const { activeHomeServiceTab } = appState;
+  const { activeHomeServiceTab, homePageConfig = {} } = appState;
   const currentServiceKey = activeHomeServiceTab === 'vector' ? 'Vector' : activeHomeServiceTab === 'patches' || activeHomeServiceTab === 'patch' ? 'Patches' : 'Embroidery';
+
+  const dbSettings = homePageConfig?.settings || {};
+  const testTitle = dbSettings.testimonials_title || 'Trusted by 1,200+ Apparel Decorators & Brands';
+  const testSub = dbSettings.testimonials_sub || 'From complex 3D puff embroidery to meticulous vector conversions and premium physical patches, our clients rely on us for production-ready quality.';
+  const faqTitle = dbSettings.faq_title || 'Frequently Asked Questions';
+  const faqSub = dbSettings.faq_sub || 'Everything you need to know about files, turnaround times, and free revisions for our services.';
+
 
   const mappedTestimonials = (appState.testimonials || []).map(t => ({
     name: t.client_name || t.name,
@@ -68,10 +75,10 @@ export const TestimonialsFAQ = () => {
               <Quote size={16} /> Client Verification
             </div>
             <h2 style={{ fontSize: isMobile ? '2rem' : '2.5rem', color: 'var(--navy-950)', marginBottom: '1rem', lineHeight: 1.2 }}>
-              Trusted by 1,200+ Apparel Decorators & Brands
+              {testTitle}
             </h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: 1.6 }}>
-              From complex 3D puff embroidery to meticulous vector conversions and premium physical patches, our clients rely on us for production-ready quality.
+              {testSub}
             </p>
           </div>
 
@@ -158,10 +165,10 @@ export const TestimonialsFAQ = () => {
         <div style={{ maxWidth: '840px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
             <h2 style={{ fontSize: isMobile ? '2rem' : '2.5rem', color: 'var(--navy-950)', marginBottom: '1rem' }}>
-              Frequently Asked Questions
+              {faqTitle}
             </h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', marginBottom: '2rem' }}>
-              Everything you need to know about files, turnaround times, and free revisions for our services.
+              {faqSub}
             </p>
             
             {/* Filter Tabs - Hidden as it is controlled globally now */}

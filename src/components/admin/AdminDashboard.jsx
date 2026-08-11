@@ -6,6 +6,7 @@ import { OrderManagementTable } from './OrderManagementTable';
 import { ClientDirectory } from './ClientDirectory';
 import { StudioServicesManager } from './StudioServicesManager';
 import { SystemSettingsManager } from './SystemSettingsManager';
+import { HomePageEditor } from './HomePageEditor';
 
 import { MediaLibraryManager } from './MediaLibraryManager';
 import { AdminChatInbox } from './AdminChatInbox';
@@ -141,6 +142,7 @@ export const AdminDashboard = () => {
     {
       title: 'STUDIO CONTENT',
       items: [
+        { id: 'homepage', label: 'Home Page', icon: LayoutDashboard },
         { id: 'media', label: 'Media Gallery', icon: Image }
       ]
     },
@@ -201,6 +203,7 @@ export const AdminDashboard = () => {
               {activeTab === 'services' && 'Service Rates'}
               {activeTab === 'clients' && 'Client Directory'}
               {activeTab === 'chat' && 'Inbox & Support'}
+              {activeTab === 'homepage' && 'Home Page Editor'}
               {activeTab === 'media' && 'Media Gallery'}
               {activeTab === 'settings' && 'Studio Settings'}
             </h3>
@@ -580,6 +583,7 @@ export const AdminDashboard = () => {
         {activeTab === 'services' && <StudioServicesManager />}
         {activeTab === 'clients' && <ClientDirectory />}
         {activeTab === 'chat' && <AdminChatInbox />}
+        {activeTab === 'homepage' && <HomePageEditor />}
         {activeTab === 'media' && <MediaLibraryManager />}
         {activeTab === 'settings' && <SystemSettingsManager />}
 

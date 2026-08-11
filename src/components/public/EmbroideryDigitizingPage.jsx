@@ -9,7 +9,8 @@ import {
 import { PackageCard } from './PackageCard';
 
 export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
-  const { setIsOrderWizardOpen, openOrderWizard } = useAppState();
+  const { setIsOrderWizardOpen, openOrderWizard, homePageConfig = {} } = useAppState();
+  const dbSettings = homePageConfig?.settings || {};
 
   const [selectedTier, setSelectedTier] = useState('standard');
 
@@ -116,15 +117,15 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
             borderRadius: '9999px',
             marginBottom: '1rem'
           }}>
-            <Layers size={16} /> Dedicated Embroidery Digitizing Studio
+            <Layers size={16} /> {dbSettings.emb_hero_badge || 'Dedicated Embroidery Digitizing Studio'}
           </div>
 
           <h1 style={{ fontSize: '3rem', color: '#ffffff', fontWeight: 900, marginBottom: '1rem', lineHeight: 1.15 }}>
-            Custom Embroidery Digitizing Services
+            {dbSettings.emb_hero_title || 'Custom Embroidery Digitizing Services'}
           </h1>
 
           <p style={{ color: '#94a3b8', fontSize: '1.15rem', lineHeight: 1.65, marginBottom: '2rem' }}>
-            Turn your logo artwork into precise embroidery files ready for commercial production. Every design is hand-digitized with exact stitch counts, underlay pathing, and zero needle breaks.
+            {dbSettings.emb_hero_sub || 'Turn your logo artwork into precise embroidery files ready for commercial production. Every design is hand-digitized with exact stitch counts, underlay pathing, and zero needle breaks.'}
           </p>
 
           {/* Quick Value Badges */}
@@ -140,13 +141,13 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
             marginBottom: '2.5rem'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <CheckCircle size={18} style={{ color: '#10b981' }} /> Accurate Stitching Pathing
+              <CheckCircle size={18} style={{ color: '#10b981' }} /> {dbSettings.emb_hero_value_1 || 'Accurate Stitching Pathing'}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <CheckCircle size={18} style={{ color: '#10b981' }} /> Smooth Commercial Results
+              <CheckCircle size={18} style={{ color: '#10b981' }} /> {dbSettings.emb_hero_value_2 || 'Smooth Commercial Results'}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <CheckCircle size={18} style={{ color: '#10b981' }} /> All Machine Formats (.DST, .PES, .EMB)
+              <CheckCircle size={18} style={{ color: '#10b981' }} /> {dbSettings.emb_hero_value_3 || 'All Machine Formats (.DST, .PES, .EMB)'}
             </div>
           </div>
 
@@ -156,7 +157,7 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
               onClick={handleStartOrder}
               style={{ fontWeight: 800, padding: '0.85rem 2rem', fontSize: '1.05rem' }}
             >
-              Order Digitizing Design <ArrowRight size={20} />
+              {dbSettings.emb_hero_btn_primary || 'Order Digitizing Design'} <ArrowRight size={20} />
             </button>
 
             <a 
@@ -164,7 +165,7 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
               className="btn btn-outline btn-lg"
               style={{ fontWeight: 700, padding: '0.85rem 1.75rem', color: '#ffffff', borderColor: 'rgba(255,255,255,0.2)' }}
             >
-              View Pricing Tiers
+              {dbSettings.emb_hero_btn_secondary || 'View Pricing Tiers'}
             </a>
           </div>
 
@@ -197,7 +198,7 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
           </div>
 
           <div style={{ textAlign: 'center', marginTop: '2.5rem', color: '#94a3b8', fontSize: '0.9rem' }}>
-            📌 <em>Prices are flat rates per design with zero hidden charges. Need multiple designs? Click any tier package above to open your instant order form.</em>
+            📌 <em>{dbSettings.emb_footer_text || 'Prices are flat rates per design with zero hidden charges. Need multiple designs? Click any tier package above to open your instant order form.'}</em>
           </div>
 
         </div>

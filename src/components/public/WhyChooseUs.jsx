@@ -23,69 +23,86 @@ import {
   ThumbsUp
 } from 'lucide-react';
 
+const ICONS = { Award, MousePointer2, RefreshCw, Globe, Headset, Shield, ThumbsUp, Upload, Layers, Cpu, Download, Sparkles, CheckCircle2, FileCheck, Truck, PenTool, Palette, ShieldCheck };
+
+const IconRenderer = ({ iconName, size = 24, fallbackIcon = Award }) => {
+  const IconComponent = ICONS[iconName] || fallbackIcon;
+  return <IconComponent size={size} strokeWidth={2} />;
+};
+
 export const WhyChooseUs = () => {
   const { 
     activeHomeServiceTab = 'embroidery', 
-    serviceCmsContent = {} 
+    homePageConfig = {}
   } = useAppState();
 
   const currentKey = activeHomeServiceTab === 'patches' ? 'patch' : (activeHomeServiceTab || 'embroidery');
-  const cmsWorkflow = serviceCmsContent[currentKey]?.workflow || serviceCmsContent[currentKey]?.advantages || {};
+  const dbSettings = homePageConfig?.settings || {};
 
-  const title = cmsWorkflow.title || (
-    currentKey === 'all' ? 'How It Works: Our Process' :
+  const title = dbSettings.why_title || 'Why Choose BDigitizing?';
+  const subtext = dbSettings.why_sub || 'Industry-leading quality, unmatched speed, and a commitment to perfection.';
+
+  // Trust Features Data source
+  const rawTrustFeatures = homePageConfig?.trustFeatures || [];
+  let trustFeatures = rawTrustFeatures.filter(f => f.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
+  
+  if (trustFeatures.length === 0) {
+    trustFeatures = [
+      { icon: 'Award', title: '15+ Years Experience', description: 'Decades of expertise handling complex designs for global brands.' },
+      { icon: 'MousePointer2', title: '100% Manual Digitizing', description: 'No auto-tracing. Every stitch and node is manually plotted for perfection.' },
+      { icon: 'RefreshCw', title: 'Free Unlimited Revisions', description: 'We tweak and refine until you are 100% satisfied with the result.' },
+      { icon: 'Globe', title: 'Worldwide Delivery', description: 'Express shipping for patches, instant downloads for digital files globally.' },
+      { icon: 'Headset', title: '24/7 Support', description: 'Round-the-clock customer service ready to answer technical queries.' },
+      { icon: 'Shield', title: 'Secure Payments', description: 'Enterprise-grade encryption for all your transactions and files.' },
+      { icon: 'ThumbsUp', title: 'Satisfaction Guarantee', description: 'Premium quality guaranteed on every single order, large or small.' }
+    ];
+  }
+
+  // Workflow Data Source
+  const rawWorkflowSteps = homePageConfig?.workflowSteps || [];
+  // Try to find steps matching the current service, fallback to 'all' if none exist for current service
+  let matchedSteps = rawWorkflowSteps.filter(s => s.service === currentKey && s.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
+  if (matchedSteps.length === 0) {
+     matchedSteps = rawWorkflowSteps.filter(s => s.service === 'all' && s.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
+  }
+
+  const workflowTitle = currentKey === 'all' ? 'How It Works: Our Process' :
     currentKey === 'vector' ? 'How It Works: Vector Art Conversion' :
     currentKey === 'patch' ? 'How It Works: Custom Patches Production' :
-    'How It Works: Embroidery Digitizing'
-  );
+    'How It Works: Embroidery Digitizing';
 
-  const subtext = cmsWorkflow.subtext || (
-    currentKey === 'all' ? 'From initial request to final delivery in 4 simple steps.' :
+  const workflowSubtext = currentKey === 'all' ? 'From initial request to final delivery in 4 simple steps.' :
     currentKey === 'vector' ? 'Pixel-perfect node tracing and color separation for print and vinyl cutting.' :
     currentKey === 'patch' ? 'Crafting premium physical emblems from digital proofing to doorstep delivery.' :
-    'From initial logo upload to machine-ready stitch file delivery in 4 simple steps.'
-  );
+    'From initial logo upload to machine-ready stitch file delivery in 4 simple steps.';
 
-  const defaultSteps = serviceCmsContent['why_choose_us_steps'] || (currentKey === 'all' ? [
-    { step: '01', icon: Upload, title: 'Select Service & Upload', desc: 'Choose your desired service and upload your artwork with specifications.' },
-    { step: '02', icon: Layers, title: 'Expert Processing', desc: 'Our studio experts process your design via digitizing, vector tracing, or patch prototyping.' },
-    { step: '03', icon: FileCheck, title: 'Quality Assurance', desc: 'Every order undergoes strict quality checks and digital proofing before finalization.' },
-    { step: '04', icon: Download, title: 'Instant Delivery / Shipping', desc: 'Download digital files instantly or receive your physical patches via express shipping.' }
-  ] : currentKey === 'vector' ? [
-    { step: '01', icon: Upload, title: 'Upload Low-Res Image', desc: 'Upload your pixelated JPEG, PNG, or hand sketch with target printing specifications.' },
-    { step: '02', icon: PenTool, title: 'Manual Vector Tracing', desc: 'Vector artists redraw your logo node-by-node in Illustrator — zero auto-tracing.' },
-    { step: '03', icon: Palette, title: 'Color Separation', desc: 'Clean Pantone spot color layer separation ready for screen printing films.' },
-    { step: '04', icon: Download, title: 'Instant Vector Delivery', desc: 'Download resolution-independent master vector source files (.AI, .EPS, .SVG, .PDF).' }
-  ] : currentKey === 'patch' ? [
-    { step: '01', icon: Upload, title: 'Artwork Submission', desc: 'Upload your artwork and choose patch material (Embroidered, Woven, PVC, Leather).' },
-    { step: '02', icon: FileCheck, title: 'Digital Proof & Approval', desc: 'Receive a high-resolution 1:1 digital mockup & physical sample proof for final approval.' },
-    { step: '03', icon: Sparkles, title: 'Precision Production', desc: 'High-density embroidery, fine woven thread weaving, or 3D waterproof PVC molding.' },
-    { step: '04', icon: Truck, title: 'Express Shipping', desc: 'Every emblem undergoes strict quality inspection before express physical shipping.' }
-  ] : [
-    { step: '01', icon: Upload, title: 'Upload Artwork', desc: 'Submit your logo file and specify target fabric type (polo, cap, hoodie) and dimensions.' },
-    { step: '02', icon: Layers, title: 'Manual Pathing', desc: 'Master digitizers set Wilcom underlay density, satin stitch directions, and pull compensation.' },
-    { step: '03', icon: Cpu, title: 'Virtual Simulation', desc: 'Every machine file undergoes pathing simulation to guarantee zero thread trims and breaks.' },
-    { step: '04', icon: Download, title: 'Instant Download', desc: 'Download production-ready machine files (.DST, .PES, .EMB) with free revisions.' }
-  ]);
 
-  const stepsToRender = cmsWorkflow.steps && cmsWorkflow.steps.length > 0
-    ? cmsWorkflow.steps.map((s, idx) => ({ ...s, icon: defaultSteps[idx]?.icon || CheckCircle2 }))
-    : defaultSteps;
+  let stepsToRender = matchedSteps;
 
-  const ICONS = { Award, MousePointer2, RefreshCw, Globe, Headset, Shield, ThumbsUp, Upload, Layers, Cpu, Download, Sparkles, CheckCircle2, FileCheck, Truck, PenTool, Palette, ShieldCheck };
+  if (stepsToRender.length === 0) {
+    stepsToRender = currentKey === 'all' ? [
+      { step_number: 1, icon: 'Upload', title: 'Select Service & Upload', description: 'Choose your desired service and upload your artwork with specifications.' },
+      { step_number: 2, icon: 'Layers', title: 'Expert Processing', description: 'Our studio experts process your design via digitizing, vector tracing, or patch prototyping.' },
+      { step_number: 3, icon: 'FileCheck', title: 'Quality Assurance', description: 'Every order undergoes strict quality checks and digital proofing before finalization.' },
+      { step_number: 4, icon: 'Download', title: 'Instant Delivery / Shipping', description: 'Download digital files instantly or receive your physical patches via express shipping.' }
+    ] : currentKey === 'vector' ? [
+      { step_number: 1, icon: 'Upload', title: 'Upload Low-Res Image', description: 'Upload your pixelated JPEG, PNG, or hand sketch with target printing specifications.' },
+      { step_number: 2, icon: 'PenTool', title: 'Manual Vector Tracing', description: 'Vector artists redraw your logo node-by-node in Illustrator — zero auto-tracing.' },
+      { step_number: 3, icon: 'Palette', title: 'Color Separation', description: 'Clean Pantone spot color layer separation ready for screen printing films.' },
+      { step_number: 4, icon: 'Download', title: 'Instant Vector Delivery', description: 'Download resolution-independent master vector source files (.AI, .EPS, .SVG, .PDF).' }
+    ] : currentKey === 'patch' ? [
+      { step_number: 1, icon: 'Upload', title: 'Artwork Submission', description: 'Upload your artwork and choose patch material (Embroidered, Woven, PVC, Leather).' },
+      { step_number: 2, icon: 'FileCheck', title: 'Digital Proof & Approval', description: 'Receive a high-resolution 1:1 digital mockup & physical sample proof for final approval.' },
+      { step_number: 3, icon: 'Sparkles', title: 'Precision Production', description: 'High-density embroidery, fine woven thread weaving, or 3D waterproof PVC molding.' },
+      { step_number: 4, icon: 'Truck', title: 'Express Shipping', description: 'Every emblem undergoes strict quality inspection before express physical shipping.' }
+    ] : [
+      { step_number: 1, icon: 'Upload', title: 'Upload Artwork', description: 'Submit your logo file and specify target fabric type (polo, cap, hoodie) and dimensions.' },
+      { step_number: 2, icon: 'Layers', title: 'Manual Pathing', description: 'Master digitizers set Wilcom underlay density, satin stitch directions, and pull compensation.' },
+      { step_number: 3, icon: 'Cpu', title: 'Virtual Simulation', description: 'Every machine file undergoes pathing simulation to guarantee zero thread trims and breaks.' },
+      { step_number: 4, icon: 'Download', title: 'Instant Download', description: 'Download production-ready machine files (.DST, .PES, .EMB) with free revisions.' }
+    ];
+  }
 
-  const trustFeatures = serviceCmsContent['trust_features']?.map(item => ({
-    ...item,
-    icon: ICONS[item.icon] || Award
-  })) || [
-    { icon: Award, title: '15+ Years Experience', desc: 'Decades of expertise handling complex designs for global brands.' },
-    { icon: MousePointer2, title: '100% Manual Digitizing', desc: 'No auto-tracing. Every stitch and node is manually plotted for perfection.' },
-    { icon: RefreshCw, title: 'Free Unlimited Revisions', desc: 'We tweak and refine until you are 100% satisfied with the result.' },
-    { icon: Globe, title: 'Worldwide Delivery', desc: 'Express shipping for patches, instant downloads for digital files globally.' },
-    { icon: Headset, title: '24/7 Support', desc: 'Round-the-clock customer service ready to answer technical queries.' },
-    { icon: Shield, title: 'Secure Payments', desc: 'Enterprise-grade encryption for all your transactions and files.' },
-    { icon: ThumbsUp, title: 'Satisfaction Guarantee', desc: 'Premium quality guaranteed on every single order, large or small.' }
-  ];
 
   return (
     <section id="why-choose-us" style={{ padding: '6rem 0', background: 'var(--bg-main)', borderTop: '1px solid var(--border-color)' }}>
@@ -94,10 +111,10 @@ export const WhyChooseUs = () => {
         {/* Trust Grid Section */}
         <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
           <h2 style={{ fontSize: '2.5rem', color: 'var(--navy-950)', marginBottom: '1rem', fontWeight: 800 }}>
-            Why Choose BDigitizing?
+            {title}
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.6 }}>
-            Industry-leading quality, unmatched speed, and a commitment to perfection.
+            {subtext}
           </p>
         </div>
 
@@ -108,10 +125,9 @@ export const WhyChooseUs = () => {
           marginBottom: '6rem'
         }}>
           {trustFeatures.map((item, idx) => {
-            const Icon = item.icon;
             return (
               <div 
-                key={idx} 
+                key={item.id || idx} 
                 style={{ 
                   padding: '2rem 1.5rem',
                   background: 'var(--bg-card)',
@@ -147,13 +163,13 @@ export const WhyChooseUs = () => {
                   justifyContent: 'center',
                   marginBottom: '1.25rem'
                 }}>
-                  <Icon size={28} strokeWidth={2} />
+                  <IconRenderer iconName={item.icon} size={28} />
                 </div>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
                   {item.title}
                 </h3>
                 <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
-                  {item.desc}
+                  {item.description || item.desc}
                 </p>
               </div>
             );
@@ -181,11 +197,11 @@ export const WhyChooseUs = () => {
           </div>
 
           <h2 style={{ fontSize: '2.5rem', color: 'var(--navy-950)', marginBottom: '0.75rem', fontWeight: 800 }}>
-            {title}
+            {workflowTitle}
           </h2>
 
           <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.6 }}>
-            {subtext}
+            {workflowSubtext}
           </p>
         </div>
 
@@ -196,10 +212,9 @@ export const WhyChooseUs = () => {
           gap: '1.5rem'
         }}>
           {stepsToRender.map((item, idx) => {
-            const StepIcon = item.icon || CheckCircle2;
             return (
               <div 
-                key={idx} 
+                key={item.id || idx} 
                 style={{ 
                   padding: '2.25rem 1.75rem', 
                   textAlign: 'left', 
@@ -235,7 +250,7 @@ export const WhyChooseUs = () => {
                       borderRadius: '9999px',
                       boxShadow: '0 4px 12px rgba(255, 122, 0, 0.3)'
                     }}>
-                      STEP {item.step || `0${idx + 1}`}
+                      STEP {item.step_number || `0${idx + 1}`}
                     </span>
 
                     <div style={{
@@ -249,7 +264,7 @@ export const WhyChooseUs = () => {
                       alignItems: 'center',
                       justifyContent: 'center'
                     }}>
-                      <StepIcon size={22} />
+                      <IconRenderer iconName={item.icon} fallbackIcon={CheckCircle2} size={22} />
                     </div>
                   </div>
 
@@ -258,7 +273,7 @@ export const WhyChooseUs = () => {
                   </h3>
 
                   <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
-                    {item.desc}
+                    {item.description || item.desc}
                   </p>
                 </div>
               </div>
@@ -270,4 +285,5 @@ export const WhyChooseUs = () => {
     </section>
   );
 };
+
 

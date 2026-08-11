@@ -3,14 +3,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FileCheck, Users, Globe, Zap, ShieldCheck, Headphones } from 'lucide-react';
 
-// Attempt to import useAppState. In a real app this path may need adjustment.
-// If it fails to import, you can adjust the path to match your project structure.
 let useAppState;
 try {
   useAppState = require('../../context/StateContext').useAppState;
 } catch (e) {
-  useAppState = () => ({ siteSettings: {} });
+  useAppState = () => ({ siteSettings: {}, homePageConfig: {} });
 }
+
+// Icon mapper for dynamic string icon names from DB
+const IconRenderer = ({ iconName, size = 24, color = "var(--orange-500, #ff7a00)" }) => {
+  switch (iconName?.toLowerCase()) {
+    case 'filecheck': return <FileCheck size={size} color={color} />;
+    case 'users': return <Users size={size} color={color} />;
+    case 'globe': return <Globe size={size} color={color} />;
+    case 'zap': return <Zap size={size} color={color} />;
+    case 'headphones': return <Headphones size={size} color={color} />;
+    case 'shieldcheck':
+    case 'shield':
+    default:
+      return <ShieldCheck size={size} color={color} />;
+  }
+};
 
 const AnimatedNumber = ({ end, duration = 2000, suffix = '', isStatic = false, staticText = '' }) => {
   const [count, setCount] = useState(0);
@@ -28,10 +41,7 @@ const AnimatedNumber = ({ end, duration = 2000, suffix = '', isStatic = false, s
       { threshold: 0.1 }
     );
 
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-
+    if (ref.current) observer.observe(ref.current);
     return () => {
       if (ref.current) observer.unobserve(ref.current);
     };
@@ -54,11 +64,8 @@ const AnimatedNumber = ({ end, duration = 2000, suffix = '', isStatic = false, s
       const currentCount = Math.floor(easeOutQuart(progress) * endNum);
       setCount(currentCount);
 
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        setCount(endNum);
-      }
+      if (progress < 1) requestAnimationFrame(animate);
+      else setCount(endNum);
     };
 
     requestAnimationFrame(animate);
@@ -70,29 +77,14 @@ const AnimatedNumber = ({ end, duration = 2000, suffix = '', isStatic = false, s
 
   if (isStatic) {
     return (
-      <span 
-        ref={ref}
-        style={{ 
-        fontWeight: '700', 
-        fontSize: '2rem', 
-        color: '#ffffff',
-        textShadow: '0 0 20px rgba(255, 122, 0, 0.3)' 
-      }}>
+      <span ref={ref} style={{ fontWeight: '700', fontSize: '2rem', color: '#ffffff', textShadow: '0 0 20px rgba(255, 122, 0, 0.3)' }}>
         {staticText}
       </span>
     );
   }
 
   return (
-    <span 
-      ref={ref}
-      style={{ 
-      fontWeight: '700', 
-      fontSize: '2rem', 
-      color: '#ffffff',
-      textShadow: '0 0 20px rgba(255, 122, 0, 0.3)',
-      fontFamily: 'var(--font-heading, "Plus Jakarta Sans", sans-serif)'
-    }}>
+    <span ref={ref} style={{ fontWeight: '700', fontSize: '2rem', color: '#ffffff', textShadow: '0 0 20px rgba(255, 122, 0, 0.3)', fontFamily: 'var(--font-heading, "Plus Jakarta Sans", sans-serif)' }}>
       {formatNumber(count)}
       <span style={{ color: 'var(--orange-500, #ff7a00)' }}>{suffix}</span>
     </span>
@@ -100,56 +92,28 @@ const AnimatedNumber = ({ end, duration = 2000, suffix = '', isStatic = false, s
 };
 
 export const TrustStatsBar = () => {
-  const { siteSettings } = useAppState();
-  const [cmsStats, setCmsStats] = useState([]);
+  const { homePageConfig } = useAppState();
+  const dbStats = homePageConfig?.trustStats || [];
 
-  useEffect(() => {
-    import('../../services/supabaseService').then(({ getCmsContent }) => {
-      getCmsContent('trust_stats').then(data => {
-        if (data && data.length > 0) {
-          setCmsStats(data);
-        }
-      });
-    });
-  }, []);
+  // Fallback defaults if DB is empty
+  let displayStats = dbStats.filter(s => s.is_active !== false).map(s => ({
+    id: s.id,
+    icon: <IconRenderer iconName={s.icon} />,
+    value: s.value,
+    suffix: s.suffix || (isNaN(parseInt(s.value)) ? '' : '+'),
+    label: s.label,
+    isStatic: s.is_static || isNaN(parseInt(String(s.value).replace(/,/g, ''), 10)),
+    staticText: s.value
+  }));
 
-  const defaultStats = [
-    {
-      id: 'designs',
-      icon: <FileCheck size={24} color="var(--orange-500, #ff7a00)" />,
-      value: cmsStats[0]?.value || siteSettings?.designsDelivered || '15000',
-      suffix: '+',
-      label: cmsStats[0]?.label || 'Orders Completed',
-      isStatic: isNaN(parseInt(String(cmsStats[0]?.value || '').replace(/,/g, ''), 10)),
-      staticText: cmsStats[0]?.value || '15000'
-    },
-    {
-      id: 'clients',
-      icon: <Users size={24} color="var(--orange-500, #ff7a00)" />,
-      value: cmsStats[1]?.value || siteSettings?.happyClients || '1200',
-      suffix: '+',
-      label: cmsStats[1]?.label || 'Happy Clients',
-      isStatic: isNaN(parseInt(String(cmsStats[1]?.value || '').replace(/,/g, ''), 10)),
-      staticText: cmsStats[1]?.value || '1200'
-    },
-    {
-      id: 'satisfaction',
-      icon: <ShieldCheck size={24} color="var(--orange-500, #ff7a00)" />,
-      value: cmsStats[2]?.value || siteSettings?.satisfactionRate || '100',
-      suffix: '%',
-      label: cmsStats[2]?.label || 'Success Rate',
-      isStatic: isNaN(parseInt(String(cmsStats[2]?.value || '').replace(/,/g, ''), 10)),
-      staticText: cmsStats[2]?.value || '100%'
-    },
-    {
-      id: 'turnaround',
-      icon: <Zap size={24} color="var(--orange-500, #ff7a00)" />,
-      value: null,
-      staticText: cmsStats[3]?.value || siteSettings?.turnaround || '12h',
-      label: cmsStats[3]?.label || 'Avg Turnaround',
-      isStatic: true
-    }
-  ];
+  if (displayStats.length === 0) {
+    displayStats = [
+      { id: '1', icon: <FileCheck size={24} color="var(--orange-500)" />, value: '15000', suffix: '+', label: 'Orders Completed', isStatic: false, staticText: '15000' },
+      { id: '2', icon: <Users size={24} color="var(--orange-500)" />, value: '1200', suffix: '+', label: 'Happy Clients', isStatic: false, staticText: '1200' },
+      { id: '3', icon: <ShieldCheck size={24} color="var(--orange-500)" />, value: '100', suffix: '%', label: 'Success Rate', isStatic: false, staticText: '100' },
+      { id: '4', icon: <Zap size={24} color="var(--orange-500)" />, value: '12h', suffix: '', label: 'Avg Turnaround', isStatic: true, staticText: '12h' }
+    ];
+  }
 
   return (
     <section 
@@ -162,70 +126,25 @@ export const TrustStatsBar = () => {
         boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.5)'
       }}
     >
-      {/* Subtle Background Glow */}
       <div style={{
-        position: 'absolute',
-        top: 0,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: '60%',
-        height: '100%',
+        position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+        width: '60%', height: '100%',
         background: 'radial-gradient(ellipse at top, rgba(255, 122, 0, 0.05) 0%, rgba(15, 23, 42, 0) 70%)',
         pointerEvents: 'none'
       }} />
 
       <div style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-        gap: '2rem',
-        position: 'relative',
-        zIndex: 1
+        maxWidth: '1200px', margin: '0 auto', display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '2rem',
+        position: 'relative', zIndex: 1
       }}>
-        {defaultStats.map((stat, index) => (
-          <div 
-            key={stat.id}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-              padding: '1rem',
-              position: 'relative',
-              // Using a subtle border for all except the last item, handling responsive borders via layout instead of window.innerWidth
-              borderRight: index !== defaultStats.length - 1 ? '1px solid rgba(226, 232, 240, 0.1)' : 'none',
-            }}
-          >
-            <div style={{
-              background: 'rgba(255, 122, 0, 0.1)',
-              padding: '0.75rem',
-              borderRadius: '50%',
-              marginBottom: '1rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 0 15px rgba(255, 122, 0, 0.15)'
-            }}>
+        {displayStats.map((stat, index) => (
+          <div key={stat.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '1rem', borderRight: index !== displayStats.length - 1 ? '1px solid rgba(226, 232, 240, 0.1)' : 'none' }}>
+            <div style={{ background: 'rgba(255, 122, 0, 0.1)', padding: '0.75rem', borderRadius: '50%', marginBottom: '1rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 15px rgba(255, 122, 0, 0.15)' }}>
               {stat.icon}
             </div>
-            
-            <AnimatedNumber 
-              end={stat.value} 
-              suffix={stat.suffix} 
-              isStatic={stat.isStatic}
-              staticText={stat.staticText}
-            />
-            
-            <span style={{
-              color: 'var(--text-muted, #64748b)',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              marginTop: '0.5rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              fontFamily: 'var(--font-body, "Inter", sans-serif)'
-            }}>
+            <AnimatedNumber end={stat.value} suffix={stat.suffix} isStatic={stat.isStatic} staticText={stat.staticText} />
+            <span style={{ color: 'var(--text-muted, #64748b)', fontSize: '0.875rem', fontWeight: '500', marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-body, "Inter", sans-serif)' }}>
               {stat.label}
             </span>
           </div>
@@ -234,3 +153,4 @@ export const TrustStatsBar = () => {
     </section>
   );
 };
+

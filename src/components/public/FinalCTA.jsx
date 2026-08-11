@@ -7,9 +7,11 @@ import { Upload, ArrowRight, Shield, Globe, Zap, CheckCircle2 } from 'lucide-rea
 
 export const FinalCTA = () => {
   const navigate = useNavigate();
-  const { activeHomeServiceTab, openOrderWizard, protectedNavigate } = useAppState();
+  const { activeHomeServiceTab, openOrderWizard, protectedNavigate, homePageConfig = {} } = useAppState();
   
   const [hoveredBtn, setHoveredBtn] = useState(null);
+  const dbSettings = homePageConfig?.settings || {};
+
 
   const handleCtaClick = () => {
     if (openOrderWizard) {
@@ -23,25 +25,32 @@ export const FinalCTA = () => {
   const getDynamicContent = () => {
     if (activeHomeServiceTab === 'vector') {
       return {
-        title: 'Transform Your Designs Into Resolution-Independent Vector Art',
-        desc: 'Precision node tracing and Pantone spot color separation. Get clean, scalable vector files ready for high-quality printing.',
-        btnText: 'Start Vector Conversion'
+        title: dbSettings.cta_vector_title || 'Transform Your Designs Into Resolution-Independent Vector Art',
+        desc: dbSettings.cta_vector_desc || 'Precision node tracing and Pantone spot color separation. Get clean, scalable vector files ready for high-quality printing.',
+        btnText: dbSettings.cta_vector_btn || 'Start Vector Conversion'
       };
     } else if (activeHomeServiceTab === 'patch' || activeHomeServiceTab === 'patches') {
       return {
-        title: 'Transform Your Designs Into Premium Custom Patches',
-        desc: 'High-density embroidered, woven, and PVC patches delivered to your door. Get a free digital proof and fast worldwide shipping.',
-        btnText: 'Order Custom Patches'
+        title: dbSettings.cta_patch_title || 'Transform Your Designs Into Premium Custom Patches',
+        desc: dbSettings.cta_patch_desc || 'High-density embroidered, woven, and PVC patches delivered to your door. Get a free digital proof and fast worldwide shipping.',
+        btnText: dbSettings.cta_patch_btn || 'Order Custom Patches'
       };
     }
     return {
-      title: 'Transform Your Designs Into Production-Ready Masterpieces',
-      desc: 'Precision embroidery digitizing with zero thread breaks. Get machine-ready stitch files engineered for your specific fabric and equipment.',
-      btnText: 'Start Digitizing Now'
+      title: dbSettings.cta_emb_title || 'Transform Your Designs Into Production-Ready Masterpieces',
+      desc: dbSettings.cta_emb_desc || 'Precision embroidery digitizing with zero thread breaks. Get machine-ready stitch files engineered for your specific fabric and equipment.',
+      btnText: dbSettings.cta_emb_btn || 'Start Digitizing Now'
     };
   };
 
   const content = getDynamicContent();
+  const ctaBadge = dbSettings.cta_badge || '🚀 Ready to Get Started?';
+  const ctaSecondaryBtn = dbSettings.cta_secondary_btn || 'Get Free Quote';
+  const badge1 = dbSettings.cta_trust_badge_1 || 'Secure Payments';
+  const badge2 = dbSettings.cta_trust_badge_2 || 'Worldwide Delivery';
+  const badge3 = dbSettings.cta_trust_badge_3 || '4-Hour Express';
+  const badge4 = dbSettings.cta_trust_badge_4 || '100% Satisfaction';
+
 
   const styles = {
     section: {
@@ -175,7 +184,7 @@ export const FinalCTA = () => {
       
       <div style={styles.container}>
         <div style={styles.pill}>
-          <span>🚀</span> Ready to Get Started?
+          {ctaBadge}
         </div>
         
         <h2 style={styles.headline}>
@@ -203,7 +212,7 @@ export const FinalCTA = () => {
             onMouseEnter={() => setHoveredBtn('secondary')}
             onMouseLeave={() => setHoveredBtn(null)}
           >
-            Get Free Quote
+            {ctaSecondaryBtn}
             <ArrowRight size={20} />
           </button>
         </div>
@@ -211,19 +220,19 @@ export const FinalCTA = () => {
         <div style={styles.trustBadges}>
           <div style={styles.badge}>
             <Shield style={styles.icon} />
-            Secure Payments
+            {badge1}
           </div>
           <div style={styles.badge}>
             <Globe style={styles.icon} />
-            Worldwide Delivery
+            {badge2}
           </div>
           <div style={styles.badge}>
             <Zap style={styles.icon} />
-            4-Hour Express
+            {badge3}
           </div>
           <div style={styles.badge}>
             <CheckCircle2 style={styles.icon} />
-            100% Satisfaction
+            {badge4}
           </div>
         </div>
       </div>

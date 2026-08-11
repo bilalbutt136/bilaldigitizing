@@ -28,6 +28,7 @@ import {
   cancelOrderInSupabase,
   deleteOrderInSupabase,
   upsertCatalogDataToSupabase,
+  fetchHomePageContentFromSupabase,
   ORDER_STATUSES,
   validateStatusTransition
 } from '../services/supabaseService';
@@ -112,6 +113,14 @@ export const StateProvider = ({ children }) => {
   // Dynamic Service-Driven Homepage & CMS Content State
   const [activeHomeServiceTab, setActiveHomeServiceTab] = useState('all');
   const [serviceCmsContent, setServiceCmsContent] = useState({});
+  const [homePageConfig, setHomePageConfig] = useState({
+    settings: {},
+    trustStats: [],
+    trustFeatures: [],
+    workflowSteps: [],
+    pricingStaticCards: [],
+    pricingTiers: []
+  });
   const [testimonials, setTestimonials] = useState([]);
   const [faqs, setFaqs] = useState([]);
 
@@ -222,6 +231,12 @@ export const StateProvider = ({ children }) => {
             if (catalog.siteSettings) setSiteSettings(catalog.siteSettings);
             if (catalog.pricing) setPricing(catalog.pricing);
             if (catalog.serviceCms) setServiceCmsContent(catalog.serviceCms);
+          }
+
+          // Fetch new Home Page CMS
+          const hpContent = await fetchHomePageContentFromSupabase();
+          if (!cancelled && hpContent) {
+            setHomePageConfig(hpContent);
           }
 
           // Load DB clients from Supabase users table
@@ -986,6 +1001,17 @@ export const StateProvider = ({ children }) => {
     return { success: false, error: res.error };
   };
 
+  const fetchHomePageContent = async () => {
+    try {
+      const data = await fetchCmsDataFromSupabase('home_page');
+      if (data) setHomePageConfig(data);
+      return data;
+    } catch (err) {
+      console.error('Error fetching home page content:', err);
+      return null;
+    }
+  };
+
   return (
     <StateContext.Provider value={{
       currentView, setCurrentView,
@@ -1013,6 +1039,7 @@ export const StateProvider = ({ children }) => {
       servicesList, setServicesList, updateServicesList,
       heroSlides, setHeroSlides, updateHeroSlides,
       heroGlobalSettings, setHeroGlobalSettings,
+      homePageConfig, setHomePageConfig, fetchHomePageContent,
       digitizers, setDigitizers,
       siteSettings, setSiteSettings, updateSiteSettings,
       adminUsers, setAdminUsers, addAdminUser,

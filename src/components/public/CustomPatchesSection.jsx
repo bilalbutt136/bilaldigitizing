@@ -18,7 +18,9 @@ import {
 import { PackageCard } from './PackageCard';
 
 export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => {
-  const { openOrderWizard, setIsOrderWizardOpen, patchCards = [], serviceCmsContent = {}, portfolioSamples } = useAppState();
+  const { openOrderWizard, setIsOrderWizardOpen, patchCards = [], serviceCmsContent = {}, portfolioSamples, homePageConfig = {} } = useAppState();
+  
+  const dbSettings = homePageConfig?.settings || {};
 
   const [selectedTier, setSelectedTier] = useState('standard');
 
@@ -139,15 +141,16 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
             borderRadius: '9999px',
             marginBottom: '1rem'
           }}>
-            <Package size={16} /> DEDICATED CUSTOM PATCHES & EMBLEMS STUDIO
+            <Package size={16} /> {dbSettings.patch_hero_badge || 'DEDICATED CUSTOM PATCHES & EMBLEMS STUDIO'}
           </div>
 
           <h1 style={{ fontSize: '3rem', color: '#ffffff', fontWeight: 900, marginBottom: '1rem', lineHeight: 1.15 }}>
-            Custom Woven, Embroidered & 3D PVC Patches
+            {dbSettings.patch_hero_title || 'Custom Woven, Embroidered & 3D PVC Patches'}
           </h1>
 
           <p style={{ color: '#94a3b8', fontSize: '1.15rem', lineHeight: 1.65, marginBottom: '2rem' }}>
-            Turn your brand logos, insignia, and artwork into high-durability physical patches. Hand-crafted precision with factory-direct pricing starting from <strong style={{ color: 'var(--orange-400)' }}>$1.50 / patch</strong>.
+            {dbSettings.patch_hero_sub || 'Turn your brand logos, insignia, and artwork into high-durability physical patches. Hand-crafted precision with factory-direct pricing starting from '}
+            {dbSettings.patch_hero_price && <strong style={{ color: 'var(--orange-400)' }}>{dbSettings.patch_hero_price}</strong>}
           </p>
 
           {/* Quick Value Badges */}
@@ -163,13 +166,13 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
             marginBottom: '2.5rem'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <CheckCircle size={18} style={{ color: '#10b981' }} /> Min. Order: 50 Patches
+              <CheckCircle size={18} style={{ color: '#10b981' }} /> {dbSettings.patch_hero_value_1 || 'Min. Order: 50 Patches'}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <CheckCircle size={18} style={{ color: '#10b981' }} /> Heavy-Duty Tactical Velcro, Heat-Seal & Sew-On
+              <CheckCircle size={18} style={{ color: '#10b981' }} /> {dbSettings.patch_hero_value_2 || 'Heavy-Duty Tactical Velcro, Heat-Seal & Sew-On'}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <CheckCircle size={18} style={{ color: '#10b981' }} /> Free Physical Sample Photo Confirmation
+              <CheckCircle size={18} style={{ color: '#10b981' }} /> {dbSettings.patch_hero_value_3 || 'Free Physical Sample Photo Confirmation'}
             </div>
           </div>
 
@@ -179,7 +182,7 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
               onClick={() => handleStartOrder('standard')}
               style={{ fontWeight: 800, padding: '0.85rem 2rem', fontSize: '1.05rem' }}
             >
-              Order Custom Patches <ArrowRight size={20} />
+              {dbSettings.patch_hero_btn_primary || 'Order Custom Patches'} <ArrowRight size={20} />
             </button>
 
             <a 
@@ -187,7 +190,7 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
               className="btn btn-outline btn-lg"
               style={{ fontWeight: 700, padding: '0.85rem 1.75rem', color: '#ffffff', borderColor: 'rgba(255,255,255,0.2)' }}
             >
-              View Pricing Tiers & Materials
+              {dbSettings.patch_hero_btn_secondary || 'View Pricing Tiers & Materials'}
             </a>
           </div>
 
@@ -220,7 +223,7 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
           </div>
 
           <div style={{ textAlign: 'center', marginTop: '2.5rem', color: '#94a3b8', fontSize: '0.9rem' }}>
-            📌 <em>Prices are flat rates per patch with zero hidden charges. Minimum order 50 Pcs. Click any tier package above to launch your order configuration modal.</em>
+            📌 <em>{dbSettings.patch_footer_text || 'Prices are flat rates per patch with zero hidden charges. Minimum order 50 Pcs. Click any tier package above to launch your order configuration modal.'}</em>
           </div>
 
         </div>
