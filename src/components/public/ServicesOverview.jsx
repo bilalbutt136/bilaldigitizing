@@ -102,52 +102,60 @@ export const ServicesOverview = () => {
 };
 
 const ServiceCard = ({ service, onOrder, onNavigate }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const cardStyle = {
+    ...styles.card,
+    ...(isHovered ? styles.cardHover : {})
+  };
+
+  const buttonStyle = {
+    ...styles.button,
+    ...(isHovered ? styles.buttonHover : {})
+  };
+
   return (
-    <div className="gig-card" onClick={onNavigate} style={{ cursor: 'pointer' }}>
-      <img 
-        src={service.category === 'Vector Art' ? '/assets/vector-mock.jpg' : '/assets/embroidery-mock.jpg'} 
-        alt={service.title}
-        className="gig-image"
-        onError={(e) => {
-          e.target.onerror = null; 
-          e.target.src = 'https://placehold.co/600x400/1e293b/ffffff?text=Service+Preview';
-        }}
-      />
-      <div className="gig-body">
-        <div className="gig-seller">
-          <div className="gig-seller-avatar">B</div>
-          <span className="gig-seller-name">B Digitizing Studio</span>
+    <div 
+      style={cardStyle}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div style={styles.cardHeader}>
+        <div style={styles.iconContainer}>
+          {service.icon}
         </div>
-        <h3 className="gig-title" onClick={(e) => { e.stopPropagation(); onNavigate(); }}>
-          {service.title}
-        </h3>
-        <div className="gig-rating">
-          <span className="gig-rating-star">★</span>
-          <span className="gig-rating-score">5.0</span>
-          <span className="gig-rating-count">(1k+)</span>
-        </div>
+        {service.price && <div style={styles.priceBadge}>{service.price}</div>}
       </div>
-      <div className="gig-footer">
-        <button 
-          onClick={(e) => { e.stopPropagation(); onOrder(); }}
-          style={{ background: 'none', border: 'none', color: '#74767e', cursor: 'pointer' }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-          </svg>
-        </button>
-        <div className="gig-footer-price">
-          <span className="gig-footer-label">Starting At</span>
-          <span className="gig-footer-amount">{service.price || '$10'}</span>
-        </div>
-      </div>
+      
+      <h3 style={styles.cardTitle}>{service.title}</h3>
+      <p style={styles.cardDescription}>{service.description}</p>
+      
+      {service.features.length > 0 && (
+        <ul style={styles.featureList}>
+          {service.features.map((feature, idx) => (
+            <li key={idx} style={styles.featureItem}>
+              <Check size={18} style={styles.checkIcon} />
+              <span style={styles.featureText}>{feature}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      
+      <button 
+        style={buttonStyle} 
+        onClick={onOrder}
+        aria-label={`Get started with ${service.title}`}
+      >
+        <span>Get Started</span>
+        <ArrowRight size={18} />
+      </button>
     </div>
   );
 };
 
 const styles = {
   section: {
-    backgroundColor: 'var(--bg-main, #ffffff)',
+    backgroundColor: 'var(--bg-main, #f8fafc)',
     padding: '70px 24px',
     fontFamily: 'var(--font-body, "Inter", sans-serif)',
     color: 'var(--text-main, #0f172a)',
@@ -157,37 +165,150 @@ const styles = {
     margin: '0 auto',
   },
   headerContainer: {
+    textAlign: 'center',
     marginBottom: '48px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
   },
   pillBadge: {
-    display: 'none', // Removed for Fiverr layout
+    backgroundColor: 'var(--orange-50, #fff7ed)',
+    color: 'var(--orange-600, #ea580c)',
+    padding: '6px 16px',
+    borderRadius: '9999px',
+    fontSize: '0.875rem',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    marginBottom: '16px',
+    border: '1px solid #ffd4a3',
   },
   heading: {
     fontFamily: 'var(--font-heading, sans-serif)',
-    fontSize: '2rem',
-    fontWeight: '700',
-    color: '#404145',
-    margin: '0 0 8px 0',
+    fontSize: 'clamp(2rem, 4vw, 2.5rem)',
+    fontWeight: '800',
+    color: 'var(--navy-950, #090d16)',
+    margin: '0 0 16px 0',
+    lineHeight: '1.2',
   },
   subtext: {
-    display: 'none', // Removed for Fiverr layout
+    fontSize: '1.125rem',
+    color: 'var(--text-muted, #64748b)',
+    maxWidth: '650px',
+    margin: '0',
+    lineHeight: '1.6',
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-    gap: '24px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+    gap: '32px',
   },
   emptyState: {
     textAlign: 'center',
     padding: '48px 24px',
     backgroundColor: '#ffffff',
-    borderRadius: '4px',
-    border: '1px solid #e4e5e7',
+    borderRadius: '16px',
+    border: '1px solid var(--border-color, #e2e8f0)',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
   },
   emptyText: {
     fontSize: '1.1rem',
     fontWeight: '600',
-    color: '#74767e',
+    color: 'var(--text-muted, #64748b)',
     margin: 0
+  },
+  card: {
+    backgroundColor: 'var(--bg-card, #ffffff)',
+    borderRadius: '16px',
+    padding: '32px',
+    border: '1px solid var(--border-color, #e2e8f0)',
+    display: 'flex',
+    flexDirection: 'column',
+    position: 'relative',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+    overflow: 'hidden',
+  },
+  cardHover: {
+    transform: 'translateY(-6px)',
+    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+    borderTop: '4px solid var(--orange-500, #ff7a00)',
+  },
+  cardHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '24px',
+  },
+  iconContainer: {
+    backgroundColor: 'var(--orange-50, #fff7ed)',
+    padding: '12px',
+    borderRadius: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  priceBadge: {
+    backgroundColor: 'var(--navy-950, #090d16)',
+    color: 'white',
+    padding: '6px 12px',
+    borderRadius: '8px',
+    fontSize: '0.875rem',
+    fontWeight: '700',
+  },
+  cardTitle: {
+    fontFamily: 'var(--font-heading, sans-serif)',
+    fontSize: '1.5rem',
+    fontWeight: '800',
+    color: 'var(--navy-950, #090d16)',
+    margin: '0 0 12px 0',
+  },
+  cardDescription: {
+    fontSize: '1rem',
+    color: 'var(--text-muted, #64748b)',
+    lineHeight: '1.5',
+    margin: '0 0 24px 0',
+  },
+  featureList: {
+    listStyle: 'none',
+    padding: '0',
+    margin: '0 0 32px 0',
+    flexGrow: '1',
+  },
+  featureItem: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    marginBottom: '12px',
+  },
+  checkIcon: {
+    color: 'var(--orange-500, #ff7a00)',
+    marginRight: '12px',
+    flexShrink: '0',
+    marginTop: '2px',
+  },
+  featureText: {
+    fontSize: '0.9375rem',
+    color: 'var(--text-main, #0f172a)',
+    lineHeight: '1.5',
+  },
+  button: {
+    width: '100%',
+    padding: '14px 24px',
+    backgroundColor: 'transparent',
+    color: 'var(--orange-600, #ea580c)',
+    border: '2px solid var(--orange-500, #ff7a00)',
+    borderRadius: '8px',
+    fontSize: '1rem',
+    fontWeight: '700',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+  },
+  buttonHover: {
+    backgroundColor: 'var(--orange-500, #ff7a00)',
+    color: 'white',
   }
 };
