@@ -509,48 +509,48 @@ export const HomePageEditor = () => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Badge</label>
-              <input type="text" value={settings.emb_hero_badge || ''} onChange={e => handleSettingChange('emb_hero_badge', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.emb_hero_badge !== undefined ? settings.emb_hero_badge : 'DEDICATED EMBROIDERY DIGITIZING STUDIO'} onChange={e => handleSettingChange('emb_hero_badge', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Title</label>
-              <input type="text" value={settings.emb_hero_title || ''} onChange={e => handleSettingChange('emb_hero_title', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.emb_hero_title !== undefined ? settings.emb_hero_title : 'Custom Embroidery Digitizing Services'} onChange={e => handleSettingChange('emb_hero_title', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
           </div>
           <div>
             <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Subtitle</label>
-            <textarea value={settings.emb_hero_sub || ''} onChange={e => handleSettingChange('emb_hero_sub', e.target.value)} rows={2} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+            <textarea value={settings.emb_hero_sub !== undefined ? settings.emb_hero_sub : 'Turn your logo artwork into precise embroidery files ready for commercial production. Every design is hand-digitized with exact stitch counts, underlay pathing, and zero needle breaks.'} onChange={e => handleSettingChange('emb_hero_sub', e.target.value)} rows={2} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Value 1</label>
-              <input type="text" value={settings.emb_hero_value_1 || ''} onChange={e => handleSettingChange('emb_hero_value_1', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.emb_hero_value_1 !== undefined ? settings.emb_hero_value_1 : 'Accurate Stitching Pathing'} onChange={e => handleSettingChange('emb_hero_value_1', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Value 2</label>
-              <input type="text" value={settings.emb_hero_value_2 || ''} onChange={e => handleSettingChange('emb_hero_value_2', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.emb_hero_value_2 !== undefined ? settings.emb_hero_value_2 : 'Smooth Commercial Results'} onChange={e => handleSettingChange('emb_hero_value_2', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Value 3</label>
-              <input type="text" value={settings.emb_hero_value_3 || ''} onChange={e => handleSettingChange('emb_hero_value_3', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.emb_hero_value_3 !== undefined ? settings.emb_hero_value_3 : 'All Machine Formats (.DST, .PES, .EMB)'} onChange={e => handleSettingChange('emb_hero_value_3', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Primary Button</label>
-              <input type="text" value={settings.emb_hero_btn_primary || ''} onChange={e => handleSettingChange('emb_hero_btn_primary', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.emb_hero_btn_primary !== undefined ? settings.emb_hero_btn_primary : 'Order Digitizing Design'} onChange={e => handleSettingChange('emb_hero_btn_primary', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Secondary Button</label>
-              <input type="text" value={settings.emb_hero_btn_secondary || ''} onChange={e => handleSettingChange('emb_hero_btn_secondary', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.emb_hero_btn_secondary !== undefined ? settings.emb_hero_btn_secondary : 'View Pricing Tiers'} onChange={e => handleSettingChange('emb_hero_btn_secondary', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
           </div>
           <div>
             <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Footer Note</label>
-            <textarea value={settings.emb_footer_text || ''} onChange={e => handleSettingChange('emb_footer_text', e.target.value)} rows={2} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+            <textarea value={settings.emb_footer_text !== undefined ? settings.emb_footer_text : 'Prices are flat rates per design with zero hidden charges. Need multiple designs? Click any tier package above to open your instant order form.'} onChange={e => handleSettingChange('emb_footer_text', e.target.value)} rows={2} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button onClick={() => handleSaveSettings(['emb_hero_badge', 'emb_hero_title', 'emb_hero_sub', 'emb_hero_value_1', 'emb_hero_value_2', 'emb_hero_value_3', 'emb_hero_btn_primary', 'emb_hero_btn_secondary', 'emb_footer_text'])} disabled={saving} style={{ background: 'var(--navy-900)', color: '#fff', padding: '0.6rem 1.2rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Save Page Text</button>
+            <button onClick={() => handleSaveSettings(['emb_hero_badge', 'emb_hero_title', 'emb_hero_sub', 'emb_hero_value_1', 'emb_hero_value_2', 'emb_hero_value_3', 'emb_hero_btn_primary', 'emb_hero_btn_secondary', 'emb_footer_text'])} disabled={saving} style={{ background: 'var(--navy-900)', color: '#fff', padding: '0.6rem 1.2rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Save Embroidery Page Text</button>
           </div>
         </div>
       </div>
@@ -564,38 +564,52 @@ export const HomePageEditor = () => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Badge</label>
-              <input type="text" value={settings.vector_hero_badge || ''} onChange={e => handleSettingChange('vector_hero_badge', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.vector_hero_badge !== undefined ? settings.vector_hero_badge : 'Dedicated Vector Redraw Studio'} onChange={e => handleSettingChange('vector_hero_badge', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Title</label>
-              <input type="text" value={settings.vector_hero_title || ''} onChange={e => handleSettingChange('vector_hero_title', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.vector_hero_title !== undefined ? settings.vector_hero_title : 'Custom Vector Art Conversion & Redraws'} onChange={e => handleSettingChange('vector_hero_title', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
           </div>
           <div>
             <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Subtitle</label>
-            <textarea value={settings.vector_hero_sub || ''} onChange={e => handleSettingChange('vector_hero_sub', e.target.value)} rows={2} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+            <textarea value={settings.vector_hero_sub !== undefined ? settings.vector_hero_sub : 'Transform low-resolution JPEGs, PNGs, hand-drawn sketches, or pixelated logos into 100% hand-drawn, razor-sharp scalable vector graphics (.AI, .EPS, .SVG, .PDF, .CDR).'} onChange={e => handleSettingChange('vector_hero_sub', e.target.value)} rows={2} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Value 1</label>
-              <input type="text" value={settings.vector_hero_value_1 || ''} onChange={e => handleSettingChange('vector_hero_value_1', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.vector_hero_value_1 !== undefined ? settings.vector_hero_value_1 : 'Hand-Drawn Clean Paths'} onChange={e => handleSettingChange('vector_hero_value_1', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Value 2</label>
-              <input type="text" value={settings.vector_hero_value_2 || ''} onChange={e => handleSettingChange('vector_hero_value_2', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.vector_hero_value_2 !== undefined ? settings.vector_hero_value_2 : '8–12 Hours Turnaround'} onChange={e => handleSettingChange('vector_hero_value_2', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Value 3</label>
-              <input type="text" value={settings.vector_hero_value_3 || ''} onChange={e => handleSettingChange('vector_hero_value_3', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.vector_hero_value_3 !== undefined ? settings.vector_hero_value_3 : 'Unlimited Free Revisions'} onChange={e => handleSettingChange('vector_hero_value_3', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Value 4</label>
-              <input type="text" value={settings.vector_hero_value_4 || ''} onChange={e => handleSettingChange('vector_hero_value_4', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.vector_hero_value_4 !== undefined ? settings.vector_hero_value_4 : 'Starting from $15.00'} onChange={e => handleSettingChange('vector_hero_value_4', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div>
+              <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Primary Button</label>
+              <input type="text" value={settings.vector_hero_btn_primary !== undefined ? settings.vector_hero_btn_primary : 'Order Vector Art'} onChange={e => handleSettingChange('vector_hero_btn_primary', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Secondary Button</label>
+              <input type="text" value={settings.vector_hero_btn_secondary !== undefined ? settings.vector_hero_btn_secondary : 'View Pricing Tiers'} onChange={e => handleSettingChange('vector_hero_btn_secondary', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+            </div>
+          </div>
+          <div>
+            <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Footer Note</label>
+            <textarea value={settings.vector_footer_text !== undefined ? settings.vector_footer_text : 'Prices are flat rates per design with zero hidden charges. Click any tier package above to configure your artwork.'} onChange={e => handleSettingChange('vector_footer_text', e.target.value)} rows={2} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button onClick={() => handleSaveSettings(['vector_hero_badge', 'vector_hero_title', 'vector_hero_sub', 'vector_hero_value_1', 'vector_hero_value_2', 'vector_hero_value_3', 'vector_hero_value_4'])} disabled={saving} style={{ background: 'var(--navy-900)', color: '#fff', padding: '0.6rem 1.2rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Save Page Text</button>
+            <button onClick={() => handleSaveSettings(['vector_hero_badge', 'vector_hero_title', 'vector_hero_sub', 'vector_hero_value_1', 'vector_hero_value_2', 'vector_hero_value_3', 'vector_hero_value_4', 'vector_hero_btn_primary', 'vector_hero_btn_secondary', 'vector_footer_text'])} disabled={saving} style={{ background: 'var(--navy-900)', color: '#fff', padding: '0.6rem 1.2rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Save Vector Page Text</button>
           </div>
         </div>
       </div>
@@ -609,52 +623,52 @@ export const HomePageEditor = () => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Badge</label>
-              <input type="text" value={settings.patch_hero_badge || ''} onChange={e => handleSettingChange('patch_hero_badge', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.patch_hero_badge !== undefined ? settings.patch_hero_badge : 'DEDICATED CUSTOM PATCHES & EMBLEMS STUDIO'} onChange={e => handleSettingChange('patch_hero_badge', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Title</label>
-              <input type="text" value={settings.patch_hero_title || ''} onChange={e => handleSettingChange('patch_hero_title', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.patch_hero_title !== undefined ? settings.patch_hero_title : 'Custom Woven, Embroidered & 3D PVC Patches'} onChange={e => handleSettingChange('patch_hero_title', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
           </div>
           <div>
             <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Subtitle</label>
-            <textarea value={settings.patch_hero_sub || ''} onChange={e => handleSettingChange('patch_hero_sub', e.target.value)} rows={2} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+            <textarea value={settings.patch_hero_sub !== undefined ? settings.patch_hero_sub : 'Turn your brand logos, insignia, and artwork into high-durability physical patches. Hand-crafted precision with factory-direct pricing starting from '} onChange={e => handleSettingChange('patch_hero_sub', e.target.value)} rows={2} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Value 1</label>
-              <input type="text" value={settings.patch_hero_value_1 || ''} onChange={e => handleSettingChange('patch_hero_value_1', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.patch_hero_value_1 !== undefined ? settings.patch_hero_value_1 : 'Min. Order: 50 Patches'} onChange={e => handleSettingChange('patch_hero_value_1', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Value 2</label>
-              <input type="text" value={settings.patch_hero_value_2 || ''} onChange={e => handleSettingChange('patch_hero_value_2', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.patch_hero_value_2 !== undefined ? settings.patch_hero_value_2 : 'Heavy-Duty Tactical Velcro, Heat-Seal & Sew-On'} onChange={e => handleSettingChange('patch_hero_value_2', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Value 3</label>
-              <input type="text" value={settings.patch_hero_value_3 || ''} onChange={e => handleSettingChange('patch_hero_value_3', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.patch_hero_value_3 !== undefined ? settings.patch_hero_value_3 : 'Free Physical Sample Photo Confirmation'} onChange={e => handleSettingChange('patch_hero_value_3', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Hero Price Tag</label>
-              <input type="text" value={settings.patch_hero_price || ''} onChange={e => handleSettingChange('patch_hero_price', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.patch_hero_price !== undefined ? settings.patch_hero_price : '$1.50'} onChange={e => handleSettingChange('patch_hero_price', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Primary Button</label>
-              <input type="text" value={settings.patch_hero_btn_primary || ''} onChange={e => handleSettingChange('patch_hero_btn_primary', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.patch_hero_btn_primary !== undefined ? settings.patch_hero_btn_primary : 'Order Custom Patches'} onChange={e => handleSettingChange('patch_hero_btn_primary', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Secondary Button</label>
-              <input type="text" value={settings.patch_hero_btn_secondary || ''} onChange={e => handleSettingChange('patch_hero_btn_secondary', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+              <input type="text" value={settings.patch_hero_btn_secondary !== undefined ? settings.patch_hero_btn_secondary : 'View Pricing Tiers & Materials'} onChange={e => handleSettingChange('patch_hero_btn_secondary', e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
             </div>
           </div>
           <div>
             <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Footer Note</label>
-            <textarea value={settings.patch_footer_text || ''} onChange={e => handleSettingChange('patch_footer_text', e.target.value)} rows={2} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
+            <textarea value={settings.patch_footer_text !== undefined ? settings.patch_footer_text : 'Prices are flat rates per patch with zero hidden charges. Minimum order 50 Pcs. Click any tier package above to launch your order configuration modal.'} onChange={e => handleSettingChange('patch_footer_text', e.target.value)} rows={2} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px' }} />
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button onClick={() => handleSaveSettings(['patch_hero_badge', 'patch_hero_title', 'patch_hero_sub', 'patch_hero_value_1', 'patch_hero_value_2', 'patch_hero_value_3', 'patch_hero_price', 'patch_hero_btn_primary', 'patch_hero_btn_secondary', 'patch_footer_text'])} disabled={saving} style={{ background: 'var(--navy-900)', color: '#fff', padding: '0.6rem 1.2rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Save Page Text</button>
+            <button onClick={() => handleSaveSettings(['patch_hero_badge', 'patch_hero_title', 'patch_hero_sub', 'patch_hero_value_1', 'patch_hero_value_2', 'patch_hero_value_3', 'patch_hero_price', 'patch_hero_btn_primary', 'patch_hero_btn_secondary', 'patch_footer_text'])} disabled={saving} style={{ background: 'var(--navy-900)', color: '#fff', padding: '0.6rem 1.2rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Save Custom Patches Text</button>
           </div>
         </div>
       </div>

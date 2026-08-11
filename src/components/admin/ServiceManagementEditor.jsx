@@ -167,11 +167,169 @@ export const ServiceManagementEditor = () => {
     showToast('Service tier removed', 'info');
   };
 
+  const defaultEmbroideryCards = [
+    {
+      id: 'pcard-basic',
+      category: 'embroidery',
+      tierKey: 'basic',
+      title: 'Basic Digitizing',
+      rate: '$10.00',
+      price: '$10.00',
+      unit: '/ design',
+      badge: 'ESSENTIAL',
+      time: '8 - 12 Hours',
+      turnaround: '8 - 12 Hours',
+      description: 'Ideal for simple left chest / small logos',
+      features: ['Standard turnaround', '.DST / .PES machine files', 'Essential stitch paths & underlay'],
+      popular: false,
+      status: 'active'
+    },
+    {
+      id: 'pcard-standard',
+      category: 'embroidery',
+      tierKey: 'standard',
+      title: 'Standard Digitizing',
+      rate: '$20.00',
+      price: '$20.00',
+      unit: '/ design',
+      badge: 'MOST POPULAR',
+      time: '4-8 Hours Express',
+      turnaround: '4-8 Hours Express',
+      description: 'Ideal for standard left chest & caps',
+      features: ['4-Hour Express Available', 'Free native .EMB source files', '100% Free Unlimited Revisions'],
+      popular: true,
+      status: 'active'
+    },
+    {
+      id: 'pcard-premium',
+      category: 'embroidery',
+      tierKey: 'premium',
+      title: 'Premium Digitizing',
+      rate: '$30.00',
+      price: '$30.00',
+      unit: '/ design',
+      badge: 'VIP & COMPLEX',
+      time: '4-8 Hours Express',
+      turnaround: '4-8 Hours Express',
+      description: 'Ideal for Jacket Backs & Large Crests',
+      features: ['3D Puff Cap density pathing', 'Jacket back high stitch count verification', '24/7 Priority studio support'],
+      popular: false,
+      status: 'active'
+    }
+  ];
+
+  const defaultVectorCards = [
+    {
+      id: 'vec-basic',
+      category: 'vector',
+      tierKey: 'basic',
+      title: 'Basic Vector Redraw',
+      rate: '$15.00',
+      price: '$15.00',
+      unit: '/ design',
+      badge: 'ESSENTIAL',
+      time: '8 - 12 Hours',
+      turnaround: '8 - 12 Hours',
+      description: 'Ideal for simple logos, text, & icon redraws',
+      features: ['100% Hand-Drawn Paths', 'Master AI, EPS, SVG & PDF files', 'Standard 8-12 hr turnaround'],
+      popular: false,
+      status: 'active'
+    },
+    {
+      id: 'vec-standard',
+      category: 'vector',
+      tierKey: 'standard',
+      title: 'Standard Vector Conversion',
+      rate: '$25.00',
+      price: '$25.00',
+      unit: '/ design',
+      badge: 'MOST POPULAR',
+      time: '4-8 Hours Express',
+      turnaround: '4-8 Hours Express',
+      description: 'Ideal for detailed artwork & color separations',
+      features: ['Pantone Spot Color Separation', 'Free Unlimited Revisions', 'High-res Print-Ready Files', '4-8 hr turnaround'],
+      popular: true,
+      status: 'active'
+    },
+    {
+      id: 'vec-premium',
+      category: 'vector',
+      tierKey: 'premium',
+      title: 'Premium Mascot & Complex Vector',
+      rate: '$35.00',
+      price: '$35.00',
+      unit: '/ design',
+      badge: 'COMPLEX & RUSH',
+      time: 'Super Rush Available',
+      turnaround: 'Super Rush Available',
+      description: 'Ideal for complex illustrations & intricate logos',
+      features: ['Complex Mascot Node Pathing', 'Super Rush Express Delivery', 'VIP Studio Support'],
+      popular: false,
+      status: 'active'
+    }
+  ];
+
+  const defaultPatchCards = [
+    {
+      id: 'patch-basic',
+      category: 'patch',
+      tierKey: 'basic',
+      title: 'Basic Woven Patches',
+      rate: '$1.50',
+      price: '$1.50',
+      unit: 'starting rate',
+      badge: 'ESSENTIAL',
+      time: '7-10 Days',
+      turnaround: '7-10 Days',
+      description: 'Ideal for simple logos and bulk orders',
+      features: ['Flat stitched edge detail', 'Iron-on backing', 'Ideal for simple logos & high-volume bulk runs', 'Standard 7-10 day studio turnaround'],
+      popular: false,
+      status: 'active'
+    },
+    {
+      id: 'patch-standard',
+      category: 'patch',
+      tierKey: 'standard',
+      title: 'Standard Embroidered Patches',
+      rate: '$2.50',
+      price: '$2.50',
+      unit: 'starting rate',
+      badge: 'MOST POPULAR',
+      time: '5-7 Days',
+      turnaround: '5-7 Days',
+      description: '3D raised thread texture & merrowed border',
+      features: ['Classic merrowed border edges', '3D raised thread texture', 'Velcro or heat-seal backing options', 'Free pre-production digital proof'],
+      popular: true,
+      status: 'active'
+    },
+    {
+      id: 'patch-premium',
+      category: 'patch',
+      tierKey: 'premium',
+      title: 'Premium 3D PVC & Leather Patches',
+      rate: '$3.50',
+      price: '$3.50',
+      unit: 'starting rate',
+      badge: 'LUXURY & PVC',
+      time: '5-7 Days',
+      turnaround: '5-7 Days',
+      description: 'Waterproof 3D molded PVC or genuine leather',
+      features: ['High-durability waterproof PVC or genuine leather', 'Laser-cut precision border outlines', 'Tactical velcro or adhesive mounting', 'VIP priority production'],
+      popular: false,
+      status: 'active'
+    }
+  ];
+
   // Get active list depending on selected category
   const getCurrentList = () => {
-    if (activeCategory === 'embroidery') return pricingCards;
-    if (activeCategory === 'patches') return patchCards;
-    return servicesList;
+    if (activeCategory === 'embroidery') {
+      return (pricingCards && pricingCards.length > 0) ? pricingCards : defaultEmbroideryCards;
+    }
+    if (activeCategory === 'patches') {
+      return (patchCards && patchCards.length > 0) ? patchCards : defaultPatchCards;
+    }
+    const filteredVec = (servicesList || []).filter(s => normalizeCategory(s.category) === 'vector-art');
+    return filteredVec.length > 0 ? filteredVec : defaultVectorCards;
   };
 
   const currentList = getCurrentList();
