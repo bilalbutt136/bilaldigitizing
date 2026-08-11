@@ -491,16 +491,6 @@ export const OrderWizardModal = () => {
     const orderTitle = title.trim() || `${pricingDetails?.serviceTitle || 'Service'} Order`;
     const finalPrice = pricingDetails?.finalPrice || 15.00;
 
-    // Wallet balance gate: block order if insufficient funds
-    if (walletBalance < parseFloat(finalPrice)) {
-      showToast(
-        `Insufficient wallet balance. You need $${(parseFloat(finalPrice) - walletBalance).toFixed(2)} more. Please fund your account.`,
-        'error'
-      );
-      setIsDepositModalOpen(true);
-      return;
-    }
-
     setIsProcessingPayment(true);
 
     try {
