@@ -16,6 +16,7 @@ import {
 
 import { useLocation } from '../../utils/navigation';
 import { PackageCard } from './PackageCard';
+import { normalizeCategory, matchCategory } from '../../utils/categoryUtils';
 
 export const PricingCalculator = () => {
   const { pricing = {}, pricingCards = [], patchCards = [], protectedNavigate, openOrderWizard, activeHomeServiceTab, setActiveHomeServiceTab, homePageConfig = {} } = useAppState();
@@ -32,16 +33,7 @@ export const PricingCalculator = () => {
   const searchParams = new URLSearchParams(location.search);
   
   // Initialize with URL param or global state
-  const initialCategory = searchParams.get('cat') || searchParams.get('service') || (activeHomeServiceTab || 'embroidery');
-
-  const [activeCategory, setActiveCategory] = React.useState(initialCategory);
-
-  // Sync with global tab changes
-  React.useEffect(() => {
-    if (activeHomeServiceTab) {
-      setActiveCategory(activeHomeServiceTab === 'patches' ? 'patch' : activeHomeServiceTab);
-    }
-  }, [activeHomeServiceTab]);
+  const activeCategory = normalizeCategory(activeHomeServiceTab || 'all');
 
   const handleSelectPackage = (cat) => {
     const cId = (cat.id || '').toLowerCase();
@@ -79,13 +71,6 @@ export const PricingCalculator = () => {
     }
   };
 
-  React.useEffect(() => {
-    const cat = new URLSearchParams(location.search).get('cat') || new URLSearchParams(location.search).get('service');
-    if (cat) {
-      setActiveCategory(cat);
-    }
-  }, [location.search]);
-
   const minFee = pricing.minOrderFee !== undefined ? parseFloat(pricing.minOrderFee).toFixed(2) : '10.00';
   const patchesFee = pricing.customPatchesStartingRate !== undefined ? parseFloat(pricing.customPatchesStartingRate).toFixed(2) : '1.50';
   const vectorFee = pricing.vectorSimpleRate !== undefined ? parseFloat(pricing.vectorSimpleRate).toFixed(2) : '15.00';
@@ -94,7 +79,7 @@ export const PricingCalculator = () => {
   
   const cardsToRender = activeCategory === 'all'
     ? allCards
-    : allCards.filter(c => (c.category || '').toLowerCase() === activeCategory.toLowerCase() || (c.title || '').toLowerCase().includes(activeCategory.toLowerCase()));
+    : allCards.filter(c => matchCategory(c.category || c.service_type, activeCategory));
 
   return (
     <section id="pricing" style={{ 

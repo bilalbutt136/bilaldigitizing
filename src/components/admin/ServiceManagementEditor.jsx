@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
+import { normalizeCategory } from '../../utils/categoryUtils';
 import { 
   Plus, 
   Trash2, 
@@ -108,6 +109,7 @@ export const ServiceManagementEditor = () => {
     e.preventDefault();
     const updatedFeatures = formData.featuresStr.split('\n').map(f => f.trim()).filter(Boolean);
     const updatedAddOns = formData.addOnsStr.split('\n').map(a => a.trim()).filter(Boolean);
+    const normCat = normalizeCategory(formData.category || activeCategory);
 
     const updatedObj = {
       id: formData.id || `srv-${Date.now()}`,
@@ -124,29 +126,26 @@ export const ServiceManagementEditor = () => {
       addOns: updatedAddOns,
       popular: formData.popular,
       status: formData.status,
-      category: formData.category,
+      category: normCat,
       image: formData.image
     };
 
-    if (activeCategory === 'embroidery') {
+    // Save to services list
+    const sExists = (servicesList || []).some(s => s.id === updatedObj.id);
+    const nextServices = sExists ? servicesList.map(s => s.id === updatedObj.id ? updatedObj : s) : [...servicesList, updatedObj];
+    if (updateServicesList) updateServicesList(nextServices);
+
+    if (normCat === 'embroidery') {
       const exists = (pricingCards || []).some(p => p.id === updatedObj.id);
       const next = exists ? pricingCards.map(p => p.id === updatedObj.id ? updatedObj : p) : [...pricingCards, updatedObj];
       if (updatePricingCards) updatePricingCards(next);
-    } else if (activeCategory === 'patches') {
+    } else if (normCat === 'patches') {
       const exists = (patchCards || []).some(p => p.id === updatedObj.id);
       const next = exists ? patchCards.map(p => p.id === updatedObj.id ? updatedObj : p) : [...patchCards, updatedObj];
       if (updatePatchCards) updatePatchCards(next);
-    } else if (activeCategory === 'store') {
-      const exists = (storeProducts || []).some(p => p.id === updatedObj.id);
-      const next = exists ? storeProducts.map(p => p.id === updatedObj.id ? updatedObj : p) : [...storeProducts, updatedObj];
-      if (updateStoreProducts) updateStoreProducts(next);
-    } else {
-      const exists = (servicesList || []).some(p => p.id === updatedObj.id);
-      const next = exists ? servicesList.map(p => p.id === updatedObj.id ? updatedObj : p) : [...servicesList, updatedObj];
-      if (updateServicesList) updateServicesList(next);
     }
 
-    showToast(`Service "${formData.title}" saved successfully!`, 'success');
+    showToast(`Service "${formData.title}" saved under category "${normCat}"!`, 'success');
     setEditingItem(null);
     setIsCreateModalOpen(false);
   };
@@ -425,6 +424,20 @@ export const ServiceManagementEditor = () => {
             </div>
 
             <form onSubmit={handleSaveItem} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.3rem' }}>Service / Package Category *</label>
+                <select 
+                  className="form-control"
+                  value={formData.category}
+                  onChange={(e) => setFormData(p => ({ ...p, category: e.target.value }))}
+                  style={{ fontWeight: 700 }}
+                >
+                  <option value="embroidery">Embroidery</option>
+                  <option value="vector-art">Vector Art</option>
+                  <option value="patches">Patches</option>
+                </select>
+              </div>
+
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.3rem' }}>Service Title *</label>
                 <input 

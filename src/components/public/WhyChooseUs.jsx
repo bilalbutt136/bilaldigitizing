@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useAppState } from '../../context/StateContext';
+import { normalizeCategory } from '../../utils/categoryUtils';
 import { 
   Upload, 
   Layers, 
@@ -32,11 +33,11 @@ const IconRenderer = ({ iconName, size = 24, fallbackIcon = Award }) => {
 
 export const WhyChooseUs = () => {
   const { 
-    activeHomeServiceTab = 'embroidery', 
+    activeHomeServiceTab = 'all', 
     homePageConfig = {}
   } = useAppState();
 
-  const currentKey = activeHomeServiceTab === 'patches' ? 'patch' : (activeHomeServiceTab || 'embroidery');
+  const currentKey = normalizeCategory(activeHomeServiceTab);
   const dbSettings = homePageConfig?.settings || {};
 
   const title = dbSettings.why_title || 'Why Choose BDigitizing?';

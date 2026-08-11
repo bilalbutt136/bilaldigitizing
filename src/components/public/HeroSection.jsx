@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
+import { normalizeCategory } from '../../utils/categoryUtils';
 import { 
   CheckCircle2, 
   ArrowRight, 
@@ -173,11 +174,11 @@ export const HeroSection = () => {
             {[
               { id: 'all', label: 'All Services', icon: LayoutGrid },
               { id: 'embroidery', label: 'Embroidery', icon: Layers },
-              { id: 'vector', label: 'Vector Art', icon: PenTool },
-              { id: 'patch', label: 'Patches', icon: Tag }
+              { id: 'vector-art', label: 'Vector Art', icon: PenTool },
+              { id: 'patches', label: 'Patches', icon: Tag }
             ].map(tab => {
               const Icon = tab.icon;
-              const isActive = (currentKey === 'patch' && tab.id?.includes('patch')) || (currentKey === tab.id);
+              const isActive = normalizeCategory(activeHomeServiceTab) === normalizeCategory(tab.id);
               return (
                 <button
                   key={tab.id}

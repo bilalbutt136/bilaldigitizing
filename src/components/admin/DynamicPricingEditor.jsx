@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { upsertPricingTier, deletePricingTier } from '../../services/supabaseService';
+import { normalizeCategory, matchCategory } from '../../utils/categoryUtils';
 import { Plus, Edit2, Trash2, CheckCircle, Save, X, RefreshCw } from 'lucide-react';
 
 export const DynamicPricingEditor = () => {
@@ -25,7 +26,7 @@ export const DynamicPricingEditor = () => {
   }
 
   const filteredTiers = dynamicPricingTiers
-    .filter(t => t.service_type === activeTypeTab)
+    .filter(t => matchCategory(t.service_type, activeTypeTab))
     .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
 
   const handleEdit = (tier) => {
@@ -134,6 +135,20 @@ export const DynamicPricingEditor = () => {
             {editingTier === 'new' ? 'Create New Tier' : 'Edit Tier'}
           </h3>
           <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div>
+              <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.5rem' }}>Category *</label>
+              <select 
+                className="form-control" 
+                value={formData.service_type || 'embroidery'} 
+                onChange={e => setFormData({...formData, service_type: e.target.value})}
+                style={{ fontWeight: 700 }}
+              >
+                <option value="embroidery">Embroidery</option>
+                <option value="vector-art">Vector Art</option>
+                <option value="patches">Patches</option>
+              </select>
+            </div>
+
             <div style={{ display: 'flex', gap: '1rem' }}>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.5rem' }}>Title</label>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRight, Layers, PenTool, Hexagon } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
+import { normalizeCategory } from '../../utils/categoryUtils';
 
 export const PortfolioPreview = () => {
   const { portfolioSamples, activeHomeServiceTab, serviceCmsContent, homePageConfig = {} } = useAppState();
@@ -25,9 +26,10 @@ export const PortfolioPreview = () => {
   const [hoveredId, setHoveredId] = useState(null);
 
   useEffect(() => {
-    if (activeHomeServiceTab === 'embroidery') setActiveCategory('Embroidery');
-    else if (activeHomeServiceTab === 'vector') setActiveCategory('Vector Art');
-    else if (activeHomeServiceTab === 'patch' || activeHomeServiceTab === 'patches') setActiveCategory('Custom Patches');
+    const norm = normalizeCategory(activeHomeServiceTab);
+    if (norm === 'embroidery') setActiveCategory('Embroidery');
+    else if (norm === 'vector-art') setActiveCategory('Vector Art');
+    else if (norm === 'patches') setActiveCategory('Custom Patches');
     else setActiveCategory('All');
   }, [activeHomeServiceTab]);
   
