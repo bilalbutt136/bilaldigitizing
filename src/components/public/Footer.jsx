@@ -233,11 +233,11 @@ export const Footer = () => {
             </div>
 
             <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-              <a href="#privacy" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
+              <button onClick={() => navigate('/privacy')} style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                  onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}>
                 Privacy Policy
-              </a>
+              </button>
               <button onClick={() => navigate('/terms')} style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                  onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}>
