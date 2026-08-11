@@ -40,28 +40,11 @@ export const WhyChooseUs = () => {
   const currentKey = normalizeCategory(activeHomeServiceTab);
   const dbSettings = homePageConfig?.settings || {};
 
-  const title = dbSettings.why_title || 'Why Choose BDigitizing?';
+  const title = dbSettings.why_title || 'A whole world of professional digitizing talent at your fingertips';
   const subtext = dbSettings.why_sub || 'Industry-leading quality, unmatched speed, and a commitment to perfection.';
-
-  // Trust Features Data source
-  const rawTrustFeatures = homePageConfig?.trustFeatures || [];
-  let trustFeatures = rawTrustFeatures.filter(f => f.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
-  
-  if (trustFeatures.length === 0) {
-    trustFeatures = [
-      { icon: 'Award', title: '15+ Years Experience', description: 'Decades of expertise handling complex designs for global brands.' },
-      { icon: 'MousePointer2', title: '100% Manual Digitizing', description: 'No auto-tracing. Every stitch and node is manually plotted for perfection.' },
-      { icon: 'RefreshCw', title: 'Free Unlimited Revisions', description: 'We tweak and refine until you are 100% satisfied with the result.' },
-      { icon: 'Globe', title: 'Worldwide Delivery', description: 'Express shipping for patches, instant downloads for digital files globally.' },
-      { icon: 'Headset', title: '24/7 Support', description: 'Round-the-clock customer service ready to answer technical queries.' },
-      { icon: 'Shield', title: 'Secure Payments', description: 'Enterprise-grade encryption for all your transactions and files.' },
-      { icon: 'ThumbsUp', title: 'Satisfaction Guarantee', description: 'Premium quality guaranteed on every single order, large or small.' }
-    ];
-  }
 
   // Workflow Data Source
   const rawWorkflowSteps = homePageConfig?.workflowSteps || [];
-  // Try to find steps matching the current service, fallback to 'all' if none exist for current service
   let matchedSteps = rawWorkflowSteps.filter(s => s.service === currentKey && s.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
   if (matchedSteps.length === 0) {
      matchedSteps = rawWorkflowSteps.filter(s => s.service === 'all' && s.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
@@ -76,7 +59,6 @@ export const WhyChooseUs = () => {
     currentKey === 'vector' ? 'Pixel-perfect node tracing and color separation for print and vinyl cutting.' :
     currentKey === 'patch' ? 'Crafting premium physical emblems from digital proofing to doorstep delivery.' :
     'From initial logo upload to machine-ready stitch file delivery in 4 simple steps.';
-
 
   let stepsToRender = matchedSteps;
 
@@ -104,104 +86,78 @@ export const WhyChooseUs = () => {
     ];
   }
 
-
   return (
-    <section id="why-choose-us" style={{ padding: '6rem 0', background: 'var(--bg-main)', borderTop: '1px solid var(--border-color)' }}>
+    <section id="why-choose-us" style={{ padding: '6rem 0', background: 'var(--bg-main)' }}>
       <div className="container">
         
-        {/* Trust Grid Section */}
-        <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
-          <h2 style={{ fontSize: '2.5rem', color: 'var(--navy-950)', marginBottom: '1rem', fontWeight: 800 }}>
-            {title}
-          </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.6 }}>
-            {subtext}
-          </p>
-        </div>
-
+        {/* Fiverr-Style Trust Proposition */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '1.5rem',
-          marginBottom: '6rem'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+          gap: '4rem',
+          alignItems: 'center',
+          marginBottom: '8rem'
         }}>
-          {trustFeatures.map((item, idx) => {
-            return (
-              <div 
-                key={item.id || idx} 
-                style={{ 
-                  padding: '2rem 1.5rem',
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '16px',
-                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.02)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  textAlign: 'center',
-                  transition: 'transform 0.3s ease, boxShadow 0.3s ease, borderColor 0.3s ease',
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-5px)';
-                  e.currentTarget.style.boxShadow = '0 12px 25px rgba(0, 0, 0, 0.06)';
-                  e.currentTarget.style.borderColor = 'var(--orange-200)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'none';
-                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.02)';
-                  e.currentTarget.style.borderColor = 'var(--border-color)';
-                }}
-              >
-                <div style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '14px',
-                  background: 'var(--orange-50)',
-                  color: 'var(--orange-500)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '1.25rem'
-                }}>
-                  <IconRenderer iconName={item.icon} size={28} />
+          <div>
+            <h2 style={{ fontSize: '2.5rem', color: '#404145', marginBottom: '2rem', fontWeight: 700, lineHeight: 1.2 }}>
+              {title}
+            </h2>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                  <CheckCircle2 size={24} color="#74767e" />
+                  <h3 style={{ fontSize: '1.25rem', color: '#404145', fontWeight: 600, margin: 0 }}>The best for every budget</h3>
                 </div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
-                  {item.title}
-                </h3>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
-                  {item.description || item.desc}
+                <p style={{ color: '#74767e', fontSize: '1.1rem', margin: 0, paddingLeft: '2.25rem' }}>
+                  Find high-quality services at every price point. No hourly rates, just project-based pricing.
                 </p>
               </div>
-            );
-          })}
+
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                  <CheckCircle2 size={24} color="#74767e" />
+                  <h3 style={{ fontSize: '1.25rem', color: '#404145', fontWeight: 600, margin: 0 }}>Quality work done quickly</h3>
+                </div>
+                <p style={{ color: '#74767e', fontSize: '1.1rem', margin: 0, paddingLeft: '2.25rem' }}>
+                  Find the right digitizer to begin working on your project within minutes.
+                </p>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                  <CheckCircle2 size={24} color="#74767e" />
+                  <h3 style={{ fontSize: '1.25rem', color: '#404145', fontWeight: 600, margin: 0 }}>Protected payments, every time</h3>
+                </div>
+                <p style={{ color: '#74767e', fontSize: '1.1rem', margin: 0, paddingLeft: '2.25rem' }}>
+                  Always know what you'll pay upfront. Your payment isn't released until you approve the work.
+                </p>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                  <CheckCircle2 size={24} color="#74767e" />
+                  <h3 style={{ fontSize: '1.25rem', color: '#404145', fontWeight: 600, margin: 0 }}>24/7 support</h3>
+                </div>
+                <p style={{ color: '#74767e', fontSize: '1.1rem', margin: 0, paddingLeft: '2.25rem' }}>
+                  Questions? Our round-the-clock support team is available to help anytime, anywhere.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+            <img src="/assets/embroidery-mock.jpg" alt="Quality Work" style={{ width: '100%', display: 'block', objectFit: 'cover' }} />
+          </div>
         </div>
 
         {/* Workflow Section Header */}
         <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            background: 'var(--orange-50)',
-            border: '1px solid var(--orange-200)',
-            color: 'var(--orange-700)',
-            fontWeight: 800,
-            fontSize: '0.85rem',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            padding: '0.35rem 0.95rem',
-            borderRadius: '9999px',
-            marginBottom: '1rem'
-          }}>
-            <ShieldCheck size={16} /> Seamless Step-by-Step Process
-          </div>
-
-          <h2 style={{ fontSize: '2.5rem', color: 'var(--navy-950)', marginBottom: '0.75rem', fontWeight: 800 }}>
+          <h2 style={{ fontSize: '2.5rem', color: '#404145', marginBottom: '0.75rem', fontWeight: 700 }}>
             {workflowTitle}
           </h2>
 
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.6 }}>
+          <p style={{ color: '#74767e', fontSize: '1.1rem', lineHeight: 1.6 }}>
             {workflowSubtext}
           </p>
         </div>
@@ -219,25 +175,20 @@ export const WhyChooseUs = () => {
                 style={{ 
                   padding: '2.25rem 1.75rem', 
                   textAlign: 'left', 
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '16px',
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)',
+                  background: '#ffffff',
+                  border: '1px solid #e4e5e7',
+                  borderRadius: '4px',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
-                  transition: 'transform 0.3s ease, boxShadow 0.3s ease, borderColor 0.3s ease',
+                  transition: 'transform 0.3s ease, boxShadow 0.3s ease',
                   cursor: 'default'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-5px)';
                   e.currentTarget.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.08)';
-                  e.currentTarget.style.borderColor = 'var(--orange-200)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'none';
-                  e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.03)';
-                  e.currentTarget.style.borderColor = 'var(--border-color)';
+                  e.currentTarget.style.boxShadow = 'none';
                 }}
               >
                 <div>
@@ -245,35 +196,29 @@ export const WhyChooseUs = () => {
                     <span style={{
                       fontSize: '0.9rem',
                       fontWeight: 900,
-                      background: 'var(--orange-500)',
+                      background: '#1dbf73',
                       color: '#ffffff',
                       padding: '0.35rem 0.85rem',
-                      borderRadius: '9999px',
-                      boxShadow: '0 4px 12px rgba(255, 122, 0, 0.3)'
+                      borderRadius: '4px'
                     }}>
                       STEP {item.step_number || `0${idx + 1}`}
                     </span>
 
                     <div style={{
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: '12px',
-                      background: 'var(--bg-main)',
-                      border: '1px solid var(--orange-200)',
-                      color: 'var(--orange-500)',
+                      color: '#404145',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
                     }}>
-                      <IconRenderer iconName={item.icon} fallbackIcon={CheckCircle2} size={22} />
+                      <IconRenderer iconName={item.icon} fallbackIcon={CheckCircle2} size={28} />
                     </div>
                   </div>
 
-                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.75rem', lineHeight: 1.35 }}>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#404145', marginBottom: '0.75rem', lineHeight: 1.35 }}>
                     {item.title}
                   </h3>
 
-                  <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+                  <p style={{ fontSize: '0.95rem', color: '#74767e', lineHeight: 1.6, margin: 0 }}>
                     {item.description || item.desc}
                   </p>
                 </div>
@@ -286,5 +231,3 @@ export const WhyChooseUs = () => {
     </section>
   );
 };
-
-

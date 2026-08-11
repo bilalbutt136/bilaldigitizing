@@ -5,7 +5,7 @@
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
 
   /* Premium Light Mode Theme */
-  --bg-main: #f8fafc;
+  --bg-main: #ffffff;
   --bg-card: #ffffff;
   
   --navy-950: #020617; /* Deeper space navy */
@@ -524,3 +524,180 @@ button, input, select, textarea, a {
 
 .overflow-x-auto, .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .table-responsive table { min-width: 600px; }
+
+/* ==========================================================================
+   FIVERR-INSPIRED MARKETPLACE UI
+   ========================================================================== */
+
+/* Fiverr-inspired Gig Cards */
+.gig-card {
+  background: #ffffff;
+  border: 1px solid #e4e5e7;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+.gig-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.gig-image {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  border-bottom: 1px solid #e4e5e7;
+}
+.gig-body {
+  padding: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.gig-seller {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.gig-seller-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--navy-900);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+.gig-seller-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #222325;
+}
+.gig-title {
+  font-size: 1rem;
+  color: #222325;
+  line-height: 1.4;
+  margin-bottom: 1rem;
+  font-weight: 400;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.gig-title:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+.gig-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  margin-top: auto;
+}
+.gig-rating-star {
+  color: #ffb33e;
+}
+.gig-rating-score {
+  font-weight: 700;
+  color: #222325;
+}
+.gig-rating-count {
+  color: #74767e;
+  font-size: 0.9rem;
+}
+.gig-footer {
+  border-top: 1px solid #e4e5e7;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.gig-footer-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.gig-footer-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: #74767e;
+  font-weight: 700;
+}
+.gig-footer-amount {
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: #222325;
+}
+
+/* Secondary Navigation Bar (Fiverr Style) */
+.marketplace-subnav {
+  border-bottom: 1px solid #e4e5e7;
+  background: #ffffff;
+  padding: 0 1.5rem;
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+.marketplace-subnav::-webkit-scrollbar {
+  display: none;
+}
+.marketplace-subnav-link {
+  padding: 0.75rem 0;
+  color: #74767e;
+  font-size: 1rem;
+  font-weight: 400;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+  background: none;
+}
+.marketplace-subnav-link:hover {
+  color: #1dbf73;
+}
+.marketplace-subnav-link.active {
+  color: #1dbf73;
+  border-bottom-color: #1dbf73;
+  font-weight: 600;
+}
+
+/* Search Bar (Fiverr Style) */
+.marketplace-search {
+  display: flex;
+  width: 100%;
+  max-width: 600px;
+}
+.marketplace-search-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e4e5e7;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  font-size: 1rem;
+  outline: none;
+  color: #222325;
+}
+.marketplace-search-input:focus {
+  border-color: #222325;
+}
+.marketplace-search-btn {
+  background: #1dbf73;
+  color: #ffffff;
+  border: none;
+  padding: 0 1.5rem;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+.marketplace-search-btn:hover {
+  background: #19a463;
+}
