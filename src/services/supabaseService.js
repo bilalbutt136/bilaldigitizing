@@ -232,17 +232,61 @@ export async function fetchOrdersFromSupabase() {
   try {
     const res = await fetch('/api/orders?action=fetchAll');
     const data = await res.json();
-    return data.orders || [];
+    const orders = data.orders || [];
+    
+    // Map snake_case database columns back to camelCase frontend properties
+    return orders.map(order => {
+      let notesData = {};
+      try {
+        if (order.notes) {
+          notesData = JSON.parse(order.notes);
+        }
+      } catch (e) {
+        notesData.notes = order.notes;
+      }
+      
+      return {
+        ...order,
+        clientName: order.client_name,
+        clientEmail: order.client_email,
+        serviceCategory: order.service_category,
+        type: order.service_type || order.service_category,
+        fabricType: order.fabric_type,
+        requestedFormats: order.requested_formats,
+        isRush: order.is_rush,
+        patchStyle: notesData.patchStyle,
+        patchBacking: notesData.patchBacking,
+        patchBorderStyle: notesData.patchBorderStyle,
+        patchWidth: notesData.patchWidth,
+        patchHeight: notesData.patchHeight,
+        patchQuantity: notesData.patchQuantity,
+        patchItems: notesData.patchItems || [],
+        placementItems: notesData.placementItems || [],
+        notes: notesData.notes || ''
+      };
+    });
   } catch { return []; }
 }
 
 // Create new Order in Supabase DB & Storage
 export async function createOrderInSupabase(newOrder) {
   try {
+    const rawFiles = newOrder.uploadedFiles || [];
+    const orderFiles = rawFiles.map(file => ({
+      order_id: newOrder.id,
+      file_name: file.original_filename || file.name || 'unnamed_file',
+      file_format: file.format || 'unknown',
+      file_type: 'client_artwork',
+      bucket_name: 'cloudinary',
+      file_path: file.public_id || file.url || 'unknown',
+      public_url: file.url,
+      file_url: file.url
+    }));
+
     const res = await fetch('/api/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'createOrder', payload: { primaryDbRow: newOrder, orderFiles: [] } })
+      body: JSON.stringify({ action: 'createOrder', payload: { primaryDbRow: newOrder, orderFiles } })
     });
     const data = await res.json();
     return { success: res.ok, data: data.order };

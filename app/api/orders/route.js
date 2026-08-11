@@ -48,8 +48,36 @@ export async function POST(request) {
 
     if (action === 'createOrder') {
       const { primaryDbRow, orderFiles } = payload;
-      const { data: insertedOrder, error: orderErr } = await supabase.from('orders').insert([primaryDbRow]).select();
-      if (orderErr) throw orderErr;
+      
+      const mappedDbRow = {
+        id: primaryDbRow.id,
+        title: primaryDbRow.title || 'Service Order',
+        client_name: primaryDbRow.clientName || 'Valued Client',
+        client_email: primaryDbRow.clientEmail || '',
+        service_category: primaryDbRow.serviceCategory || primaryDbRow.type || 'Digitizing',
+        service_type: primaryDbRow.type,
+        fabric_type: primaryDbRow.fabricType || null,
+        requested_formats: primaryDbRow.requestedFormats || ['dst'],
+        is_rush: primaryDbRow.isRush || false,
+        price: primaryDbRow.price || 15.00,
+        notes: JSON.stringify({
+          notes: primaryDbRow.notes,
+          patchStyle: primaryDbRow.patchStyle,
+          patchBacking: primaryDbRow.patchBacking,
+          patchBorderStyle: primaryDbRow.patchBorderStyle,
+          patchWidth: primaryDbRow.patchWidth,
+          patchHeight: primaryDbRow.patchHeight,
+          patchQuantity: primaryDbRow.patchQuantity,
+          patchItems: primaryDbRow.patchItems,
+          placementItems: primaryDbRow.placementItems
+        })
+      };
+
+      const { data: insertedOrder, error: orderErr } = await supabase.from('orders').insert([mappedDbRow]).select();
+      if (orderErr) {
+        console.error("Order Insert Error:", orderErr);
+        throw orderErr;
+      }
       
       if (orderFiles && orderFiles.length > 0) {
         for (let file of orderFiles) {
