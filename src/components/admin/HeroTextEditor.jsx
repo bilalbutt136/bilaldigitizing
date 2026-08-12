@@ -3,6 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { Save, Sparkles, Image as ImageIcon, Layers, PenTool, Tag } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import 'react-quill/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 export const HeroTextEditor = () => {
   const { heroServiceText, updateHeroServiceText, showToast } = useAppState();
@@ -55,59 +59,46 @@ export const HeroTextEditor = () => {
     }
   };
 
-  const parseField = (fieldValue, defaultValue) => {
-    if (!fieldValue) return { text: defaultValue, color: '', fontSize: '', textAlign: 'left' };
-    if (typeof fieldValue === 'string') return { text: fieldValue, color: '', fontSize: '', textAlign: 'left' };
-    return {
-      text: fieldValue.text !== undefined ? fieldValue.text : defaultValue,
-      color: fieldValue.color || '',
-      fontSize: fieldValue.fontSize || '',
-      textAlign: fieldValue.textAlign || 'left'
-    };
-  };
-
   useEffect(() => {
     if (heroServiceText) {
       setFormData(prev => ({
         embroidery: {
-          headline: parseField(heroServiceText.embroidery?.headline, DEFAULT_CONTENT.embroidery.headline),
-          subtitle: parseField(heroServiceText.embroidery?.subtitle, DEFAULT_CONTENT.embroidery.subtitle),
-          description: parseField(heroServiceText.embroidery?.description, DEFAULT_CONTENT.embroidery.description)
+          headline: heroServiceText.embroidery?.headline || DEFAULT_CONTENT.embroidery.headline,
+          subtitle: heroServiceText.embroidery?.subtitle || DEFAULT_CONTENT.embroidery.subtitle,
+          description: heroServiceText.embroidery?.description || DEFAULT_CONTENT.embroidery.description
         },
         'vector-art': {
-          headline: parseField(heroServiceText['vector-art']?.headline, DEFAULT_CONTENT['vector-art'].headline),
-          subtitle: parseField(heroServiceText['vector-art']?.subtitle, DEFAULT_CONTENT['vector-art'].subtitle),
-          description: parseField(heroServiceText['vector-art']?.description, DEFAULT_CONTENT['vector-art'].description)
+          headline: heroServiceText['vector-art']?.headline || DEFAULT_CONTENT['vector-art'].headline,
+          subtitle: heroServiceText['vector-art']?.subtitle || DEFAULT_CONTENT['vector-art'].subtitle,
+          description: heroServiceText['vector-art']?.description || DEFAULT_CONTENT['vector-art'].description
         },
         patch: {
-          headline: parseField(heroServiceText.patch?.headline, DEFAULT_CONTENT.patch.headline),
-          subtitle: parseField(heroServiceText.patch?.subtitle, DEFAULT_CONTENT.patch.subtitle),
-          description: parseField(heroServiceText.patch?.description, DEFAULT_CONTENT.patch.description)
+          headline: heroServiceText.patch?.headline || DEFAULT_CONTENT.patch.headline,
+          subtitle: heroServiceText.patch?.subtitle || DEFAULT_CONTENT.patch.subtitle,
+          description: heroServiceText.patch?.description || DEFAULT_CONTENT.patch.description
         },
         all: {
-          headline: parseField(heroServiceText.all?.headline, DEFAULT_CONTENT.all.headline),
-          subtitle: parseField(heroServiceText.all?.subtitle, DEFAULT_CONTENT.all.subtitle),
-          description: parseField(heroServiceText.all?.description, DEFAULT_CONTENT.all.description)
+          headline: heroServiceText.all?.headline || DEFAULT_CONTENT.all.headline,
+          subtitle: heroServiceText.all?.subtitle || DEFAULT_CONTENT.all.subtitle,
+          description: heroServiceText.all?.description || DEFAULT_CONTENT.all.description
         }
       }));
     }
   }, [heroServiceText]);
 
-  const handleInputChange = (field, prop, value) => {
+  const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
       [activeTab]: {
         ...prev[activeTab],
-        [field]: {
-          ...prev[activeTab][field],
-          [prop]: value
-        }
+        [field]: value
       }
     }));
   };
 
   const handleSave = (e) => {
     e.preventDefault();
+    // Since we're saving rich text HTML directly, we don't need any complex mapping
     if (updateHeroServiceText) {
       updateHeroServiceText(formData);
     } else {
@@ -121,6 +112,17 @@ export const HeroTextEditor = () => {
     { id: 'vector-art', label: 'Vector Art', icon: PenTool },
     { id: 'patch', label: 'Patches', icon: Tag }
   ];
+
+  const quillModules = {
+    toolbar: [
+      [{ 'size': ['small', false, 'large', 'huge'] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'color': [] }, { 'background': [] }],
+      [{ 'align': [] }],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      ['clean']
+    ]
+  };
 
   const renderStyleControls = (field) => {
     const val = formData[activeTab]?.[field] || parseField(null, '');
@@ -211,46 +213,49 @@ export const HeroTextEditor = () => {
 
       <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
         
-        <div style={{ marginBottom: '2rem' }}>
+        <div style={{ marginBottom: '2.5rem' }}>
           <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
             Main Headline (H1)
           </label>
-          <input
-            type="text"
-            className="form-control"
-            value={formData[activeTab]?.headline?.text || ''}
-            onChange={(e) => handleInputChange('headline', 'text', e.target.value)}
-            style={{ fontSize: '1.25rem', fontWeight: 800 }}
-          />
-          {renderStyleControls('headline')}
+          <div style={{ background: '#fff', borderRadius: '4px' }}>
+            <ReactQuill 
+              theme="snow" 
+              value={typeof formData[activeTab]?.headline === 'object' ? formData[activeTab].headline.text : (formData[activeTab]?.headline || '')} 
+              onChange={(val) => handleInputChange('headline', val)}
+              modules={quillModules}
+              style={{ minHeight: '100px' }}
+            />
+          </div>
         </div>
 
-        <div style={{ marginBottom: '2rem' }}>
+        <div style={{ marginBottom: '2.5rem' }}>
           <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
             Subtitle / Dynamic Text
           </label>
-          <input
-            type="text"
-            className="form-control"
-            value={formData[activeTab]?.subtitle?.text || ''}
-            onChange={(e) => handleInputChange('subtitle', 'text', e.target.value)}
-            style={{ color: 'var(--orange-600)', fontWeight: 600 }}
-          />
-          {renderStyleControls('subtitle')}
+          <div style={{ background: '#fff', borderRadius: '4px' }}>
+            <ReactQuill 
+              theme="snow" 
+              value={typeof formData[activeTab]?.subtitle === 'object' ? formData[activeTab].subtitle.text : (formData[activeTab]?.subtitle || '')} 
+              onChange={(val) => handleInputChange('subtitle', val)}
+              modules={quillModules}
+              style={{ minHeight: '100px' }}
+            />
+          </div>
         </div>
 
         <div style={{ marginBottom: '1.5rem' }}>
           <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
             Description Paragraph
           </label>
-          <textarea
-            className="form-control"
-            rows={4}
-            value={formData[activeTab]?.description?.text || ''}
-            onChange={(e) => handleInputChange('description', 'text', e.target.value)}
-            style={{ lineHeight: 1.6 }}
-          />
-          {renderStyleControls('description')}
+          <div style={{ background: '#fff', borderRadius: '4px' }}>
+            <ReactQuill 
+              theme="snow" 
+              value={typeof formData[activeTab]?.description === 'object' ? formData[activeTab].description.text : (formData[activeTab]?.description || '')} 
+              onChange={(val) => handleInputChange('description', val)}
+              modules={quillModules}
+              style={{ minHeight: '150px' }}
+            />
+          </div>
         </div>
 
       </div>

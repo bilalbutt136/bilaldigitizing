@@ -71,28 +71,6 @@ export const HeroSection = () => {
     );
   }
 
-  const renderStyledText = (fieldData, fallbackString) => {
-    if (!fieldData) return fallbackString;
-    if (typeof fieldData === 'string') return fieldData;
-    
-    const { text, color, fontSize, textAlign } = fieldData;
-    if (!color && !fontSize && (!textAlign || textAlign === 'left')) {
-      return text || fallbackString;
-    }
-
-    return (
-      <span style={{
-        color: color || undefined,
-        fontSize: fontSize || undefined,
-        textAlign: textAlign !== 'left' ? textAlign : undefined,
-        display: textAlign && textAlign !== 'left' ? 'block' : 'inline',
-        width: textAlign && textAlign !== 'left' ? '100%' : 'auto'
-      }}>
-        {text || fallbackString}
-      </span>
-    );
-  };
-
   const handlePrimaryClick = () => {
     if (currentKey === 'all') {
       const el = document.getElementById('pricing');
@@ -273,21 +251,32 @@ export const HeroSection = () => {
           <div style={{ textAlign: 'left' }}>
             
             {/* Unified Headline */}
-            <h1 style={{
-              fontSize: 'clamp(2.2rem, 4.5vw, 3.8rem)',
-              fontWeight: 800,
-              lineHeight: 1.15,
-              color: '#ffffff',
-              marginBottom: '1rem',
-              letterSpacing: '-0.02em',
-              fontFamily: 'var(--font-heading, "Plus Jakarta Sans", sans-serif)'
-            }}>
-              {currentKey === 'all' ? renderStyledText(heroServiceText?.all?.headline, globalTitle) :
-               currentKey === 'embroidery' ? renderStyledText(heroServiceText?.embroidery?.headline, 'Embroidery Digitizing Logo') : 
-               currentKey === 'vector-art' ? renderStyledText(heroServiceText?.['vector-art']?.headline, 'Vector Art Conversion') :
-               currentKey === 'patch' ? renderStyledText(heroServiceText?.patch?.headline, 'Custom Patches') :
-               globalTitle}
-            </h1>
+            <style dangerouslySetInnerHTML={{__html: `
+              .hero-rich-text p { margin: 0; padding: 0; line-height: inherit; }
+              .hero-rich-text h1, .hero-rich-text h2, .hero-rich-text h3 { margin: 0; padding: 0; line-height: inherit; font-size: inherit; font-weight: inherit; }
+            `}} />
+            
+            <div 
+              className="hero-rich-text"
+              role="heading" 
+              aria-level="1"
+              style={{
+                fontSize: 'clamp(2.2rem, 4.5vw, 3.8rem)',
+                fontWeight: 800,
+                lineHeight: 1.15,
+                color: '#ffffff',
+                marginBottom: '1rem',
+                letterSpacing: '-0.02em',
+                fontFamily: 'var(--font-heading, "Plus Jakarta Sans", sans-serif)'
+              }}
+              dangerouslySetInnerHTML={{
+                __html: currentKey === 'all' ? (typeof heroServiceText?.all?.headline === 'string' ? heroServiceText.all.headline : heroServiceText?.all?.headline?.text || globalTitle) :
+                        currentKey === 'embroidery' ? (typeof heroServiceText?.embroidery?.headline === 'string' ? heroServiceText.embroidery.headline : heroServiceText?.embroidery?.headline?.text || 'Embroidery Digitizing Logo') : 
+                        currentKey === 'vector-art' ? (typeof heroServiceText?.['vector-art']?.headline === 'string' ? heroServiceText['vector-art'].headline : heroServiceText?.['vector-art']?.headline?.text || 'Vector Art Conversion') :
+                        currentKey === 'patch' ? (typeof heroServiceText?.patch?.headline === 'string' ? heroServiceText.patch.headline : heroServiceText?.patch?.headline?.text || 'Custom Patches') :
+                        globalTitle
+              }}
+            />
             
             {currentKey === 'all' && (!heroServiceText?.all?.subtitle || (typeof heroServiceText.all.subtitle === 'object' && !heroServiceText.all.subtitle.text)) ? (
               <div style={{ 
@@ -300,35 +289,43 @@ export const HeroSection = () => {
                 Precision <span key={textIndex} className="hero-text-rotate" style={{ color: 'var(--orange-500, #ff7a00)' }}>{rotatingTextsArr[textIndex]}</span>
               </div>
             ) : (
-              <div style={{ 
-                fontSize: 'clamp(1.5rem, 3vw, 2.2rem)',
-                fontWeight: 700,
-                marginBottom: '1.5rem',
-                color: 'var(--orange-500, #ff7a00)'
-              }}>
-                {currentKey === 'all' ? renderStyledText(heroServiceText?.all?.subtitle, '') :
-                 currentKey === 'embroidery' ? renderStyledText(heroServiceText?.embroidery?.subtitle, 'Precision Commercial Embroidery') : 
-                 currentKey === 'vector-art' ? renderStyledText(heroServiceText?.['vector-art']?.subtitle, 'Scalable Vector Art Redraw') : 
-                 currentKey === 'patch' ? renderStyledText(heroServiceText?.patch?.subtitle, 'Custom Physical Patches & Emblems') : 
-                 (activeService.title || 'Premium Services')}
-              </div>
+              <div 
+                className="hero-rich-text"
+                style={{ 
+                  fontSize: 'clamp(1.5rem, 3vw, 2.2rem)',
+                  fontWeight: 700,
+                  marginBottom: '1.5rem',
+                  color: 'var(--orange-500, #ff7a00)'
+                }}
+                dangerouslySetInnerHTML={{
+                  __html: currentKey === 'all' ? (typeof heroServiceText?.all?.subtitle === 'string' ? heroServiceText.all.subtitle : heroServiceText?.all?.subtitle?.text || '') :
+                          currentKey === 'embroidery' ? (typeof heroServiceText?.embroidery?.subtitle === 'string' ? heroServiceText.embroidery.subtitle : heroServiceText?.embroidery?.subtitle?.text || 'Precision Commercial Embroidery') : 
+                          currentKey === 'vector-art' ? (typeof heroServiceText?.['vector-art']?.subtitle === 'string' ? heroServiceText['vector-art'].subtitle : heroServiceText?.['vector-art']?.subtitle?.text || 'Scalable Vector Art Redraw') : 
+                          currentKey === 'patch' ? (typeof heroServiceText?.patch?.subtitle === 'string' ? heroServiceText.patch.subtitle : heroServiceText?.patch?.subtitle?.text || 'Custom Physical Patches & Emblems') : 
+                          (activeService.title || 'Premium Services')
+                }}
+              />
             )}
 
             {/* Description tied to the active service */}
-            <p style={{
-              fontSize: 'clamp(1rem, 1.2vw, 1.15rem)',
-              lineHeight: 1.6,
-              color: 'var(--text-muted, #94a3b8)',
-              marginBottom: '2rem',
-              maxWidth: '600px',
-              fontFamily: 'var(--font-body, "Inter", sans-serif)'
-            }}>
-              {currentKey === 'all' ? renderStyledText(heroServiceText?.all?.description, "Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks. Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.") :
-               currentKey === 'embroidery' ? renderStyledText(heroServiceText?.embroidery?.description, "Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks. Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.") :
-               currentKey === 'vector-art' ? renderStyledText(heroServiceText?.['vector-art']?.description, "Transform pixelated JPEGs, PNGs, and sketches into 100% hand-drawn scalable vector files (.AI, .EPS, .SVG, .PDF, .CDR) with Pantone color separation. Perfect for screen printing, DTG, and large format printing with zero quality loss.") :
-               currentKey === 'patch' ? renderStyledText(heroServiceText?.patch?.description, "High-density embroidered, 3D molded waterproof PVC, woven, and laser-engraved leather patches with physical worldwide shipping. Premium quality backings including iron-on, velcro, and peel-and-stick.") :
-               (activeService.description || "Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.")}
-            </p>
+            <div 
+              className="hero-rich-text"
+              style={{
+                fontSize: 'clamp(1rem, 1.2vw, 1.15rem)',
+                lineHeight: 1.6,
+                color: 'var(--text-muted, #94a3b8)',
+                marginBottom: '2rem',
+                maxWidth: '600px',
+                fontFamily: 'var(--font-body, "Inter", sans-serif)'
+              }}
+              dangerouslySetInnerHTML={{
+                __html: currentKey === 'all' ? (typeof heroServiceText?.all?.description === 'string' ? heroServiceText.all.description : heroServiceText?.all?.description?.text || "Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks. Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.") :
+                        currentKey === 'embroidery' ? (typeof heroServiceText?.embroidery?.description === 'string' ? heroServiceText.embroidery.description : heroServiceText?.embroidery?.description?.text || "Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks. Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.") :
+                        currentKey === 'vector-art' ? (typeof heroServiceText?.['vector-art']?.description === 'string' ? heroServiceText['vector-art'].description : heroServiceText?.['vector-art']?.description?.text || "Transform pixelated JPEGs, PNGs, and sketches into 100% hand-drawn scalable vector files (.AI, .EPS, .SVG, .PDF, .CDR) with Pantone color separation. Perfect for screen printing, DTG, and large format printing with zero quality loss.") :
+                        currentKey === 'patch' ? (typeof heroServiceText?.patch?.description === 'string' ? heroServiceText.patch.description : heroServiceText?.patch?.description?.text || "High-density embroidered, 3D molded waterproof PVC, woven, and laser-engraved leather patches with physical worldwide shipping. Premium quality backings including iron-on, velcro, and peel-and-stick.") :
+                        (activeService.description || "Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.")
+              }}
+            />
 
             {/* Trust Badges Row */}
             <div style={{
