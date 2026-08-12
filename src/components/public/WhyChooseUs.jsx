@@ -40,8 +40,8 @@ export const WhyChooseUs = () => {
   const currentKey = normalizeCategory(activeHomeServiceTab);
   const dbSettings = homePageConfig?.settings || {};
 
-  const title = dbSettings.why_title || 'Why Choose BDigitizing?';
-  const subtext = dbSettings.why_sub || 'Industry-leading quality, unmatched speed, and a commitment to perfection.';
+  const title = dbSettings[`why_title_${currentKey}`] || dbSettings.why_title || 'Why Choose BDigitizing?';
+  const subtext = dbSettings[`why_sub_${currentKey}`] || dbSettings.why_sub || 'Industry-leading quality, unmatched speed, and a commitment to perfection.';
 
   // Trust Features Data source
   const rawTrustFeatures = homePageConfig?.trustFeatures || [];
@@ -68,13 +68,13 @@ export const WhyChooseUs = () => {
   }
 
   const workflowTitle = currentKey === 'all' ? 'How It Works: Our Process' :
-    currentKey === 'vector' ? 'How It Works: Vector Art Conversion' :
-    currentKey === 'patch' ? 'How It Works: Custom Patches Production' :
+    currentKey === 'vector-art' ? 'How It Works: Vector Art Conversion' :
+    currentKey === 'patches' ? 'How It Works: Custom Patches Production' :
     'How It Works: Embroidery Digitizing';
 
   const workflowSubtext = currentKey === 'all' ? 'From initial request to final delivery in 4 simple steps.' :
-    currentKey === 'vector' ? 'Pixel-perfect node tracing and color separation for print and vinyl cutting.' :
-    currentKey === 'patch' ? 'Crafting premium physical emblems from digital proofing to doorstep delivery.' :
+    currentKey === 'vector-art' ? 'Pixel-perfect node tracing and color separation for print and vinyl cutting.' :
+    currentKey === 'patches' ? 'Crafting premium physical emblems from digital proofing to doorstep delivery.' :
     'From initial logo upload to machine-ready stitch file delivery in 4 simple steps.';
 
 
@@ -86,12 +86,12 @@ export const WhyChooseUs = () => {
       { step_number: 2, icon: 'Layers', title: 'Expert Processing', description: 'Our studio experts process your design via digitizing, vector tracing, or patch prototyping.' },
       { step_number: 3, icon: 'FileCheck', title: 'Quality Assurance', description: 'Every order undergoes strict quality checks and digital proofing before finalization.' },
       { step_number: 4, icon: 'Download', title: 'Instant Delivery / Shipping', description: 'Download digital files instantly or receive your physical patches via express shipping.' }
-    ] : currentKey === 'vector' ? [
+    ] : currentKey === 'vector-art' ? [
       { step_number: 1, icon: 'Upload', title: 'Upload Low-Res Image', description: 'Upload your pixelated JPEG, PNG, or hand sketch with target printing specifications.' },
       { step_number: 2, icon: 'PenTool', title: 'Manual Vector Tracing', description: 'Vector artists redraw your logo node-by-node in Illustrator — zero auto-tracing.' },
       { step_number: 3, icon: 'Palette', title: 'Color Separation', description: 'Clean Pantone spot color layer separation ready for screen printing films.' },
       { step_number: 4, icon: 'Download', title: 'Instant Vector Delivery', description: 'Download resolution-independent master vector source files (.AI, .EPS, .SVG, .PDF).' }
-    ] : currentKey === 'patch' ? [
+    ] : currentKey === 'patches' ? [
       { step_number: 1, icon: 'Upload', title: 'Artwork Submission', description: 'Upload your artwork and choose patch material (Embroidered, Woven, PVC, Leather).' },
       { step_number: 2, icon: 'FileCheck', title: 'Digital Proof & Approval', description: 'Receive a high-resolution 1:1 digital mockup & physical sample proof for final approval.' },
       { step_number: 3, icon: 'Sparkles', title: 'Precision Production', description: 'High-density embroidery, fine woven thread weaving, or 3D waterproof PVC molding.' },

@@ -11,9 +11,7 @@ import { MediaLibraryManager } from './MediaLibraryManager';
 import { AdminChatInbox } from './AdminChatInbox';
 import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
-import dynamic from 'next/dynamic';
-const HeroTextEditor = dynamic(() => import('./HeroTextEditor').then(mod => mod.HeroTextEditor), { ssr: false });
-import { ServiceBannerEditor } from './ServiceBannerEditor';
+import { HomePageManager } from './HomePageManager';
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -149,8 +147,7 @@ export const AdminDashboard = () => {
     {
       title: 'STUDIO CONTENT',
       items: [
-        { id: 'hero-text', label: 'Hero Text Content', icon: Type },
-        { id: 'service-banners', label: 'Service Banners', icon: LayoutTemplate },
+        { id: 'homepage-cms', label: 'Home Page CMS', icon: LayoutTemplate },
         { id: 'media', label: 'Media Gallery', icon: Image },
         { id: 'promotions', label: 'Promotions', icon: TrendingUp },
         { id: 'contact', label: 'Contact Info', icon: Phone }
@@ -597,8 +594,7 @@ export const AdminDashboard = () => {
         {activeTab === 'media' && <MediaLibraryManager />}
         {activeTab === 'promotions' && <PromotionsManager />}
         {activeTab === 'contact' && <ContactInfoManager />}
-        {activeTab === 'hero-text' && <HeroTextEditor />}
-        {activeTab === 'service-banners' && <ServiceBannerEditor />}
+        {activeTab === 'homepage-cms' && <HomePageManager />}
         {activeTab === 'settings' && <SystemSettingsManager />}
 
       </main>

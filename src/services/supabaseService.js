@@ -715,6 +715,36 @@ export async function updateHomePageSettingsInSupabase(payloadArray) {
   }
 }
 
+export async function upsertHomePageTableRow(table, data) {
+  try {
+    const res = await fetch('/api/admin/homepage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'upsertTableRow', payload: { table, data } })
+    });
+    const json = await res.json();
+    return { success: json.success || false };
+  } catch (err) {
+    console.warn('Upsert home page table row exception:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function deleteHomePageTableRow(table, id) {
+  try {
+    const res = await fetch('/api/admin/homepage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'deleteTableRow', payload: { table, id } })
+    });
+    const json = await res.json();
+    return { success: json.success || false };
+  } catch (err) {
+    console.warn('Delete home page table row exception:', err);
+    return { success: false, error: err.message };
+  }
+}
+
 // ============================================================
 // CATALOG (DB-driven; replaces mock catalog defaults)
 // ============================================================
