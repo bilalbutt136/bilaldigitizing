@@ -249,7 +249,7 @@ export const HeroSection = () => {
                 color: '#ffffff',
                 marginBottom: '1.25rem'
               }}
-              dangerouslySetInnerHTML={{ __html: cleanHtml(activeService.headline || "Premium Digitizing, Vector Art & Custom Patches") }}
+              dangerouslySetInnerHTML={{ __html: cleanHtml(activeService.title || "Premium Digitizing, Vector Art & Custom Patches") }}
             />
             
             <div style={{ 
@@ -258,7 +258,7 @@ export const HeroSection = () => {
                 marginBottom: '1.5rem',
                 color: 'var(--orange-400, #ff9433)'
               }}
-              dangerouslySetInnerHTML={{ __html: cleanHtml(activeService.subtitle || "Engineered for excellence, delivered in hours.") }}
+              dangerouslySetInnerHTML={{ __html: cleanHtml(activeService.highlight || "Engineered for excellence, delivered in hours.") }}
             />
 
             <div style={{
@@ -307,7 +307,7 @@ export const HeroSection = () => {
                   gap: '0.5rem'
                 }}
               >
-                {activeService.primaryCta || 'Get Started'} <ArrowRight size={18} />
+                {activeService.primary_cta || 'Get Started'} <ArrowRight size={18} />
               </button>
 
               <button 
@@ -324,7 +324,7 @@ export const HeroSection = () => {
                   cursor: 'pointer'
                 }}
               >
-                 {activeService.secondaryCta || 'View Pricing'}
+                 {activeService.secondary_cta || 'View Pricing'}
               </button>
             </div>
           </div>
@@ -345,7 +345,9 @@ export const HeroSection = () => {
                   <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--orange-400, #ff9433)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <span className="blinking-green-dot" /> Showcase
                   </div>
-                  <div style={{ fontSize: '1rem', fontWeight: 700, color: '#ffffff' }}>{activeService.previewTitle || "Professional Results"}</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, color: '#ffffff' }}>
+                    {activeService.trust_points?.[0]?.previewTitle || "Professional Results"}
+                  </div>
                 </div>
               </div>
 
@@ -373,7 +375,8 @@ export const HeroSection = () => {
               >
                 {(() => {
                   const fallback = 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=800';
-                  const imgAfter = activeService.previewAfter || activeService.banner_image || fallback;
+                  const imgAfter = activeService.banner_image || fallback;
+                  const imgBefore = activeService.trust_points?.[0]?.previewBefore || null;
                   return (
                     <>
                       <img src={imgAfter} alt="After" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable="false" />
@@ -389,11 +392,11 @@ export const HeroSection = () => {
                         clipPath: `polygon(0 0, ${sliderPos}% 0, ${sliderPos}% 100%, 0 100%)`,
                       }}>
                         <img 
-                          src={activeService.previewBefore || imgAfter} 
+                          src={imgBefore || imgAfter} 
                           alt="Before" 
                           style={{ 
                             width: '100%', height: '100%', objectFit: 'cover',
-                            filter: activeService.previewBefore ? 'none' : 'grayscale(100%) blur(4px) contrast(1.2)'
+                            filter: imgBefore ? 'none' : 'grayscale(100%) blur(4px) contrast(1.2)'
                           }} 
                           draggable="false" 
                         />
@@ -459,7 +462,7 @@ export const HeroSection = () => {
                   border: '1px solid rgba(239, 68, 68, 0.4)'
                 }}>
                   <span className="blinking-red-dot" />
-                  <span>{activeService.previewTag || 'Before'}</span>
+                  <span>{activeService.trust_points?.[0]?.previewTag || 'Before'}</span>
                 </span>
 
                 <span style={{
@@ -479,7 +482,7 @@ export const HeroSection = () => {
                   gap: '0.4rem'
                 }}>
                   <span className="blinking-green-dot" />
-                  <span>{activeService.previewTagAfter || 'After'}</span>
+                  <span>{activeService.trust_points?.[0]?.previewTagAfter || 'After'}</span>
                 </span>
               </div>
             </div>

@@ -45,22 +45,30 @@ export const HomePageManager = () => {
   useEffect(() => {
     // 1. Hero Content
     const targetKey = activeTab === 'patches' ? 'patch' : activeTab;
-    const existingHero = heroSlides?.find(s => s.id?.toLowerCase()?.includes(targetKey) || s.serviceKey?.toLowerCase()?.includes(targetKey));
+    const existingHero = heroSlides?.find(s => s.id?.toLowerCase()?.includes(targetKey) || s.service_key?.toLowerCase()?.includes(targetKey));
     
+    // Parse showcase metadata from trust_points or use defaults
+    let showcaseMeta = {};
+    if (existingHero?.trust_points && Array.isArray(existingHero.trust_points) && existingHero.trust_points.length > 0) {
+      if (typeof existingHero.trust_points[0] === 'object') {
+        showcaseMeta = existingHero.trust_points[0];
+      }
+    }
+
     setHeroForm({
       id: existingHero?.id || `hero-${activeTab}`,
-      headline: existingHero?.headline || '',
-      subtitle: existingHero?.subtitle || '',
+      headline: existingHero?.title || '',
+      subtitle: existingHero?.highlight || '',
       description: existingHero?.description || '',
-      primaryCta: existingHero?.primaryCta || 'Get Started',
-      secondaryCta: existingHero?.secondaryCta || 'View Pricing',
-      previewTitle: existingHero?.previewTitle || 'Professional Results',
-      previewBefore: existingHero?.previewBefore || '',
-      previewAfter: existingHero?.previewAfter || '',
-      previewTag: existingHero?.previewTag || 'Before',
-      previewTagAfter: existingHero?.previewTagAfter || 'After',
+      primaryCta: existingHero?.primary_cta || 'Get Started',
+      secondaryCta: existingHero?.secondary_cta || 'View Pricing',
+      previewTitle: showcaseMeta.previewTitle || 'Professional Results',
+      previewBefore: showcaseMeta.previewBefore || '',
+      previewAfter: existingHero?.banner_image || '',
+      previewTag: showcaseMeta.previewTag || 'Before',
+      previewTagAfter: showcaseMeta.previewTagAfter || 'After',
       is_active: existingHero?.is_active !== false,
-      serviceKey: targetKey
+      service_key: targetKey
     });
 
     // 2. Why Choose Us Title/Subtext (we will save as why_title_embroidery, etc.)
@@ -148,18 +156,20 @@ export const HomePageManager = () => {
       // 2. Save Hero Content
       const heroDbPayload = {
         id: heroForm.id,
-        serviceKey: heroForm.serviceKey,
-        headline: heroForm.headline,
-        subtitle: heroForm.subtitle,
+        service_key: heroForm.service_key,
+        title: heroForm.headline,
+        highlight: heroForm.subtitle,
         description: heroForm.description,
-        primaryCta: heroForm.primaryCta,
-        secondaryCta: heroForm.secondaryCta,
-        previewTitle: heroForm.previewTitle,
-        previewBefore: finalBeforeUrl,
-        previewAfter: finalAfterUrl,
-        previewTag: heroForm.previewTag,
-        previewTagAfter: heroForm.previewTagAfter,
-        is_active: heroForm.is_active
+        primary_cta: heroForm.primaryCta,
+        secondary_cta: heroForm.secondaryCta,
+        banner_image: finalAfterUrl,
+        is_active: heroForm.is_active,
+        trust_points: [{
+          previewTitle: heroForm.previewTitle,
+          previewBefore: finalBeforeUrl,
+          previewTag: heroForm.previewTag,
+          previewTagAfter: heroForm.previewTagAfter
+        }]
       };
       
       const res1 = await fetch('/api/admin/homepage', {
