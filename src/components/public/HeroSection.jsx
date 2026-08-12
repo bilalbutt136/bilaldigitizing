@@ -248,10 +248,11 @@ export const HeroSection = () => {
         }}>
           
           {/* Left Column Text Content */}
-          <div style={{ textAlign: 'left' }}>
+          <div style={{ textAlign: 'left', minWidth: 0, maxWidth: '100%', wordBreak: 'break-word' }}>
             
             {/* Unified Headline */}
             <style dangerouslySetInnerHTML={{__html: `
+              .hero-rich-text { word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap; }
               .hero-rich-text p { margin: 0; padding: 0; line-height: inherit; }
               .hero-rich-text h1, .hero-rich-text h2, .hero-rich-text h3 { margin: 0; padding: 0; line-height: inherit; font-size: inherit; font-weight: inherit; }
             `}} />
