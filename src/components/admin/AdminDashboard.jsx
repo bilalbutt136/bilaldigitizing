@@ -7,11 +7,9 @@ import { ClientDirectory } from './ClientDirectory';
 import { StudioServicesManager } from './StudioServicesManager';
 import { SystemSettingsManager } from './SystemSettingsManager';
 
-import { MediaLibraryManager } from './MediaLibraryManager';
 import { AdminChatInbox } from './AdminChatInbox';
 import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
-import { HomePageManager } from './HomePageManager';
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -147,8 +145,6 @@ export const AdminDashboard = () => {
     {
       title: 'STUDIO CONTENT',
       items: [
-        { id: 'homepage-cms', label: 'Home Page CMS', icon: LayoutTemplate },
-        { id: 'media', label: 'Media Gallery', icon: Image },
         { id: 'promotions', label: 'Promotions', icon: TrendingUp },
         { id: 'contact', label: 'Contact Info', icon: Phone }
       ]
@@ -210,7 +206,6 @@ export const AdminDashboard = () => {
               {activeTab === 'services' && 'Service Rates'}
               {activeTab === 'clients' && 'Client Directory'}
               {activeTab === 'chat' && 'Inbox & Support'}
-              {activeTab === 'media' && 'Media Gallery'}
               {activeTab === 'promotions' && 'Promotions'}
               {activeTab === 'contact' && 'Contact Info'}
               {activeTab === 'settings' && 'Studio Settings'}
@@ -591,10 +586,8 @@ export const AdminDashboard = () => {
         {activeTab === 'services' && <StudioServicesManager />}
         {activeTab === 'clients' && <ClientDirectory />}
         {activeTab === 'chat' && <AdminChatInbox />}
-        {activeTab === 'media' && <MediaLibraryManager />}
         {activeTab === 'promotions' && <PromotionsManager />}
         {activeTab === 'contact' && <ContactInfoManager />}
-        {activeTab === 'homepage-cms' && <HomePageManager />}
         {activeTab === 'settings' && <SystemSettingsManager />}
 
       </main>

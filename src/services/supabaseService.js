@@ -190,42 +190,6 @@ export async function updateUserPassword(newPassword) {
 }
 
 
-// Helper to upload files to Cloudinary securely via backend
-export async function uploadFileToCloudinary(fileObj, bucketName = 'client-uploads', folderPath = 'artwork') {
-  return uploadFileToSupabaseStorage(fileObj, bucketName, folderPath);
-}
-
-// Upload file natively to Supabase Storage via backend route
-export async function uploadFileToSupabaseStorage(fileObj, bucketName = 'portfolio-images', folderPath = 'showcase') {
-  if (!fileObj) return null;
-  try {
-    const formData = new FormData();
-    formData.append('file', fileObj);
-    formData.append('bucket', bucketName);
-    formData.append('folder', folderPath);
-
-    const res = await fetch('/api/admin/upload', {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!res.ok) {
-      console.warn('Supabase storage upload error:', await res.text());
-      return null;
-    }
-
-    const data = await res.json();
-    if (!data.success) {
-      console.warn('Supabase storage upload failed:', data.error);
-      return null;
-    }
-
-    return data.url;
-  } catch (err) {
-    console.warn('Supabase storage exception:', err);
-    return null;
-  }
-}
 
 // Fetch all orders from Supabase DB
 export async function fetchOrdersFromSupabase() {
@@ -700,50 +664,6 @@ export async function fetchHomePageContentFromSupabase() {
   }
 }
 
-export async function updateHomePageSettingsInSupabase(payloadArray) {
-  try {
-    const res = await fetch('/api/admin/homepage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'updateSettings', payload: payloadArray })
-    });
-    const json = await res.json();
-    return { success: json.success || false };
-  } catch (err) {
-    console.warn('Update home page settings exception:', err);
-    return { success: false, error: err.message };
-  }
-}
-
-export async function upsertHomePageTableRow(table, data) {
-  try {
-    const res = await fetch('/api/admin/homepage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'upsertTableRow', payload: { table, data } })
-    });
-    const json = await res.json();
-    return { success: json.success || false };
-  } catch (err) {
-    console.warn('Upsert home page table row exception:', err);
-    return { success: false, error: err.message };
-  }
-}
-
-export async function deleteHomePageTableRow(table, id) {
-  try {
-    const res = await fetch('/api/admin/homepage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'deleteTableRow', payload: { table, id } })
-    });
-    const json = await res.json();
-    return { success: json.success || false };
-  } catch (err) {
-    console.warn('Delete home page table row exception:', err);
-    return { success: false, error: err.message };
-  }
-}
 
 // ============================================================
 // CATALOG (DB-driven; replaces mock catalog defaults)
