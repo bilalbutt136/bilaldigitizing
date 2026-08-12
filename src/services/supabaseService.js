@@ -700,6 +700,21 @@ export async function fetchHomePageContentFromSupabase() {
   }
 }
 
+export async function updateHomePageSettingsInSupabase(payloadArray) {
+  try {
+    const res = await fetch('/api/admin/homepage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'updateSettings', payload: payloadArray })
+    });
+    const json = await res.json();
+    return { success: json.success || false };
+  } catch (err) {
+    console.warn('Update home page settings exception:', err);
+    return { success: false, error: err.message };
+  }
+}
+
 // ============================================================
 // CATALOG (DB-driven; replaces mock catalog defaults)
 // ============================================================

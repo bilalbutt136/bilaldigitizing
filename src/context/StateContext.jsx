@@ -29,6 +29,7 @@ import {
   deleteOrderInSupabase,
   upsertCatalogDataToSupabase,
   fetchHomePageContentFromSupabase,
+  updateHomePageSettingsInSupabase,
   ORDER_STATUSES,
   validateStatusTransition
 } from '../services/supabaseService';
@@ -1013,12 +1014,33 @@ export const StateProvider = ({ children }) => {
 
   const fetchHomePageContent = async () => {
     try {
-      const data = await fetchCmsDataFromSupabase('home_page');
+      const data = await fetchHomePageContentFromSupabase();
       if (data) setHomePageConfig(data);
       return data;
     } catch (err) {
       console.error('Error fetching home page content:', err);
       return null;
+    }
+  };
+
+  const updateHomePageConfigSettings = async (newSettingsObject) => {
+    // Optimistic UI update
+    setHomePageConfig(prev => ({
+      ...prev,
+      settings: { ...prev.settings, ...newSettingsObject }
+    }));
+    
+    // Transform into payload array for the API: [{key: '...', value: '...'}, ...]
+    const payloadArray = Object.keys(newSettingsObject).map(k => ({
+      key: k,
+      value: newSettingsObject[k]
+    }));
+    
+    const res = await updateHomePageSettingsInSupabase(payloadArray);
+    if (res.success) {
+      showToast('Service banners updated successfully!', 'success');
+    } else {
+      showToast('Failed to save service banners to database.', 'error');
     }
   };
 
@@ -1050,7 +1072,7 @@ export const StateProvider = ({ children }) => {
       heroSlides, setHeroSlides, updateHeroSlides,
       heroGlobalSettings, setHeroGlobalSettings,
       heroServiceText, setHeroServiceText, updateHeroServiceText,
-      homePageConfig, setHomePageConfig, fetchHomePageContent,
+      homePageConfig, setHomePageConfig, fetchHomePageContent, updateHomePageConfigSettings,
       digitizers, setDigitizers,
       siteSettings, setSiteSettings, updateSiteSettings,
       adminUsers, setAdminUsers, addAdminUser,
