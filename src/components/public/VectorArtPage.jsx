@@ -427,6 +427,30 @@ export const VectorArtPage = ({ hideHero = false }) => {
               </span>
             </div>
 
+            <div style={{ marginTop: '2.5rem', display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              <button 
+                className="btn btn-primary-orange btn-lg"
+                onClick={() => {
+                  const el = document.getElementById('pricing-tiers');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                style={{ fontWeight: 800, padding: '0.85rem 2rem', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                {dbSettings.vector_hero_btn_primary || 'Order Digitizing Design'} <ArrowRight size={20} />
+              </button>
+
+              <button 
+                onClick={() => {
+                  const el = document.getElementById('pricing-tiers');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="btn btn-outline btn-lg"
+                style={{ fontWeight: 700, padding: '0.85rem 1.75rem', color: '#ffffff', borderColor: 'rgba(255,255,255,0.2)' }}
+              >
+                {dbSettings.vector_hero_btn_secondary || 'View Pricing Tiers'}
+              </button>
+            </div>
+
           </div>
         </div>
         </section>
