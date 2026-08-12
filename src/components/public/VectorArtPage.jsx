@@ -354,7 +354,83 @@ export const VectorArtPage = ({ hideHero = false }) => {
   return (
     <div style={{ background: '#0b1329', minHeight: '100vh', paddingBottom: '5rem', color: '#ffffff' }}>
       
+      {/* 1. Studio Header Banner */}
+      {!hideHero && (
+        <section style={{
+          background: 'linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%)',
+          color: '#ffffff',
+          padding: '4.5rem 0 3.5rem',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+          position: 'absolute',
+          top: '-20%',
+          right: '-5%',
+          width: '500px',
+          height: '500px',
+          background: 'radial-gradient(circle, rgba(255, 122, 0, 0.15) 0%, transparent 70%)',
+          pointerEvents: 'none'
+        }} />
 
+        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
+          <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+            
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              background: 'rgba(255, 122, 0, 0.15)',
+              border: '1.5px solid var(--orange-500)',
+              color: 'var(--orange-400)',
+              fontWeight: 800,
+              fontSize: '0.825rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              padding: '0.35rem 0.95rem',
+              borderRadius: '9999px',
+              marginBottom: '1.25rem'
+            }}>
+              <Zap size={16} /> {dbSettings.vector_hero_badge || 'Dedicated Vector Redraw Studio'}
+            </div>
+
+            <h1 style={{ fontSize: '2.8rem', fontWeight: 800, color: '#ffffff', marginBottom: '1rem', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+              {dbSettings.vector_hero_title || 'Custom Vector Art Conversion & Redraws'}
+            </h1>
+
+            <p style={{ fontSize: '1.1rem', color: '#94a3b8', lineHeight: 1.6, marginBottom: '2rem' }}>
+              {dbSettings.vector_hero_sub || 'Transform low-resolution JPEGs, PNGs, hand-drawn sketches, or pixelated logos into 100% hand-drawn, razor-sharp scalable vector graphics (.AI, .EPS, .SVG, .PDF, .CDR).'}
+            </p>
+
+            {/* Value Highlights Pill Bar */}
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              gap: '1.25rem',
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              color: '#e2e8f0'
+            }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <CheckCircle2 size={16} style={{ color: 'var(--orange-500)' }} /> {dbSettings.vector_hero_value_1 || 'Hand-Drawn Clean Paths'}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Clock size={16} style={{ color: 'var(--orange-500)' }} /> {dbSettings.vector_hero_value_2 || '8–12 Hours Turnaround'}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <ShieldCheck size={16} style={{ color: 'var(--orange-500)' }} /> {dbSettings.vector_hero_value_3 || 'Unlimited Free Revisions'}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Sparkles size={16} style={{ color: 'var(--orange-500)' }} /> {dbSettings.vector_hero_value_4 || 'Starting from $15.00'}
+              </span>
+            </div>
+
+          </div>
+        </div>
+        </section>
+      )}
 
       {/* 2. Pricing Tier Cards OR Order Configuration Form View */}
       {!isOrderViewOpen ? (
