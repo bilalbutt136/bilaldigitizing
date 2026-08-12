@@ -44,14 +44,20 @@ export const WhyChooseUs = () => {
   const subtext = dbSettings[`why_sub_${currentKey}`] || dbSettings.why_sub || 'Industry-leading quality, unmatched speed, and a commitment to perfection.';
 
   // Trust Features Data source
-  const rawTrustFeatures = homePageConfig?.trustFeatures || [];
+  const allFeaturesStr = homePageConfig?.settings?.trust_features;
+  let rawTrustFeatures = [];
+  try {
+    rawTrustFeatures = typeof allFeaturesStr === 'string' ? JSON.parse(allFeaturesStr) : (allFeaturesStr || []);
+  } catch(e) {
+    rawTrustFeatures = [];
+  }
   
   // Try to find features matching the current service
-  let trustFeatures = rawTrustFeatures.filter(f => f.service_key === currentKey && f.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
+  let trustFeatures = rawTrustFeatures.filter(f => f.service_key === currentKey && f.is_active !== false).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
   
   // Fallback to 'all' if no features exist for current service
   if (trustFeatures.length === 0) {
-    trustFeatures = rawTrustFeatures.filter(f => (!f.service_key || f.service_key === 'all') && f.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
+    trustFeatures = rawTrustFeatures.filter(f => (!f.service_key || f.service_key === 'all') && f.is_active !== false).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
   }
   
   // Hardcoded fallback if DB is empty

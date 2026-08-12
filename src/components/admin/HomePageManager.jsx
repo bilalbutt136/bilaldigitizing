@@ -255,10 +255,26 @@ export const HomePageManager = () => {
          await upsertHeroContent([heroDbPayload]);
       }
 
-      // 3. Save Settings (Why Choose Us titles)
+      // 3. Save Settings (Why Choose Us titles + JSON dump of Trust Features)
+      const allFeaturesStr = homePageConfig?.settings?.trust_features;
+      let allExistingFeatures = [];
+      try {
+        allExistingFeatures = typeof allFeaturesStr === 'string' ? JSON.parse(allFeaturesStr) : (allFeaturesStr || []);
+      } catch(e) {
+        allExistingFeatures = [];
+      }
+
+      const otherFeatures = allExistingFeatures.filter(f => f.service_key !== activeTab); 
+      const combinedTrustFeatures = [...otherFeatures, ...trustFeaturesForm.map(f => {
+        let pf = {...f, service_key: f.service_key || activeTab};
+        if (pf.id && pf.id.toString().startsWith('temp-')) delete pf.id; 
+        return pf;
+      })];
+
       const settingsPayload = [
         { key: `why_title_${activeTab}`, value: whyForm.why_title },
         { key: `why_sub_${activeTab}`, value: whyForm.why_sub },
+        { key: `trust_features`, value: JSON.stringify(combinedTrustFeatures) },
         // Also save generic ones if 'all' is selected to ensure fallback
         ...(activeTab === 'all' ? [
           { key: 'why_title', value: whyForm.why_title },
@@ -266,15 +282,6 @@ export const HomePageManager = () => {
         ] : [])
       ];
       await updateHomePageSettingsInSupabase(settingsPayload);
-
-      // 4. Save Trust Features to table
-      for (const feat of trustFeaturesForm) {
-        const featPayload = { ...feat, service_key: feat.service_key || activeTab };
-        if (featPayload.id && featPayload.id.toString().startsWith('temp-')) {
-          delete featPayload.id;
-        }
-        await upsertHomePageTableRow('trust_features', featPayload);
-      }
 
       // 4. Save Workflow Steps
       for (const step of workflowForm) {
