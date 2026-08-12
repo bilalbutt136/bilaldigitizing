@@ -144,23 +144,8 @@ export const HeroSection = () => {
           0%, 100% { opacity: 1; transform: scale(1.1); }
           50% { opacity: 0.25; transform: scale(0.75); }
         }
-        @keyframes cardBlinkingBorder {
-          0%, 100% {
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 122, 0, 0.25);
-            border-color: rgba(255, 122, 0, 0.4);
-          }
-          50% {
-            box-shadow: 0 30px 65px -10px rgba(0, 0, 0, 0.7), 0 0 35px rgba(255, 122, 0, 0.6);
-            border-color: rgba(255, 122, 0, 0.9);
-          }
-        }
-        @keyframes handlePulseBlink {
-          0%, 100% { box-shadow: 0 0 12px rgba(255, 122, 0, 0.8), 0 0 0 0 rgba(255, 122, 0, 0.4); }
-          50% { box-shadow: 0 0 22px rgba(255, 122, 0, 1), 0 0 0 10px rgba(255, 122, 0, 0); }
-        }
         .hero-text-rotate {
           display: inline-block;
-          min-width: 320px;
           animation: fadeUp 0.5s ease forwards;
         }
         .blinking-red-dot {
@@ -181,28 +166,27 @@ export const HeroSection = () => {
           display: inline-block;
           animation: blinkingDot 1.2s infinite ease-in-out 0.6s;
         }
-        @media (max-width: 768px) {
-          .hero-text-rotate {
-            min-width: auto;
-          }
-        }
         @media (max-width: 1024px) {
           .hero-grid {
             grid-template-columns: 1fr !important;
-            gap: 3rem !important;
+            gap: 4rem !important;
+          }
+          .hero-left-col {
+            max-width: 100% !important;
+            text-align: center !important;
+          }
+          .hero-trust-badges {
+            justify-content: center !important;
+          }
+          .hero-cta-group {
+            justify-content: center !important;
           }
         }
       `}} />
 
       <div className="container" style={{ position: 'relative', zIndex: 2, maxWidth: '1500px', margin: '0 auto', padding: '0 2rem' }}>
         
-        {/* Service Switcher Tabs */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          marginBottom: '3rem'
-        }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem' }}>
           <div style={{
             display: 'inline-flex',
             background: 'rgba(15, 23, 42, 0.6)',
@@ -230,8 +214,8 @@ export const HeroSection = () => {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.6rem 1.5rem',
+                    gap: '0.6rem',
+                    padding: '0.6rem 1.8rem',
                     borderRadius: '9999px',
                     border: 'none',
                     background: isActive ? 'var(--orange-500, #ff7a00)' : 'transparent',
@@ -242,7 +226,7 @@ export const HeroSection = () => {
                     transition: 'all 0.3s ease'
                   }}
                 >
-                  <Icon size={16} style={{ color: isActive ? '#ffffff' : '#94a3b8' }} />
+                  <Icon size={16} />
                   <span>{tab.label}</span>
                 </button>
               );
@@ -250,134 +234,62 @@ export const HeroSection = () => {
           </div>
         </div>
 
-        {/* Hero Content Grid */}
         <div className="hero-grid" style={{
           display: 'grid',
-          gridTemplateColumns: '1.2fr 1fr',
-          gap: '5rem',
+          gridTemplateColumns: '55% 45%',
+          gap: '3rem',
           alignItems: 'center'
         }}>
           
-          {/* Left Column Text Content */}
-          <div style={{ textAlign: 'left', minWidth: 0, maxWidth: '680px' }}>
-            
-            {/* Unified Headline */}
-            <style dangerouslySetInnerHTML={{__html: `
-              .hero-rich-text { white-space: normal !important; }
-              .hero-rich-text * { white-space: normal !important; }
-              .hero-rich-text p { margin: 0; padding: 0; line-height: inherit; }
-              .hero-rich-text h1, .hero-rich-text h2, .hero-rich-text h3 { margin: 0; padding: 0; line-height: inherit; font-size: inherit; font-weight: inherit; }
-            `}} />
-            
-            <div 
-              className="hero-rich-text"
-              role="heading" 
-              aria-level="1"
-              style={{
-                fontSize: 'clamp(2.2rem, 4.5vw, 3.8rem)',
+          <div className="hero-left-col" style={{ textAlign: 'left' }}>
+            <h1 style={{
+                fontSize: 'clamp(2rem, 3.8vw, 3.2rem)',
                 fontWeight: 800,
                 lineHeight: 1.15,
                 color: '#ffffff',
-                marginBottom: '1rem',
-                letterSpacing: '-0.02em',
-                fontFamily: 'var(--font-heading, "Plus Jakarta Sans", sans-serif)'
+                marginBottom: '1.25rem'
               }}
-              dangerouslySetInnerHTML={{
-                __html: cleanHtml(
-                  currentKey === 'all' ? (typeof heroServiceText?.all?.headline === 'string' ? heroServiceText.all.headline : heroServiceText?.all?.headline?.text || globalTitle) :
-                  currentKey === 'embroidery' ? (typeof heroServiceText?.embroidery?.headline === 'string' ? heroServiceText.embroidery.headline : heroServiceText?.embroidery?.headline?.text || 'Embroidery Digitizing Logo') : 
-                  currentKey === 'vector-art' ? (typeof heroServiceText?.['vector-art']?.headline === 'string' ? heroServiceText['vector-art'].headline : heroServiceText?.['vector-art']?.headline?.text || 'Vector Art Conversion') :
-                  currentKey === 'patch' ? (typeof heroServiceText?.patch?.headline === 'string' ? heroServiceText.patch.headline : heroServiceText?.patch?.headline?.text || 'Custom Patches') :
-                  globalTitle
-                )
-              }}
+              dangerouslySetInnerHTML={{ __html: cleanHtml(activeService.headline || "Premium Digitizing, Vector Art & Custom Patches") }}
             />
             
-            {currentKey === 'all' && (!heroServiceText?.all?.subtitle || (typeof heroServiceText.all.subtitle === 'object' && !heroServiceText.all.subtitle.text)) ? (
-              <div style={{ 
-                fontSize: 'clamp(1.5rem, 3vw, 2.2rem)',
-                fontWeight: 700,
+            <div style={{ 
+                fontSize: 'clamp(1.1rem, 2vw, 1.3rem)',
+                fontWeight: 600,
                 marginBottom: '1.5rem',
-                color: 'var(--orange-400, #ff9433)',
-                minHeight: '3rem'
-              }}>
-                Precision <span key={textIndex} className="hero-text-rotate" style={{ color: 'var(--orange-500, #ff7a00)' }}>{rotatingTextsArr[textIndex]}</span>
-              </div>
-            ) : (
-              <div 
-                className="hero-rich-text"
-                style={{ 
-                  fontSize: 'clamp(1.5rem, 3vw, 2.2rem)',
-                  fontWeight: 700,
-                  marginBottom: '1.5rem',
-                  color: 'var(--orange-500, #ff7a00)'
-                }}
-                dangerouslySetInnerHTML={{
-                  __html: cleanHtml(
-                    currentKey === 'all' ? (typeof heroServiceText?.all?.subtitle === 'string' ? heroServiceText.all.subtitle : heroServiceText?.all?.subtitle?.text || '') :
-                    currentKey === 'embroidery' ? (typeof heroServiceText?.embroidery?.subtitle === 'string' ? heroServiceText.embroidery.subtitle : heroServiceText?.embroidery?.subtitle?.text || 'Precision Commercial Embroidery') : 
-                    currentKey === 'vector-art' ? (typeof heroServiceText?.['vector-art']?.subtitle === 'string' ? heroServiceText['vector-art'].subtitle : heroServiceText?.['vector-art']?.subtitle?.text || 'Scalable Vector Art Redraw') : 
-                    currentKey === 'patch' ? (typeof heroServiceText?.patch?.subtitle === 'string' ? heroServiceText.patch.subtitle : heroServiceText?.patch?.subtitle?.text || 'Custom Physical Patches & Emblems') : 
-                    (activeService.title || 'Premium Services')
-                  )
-                }}
-              />
-            )}
-
-            {/* Description tied to the active service */}
-            <div 
-              className="hero-rich-text"
-              style={{
-                fontSize: 'clamp(1rem, 1.2vw, 1.15rem)',
-                lineHeight: 1.6,
-                color: 'var(--text-muted, #94a3b8)',
-                marginBottom: '1.5rem',
-                maxWidth: '100%',
-                fontFamily: 'var(--font-body, "Inter", sans-serif)'
+                color: 'var(--orange-400, #ff9433)'
               }}
-              dangerouslySetInnerHTML={{
-                __html: cleanHtml(
-                  currentKey === 'all' ? (typeof heroServiceText?.all?.description === 'string' ? heroServiceText.all.description : heroServiceText?.all?.description?.text || "Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks. Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.") :
-                  currentKey === 'embroidery' ? (typeof heroServiceText?.embroidery?.description === 'string' ? heroServiceText.embroidery.description : heroServiceText?.embroidery?.description?.text || "Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks. Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.") :
-                  currentKey === 'vector-art' ? (typeof heroServiceText?.['vector-art']?.description === 'string' ? heroServiceText['vector-art'].description : heroServiceText?.['vector-art']?.description?.text || "Transform pixelated JPEGs, PNGs, and sketches into 100% hand-drawn scalable vector files (.AI, .EPS, .SVG, .PDF, .CDR) with Pantone color separation. Perfect for screen printing, DTG, and large format printing with zero quality loss.") :
-                  currentKey === 'patch' ? (typeof heroServiceText?.patch?.description === 'string' ? heroServiceText.patch.description : heroServiceText?.patch?.description?.text || "High-density embroidered, 3D molded waterproof PVC, woven, and laser-engraved leather patches with physical worldwide shipping. Premium quality backings including iron-on, velcro, and peel-and-stick.") :
-                  (activeService.description || "Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.")
-                )
-              }}
+              dangerouslySetInnerHTML={{ __html: cleanHtml(activeService.subtitle || "Engineered for excellence, delivered in hours.") }}
             />
 
-            {/* Trust Badges Row */}
             <div style={{
+                fontSize: '1.05rem',
+                lineHeight: 1.6,
+                color: '#94a3b8',
+                marginBottom: '2rem'
+              }}
+              dangerouslySetInnerHTML={{ __html: cleanHtml(activeService.description || "Transform your brand assets with professional digitizing and vector conversion services.") }}
+            />
+
+            <div className="hero-trust-badges" style={{
               display: 'flex',
               flexWrap: 'wrap',
               gap: '1.5rem',
-              marginBottom: '1.5rem'
+              marginBottom: '2.5rem'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Star size={20} style={{ color: 'var(--orange-500, #ff7a00)', fill: 'var(--orange-500, #ff7a00)' }} />
-                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#e2e8f0' }}>1,200+ Clients</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Globe size={20} style={{ color: 'var(--orange-500, #ff7a00)' }} />
-                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#e2e8f0' }}>45+ Countries</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Clock size={20} style={{ color: 'var(--orange-500, #ff7a00)' }} />
-                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#e2e8f0' }}>4-Hr Express</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <ShieldCheck size={20} style={{ color: 'var(--orange-500, #ff7a00)' }} />
-                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#e2e8f0' }}>100% Guaranteed</span>
-              </div>
+              {[
+                { label: '1,200+ Clients', icon: Star },
+                { label: '45+ Countries', icon: Globe },
+                { label: '4-Hr Express', icon: Clock },
+                { label: '100% Guaranteed', icon: ShieldCheck }
+              ].map((b, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <b.icon size={18} style={{ color: 'var(--orange-500, #ff7a00)' }} />
+                  <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{b.label}</span>
+                </div>
+              ))}
             </div>
 
-            {/* Dynamic CTAs */}
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '1rem', 
-              flexWrap: 'wrap'
-            }}>
+            <div className="hero-cta-group" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
               <button 
                 type="button"
                 onClick={handlePrimaryClick}
@@ -387,22 +299,15 @@ export const HeroSection = () => {
                   border: 'none',
                   borderRadius: '8px',
                   padding: '1rem 2rem',
-                  fontSize: '1.05rem',
+                  fontSize: '1rem',
                   fontWeight: 700,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem',
-                  boxShadow: '0 4px 14px rgba(255, 122, 0, 0.4)',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                  gap: '0.5rem'
                 }}
-                onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 122, 0, 0.6)'; }}
-                onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(255, 122, 0, 0.4)'; }}
               >
-                {(activeService.primaryCta && activeService.primaryCta !== 'Order Now') ? activeService.primaryCta : 
-                 (currentKey === 'embroidery' ? 'Order Digitizing Design' :
-                  currentKey === 'vector-art' ? 'Order Vector Art' :
-                  currentKey === 'patch' ? 'Order Custom Patches' : 'Order Now')} <ArrowRight size={20} />
+                {activeService.primaryCta || 'Get Started'} <ArrowRight size={18} />
               </button>
 
               <button 
@@ -410,68 +315,50 @@ export const HeroSection = () => {
                 onClick={handleSecondaryClick}
                 style={{ 
                   background: 'transparent',
-                  color: 'var(--orange-500, #ff7a00)', 
+                  color: '#ffffff', 
                   border: '1.5px solid rgba(255, 255, 255, 0.15)',
                   borderRadius: '8px',
-                  padding: '0.9rem 1.8rem', 
-                  fontSize: '1.05rem',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s ease'
+                  padding: '1rem 2rem', 
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
                 }}
-                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255, 122, 0, 0.05)'; e.currentTarget.style.borderColor = 'rgba(255, 122, 0, 0.3)'; }}
-                onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)'; }}
               >
-                 {activeService.secondaryCta || 'View Pricing Tiers'}
+                 {activeService.secondaryCta || 'View Pricing'}
               </button>
             </div>
-
           </div>
 
-          {/* Right Column Interactive Before/After Visualizer Card with Blinking Pulse Effect */}
           <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
             <div style={{
-              background: 'rgba(30, 41, 59, 0.7)',
-              border: '2px solid rgba(255, 122, 0, 0.5)',
-              borderRadius: '24px',
-              padding: '1.5rem',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+              background: 'rgba(15, 23, 42, 0.4)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '20px',
+              padding: '1.25rem',
+              boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.5)',
               width: '100%',
-              maxWidth: '550px',
-              backdropFilter: 'blur(16px)',
-              animation: 'cardBlinkingBorder 3s infinite ease-in-out'
+              maxWidth: '650px',
+              backdropFilter: 'blur(12px)'
             }}>
-              {/* Card Header Info */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '1rem'
-              }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--orange-400, #ff9433)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <span className="blinking-green-dot" /> Showcase — {activeService.label}
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--orange-400, #ff9433)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span className="blinking-green-dot" /> Showcase
                   </div>
-                  <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', marginTop: '0.2rem' }}>
-                    {activeService.previewTitle}
-                  </div>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, color: '#ffffff' }}>{activeService.previewTitle || "Professional Results"}</div>
                 </div>
               </div>
 
-              {/* Split Drag Slider Visualizer */}
               <div 
                 style={{
                   position: 'relative',
                   width: '100%',
-                  height: '320px',
-                  borderRadius: '16px',
+                  aspectRatio: '16/10',
+                  borderRadius: '12px',
                   overflow: 'hidden',
                   cursor: 'ew-resize',
                   userSelect: 'none',
-                  boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.3)'
+                  background: '#000'
                 }}
                 onMouseMove={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
@@ -484,36 +371,48 @@ export const HeroSection = () => {
                   setSliderPos((x / rect.width) * 100);
                 }}
               >
-                {/* After Image (Full width background) */}
-                <img 
-                  src={activeService.previewAfter} 
-                  alt={activeService.previewTitle} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  draggable="false"
-                />
+                {(() => {
+                  const fallback = 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=800';
+                  const imgAfter = activeService.previewAfter || activeService.banner_image || fallback;
+                  return (
+                    <>
+                      <img src={imgAfter} alt="After" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable="false" />
+                      
+                      <div style={{ 
+                        position: 'absolute', 
+                        top: 0, 
+                        left: 0, 
+                        bottom: 0,
+                        right: 0,
+                        width: '100%',
+                        height: '100%',
+                        clipPath: `polygon(0 0, ${sliderPos}% 0, ${sliderPos}% 100%, 0 100%)`,
+                      }}>
+                        <img 
+                          src={activeService.previewBefore || imgAfter} 
+                          alt="Before" 
+                          style={{ 
+                            width: '100%', height: '100%', objectFit: 'cover',
+                            filter: activeService.previewBefore ? 'none' : 'grayscale(100%) blur(4px) contrast(1.2)'
+                          }} 
+                          draggable="false" 
+                        />
+                        <div style={{
+                          position: 'absolute',
+                          top: 0,
+                          bottom: 0,
+                          right: 0,
+                          width: '2px',
+                          background: 'rgba(255, 255, 255, 0.8)'
+                        }} />
+                      </div>
+                    </>
+                  );
+                })()}
 
-                {/* Before Image (Clipped overlay) */}
                 <div style={{
                   position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  bottom: 0,
-                  width: `${sliderPos}%`,
-                  overflow: 'hidden'
-                }}>
-                  <img 
-                    src={activeService.previewBefore} 
-                    alt="Original Artwork" 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', maxWidth: 'none', minWidth: '100%' }}
-                    draggable="false"
-                  />
-                </div>
-
-                {/* Divider Line with Blinking Pulse Handle */}
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  bottom: 0,
+                  top: '50%',
                   left: `${sliderPos}%`,
                   width: '4px',
                   background: 'var(--orange-500, #ff7a00)',
