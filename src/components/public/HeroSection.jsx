@@ -97,6 +97,11 @@ export const HeroSection = () => {
     }
   };
 
+  const cleanHtml = (html) => {
+    if (typeof html !== 'string') return html;
+    return html.replace(/&nbsp;/g, ' ');
+  };
+
   return (
     <section style={{
       background: 'linear-gradient(135deg, var(--navy-950, #0f172a) 0%, var(--navy-800, #1e293b) 100%)',
@@ -258,6 +263,8 @@ export const HeroSection = () => {
             
             {/* Unified Headline */}
             <style dangerouslySetInnerHTML={{__html: `
+              .hero-rich-text { white-space: normal !important; }
+              .hero-rich-text * { white-space: normal !important; }
               .hero-rich-text p { margin: 0; padding: 0; line-height: inherit; }
               .hero-rich-text h1, .hero-rich-text h2, .hero-rich-text h3 { margin: 0; padding: 0; line-height: inherit; font-size: inherit; font-weight: inherit; }
             `}} />
@@ -276,11 +283,13 @@ export const HeroSection = () => {
                 fontFamily: 'var(--font-heading, "Plus Jakarta Sans", sans-serif)'
               }}
               dangerouslySetInnerHTML={{
-                __html: currentKey === 'all' ? (typeof heroServiceText?.all?.headline === 'string' ? heroServiceText.all.headline : heroServiceText?.all?.headline?.text || globalTitle) :
-                        currentKey === 'embroidery' ? (typeof heroServiceText?.embroidery?.headline === 'string' ? heroServiceText.embroidery.headline : heroServiceText?.embroidery?.headline?.text || 'Embroidery Digitizing Logo') : 
-                        currentKey === 'vector-art' ? (typeof heroServiceText?.['vector-art']?.headline === 'string' ? heroServiceText['vector-art'].headline : heroServiceText?.['vector-art']?.headline?.text || 'Vector Art Conversion') :
-                        currentKey === 'patch' ? (typeof heroServiceText?.patch?.headline === 'string' ? heroServiceText.patch.headline : heroServiceText?.patch?.headline?.text || 'Custom Patches') :
-                        globalTitle
+                __html: cleanHtml(
+                  currentKey === 'all' ? (typeof heroServiceText?.all?.headline === 'string' ? heroServiceText.all.headline : heroServiceText?.all?.headline?.text || globalTitle) :
+                  currentKey === 'embroidery' ? (typeof heroServiceText?.embroidery?.headline === 'string' ? heroServiceText.embroidery.headline : heroServiceText?.embroidery?.headline?.text || 'Embroidery Digitizing Logo') : 
+                  currentKey === 'vector-art' ? (typeof heroServiceText?.['vector-art']?.headline === 'string' ? heroServiceText['vector-art'].headline : heroServiceText?.['vector-art']?.headline?.text || 'Vector Art Conversion') :
+                  currentKey === 'patch' ? (typeof heroServiceText?.patch?.headline === 'string' ? heroServiceText.patch.headline : heroServiceText?.patch?.headline?.text || 'Custom Patches') :
+                  globalTitle
+                )
               }}
             />
             
@@ -304,11 +313,13 @@ export const HeroSection = () => {
                   color: 'var(--orange-500, #ff7a00)'
                 }}
                 dangerouslySetInnerHTML={{
-                  __html: currentKey === 'all' ? (typeof heroServiceText?.all?.subtitle === 'string' ? heroServiceText.all.subtitle : heroServiceText?.all?.subtitle?.text || '') :
-                          currentKey === 'embroidery' ? (typeof heroServiceText?.embroidery?.subtitle === 'string' ? heroServiceText.embroidery.subtitle : heroServiceText?.embroidery?.subtitle?.text || 'Precision Commercial Embroidery') : 
-                          currentKey === 'vector-art' ? (typeof heroServiceText?.['vector-art']?.subtitle === 'string' ? heroServiceText['vector-art'].subtitle : heroServiceText?.['vector-art']?.subtitle?.text || 'Scalable Vector Art Redraw') : 
-                          currentKey === 'patch' ? (typeof heroServiceText?.patch?.subtitle === 'string' ? heroServiceText.patch.subtitle : heroServiceText?.patch?.subtitle?.text || 'Custom Physical Patches & Emblems') : 
-                          (activeService.title || 'Premium Services')
+                  __html: cleanHtml(
+                    currentKey === 'all' ? (typeof heroServiceText?.all?.subtitle === 'string' ? heroServiceText.all.subtitle : heroServiceText?.all?.subtitle?.text || '') :
+                    currentKey === 'embroidery' ? (typeof heroServiceText?.embroidery?.subtitle === 'string' ? heroServiceText.embroidery.subtitle : heroServiceText?.embroidery?.subtitle?.text || 'Precision Commercial Embroidery') : 
+                    currentKey === 'vector-art' ? (typeof heroServiceText?.['vector-art']?.subtitle === 'string' ? heroServiceText['vector-art'].subtitle : heroServiceText?.['vector-art']?.subtitle?.text || 'Scalable Vector Art Redraw') : 
+                    currentKey === 'patch' ? (typeof heroServiceText?.patch?.subtitle === 'string' ? heroServiceText.patch.subtitle : heroServiceText?.patch?.subtitle?.text || 'Custom Physical Patches & Emblems') : 
+                    (activeService.title || 'Premium Services')
+                  )
                 }}
               />
             )}
@@ -325,11 +336,13 @@ export const HeroSection = () => {
                 fontFamily: 'var(--font-body, "Inter", sans-serif)'
               }}
               dangerouslySetInnerHTML={{
-                __html: currentKey === 'all' ? (typeof heroServiceText?.all?.description === 'string' ? heroServiceText.all.description : heroServiceText?.all?.description?.text || "Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks. Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.") :
-                        currentKey === 'embroidery' ? (typeof heroServiceText?.embroidery?.description === 'string' ? heroServiceText.embroidery.description : heroServiceText?.embroidery?.description?.text || "Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks. Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.") :
-                        currentKey === 'vector-art' ? (typeof heroServiceText?.['vector-art']?.description === 'string' ? heroServiceText['vector-art'].description : heroServiceText?.['vector-art']?.description?.text || "Transform pixelated JPEGs, PNGs, and sketches into 100% hand-drawn scalable vector files (.AI, .EPS, .SVG, .PDF, .CDR) with Pantone color separation. Perfect for screen printing, DTG, and large format printing with zero quality loss.") :
-                        currentKey === 'patch' ? (typeof heroServiceText?.patch?.description === 'string' ? heroServiceText.patch.description : heroServiceText?.patch?.description?.text || "High-density embroidered, 3D molded waterproof PVC, woven, and laser-engraved leather patches with physical worldwide shipping. Premium quality backings including iron-on, velcro, and peel-and-stick.") :
-                        (activeService.description || "Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.")
+                __html: cleanHtml(
+                  currentKey === 'all' ? (typeof heroServiceText?.all?.description === 'string' ? heroServiceText.all.description : heroServiceText?.all?.description?.text || "Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks. Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.") :
+                  currentKey === 'embroidery' ? (typeof heroServiceText?.embroidery?.description === 'string' ? heroServiceText.embroidery.description : heroServiceText?.embroidery?.description?.text || "Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks. Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.") :
+                  currentKey === 'vector-art' ? (typeof heroServiceText?.['vector-art']?.description === 'string' ? heroServiceText['vector-art'].description : heroServiceText?.['vector-art']?.description?.text || "Transform pixelated JPEGs, PNGs, and sketches into 100% hand-drawn scalable vector files (.AI, .EPS, .SVG, .PDF, .CDR) with Pantone color separation. Perfect for screen printing, DTG, and large format printing with zero quality loss.") :
+                  currentKey === 'patch' ? (typeof heroServiceText?.patch?.description === 'string' ? heroServiceText.patch.description : heroServiceText?.patch?.description?.text || "High-density embroidered, 3D molded waterproof PVC, woven, and laser-engraved leather patches with physical worldwide shipping. Premium quality backings including iron-on, velcro, and peel-and-stick.") :
+                  (activeService.description || "Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.")
+                )
               }}
             />
 
