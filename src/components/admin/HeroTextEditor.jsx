@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { Save, Sparkles, Image as ImageIcon, Layers, PenTool, Tag } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import 'react-quill/dist/quill.snow.css';
+import 'react-quill-new/dist/quill.snow.css';
 
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
 const quillModules = {
   toolbar: [
