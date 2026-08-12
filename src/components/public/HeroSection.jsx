@@ -101,7 +101,7 @@ export const HeroSection = () => {
     <section style={{
       background: 'linear-gradient(135deg, var(--navy-950, #0f172a) 0%, var(--navy-800, #1e293b) 100%)',
       color: '#ffffff',
-      padding: '4.5rem 0 6rem',
+      padding: '1.5rem 0 6rem',
       position: 'relative',
       overflow: 'hidden'
     }}>
@@ -321,7 +321,7 @@ export const HeroSection = () => {
                 lineHeight: 1.6,
                 color: 'var(--text-muted, #94a3b8)',
                 marginBottom: '2rem',
-                maxWidth: '600px',
+                maxWidth: '90%',
                 fontFamily: 'var(--font-body, "Inter", sans-serif)'
               }}
               dangerouslySetInnerHTML={{
