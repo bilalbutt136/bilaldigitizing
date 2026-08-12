@@ -8,6 +8,17 @@ import 'react-quill/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
+const quillModules = {
+  toolbar: [
+    [{ 'size': ['small', false, 'large', 'huge'] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'color': [] }, { 'background': [] }],
+    [{ 'align': [] }],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['clean']
+  ]
+};
+
 export const HeroTextEditor = () => {
   const { heroServiceText, updateHeroServiceText, showToast } = useAppState();
 
@@ -112,18 +123,6 @@ export const HeroTextEditor = () => {
     { id: 'vector-art', label: 'Vector Art', icon: PenTool },
     { id: 'patch', label: 'Patches', icon: Tag }
   ];
-
-  const quillModules = {
-    toolbar: [
-      [{ 'size': ['small', false, 'large', 'huge'] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'color': [] }, { 'background': [] }],
-      [{ 'align': [] }],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      ['clean']
-    ]
-  };
-
   const renderStyleControls = (field) => {
     const val = formData[activeTab]?.[field] || parseField(null, '');
     return (

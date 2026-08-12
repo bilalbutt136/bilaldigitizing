@@ -11,7 +11,8 @@ import { MediaLibraryManager } from './MediaLibraryManager';
 import { AdminChatInbox } from './AdminChatInbox';
 import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
-import { HeroTextEditor } from './HeroTextEditor';
+import dynamic from 'next/dynamic';
+const HeroTextEditor = dynamic(() => import('./HeroTextEditor').then(mod => mod.HeroTextEditor), { ssr: false });
 import { ServiceBannerEditor } from './ServiceBannerEditor';
 import { 
   LayoutDashboard, 
