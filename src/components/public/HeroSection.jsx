@@ -181,9 +181,15 @@ export const HeroSection = () => {
             min-width: auto;
           }
         }
+        @media (max-width: 1024px) {
+          .hero-grid {
+            grid-template-columns: 1fr !important;
+            gap: 3rem !important;
+          }
+        }
       `}} />
 
-      <div className="container" style={{ position: 'relative', zIndex: 2, maxWidth: '1280px', margin: '0 auto', padding: '0 1.5rem' }}>
+      <div className="container" style={{ position: 'relative', zIndex: 2, maxWidth: '1500px', margin: '0 auto', padding: '0 2rem' }}>
         
         {/* Service Switcher Tabs */}
         <div style={{
@@ -240,19 +246,18 @@ export const HeroSection = () => {
         </div>
 
         {/* Hero Content Grid */}
-        <div style={{
+        <div className="hero-grid" style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: '4rem',
+          gridTemplateColumns: '1.2fr 1fr',
+          gap: '5rem',
           alignItems: 'center'
         }}>
           
           {/* Left Column Text Content */}
-          <div style={{ textAlign: 'left', minWidth: 0, maxWidth: '100%', wordBreak: 'break-word' }}>
+          <div style={{ textAlign: 'left', minWidth: 0 }}>
             
             {/* Unified Headline */}
             <style dangerouslySetInnerHTML={{__html: `
-              .hero-rich-text { word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap; }
               .hero-rich-text p { margin: 0; padding: 0; line-height: inherit; }
               .hero-rich-text h1, .hero-rich-text h2, .hero-rich-text h3 { margin: 0; padding: 0; line-height: inherit; font-size: inherit; font-weight: inherit; }
             `}} />
