@@ -101,7 +101,7 @@ export const HeroSection = () => {
     <section style={{
       background: 'linear-gradient(135deg, var(--navy-950, #0f172a) 0%, var(--navy-800, #1e293b) 100%)',
       color: '#ffffff',
-      padding: '4.5rem 0 6rem',
+      padding: '2.5rem 0 6rem',
       position: 'relative',
       overflow: 'hidden'
     }}>
@@ -254,7 +254,7 @@ export const HeroSection = () => {
         }}>
           
           {/* Left Column Text Content */}
-          <div style={{ textAlign: 'left', minWidth: 0 }}>
+          <div style={{ textAlign: 'left', minWidth: 0, maxWidth: '680px' }}>
             
             {/* Unified Headline */}
             <style dangerouslySetInnerHTML={{__html: `
@@ -320,8 +320,8 @@ export const HeroSection = () => {
                 fontSize: 'clamp(1rem, 1.2vw, 1.15rem)',
                 lineHeight: 1.6,
                 color: 'var(--text-muted, #94a3b8)',
-                marginBottom: '2rem',
-                maxWidth: '600px',
+                marginBottom: '1.5rem',
+                maxWidth: '100%',
                 fontFamily: 'var(--font-body, "Inter", sans-serif)'
               }}
               dangerouslySetInnerHTML={{
@@ -338,7 +338,7 @@ export const HeroSection = () => {
               display: 'flex',
               flexWrap: 'wrap',
               gap: '1.5rem',
-              marginBottom: '2.5rem'
+              marginBottom: '1.5rem'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Star size={20} style={{ color: 'var(--orange-500, #ff7a00)', fill: 'var(--orange-500, #ff7a00)' }} />
