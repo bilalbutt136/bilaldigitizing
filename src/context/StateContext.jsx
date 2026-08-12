@@ -104,6 +104,7 @@ export const StateProvider = ({ children }) => {
     title: 'Premium Embroidery, Vector Art & Patches',
     rotatingTexts: 'Commercial Embroidery, Scalable Vector Art, Custom Physical Patches'
   });
+  const [heroServiceText, setHeroServiceText] = useState({});
   const [siteSettings, setSiteSettings] = useState({});
   const [digitizers, setDigitizers] = useState([]);
 
@@ -222,6 +223,7 @@ export const StateProvider = ({ children }) => {
             if (catalog.sewOuts) setSewOuts(catalog.sewOuts);
             if (catalog.heroSlides) setHeroSlides(catalog.heroSlides);
             if (catalog.heroGlobalSettings) setHeroGlobalSettings(catalog.heroGlobalSettings);
+            if (catalog.heroServiceText) setHeroServiceText(catalog.heroServiceText);
             if (catalog.digitizers) {
               setDigitizers(prev => prev.map(d => {
                 const fresh = catalog.digitizers.find(x => x.id === d.id);
@@ -330,6 +332,7 @@ export const StateProvider = ({ children }) => {
               if (catalog.portfolioSamples) setPortfolioSamples(catalog.portfolioSamples);
               if (catalog.sewOuts) setSewOuts(catalog.sewOuts);
               if (catalog.heroSlides) setHeroSlides(catalog.heroSlides);
+              if (catalog.heroServiceText) setHeroServiceText(catalog.heroServiceText);
               if (catalog.siteSettings) setSiteSettings(catalog.siteSettings);
               if (catalog.pricing) setPricing(catalog.pricing);
               if (catalog.serviceCms) setServiceCmsContent(catalog.serviceCms);
@@ -905,6 +908,12 @@ export const StateProvider = ({ children }) => {
     upsertCatalogDataToSupabase('hero_slides', newSlides);
   };
 
+  const updateHeroServiceText = (newData) => {
+    setHeroServiceText(newData);
+    saveCmsConfigToSupabase('hero_service_text', newData);
+    showToast('Hero section text updated successfully!', 'success');
+  };
+
   const updateSiteSettings = (newSettings) => {
     setSiteSettings(newSettings);
     saveCmsConfigToSupabase('site_settings', newSettings);
@@ -946,6 +955,7 @@ export const StateProvider = ({ children }) => {
         if (catalog.portfolioSamples) setPortfolioSamples(catalog.portfolioSamples);
         if (catalog.sewOuts) setSewOuts(catalog.sewOuts);
         if (catalog.heroSlides) setHeroSlides(catalog.heroSlides);
+        if (catalog.heroServiceText) setHeroServiceText(catalog.heroServiceText);
         if (catalog.digitizers?.length) {
           const merged = digitizers.map(d => {
             const fresh = catalog.digitizers.find(x => x.id === d.id);
@@ -1039,6 +1049,7 @@ export const StateProvider = ({ children }) => {
       servicesList, setServicesList, updateServicesList,
       heroSlides, setHeroSlides, updateHeroSlides,
       heroGlobalSettings, setHeroGlobalSettings,
+      heroServiceText, setHeroServiceText, updateHeroServiceText,
       homePageConfig, setHomePageConfig, fetchHomePageContent,
       digitizers, setDigitizers,
       siteSettings, setSiteSettings, updateSiteSettings,

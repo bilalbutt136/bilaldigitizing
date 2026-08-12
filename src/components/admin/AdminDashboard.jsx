@@ -11,6 +11,7 @@ import { MediaLibraryManager } from './MediaLibraryManager';
 import { AdminChatInbox } from './AdminChatInbox';
 import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
+import { HeroTextEditor } from './HeroTextEditor';
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -27,7 +28,8 @@ import {
   Menu,
   X,
   DollarSign,
-  Phone
+  Phone,
+  Type
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -144,6 +146,7 @@ export const AdminDashboard = () => {
     {
       title: 'STUDIO CONTENT',
       items: [
+        { id: 'hero-text', label: 'Hero Text Content', icon: Type },
         { id: 'media', label: 'Media Gallery', icon: Image },
         { id: 'promotions', label: 'Promotions', icon: TrendingUp },
         { id: 'contact', label: 'Contact Info', icon: Phone }
@@ -590,6 +593,7 @@ export const AdminDashboard = () => {
         {activeTab === 'media' && <MediaLibraryManager />}
         {activeTab === 'promotions' && <PromotionsManager />}
         {activeTab === 'contact' && <ContactInfoManager />}
+        {activeTab === 'hero-text' && <HeroTextEditor />}
         {activeTab === 'settings' && <SystemSettingsManager />}
 
       </main>

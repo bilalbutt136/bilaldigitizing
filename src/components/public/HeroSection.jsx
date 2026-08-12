@@ -28,7 +28,8 @@ export const HeroSection = () => {
     setActiveHomeServiceTab, 
     serviceCmsContent = {},
     heroSlides,
-    heroGlobalSettings
+    heroGlobalSettings,
+    heroServiceText = {}
   } = useAppState();
 
   const [sliderPos, setSliderPos] = useState(50);
@@ -259,9 +260,9 @@ export const HeroSection = () => {
               letterSpacing: '-0.02em',
               fontFamily: 'var(--font-heading, "Plus Jakarta Sans", sans-serif)'
             }}>
-              {currentKey === 'embroidery' ? 'Embroidery Digitizing Logo' : 
-               currentKey === 'vector-art' ? 'Vector Art Conversion' :
-               currentKey === 'patch' ? 'Custom Patches' :
+              {currentKey === 'embroidery' ? (heroServiceText?.embroidery?.headline || 'Embroidery Digitizing Logo') : 
+               currentKey === 'vector-art' ? (heroServiceText?.['vector-art']?.headline || 'Vector Art Conversion') :
+               currentKey === 'patch' ? (heroServiceText?.patch?.headline || 'Custom Patches') :
                globalTitle}
             </h1>
             
@@ -283,9 +284,9 @@ export const HeroSection = () => {
                 marginBottom: '1.5rem',
                 color: 'var(--orange-500, #ff7a00)'
               }}>
-                {currentKey === 'embroidery' ? 'Precision Commercial Embroidery' : 
-                 currentKey === 'vector-art' ? 'Scalable Vector Art Redraw' : 
-                 currentKey === 'patch' ? 'Custom Physical Patches & Emblems' : 
+                {currentKey === 'embroidery' ? (heroServiceText?.embroidery?.subtitle || 'Precision Commercial Embroidery') : 
+                 currentKey === 'vector-art' ? (heroServiceText?.['vector-art']?.subtitle || 'Scalable Vector Art Redraw') : 
+                 currentKey === 'patch' ? (heroServiceText?.patch?.subtitle || 'Custom Physical Patches & Emblems') : 
                  (activeService.title || 'Premium Services')}
               </div>
             )}
@@ -299,9 +300,9 @@ export const HeroSection = () => {
               maxWidth: '600px',
               fontFamily: 'var(--font-body, "Inter", sans-serif)'
             }}>
-              {currentKey === 'embroidery' ? "Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks. Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally." :
-               currentKey === 'vector-art' ? "Transform pixelated JPEGs, PNGs, and sketches into 100% hand-drawn scalable vector files (.AI, .EPS, .SVG, .PDF, .CDR) with Pantone color separation. Perfect for screen printing, DTG, and large format printing with zero quality loss." :
-               currentKey === 'patch' ? "High-density embroidered, 3D molded waterproof PVC, woven, and laser-engraved leather patches with physical worldwide shipping. Premium quality backings including iron-on, velcro, and peel-and-stick." :
+              {currentKey === 'embroidery' ? (heroServiceText?.embroidery?.description || "Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks. Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.") :
+               currentKey === 'vector-art' ? (heroServiceText?.['vector-art']?.description || "Transform pixelated JPEGs, PNGs, and sketches into 100% hand-drawn scalable vector files (.AI, .EPS, .SVG, .PDF, .CDR) with Pantone color separation. Perfect for screen printing, DTG, and large format printing with zero quality loss.") :
+               currentKey === 'patch' ? (heroServiceText?.patch?.description || "High-density embroidered, 3D molded waterproof PVC, woven, and laser-engraved leather patches with physical worldwide shipping. Premium quality backings including iron-on, velcro, and peel-and-stick.") :
                (activeService.description || "Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.")}
             </p>
 

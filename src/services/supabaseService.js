@@ -744,6 +744,7 @@ export async function fetchCatalogFromSupabase() {
       heroSlides: data.hero_slides || [],
       pricingCards: data.pricing_cards || [],
       heroGlobalSettings: configMap['hero_global_settings'] || null,
+      heroServiceText: configMap['hero_service_text'] || null,
       siteSettings: configMap['site_settings'] || null,
       pricing: configMap['pricing'] || null,
       serviceCms: {
