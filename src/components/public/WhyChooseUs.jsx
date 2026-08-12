@@ -45,8 +45,16 @@ export const WhyChooseUs = () => {
 
   // Trust Features Data source
   const rawTrustFeatures = homePageConfig?.trustFeatures || [];
-  let trustFeatures = rawTrustFeatures.filter(f => f.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
   
+  // Try to find features matching the current service
+  let trustFeatures = rawTrustFeatures.filter(f => f.service_key === currentKey && f.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
+  
+  // Fallback to 'all' if no features exist for current service
+  if (trustFeatures.length === 0) {
+    trustFeatures = rawTrustFeatures.filter(f => (!f.service_key || f.service_key === 'all') && f.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
+  }
+  
+  // Hardcoded fallback if DB is empty
   if (trustFeatures.length === 0) {
     trustFeatures = [
       { icon: 'Award', title: '15+ Years Experience', description: 'Decades of expertise handling complex designs for global brands.' },

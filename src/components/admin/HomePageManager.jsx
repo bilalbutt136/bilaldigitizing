@@ -3,13 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { Save, Image as ImageIcon, CheckCircle2, RefreshCw, Plus, Trash2, LayoutTemplate } from 'lucide-react';
-import { uploadFileToCloudinary, upsertHeroContent, updateHomePageSettingsInSupabase, upsertHomePageTableRow, deleteHomePageTableRow } from '../../services/supabaseService';
+import { uploadFileToSupabaseStorage, upsertHeroContent, updateHomePageSettingsInSupabase, upsertHomePageTableRow, deleteHomePageTableRow } from '../../services/supabaseService';
 
 const CATEGORIES = [
   { id: 'all', label: 'All Services' },
   { id: 'embroidery', label: 'Embroidery' },
   { id: 'vector-art', label: 'Vector Art' },
   { id: 'patches', label: 'Patches' }
+];
+
+const ICONS_LIST = [
+  'Star', 'Globe', 'Clock', 'ShieldCheck', 'HeartHandshake', 'Award', 'Zap', 'TrendingUp', 'ThumbsUp', 'CheckCircle2', 'Tag', 'Upload', 'Layers', 'Cpu', 'Download', 'Sparkles', 'FileCheck', 'Truck', 'PenTool', 'Palette', 'MousePointer2', 'RefreshCw', 'Headset', 'Shield'
 ];
 
 export const HomePageManager = () => {
@@ -24,16 +28,21 @@ export const HomePageManager = () => {
     subtitle: '',
     description: '',
     primaryCta: '',
+    primaryAction: '',
     secondaryCta: '',
+    secondaryAction: '',
     previewTitle: '',
     previewBefore: '',
     previewAfter: '',
     previewTag: '',
     previewTagAfter: '',
-    is_active: true
+    is_active: true,
+    stats: []
   });
 
   const [workflowForm, setWorkflowForm] = useState([]);
+  const [trustFeaturesForm, setTrustFeaturesForm] = useState([]);
+  
   const [whyForm, setWhyForm] = useState({
     why_title: '',
     why_sub: ''
@@ -61,12 +70,20 @@ export const HomePageManager = () => {
       subtitle: existingHero?.highlight || '',
       description: existingHero?.description || '',
       primaryCta: existingHero?.primary_cta || 'Get Started',
+      primaryAction: existingHero?.primary_btn_action || '/order',
       secondaryCta: existingHero?.secondary_cta || 'View Pricing',
+      secondaryAction: existingHero?.secondary_btn_action || '/services',
       previewTitle: showcaseMeta.previewTitle || 'Professional Results',
       previewBefore: showcaseMeta.previewBefore || '',
       previewAfter: existingHero?.banner_image || '',
       previewTag: showcaseMeta.previewTag || 'Before',
       previewTagAfter: showcaseMeta.previewTagAfter || 'After',
+      stats: showcaseMeta.stats || [
+        { value: '1,200+', label: 'Clients', icon: 'Star' },
+        { value: '45+', label: 'Countries', icon: 'Globe' },
+        { value: '4-Hr', label: 'Express', icon: 'Clock' },
+        { value: '100%', label: 'Guaranteed', icon: 'ShieldCheck' }
+      ],
       is_active: existingHero?.is_active !== false,
       service_key: targetKey
     });
@@ -83,8 +100,21 @@ export const HomePageManager = () => {
     const rawWorkflowSteps = homePageConfig?.workflowSteps || [];
     let matchedSteps = rawWorkflowSteps.filter(s => s.service === currentKeyForWorkflow).sort((a, b) => a.sort_order - b.sort_order);
     
-    // If no steps exist yet in the DB for this service, initialize an empty array or fallback
     setWorkflowForm(matchedSteps);
+
+    // 4. Trust Features (Why Choose Us grid)
+    // Try to load existing trust features from site_settings (assuming it's managed via site_config or a specific table)
+    // For now we will store trust features globally in site_config for simplicity, or per category if needed.
+    // The existing WhyChooseUs.jsx pulls from homePageConfig?.trustFeatures
+    let rawTrustFeatures = homePageConfig?.trustFeatures || [];
+    let matchedFeatures = rawTrustFeatures.filter(s => s.service_key === activeTab || (!s.service_key && activeTab === 'all')).sort((a, b) => a.sort_order - b.sort_order);
+    if (matchedFeatures.length === 0 && activeTab === 'all') {
+      matchedFeatures = [
+        { id: 'temp-1', icon: 'Award', title: '15+ Years Experience', description: 'Decades of expertise handling complex designs for global brands.', sort_order: 1, is_active: true, service_key: activeTab },
+        { id: 'temp-2', icon: 'MousePointer2', title: '100% Manual Digitizing', description: 'No auto-tracing. Every stitch and node is manually plotted for perfection.', sort_order: 2, is_active: true, service_key: activeTab }
+      ];
+    }
+    setTrustFeaturesForm(matchedFeatures);
 
   }, [activeTab, heroSlides, homePageConfig]);
 
@@ -137,6 +167,44 @@ export const HomePageManager = () => {
     setWorkflowForm(prev => prev.filter((_, i) => i !== idx));
   };
 
+  const handleAddTrustFeature = () => {
+    setTrustFeaturesForm(prev => [
+      ...prev,
+      {
+        id: `temp-feat-${Date.now()}`,
+        icon: 'Star',
+        title: '',
+        description: '',
+        sort_order: prev.length + 1,
+        is_active: true,
+        service_key: activeTab
+      }
+    ]);
+  };
+
+  const updateTrustFeature = (idx, field, value) => {
+    setTrustFeaturesForm(prev => {
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], [field]: value };
+      return updated;
+    });
+  };
+
+  const handleRemoveTrustFeature = async (idx) => {
+    // For now we assume they are saved as a JSON array in site_config under 'trust_features' or in a table.
+    // If they are in a table `trust_features`:
+    const feature = trustFeaturesForm[idx];
+    if (feature.id && !feature.id.toString().startsWith('temp-')) {
+      const res = await deleteHomePageTableRow('trust_features', feature.id);
+      if (res && !res.success) {
+        // If it fails, maybe they are just JSON. We'll proceed with local delete anyway
+        console.warn('Could not delete from table, might be json only', res);
+      }
+    }
+    setTrustFeaturesForm(prev => prev.filter((_, i) => i !== idx));
+  };
+
+
   const handleSave = async () => {
     setIsSaving(true);
     showToast('Saving Home Page Content...', 'info');
@@ -147,10 +215,12 @@ export const HomePageManager = () => {
       let finalAfterUrl = heroForm.previewAfter;
 
       if (filesToUpload.previewBefore) {
-        finalBeforeUrl = await uploadFileToCloudinary(filesToUpload.previewBefore, 'client-uploads', 'showcase');
+        finalBeforeUrl = await uploadFileToSupabaseStorage(filesToUpload.previewBefore, 'portfolio-images', 'showcase');
+        if (!finalBeforeUrl) throw new Error("Failed to upload Before Image. Please check your storage settings.");
       }
       if (filesToUpload.previewAfter) {
-        finalAfterUrl = await uploadFileToCloudinary(filesToUpload.previewAfter, 'client-uploads', 'showcase');
+        finalAfterUrl = await uploadFileToSupabaseStorage(filesToUpload.previewAfter, 'portfolio-images', 'showcase');
+        if (!finalAfterUrl) throw new Error("Failed to upload After Image. Please check your storage settings.");
       }
 
       // 2. Save Hero Content
@@ -161,14 +231,17 @@ export const HomePageManager = () => {
         highlight: heroForm.subtitle,
         description: heroForm.description,
         primary_cta: heroForm.primaryCta,
+        primary_btn_action: heroForm.primaryAction,
         secondary_cta: heroForm.secondaryCta,
+        secondary_btn_action: heroForm.secondaryAction,
         banner_image: finalAfterUrl,
         is_active: heroForm.is_active,
         trust_points: [{
           previewTitle: heroForm.previewTitle,
           previewBefore: finalBeforeUrl,
           previewTag: heroForm.previewTag,
-          previewTagAfter: heroForm.previewTagAfter
+          previewTagAfter: heroForm.previewTagAfter,
+          stats: heroForm.stats
         }]
       };
       
@@ -179,7 +252,6 @@ export const HomePageManager = () => {
       });
       
       if (!res1.ok) {
-         // Fallback to upsertHeroContent if custom table route fails (just in case)
          await upsertHeroContent([heroDbPayload]);
       }
 
@@ -194,6 +266,15 @@ export const HomePageManager = () => {
         ] : [])
       ];
       await updateHomePageSettingsInSupabase(settingsPayload);
+
+      // 4. Save Trust Features to table
+      for (const feat of trustFeaturesForm) {
+        const featPayload = { ...feat, service_key: feat.service_key || activeTab };
+        if (featPayload.id && featPayload.id.toString().startsWith('temp-')) {
+          delete featPayload.id;
+        }
+        await upsertHomePageTableRow('trust_features', featPayload);
+      }
 
       // 4. Save Workflow Steps
       for (const step of workflowForm) {
@@ -285,8 +366,8 @@ export const HomePageManager = () => {
               />
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className="form-group">
                 <label>Primary Button Text</label>
                 <input 
                   type="text" 
@@ -295,7 +376,16 @@ export const HomePageManager = () => {
                   onChange={e => handleHeroChange('primaryCta', e.target.value)}
                 />
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
+                <label>Primary Button Action</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  value={heroForm.primaryAction || ''}
+                  onChange={e => handleHeroChange('primaryAction', e.target.value)}
+                />
+              </div>
+              <div className="form-group">
                 <label>Secondary Button Text</label>
                 <input 
                   type="text" 
@@ -304,6 +394,63 @@ export const HomePageManager = () => {
                   onChange={e => handleHeroChange('secondaryCta', e.target.value)}
                 />
               </div>
+              <div className="form-group">
+                <label>Secondary Button Action</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  value={heroForm.secondaryAction || ''}
+                  onChange={e => handleHeroChange('secondaryAction', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--navy-800)', marginTop: '1rem' }}>Hero Statistics</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {heroForm.stats && heroForm.stats.map((stat, idx) => (
+                <div key={idx} style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.75rem' }}>Value (e.g. 1,200+)</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      value={stat.value || ''}
+                      onChange={(e) => {
+                        const newStats = [...heroForm.stats];
+                        newStats[idx].value = e.target.value;
+                        handleHeroChange('stats', newStats);
+                      }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.75rem' }}>Label (e.g. Clients)</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      value={stat.label || ''}
+                      onChange={(e) => {
+                        const newStats = [...heroForm.stats];
+                        newStats[idx].label = e.target.value;
+                        handleHeroChange('stats', newStats);
+                      }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.75rem' }}>Icon</label>
+                    <select 
+                      className="form-input"
+                      value={stat.icon || 'Star'}
+                      onChange={(e) => {
+                        const newStats = [...heroForm.stats];
+                        newStats[idx].icon = e.target.value;
+                        handleHeroChange('stats', newStats);
+                      }}
+                    >
+                      {ICONS_LIST.map(icon => <option key={icon} value={icon}>{icon}</option>)}
+                    </select>
+                  </div>
+                </div>
+              ))}
             </div>
 
             <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--navy-800)', marginTop: '1rem' }}>Showcase Image (Before/After)</h4>
@@ -330,7 +477,7 @@ export const HomePageManager = () => {
                     <ImageIcon size={24} />
                   </div>
                 )}
-                <input type="file" accept="image/*" onChange={e => handleFileChange(e, 'previewBefore')} style={{ fontSize: '0.8rem' }} />
+                <input type="file" accept="image/png, image/jpeg, image/webp" onChange={e => handleFileChange(e, 'previewBefore')} style={{ fontSize: '0.8rem' }} />
                 <input 
                   type="text" 
                   placeholder="Before Tag (e.g. Low Res)" 
@@ -352,7 +499,7 @@ export const HomePageManager = () => {
                     <ImageIcon size={24} />
                   </div>
                 )}
-                <input type="file" accept="image/*" onChange={e => handleFileChange(e, 'previewAfter')} style={{ fontSize: '0.8rem' }} />
+                <input type="file" accept="image/png, image/jpeg, image/webp" onChange={e => handleFileChange(e, 'previewAfter')} style={{ fontSize: '0.8rem' }} />
                 <input 
                   type="text" 
                   placeholder="After Tag (e.g. Vectorized)" 
@@ -369,7 +516,7 @@ export const HomePageManager = () => {
 
         {/* RIGHT COLUMN: WHY CHOOSE US / WORKFLOW */}
         <div>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>How It Works (Workflow)</h3>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Why Choose Us (Grid & Workflow)</h3>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
             <div className="form-group">
@@ -379,7 +526,7 @@ export const HomePageManager = () => {
                 className="form-input" 
                 value={whyForm.why_title || ''}
                 onChange={e => handleWhyChange('why_title', e.target.value)}
-                placeholder="e.g. How It Works: Embroidery Digitizing"
+                placeholder="e.g. How It Works & Why Choose Us"
               />
             </div>
             
@@ -390,9 +537,46 @@ export const HomePageManager = () => {
                 rows={2}
                 value={whyForm.why_sub || ''}
                 onChange={e => handleWhyChange('why_sub', e.target.value)}
-                placeholder="e.g. From initial logo upload to machine-ready stitch file delivery."
+                placeholder="e.g. Industry-leading quality, unmatched speed..."
               />
             </div>
+          </div>
+
+          <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--navy-800)', marginBottom: '1rem' }}>Trust Grid Features</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
+            {trustFeaturesForm.map((feat, idx) => (
+              <div key={idx} style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', position: 'relative' }}>
+                <button 
+                  onClick={() => handleRemoveTrustFeature(idx)}
+                  style={{ position: 'absolute', top: '10px', right: '10px', background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                >
+                  <Trash2 size={16} />
+                </button>
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Feature Title</label>
+                    <input type="text" className="form-input" style={{ padding: '0.4rem' }} value={feat.title || ''} onChange={e => updateTrustFeature(idx, 'title', e.target.value)} />
+                  </div>
+                  <div style={{ width: '120px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Icon</label>
+                    <select className="form-input" style={{ padding: '0.4rem' }} value={feat.icon || 'Star'} onChange={e => updateTrustFeature(idx, 'icon', e.target.value)}>
+                      {ICONS_LIST.map(icon => <option key={icon} value={icon}>{icon}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Description</label>
+                  <textarea className="form-input" rows={2} style={{ padding: '0.4rem' }} value={feat.description || ''} onChange={e => updateTrustFeature(idx, 'description', e.target.value)} />
+                </div>
+              </div>
+            ))}
+            <button 
+              onClick={handleAddTrustFeature}
+              className="btn btn-outline" 
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+            >
+              <Plus size={16} /> Add Grid Feature
+            </button>
           </div>
 
           <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--navy-800)', marginBottom: '1rem' }}>Workflow Steps</h4>
@@ -411,7 +595,13 @@ export const HomePageManager = () => {
                     <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Step Title</label>
                     <input type="text" className="form-input" style={{ padding: '0.4rem' }} value={step.title || ''} onChange={e => updateWorkflowStep(idx, 'title', e.target.value)} />
                   </div>
-                  <div style={{ width: '80px' }}>
+                  <div style={{ width: '100px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Icon</label>
+                    <select className="form-input" style={{ padding: '0.4rem' }} value={step.icon || 'CheckCircle2'} onChange={e => updateWorkflowStep(idx, 'icon', e.target.value)}>
+                      {ICONS_LIST.map(icon => <option key={icon} value={icon}>{icon}</option>)}
+                    </select>
+                  </div>
+                  <div style={{ width: '60px' }}>
                     <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Order</label>
                     <input type="number" className="form-input" style={{ padding: '0.4rem' }} value={step.sort_order || 0} onChange={e => updateWorkflowStep(idx, 'sort_order', parseInt(e.target.value))} />
                   </div>

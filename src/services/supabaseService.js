@@ -192,37 +192,37 @@ export async function updateUserPassword(newPassword) {
 
 // Helper to upload files to Cloudinary securely via backend
 export async function uploadFileToCloudinary(fileObj, bucketName = 'client-uploads', folderPath = 'artwork') {
-  if (!fileObj) return null;
+  return uploadFileToSupabaseStorage(fileObj, bucketName, folderPath);
+}
 
+// Upload file natively to Supabase Storage via backend route
+export async function uploadFileToSupabaseStorage(fileObj, bucketName = 'portfolio-images', folderPath = 'showcase') {
+  if (!fileObj) return null;
   try {
     const formData = new FormData();
     formData.append('file', fileObj);
-    if (folderPath) {
-      formData.append('folder', folderPath);
-    }
+    formData.append('bucket', bucketName);
+    formData.append('folder', folderPath);
 
-    const response = await fetch('/api/cloudinary/upload', {
+    const res = await fetch('/api/admin/upload', {
       method: 'POST',
-      body: formData,
+      body: formData
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.warn('Cloudinary secure upload error:', errorData);
+    if (!res.ok) {
+      console.warn('Supabase storage upload error:', await res.text());
       return null;
     }
 
-    const data = await response.json();
+    const data = await res.json();
     if (!data.success) {
-      console.warn('Cloudinary secure upload failed:', data.error);
+      console.warn('Supabase storage upload failed:', data.error);
       return null;
     }
 
-    // The backend returns a permanently signed delivery URL for the authenticated asset
-    console.log("Uploaded Secure File to Cloudinary. Public ID:", data.public_id);
     return data.url;
   } catch (err) {
-    console.warn('Cloudinary upload exception:', err);
+    console.warn('Supabase storage exception:', err);
     return null;
   }
 }

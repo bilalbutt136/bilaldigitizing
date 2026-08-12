@@ -6,8 +6,9 @@ export async function POST(request) {
   try {
     const formData = await request.formData();
     const file = formData.get('file');
-    const folder = formData.get('folder') || 'media-gallery';
-    const bucket = formData.get('bucket') || 'portfolio-images';
+    const folder = formData.get('folder') || 'artwork';
+    // We will use portfolio-images since it is public and supports public URLs natively
+    const bucket = formData.get('bucket') || 'portfolio-images'; 
 
     if (!file) {
       return NextResponse.json({ success: false, error: 'No file provided' }, { status: 400 });
@@ -19,7 +20,7 @@ export async function POST(request) {
     const buffer = Buffer.from(bytes);
 
     // Generate unique filename to prevent overwriting
-    const fileExt = file.name.split('.').pop() || 'png';
+    const fileExt = file.name.split('.').pop();
     const uniqueFilename = `${folder}/${uuidv4()}.${fileExt}`;
 
     // Upload to Supabase Storage
@@ -44,7 +45,7 @@ export async function POST(request) {
     return NextResponse.json({
       success: true,
       url: publicUrlData.publicUrl,
-      public_id: uniqueFilename, // Retain public_id for backward compatibility with frontend
+      public_id: uniqueFilename,
     });
   } catch (error) {
     console.error('[Upload API Error]', error);

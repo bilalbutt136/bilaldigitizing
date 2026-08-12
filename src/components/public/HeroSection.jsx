@@ -16,8 +16,27 @@ import {
   Globe,
   Clock,
   ShieldCheck,
-  LayoutGrid
+  LayoutGrid,
+  HeartHandshake,
+  Award,
+  Zap,
+  TrendingUp,
+  ThumbsUp
 } from 'lucide-react';
+
+const ICON_MAP = {
+  Star,
+  Globe,
+  Clock,
+  ShieldCheck,
+  HeartHandshake,
+  Award,
+  Zap,
+  TrendingUp,
+  ThumbsUp,
+  CheckCircle2,
+  Tag
+};
 
 export const HeroSection = () => {
   const navigate = useNavigate();
@@ -71,30 +90,45 @@ export const HeroSection = () => {
     );
   }
 
-  const handlePrimaryClick = () => {
-    if (currentKey === 'all') {
-      const el = document.getElementById('pricing');
+  const resolveAction = (actionStr, defaultBehavior) => {
+    if (!actionStr) {
+      defaultBehavior();
+      return;
+    }
+    if (actionStr.startsWith('#')) {
+      const el = document.getElementById(actionStr.substring(1));
       if (el) el.scrollIntoView({ behavior: 'smooth' });
+      else navigate(actionStr);
+    } else if (actionStr.includes('orderWizard') || actionStr === '/order') {
+      if (openOrderWizard) openOrderWizard({ type: currentKey });
+      else protectedNavigate('customer', true);
     } else {
-      if (openOrderWizard) {
-        openOrderWizard({ type: currentKey });
-      } else {
-        protectedNavigate('customer', true);
-      }
+      navigate(actionStr);
     }
   };
 
-  const handleSecondaryClick = () => {
-    if (currentKey === 'all') {
-      if (openOrderWizard) {
-        openOrderWizard({ type: 'all' });
+  const handlePrimaryClick = () => {
+    resolveAction(activeService.primary_btn_action, () => {
+      if (currentKey === 'all') {
+        const el = document.getElementById('pricing');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
       } else {
-        protectedNavigate('customer', true);
+        if (openOrderWizard) openOrderWizard({ type: currentKey });
+        else protectedNavigate('customer', true);
       }
-    } else {
-      const el = document.getElementById('pricing');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    }
+    });
+  };
+
+  const handleSecondaryClick = () => {
+    resolveAction(activeService.secondary_btn_action, () => {
+      if (currentKey === 'all') {
+        if (openOrderWizard) openOrderWizard({ type: 'all' });
+        else protectedNavigate('customer', true);
+      } else {
+        const el = document.getElementById('pricing');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
   };
 
   const cleanHtml = (html) => {
@@ -276,17 +310,23 @@ export const HeroSection = () => {
               gap: '1.5rem',
               marginBottom: '2.5rem'
             }}>
-              {[
-                { label: '1,200+ Clients', icon: Star },
-                { label: '45+ Countries', icon: Globe },
-                { label: '4-Hr Express', icon: Clock },
-                { label: '100% Guaranteed', icon: ShieldCheck }
-              ].map((b, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <b.icon size={18} style={{ color: 'var(--orange-500, #ff7a00)' }} />
-                  <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{b.label}</span>
-                </div>
-              ))}
+              {(activeService.trust_points?.[0]?.stats || [
+                { value: '1,200+', label: 'Clients', icon: 'Star' },
+                { value: '45+', label: 'Countries', icon: 'Globe' },
+                { value: '4-Hr', label: 'Express', icon: 'Clock' },
+                { value: '100%', label: 'Guaranteed', icon: 'ShieldCheck' }
+              ]).map((b, i) => {
+                const IconComp = ICON_MAP[b.icon] || Star;
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <IconComp size={18} style={{ color: 'var(--orange-500, #ff7a00)' }} />
+                    <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                      {b.value && <span style={{ color: 'var(--orange-500)' }}>{b.value} </span>}
+                      {b.label}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="hero-cta-group" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
