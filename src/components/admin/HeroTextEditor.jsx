@@ -23,6 +23,11 @@ export const HeroTextEditor = () => {
       headline: '',
       subtitle: '',
       description: ''
+    },
+    all: {
+      headline: '',
+      subtitle: '',
+      description: ''
     }
   });
 
@@ -42,6 +47,11 @@ export const HeroTextEditor = () => {
       headline: 'Custom Patches',
       subtitle: 'Custom Physical Patches & Emblems',
       description: 'High-density embroidered, 3D molded waterproof PVC, woven, and laser-engraved leather patches with physical worldwide shipping. Premium quality backings including iron-on, velcro, and peel-and-stick.'
+    },
+    all: {
+      headline: 'Embroidery Digitizing, Vector Art & Custom Patches',
+      subtitle: 'Precision Commercial Embroidery, Scalable Vector Art, Custom Physical Patches',
+      description: 'Convert your logos into clean, production-ready embroidery machine files (.DST, .PES, .EXP, .EMB) engineered for Tajima, Brother, Melco & Barudan multi-head machines with zero thread breaks. Delivering unmatched quality for promotional product distributors, apparel brands, and custom decoration shops globally.'
     }
   };
 
@@ -50,7 +60,8 @@ export const HeroTextEditor = () => {
       setFormData(prev => ({
         embroidery: heroServiceText.embroidery || DEFAULT_CONTENT.embroidery,
         'vector-art': heroServiceText['vector-art'] || DEFAULT_CONTENT['vector-art'],
-        patch: heroServiceText.patch || DEFAULT_CONTENT.patch
+        patch: heroServiceText.patch || DEFAULT_CONTENT.patch,
+        all: heroServiceText.all || DEFAULT_CONTENT.all
       }));
     }
   }, [heroServiceText]);
@@ -75,6 +86,7 @@ export const HeroTextEditor = () => {
   };
 
   const tabs = [
+    { id: 'all', label: 'All Services', icon: Sparkles },
     { id: 'embroidery', label: 'Embroidery', icon: Layers },
     { id: 'vector-art', label: 'Vector Art', icon: PenTool },
     { id: 'patch', label: 'Patches', icon: Tag }
