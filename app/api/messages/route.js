@@ -9,9 +9,18 @@ export async function GET(request) {
     const supabase = createAdminClient();
 
     if (action === 'fetchConversations') {
-      const { data, error } = await supabase.from('conversations').select('*').order('updated_at', { ascending: false });
-      if (error) throw error;
-      return NextResponse.json({ conversations: data });
+      const { data: convData, error: convError } = await supabase.from('conversations').select('*').order('updated_at', { ascending: false });
+      if (convError) throw convError;
+
+      const { data: messagesData, error: msgError } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
+      if (msgError) throw msgError;
+
+      const conversations = convData.map(conv => ({
+        ...conv,
+        messages: messagesData.filter(m => m.conversation_id === conv.id)
+      }));
+
+      return NextResponse.json({ conversations });
     }
 
     if (action === 'fetchMessages') {

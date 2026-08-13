@@ -962,7 +962,7 @@ export async function addChatMessage(chatId, messageObj) {
     await fetch('/api/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'insertMessage', payload: messageObj })
+      body: JSON.stringify({ action: 'insertMessage', payload: { ...messageObj, conversation_id: chatId } })
     });
     return true;
   } catch { return false; }
