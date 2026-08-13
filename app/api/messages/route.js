@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -36,6 +38,8 @@ export async function GET(request) {
           avatar: conv.avatar,
           status: conv.status,
           unreadCount: conv.unread_count,
+          createdAt: conv.created_at,
+          updatedAt: conv.updated_at,
           messages: mappedMessages
         };
       });
@@ -97,6 +101,8 @@ export async function POST(request) {
         avatar: conv.avatar,
         status: conv.status,
         unreadCount: conv.unread_count,
+        createdAt: conv.created_at,
+        updatedAt: conv.updated_at,
         messages: payload.messages || []
       };
 

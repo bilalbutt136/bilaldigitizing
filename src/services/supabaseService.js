@@ -951,7 +951,9 @@ export async function createConversation(dbConv) {
 
 export async function fetchConversations() {
   try {
-    const res = await fetch('/api/messages?action=fetchConversations');
+    const res = await fetch('/api/messages?action=fetchConversations', {
+      cache: 'no-store'
+    });
     const data = await res.json();
     return data.conversations || [];
   } catch { return []; }
