@@ -59,25 +59,33 @@ export const AdminChatInbox = () => {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    let channel;
+    let isMounted = true;
     const loadChats = async () => {
+      if (!isMounted) return;
       const data = await fetchConversations();
       if (data && data.length > 0) {
-        setConversations(deduplicateThreads(data));
+        setConversations(prev => {
+          const newThreads = deduplicateThreads(data);
+          // Only play sound if new message count increased
+          const prevCount = prev.reduce((acc, c) => acc + (c.messages?.length || 0), 0);
+          const newCount = newThreads.reduce((acc, c) => acc + (c.messages?.length || 0), 0);
+          if (newCount > prevCount) {
+             playNotificationSound('receive');
+          }
+          return newThreads;
+        });
       }
     };
     
-    if (isSupabaseConfigured && supabase) {
-      loadChats();
-      channel = supabase.channel(`global-messages-channel-admin-${Date.now()}`)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
-          loadChats();
-          playNotificationSound('receive');
-        })
-        .subscribe();
-    }
+    // Initial load
+    loadChats();
+    
+    // Fallback polling loop to guarantee updates even if Supabase Realtime isn't configured
+    const interval = setInterval(loadChats, 3000);
+
     return () => {
-      if (channel) supabase.removeChannel(channel);
+      isMounted = false;
+      clearInterval(interval);
     };
   }, []);
 

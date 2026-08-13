@@ -30,11 +30,21 @@ export const ClientLiveChatWidget = () => {
   const [chats, setChats] = useState([]);
 
   useEffect(() => {
-    let channel;
+    let isMounted = true;
     const loadChats = async () => {
+      if (!isMounted) return;
       if (isSupabaseConfigured) {
         const data = await fetchConversations();
-        if (data && data.length > 0) setChats(data);
+        if (data && data.length > 0) {
+          setChats(prev => {
+             const prevCount = Array.isArray(prev) ? prev.reduce((acc, c) => acc + (c.messages?.length || 0), 0) : 0;
+             const newCount = Array.isArray(data) ? data.reduce((acc, c) => acc + (c.messages?.length || 0), 0) : 0;
+             if (newCount > prevCount) {
+                 playNotificationSound('receive');
+             }
+             return data;
+          });
+        }
       } else {
         try {
           const saved = typeof window !== 'undefined' && localStorage.getItem('bdigi_admin_chats');
@@ -43,19 +53,15 @@ export const ClientLiveChatWidget = () => {
       }
     };
 
+    // Initial load
     loadChats();
 
-    if (isSupabaseConfigured && supabase) {
-      channel = supabase.channel(`global-messages-channel-client-${Date.now()}`)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
-          loadChats();
-          playNotificationSound('receive');
-        })
-        .subscribe();
-    }
+    // Fallback polling loop
+    const interval = setInterval(loadChats, 3000);
     
     return () => {
-      if (channel) supabase.removeChannel(channel);
+      isMounted = false;
+      clearInterval(interval);
     };
   }, []);
 
