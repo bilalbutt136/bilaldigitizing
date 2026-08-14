@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase/client';
-import { fetchConversations, addChatMessage } from '../../services/supabaseService';
+import { fetchConversations, addChatMessage, markConversationAsRead } from '../../services/supabaseService';
 import { playNotificationSound } from '../../utils/audioNotification';
 import {
   MessageSquare,
@@ -106,6 +106,16 @@ export const AdminChatInbox = () => {
   const activeChat = conversations.find(c => c.id === activeChatId) || conversations[0] || null;
   const currentActiveChatId = activeChat ? activeChat.id : activeChatId;
 
+  // Auto-mark active chat as read
+  useEffect(() => {
+    if (activeChat && activeChat.unreadCount > 0) {
+      markConversationAsRead(activeChat.id);
+      setConversations(prev => prev.map(c => 
+        c.id === activeChat.id ? { ...c, unreadCount: 0 } : c
+      ));
+    }
+  }, [activeChat]);
+
   // Filter conversations
   const filteredConversations = conversations.filter(conv => {
     const matchesSearch = (conv.clientName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -119,13 +129,6 @@ export const AdminChatInbox = () => {
 
   const handleSelectChat = (chatId) => {
     setActiveChatId(chatId);
-    // Clear unread count for selected chat
-    setConversations(prev => prev.map(c => {
-      if (c.id === chatId) {
-        return { ...c, unreadCount: 0 };
-      }
-      return c;
-    }));
   };
 
   const handleSendMessage = async (e) => {

@@ -970,6 +970,17 @@ export async function addChatMessage(chatId, messageObj) {
   } catch { return false; }
 }
 
+export async function markConversationAsRead(chatId) {
+  try {
+    await fetch('/api/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'markAsRead', payload: { conversation_id: chatId } })
+    });
+    return true;
+  } catch { return false; }
+}
+
 // ============================================================
 // META PIXEL / TRACKING LOGS
 // ============================================================

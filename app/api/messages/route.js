@@ -139,6 +139,32 @@ export async function POST(request) {
       return NextResponse.json({ success: true });
     }
 
+    if (action === 'markAsRead') {
+      const { conversation_id } = payload;
+      
+      // Fetch the conversation to get the client_email
+      const { data: convData } = await supabase.from('conversations')
+        .select('client_email')
+        .eq('id', conversation_id)
+        .single();
+        
+      if (convData && convData.client_email) {
+        // Mark all conversations from this client as read to support deduplicated grouping
+        const { error } = await supabase.from('conversations')
+          .update({ unread_count: 0 })
+          .eq('client_email', convData.client_email);
+        if (error) throw error;
+      } else {
+        // Fallback to just the id if email is not found
+        const { error } = await supabase.from('conversations')
+          .update({ unread_count: 0 })
+          .eq('id', conversation_id);
+        if (error) throw error;
+      }
+      
+      return NextResponse.json({ success: true });
+    }
+
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error) {
     console.error('[Messages API POST]', error);
