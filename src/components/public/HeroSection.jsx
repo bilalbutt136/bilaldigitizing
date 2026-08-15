@@ -1,38 +1,77 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { normalizeCategory } from '../../utils/categoryUtils';
 import { 
   CheckCircle2, 
   ArrowRight, 
-  Upload, 
   Star,
-  Tag,
+  Clock, 
+  ShieldCheck, 
+  MoveHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Zap,
   Layers,
   PenTool,
-  MoveHorizontal,
-  Globe,
-  Clock,
-  ShieldCheck,
-  LayoutGrid,
-  Sparkles,
-  Zap
+  Tag
 } from 'lucide-react';
 
-
-const ICON_MAP = {
-  Star,
-  Globe,
-  Clock,
-  ShieldCheck,
-  Zap,
-  CheckCircle2,
-  Tag,
-  Layers,
-  PenTool
-};
+const SHOWCASE_SLIDES = [
+  {
+    id: 'portrait-embroidery',
+    category: 'embroidery',
+    title: 'Character & Portrait Digitizing',
+    subtitle: 'Vector Graphic to High-Density Textured Sew-Out',
+    beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=900',
+    afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=900',
+    beforeTag: 'BEFORE',
+    afterTag: 'AFTER'
+  },
+  {
+    id: 'cap-3d-puff',
+    category: 'embroidery',
+    title: '3D Puff Raised Cap Embroidery',
+    subtitle: '2D Flat Logo to High-Density Foam Cap Stitch File',
+    beforeImg: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&q=80&w=900',
+    afterImg: 'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&q=80&w=900',
+    beforeTag: 'BEFORE',
+    afterTag: 'AFTER'
+  },
+  {
+    id: 'vector-tracing',
+    category: 'vector-art',
+    title: 'Raster to Scalable Vector Tracing',
+    subtitle: 'Pixelated Low-Res JPG to Clean Scalable Vector Bézier Paths',
+    beforeImg: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=900',
+    afterImg: 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&q=80&w=900',
+    beforeTag: 'BEFORE',
+    afterTag: 'AFTER'
+  },
+  {
+    id: 'custom-patches',
+    category: 'patches',
+    title: 'Custom Physical Manufactured Patches',
+    subtitle: 'Digital Emblem Artwork to Finished Velcro Embroidered Patch',
+    beforeImg: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&q=80&w=900',
+    afterImg: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=900',
+    beforeTag: 'BEFORE',
+    afterTag: 'AFTER'
+  },
+  {
+    id: 'jacket-back',
+    category: 'embroidery',
+    title: 'Full Jacket Back Master Design',
+    subtitle: 'Multi-Color Artwork to 85,000-Stitch Zero-Break Sew-Out',
+    beforeImg: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&q=80&w=900',
+    afterImg: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=900',
+    beforeTag: 'BEFORE',
+    afterTag: 'AFTER'
+  }
+];
 
 export const HeroSection = () => {
   const navigate = useNavigate();
@@ -40,524 +79,373 @@ export const HeroSection = () => {
     protectedNavigate, 
     openOrderWizard, 
     activeHomeServiceTab = 'all', 
-    setActiveHomeServiceTab,
-    heroSlides = []
+    heroSlides = [] 
   } = useAppState();
 
+  const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
   const [sliderPos, setSliderPos] = useState(50);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isFading, setIsFading] = useState(false);
 
+  // Combine DB heroSlides with built-in showcase gallery
   const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
-
-  // Fallback curated showcase data if not yet loaded from DB
-  const showcaseData = {
-    all: {
-      badge: 'Complete Studio Capabilities',
-      title: 'Commercial Embroidery, Scalable Vector Art & Custom Patches',
-      highlight: 'Three Master Services. Factory-Grade Precision. 4–12 Hr Delivery.',
-      description: 'From machine-ready stitch files (.DST, .PES, .EMB) and crisp spot-color vector art (.AI, .EPS, .SVG) to physical custom patches with Velcro and Iron-On backings delivered straight to your door.',
-      features: [
-        'Embroidery Digitizing: Starts $10.00 Flat · 100% Hand Pathing · 0 Thread Breaks',
-        'Vector Art Redraw: Starts $15.00 Flat · Pantone Spot Colors · Master AI/EPS/SVG',
-        'Custom Physical Patches: Starts $1.50 / Piece · Velcro & Iron-On · Doorstep Delivery'
-      ],
-      stats: [
-        { value: '1,200+', label: 'Clients', icon: 'Star' },
-        { value: '45+', label: 'Countries', icon: 'Globe' },
-        { value: '4-Hr', label: 'Express', icon: 'Clock' },
-        { value: '100%', label: 'Guaranteed', icon: 'ShieldCheck' }
-      ],
-      primary_cta: 'Get Started Now',
-      primary_btn_action: '#pricing',
-      secondary_cta: 'Explore Packages',
-      secondary_btn_action: '/pricing',
-      previewTitle: 'All Studio Production Results',
-      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
-      afterImg: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=800',
-      beforeTag: 'Raw Artwork',
-      afterTag: 'Finished Production'
-    },
-    embroidery: {
-      badge: 'Factory-Grade Machine Digitizing',
-      title: 'Commercial Embroidery Digitizing',
-      highlight: 'Zero Thread Breaks. Calculated Pull Compensation. 4–12 Hr Turnaround.',
-      description: 'Engineered by master digitizers with 15+ years factory experience. Hand-mapped stitch pathing for caps, left chest polos, 3D puff foam, and full jacket backs with free unlimited revisions.',
-      features: [
-        '100% Manual Digitizing (No Auto-Trace shortcuts)',
-        'All Machine Formats: Tajima (.DST), Wilcom (.EMB), Brother (.PES), Melco (.EXP)',
-        'Free Unlimited Production Edits & Color Sequence Sheets',
-        'Guaranteed Zero Thread Breaks on Commercial Machines'
-      ],
-      stats: [
-        { value: '100k+', label: 'Sew-Outs', icon: 'Star' },
-        { value: '0', label: 'Thread Breaks', icon: 'Zap' },
-        { value: '4-12 Hr', label: 'Delivery', icon: 'Clock' },
-        { value: '100%', label: 'Guaranteed', icon: 'ShieldCheck' }
-      ],
-      primary_cta: 'Order Embroidery Digitizing',
-      primary_btn_action: '/order',
-      secondary_cta: 'View Embroidery Packages',
-      secondary_btn_action: '/services/embroidery-digitizing',
-      previewTitle: 'Raw Art to High-Density Sew-Out',
-      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
-      afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=800',
-      beforeTag: 'Original Logo',
-      afterTag: 'Digitized Sew-Out'
-    },
-    'vector-art': {
-      badge: 'Resolution-Independent Vector Tracing',
-      title: 'Raster to Scalable Vector Art Conversion',
-      highlight: 'Hand-Drawn Bézier Curves. Pantone Color Separation. Press Ready.',
-      description: 'Convert blurry low-res JPGs, PNGs, and sketches into razor-sharp vector graphics with clean anchor nodes, exact Pantone (PMS) matching, and separated layers for screen printing and vinyl cutting.',
-      features: [
-        '100% Hand-Crafted Smooth Node Paths (Zero Overlapping Lines)',
-        'Pantone Solid Coated Spot Color Separation Included',
-        'Master Source Suite: .AI, .EPS, .SVG & High-Res 300+ DPI PDF',
-        'Print, Vinyl Cut & Screen-Printing Production Ready'
-      ],
-      stats: [
-        { value: '50k+', label: 'Vectors', icon: 'Star' },
-        { value: 'Sharp', label: 'Cut Paths', icon: 'Zap' },
-        { value: '6-12 Hr', label: 'Delivery', icon: 'Clock' },
-        { value: '100%', label: 'Scale-Free', icon: 'ShieldCheck' }
-      ],
-      primary_cta: 'Order Vector Art Conversion',
-      primary_btn_action: '/order',
-      secondary_cta: 'View Vector Packages',
-      secondary_btn_action: '/services/vector-tracing',
-      previewTitle: 'Blurry Raster to Clean Scalable Vector',
-      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
-      afterImg: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=800',
-      beforeTag: 'Blurry Pixelated Raster',
-      afterTag: 'Sharp Vector Nodes'
-    },
-    patches: {
-      badge: 'Custom Manufactured Emblems',
-      title: 'Premium Physical Custom Patches',
-      highlight: 'Embroidered, Woven & 3D Molded PVC. Doorstep Delivery.',
-      description: 'Custom manufactured physical patches for uniforms, tactical gear, hats, and apparel brands. Available with Velcro hook & loop, iron-on, or adhesive backings with free digital proofs before production.',
-      features: [
-        'Custom Embroidered, High-Density Woven & 3D Rubber PVC',
-        'Military-Grade Velcro, Heat-Seal Iron-On & Peel Backings',
-        'Free 12-Hour Digital Proof & Doorstep Worldwide Shipping',
-        'Merrowed & Laser Cut High-Durability Borders'
-      ],
-      stats: [
-        { value: '10 Pcs', label: 'Low MOQ', icon: 'Star' },
-        { value: '12-Hr', label: 'Free Proof', icon: 'Zap' },
-        { value: '3-5 Day', label: 'Production', icon: 'Clock' },
-        { value: 'Global', label: 'Doorstep Delivery', icon: 'Globe' }
-      ],
-      primary_cta: 'Order Custom Patches',
-      primary_btn_action: '/order',
-      secondary_cta: 'Get Free Patch Proof',
-      secondary_btn_action: '/custom-patches',
-      previewTitle: 'Artwork to Physical Manufactured Patch',
-      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
-      afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=800',
-      beforeTag: 'Design Artwork',
-      afterTag: 'Manufactured Patch'
-    }
-  };
-
-
-  const currentContent = showcaseData[activeTab] || showcaseData.all;
-
-  // Real-time DB Slide Override from heroSlides
-  const matchedSlide = (heroSlides || []).find(
+  const matchedDbSlide = (heroSlides || []).find(
     s => s.id?.toLowerCase() === activeTab || s.serviceKey?.toLowerCase() === activeTab
   );
 
-  const badge = matchedSlide?.badge || currentContent.badge;
-  const title = matchedSlide?.title || currentContent.title;
-  const highlight = matchedSlide?.highlight || currentContent.highlight;
-  const description = matchedSlide?.description || currentContent.description;
-
-  const rawFeatures = matchedSlide?.features || (matchedSlide?.trust_points?.[0]?.features) || currentContent.features;
-  const featuresList = Array.isArray(rawFeatures)
-    ? rawFeatures.map(f => typeof f === 'string' ? f : f.text)
-    : currentContent.features;
-
-  const rawStats = matchedSlide?.stats || (matchedSlide?.trust_points?.[0]?.stats) || currentContent.stats;
-  const statsList = Array.isArray(rawStats) ? rawStats : currentContent.stats;
-
-
-  const primaryCtaText = matchedSlide?.primary_cta || matchedSlide?.primaryCta || currentContent.primary_cta;
-  const primaryBtnAction = matchedSlide?.primary_btn_action || matchedSlide?.trust_points?.[0]?.primaryBtnAction || currentContent.primary_btn_action;
-  
-  const secondaryCtaText = matchedSlide?.secondary_cta || matchedSlide?.secondaryCta || currentContent.secondary_cta;
-  const secondaryBtnAction = matchedSlide?.secondary_btn_action || matchedSlide?.trust_points?.[0]?.secondaryBtnAction || currentContent.secondary_btn_action;
-
-  const previewTitle = matchedSlide?.previewTitle || matchedSlide?.trust_points?.[0]?.previewTitle || currentContent.previewTitle;
-  const beforeImage = matchedSlide?.beforeImg || matchedSlide?.trust_points?.[0]?.previewBefore || currentContent.beforeImg;
-  const afterImage = matchedSlide?.afterImg || matchedSlide?.banner_image || currentContent.afterImg;
-  const beforeTag = matchedSlide?.beforeTag || matchedSlide?.trust_points?.[0]?.previewTag || currentContent.beforeTag;
-  const afterTag = matchedSlide?.afterTag || matchedSlide?.trust_points?.[0]?.previewTagAfter || currentContent.afterTag;
-
-  const handleTabClick = (tabId) => {
-    if (setActiveHomeServiceTab) {
-      setActiveHomeServiceTab(tabId);
+  const displaySlides = React.useMemo(() => {
+    if (matchedDbSlide && matchedDbSlide.beforeImg && matchedDbSlide.afterImg) {
+      const customSlide = {
+        id: matchedDbSlide.id || 'custom-db-slide',
+        category: activeTab,
+        title: matchedDbSlide.title || matchedDbSlide.previewTitle || 'Custom Studio Production Result',
+        subtitle: matchedDbSlide.highlight || 'Original Artwork to Production Finished Quality',
+        beforeImg: matchedDbSlide.beforeImg,
+        afterImg: matchedDbSlide.afterImg,
+        beforeTag: matchedDbSlide.beforeTag || 'BEFORE',
+        afterTag: matchedDbSlide.afterTag || 'AFTER'
+      };
+      return [customSlide, ...SHOWCASE_SLIDES.filter(s => s.id !== customSlide.id)];
     }
-    setSliderPos(50);
+    return SHOWCASE_SLIDES;
+  }, [matchedDbSlide, activeTab]);
+
+  // Auto-rotation timer: switches slide every 5 seconds (5000ms)
+  useEffect(() => {
+    if (isHovered) return; // Pause timer on hover
+
+    const interval = setInterval(() => {
+      setIsFading(true);
+      setTimeout(() => {
+        setCurrentSlideIdx(prev => (prev + 1) % displaySlides.length);
+        setIsFading(false);
+      }, 250);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isHovered, displaySlides.length]);
+
+  const currentSlide = displaySlides[currentSlideIdx] || displaySlides[0];
+
+  const handleDotClick = (idx) => {
+    if (idx === currentSlideIdx) return;
+    setIsFading(true);
+    setTimeout(() => {
+      setCurrentSlideIdx(idx);
+      setIsFading(false);
+    }, 200);
   };
 
-  const resolveAction = (actionStr, defaultBehavior) => {
-    if (!actionStr) {
-      defaultBehavior();
-      return;
-    }
-    if (actionStr.startsWith('#')) {
-      const el = document.getElementById(actionStr.substring(1));
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-      else navigate(actionStr);
-    } else if (actionStr.includes('orderWizard') || actionStr === '/order') {
-      const sType = activeTab === 'patches' ? 'patch' : (activeTab === 'vector-art' ? 'vector' : (activeTab === 'embroidery' ? 'embroidery' : 'all'));
-      if (openOrderWizard) openOrderWizard({ type: sType });
-      else protectedNavigate('customer', true, { type: sType });
+  const handlePrev = () => {
+    setIsFading(true);
+    setTimeout(() => {
+      setCurrentSlideIdx(prev => (prev === 0 ? displaySlides.length - 1 : prev - 1));
+      setIsFading(false);
+    }, 200);
+  };
+
+  const handleNext = () => {
+    setIsFading(true);
+    setTimeout(() => {
+      setCurrentSlideIdx(prev => (prev + 1) % displaySlides.length);
+      setIsFading(false);
+    }, 200);
+  };
+
+  const handleLaunchOrder = () => {
+    if (openOrderWizard) {
+      openOrderWizard({ type: 'all' });
+    } else if (protectedNavigate) {
+      protectedNavigate('customer', true, { type: 'all' });
     } else {
-      navigate(actionStr);
+      navigate('/order');
     }
   };
 
-  const handlePrimaryAction = () => {
-    resolveAction(primaryBtnAction, () => {
-      const serviceType = activeTab === 'patches' ? 'patch' : (activeTab === 'vector-art' ? 'vector' : (activeTab === 'embroidery' ? 'embroidery' : 'all'));
-      if (openOrderWizard) {
-        openOrderWizard({ type: serviceType });
-      } else {
-        protectedNavigate('customer', true, { type: serviceType });
-      }
-    });
+  const handleViewPricing = () => {
+    navigate('/pricing');
   };
-
-  const handleSecondaryAction = () => {
-    resolveAction(secondaryBtnAction, () => {
-      if (activeTab === 'embroidery') {
-        navigate('/services/embroidery-digitizing');
-      } else if (activeTab === 'vector-art') {
-        navigate('/services/vector-tracing');
-      } else if (activeTab === 'patches') {
-        navigate('/custom-patches');
-      } else {
-        navigate('/pricing');
-      }
-    });
-  };
-
-  const tabs = [
-    { id: 'all', label: 'All Services', icon: LayoutGrid },
-    { id: 'embroidery', label: 'Embroidery', icon: Layers },
-    { id: 'vector-art', label: 'Vector Art', icon: PenTool },
-    { id: 'patches', label: 'Patches', icon: Tag }
-  ];
 
   return (
     <section style={{
-      background: 'linear-gradient(135deg, var(--navy-950, #0f172a) 0%, var(--navy-900, #0f172a) 60%, #1e1b4b 100%)',
-      color: '#ffffff',
-      padding: '2.5rem 0 5.5rem',
+      background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 60%, #e2e8f0 100%)',
+      color: 'var(--navy-950, #0f172a)',
+      padding: '4rem 0 5rem',
       position: 'relative',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
     }}>
-      {/* Ambient Glows */}
+      
+      {/* Background Soft Glow Accents */}
       <div style={{
         position: 'absolute',
-        top: '-15%',
+        top: '-10%',
         left: '-5%',
-        width: '700px',
-        height: '700px',
-        background: 'radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, transparent 60%)',
+        width: '600px',
+        height: '600px',
+        background: 'radial-gradient(circle, rgba(234, 88, 12, 0.08) 0%, transparent 70%)',
         pointerEvents: 'none',
         zIndex: 0
       }} />
       <div style={{
         position: 'absolute',
-        bottom: '-15%',
+        bottom: '-10%',
         right: '-5%',
         width: '600px',
         height: '600px',
-        background: 'radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 60%)',
+        background: 'radial-gradient(circle, rgba(37, 99, 235, 0.06) 0%, transparent 70%)',
         pointerEvents: 'none',
         zIndex: 0
       }} />
 
       <style dangerouslySetInnerHTML={{__html: `
-        .blinking-green-dot {
-          width: 8px;
-          height: 8px;
+        .hero-pulse-dot {
+          width: 9px;
+          height: 9px;
           border-radius: 50%;
-          background: #22c55e;
-          box-shadow: 0 0 8px #22c55e;
+          background: #ea580c;
+          box-shadow: 0 0 10px rgba(234, 88, 12, 0.8);
           display: inline-block;
-          animation: blink 1.2s infinite ease-in-out;
+          animation: pulseGlow 1.8s infinite ease-in-out;
         }
-        .blinking-red-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: #ef4444;
-          box-shadow: 0 0 8px #ef4444;
-          display: inline-block;
-          animation: blink 1.2s infinite ease-in-out 0.6s;
+        @keyframes pulseGlow {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.35); opacity: 0.5; }
         }
-        @keyframes blink {
-          0%, 100% { opacity: 1; transform: scale(1.1); }
-          50% { opacity: 0.3; transform: scale(0.8); }
+        @keyframes progressCountdown {
+          from { width: 0%; }
+          to { width: 100%; }
         }
         @media (max-width: 1024px) {
-          .hero-grid-layout {
+          .hero-main-grid {
             grid-template-columns: 1fr !important;
-            gap: 3.5rem !important;
-          }
-          .hero-left-content {
+            gap: 3rem !important;
             text-align: center !important;
           }
-          .hero-trust-badges-row {
+          .hero-left-col {
+            text-align: center !important;
+            align-items: center !important;
+          }
+          .hero-cta-group {
             justify-content: center !important;
           }
-          .hero-cta-buttons-row {
+          .hero-trust-row {
             justify-content: center !important;
           }
         }
       `}} />
 
-      <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+      <div className="container" style={{ position: 'relative', zIndex: 1, maxWidth: '1240px', margin: '0 auto' }}>
         
-        {/* Top 4 Navigation Tabs Switcher */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem' }}>
-          <div style={{
-            display: 'inline-flex',
-            background: 'rgba(15, 23, 42, 0.75)',
-            border: '1px solid rgba(255, 255, 255, 0.14)',
-            padding: '0.35rem',
-            borderRadius: '9999px',
-            backdropFilter: 'blur(16px)',
-            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            gap: '0.3rem'
-          }}>
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isSelected = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => handleTabClick(tab.id)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.55rem',
-                    padding: '0.65rem 1.65rem',
-                    borderRadius: '9999px',
-                    border: 'none',
-                    background: isSelected 
-                      ? 'linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%)' 
-                      : 'transparent',
-                    color: isSelected ? '#ffffff' : '#94a3b8',
-                    fontWeight: isSelected ? 800 : 600,
-                    fontSize: '0.925rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                    boxShadow: isSelected ? '0 4px 16px rgba(249, 115, 22, 0.45)' : 'none'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.color = '#ffffff';
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.color = '#94a3b8';
-                      e.currentTarget.style.background = 'transparent';
-                    }
-                  }}
-                >
-                  <Icon size={16} />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 2-Column Hero Dynamic Presentation */}
-        <div className="hero-grid-layout" style={{
+        {/* 2-Column Hero Grid */}
+        <div className="hero-main-grid" style={{
           display: 'grid',
-          gridTemplateColumns: '1.12fr 0.88fr',
+          gridTemplateColumns: '1.08fr 0.92fr',
           gap: '3.5rem',
           alignItems: 'center'
         }}>
           
-          {/* Left Column: Dynamic Service Copy, Benefits, Packages & CTAs */}
-          <div className="hero-left-content" style={{ textAlign: 'left' }}>
+          {/* Left Column: Clear, Spacious Presentation */}
+          <div className="hero-left-col" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
             
-            {/* Dynamic Badge */}
+            {/* Top Pill Badge */}
             <div style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.45rem',
-              background: 'rgba(249, 115, 22, 0.15)',
-              border: '1px solid rgba(249, 115, 22, 0.35)',
-              color: 'var(--orange-400)',
-              padding: '0.35rem 0.95rem',
+              gap: '0.55rem',
+              background: '#ffffff',
+              border: '1.5px solid #fed7aa',
+              color: '#c2410c',
+              padding: '0.45rem 1.15rem',
               borderRadius: '9999px',
-              fontSize: '0.825rem',
+              fontSize: '0.85rem',
               fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              marginBottom: '1.25rem'
+              boxShadow: '0 2px 8px rgba(234, 88, 12, 0.08)',
+              marginBottom: '1.5rem'
             }}>
-              <Sparkles size={14} />
-              {badge}
+              <span className="hero-pulse-dot" />
+              <span>Embroidery Digitizing & Custom Patch Manufacturing</span>
             </div>
 
-            {/* Dynamic Main Title */}
+            {/* Main Headline */}
             <h1 style={{
-              fontSize: 'clamp(2.15rem, 3.8vw, 3.25rem)',
-              fontWeight: 900,
-              lineHeight: 1.14,
-              color: '#ffffff',
-              marginBottom: '1rem',
-              letterSpacing: '-0.025em',
-              fontFamily: 'var(--font-heading)'
+              fontSize: 'clamp(2.4rem, 4.2vw, 3.65rem)',
+              fontFamily: 'var(--font-heading, "Inter", sans-serif)',
+              fontWeight: 950,
+              color: '#0f172a',
+              lineHeight: 1.12,
+              letterSpacing: '-0.03em',
+              marginBottom: '1.35rem'
             }}>
-              {title}
+              Professional <span style={{ color: 'var(--orange-500, #ea580c)' }}>Embroidery Digitizing</span> Services & <span style={{ color: 'var(--orange-600, #c2410c)' }}>Custom Patches</span>
             </h1>
 
-            {/* Dynamic Highlight / Subheading */}
-            <div style={{
-              fontSize: 'clamp(1.05rem, 1.6vw, 1.2rem)',
-              fontWeight: 700,
-              color: 'var(--orange-400)',
-              marginBottom: '1.15rem',
-              lineHeight: 1.4
-            }}>
-              {highlight}
-            </div>
-
-            {/* Dynamic Description */}
+            {/* Description Body */}
             <p style={{
-              fontSize: '1.05rem',
+              fontSize: '1.125rem',
               lineHeight: 1.65,
-              color: '#94a3b8',
-              marginBottom: '1.75rem',
-              maxWidth: '640px'
+              color: '#475569',
+              marginBottom: '2.25rem',
+              maxWidth: '580px'
             }}>
-              {description}
+              Convert your logo into machine-ready DST, PES, & EXP embroidery files or order custom embroidered patches with iron-on, velcro, & sew-on backings — hand-crafted by experts and delivered worldwide.
             </p>
 
-            {/* Service Features Checkmarks List */}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.75rem',
-              marginBottom: '2.25rem',
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              padding: '1.15rem 1.35rem',
-              borderRadius: '14px'
-            }}>
-              {featuresList.map((featText, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', fontSize: '0.925rem', color: '#e2e8f0', fontWeight: 600 }}>
-                  <CheckCircle2 size={17} style={{ color: 'var(--orange-400)', flexShrink: 0, marginTop: '2px' }} />
-                  <span style={{ lineHeight: 1.45 }}>{featText}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Trust Metrics Row */}
-            <div className="hero-trust-badges-row" style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '1.5rem',
-              marginBottom: '2.5rem'
-            }}>
-              {statsList.map((stat, i) => {
-                const IconComp = ICON_MAP[stat.icon] || Star;
-                return (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <IconComp size={18} style={{ color: 'var(--orange-500)' }} />
-                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#e2e8f0' }}>
-                      <strong style={{ color: 'var(--orange-400)', marginRight: '4px' }}>{stat.value}</strong>
-                      {stat.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* CTA Buttons Group */}
-            <div className="hero-cta-buttons-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-              <button 
+            {/* CTA Buttons */}
+            <div className="hero-cta-group" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '2.25rem' }}>
+              <button
                 type="button"
-                className="btn btn-primary-orange btn-lg"
-                onClick={handlePrimaryAction}
-                style={{ 
-                  padding: '0.95rem 2.25rem',
+                onClick={handleLaunchOrder}
+                style={{
+                  background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '1rem 2.25rem',
+                  borderRadius: '14px',
+                  fontWeight: 800,
                   fontSize: '1.05rem',
-                  fontWeight: 800
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.6rem',
+                  boxShadow: '0 8px 24px rgba(234, 88, 12, 0.35)',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 12px 28px rgba(234, 88, 12, 0.45)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(234, 88, 12, 0.35)';
                 }}
               >
-                <Upload size={18} />
-                {primaryCtaText}
+                <span>Order now</span>
                 <ArrowRight size={18} />
               </button>
 
-              <button 
+              <button
                 type="button"
-                className="btn btn-outline btn-lg"
-                onClick={handleSecondaryAction}
-                style={{ 
-                  color: '#ffffff', 
-                  borderColor: 'rgba(255, 255, 255, 0.25)',
-                  padding: '0.95rem 2rem', 
+                onClick={handleViewPricing}
+                style={{
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  border: '1.5px solid #cbd5e1',
+                  padding: '1rem 2.15rem',
+                  borderRadius: '14px',
+                  fontWeight: 800,
                   fontSize: '1.05rem',
-                  fontWeight: 700
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#f8fafc';
+                  e.currentTarget.style.borderColor = '#94a3b8';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#ffffff';
+                  e.currentTarget.style.borderColor = '#cbd5e1';
                 }}
               >
-                {secondaryCtaText}
+                View pricing
               </button>
+            </div>
+
+            {/* Trust Badges Row (as seen in sample image) */}
+            <div className="hero-trust-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                padding: '0.4rem 0.9rem',
+                borderRadius: '9999px',
+                background: '#fffbeb',
+                border: '1px solid #fef3c7',
+                color: '#b45309',
+                fontSize: '0.85rem',
+                fontWeight: 700
+              }}>
+                <Star size={15} fill="#f59e0b" color="#f59e0b" />
+                <span>4.9/5 rated</span>
+              </div>
+
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                padding: '0.4rem 0.9rem',
+                borderRadius: '9999px',
+                background: '#eff6ff',
+                border: '1px solid #dbeafe',
+                color: '#1d4ed8',
+                fontSize: '0.85rem',
+                fontWeight: 700
+              }}>
+                <Clock size={15} color="#2563eb" />
+                <span>2–12 hr delivery</span>
+              </div>
+
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                padding: '0.4rem 0.9rem',
+                borderRadius: '9999px',
+                background: '#ecfdf5',
+                border: '1px solid #d1fae5',
+                color: '#047857',
+                fontSize: '0.85rem',
+                fontWeight: 700
+              }}>
+                <CheckCircle2 size={15} color="#059669" />
+                <span>Free revisions</span>
+              </div>
             </div>
 
           </div>
 
-          {/* Right Column: Interactive Before/After Showcase Box */}
-          <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+          {/* Right Column: Prominent, Larger, Crisp Before/After Showcase Card */}
+          <div 
+            style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
             <div style={{
-              background: 'rgba(15, 23, 42, 0.6)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              borderRadius: '20px',
-              padding: '1.25rem',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
+              background: '#ffffff',
+              borderRadius: '26px',
+              padding: '1.75rem',
+              boxShadow: '0 25px 60px rgba(15, 23, 42, 0.12), 0 4px 16px rgba(0, 0, 0, 0.04)',
+              border: '1px solid rgba(226, 232, 240, 0.9)',
               width: '100%',
-              maxWidth: '650px',
-              backdropFilter: 'blur(16px)'
+              maxWidth: '620px',
+              position: 'relative'
             }}>
               
+              {/* Top Mini Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem', letterSpacing: '0.06em' }}>
-                    <span className="blinking-green-dot" /> SHOWCASE
-                  </div>
-                  <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginTop: '2px' }}>
-                    {previewTitle}
-                  </div>
-                </div>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--orange-600, #ea580c)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  {currentSlide.title}
+                </span>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8' }}>
+                  {currentSlideIdx + 1} / {displaySlides.length}
+                </span>
               </div>
 
-              {/* Interactive Comparison Slider */}
+              {/* Side-by-Side / Interactive Comparison Image Box */}
               <div 
                 style={{
                   position: 'relative',
                   width: '100%',
                   aspectRatio: '16/10',
-                  borderRadius: '14px',
+                  borderRadius: '18px',
                   overflow: 'hidden',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
                   cursor: 'ew-resize',
-                  userSelect: 'none',
-                  background: '#090d16'
+                  opacity: isFading ? 0.3 : 1,
+                  transition: 'opacity 0.25s ease-in-out',
+                  userSelect: 'none'
                 }}
                 onMouseMove={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
@@ -570,15 +458,15 @@ export const HeroSection = () => {
                   setSliderPos((x / rect.width) * 100);
                 }}
               >
-                {/* After Finished Image */}
+                {/* AFTER Finished Image (Full Box) */}
                 <img 
-                  src={afterImage} 
-                  alt="After" 
+                  src={currentSlide.afterImg} 
+                  alt="After Finished Product" 
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                   draggable="false" 
                 />
                 
-                {/* Before Image with ClipPath */}
+                {/* BEFORE Image Overlay with interactive ClipPath */}
                 <div style={{ 
                   position: 'absolute', 
                   top: 0, 
@@ -590,13 +478,12 @@ export const HeroSection = () => {
                   clipPath: `polygon(0 0, ${sliderPos}% 0, ${sliderPos}% 100%, 0 100%)`,
                 }}>
                   <img 
-                    src={beforeImage} 
-                    alt="Before" 
+                    src={currentSlide.beforeImg} 
+                    alt="Before Original Artwork" 
                     style={{ 
                       width: '100%', 
                       height: '100%', 
-                      objectFit: 'cover',
-                      filter: beforeImage === afterImage ? 'grayscale(100%) blur(4px) contrast(1.2)' : 'none'
+                      objectFit: 'cover'
                     }} 
                     draggable="false" 
                   />
@@ -605,85 +492,148 @@ export const HeroSection = () => {
                     top: 0,
                     bottom: 0,
                     right: 0,
-                    width: '2px',
-                    background: 'rgba(255, 255, 255, 0.9)'
+                    width: '3px',
+                    background: '#ffffff',
+                    boxShadow: '0 0 10px rgba(0,0,0,0.3)'
                   }} />
                 </div>
 
-                {/* Handle Divider */}
+                {/* Central Interactive Divider Handle */}
                 <div style={{
                   position: 'absolute',
                   top: '50%',
                   left: `${sliderPos}%`,
-                  width: '4px',
-                  background: 'var(--orange-500)',
-                  boxShadow: '0 0 16px rgba(255, 122, 0, 0.9)',
-                  transform: 'translateX(-50%)'
+                  transform: 'translateX(-50%)',
+                  pointerEvents: 'none'
                 }}>
                   <div style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: '36px',
-                    height: '36px',
-                    background: 'var(--orange-500)',
+                    transform: 'translateY(-50%)',
+                    width: '34px',
+                    height: '34px',
+                    background: 'var(--orange-500, #ea580c)',
                     color: '#ffffff',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.5)',
+                    boxShadow: '0 4px 14px rgba(234, 88, 12, 0.5)',
                     border: '3px solid #ffffff'
                   }}>
-                    <MoveHorizontal size={18} />
+                    <MoveHorizontal size={16} />
                   </div>
                 </div>
 
-                {/* Before Label Badge */}
-                <span style={{
-                  position: 'absolute',
-                  bottom: '14px',
-                  left: '14px',
-                  background: 'rgba(15, 23, 42, 0.88)',
-                  backdropFilter: 'blur(6px)',
-                  color: '#ffffff',
-                  fontSize: '0.75rem',
-                  fontWeight: 800,
-                  padding: '0.35rem 0.75rem',
-                  borderRadius: '6px',
-                  letterSpacing: '0.04em',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  border: '1px solid rgba(239, 68, 68, 0.4)'
-                }}>
-                  <span className="blinking-red-dot" />
-                  <span>{beforeTag}</span>
-                </span>
+                {/* Quick Arrow Controls on Hover */}
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+                  style={{
+                    position: 'absolute',
+                    left: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'rgba(255, 255, 255, 0.85)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    zIndex: 10
+                  }}
+                  title="Previous Sample"
+                >
+                  <ChevronLeft size={18} color="#0f172a" />
+                </button>
 
-                {/* After Label Badge */}
-                <span style={{
-                  position: 'absolute',
-                  bottom: '14px',
-                  right: '14px',
-                  background: 'var(--orange-500)',
-                  color: '#ffffff',
-                  fontSize: '0.75rem',
-                  fontWeight: 800,
-                  padding: '0.35rem 0.75rem',
-                  borderRadius: '6px',
-                  letterSpacing: '0.04em',
-                  boxShadow: '0 4px 12px rgba(249, 115, 22, 0.4)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem'
-                }}>
-                  <span className="blinking-green-dot" />
-                  <span>{afterTag}</span>
-                </span>
-
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleNext(); }}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'rgba(255, 255, 255, 0.85)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    zIndex: 10
+                  }}
+                  title="Next Sample"
+                >
+                  <ChevronRight size={18} color="#0f172a" />
+                </button>
               </div>
+
+              {/* Bottom Row: BEFORE | Pagination Dots (5-second auto rotating) | AFTER */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: '1.25rem',
+                paddingTop: '0.75rem',
+                borderTop: '1px solid #f1f5f9'
+              }}>
+                {/* BEFORE Label */}
+                <span style={{
+                  fontWeight: 900,
+                  fontSize: '0.85rem',
+                  letterSpacing: '0.08em',
+                  color: '#0f172a',
+                  textTransform: 'uppercase'
+                }}>
+                  {currentSlide.beforeTag || 'BEFORE'}
+                </span>
+
+                {/* Interactive Pagination Dots with 5-Second Active Indicator */}
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                  {displaySlides.map((slide, idx) => {
+                    const isActive = idx === currentSlideIdx;
+                    return (
+                      <button
+                        key={slide.id || idx}
+                        type="button"
+                        onClick={() => handleDotClick(idx)}
+                        style={{
+                          height: '8px',
+                          width: isActive ? '24px' : '8px',
+                          borderRadius: '9999px',
+                          border: 'none',
+                          background: isActive ? 'var(--orange-500, #ea580c)' : '#cbd5e1',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                          padding: 0,
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}
+                        title={`View sample ${idx + 1}: ${slide.title}`}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* AFTER Label */}
+                <span style={{
+                  fontWeight: 900,
+                  fontSize: '0.85rem',
+                  letterSpacing: '0.08em',
+                  color: '#0f172a',
+                  textTransform: 'uppercase'
+                }}>
+                  {currentSlide.afterTag || 'AFTER'}
+                </span>
+              </div>
+
             </div>
           </div>
 
