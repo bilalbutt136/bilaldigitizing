@@ -15,11 +15,9 @@ import {
   Trash2, 
   Image as ImageIcon,
   Upload,
-  RefreshCw,
-  DollarSign,
-  Clock,
-  Package
+  RefreshCw
 } from 'lucide-react';
+
 import { saveHeroServiceViaApi } from '../../services/supabaseService';
 
 const DEFAULT_SERVICES = {
@@ -34,32 +32,6 @@ const DEFAULT_SERVICES = {
       'Embroidery Digitizing: Starts $10.00 Flat · 100% Hand Pathing · 0 Thread Breaks',
       'Vector Art Redraw: Starts $15.00 Flat · Pantone Spot Colors · Master AI/EPS/SVG',
       'Custom Physical Patches: Starts $1.50 / Piece · Velcro & Iron-On · Doorstep Delivery'
-    ],
-    packages: [
-      {
-        id: 'pkg-all-1',
-        name: 'Commercial Embroidery Digitizing',
-        price: '$10.00',
-        turnaround: '4–12 Hours',
-        description: 'Tajima .DST, Wilcom .EMB & Brother .PES with free unlimited revisions and zero thread breaks.',
-        features: ['100% Manual Digitizing', 'Free Unlimited Edits', 'PDF Sequence Sheet', 'All Formats (.DST/.PES/.EMB)']
-      },
-      {
-        id: 'pkg-all-2',
-        name: 'Scalable Vector Art Redraw',
-        price: '$15.00',
-        turnaround: '6–12 Hours',
-        description: 'Pixel-perfect Bézier node curves with Pantone spot color separation for screen printing.',
-        features: ['Hand-Drawn Vector Nodes', 'Pantone Spot Colors', 'Master Suite (.AI/.EPS/.SVG)', 'High-Res 300 DPI PDF']
-      },
-      {
-        id: 'pkg-all-3',
-        name: 'Custom Physical Manufactured Patches',
-        price: '$1.50 / pc',
-        turnaround: '3–5 Days',
-        description: 'Embroidered, woven, and 3D PVC patches with Velcro and Iron-On backings delivered globally.',
-        features: ['Embroidered / Woven / PVC', 'Velcro & Iron-On Backings', '12-Hr Free Digital Proof', 'Global Doorstep Delivery']
-      }
     ],
     stats: [
       { value: '1,200+', label: 'Clients' },
@@ -88,33 +60,7 @@ const DEFAULT_SERVICES = {
       '100% Manual Digitizing (No Auto-Trace shortcuts)',
       'All Machine Formats: Tajima (.DST), Wilcom (.EMB), Brother (.PES), Melco (.EXP)',
       'Free Unlimited Production Edits & Color Sequence Sheets',
-      'Packages: Left Chest ($10), Mid-Size ($20), Full Back & 3D Puff ($35)'
-    ],
-    packages: [
-      {
-        id: 'pkg-emb-1',
-        name: 'Left Chest & Cap Small Logo',
-        price: '$10.00',
-        turnaround: '4–12 Hours',
-        description: 'Standard logos up to 4" x 4" optimized for structured caps, polos, and left-chest apparel.',
-        features: ['Up to 4" x 4" Size', 'Cap & Flat Optimization', 'Underlay Compensation', 'Free Machine Formats']
-      },
-      {
-        id: 'pkg-emb-2',
-        name: 'Mid-Size Jacket & Sleeve Design',
-        price: '$20.00',
-        turnaround: '6–12 Hours',
-        description: 'Medium complexity artwork up to 7" x 7" with calculated density and pull compensation.',
-        features: ['Up to 7" x 7" Size', 'Complex Multi-Color Pathing', 'Unlimited Free Revisions', 'Production PDF Sheet']
-      },
-      {
-        id: 'pkg-emb-3',
-        name: 'Full Jacket Back & 3D Puff',
-        price: '$35.00',
-        turnaround: '8–12 Hours',
-        description: 'High stitch count full back designs up to 12" x 12" and specialty 3D puff foam digitizing.',
-        features: ['Up to 12" x 12" Full Back', '3D Puff Foam Layering', 'High Density Pathing', 'Priority Expedited QA']
-      }
+      'Guaranteed Zero Thread Breaks on Commercial Machines'
     ],
     stats: [
       { value: '100k+', label: 'Sew-Outs' },
@@ -143,33 +89,7 @@ const DEFAULT_SERVICES = {
       '100% Hand-Crafted Smooth Node Paths (Zero Overlapping Lines)',
       'Pantone Solid Coated Spot Color Separation Included',
       'Master Source Suite: .AI, .EPS, .SVG & High-Res 300+ DPI PDF',
-      'Packages: Simple Logo ($15), Medium Detail ($25), Complex Art ($45)'
-    ],
-    packages: [
-      {
-        id: 'pkg-vec-1',
-        name: 'Simple Logo & Typography Redraw',
-        price: '$15.00',
-        turnaround: '6–12 Hours',
-        description: 'Clean typographic logos, basic shapes, and clean line work converted to crisp vector nodes.',
-        features: ['Clean Bézier Curves', 'Sharp Vector Nodes', 'AI, EPS, SVG, PDF', 'Infinite Scalability']
-      },
-      {
-        id: 'pkg-vec-2',
-        name: 'Medium Detail Artwork with Colors',
-        price: '$25.00',
-        turnaround: '8–12 Hours',
-        description: 'Multi-color logos, badges, and detailed illustrations with Pantone spot color matching.',
-        features: ['Pantone PMS Color Match', 'Separated Color Layers', 'Gradients & Blends', 'Cut-Path Vinyl Friendly']
-      },
-      {
-        id: 'pkg-vec-3',
-        name: 'Complex Intricate Illustration',
-        price: '$45.00',
-        turnaround: '12–24 Hours',
-        description: 'Highly intricate artwork, photographic traces, crests, and mascot illustrations.',
-        features: ['Intricate Fine Lines', 'Complete Layer Organization', 'Print-Ready Color Separations', 'Master Source Files']
-      }
+      'Print, Vinyl Cut & Screen-Printing Production Ready'
     ],
     stats: [
       { value: '50k+', label: 'Vectors' },
@@ -198,33 +118,7 @@ const DEFAULT_SERVICES = {
       'Custom Embroidered, High-Density Woven & 3D Rubber PVC',
       'Military-Grade Velcro, Heat-Seal Iron-On & Peel Backings',
       'Free 12-Hour Digital Proof & Doorstep Worldwide Shipping',
-      'Quantity Tiers: Sample (10-50 pcs), Production (100-500 pcs), Bulk ($1.50/pc)'
-    ],
-    packages: [
-      {
-        id: 'pkg-patch-1',
-        name: 'Sample Quantity Batch (10–50 Pcs)',
-        price: '$4.50 / pc',
-        turnaround: '3–5 Days',
-        description: 'Low-minimum run perfect for small brands, clubs, and prototype testing before mass production.',
-        features: ['Low 10 Pcs Minimum', '12-Hr Free Proofing', 'Velcro / Iron-On', '100% Quality Checked']
-      },
-      {
-        id: 'pkg-patch-2',
-        name: 'Production Batch (100–500 Pcs)',
-        price: '$2.50 / pc',
-        turnaround: '4–7 Days',
-        description: 'Standard volume for uniform programs, merchandise, and tactical apparel.',
-        features: ['Merrowed or Laser Border', 'Free Custom Backing', 'Up to 9 Thread Colors', 'Free Doorstep Shipping']
-      },
-      {
-        id: 'pkg-patch-3',
-        name: 'Wholesale Bulk Batch (500+ Pcs)',
-        price: '$1.50 / pc',
-        turnaround: '7–10 Days',
-        description: 'Factory direct wholesale pricing with volume discounts and priority manufacturing line.',
-        features: ['Factory Direct Rates', 'Custom Packaging Available', 'Express Global Delivery', 'Dedicated Production QA']
-      }
+      'Merrowed & Laser Cut High-Durability Borders'
     ],
     stats: [
       { value: '10 Pcs', label: 'Low MOQ' },
@@ -245,6 +139,7 @@ const DEFAULT_SERVICES = {
 };
 
 export const HeroServicesEditor = () => {
+
   const { heroSlides = [], setHeroSlides, showToast } = useAppState();
   const [selectedService, setSelectedService] = useState('all');
   const [formState, setFormState] = useState(DEFAULT_SERVICES.all);
@@ -270,7 +165,6 @@ export const HeroServicesEditor = () => {
         highlight: existing.highlight || defaults.highlight,
         description: existing.description || defaults.description,
         features: Array.isArray(existing.features) ? existing.features.map(f => typeof f === 'string' ? f : f.text) : (existing.trust_points?.[0]?.features || defaults.features),
-        packages: Array.isArray(existing.packages) && existing.packages.length > 0 ? existing.packages : (existing.trust_points?.[0]?.packages || defaults.packages),
         stats: Array.isArray(existing.stats) ? existing.stats : (existing.trust_points?.[0]?.stats || defaults.stats),
         primary_cta: existing.primary_cta || existing.primaryCta || defaults.primary_cta,
         primary_btn_action: existing.primary_btn_action || existing.trust_points?.[0]?.primaryBtnAction || defaults.primary_btn_action,
@@ -321,38 +215,6 @@ export const HeroServicesEditor = () => {
     }));
   };
 
-  // Package tier modifications
-  const handlePackageChange = (index, field, value) => {
-    setFormState(prev => {
-      const updatedPkgs = [...(prev.packages || [])];
-      updatedPkgs[index] = { ...updatedPkgs[index], [field]: value };
-      return { ...prev, packages: updatedPkgs };
-    });
-  };
-
-  const handleAddPackage = () => {
-    setFormState(prev => ({
-      ...prev,
-      packages: [
-        ...(prev.packages || []),
-        {
-          id: `pkg-${Date.now()}`,
-          name: 'New Package Tier',
-          price: '$20.00',
-          turnaround: '6–12 Hours',
-          description: 'Package tier description and scope.',
-          features: ['Feature line 1', 'Feature line 2']
-        }
-      ]
-    }));
-  };
-
-  const handleRemovePackage = (index) => {
-    setFormState(prev => ({
-      ...prev,
-      packages: prev.packages.filter((_, i) => i !== index)
-    }));
-  };
 
   const handleImageFileUpload = async (file, targetField) => {
     if (!file) return;
@@ -601,120 +463,9 @@ export const HeroServicesEditor = () => {
           </div>
         </div>
 
-        {/* Section 2: Service Packages & Pricing Tiers */}
+        {/* Section 2: Key Features Checklist */}
         <div className="card" style={{ padding: '2rem', background: '#ffffff', borderRadius: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <div>
-              <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Package size={20} style={{ color: 'var(--orange-500)' }} />
-                Service Packages & Starting Prices
-              </h4>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
-                Package tiers shown for this service on the homepage and services section.
-              </p>
-            </div>
-            <button
-              type="button"
-              className="btn btn-outline btn-sm"
-              onClick={handleAddPackage}
-              style={{ fontWeight: 700 }}
-            >
-              <Plus size={14} /> Add Package
-            </button>
-          </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
-            {(formState.packages || []).map((pkg, idx) => (
-              <div
-                key={pkg.id || idx}
-                style={{
-                  padding: '1.25rem',
-                  background: '#f8fafc',
-                  borderRadius: '12px',
-                  border: '1px solid var(--border-color)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.75rem'
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase' }}>
-                    Package #{idx + 1}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemovePackage(idx)}
-                    style={{
-                      background: '#fee2e2',
-                      border: 'none',
-                      color: '#dc2626',
-                      padding: '0.35rem',
-                      borderRadius: '6px',
-                      cursor: 'pointer'
-                    }}
-                    title="Remove package"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-
-                <div className="form-group">
-                  <label style={{ fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.2rem' }}>Package Name</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={pkg.name || ''}
-                    onChange={(e) => handlePackageChange(idx, 'name', e.target.value)}
-                    placeholder="e.g. Left Chest & Cap Logo"
-                    required
-                  />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                  <div className="form-group">
-                    <label style={{ fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem', marginBottom: '0.2rem' }}>
-                      <DollarSign size={12} /> Price
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={pkg.price || ''}
-                      onChange={(e) => handlePackageChange(idx, 'price', e.target.value)}
-                      placeholder="e.g. $10.00"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label style={{ fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem', marginBottom: '0.2rem' }}>
-                      <Clock size={12} /> Turnaround
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={pkg.turnaround || ''}
-                      onChange={(e) => handlePackageChange(idx, 'turnaround', e.target.value)}
-                      placeholder="e.g. 4–12 Hours"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label style={{ fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.2rem' }}>Short Description</label>
-                  <textarea
-                    className="form-control"
-                    rows={2}
-                    value={pkg.description || ''}
-                    onChange={(e) => handlePackageChange(idx, 'description', e.target.value)}
-                    placeholder="Brief package description..."
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Section 3: Key Features Checklist */}
-        <div className="card" style={{ padding: '2rem', background: '#ffffff', borderRadius: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
             <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span>✅</span> Key Feature Bullet Points
