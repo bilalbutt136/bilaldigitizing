@@ -426,11 +426,11 @@ export const VectorArtPage = ({ hideHero = false }) => {
         </div>
         </section>
       )}
-
       {/* 2. Pricing Tier Cards OR Order Configuration Form View */}
       {!isOrderViewOpen ? (
-        <div id="pricing-tiers" className="container" style={{ marginTop: '2.5rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+        <section style={{ padding: '5rem 0 6rem', background: '#f1f5f9', color: '#0f172a' }}>
+          <div id="pricing-tiers" className="container" style={{ maxWidth: '1240px', overflow: 'visible' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2.5rem', marginBottom: '1.5rem', paddingTop: '1rem', overflow: 'visible' }}>
             
             {(() => {
               const handleSelectVectorTier = (cat) => {
@@ -444,45 +444,48 @@ export const VectorArtPage = ({ hideHero = false }) => {
                   id: 'vec-basic',
                   category: 'vector',
                   tierKey: 'basic',
-                  title: 'Basic Vector Redraw',
-                  subTitle: 'Ideal for simple logos, text, & icon redraws',
+                  title: 'Simple Logo & Typography Redraw',
+                  subTitle: 'Clean typographic logos, basic geometric shapes, and clean line work converted to vector',
                   icon: Zap,
-                  discountTag: '',
+                  discountTag: 'BASIC',
                   rate: '$15.00',
                   unit: '/ design',
-                  delivery: '8-12 Hours',
+                  delivery: '6–12 Hours',
                   complexityValue: 'Simple Vector Redraw',
                   isRushValue: false,
-                  btnText: 'Order Basic ($15.00)',
-                  badge: 'ESSENTIAL',
+                  btnText: 'Order Simple ($15.00)',
+                  badge: 'BASIC',
                   popular: false,
                   features: [
-                    '100% Hand-Drawn Paths',
-                    'Master AI, EPS, SVG & PDF files',
-                    'Standard 8-12 hr turnaround'
+                    'Clean Bézier Curves & Anchor Nodes',
+                    'Sharp 100% Scalable Vector Paths',
+                    'Master Suite: .AI, .EPS, .SVG, .PDF',
+                    'Infinite Scale Without Pixelation',
+                    '100% Manual Hand Trace Tracing'
                   ]
                 },
                 {
                   id: 'vec-standard',
                   category: 'vector',
                   tierKey: 'standard',
-                  title: 'Standard Vector Conversion',
-                  subTitle: 'Ideal for detailed artwork & color separations',
+                  title: 'Medium Detail Artwork with Colors',
+                  subTitle: 'Multi-color badges, crests, and detailed illustrations with Pantone spot color separation',
                   icon: Trophy,
                   discountTag: 'MOST POPULAR',
                   rate: '$25.00',
                   unit: '/ design',
-                  delivery: '4-8 Hours Express',
+                  delivery: '6–12 Hours',
                   complexityValue: 'Standard Vector Conversion',
                   isRushValue: false,
-                  btnText: 'Order Standard ($25.00)',
+                  btnText: 'Order Medium ($25.00)',
                   badge: 'MOST POPULAR',
                   popular: true,
                   features: [
-                    'Pantone Spot Color Separation',
-                    'Free Unlimited Revisions',
-                    'High-res Print-Ready Files',
-                    '4-8 hr turnaround'
+                    'Pantone (PMS) Spot Color Matching',
+                    'Separated Layers for Screen Printing',
+                    'Vinyl Cutting Smooth Cut-Paths',
+                    'Gradients, Blends & Textures Included',
+                    'High-Res 300+ DPI PDF Master Included'
                   ]
                 },
                 {
@@ -525,7 +528,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
                 discountTag: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
                 rate: typeof t.price === 'number' ? `$${t.price.toFixed(2)}` : (String(t.price).startsWith('$') ? String(t.price) : `$${t.price}`),
                 unit: t.price_unit || '/ design',
-                delivery: t.turnaround_time || '6-12 Hours',
+                delivery: t.turnaround_time || '6–12 Hours',
                 complexityValue: idx === 0 ? 'Simple Vector Redraw' : idx === 1 ? 'Standard Vector Conversion' : 'Complex Vector Redraw',
                 isRushValue: idx === 2,
                 btnText: t.button_text || `Order ${t.title.split(' ')[0]} ($${t.price})`,
@@ -535,7 +538,6 @@ export const VectorArtPage = ({ hideHero = false }) => {
               }));
 
               const activeVecCards = mappedDynamicVecCards.length > 0 ? mappedDynamicVecCards : defaultVectorCards;
-
 
               return activeVecCards.map((cat, idx) => (
                 <PackageCard
@@ -547,8 +549,10 @@ export const VectorArtPage = ({ hideHero = false }) => {
                 />
               ));
             })()}
+            </div>
           </div>
-        </div>
+        </section>
+
 
       ) : (
         /* Dedicated Order Configuration View */

@@ -291,17 +291,19 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
       )}
 
       {/* Pricing Tiers Section */}
-      <section id="pricing-tiers" style={{ padding: '3.5rem 0 5rem', background: 'var(--navy-950)' }}>
-        <div className="container">
+      <section id="pricing-tiers" style={{ padding: '5rem 0 6rem', background: '#f1f5f9', color: '#0f172a' }}>
+        <div className="container" style={{ maxWidth: '1240px', margin: '0 auto', overflow: 'visible' }}>
 
-          {/* Streamlined Compact Pricing Tiers Grid */}
+          {/* Streamlined Pricing Tiers Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '1.5rem',
-            maxWidth: '1200px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: '2.5rem',
+            maxWidth: '1240px',
             margin: '0 auto',
-            alignItems: 'stretch'
+            alignItems: 'stretch',
+            paddingTop: '1rem',
+            overflow: 'visible'
           }}>
             {cardsToRender.map((cat, idx) => (
               <PackageCard
@@ -314,12 +316,13 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
             ))}
           </div>
 
-          <div style={{ textAlign: 'center', marginTop: '2.5rem', color: '#94a3b8', fontSize: '0.9rem' }}>
-            📌 <em>{dbSettings.patch_footer_text || 'Prices are flat rates per patch with zero hidden charges. Minimum order 50 Pcs. Click any tier package above to launch your order configuration modal.'}</em>
+          <div style={{ textAlign: 'center', marginTop: '3.5rem', color: '#64748b', fontSize: '0.925rem', fontWeight: 600 }}>
+            📌 <em>{dbSettings.patch_footer_text || 'Prices are flat rates per patch with zero hidden charges. Low minimum order from 10 pieces. Click any tier package above to launch your instant order form.'}</em>
           </div>
 
         </div>
       </section>
+
 
       {/* SECTION 2: Custom Patches Showcase & Sew-Out / Sample Grid */}
       <section style={{ padding: '5rem 0', background: '#0f172a', borderTop: '1px solid rgba(255,255,255,0.08)' }}>

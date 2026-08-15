@@ -239,17 +239,19 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
       )}
 
       {/* Main Content & Packages */}
-      <section id="pricing-tiers" style={{ padding: '3.5rem 0 5rem', background: 'var(--navy-950)' }}>
-        <div className="container">
+      <section id="pricing-tiers" style={{ padding: '5rem 0 6rem', background: '#f1f5f9', color: '#0f172a' }}>
+        <div className="container" style={{ maxWidth: '1240px', margin: '0 auto', overflow: 'visible' }}>
 
-          {/* Streamlined Compact Pricing Tiers Grid */}
+          {/* Streamlined Pricing Tiers Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '1.5rem',
-            maxWidth: '1200px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: '2.5rem',
+            maxWidth: '1240px',
             margin: '0 auto',
-            alignItems: 'stretch'
+            alignItems: 'stretch',
+            paddingTop: '1rem',
+            overflow: 'visible'
           }}>
             {activeCards.map((cat, idx) => (
               <PackageCard
@@ -262,12 +264,13 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
             ))}
           </div>
 
-          <div style={{ textAlign: 'center', marginTop: '2.5rem', color: '#94a3b8', fontSize: '0.9rem' }}>
+          <div style={{ textAlign: 'center', marginTop: '3.5rem', color: '#64748b', fontSize: '0.925rem', fontWeight: 600 }}>
             📌 <em>{dbSettings.emb_footer_text || 'Prices are flat rates per design with zero hidden charges. Need multiple designs? Click any tier package above to open your instant order form.'}</em>
           </div>
 
         </div>
       </section>
+
 
     </div>
   );
