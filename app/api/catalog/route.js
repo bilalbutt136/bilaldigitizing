@@ -3,12 +3,12 @@ import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 const ALLOWED_TABLES = ['services', 'pricing_cards', 'patch_cards', 'store_products', 'pricing_tiers', 'portfolio', 'sew_outs', 'hero_slides', 'digitizers', 'site_config', 'faqs', 'testimonials'];
-
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
@@ -33,6 +33,19 @@ async function getAuthenticatedUser() {
   const adminClient = createAdminClient();
   const { data: adminData } = await adminClient.from('admins').select('email').eq('email', user.email.toLowerCase()).maybeSingle();
   return { user, isAdmin: !!adminData };
+}
+
+function revalidateAllSitePages() {
+  try {
+    revalidatePath('/', 'layout');
+    revalidatePath('/pricing');
+    revalidatePath('/services/embroidery-digitizing');
+    revalidatePath('/services/vector-tracing');
+    revalidatePath('/custom-patches');
+    revalidatePath('/');
+  } catch (e) {
+    console.warn('[Revalidate Error]:', e);
+  }
 }
 
 export async function GET(request) {
@@ -98,22 +111,40 @@ export async function POST(request) {
     }
 
     if (action === 'upsert') {
-      const { error } = await supabase.from(tableName).upsert(payload, { onConflict: 'id' });
-      if (error) throw error;
-      try {
-        revalidatePath('/pricing');
-        revalidatePath('/');
-      } catch {}
-      return NextResponse.json({ success: true });
+      let upsertPayload = { ...payload };
+
+      // Ensure pricing_tiers has an ID and correctly resolves existing rows
+      if (tableName === 'pricing_tiers') {
+        if (!upsertPayload.id || typeof upsertPayload.id !== 'string' || upsertPayload.id.length < 10) {
+          const { data: existing } = await supabase
+            .from('pricing_tiers')
+            .select('id')
+            .eq('service_type', upsertPayload.service_type)
+            .eq('display_order', upsertPayload.display_order)
+            .maybeSingle();
+
+          if (existing?.id) {
+            upsertPayload.id = existing.id;
+          } else {
+            upsertPayload.id = crypto.randomUUID();
+          }
+        }
+      }
+
+      const { data: savedData, error } = await supabase.from(tableName).upsert(upsertPayload, { onConflict: 'id' }).select().single();
+      if (error) {
+        console.error(`[Catalog API upsert error on ${tableName}]:`, error);
+        throw error;
+      }
+      
+      revalidateAllSitePages();
+      return NextResponse.json({ success: true, data: savedData });
     }
     
     if (action === 'delete') {
       const { error } = await supabase.from(tableName).delete().eq('id', payload.id);
       if (error) throw error;
-      try {
-        revalidatePath('/pricing');
-        revalidatePath('/');
-      } catch {}
+      revalidateAllSitePages();
       return NextResponse.json({ success: true });
     }
 
@@ -127,10 +158,7 @@ export async function POST(request) {
         const { error } = await supabase.from(tableName).insert(cleanData);
         if (error) throw error;
       }
-      try {
-        revalidatePath('/pricing');
-        revalidatePath('/');
-      } catch {}
+      revalidateAllSitePages();
       return NextResponse.json({ success: true });
     }
 

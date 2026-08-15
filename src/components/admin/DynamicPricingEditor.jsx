@@ -276,6 +276,7 @@ export const DynamicPricingEditor = () => {
   const {
     isAuthInitialized,
     dynamicPricingTiers = [],
+    setDynamicPricingTiers,
     showToast,
     resetAllData
   } = useAppState();
@@ -363,6 +364,20 @@ export const DynamicPricingEditor = () => {
       if (success) {
         showToast(`"${formData.title}" saved & updated on live website!`, 'success');
         setEditingTier(null);
+        if (setDynamicPricingTiers) {
+          setDynamicPricingTiers(prev => {
+            const index = prev.findIndex(t => 
+              t.service_type === normalizedServiceType && 
+              Number(t.display_order) === Number(payload.display_order)
+            );
+            if (index >= 0) {
+              const updated = [...prev];
+              updated[index] = { ...updated[index], ...payload };
+              return updated;
+            }
+            return [...prev, payload];
+          });
+        }
         await resetAllData();
       } else {
         showToast('Failed to save pricing package. Please check Supabase connection.', 'error');
@@ -374,6 +389,7 @@ export const DynamicPricingEditor = () => {
       setIsSaving(false);
     }
   };
+
 
   const handleFeatureChange = (index, val) => {
     const newFeatures = [...(formData.features || [])];

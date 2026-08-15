@@ -960,12 +960,14 @@ export const StateProvider = ({ children }) => {
       if (catalog) {
         if (catalog.servicesList) setServicesList(catalog.servicesList);
         if (catalog.pricingCards) setPricingCards(catalog.pricingCards);
+        if (catalog.dynamicPricingTiers) setDynamicPricingTiers(catalog.dynamicPricingTiers);
         if (catalog.patchCards) setPatchCards(catalog.patchCards);
         if (catalog.storeProducts) setStoreProducts(catalog.storeProducts);
         if (catalog.portfolioSamples) setPortfolioSamples(catalog.portfolioSamples);
         if (catalog.sewOuts) setSewOuts(catalog.sewOuts);
         if (catalog.heroSlides) setHeroSlides(catalog.heroSlides);
         if (catalog.heroServiceText) setHeroServiceText(catalog.heroServiceText);
+
         if (catalog.digitizers?.length) {
           const merged = digitizers.map(d => {
             const fresh = catalog.digitizers.find(x => x.id === d.id);
