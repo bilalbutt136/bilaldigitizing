@@ -10,7 +10,7 @@ import {
 import { PackageCard } from './PackageCard';
 
 export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
-  const { setIsOrderWizardOpen, openOrderWizard, pricingCards = [], homePageConfig = {} } = useAppState();
+  const { setIsOrderWizardOpen, openOrderWizard, pricingCards = [], dynamicPricingTiers = [], homePageConfig = {} } = useAppState();
   const dbSettings = homePageConfig?.settings || {};
 
   const [selectedTier, setSelectedTier] = useState('standard');
@@ -111,9 +111,32 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
   ];
 
   const dbFilteredCards = (pricingCards || []).filter(c => matchCategory(c.category, 'embroidery'));
-  const activeCards = cardsToRender.length > 0 
-    ? cardsToRender 
-    : (dbFilteredCards.length > 0 ? dbFilteredCards : defaultEmbroideryCards);
+  
+  const dbDynamicTiers = (dynamicPricingTiers || [])
+    .filter(t => matchCategory(t.service_type, 'embroidery'))
+    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+  const mappedDynamicCards = dbDynamicTiers.map((t, idx) => ({
+    id: t.id || `emb-tier-${idx}`,
+    category: 'embroidery',
+    tierKey: idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium',
+    title: t.title,
+    subTitle: t.subtitle,
+    icon: idx === 0 ? Zap : idx === 1 ? Trophy : Sparkles,
+    discountTag: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
+    rate: typeof t.price === 'number' ? `$${t.price.toFixed(2)}` : (String(t.price).startsWith('$') ? String(t.price) : `$${t.price}`),
+    unit: t.price_unit || '/ design',
+    delivery: t.turnaround_time || '4-12 Hours Express',
+    btnText: t.button_text || `Order (${t.price})`,
+    badge: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
+    popular: Boolean(t.is_popular),
+    features: Array.isArray(t.features) ? t.features : []
+  }));
+
+  const activeCards = mappedDynamicCards.length > 0 
+    ? mappedDynamicCards 
+    : (cardsToRender.length > 0 ? cardsToRender : (dbFilteredCards.length > 0 ? dbFilteredCards : defaultEmbroideryCards));
+
 
   const handleSelectTier = (tierKey = 'standard', cardObj = null) => {
     setSelectedTier(tierKey);
