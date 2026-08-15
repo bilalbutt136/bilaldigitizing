@@ -18,7 +18,7 @@ import {
 import { PackageCard } from './PackageCard';
 
 export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => {
-  const { openOrderWizard, setIsOrderWizardOpen, patchCards = [], serviceCmsContent = {}, portfolioSamples, homePageConfig = {} } = useAppState();
+  const { openOrderWizard, setIsOrderWizardOpen, patchCards = [], dynamicPricingTiers = [], serviceCmsContent = {}, portfolioSamples, homePageConfig = {} } = useAppState();
   
   const dbSettings = homePageConfig?.settings || {};
 
@@ -94,7 +94,31 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
     }
   ];
 
-  const cardsToRender = patchCards && patchCards.length > 0 ? patchCards : defaultPatchCards;
+  const dbDynamicPatchTiers = (dynamicPricingTiers || [])
+    .filter(t => (t.service_type || '').toLowerCase().includes('patch'))
+    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+  const mappedDynamicPatchCards = dbDynamicPatchTiers.map((t, idx) => ({
+    id: t.id || `patch-tier-${idx}`,
+    category: 'patch',
+    tierKey: idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium',
+    title: t.title,
+    subTitle: t.subtitle,
+    icon: idx === 0 ? Zap : idx === 1 ? Trophy : Sparkles,
+    discountTag: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
+    rate: typeof t.price === 'number' ? `$${t.price.toFixed(2)}` : (String(t.price).startsWith('$') ? String(t.price) : `$${t.price}`),
+    unit: t.price_unit || 'starting rate',
+    delivery: t.turnaround_time || '5-7 Days',
+    btnText: t.button_text || `Order (${t.price})`,
+    badge: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
+    popular: Boolean(t.is_popular),
+    features: Array.isArray(t.features) ? t.features : []
+  }));
+
+  const cardsToRender = mappedDynamicPatchCards.length > 0
+    ? mappedDynamicPatchCards
+    : (patchCards && patchCards.length > 0 ? patchCards : defaultPatchCards);
+
 
   const handleStartOrder = (tierKey = 'standard', cardObj = null) => {
     setSelectedTier(tierKey);

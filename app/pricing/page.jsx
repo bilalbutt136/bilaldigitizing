@@ -195,6 +195,69 @@ const DEFAULT_ALL_PACKAGES = {
   ]
 };
 
+// Universal Tier Theme: Package 1 = Orange, Package 2 = Blue, Package 3 = Green
+const getPackageTierTheme = (packageNumber, serviceType = 'embroidery') => {
+  const norm = (serviceType || '').toLowerCase().replace('-', '_');
+  let icon = Layers;
+  let serviceLabel = 'EMBROIDERY DIGITIZING';
+  let orderType = 'embroidery';
+  
+  if (norm.startsWith('vec')) {
+    icon = PenTool;
+    serviceLabel = 'VECTOR ART CONVERSION';
+    orderType = 'vector';
+  } else if (norm.startsWith('patch')) {
+    icon = Tag;
+    serviceLabel = 'CUSTOM MANUFACTURED PATCHES';
+    orderType = 'patch';
+  }
+
+  const order = Number(packageNumber) || 1;
+
+  if (order === 1) {
+    // Package #1: ORANGE
+    return {
+      packageNumber: 1,
+      color: '#ea580c',
+      bgLight: 'rgba(234, 88, 12, 0.12)',
+      border: '#fed7aa',
+      btnBg: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+      glowColor: 'rgba(234, 88, 12, 0.28)',
+      icon,
+      serviceLabel,
+      orderType
+    };
+  }
+
+  if (order === 2) {
+    // Package #2: BLUE
+    return {
+      packageNumber: 2,
+      color: '#2563eb',
+      bgLight: 'rgba(37, 99, 235, 0.12)',
+      border: '#bfdbfe',
+      btnBg: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+      glowColor: 'rgba(37, 99, 235, 0.28)',
+      icon,
+      serviceLabel,
+      orderType
+    };
+  }
+
+  // Package #3: GREEN
+  return {
+    packageNumber: 3,
+    color: '#059669',
+    bgLight: 'rgba(16, 185, 129, 0.12)',
+    border: '#a7f3d0',
+    btnBg: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+    glowColor: 'rgba(5, 150, 105, 0.28)',
+    icon,
+    serviceLabel,
+    orderType
+  };
+};
+
 export default function PricingPage() {
   const { openOrderWizard, dynamicPricingTiers = [] } = useAppState();
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'embroidery' | 'vector_art' | 'patches'
@@ -211,68 +274,27 @@ export default function PricingPage() {
     }
   };
 
-  const getServiceTheme = (sType) => {
-    const norm = (sType || '').toLowerCase().replace('-', '_');
-    if (norm.startsWith('vec')) {
-      return {
-        key: 'vector_art',
-        categoryLabel: 'VECTOR ART CONVERSION',
-        color: '#2563eb',
-        bgLight: 'rgba(37, 99, 235, 0.12)',
-        border: '#bfdbfe',
-        icon: PenTool,
-        btnBg: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-        glowColor: 'rgba(37, 99, 235, 0.25)',
-        orderType: 'vector'
-      };
-    }
-    if (norm.startsWith('patch')) {
-      return {
-        key: 'patches',
-        categoryLabel: 'CUSTOM MANUFACTURED PATCHES',
-        color: '#059669',
-        bgLight: 'rgba(16, 185, 129, 0.12)',
-        border: '#a7f3d0',
-        icon: Tag,
-        btnBg: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-        glowColor: 'rgba(5, 150, 105, 0.25)',
-        orderType: 'patch'
-      };
-    }
-    return {
-      key: 'embroidery',
-      categoryLabel: 'EMBROIDERY DIGITIZING',
-      color: '#ea580c',
-      bgLight: 'rgba(234, 88, 12, 0.12)',
-      border: '#fed7aa',
-      icon: Layers,
-      btnBg: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-      glowColor: 'rgba(234, 88, 12, 0.25)',
-      orderType: 'embroidery'
-    };
-  };
-
   // Helper to build packages list dynamically from DB or defaults
   const getPackages = () => {
     if (activeTab === 'all') {
-      // 3 Core packages: 1 per master service
+      // 3 Core packages: 1 = Orange (Embroidery), 2 = Blue (Vector), 3 = Green (Patches)
       const dbEmb = dynamicPricingTiers.find(t => matchCategory(t.service_type, 'embroidery'));
       const dbVec = dynamicPricingTiers.find(t => matchCategory(t.service_type, 'vector_art'));
       const dbPatch = dynamicPricingTiers.find(t => matchCategory(t.service_type, 'patches'));
 
       const coreDefs = [
-        { cat: 'embroidery', def: DEFAULT_ALL_PACKAGES.embroidery[0], db: dbEmb },
-        { cat: 'vector_art', def: DEFAULT_ALL_PACKAGES.vector_art[1], db: dbVec },
-        { cat: 'patches', def: DEFAULT_ALL_PACKAGES.patches[2], db: dbPatch }
+        { cat: 'embroidery', pkgNum: 1, def: DEFAULT_ALL_PACKAGES.embroidery[0], db: dbEmb },
+        { cat: 'vector_art', pkgNum: 2, def: DEFAULT_ALL_PACKAGES.vector_art[1], db: dbVec },
+        { cat: 'patches', pkgNum: 3, def: DEFAULT_ALL_PACKAGES.patches[2], db: dbPatch }
       ];
 
-      return coreDefs.map(({ cat, def, db }) => {
-        const theme = getServiceTheme(cat);
+      return coreDefs.map(({ cat, pkgNum, def, db }) => {
+        const theme = getPackageTierTheme(pkgNum, cat);
         const data = db || def;
         return {
           id: data.id || `core-${cat}`,
           serviceType: theme.orderType,
-          categoryLabel: theme.categoryLabel,
+          categoryLabel: theme.serviceLabel,
           badgeText: data.badge_text || def.badge_text,
           isPopular: data.is_popular !== undefined ? data.is_popular : def.is_popular,
           title: data.title || def.title,
@@ -290,22 +312,22 @@ export default function PricingPage() {
       });
     }
 
-    // Specific category selected: render the 3 packages for that category
+    // Specific category selected: render the 3 packages (Pkg 1 = Orange, Pkg 2 = Blue, Pkg 3 = Green)
     const catDefaults = DEFAULT_ALL_PACKAGES[activeTab] || [];
     const dbTiers = dynamicPricingTiers
       .filter(t => matchCategory(t.service_type, activeTab))
       .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
 
-    const theme = getServiceTheme(activeTab);
-
     return catDefaults.map((defPkg, idx) => {
       const matchedDb = dbTiers[idx] || dbTiers.find(t => t.display_order === defPkg.display_order) || null;
       const data = matchedDb || defPkg;
+      const pkgNum = idx + 1;
+      const theme = getPackageTierTheme(pkgNum, activeTab);
 
       return {
-        id: data.id || `${activeTab}-tier-${idx + 1}`,
+        id: data.id || `${activeTab}-tier-${pkgNum}`,
         serviceType: theme.orderType,
-        categoryLabel: `${theme.categoryLabel} · TIER #${idx + 1}`,
+        categoryLabel: `${theme.serviceLabel} · PACKAGE #${pkgNum}`,
         badgeText: data.badge_text || defPkg.badge_text,
         isPopular: data.is_popular !== undefined ? data.is_popular : defPkg.is_popular,
         title: data.title || defPkg.title,

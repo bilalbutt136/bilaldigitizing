@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { upsertPricingTier, deletePricingTier } from '../../services/supabaseService';
+import { upsertPricingTier } from '../../services/supabaseService';
 import { matchCategory } from '../../utils/categoryUtils';
 import { 
   Plus, 
@@ -19,9 +19,7 @@ import {
   Clock,
   Eye,
   Check,
-  ExternalLink,
-  Sliders,
-  CheckCircle
+  ExternalLink
 } from 'lucide-react';
 
 // Default 3 packages for each of the 3 core services (Total 9 packages)
@@ -214,6 +212,66 @@ const DEFAULT_ALL_PACKAGES = {
   ]
 };
 
+// Unified Tier Theme: Package 1 = Orange, Package 2 = Blue, Package 3 = Green
+export const getPackageTierTheme = (packageNumber, serviceType = 'embroidery') => {
+  const norm = (serviceType || '').toLowerCase().replace('-', '_');
+  let icon = Layers;
+  let serviceLabel = 'EMBROIDERY DIGITIZING';
+  
+  if (norm.startsWith('vec')) {
+    icon = PenTool;
+    serviceLabel = 'VECTOR ART CONVERSION';
+  } else if (norm.startsWith('patch')) {
+    icon = Tag;
+    serviceLabel = 'CUSTOM MANUFACTURED PATCHES';
+  }
+
+  const order = Number(packageNumber) || 1;
+
+  if (order === 1) {
+    // Package #1: ORANGE THEME
+    return {
+      name: 'orange',
+      packageNumber: 1,
+      color: '#ea580c',
+      bgLight: 'rgba(234, 88, 12, 0.12)',
+      border: '#fed7aa',
+      btnBg: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+      glowColor: 'rgba(234, 88, 12, 0.28)',
+      icon,
+      serviceLabel
+    };
+  }
+
+  if (order === 2) {
+    // Package #2: BLUE THEME
+    return {
+      name: 'blue',
+      packageNumber: 2,
+      color: '#2563eb',
+      bgLight: 'rgba(37, 99, 235, 0.12)',
+      border: '#bfdbfe',
+      btnBg: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+      glowColor: 'rgba(37, 99, 235, 0.28)',
+      icon,
+      serviceLabel
+    };
+  }
+
+  // Package #3: GREEN THEME
+  return {
+    name: 'green',
+    packageNumber: 3,
+    color: '#059669',
+    bgLight: 'rgba(16, 185, 129, 0.12)',
+    border: '#a7f3d0',
+    btnBg: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+    glowColor: 'rgba(5, 150, 105, 0.28)',
+    icon,
+    serviceLabel
+  };
+};
+
 export const DynamicPricingEditor = () => {
   const {
     isAuthInitialized,
@@ -222,7 +280,7 @@ export const DynamicPricingEditor = () => {
     resetAllData
   } = useAppState();
 
-  const [activeCategoryTab, setActiveCategoryTab] = useState('embroidery'); // 'embroidery' | 'vector_art' | 'patches' | 'all'
+  const [activeCategoryTab, setActiveCategoryTab] = useState('embroidery'); // 'embroidery' | 'vector_art' | 'patches'
   const [editingTier, setEditingTier] = useState(null);
   const [formData, setFormData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
@@ -230,47 +288,6 @@ export const DynamicPricingEditor = () => {
   if (!isAuthInitialized) {
     return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pricing catalog...</div>;
   }
-
-  const getServiceTheme = (sType) => {
-    const norm = (sType || '').toLowerCase().replace('-', '_');
-    if (norm.startsWith('vec')) {
-      return {
-        key: 'vector_art',
-        label: 'VECTOR ART CONVERSION',
-        shortLabel: 'Vector Art',
-        color: '#2563eb',
-        bgLight: 'rgba(37, 99, 235, 0.12)',
-        border: '#bfdbfe',
-        icon: PenTool,
-        btnBg: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-        glowColor: 'rgba(37, 99, 235, 0.25)'
-      };
-    }
-    if (norm.startsWith('patch')) {
-      return {
-        key: 'patches',
-        label: 'CUSTOM MANUFACTURED PATCHES',
-        shortLabel: 'Custom Patches',
-        color: '#059669',
-        bgLight: 'rgba(16, 185, 129, 0.12)',
-        border: '#a7f3d0',
-        icon: Tag,
-        btnBg: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-        glowColor: 'rgba(5, 150, 105, 0.25)'
-      };
-    }
-    return {
-      key: 'embroidery',
-      label: 'EMBROIDERY DIGITIZING',
-      shortLabel: 'Embroidery',
-      color: '#ea580c',
-      bgLight: 'rgba(234, 88, 12, 0.12)',
-      border: '#fed7aa',
-      icon: Layers,
-      btnBg: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-      glowColor: 'rgba(234, 88, 12, 0.25)'
-    };
-  };
 
   // Helper to get the 3 packages for a given service category
   const getPackagesForCategory = (categoryKey) => {
@@ -281,14 +298,15 @@ export const DynamicPricingEditor = () => {
 
     return defaults.map((defPkg, idx) => {
       const matchedDb = dbTiers[idx] || dbTiers.find(t => t.display_order === defPkg.display_order) || null;
+      const pkgNum = idx + 1;
       return {
-        key: `${categoryKey}-${idx + 1}`,
-        packageNumber: idx + 1,
+        key: `${categoryKey}-${pkgNum}`,
+        packageNumber: pkgNum,
         categoryKey,
         defaultData: defPkg,
         dbData: matchedDb,
         data: matchedDb || defPkg,
-        theme: getServiceTheme(categoryKey)
+        theme: getPackageTierTheme(pkgNum, categoryKey)
       };
     });
   };
@@ -383,13 +401,13 @@ export const DynamicPricingEditor = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'var(--orange-50)', border: '1px solid var(--orange-200)', color: 'var(--orange-700)', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-              <Sparkles size={13} /> 9 Studio Pricing Packages (3 Per Service)
+              <Sparkles size={13} /> Single Source of Truth · 9 Studio Packages
             </div>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--navy-900)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              Service Pricing Packages Manager
+              Master Service Packages Manager
             </h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.35rem 0 0', maxWidth: '700px' }}>
-              Directly edit all 3 packages for <strong>Embroidery Digitizing</strong>, 3 packages for <strong>Vector Art</strong>, and 3 packages for <strong>Custom Patches</strong>. When editing, the live side preview renders changes in real time.
+              Every service has 3 packages styled in <strong>Orange (Pkg #1)</strong>, <strong>Blue (Pkg #2)</strong>, and <strong>Green (Pkg #3)</strong>. Changes made here immediately update the <strong>Public Pricing Page</strong> and the respective <strong>Service Page</strong> simultaneously.
             </p>
           </div>
 
@@ -401,7 +419,7 @@ export const DynamicPricingEditor = () => {
               className="btn btn-outline btn-sm"
               style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}
             >
-              <ExternalLink size={14} /> Open Public /pricing
+              <ExternalLink size={14} /> Open Live /pricing
             </a>
           </div>
         </div>
@@ -515,9 +533,9 @@ export const DynamicPricingEditor = () => {
                     onChange={e => setFormData({ ...formData, display_order: parseInt(e.target.value) || 1 })}
                     style={{ fontWeight: 700 }}
                   >
-                    <option value={1}>Package #1 (Basic / Entry)</option>
-                    <option value={2}>Package #2 (Mid-Tier / Popular)</option>
-                    <option value={3}>Package #3 (Pro / Bulk Wholesale)</option>
+                    <option value={1}>Package #1 (Orange Theme - Basic / Entry)</option>
+                    <option value={2}>Package #2 (Blue Theme - Mid-Tier / Popular)</option>
+                    <option value={3}>Package #3 (Green Theme - Pro / Wholesale)</option>
                   </select>
                 </div>
               </div>
@@ -531,7 +549,7 @@ export const DynamicPricingEditor = () => {
                     className="form-control" 
                     value={formData.badge_text || ''} 
                     onChange={e => setFormData({ ...formData, badge_text: e.target.value })} 
-                    placeholder="e.g. BASIC / MOST POPULAR / BEST VALUE" 
+                    placeholder="e.g. BASIC / MOST POPULAR / PRO TIER" 
                   />
                 </div>
 
@@ -545,7 +563,7 @@ export const DynamicPricingEditor = () => {
                       style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--orange-500)' }} 
                     />
                     <label htmlFor="isPopularToggle" style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--navy-900)', cursor: 'pointer', margin: 0 }}>
-                      Highlight as 'Best Value / Popular'
+                      Highlight as 'Featured / Most Popular'
                     </label>
                   </div>
                 </div>
@@ -699,7 +717,7 @@ export const DynamicPricingEditor = () => {
             </div>
 
             {(() => {
-              const theme = getServiceTheme(formData.service_type);
+              const theme = getPackageTierTheme(formData.display_order || 1, formData.service_type || 'embroidery');
               const ThemeIcon = theme.icon;
 
               return (
@@ -744,7 +762,7 @@ export const DynamicPricingEditor = () => {
                       </div>
                       <div>
                         <span style={{ fontSize: '0.72rem', fontWeight: 800, color: theme.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                          {theme.label}
+                          {theme.serviceLabel} · PACKAGE #{formData.display_order || 1}
                         </span>
                         <h3 style={{ fontSize: '1.35rem', fontWeight: 900, margin: '0.15rem 0 0', color: 'var(--navy-900)', lineHeight: 1.2 }}>
                           {formData.title || 'Package Title'}
@@ -880,7 +898,7 @@ export const DynamicPricingEditor = () => {
                       </div>
                       <div>
                         <span style={{ fontSize: '0.72rem', fontWeight: 800, color: pkgObj.theme.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                          {pkgObj.theme.label} · PACKAGE #{pkgObj.packageNumber}
+                          {pkgObj.theme.serviceLabel} · PACKAGE #{pkgObj.packageNumber}
                         </span>
                         <h3 style={{ fontSize: '1.35rem', fontWeight: 900, margin: '0.15rem 0 0', color: 'var(--navy-900)', lineHeight: 1.2 }}>
                           {activeData.title || pkgObj.defaultData.title}

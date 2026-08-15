@@ -1,24 +1,27 @@
 import React from 'react';
 import { CheckCircle, Zap, Trophy, Sparkles, Clock, ArrowRight } from 'lucide-react';
 
-const getTierTheme = (tierKey, title) => {
-  const str = ((tierKey || '') + ' ' + (title || '')).toLowerCase();
-  if (str.includes('basic') || str.includes('simple')) {
-    return { color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.15)', border: 'rgba(56, 189, 248, 0.3)' }; // Blue
+const getTierTheme = (tierKey, title, idx) => {
+  const index = typeof idx === 'number' ? idx % 3 : 0;
+  if (index === 0) {
+    // Package 1: ORANGE
+    return { color: '#ea580c', bg: 'rgba(234, 88, 12, 0.15)', border: 'rgba(234, 88, 12, 0.35)', btnGradient: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' };
   }
-  if (str.includes('premium') || str.includes('rush') || str.includes('vip') || str.includes('leather')) {
-    return { color: '#a855f7', bg: 'rgba(168, 85, 247, 0.15)', border: 'rgba(168, 85, 247, 0.3)' }; // Purple
+  if (index === 1) {
+    // Package 2: BLUE
+    return { color: '#2563eb', bg: 'rgba(37, 99, 235, 0.15)', border: 'rgba(37, 99, 235, 0.35)', btnGradient: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' };
   }
-  // Standard / Default
-  return { color: '#ff7a00', bg: 'rgba(255, 122, 0, 0.15)', border: 'rgba(255, 122, 0, 0.3)' }; // Orange
+  // Package 3: GREEN
+  return { color: '#059669', bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.35)', btnGradient: 'linear-gradient(135deg, #059669 0%, #047857 100%)' };
 };
 
-export const PackageCard = ({ cat, idx, onSelect, forceCategory = '' }) => {
-  const isPopular = cat.popular || cat.badge === 'MOST POPULAR' || cat.badge === 'MOST POPULAR TIER';
+export const PackageCard = ({ cat, idx = 0, onSelect, forceCategory = '' }) => {
+  const isPopular = cat.popular || cat.badge === 'MOST POPULAR' || cat.badge === 'MOST POPULAR TIER' || cat.badge === 'BEST VALUE';
   const IconComp = cat.icon || (idx === 0 ? Zap : idx === 1 ? Trophy : Sparkles);
   const typeString = (cat.category || forceCategory || '').toLowerCase() + ' ' + (cat.title || '').toLowerCase();
   
-  const tierTheme = getTierTheme(cat.tierKey, cat.title);
+  const tierTheme = getTierTheme(cat.tierKey, cat.title, idx);
+
 
   const rawRateStr = (cat.rate || '$2.50').replace(/\/.*$/, '').trim();
   
@@ -43,7 +46,7 @@ export const PackageCard = ({ cat, idx, onSelect, forceCategory = '' }) => {
       onClick={() => onSelect(cat)}
       style={{
         background: '#121827', // very dark blue for the card body
-        border: isPopular ? `2px solid #ff7a00` : '1px solid rgba(255, 255, 255, 0.05)',
+        border: isPopular ? `2px solid ${tierTheme.color}` : '1px solid rgba(255, 255, 255, 0.05)',
         borderRadius: '16px',
         padding: '2rem 1.5rem 1.5rem',
         position: 'relative',
@@ -51,7 +54,7 @@ export const PackageCard = ({ cat, idx, onSelect, forceCategory = '' }) => {
         flexDirection: 'column',
         justifyContent: 'space-between',
         height: '100%',
-        boxShadow: isPopular ? '0 12px 30px rgba(255, 122, 0, 0.15)' : '0 4px 20px rgba(0, 0, 0, 0.2)',
+        boxShadow: isPopular ? `0 12px 30px ${tierTheme.border}` : '0 4px 20px rgba(0, 0, 0, 0.2)',
         transition: 'transform 0.3s ease, box-shadow 0.3s ease',
         cursor: 'pointer'
       }}
@@ -63,7 +66,7 @@ export const PackageCard = ({ cat, idx, onSelect, forceCategory = '' }) => {
           top: '-14px',
           left: '50%',
           transform: 'translateX(-50%)',
-          background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
+          background: tierTheme.btnGradient,
           color: '#ffffff',
           fontSize: '0.725rem',
           fontWeight: 800,
@@ -71,12 +74,13 @@ export const PackageCard = ({ cat, idx, onSelect, forceCategory = '' }) => {
           borderRadius: '9999px',
           letterSpacing: '0.06em',
           textTransform: 'uppercase',
-          boxShadow: '0 4px 12px rgba(255, 122, 0, 0.35)',
+          boxShadow: `0 4px 12px ${tierTheme.border}`,
           whiteSpace: 'nowrap'
         }}>
-          ★ MOST POPULAR
+          ★ {cat.badge || 'MOST POPULAR'}
         </div>
       )}
+
 
       <div>
         {/* Inside Tag Badge (if any and not popular) */}

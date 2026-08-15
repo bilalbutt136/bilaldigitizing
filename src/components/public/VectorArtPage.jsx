@@ -27,7 +27,9 @@ export const VectorArtPage = ({ hideHero = false }) => {
   const { 
     createOrder, 
     pricing, 
+    dynamicPricingTiers = [],
     walletBalance = 0, 
+
     deductWalletBalance, 
     setIsDepositModalOpen,
     isAuthenticated,
@@ -37,6 +39,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
     serviceCmsContent = {},
     homePageConfig = {}
   } = useAppState();
+
 
   const dbSettings = homePageConfig?.settings || {};
 
@@ -527,9 +530,6 @@ export const VectorArtPage = ({ hideHero = false }) => {
                   delivery: 'Super Rush Available',
                   complexityValue: 'Complex Vector Redraw',
                   isRushValue: true,
-                  btnText: 'Order Premium ($35.00)',
-                  badge: 'COMPLEX & RUSH',
-                  popular: false,
                   features: [
                     'Complex Mascot Node Pathing',
                     'Super Rush Express Delivery',
@@ -538,7 +538,33 @@ export const VectorArtPage = ({ hideHero = false }) => {
                 }
               ];
 
-              const activeVecCards = vectorCards.length > 0 ? vectorCards : defaultVectorCards;
+              const dbDynamicVecTiers = (dynamicPricingTiers || [])
+                .filter(t => (t.service_type || '').toLowerCase().includes('vec'))
+                .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+
+              const mappedDynamicVecCards = dbDynamicVecTiers.map((t, idx) => ({
+                id: t.id || `vec-tier-${idx}`,
+                category: 'vector',
+                tierKey: idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium',
+                title: t.title,
+                subTitle: t.subtitle,
+                icon: idx === 0 ? Zap : idx === 1 ? Trophy : Sparkles,
+                discountTag: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
+                rate: typeof t.price === 'number' ? `$${t.price.toFixed(2)}` : (String(t.price).startsWith('$') ? String(t.price) : `$${t.price}`),
+                unit: t.price_unit || '/ design',
+                delivery: t.turnaround_time || '6-12 Hours',
+                complexityValue: idx === 0 ? 'Simple Vector Redraw' : idx === 1 ? 'Standard Vector Conversion' : 'Complex Vector Redraw',
+                isRushValue: idx === 2,
+                btnText: t.button_text || `Order (${t.price})`,
+                badge: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
+                popular: Boolean(t.is_popular),
+                features: Array.isArray(t.features) ? t.features : []
+              }));
+
+              const activeVecCards = mappedDynamicVecCards.length > 0 
+                ? mappedDynamicVecCards 
+                : (vectorCards.length > 0 ? vectorCards : defaultVectorCards);
 
               return activeVecCards.map((cat, idx) => (
                 <PackageCard
@@ -552,6 +578,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
             })()}
           </div>
         </div>
+
       ) : (
         /* Dedicated Order Configuration View */
         <div id="vector-order-form" className="container" style={{ marginTop: '2rem' }}>
