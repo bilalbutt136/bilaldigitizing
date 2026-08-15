@@ -36,6 +36,7 @@ export const AdminDashboard = () => {
   const { 
     orders = [], 
     clients = [], 
+    portfolioSamples = [],
     setIsPricingSettingsOpen,
     resetAllData,
     authUser,
