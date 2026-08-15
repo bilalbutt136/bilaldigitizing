@@ -6,7 +6,7 @@ export async function POST(request) {
   try {
     const formData = await request.formData();
     const file = formData.get('file');
-    const folder = formData.get('folder') || 'media-gallery';
+    const folder = formData.get('folder') || 'hero-showcase';
     const bucket = formData.get('bucket') || 'portfolio-images';
 
     if (!file) {
@@ -19,17 +19,35 @@ export async function POST(request) {
     const buffer = Buffer.from(bytes);
 
     // Generate unique filename to prevent overwriting
-    const fileExt = file.name.split('.').pop() || 'png';
+    const originalName = file.name || 'image.png';
+    const fileExt = originalName.split('.').pop() || 'png';
     const uniqueFilename = `${folder}/${uuidv4()}.${fileExt}`;
 
-    // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
+    // Try upload to Supabase Storage
+    let { error } = await supabase.storage
       .from(bucket)
       .upload(uniqueFilename, buffer, {
-        contentType: file.type,
+        contentType: file.type || 'image/png',
         cacheControl: '3600',
-        upsert: false
+        upsert: true
       });
+
+    // If bucket not found, create bucket and retry
+    if (error && (error.message?.toLowerCase().includes('not found') || error.message?.toLowerCase().includes('bucket'))) {
+      try {
+        await supabase.storage.createBucket(bucket, { public: true });
+        const retry = await supabase.storage
+          .from(bucket)
+          .upload(uniqueFilename, buffer, {
+            contentType: file.type || 'image/png',
+            cacheControl: '3600',
+            upsert: true
+          });
+        error = retry.error;
+      } catch (bucketErr) {
+        console.warn('Bucket creation attempt warning:', bucketErr);
+      }
+    }
 
     if (error) {
       console.error('[Supabase Upload Error]', error);
@@ -44,7 +62,7 @@ export async function POST(request) {
     return NextResponse.json({
       success: true,
       url: publicUrlData.publicUrl,
-      public_id: uniqueFilename, // Retain public_id for backward compatibility with frontend
+      public_id: uniqueFilename,
     });
   } catch (error) {
     console.error('[Upload API Error]', error);

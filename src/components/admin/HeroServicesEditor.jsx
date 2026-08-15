@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { 
   Save, 
@@ -13,10 +13,11 @@ import {
   CheckCircle2, 
   Plus, 
   Trash2, 
-  Image,
-  ArrowRight,
-  Upload
+  Image as ImageIcon,
+  Upload,
+  RefreshCw
 } from 'lucide-react';
+
 
 const DEFAULT_SERVICES = {
   all: {
@@ -141,10 +142,14 @@ export const HeroServicesEditor = () => {
   const [selectedService, setSelectedService] = useState('all');
   const [formState, setFormState] = useState(DEFAULT_SERVICES.all);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadingState, setUploadingState] = useState({ beforeImg: false, afterImg: false });
+
+  const beforeFileInputRef = useRef(null);
+  const afterFileInputRef = useRef(null);
 
   // Sync form state when service tab or heroSlides changes
   useEffect(() => {
-    const existing = heroSlides.find(
+    const existing = (heroSlides || []).find(
       s => s.id?.toLowerCase() === selectedService || s.serviceKey?.toLowerCase() === selectedService
     );
     const defaults = DEFAULT_SERVICES[selectedService] || DEFAULT_SERVICES.all;
@@ -208,8 +213,38 @@ export const HeroServicesEditor = () => {
     }));
   };
 
+  const handleImageFileUpload = async (file, targetField) => {
+    if (!file) return;
+    setUploadingState(prev => ({ ...prev, [targetField]: true }));
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'hero-showcase');
+      formData.append('bucket', 'portfolio-images');
+
+      const res = await fetch('/api/cloudinary/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await res.json();
+      if (data.success && data.url) {
+        setFormState(prev => ({ ...prev, [targetField]: data.url }));
+        showToast('Image uploaded and optimized successfully!', 'success');
+      } else {
+        showToast(data.error || 'Failed to upload image.', 'error');
+      }
+    } catch (err) {
+      console.error('Upload exception:', err);
+      showToast('Network error during image upload.', 'error');
+    } finally {
+      setUploadingState(prev => ({ ...prev, [targetField]: false }));
+    }
+  };
+
   const handleSave = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setIsSaving(true);
 
     try {
@@ -271,7 +306,7 @@ export const HeroServicesEditor = () => {
               Homepage Services & Hero Showcase Editor
             </h3>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: '0.35rem 0 0' }}>
-              Edit headlines, descriptions, features, trust stats, and before/after comparison images for each service tab on the homepage.
+              Edit headlines, descriptions, features, trust stats, and upload before/after comparison images for each service tab on the homepage.
             </p>
           </div>
 
@@ -291,7 +326,7 @@ export const HeroServicesEditor = () => {
               disabled={isSaving}
               style={{ fontWeight: 800 }}
             >
-              <Save size={14} /> {isSaving ? 'Saving...' : 'Save Service Changes'}
+              <Save size={14} /> {isSaving ? 'Saving to Database...' : 'Save Service Changes'}
             </button>
           </div>
         </div>
@@ -548,14 +583,14 @@ export const HeroServicesEditor = () => {
           </div>
         </div>
 
-        {/* Section 5: Interactive Comparison Slider Showcase */}
+        {/* Section 5: Interactive Comparison Showcase with Direct Image Upload */}
         <div className="card" style={{ padding: '2rem', background: '#ffffff', borderRadius: '16px' }}>
           <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Image size={20} style={{ color: 'var(--orange-500)' }} />
-            Interactive Comparison Showcase Box
+            <ImageIcon size={20} style={{ color: 'var(--orange-500)' }} />
+            Interactive Comparison Showcase Box (Image Upload & URLs)
           </h4>
 
-          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+          <div className="form-group" style={{ marginBottom: '1.5rem' }}>
             <label style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.35rem', display: 'block' }}>
               Showcase Header Title
             </label>
@@ -570,13 +605,55 @@ export const HeroServicesEditor = () => {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.25rem' }}>
-            {/* Before Artwork */}
+            
+            {/* Before Artwork Column with File Upload */}
             <div style={{ padding: '1.25rem', background: '#fff1f2', borderRadius: '12px', border: '1px solid #fecdd3' }}>
-              <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#991b1b', marginBottom: '0.75rem' }}>
-                Before Image (Left Side)
+              <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#991b1b', marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Before Image (Left Side)</span>
+                <span style={{ fontSize: '0.72rem', background: '#ffe4e6', color: '#be123c', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>RAW ART</span>
               </div>
+
+              {/* Image Preview Thumbnail */}
+              {formState.beforeImg && (
+                <div style={{ position: 'relative', width: '100%', height: '140px', borderRadius: '8px', overflow: 'hidden', marginBottom: '0.85rem', border: '1px solid #fecdd3', background: '#000' }}>
+                  <img src={formState.beforeImg} alt="Before preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              )}
+
+              {/* Direct File Upload Button */}
+              <div style={{ marginBottom: '0.85rem' }}>
+                <input
+                  type="file"
+                  ref={beforeFileInputRef}
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleImageFileUpload(e.target.files[0], 'beforeImg');
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  style={{ width: '100%', fontWeight: 700, borderColor: '#f87171', color: '#991b1b', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+                  onClick={() => beforeFileInputRef.current?.click()}
+                  disabled={uploadingState.beforeImg}
+                >
+                  {uploadingState.beforeImg ? (
+                    <>
+                      <RefreshCw size={14} className="spin-icon" /> Uploading to Storage...
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={14} /> Upload Before Image File
+                    </>
+                  )}
+                </button>
+              </div>
+
               <div className="form-group" style={{ marginBottom: '0.75rem' }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: '0.25rem' }}>Before Image URL</label>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.2rem' }}>Or Paste Image URL</label>
                 <input
                   type="url"
                   className="form-control"
@@ -586,8 +663,9 @@ export const HeroServicesEditor = () => {
                   required
                 />
               </div>
+
               <div className="form-group">
-                <label style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: '0.25rem' }}>Before Badge Tag</label>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.2rem' }}>Before Badge Tag</label>
                 <input
                   type="text"
                   className="form-control"
@@ -598,13 +676,54 @@ export const HeroServicesEditor = () => {
               </div>
             </div>
 
-            {/* After Finished Production */}
+            {/* After Finished Production Column with File Upload */}
             <div style={{ padding: '1.25rem', background: '#ecfdf5', borderRadius: '12px', border: '1px solid #a7f3d0' }}>
-              <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#065f46', marginBottom: '0.75rem' }}>
-                After Finished Image (Right Side)
+              <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#065f46', marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>After Finished Image (Right Side)</span>
+                <span style={{ fontSize: '0.72rem', background: '#d1fae5', color: '#047857', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>FINISHED SEW-OUT</span>
               </div>
+
+              {/* Image Preview Thumbnail */}
+              {formState.afterImg && (
+                <div style={{ position: 'relative', width: '100%', height: '140px', borderRadius: '8px', overflow: 'hidden', marginBottom: '0.85rem', border: '1px solid #a7f3d0', background: '#000' }}>
+                  <img src={formState.afterImg} alt="After preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              )}
+
+              {/* Direct File Upload Button */}
+              <div style={{ marginBottom: '0.85rem' }}>
+                <input
+                  type="file"
+                  ref={afterFileInputRef}
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleImageFileUpload(e.target.files[0], 'afterImg');
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  style={{ width: '100%', fontWeight: 700, borderColor: '#34d399', color: '#065f46', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+                  onClick={() => afterFileInputRef.current?.click()}
+                  disabled={uploadingState.afterImg}
+                >
+                  {uploadingState.afterImg ? (
+                    <>
+                      <RefreshCw size={14} className="spin-icon" /> Uploading to Storage...
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={14} /> Upload After Image File
+                    </>
+                  )}
+                </button>
+              </div>
+
               <div className="form-group" style={{ marginBottom: '0.75rem' }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: '0.25rem' }}>After Image URL</label>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.2rem' }}>Or Paste Image URL</label>
                 <input
                   type="url"
                   className="form-control"
@@ -614,8 +733,9 @@ export const HeroServicesEditor = () => {
                   required
                 />
               </div>
+
               <div className="form-group">
-                <label style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: '0.25rem' }}>After Badge Tag</label>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.2rem' }}>After Badge Tag</label>
                 <input
                   type="text"
                   className="form-control"
@@ -625,6 +745,7 @@ export const HeroServicesEditor = () => {
                 />
               </div>
             </div>
+
           </div>
         </div>
 

@@ -904,10 +904,12 @@ export const StateProvider = ({ children }) => {
     upsertCatalogDataToSupabase('services', newServices);
   };
 
-  const updateHeroSlides = (newSlides) => {
+  const updateHeroSlides = async (newSlides) => {
     setHeroSlides(newSlides);
-    upsertCatalogDataToSupabase('hero_slides', newSlides);
+    await saveCmsConfigToSupabase('hero_slides', newSlides);
+    await upsertCatalogDataToSupabase('hero_slides', newSlides);
   };
+
 
   const updateHeroServiceText = (newData) => {
     setHeroServiceText(newData);

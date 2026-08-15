@@ -427,23 +427,35 @@ export async function fetchCmsConfigFromSupabase() {
 
 // Save/Upsert CMS Configuration to Supabase (only for key-value settings)
 export async function saveCmsConfigToSupabase(key, value) {
-  if (!isSupabaseConfigured || !key) return false;
+  if (!key) return false;
 
   try {
-    const { error } = await supabase
-      .from('site_config')
-      .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    const serializedValue = typeof value === 'object' ? JSON.stringify(value) : value;
 
-    if (error) {
-      console.warn(`Supabase upsert site_config [${key}] warning:`, error.message);
-      return false;
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('site_config')
+        .upsert({ key, value: serializedValue, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+
+      if (!error) {
+        return true;
+      }
+      console.warn(`Supabase direct upsert site_config [${key}] warning:`, error?.message);
     }
-    return true;
+
+    // Fallback: save via server-side API
+    const res = await fetch('/api/admin/homepage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ settings: [{ key, value }] })
+    });
+    return res.ok;
   } catch (err) {
     console.warn(`Supabase upsert site_config [${key}] exception:`, err);
     return false;
   }
 }
+
 
 // Upsert array of catalog items to a dedicated table
 export async function upsertCatalogDataToSupabase(tableName, dataArray) {
@@ -722,7 +734,9 @@ export async function fetchCatalogFromSupabase() {
       storeProducts: data.store_products || [],
       portfolioSamples: data.portfolio || [],
       sewOuts: data.sew_outs || [],
-      heroSlides: data.hero_slides || [],
+      heroSlides: (configMap['hero_slides'] && Array.isArray(configMap['hero_slides']) && configMap['hero_slides'].length > 0)
+        ? configMap['hero_slides']
+        : (data.hero_slides || []),
       pricingCards: data.pricing_cards || [],
       heroGlobalSettings: configMap['hero_global_settings'] || null,
       heroServiceText: configMap['hero_service_text'] || null,
