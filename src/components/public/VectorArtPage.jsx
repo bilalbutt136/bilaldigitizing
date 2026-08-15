@@ -515,25 +515,34 @@ export const VectorArtPage = ({ hideHero = false }) => {
               ];
 
               const dbDynamicVecTiers = (dynamicPricingTiers || [])
-                .filter(t => (t.service_type || '').toLowerCase().includes('vec'))
+                .filter(t => matchCategory(t.service_type, 'vector'))
                 .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
 
               const mappedDynamicVecCards = dbDynamicVecTiers.map((t, idx) => ({
                 id: t.id || `vec-tier-${idx}`,
                 category: 'vector',
+                service_type: 'vector_art',
                 tierKey: idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium',
                 title: t.title,
                 subTitle: t.subtitle,
+                subtitle: t.subtitle,
                 icon: idx === 0 ? Zap : idx === 1 ? Trophy : Sparkles,
                 discountTag: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
                 rate: typeof t.price === 'number' ? `$${t.price.toFixed(2)}` : (String(t.price).startsWith('$') ? String(t.price) : `$${t.price}`),
+                price: t.price,
+                original_price: t.original_price,
                 unit: t.price_unit || '/ design',
+                price_unit: t.price_unit || '/ design',
                 delivery: t.turnaround_time || '6–12 Hours',
+                turnaround_time: t.turnaround_time || '6–12 Hours',
                 complexityValue: idx === 0 ? 'Simple Vector Redraw' : idx === 1 ? 'Standard Vector Conversion' : 'Complex Vector Redraw',
                 isRushValue: idx === 2,
                 btnText: t.button_text || `Order ${t.title.split(' ')[0]} ($${t.price})`,
+                button_text: t.button_text || `Order ${t.title.split(' ')[0]} ($${t.price})`,
                 badge: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
+                badge_text: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
                 popular: Boolean(t.is_popular),
+                is_popular: Boolean(t.is_popular),
                 features: Array.isArray(t.features) ? t.features : []
               }));
 

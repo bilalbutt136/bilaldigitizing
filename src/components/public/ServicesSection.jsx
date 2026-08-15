@@ -16,14 +16,15 @@ import {
   CheckCircle2,
   PackageCheck
 } from 'lucide-react';
-import { normalizeCategory } from '../../utils/categoryUtils';
+import { normalizeCategory, matchCategory } from '../../utils/categoryUtils';
 
 export const ServicesSection = () => {
   const { 
     activeHomeServiceTab = 'all', 
     setActiveHomeServiceTab, 
     openOrderWizard, 
-    protectedNavigate
+    protectedNavigate,
+    dynamicPricingTiers = []
   } = useAppState();
 
   const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
@@ -36,28 +37,69 @@ export const ServicesSection = () => {
     setOpenFaqIndex(null);
   };
 
-  const handleLaunchOrder = (serviceType, tierKey = 'standard') => {
+  const handleLaunchOrder = (serviceType, tierKey = 'standard', pkgData = null) => {
+    const sType = serviceType === 'patch' || serviceType === 'patches' 
+      ? 'patch' 
+      : (serviceType === 'vector' || serviceType === 'vector-art' || serviceType === 'vector_art') 
+        ? 'vector' 
+        : 'embroidery';
+
     if (openOrderWizard) {
       openOrderWizard({
-        type: serviceType,
-        tierKey
+        type: sType,
+        tierKey,
+        title: pkgData?.title || undefined,
+        rate: pkgData?.price ? `$${Number(pkgData.price).toFixed(2)}` : undefined
       });
     } else if (protectedNavigate) {
       protectedNavigate('customer', true, {
-        type: serviceType,
-        tierKey
+        type: sType,
+        tierKey,
+        title: pkgData?.title || undefined,
+        rate: pkgData?.price ? `$${Number(pkgData.price).toFixed(2)}` : undefined
       });
     }
   };
+
+  // Dynamic Tiers from DB grouped by service
+  const embroideryTiers = (dynamicPricingTiers || [])
+    .filter(t => matchCategory(t.service_type, 'embroidery'))
+    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+  const vectorTiers = (dynamicPricingTiers || [])
+    .filter(t => matchCategory(t.service_type, 'vector'))
+    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+  const patchTiers = (dynamicPricingTiers || [])
+    .filter(t => matchCategory(t.service_type, 'patch'))
+    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+  // Dynamic Starting Prices
+  const embMinPrice = embroideryTiers.length > 0 ? Math.min(...embroideryTiers.map(t => Number(t.price) || 10)) : 10;
+  const vecMinPrice = vectorTiers.length > 0 ? Math.min(...vectorTiers.map(t => Number(t.price) || 15)) : 15;
+  const patchMinPrice = patchTiers.length > 0 ? Math.min(...patchTiers.map(t => Number(t.price) || 1.5)) : 1.5;
+
+  // Dynamic Packages Text for All Services summary
+  const embPackagesSummary = embroideryTiers.length > 0
+    ? embroideryTiers.map(t => `${t.title.split(' ')[0]} ($${Number(t.price).toFixed(t.price % 1 === 0 ? 0 : 2)})`).join(', ')
+    : 'Left Chest ($10), Mid-Size ($20), Full Back & 3D Puff ($35)';
+
+  const vecPackagesSummary = vectorTiers.length > 0
+    ? vectorTiers.map(t => `${t.title.split(' ')[0]} ($${Number(t.price).toFixed(t.price % 1 === 0 ? 0 : 2)})`).join(', ')
+    : 'Simple Logo ($15), Medium Detail ($25), Complex Art ($45)';
+
+  const patchPackagesSummary = patchTiers.length > 0
+    ? patchTiers.map(t => `${t.title.split(' ')[0]} ($${Number(t.price).toFixed(t.price % 1 === 0 ? 0 : 2)})`).join(', ')
+    : 'Sample Run ($4.50), Production Batch ($2.50), Wholesale Bulk ($1.50)';
 
   // --------------------------------------------------------------------------
   // Tab Metadata
   // --------------------------------------------------------------------------
   const tabs = [
     { id: 'all', label: 'All Services', icon: LayoutGrid },
-    { id: 'embroidery', label: 'Embroidery', icon: Layers },
-    { id: 'vector-art', label: 'Vector Art', icon: PenTool },
-    { id: 'patches', label: 'Patches', icon: Tag }
+    { id: 'embroidery', label: `Embroidery (${embroideryTiers.length || 3})`, icon: Layers },
+    { id: 'vector-art', label: `Vector Art (${vectorTiers.length || 3})`, icon: PenTool },
+    { id: 'patches', label: `Patches (${patchTiers.length || 3})`, icon: Tag }
   ];
 
   // --------------------------------------------------------------------------
@@ -285,10 +327,10 @@ export const ServicesSection = () => {
                 </p>
 
                 <div style={{ color: 'var(--orange-600)', fontSize: '2.5rem', fontWeight: 900, marginBottom: '0.25rem', fontFamily: 'var(--font-heading)' }}>
-                  $10.00
+                  ${embMinPrice.toFixed(2)}
                 </div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
-                  STARTS $10.00 FLAT / DESIGN
+                  STARTS ${embMinPrice.toFixed(2)} FLAT / DESIGN
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
@@ -307,7 +349,7 @@ export const ServicesSection = () => {
 
                 {/* Available Packages Pill */}
                 <div style={{ padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.5rem', fontSize: '0.825rem', color: 'var(--navy-800)' }}>
-                  <strong style={{ color: 'var(--navy-950)' }}>Available Packages:</strong> Left Chest ($10), Mid-Size ($20), Full Back & 3D Puff ($35)
+                  <strong style={{ color: 'var(--navy-950)' }}>Available Packages:</strong> {embPackagesSummary}
                 </div>
               </div>
 
@@ -355,10 +397,10 @@ export const ServicesSection = () => {
                 </p>
 
                 <div style={{ color: 'var(--orange-600)', fontSize: '2.5rem', fontWeight: 900, marginBottom: '0.25rem', fontFamily: 'var(--font-heading)' }}>
-                  $15.00
+                  ${vecMinPrice.toFixed(2)}
                 </div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
-                  STARTS $15.00 FLAT / DESIGN
+                  STARTS ${vecMinPrice.toFixed(2)} FLAT / DESIGN
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
@@ -377,7 +419,7 @@ export const ServicesSection = () => {
 
                 {/* Available Packages Pill */}
                 <div style={{ padding: '0.75rem 1rem', background: '#ffffff', borderRadius: '10px', border: '1px solid var(--orange-200)', marginBottom: '1.5rem', fontSize: '0.825rem', color: 'var(--navy-800)' }}>
-                  <strong style={{ color: 'var(--navy-950)' }}>Available Packages:</strong> Simple Logo ($15), Medium Detail ($25), Complex Art ($45)
+                  <strong style={{ color: 'var(--navy-950)' }}>Available Packages:</strong> {vecPackagesSummary}
                 </div>
               </div>
 
@@ -424,10 +466,10 @@ export const ServicesSection = () => {
                 </p>
 
                 <div style={{ color: 'var(--orange-600)', fontSize: '2.5rem', fontWeight: 900, marginBottom: '0.25rem', fontFamily: 'var(--font-heading)' }}>
-                  $1.50
+                  ${patchMinPrice.toFixed(2)}
                 </div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
-                  STARTS $1.50 / PIECE
+                  STARTS ${patchMinPrice.toFixed(2)} / PIECE
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
@@ -446,7 +488,7 @@ export const ServicesSection = () => {
 
                 {/* Available Packages Pill */}
                 <div style={{ padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.5rem', fontSize: '0.825rem', color: 'var(--navy-800)' }}>
-                  <strong style={{ color: 'var(--navy-950)' }}>Available Types:</strong> Embroidered, High-Density Woven, 3D Molded PVC
+                  <strong style={{ color: 'var(--navy-950)' }}>Available Packages:</strong> {patchPackagesSummary}
                 </div>
               </div>
 
@@ -466,7 +508,7 @@ export const ServicesSection = () => {
         )}
 
         {/* ====================================================================
-            VIEW 2: EMBROIDERY TAB (Only Embroidery Information)
+            VIEW 2: EMBROIDERY TAB (Dynamic Embroidery Packages)
            ==================================================================== */}
         {activeTab === 'embroidery' && (
           <div>
@@ -549,77 +591,69 @@ export const ServicesSection = () => {
               </div>
             </div>
 
-            {/* 4. Packages & Pricing Grid */}
+            {/* 4. Packages & Pricing Grid (Dynamic from DB) */}
             <div style={{ marginBottom: '3.5rem' }}>
               <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '1.5rem', textAlign: 'center' }}>
-                Embroidery Digitizing Packages
+                Embroidery Digitizing Packages ({embroideryTiers.length})
               </h3>
               <div className="grid-responsive-3" style={{ alignItems: 'stretch' }}>
-                {[
-                  {
-                    tierKey: 'basic',
-                    title: 'Basic Left Chest / Cap',
-                    price: '$10.00',
-                    subtitle: 'Up to 10,000 Stitches',
-                    features: ['Standard Left Chest / Cap size', '100% Hand Digitized File', 'Tajima DST + Brother PES + PDF', 'Free Unlimited Revisions', '8–12 Hour Turnaround'],
-                    popular: false
-                  },
-                  {
-                    tierKey: 'standard',
-                    title: 'Standard Mid-Size / 3D Puff',
-                    price: '$20.00',
-                    subtitle: 'Up to 25,000 Stitches',
-                    features: ['Mid-size Chest & 3D Foam Caps', 'High-Density Puff Stitching', 'All Machine Formats + EMB Source', 'Free Color Stop & Trim Edits', '6–12 Hour Turnaround'],
-                    popular: true
-                  },
-                  {
-                    tierKey: 'premium',
-                    title: 'Full Jacket Back / Complex',
-                    price: '$35.00',
-                    subtitle: 'Up to 50,000+ Stitches',
-                    features: ['Large Jacket Back & Detailed Art', 'Lightweight Underlay Balancing', 'Dedicated Master Digitizer', 'Priority Rush 4–8 Hour Delivery', 'Complete Production Run Sheet'],
-                    popular: false
-                  }
-                ].map((pkg) => (
-                  <div key={pkg.title} className="card" style={{
-                    background: pkg.popular ? 'linear-gradient(180deg, #ffffff 0%, #fff7ed 100%)' : '#ffffff',
-                    borderRadius: '20px',
-                    padding: '2.25rem 2rem',
-                    border: pkg.popular ? '2px solid var(--orange-400)' : '1px solid var(--border-color)',
-                    boxShadow: pkg.popular ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    transform: pkg.popular ? 'translateY(-6px)' : 'none'
-                  }}>
-                    <div>
-                      {pkg.popular && (
-                        <div style={{ display: 'inline-block', background: 'var(--orange-600)', color: '#ffffff', fontSize: '0.75rem', fontWeight: 800, padding: '0.2rem 0.75rem', borderRadius: '9999px', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
-                          ★ Most Popular Package
-                        </div>
-                      )}
-                      <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-950)', margin: '0 0 0.5rem 0' }}>{pkg.title}</h4>
-                      <div style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--orange-600)', fontFamily: 'var(--font-heading)', margin: '0.25rem 0' }}>{pkg.price}</div>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1.5rem' }}>{pkg.subtitle}</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
-                        {pkg.features.map(f => (
-                          <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.875rem', color: 'var(--navy-800)', fontWeight: 600 }}>
-                            <CheckCircle size={15} style={{ color: '#10b981', flexShrink: 0 }} />
-                            <span>{f}</span>
+                {embroideryTiers.map((pkg, idx) => {
+                  const isPopular = Boolean(pkg.is_popular);
+                  const priceStr = `$${Number(pkg.price).toFixed(2)}`;
+                  const tierKey = idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium';
+
+                  return (
+                    <div key={pkg.id || idx} className="card" style={{
+                      background: isPopular ? 'linear-gradient(180deg, #ffffff 0%, #fff7ed 100%)' : '#ffffff',
+                      borderRadius: '20px',
+                      padding: '2.25rem 2rem',
+                      border: isPopular ? '2px solid var(--orange-400)' : '1px solid var(--border-color)',
+                      boxShadow: isPopular ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      transform: isPopular ? 'translateY(-6px)' : 'none'
+                    }}>
+                      <div>
+                        {pkg.badge_text && (
+                          <div style={{ display: 'inline-block', background: isPopular ? 'var(--orange-600)' : 'var(--navy-800)', color: '#ffffff', fontSize: '0.75rem', fontWeight: 800, padding: '0.2rem 0.75rem', borderRadius: '9999px', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
+                            {pkg.badge_text}
                           </div>
-                        ))}
+                        )}
+                        <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-950)', margin: '0 0 0.5rem 0' }}>{pkg.title}</h4>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', margin: '0.25rem 0' }}>
+                          <span style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--orange-600)', fontFamily: 'var(--font-heading)' }}>
+                            {priceStr}
+                          </span>
+                          {pkg.original_price && (
+                            <span style={{ fontSize: '1.1rem', color: '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
+                              ${Number(pkg.original_price).toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
+                          {pkg.subtitle || pkg.price_unit || '/ DESIGN'}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
+                          {(pkg.features || []).map((f, fIdx) => (
+                            <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.875rem', color: 'var(--navy-800)', fontWeight: 600 }}>
+                              <CheckCircle size={15} style={{ color: '#10b981', flexShrink: 0 }} />
+                              <span>{f}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
+                      <button
+                        type="button"
+                        className={isPopular ? 'btn btn-primary-orange' : 'btn btn-outline'}
+                        onClick={() => handleLaunchOrder('embroidery', tierKey, pkg)}
+                        style={{ width: '100%', padding: '0.85rem', fontWeight: 800 }}
+                      >
+                        {pkg.button_text || `Order ${pkg.title.split(' ')[0]}`} <ArrowRight size={16} />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      className={pkg.popular ? 'btn btn-primary-orange' : 'btn btn-outline'}
-                      onClick={() => handleLaunchOrder('embroidery', pkg.tierKey)}
-                      style={{ width: '100%', padding: '0.85rem', fontWeight: 800 }}
-                    >
-                      Order {pkg.title} <ArrowRight size={16} />
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -671,7 +705,7 @@ export const ServicesSection = () => {
         )}
 
         {/* ====================================================================
-            VIEW 3: VECTOR ART TAB (Only Vector Information)
+            VIEW 3: VECTOR ART TAB (Dynamic Vector Packages)
            ==================================================================== */}
         {activeTab === 'vector-art' && (
           <div>
@@ -754,77 +788,69 @@ export const ServicesSection = () => {
               </div>
             </div>
 
-            {/* 4. Packages & Pricing Grid */}
+            {/* 4. Packages & Pricing Grid (Dynamic from DB) */}
             <div style={{ marginBottom: '3.5rem' }}>
               <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '1.5rem', textAlign: 'center' }}>
-                Vector Art Conversion Packages
+                Vector Art Conversion Packages ({vectorTiers.length})
               </h3>
               <div className="grid-responsive-3" style={{ alignItems: 'stretch' }}>
-                {[
-                  {
-                    tierKey: 'basic',
-                    title: 'Simple Vector Redraw',
-                    price: '$15.00',
-                    subtitle: 'Clean 1-2 Color Logos & Text',
-                    features: ['Simple text logos & geometric shapes', '100% Hand-traced Bézier curves', 'AI + EPS + SVG + PDF deliverables', 'Free color corrections', '6–12 Hour Turnaround'],
-                    popular: false
-                  },
-                  {
-                    tierKey: 'standard',
-                    title: 'Medium Complexity Vector',
-                    price: '$25.00',
-                    subtitle: 'Multi-Color Graphics & Crests',
-                    features: ['Multi-color emblems & badges', 'Pantone (PMS) Color Matching', 'Screen print layer separation', 'All Master Vector files included', '6–12 Hour Turnaround'],
-                    popular: true
-                  },
-                  {
-                    tierKey: 'premium',
-                    title: 'Complex Illustration Vector',
-                    price: '$45.00',
-                    subtitle: 'Detailed Artwork & Mascots',
-                    features: ['Intricate mascots, gradients & shading', 'Full color gradient meshes', 'High-res 600+ DPI print proof', 'Priority rush processing', 'Free unlimited revisions'],
-                    popular: false
-                  }
-                ].map((pkg) => (
-                  <div key={pkg.title} className="card" style={{
-                    background: pkg.popular ? 'linear-gradient(180deg, #ffffff 0%, #fff7ed 100%)' : '#ffffff',
-                    borderRadius: '20px',
-                    padding: '2.25rem 2rem',
-                    border: pkg.popular ? '2px solid var(--orange-400)' : '1px solid var(--border-color)',
-                    boxShadow: pkg.popular ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    transform: pkg.popular ? 'translateY(-6px)' : 'none'
-                  }}>
-                    <div>
-                      {pkg.popular && (
-                        <div style={{ display: 'inline-block', background: 'var(--orange-600)', color: '#ffffff', fontSize: '0.75rem', fontWeight: 800, padding: '0.2rem 0.75rem', borderRadius: '9999px', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
-                          ★ Most Popular Package
-                        </div>
-                      )}
-                      <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-950)', margin: '0 0 0.5rem 0' }}>{pkg.title}</h4>
-                      <div style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--orange-600)', fontFamily: 'var(--font-heading)', margin: '0.25rem 0' }}>{pkg.price}</div>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1.5rem' }}>{pkg.subtitle}</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
-                        {pkg.features.map(f => (
-                          <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.875rem', color: 'var(--navy-800)', fontWeight: 600 }}>
-                            <CheckCircle size={15} style={{ color: '#10b981', flexShrink: 0 }} />
-                            <span>{f}</span>
+                {vectorTiers.map((pkg, idx) => {
+                  const isPopular = Boolean(pkg.is_popular);
+                  const priceStr = `$${Number(pkg.price).toFixed(2)}`;
+                  const tierKey = idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium';
+
+                  return (
+                    <div key={pkg.id || idx} className="card" style={{
+                      background: isPopular ? 'linear-gradient(180deg, #ffffff 0%, #fff7ed 100%)' : '#ffffff',
+                      borderRadius: '20px',
+                      padding: '2.25rem 2rem',
+                      border: isPopular ? '2px solid var(--orange-400)' : '1px solid var(--border-color)',
+                      boxShadow: isPopular ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      transform: isPopular ? 'translateY(-6px)' : 'none'
+                    }}>
+                      <div>
+                        {pkg.badge_text && (
+                          <div style={{ display: 'inline-block', background: isPopular ? 'var(--orange-600)' : 'var(--navy-800)', color: '#ffffff', fontSize: '0.75rem', fontWeight: 800, padding: '0.2rem 0.75rem', borderRadius: '9999px', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
+                            {pkg.badge_text}
                           </div>
-                        ))}
+                        )}
+                        <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-950)', margin: '0 0 0.5rem 0' }}>{pkg.title}</h4>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', margin: '0.25rem 0' }}>
+                          <span style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--orange-600)', fontFamily: 'var(--font-heading)' }}>
+                            {priceStr}
+                          </span>
+                          {pkg.original_price && (
+                            <span style={{ fontSize: '1.1rem', color: '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
+                              ${Number(pkg.original_price).toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
+                          {pkg.subtitle || pkg.price_unit || '/ DESIGN'}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
+                          {(pkg.features || []).map((f, fIdx) => (
+                            <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.875rem', color: 'var(--navy-800)', fontWeight: 600 }}>
+                              <CheckCircle size={15} style={{ color: '#10b981', flexShrink: 0 }} />
+                              <span>{f}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
+                      <button
+                        type="button"
+                        className={isPopular ? 'btn btn-primary-orange' : 'btn btn-outline'}
+                        onClick={() => handleLaunchOrder('vector', tierKey, pkg)}
+                        style={{ width: '100%', padding: '0.85rem', fontWeight: 800 }}
+                      >
+                        {pkg.button_text || `Order ${pkg.title.split(' ')[0]}`} <ArrowRight size={16} />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      className={pkg.popular ? 'btn btn-primary-orange' : 'btn btn-outline'}
-                      onClick={() => handleLaunchOrder('vector', pkg.tierKey)}
-                      style={{ width: '100%', padding: '0.85rem', fontWeight: 800 }}
-                    >
-                      Order {pkg.title} <ArrowRight size={16} />
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -876,7 +902,7 @@ export const ServicesSection = () => {
         )}
 
         {/* ====================================================================
-            VIEW 4: PATCHES TAB (Only Patches Information)
+            VIEW 4: PATCHES TAB (Dynamic Patches Packages)
            ==================================================================== */}
         {activeTab === 'patches' && (
           <div>
@@ -959,77 +985,69 @@ export const ServicesSection = () => {
               </div>
             </div>
 
-            {/* 4. Packages & Quantity Pricing Tiers */}
+            {/* 4. Packages & Quantity Pricing Tiers (Dynamic from DB) */}
             <div style={{ marginBottom: '3.5rem' }}>
               <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '1.5rem', textAlign: 'center' }}>
-                Patches Quantity & Pricing Tiers
+                Patches Quantity & Pricing Packages ({patchTiers.length})
               </h3>
               <div className="grid-responsive-3" style={{ alignItems: 'stretch' }}>
-                {[
-                  {
-                    tierKey: 'basic',
-                    title: 'Sample / Small Batch',
-                    price: '$2.95',
-                    subtitle: '10 – 50 Pieces',
-                    features: ['Free 12h Digital Proof', 'Velcro or Iron-On Backing included', 'Up to 9 Thread Colors', 'Merrowed or Laser Cut Border', 'Fast 4–6 Days Production'],
-                    popular: false
-                  },
-                  {
-                    tierKey: 'standard',
-                    title: 'Standard Production Run',
-                    price: '$1.85',
-                    subtitle: '100 – 500 Pieces',
-                    features: ['Free Digital Proof + Sew-out Photo', 'Any Backing (Velcro / Iron-On)', 'Specialty Metallic / Glow Threads', 'Complimentary Mold / Setup Fee', 'Doorstep Express Shipping'],
-                    popular: true
-                  },
-                  {
-                    tierKey: 'premium',
-                    title: 'Bulk Wholesale Tier',
-                    price: '$1.50',
-                    subtitle: '1,000+ Pieces',
-                    features: ['Lowest factory-direct pricing', 'Dedicated account manager', 'Free physical pre-production sample', 'Custom printed backing cards', 'Express Worldwide Doorstep Delivery'],
-                    popular: false
-                  }
-                ].map((pkg) => (
-                  <div key={pkg.title} className="card" style={{
-                    background: pkg.popular ? 'linear-gradient(180deg, #ffffff 0%, #fff7ed 100%)' : '#ffffff',
-                    borderRadius: '20px',
-                    padding: '2.25rem 2rem',
-                    border: pkg.popular ? '2px solid var(--orange-400)' : '1px solid var(--border-color)',
-                    boxShadow: pkg.popular ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    transform: pkg.popular ? 'translateY(-6px)' : 'none'
-                  }}>
-                    <div>
-                      {pkg.popular && (
-                        <div style={{ display: 'inline-block', background: 'var(--orange-600)', color: '#ffffff', fontSize: '0.75rem', fontWeight: 800, padding: '0.2rem 0.75rem', borderRadius: '9999px', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
-                          ★ Best Value Tier
-                        </div>
-                      )}
-                      <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-950)', margin: '0 0 0.5rem 0' }}>{pkg.title}</h4>
-                      <div style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--orange-600)', fontFamily: 'var(--font-heading)', margin: '0.25rem 0' }}>{pkg.price}</div>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1.5rem' }}>{pkg.subtitle}</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
-                        {pkg.features.map(f => (
-                          <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.875rem', color: 'var(--navy-800)', fontWeight: 600 }}>
-                            <CheckCircle size={15} style={{ color: '#10b981', flexShrink: 0 }} />
-                            <span>{f}</span>
+                {patchTiers.map((pkg, idx) => {
+                  const isPopular = Boolean(pkg.is_popular);
+                  const priceStr = `$${Number(pkg.price).toFixed(2)}`;
+                  const tierKey = idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium';
+
+                  return (
+                    <div key={pkg.id || idx} className="card" style={{
+                      background: isPopular ? 'linear-gradient(180deg, #ffffff 0%, #fff7ed 100%)' : '#ffffff',
+                      borderRadius: '20px',
+                      padding: '2.25rem 2rem',
+                      border: isPopular ? '2px solid var(--orange-400)' : '1px solid var(--border-color)',
+                      boxShadow: isPopular ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      transform: isPopular ? 'translateY(-6px)' : 'none'
+                    }}>
+                      <div>
+                        {pkg.badge_text && (
+                          <div style={{ display: 'inline-block', background: isPopular ? 'var(--orange-600)' : 'var(--navy-800)', color: '#ffffff', fontSize: '0.75rem', fontWeight: 800, padding: '0.2rem 0.75rem', borderRadius: '9999px', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
+                            {pkg.badge_text}
                           </div>
-                        ))}
+                        )}
+                        <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-950)', margin: '0 0 0.5rem 0' }}>{pkg.title}</h4>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', margin: '0.25rem 0' }}>
+                          <span style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--orange-600)', fontFamily: 'var(--font-heading)' }}>
+                            {priceStr}
+                          </span>
+                          {pkg.original_price && (
+                            <span style={{ fontSize: '1.1rem', color: '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
+                              ${Number(pkg.original_price).toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
+                          {pkg.subtitle || pkg.price_unit || '/ PIECE'}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
+                          {(pkg.features || []).map((f, fIdx) => (
+                            <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.875rem', color: 'var(--navy-800)', fontWeight: 600 }}>
+                              <CheckCircle size={15} style={{ color: '#10b981', flexShrink: 0 }} />
+                              <span>{f}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
+                      <button
+                        type="button"
+                        className={isPopular ? 'btn btn-primary-orange' : 'btn btn-outline'}
+                        onClick={() => handleLaunchOrder('patch', tierKey, pkg)}
+                        style={{ width: '100%', padding: '0.85rem', fontWeight: 800 }}
+                      >
+                        {pkg.button_text || `Order ${pkg.title.split(' ')[0]}`} <ArrowRight size={16} />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      className={pkg.popular ? 'btn btn-primary-orange' : 'btn btn-outline'}
-                      onClick={() => handleLaunchOrder('patch', pkg.tierKey)}
-                      style={{ width: '100%', padding: '0.85rem', fontWeight: 800 }}
-                    >
-                      Order {pkg.title} <ArrowRight size={16} />
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -1084,3 +1102,5 @@ export const ServicesSection = () => {
     </section>
   );
 };
+
+export default ServicesSection;

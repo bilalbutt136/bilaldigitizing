@@ -16,6 +16,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { PackageCard } from './PackageCard';
+import { matchCategory } from '../../utils/categoryUtils';
 
 export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => {
   const { openOrderWizard, setIsOrderWizardOpen, patchCards = [], dynamicPricingTiers = [], serviceCmsContent = {}, portfolioSamples, homePageConfig = {} } = useAppState();
@@ -98,23 +99,32 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
   ];
 
   const dbDynamicPatchTiers = (dynamicPricingTiers || [])
-    .filter(t => (t.service_type || '').toLowerCase().includes('patch'))
+    .filter(t => matchCategory(t.service_type, 'patch'))
     .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
 
   const mappedDynamicPatchCards = dbDynamicPatchTiers.map((t, idx) => ({
     id: t.id || `patch-tier-${idx}`,
     category: 'patch',
+    service_type: 'patches',
     tierKey: idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium',
     title: t.title,
     subTitle: t.subtitle,
+    subtitle: t.subtitle,
     icon: idx === 0 ? Zap : idx === 1 ? Trophy : Sparkles,
     discountTag: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
     rate: typeof t.price === 'number' ? `$${t.price.toFixed(2)}` : (String(t.price).startsWith('$') ? String(t.price) : `$${t.price}`),
+    price: t.price,
+    original_price: t.original_price,
     unit: t.price_unit || '/ piece',
+    price_unit: t.price_unit || '/ piece',
     delivery: t.turnaround_time || '4–7 Days',
+    turnaround_time: t.turnaround_time || '4–7 Days',
     btnText: t.button_text || `Order ${t.title.split(' ')[0]} ($${t.price})`,
+    button_text: t.button_text || `Order ${t.title.split(' ')[0]} ($${t.price})`,
     badge: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
+    badge_text: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
     popular: Boolean(t.is_popular),
+    is_popular: Boolean(t.is_popular),
     features: Array.isArray(t.features) ? t.features : []
   }));
 

@@ -95,17 +95,26 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
   const mappedDynamicCards = dbDynamicTiers.map((t, idx) => ({
     id: t.id || `emb-tier-${idx}`,
     category: 'embroidery',
+    service_type: 'embroidery',
     tierKey: idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium',
     title: t.title,
     subTitle: t.subtitle,
+    subtitle: t.subtitle,
     icon: idx === 0 ? Zap : idx === 1 ? Trophy : Sparkles,
     discountTag: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
     rate: typeof t.price === 'number' ? `$${t.price.toFixed(2)}` : (String(t.price).startsWith('$') ? String(t.price) : `$${t.price}`),
+    price: t.price,
+    original_price: t.original_price,
     unit: t.price_unit || '/ design',
+    price_unit: t.price_unit || '/ design',
     delivery: t.turnaround_time || '4–12 Hours Express',
+    turnaround_time: t.turnaround_time || '4–12 Hours Express',
     btnText: t.button_text || `Order ${t.title.split(' ')[0]} ($${t.price})`,
+    button_text: t.button_text || `Order ${t.title.split(' ')[0]} ($${t.price})`,
     badge: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
+    badge_text: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
     popular: Boolean(t.is_popular),
+    is_popular: Boolean(t.is_popular),
     features: Array.isArray(t.features) ? t.features : []
   }));
 

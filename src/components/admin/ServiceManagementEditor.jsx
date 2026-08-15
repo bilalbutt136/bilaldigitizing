@@ -337,85 +337,16 @@ export const ServiceManagementEditor = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       
-      {/* 1. TOP GLOBAL BASE RATES BANNER */}
-      <div className="card" style={{ padding: '1.5rem', background: '#ffffff', border: '1px solid var(--border-color)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--navy-950)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <DollarSign size={20} style={{ color: 'var(--orange-500)' }} /> Instant Pricing Matrix & Rush Surcharges
-            </h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
-              Configure studio base rates per item placement, vector redraw complexity, and rush delivery fees.
-            </p>
-          </div>
-
-          <button 
-            type="button" 
-            className="btn btn-primary-orange btn-sm"
-            onClick={handleBasePricingSave}
-            style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-          >
-            <Save size={15} /> Save Base Rates
-          </button>
+      {/* Service Management Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0 }}>
+            Master Services & Packages
+          </h2>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
+            Manage and edit all services and packages with direct database persistence.
+          </p>
         </div>
-
-        <form onSubmit={handleBasePricingSave} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--navy-800)', marginBottom: '0.3rem' }}>
-              Basic Digitizing ($/design)
-            </label>
-            <input 
-              type="number" 
-              step="0.5"
-              className="form-control"
-              value={basePricing.minOrderFee}
-              onChange={(e) => setBasePricing(p => ({ ...p, minOrderFee: parseFloat(e.target.value) || 0 }))}
-              style={{ fontWeight: 800 }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--navy-800)', marginBottom: '0.3rem' }}>
-              Standard Redraw ($/design)
-            </label>
-            <input 
-              type="number" 
-              step="0.5"
-              className="form-control"
-              value={basePricing.vectorSimpleRate}
-              onChange={(e) => setBasePricing(p => ({ ...p, vectorSimpleRate: parseFloat(e.target.value) || 0 }))}
-              style={{ fontWeight: 800 }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--navy-800)', marginBottom: '0.3rem' }}>
-              Complex Vector ($/art)
-            </label>
-            <input 
-              type="number" 
-              step="0.5"
-              className="form-control"
-              value={basePricing.vectorComplexRate}
-              onChange={(e) => setBasePricing(p => ({ ...p, vectorComplexRate: parseFloat(e.target.value) || 0 }))}
-              style={{ fontWeight: 800 }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--navy-800)', marginBottom: '0.3rem' }}>
-              Super Rush Surcharge ($)
-            </label>
-            <input 
-              type="number" 
-              step="0.5"
-              className="form-control"
-              value={basePricing.rushSurcharge}
-              onChange={(e) => setBasePricing(p => ({ ...p, rushSurcharge: parseFloat(e.target.value) || 0 }))}
-              style={{ fontWeight: 800, color: 'var(--orange-600)' }}
-            />
-          </div>
-        </form>
       </div>
 
       {/* 2. CATEGORY SELECTOR TABS & ACTION BUTTON */}

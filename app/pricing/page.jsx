@@ -195,7 +195,45 @@ const DEFAULT_ALL_PACKAGES = {
   ]
 };
 
-// Universal Tier Theme: Package 1 = Orange, Package 2 = Blue, Package 3 = Green
+const PALETTES = [
+  {
+    color: '#ea580c',
+    bgLight: 'rgba(234, 88, 12, 0.12)',
+    border: '#fed7aa',
+    btnBg: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+    glowColor: 'rgba(234, 88, 12, 0.28)'
+  },
+  {
+    color: '#2563eb',
+    bgLight: 'rgba(37, 99, 235, 0.12)',
+    border: '#bfdbfe',
+    btnBg: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+    glowColor: 'rgba(37, 99, 235, 0.28)'
+  },
+  {
+    color: '#059669',
+    bgLight: 'rgba(16, 185, 129, 0.12)',
+    border: '#a7f3d0',
+    btnBg: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+    glowColor: 'rgba(5, 150, 105, 0.28)'
+  },
+  {
+    color: '#7c3aed',
+    bgLight: 'rgba(124, 58, 237, 0.12)',
+    border: '#ddd6fe',
+    btnBg: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+    glowColor: 'rgba(124, 58, 237, 0.28)'
+  },
+  {
+    color: '#d97706',
+    bgLight: 'rgba(217, 119, 6, 0.12)',
+    border: '#fde68a',
+    btnBg: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
+    glowColor: 'rgba(217, 119, 6, 0.28)'
+  }
+];
+
+// Universal Tier Theme: supports any number of packages
 const getPackageTierTheme = (packageNumber, serviceType = 'embroidery') => {
   const norm = (serviceType || '').toLowerCase().replace('-', '_');
   let icon = Layers;
@@ -213,45 +251,11 @@ const getPackageTierTheme = (packageNumber, serviceType = 'embroidery') => {
   }
 
   const order = Number(packageNumber) || 1;
+  const pal = PALETTES[(order - 1) % PALETTES.length];
 
-  if (order === 1) {
-    // Package #1: ORANGE
-    return {
-      packageNumber: 1,
-      color: '#ea580c',
-      bgLight: 'rgba(234, 88, 12, 0.12)',
-      border: '#fed7aa',
-      btnBg: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-      glowColor: 'rgba(234, 88, 12, 0.28)',
-      icon,
-      serviceLabel,
-      orderType
-    };
-  }
-
-  if (order === 2) {
-    // Package #2: BLUE
-    return {
-      packageNumber: 2,
-      color: '#2563eb',
-      bgLight: 'rgba(37, 99, 235, 0.12)',
-      border: '#bfdbfe',
-      btnBg: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-      glowColor: 'rgba(37, 99, 235, 0.28)',
-      icon,
-      serviceLabel,
-      orderType
-    };
-  }
-
-  // Package #3: GREEN
   return {
-    packageNumber: 3,
-    color: '#059669',
-    bgLight: 'rgba(16, 185, 129, 0.12)',
-    border: '#a7f3d0',
-    btnBg: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-    glowColor: 'rgba(5, 150, 105, 0.28)',
+    packageNumber: order,
+    ...pal,
     icon,
     serviceLabel,
     orderType
@@ -274,10 +278,15 @@ export default function PricingPage() {
     }
   };
 
+  const getCategoryCount = (categoryKey) => {
+    const dbTiers = dynamicPricingTiers.filter(t => matchCategory(t.service_type, categoryKey));
+    return dbTiers.length > 0 ? dbTiers.length : (DEFAULT_ALL_PACKAGES[categoryKey] || []).length;
+  };
+
   // Helper to build packages list dynamically from DB or defaults
   const getPackages = () => {
     if (activeTab === 'all') {
-      // 3 Core packages: 1 = Orange (Embroidery), 2 = Blue (Vector), 3 = Green (Patches)
+      // Core overview: 1 = Orange (Embroidery), 2 = Blue (Vector), 3 = Green (Patches)
       const dbEmb = dynamicPricingTiers.find(t => matchCategory(t.service_type, 'embroidery'));
       const dbVec = dynamicPricingTiers.find(t => matchCategory(t.service_type, 'vector_art'));
       const dbPatch = dynamicPricingTiers.find(t => matchCategory(t.service_type, 'patches'));
@@ -312,15 +321,14 @@ export default function PricingPage() {
       });
     }
 
-    // Specific category selected: render the 3 packages (Pkg 1 = Orange, Pkg 2 = Blue, Pkg 3 = Green)
-    const catDefaults = DEFAULT_ALL_PACKAGES[activeTab] || [];
+    // Specific category selected: render ALL dynamic packages in DB or defaults
     const dbTiers = dynamicPricingTiers
       .filter(t => matchCategory(t.service_type, activeTab))
       .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
 
-    return catDefaults.map((defPkg, idx) => {
-      const matchedDb = dbTiers[idx] || dbTiers.find(t => t.display_order === defPkg.display_order) || null;
-      const data = matchedDb || defPkg;
+    const sourcePackages = dbTiers.length > 0 ? dbTiers : (DEFAULT_ALL_PACKAGES[activeTab] || []);
+
+    return sourcePackages.map((data, idx) => {
       const pkgNum = idx + 1;
       const theme = getPackageTierTheme(pkgNum, activeTab);
 
@@ -328,18 +336,18 @@ export default function PricingPage() {
         id: data.id || `${activeTab}-tier-${pkgNum}`,
         serviceType: theme.orderType,
         categoryLabel: `${theme.serviceLabel} · PACKAGE #${pkgNum}`,
-        badgeText: data.badge_text || defPkg.badge_text,
-        isPopular: data.is_popular !== undefined ? data.is_popular : defPkg.is_popular,
-        title: data.title || defPkg.title,
-        subtitle: data.subtitle || defPkg.subtitle,
-        price: (data.price !== undefined && data.price !== null) ? Number(data.price) : defPkg.price,
-        originalPrice: data.original_price ? Number(data.original_price) : defPkg.original_price,
-        priceUnit: data.price_unit || defPkg.price_unit,
-        turnaround: data.turnaround_time || defPkg.turnaround_time,
-        buttonText: data.button_text || defPkg.button_text,
+        badgeText: data.badge_text,
+        isPopular: Boolean(data.is_popular),
+        title: data.title,
+        subtitle: data.subtitle,
+        price: (data.price !== undefined && data.price !== null) ? Number(data.price) : 0,
+        originalPrice: data.original_price ? Number(data.original_price) : null,
+        priceUnit: data.price_unit || (activeTab === 'patches' ? '/ PIECE' : '/ DESIGN'),
+        turnaround: data.turnaround_time,
+        buttonText: data.button_text || `Order ${data.title ? data.title.split(' ')[0] : 'Package'}`,
         features: Array.isArray(data.features) && data.features.filter(f => f && f.trim()).length > 0
           ? data.features.filter(f => f && f.trim())
-          : defPkg.features,
+          : [],
         theme
       };
     });
@@ -349,10 +357,11 @@ export default function PricingPage() {
 
   const tabButtons = [
     { key: 'all', label: 'All 3 Core Services', icon: Sparkles },
-    { key: 'embroidery', label: '🧵 Embroidery (3 Packages)', icon: Layers },
-    { key: 'vector_art', label: '✒️ Vector Art (3 Packages)', icon: PenTool },
-    { key: 'patches', label: '🏷️ Custom Patches (3 Packages)', icon: Tag }
+    { key: 'embroidery', label: `🧵 Embroidery (${getCategoryCount('embroidery')} Packages)`, icon: Layers },
+    { key: 'vector_art', label: `✒️ Vector Art (${getCategoryCount('vector_art')} Packages)`, icon: PenTool },
+    { key: 'patches', label: `🏷️ Custom Patches (${getCategoryCount('patches')} Packages)`, icon: Tag }
   ];
+
 
   return (
     <main style={{ padding: '8rem 2rem 6rem', background: 'var(--navy-100)', minHeight: '100vh', color: 'var(--text-main)', fontFamily: 'var(--font-body, "Inter", sans-serif)' }}>

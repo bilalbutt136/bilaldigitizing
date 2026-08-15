@@ -115,20 +115,33 @@ export async function POST(request) {
 
       // Ensure pricing_tiers has an ID and correctly resolves existing rows
       if (tableName === 'pricing_tiers') {
-        if (!upsertPayload.id || typeof upsertPayload.id !== 'string' || upsertPayload.id.length < 10) {
+        const validFields = [
+          'id', 'service_type', 'title', 'subtitle', 'badge_text', 'price',
+          'original_price', 'price_unit', 'turnaround_time', 'features',
+          'button_text', 'is_popular', 'display_order', 'updated_at'
+        ];
+        const cleaned = {};
+        for (const field of validFields) {
+          if (upsertPayload[field] !== undefined) {
+            cleaned[field] = upsertPayload[field];
+          }
+        }
+        if (!cleaned.id || typeof cleaned.id !== 'string' || cleaned.id.length < 10) {
           const { data: existing } = await supabase
             .from('pricing_tiers')
             .select('id')
-            .eq('service_type', upsertPayload.service_type)
-            .eq('display_order', upsertPayload.display_order)
+            .eq('service_type', cleaned.service_type)
+            .eq('display_order', cleaned.display_order)
             .maybeSingle();
 
           if (existing?.id) {
-            upsertPayload.id = existing.id;
+            cleaned.id = existing.id;
           } else {
-            upsertPayload.id = crypto.randomUUID();
+            cleaned.id = crypto.randomUUID();
           }
         }
+        cleaned.updated_at = new Date().toISOString();
+        upsertPayload = cleaned;
       }
 
       const { data: savedData, error } = await supabase.from(tableName).upsert(upsertPayload, { onConflict: 'id' }).select().single();

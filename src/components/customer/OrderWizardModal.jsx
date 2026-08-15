@@ -28,11 +28,10 @@ export const OrderWizardModal = () => {
     setCheckoutSession,
     walletBalance,
     setIsDepositModalOpen,
-    vectorCards = [],
-    patchCards = [],
-    pricingCards = [],
+    dynamicPricingTiers = [],
     serviceCmsContent = {}
   } = useAppState();
+
 
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
@@ -693,32 +692,53 @@ export const OrderWizardModal = () => {
                             <div>
                               <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Package Tier *</label>
                               <select value={item.packageTier || 'standard'} onChange={(e) => updatePlacementItem(item.id, 'packageTier', e.target.value)} className="form-control" style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem' }}>
-                                {type === 'vector' ? (
-                                  <>
-                                    <option value="basic">⚡ Simple Redraw ($15.00)</option>
-                                    <option value="standard">✨ Complex Redraw ($25.00)</option>
-                                    <option value="premium">🔥 Super Rush Express ($40.00)</option>
-                                  </>
-                                ) : (
-                                  pricingCards && pricingCards.length > 0 ? (
-                                    pricingCards.map(card => {
-                                      const value = card.id.replace('pcard-', '');
+                                {(() => {
+                                  const matchingTiers = (dynamicPricingTiers || [])
+                                    .filter(t => matchCategory(t.service_type, type))
+                                    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+                                  if (matchingTiers.length > 0) {
+                                    return matchingTiers.map((t, tIdx) => {
+                                      const keyVal = tIdx === 0 ? 'basic' : tIdx === 1 ? 'standard' : 'premium';
                                       return (
-                                        <option key={card.id} value={value}>
-                                          {card.title.replace(' Digitizing', '').replace(' Patches', '')} ({card.rate.replace('Starting from ', '')})
+                                        <option key={t.id || tIdx} value={keyVal}>
+                                          {t.title} (${typeof t.price === 'number' ? t.price.toFixed(2) : t.price})
                                         </option>
                                       );
-                                    })
-                                  ) : (
+                                    });
+                                  }
+
+                                  if (type === 'vector') {
+                                    return (
+                                      <>
+                                        <option value="basic">⚡ Simple Logo ($15.00)</option>
+                                        <option value="standard">⭐ Medium Detail ($25.00)</option>
+                                        <option value="premium">✨ Complex Illustration ($45.00)</option>
+                                      </>
+                                    );
+                                  }
+
+                                  if (type === 'patch') {
+                                    return (
+                                      <>
+                                        <option value="basic">⚡ Sample Batch ($4.50/pc)</option>
+                                        <option value="standard">⭐ Production Batch ($2.50/pc)</option>
+                                        <option value="premium">✨ Wholesale Bulk ($1.50/pc)</option>
+                                      </>
+                                    );
+                                  }
+
+                                  return (
                                     <>
-                                      <option value="basic">⚡ Basic</option>
-                                      <option value="standard">⭐ Standard</option>
-                                      <option value="premium">✨ Premium</option>
+                                      <option value="basic">⚡ Left Chest & Cap ($10.00)</option>
+                                      <option value="standard">⭐ Mid-Size Jacket ($20.00)</option>
+                                      <option value="premium">✨ Full Back & 3D ($35.00)</option>
                                     </>
-                                  )
-                                )}
+                                  );
+                                })()}
                               </select>
                             </div>
+
 
                             {type === 'embroidery' ? (
                               <div>

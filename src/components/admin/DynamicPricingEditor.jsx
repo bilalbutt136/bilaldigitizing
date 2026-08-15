@@ -2,41 +2,78 @@
 
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { upsertPricingTier } from '../../services/supabaseService';
 import { matchCategory } from '../../utils/categoryUtils';
+import { upsertPricingTier, deletePricingTier } from '../../services/supabaseService';
 import { 
   Plus, 
-  Edit3, 
   Trash2, 
-  CheckCircle2, 
+  Edit3, 
   Save, 
+  Clock, 
   X, 
+  Copy, 
+  ChevronUp, 
+  ChevronDown, 
+  Eye, 
   Layers, 
   PenTool, 
   Tag, 
-  Sparkles,
+  CheckCircle,
   ArrowRight,
-  Clock,
-  Eye,
-  Check,
-  ExternalLink
+  AlertTriangle
 } from 'lucide-react';
 
-// Default 3 packages for each of the 3 core services (Total 9 packages)
+const PALETTES = [
+  {
+    color: '#ea580c',
+    bgLight: 'rgba(234, 88, 12, 0.12)',
+    border: '#fed7aa',
+    btnGradient: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+    glowColor: 'rgba(234, 88, 12, 0.28)'
+  },
+  {
+    color: '#2563eb',
+    bgLight: 'rgba(37, 99, 235, 0.12)',
+    border: '#bfdbfe',
+    btnGradient: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+    glowColor: 'rgba(37, 99, 235, 0.28)'
+  },
+  {
+    color: '#059669',
+    bgLight: 'rgba(16, 185, 129, 0.12)',
+    border: '#a7f3d0',
+    btnGradient: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+    glowColor: 'rgba(5, 150, 105, 0.28)'
+  },
+  {
+    color: '#7c3aed',
+    bgLight: 'rgba(124, 58, 237, 0.12)',
+    border: '#ddd6fe',
+    btnGradient: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+    glowColor: 'rgba(124, 58, 237, 0.28)'
+  },
+  {
+    color: '#d97706',
+    bgLight: 'rgba(217, 119, 6, 0.12)',
+    border: '#fde68a',
+    btnGradient: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
+    glowColor: 'rgba(217, 119, 6, 0.28)'
+  }
+];
+
 const DEFAULT_ALL_PACKAGES = {
   embroidery: [
     {
       display_order: 1,
-      service_type: 'embroidery',
       badge_text: 'BASIC',
       is_popular: false,
       title: 'Left Chest & Cap Small Logo',
-      subtitle: 'Standard logos up to 4" x 4" optimized for structured caps, polos, and apparel.',
-      price: 10,
-      original_price: 15,
+      subtitle: 'Commercial stitch files for caps, polos, shirts & jackets (.DST, .PES, .EMB)',
+      price: 10.00,
+      original_price: 15.00,
       price_unit: '/ DESIGN',
       turnaround_time: '4–12 Hours',
-      button_text: 'Order Left Chest Logo',
+      button_text: 'Order Left Chest',
       features: [
         'Up to 4" x 4" Dimensions',
         '100% Hand-Mapped Stitch Pathing',
@@ -47,18 +84,17 @@ const DEFAULT_ALL_PACKAGES = {
     },
     {
       display_order: 2,
-      service_type: 'embroidery',
       badge_text: 'MOST POPULAR',
       is_popular: true,
       title: 'Mid-Size Jacket & Sleeve Design',
-      subtitle: 'Medium complexity artwork up to 7" x 7" with calculated density and pull compensation.',
-      price: 20,
-      original_price: 30,
+      subtitle: 'Medium complexity artwork up to 7" x 7" with calculated density and pull compensation',
+      price: 20.00,
+      original_price: 30.00,
       price_unit: '/ DESIGN',
       turnaround_time: '6–12 Hours',
-      button_text: 'Order Mid-Size Design',
+      button_text: 'Order Mid-Size',
       features: [
-        'Up to 7" x 7" Medium Artwork',
+        'Up to 7" x 7" Medium Artwork Area',
         'Complex Multi-Color Layering',
         'Underlay Pull & Push Compensation',
         'Free Unlimited Production Revisions',
@@ -67,16 +103,15 @@ const DEFAULT_ALL_PACKAGES = {
     },
     {
       display_order: 3,
-      service_type: 'embroidery',
       badge_text: 'PRO / 3D PUFF',
       is_popular: false,
       title: 'Full Back & 3D Puff Foam',
-      subtitle: 'High stitch count full jacket back designs up to 12" x 12" and specialty 3D puff foam.',
-      price: 35,
-      original_price: 50,
+      subtitle: 'High stitch count full jacket back designs up to 12" x 12" and specialty 3D puff foam',
+      price: 35.00,
+      original_price: 50.00,
       price_unit: '/ DESIGN',
       turnaround_time: '8–12 Hours',
-      button_text: 'Order Full Back / 3D',
+      button_text: 'Order Full Back',
       features: [
         'Up to 12" x 12" Full Back Area',
         'High Density 3D Puff Foam Pathing',
@@ -89,184 +124,141 @@ const DEFAULT_ALL_PACKAGES = {
   vector_art: [
     {
       display_order: 1,
-      service_type: 'vector_art',
       badge_text: 'BASIC',
       is_popular: false,
       title: 'Simple Logo & Typography Redraw',
-      subtitle: 'Clean typographic logos, basic geometric shapes, and clean line work converted to vector.',
-      price: 15,
-      original_price: 25,
+      subtitle: 'Clean typographic logos, basic geometric shapes, and clean line work converted to vector',
+      price: 15.00,
+      original_price: 25.00,
       price_unit: '/ DESIGN',
       turnaround_time: '6–12 Hours',
-      button_text: 'Order Simple Redraw',
+      button_text: 'Order Simple',
       features: [
         'Clean Bézier Curves & Anchor Nodes',
-        'Sharp 100% Scalable Paths',
+        'Sharp 100% Scalable Vector Paths',
         'Master Suite: .AI, .EPS, .SVG, .PDF',
         'Infinite Scale Without Pixelation',
-        '100% Manual Hand Trace'
+        '100% Manual Hand Trace Tracing'
       ]
     },
     {
       display_order: 2,
-      service_type: 'vector_art',
-      badge_text: 'BEST VALUE',
+      badge_text: 'MOST POPULAR',
       is_popular: true,
-      title: 'Medium Detail Artwork',
-      subtitle: 'Multi-color badges, crests, and detailed illustrations with Pantone spot color separation.',
-      price: 25,
-      original_price: 35,
+      title: 'Medium Detail Artwork with Colors',
+      subtitle: 'Multi-color badges, crests, and detailed illustrations with Pantone spot color separation',
+      price: 25.00,
+      original_price: 40.00,
       price_unit: '/ DESIGN',
       turnaround_time: '6–12 Hours',
-      button_text: 'Order Medium Vector',
+      button_text: 'Order Medium',
       features: [
-        'Pantone (PMS) Color Matching',
+        'Pantone (PMS) Spot Color Matching',
         'Separated Layers for Screen Printing',
         'Vinyl Cutting Smooth Cut-Paths',
-        'Gradients, Blends & Textures',
-        'High-Res 300+ DPI PDF Included'
+        'Gradients, Blends & Textures Included',
+        'High-Res 300+ DPI PDF Master Included'
       ]
     },
     {
       display_order: 3,
-      service_type: 'vector_art',
       badge_text: 'MASTER DETAIL',
       is_popular: false,
       title: 'Complex Illustration & Mascot',
-      subtitle: 'Highly intricate artwork, photographic traces, hand drawings, heraldic crests, and mascots.',
-      price: 45,
-      original_price: 65,
+      subtitle: 'Intricate mascots, gradient-rich detailed emblems, multi-tone shading & fine line art',
+      price: 45.00,
+      original_price: 70.00,
       price_unit: '/ DESIGN',
       turnaround_time: '12–24 Hours',
-      button_text: 'Order Complex Vector',
+      button_text: 'Order Complex',
       features: [
-        'Ultra-Intricate Fine Details',
-        'Complete Layer Organization',
+        'Ultra-Intricate Fine Vector Details',
+        'Complete Multi-Layer Organization',
         'Print-Ready Color Separations',
-        'All Master Editable Formats',
-        'Unlimited Revisions Until Press-Ready'
+        'All Master Source & Vector Formats',
+        'VIP Priority Studio Support'
       ]
     }
   ],
   patches: [
     {
       display_order: 1,
-      service_type: 'patches',
       badge_text: 'SAMPLE RUN',
       is_popular: false,
       title: 'Sample Batch (10–50 Pcs)',
-      subtitle: 'Low-minimum run perfect for small brands, clubs, prototypes, and event samples.',
+      subtitle: 'Low-minimum run perfect for small brands, clubs, prototypes & event samples',
       price: 4.50,
-      original_price: 6.50,
+      original_price: 6.00,
       price_unit: '/ PIECE',
       turnaround_time: '3–5 Days',
       button_text: 'Order Sample Run',
       features: [
-        'Ultra-Low 10 Pieces Minimum',
-        '12-Hour Free Digital Proofing',
-        'Velcro, Iron-On or Peel Backings',
-        'Embroidered, Woven or 3D PVC',
-        '100% Quality Inspected'
+        'Ultra-Low 10 Pieces Minimum Order',
+        '12-Hour Free Digital Production Proof',
+        'Velcro Hook & Loop or Iron-On Backings',
+        'Custom Embroidered, Woven or 3D PVC',
+        '100% Quality Inspected Before Shipping'
       ]
     },
     {
       display_order: 2,
-      service_type: 'patches',
-      badge_text: 'POPULAR',
+      badge_text: 'MOST POPULAR',
       is_popular: true,
       title: 'Production Batch (100–500 Pcs)',
-      subtitle: 'Standard volume for company uniforms, tactical gear, martial arts, and apparel brands.',
+      subtitle: 'Standard volume for company uniforms, tactical gear, martial arts & apparel brands',
       price: 2.50,
       original_price: 4.00,
       price_unit: '/ PIECE',
       turnaround_time: '4–7 Days',
       button_text: 'Order Production Run',
       features: [
-        'Merrowed or Laser-Cut Borders',
-        'Up to 9 Thread Colors Included',
+        'Merrowed Border or Laser-Cut Edge',
+        'Up to 9 Thread Colors Included Free',
         'Free Military-Grade Backing Choice',
-        'Free Doorstep Worldwide Shipping',
-        'Free Digital Proof with Revisions'
+        'Free Doorstep Worldwide Express Shipping',
+        'Free Digital Proof with Unlimited Edits'
       ]
     },
     {
       display_order: 3,
-      service_type: 'patches',
       badge_text: 'WHOLESALE',
       is_popular: false,
-      title: 'Wholesale Bulk (500+ Pcs)',
-      subtitle: 'Factory-direct wholesale pricing with volume discounts and priority factory line.',
+      title: 'Wholesale Bulk Batch (500+ Pcs)',
+      subtitle: 'Factory-direct wholesale pricing with volume discounts and priority factory line',
       price: 1.50,
       original_price: 3.00,
       price_unit: '/ PIECE',
       turnaround_time: '7–10 Days',
       button_text: 'Order Bulk Wholesale',
       features: [
-        'Factory Direct Wholesale Rate',
-        'Priority Dedicated Production Line',
+        'Factory Direct Wholesale Rate ($1.50/pc)',
+        'Priority Dedicated Manufacturing Line',
         'Custom Retail Backer Cards Available',
-        'Express Air Doorstep Delivery',
+        'Express Air Doorstep Global Delivery',
         'Dedicated Production QA Manager'
       ]
     }
   ]
 };
 
-// Unified Tier Theme: Package 1 = Orange, Package 2 = Blue, Package 3 = Green
-export const getPackageTierTheme = (packageNumber, serviceType = 'embroidery') => {
-  const norm = (serviceType || '').toLowerCase().replace('-', '_');
+const getPackageTierTheme = (idx = 0, serviceType = 'embroidery') => {
+  const pal = PALETTES[idx % PALETTES.length];
+  const sType = (serviceType || '').toLowerCase().replace('-', '_');
+  
   let icon = Layers;
   let serviceLabel = 'EMBROIDERY DIGITIZING';
-  
-  if (norm.startsWith('vec')) {
+
+  if (sType.includes('vec')) {
     icon = PenTool;
     serviceLabel = 'VECTOR ART CONVERSION';
-  } else if (norm.startsWith('patch')) {
+  } else if (sType.includes('patch')) {
     icon = Tag;
     serviceLabel = 'CUSTOM MANUFACTURED PATCHES';
   }
 
-  const order = Number(packageNumber) || 1;
-
-  if (order === 1) {
-    // Package #1: ORANGE THEME
-    return {
-      name: 'orange',
-      packageNumber: 1,
-      color: '#ea580c',
-      bgLight: 'rgba(234, 88, 12, 0.12)',
-      border: '#fed7aa',
-      btnBg: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-      glowColor: 'rgba(234, 88, 12, 0.28)',
-      icon,
-      serviceLabel
-    };
-  }
-
-  if (order === 2) {
-    // Package #2: BLUE THEME
-    return {
-      name: 'blue',
-      packageNumber: 2,
-      color: '#2563eb',
-      bgLight: 'rgba(37, 99, 235, 0.12)',
-      border: '#bfdbfe',
-      btnBg: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-      glowColor: 'rgba(37, 99, 235, 0.28)',
-      icon,
-      serviceLabel
-    };
-  }
-
-  // Package #3: GREEN THEME
   return {
-    name: 'green',
-    packageNumber: 3,
-    color: '#059669',
-    bgLight: 'rgba(16, 185, 129, 0.12)',
-    border: '#a7f3d0',
-    btnBg: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-    glowColor: 'rgba(5, 150, 105, 0.28)',
+    packageNumber: idx + 1,
+    ...pal,
     icon,
     serviceLabel
   };
@@ -285,53 +277,165 @@ export const DynamicPricingEditor = () => {
   const [editingTier, setEditingTier] = useState(null);
   const [formData, setFormData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
+  const [newFeatureInput, setNewFeatureInput] = useState('');
+  const [deleteCandidate, setDeleteCandidate] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   if (!isAuthInitialized) {
     return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pricing catalog...</div>;
   }
 
-  // Helper to get the 3 packages for a given service category
-  const getPackagesForCategory = (categoryKey) => {
-    const defaults = DEFAULT_ALL_PACKAGES[categoryKey] || [];
-    const dbTiers = dynamicPricingTiers
+  // Get all packages for the active category (from DB or fallback defaults)
+  const getCategoryPackages = (categoryKey) => {
+    const dbTiers = (dynamicPricingTiers || [])
       .filter(t => matchCategory(t.service_type, categoryKey))
       .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
 
-    return defaults.map((defPkg, idx) => {
-      const matchedDb = dbTiers[idx] || dbTiers.find(t => t.display_order === defPkg.display_order) || null;
-      const pkgNum = idx + 1;
-      return {
-        key: `${categoryKey}-${pkgNum}`,
-        packageNumber: pkgNum,
-        categoryKey,
-        defaultData: defPkg,
-        dbData: matchedDb,
-        data: matchedDb || defPkg,
-        theme: getPackageTierTheme(pkgNum, categoryKey)
-      };
-    });
+    if (dbTiers.length > 0) {
+      return dbTiers.map((tier, idx) => ({
+        ...tier,
+        _isDb: true,
+        _idx: idx,
+        theme: getPackageTierTheme(idx, categoryKey)
+      }));
+    }
+
+    const defaults = DEFAULT_ALL_PACKAGES[categoryKey] || [];
+    return defaults.map((def, idx) => ({
+      ...def,
+      id: `default-${categoryKey}-${idx}`,
+      service_type: categoryKey,
+      _isDb: false,
+      _idx: idx,
+      theme: getPackageTierTheme(idx, categoryKey)
+    }));
   };
 
-  const handleEditPackage = (pkgObj) => {
-    const activeData = pkgObj.dbData || pkgObj.defaultData;
+  const currentPackages = getCategoryPackages(activeCategoryTab);
+
+  const handleOpenEdit = (pkg, idx) => {
     setFormData({
-      id: pkgObj.dbData?.id || undefined,
-      service_type: pkgObj.categoryKey,
-      display_order: pkgObj.defaultData.display_order,
-      title: activeData.title || pkgObj.defaultData.title,
-      subtitle: activeData.subtitle || pkgObj.defaultData.subtitle,
-      badge_text: activeData.badge_text || pkgObj.defaultData.badge_text,
-      is_popular: activeData.is_popular !== undefined ? activeData.is_popular : pkgObj.defaultData.is_popular,
-      price: (activeData.price !== undefined && activeData.price !== null) ? Number(activeData.price) : pkgObj.defaultData.price,
-      original_price: activeData.original_price ? Number(activeData.original_price) : pkgObj.defaultData.original_price,
-      price_unit: activeData.price_unit || pkgObj.defaultData.price_unit,
-      turnaround_time: activeData.turnaround_time || pkgObj.defaultData.turnaround_time,
-      button_text: activeData.button_text || pkgObj.defaultData.button_text,
-      features: Array.isArray(activeData.features) && activeData.features.length > 0 
-        ? [...activeData.features] 
-        : [...pkgObj.defaultData.features]
+      id: pkg.id && !String(pkg.id).startsWith('default-') ? pkg.id : undefined,
+      service_type: pkg.service_type || activeCategoryTab,
+      display_order: pkg.display_order || (idx + 1),
+      title: pkg.title || '',
+      subtitle: pkg.subtitle || '',
+      badge_text: pkg.badge_text || '',
+      is_popular: Boolean(pkg.is_popular),
+      price: (pkg.price !== undefined && pkg.price !== null) ? Number(pkg.price) : 0,
+      original_price: pkg.original_price ? Number(pkg.original_price) : null,
+      price_unit: pkg.price_unit || (activeCategoryTab === 'patches' ? '/ PIECE' : '/ DESIGN'),
+      turnaround_time: pkg.turnaround_time || '4–12 Hours',
+      button_text: pkg.button_text || `Order ${pkg.title ? pkg.title.split(' ')[0] : 'Package'}`,
+      features: Array.isArray(pkg.features) ? [...pkg.features] : []
     });
-    setEditingTier(pkgObj.key);
+    setNewFeatureInput('');
+    setEditingTier(pkg.id || `edit-${idx}`);
+  };
+
+  const handleOpenCreate = () => {
+    const maxOrder = currentPackages.reduce((max, p) => Math.max(max, p.display_order || 0), 0);
+    setFormData({
+      service_type: activeCategoryTab,
+      display_order: maxOrder + 1,
+      title: 'New Service Package',
+      subtitle: 'Complete professional studio package with commercial production files',
+      badge_text: 'NEW TIER',
+      is_popular: false,
+      price: 20.00,
+      original_price: 30.00,
+      price_unit: activeCategoryTab === 'patches' ? '/ PIECE' : '/ DESIGN',
+      turnaround_time: '4–12 Hours',
+      button_text: 'Order Package',
+      features: [
+        'Commercial Production File Formats Included',
+        '100% Hand-Crafted Pathing Quality',
+        'Free Unlimited Revisions',
+        'Direct Studio Support'
+      ]
+    });
+    setNewFeatureInput('');
+    setEditingTier('new-package');
+  };
+
+  const handleDuplicate = async (pkg) => {
+    const maxOrder = currentPackages.reduce((max, p) => Math.max(max, p.display_order || 0), 0);
+    const cloned = {
+      service_type: pkg.service_type || activeCategoryTab,
+      display_order: maxOrder + 1,
+      title: `${pkg.title} (Copy)`,
+      subtitle: pkg.subtitle || '',
+      badge_text: pkg.badge_text || '',
+      is_popular: false,
+      price: Number(pkg.price) || 0,
+      original_price: pkg.original_price ? Number(pkg.original_price) : null,
+      price_unit: pkg.price_unit || (activeCategoryTab === 'patches' ? '/ PIECE' : '/ DESIGN'),
+      turnaround_time: pkg.turnaround_time || '4–12 Hours',
+      button_text: pkg.button_text || 'Order Package',
+      features: Array.isArray(pkg.features) ? [...pkg.features] : []
+    };
+
+    setIsSaving(true);
+    try {
+      const ok = await upsertPricingTier(cloned);
+      if (ok) {
+        showToast(`Duplicated "${pkg.title}" as new package!`, 'success');
+        await resetAllData();
+      } else {
+        showToast('Failed to duplicate package. Please try again.', 'error');
+      }
+    } catch (err) {
+      console.error('Duplicate error:', err);
+      showToast('Error duplicating package.', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleReorder = async (pkg, direction) => {
+    const idx = currentPackages.findIndex(p => p.id === pkg.id);
+    if (idx < 0) return;
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= currentPackages.length) return;
+
+    const currentItem = currentPackages[idx];
+    const targetItem = currentPackages[targetIdx];
+
+    const currentOrder = currentItem.display_order || (idx + 1);
+    const targetOrder = targetItem.display_order || (targetIdx + 1);
+
+    setIsSaving(true);
+    try {
+      await upsertPricingTier({ ...currentItem, display_order: targetOrder });
+      await upsertPricingTier({ ...targetItem, display_order: currentOrder });
+      showToast('Packages reordered successfully!', 'success');
+      await resetAllData();
+    } catch (err) {
+      console.error('Reorder error:', err);
+      showToast('Error reordering packages.', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteCandidate) return;
+    setIsDeleting(true);
+    try {
+      if (deleteCandidate._isDb && deleteCandidate.id) {
+        const ok = await deletePricingTier(deleteCandidate.id);
+        if (!ok) throw new Error('Delete failed in database');
+      }
+      showToast(`Package "${deleteCandidate.title}" deleted!`, 'success');
+      setDeleteCandidate(null);
+      if (editingTier === deleteCandidate.id) setEditingTier(null);
+      await resetAllData();
+    } catch (err) {
+      console.error('Delete error:', err);
+      showToast('Error deleting package.', 'error');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleSave = async (e) => {
@@ -343,7 +447,7 @@ export const DynamicPricingEditor = () => {
 
     setIsSaving(true);
     try {
-      const sanitizedType = (formData.service_type || 'embroidery').toLowerCase().replace('-', '_');
+      const sanitizedType = (formData.service_type || activeCategoryTab).toLowerCase().replace('-', '_');
       const normalizedServiceType = sanitizedType.startsWith('vec') 
         ? 'vector_art' 
         : sanitizedType.startsWith('patch') 
@@ -380,7 +484,7 @@ export const DynamicPricingEditor = () => {
         }
         await resetAllData();
       } else {
-        showToast('Failed to save pricing package. Please check Supabase connection.', 'error');
+        showToast('Failed to save pricing package. Please check connection.', 'error');
       }
     } catch (err) {
       console.error('Save pricing package error:', err);
@@ -390,129 +494,341 @@ export const DynamicPricingEditor = () => {
     }
   };
 
+  const handleAddFeature = () => {
+    if (!newFeatureInput.trim()) return;
+    setFormData(prev => ({
+      ...prev,
+      features: [...(prev.features || []), newFeatureInput.trim()]
+    }));
+    setNewFeatureInput('');
+  };
 
   const handleFeatureChange = (index, val) => {
     const newFeatures = [...(formData.features || [])];
     newFeatures[index] = val;
-    setFormData({ ...formData, features: newFeatures });
+    setFormData(prev => ({ ...prev, features: newFeatures }));
   };
 
-  const addFeature = () => setFormData({ ...formData, features: [...(formData.features || []), ''] });
-  const removeFeature = (index) => {
-    const newFeatures = (formData.features || []).filter((_, i) => i !== index);
-    setFormData({ ...formData, features: newFeatures });
+  const handleMoveFeature = (index, direction) => {
+    const features = [...(formData.features || [])];
+    const targetIdx = direction === 'up' ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= features.length) return;
+    const temp = features[index];
+    features[index] = features[targetIdx];
+    features[targetIdx] = temp;
+    setFormData(prev => ({ ...prev, features }));
   };
 
-  const categories = [
-    { key: 'embroidery', label: 'Embroidery Digitizing (3 Packages)', icon: Layers, count: 3 },
-    { key: 'vector_art', label: 'Vector Art Conversion (3 Packages)', icon: PenTool, count: 3 },
-    { key: 'patches', label: 'Custom Patches (3 Packages)', icon: Tag, count: 3 }
-  ];
+  const handleRemoveFeature = (index) => {
+    const features = [...(formData.features || [])];
+    features.splice(index, 1);
+    setFormData(prev => ({ ...prev, features }));
+  };
 
   return (
-    <div style={{ padding: '0.5rem 0 2rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       
-      {/* Top Banner */}
-      <div className="card" style={{ padding: '1.75rem 2rem', background: '#ffffff', borderRadius: '16px', marginBottom: '1.75rem', border: '1px solid var(--border-color)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
-          <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'var(--orange-50)', border: '1px solid var(--orange-200)', color: 'var(--orange-700)', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-              <Sparkles size={13} /> Single Source of Truth · 9 Studio Packages
-            </div>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--navy-900)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              Master Service Packages Manager
-            </h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.35rem 0 0', maxWidth: '700px' }}>
-              Every service has 3 packages styled in <strong>Orange (Pkg #1)</strong>, <strong>Blue (Pkg #2)</strong>, and <strong>Green (Pkg #3)</strong>. Changes made here immediately update the <strong>Public Pricing Page</strong> and the respective <strong>Service Page</strong> simultaneously.
-            </p>
-          </div>
+      {/* Category Tabs Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'inline-flex', gap: '0.4rem', background: '#f1f5f9', padding: '0.35rem', borderRadius: '14px' }}>
+          <button
+            type="button"
+            onClick={() => { setActiveCategoryTab('embroidery'); setEditingTier(null); }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.65rem 1.25rem',
+              borderRadius: '10px',
+              border: 'none',
+              background: activeCategoryTab === 'embroidery' ? '#ffffff' : 'transparent',
+              color: activeCategoryTab === 'embroidery' ? '#ea580c' : 'var(--navy-700)',
+              fontWeight: 800,
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              boxShadow: activeCategoryTab === 'embroidery' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none'
+            }}
+          >
+            <Layers size={16} /> <span>Embroidery Digitizing ({getCategoryPackages('embroidery').length})</span>
+          </button>
 
-          <div style={{ display: 'flex', gap: '0.65rem' }}>
-            <a 
-              href="/pricing" 
-              target="_blank" 
-              rel="noreferrer" 
-              className="btn btn-outline btn-sm"
-              style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-            >
-              <ExternalLink size={14} /> Open Live /pricing
-            </a>
-          </div>
+          <button
+            type="button"
+            onClick={() => { setActiveCategoryTab('vector_art'); setEditingTier(null); }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.65rem 1.25rem',
+              borderRadius: '10px',
+              border: 'none',
+              background: activeCategoryTab === 'vector_art' ? '#ffffff' : 'transparent',
+              color: activeCategoryTab === 'vector_art' ? '#2563eb' : 'var(--navy-700)',
+              fontWeight: 800,
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              boxShadow: activeCategoryTab === 'vector_art' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none'
+            }}
+          >
+            <PenTool size={16} /> <span>Vector Art Redraw ({getCategoryPackages('vector_art').length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setActiveCategoryTab('patches'); setEditingTier(null); }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.65rem 1.25rem',
+              borderRadius: '10px',
+              border: 'none',
+              background: activeCategoryTab === 'patches' ? '#ffffff' : 'transparent',
+              color: activeCategoryTab === 'patches' ? '#059669' : 'var(--navy-700)',
+              fontWeight: 800,
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              boxShadow: activeCategoryTab === 'patches' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none'
+            }}
+          >
+            <Tag size={16} /> <span>Custom Patches ({getCategoryPackages('patches').length})</span>
+          </button>
         </div>
+
+        <button
+          type="button"
+          onClick={handleOpenCreate}
+          className="btn btn-primary-orange"
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, padding: '0.7rem 1.35rem', borderRadius: '12px' }}
+        >
+          <Plus size={18} /> Add New Package
+        </button>
       </div>
 
-      {/* Category Tabs */}
-      <div style={{
-        display: 'flex',
-        gap: '0.6rem',
-        background: '#f1f5f9',
-        padding: '0.4rem',
-        borderRadius: '14px',
-        border: '1px solid var(--border-color)',
-        marginBottom: '2rem',
-        flexWrap: 'wrap'
-      }}>
-        {categories.map(cat => {
-          const IconComp = cat.icon;
-          const isActive = activeCategoryTab === cat.key;
-          return (
-            <button
-              key={cat.key}
-              type="button"
-              onClick={() => {
-                setActiveCategoryTab(cat.key);
-                setEditingTier(null);
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.6rem',
-                padding: '0.8rem 1.4rem',
-                borderRadius: '10px',
-                border: 'none',
-                background: isActive ? '#ffffff' : 'transparent',
-                color: isActive ? 'var(--navy-900)' : 'var(--navy-600)',
-                fontWeight: isActive ? 900 : 700,
-                fontSize: '0.925rem',
-                cursor: 'pointer',
-                boxShadow: isActive ? '0 4px 12px rgba(0,0,0,0.08)' : 'none',
-                transition: 'all 0.18s ease'
-              }}
-            >
-              <IconComp size={18} style={{ color: isActive ? 'var(--orange-500)' : 'inherit' }} />
-              <span>{cat.label}</span>
-              <span style={{
-                background: isActive ? 'var(--orange-100)' : '#e2e8f0',
-                color: isActive ? 'var(--orange-700)' : 'var(--text-muted)',
-                fontSize: '0.72rem',
-                fontWeight: 800,
-                padding: '0.15rem 0.5rem',
-                borderRadius: '9999px'
-              }}>
-                {cat.count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      {/* Main Content Area */}
+      {!editingTier ? (
+        /* Package Cards Overview Grid */
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gap: '1.75rem',
+          alignItems: 'stretch'
+        }}>
+          {currentPackages.map((pkg, idx) => {
+            const theme = pkg.theme;
+            const ThemeIcon = theme.icon;
 
-      {editingTier ? (
-        /* ========================================================================= */
-        /* EDIT MODE: Side-by-Side Split View with Sticky Customer Sidebar Preview   */
-        /* ========================================================================= */
-        <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 0.85fr', gap: '2rem', alignItems: 'start' }}>
-          
-          {/* Left Column: Form Controls */}
-          <div className="card" style={{ padding: '2.25rem', background: '#fff', borderRadius: '20px', boxShadow: 'var(--shadow-md)', border: '1.5px solid var(--border-color)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
-              <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase' }}>
-                  Live Package Editor · Package #{formData.display_order || 1}
-                </span>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--navy-900)', margin: '0.15rem 0 0' }}>
-                  {formData.title ? `Editing: ${formData.title}` : 'Edit Package Details'}
-                </h3>
+            return (
+              <div
+                key={pkg.id || idx}
+                style={{
+                  background: '#ffffff',
+                  border: pkg.is_popular ? `2.5px solid ${theme.color}` : '1.5px solid var(--border-color)',
+                  borderRadius: '20px',
+                  padding: '2rem 1.5rem 1.5rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  boxShadow: pkg.is_popular ? `0 12px 30px ${theme.glowColor}` : '0 4px 16px rgba(0,0,0,0.04)',
+                  position: 'relative'
+                }}
+              >
+                {/* Top Badge */}
+                {pkg.badge_text && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-12px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: theme.color,
+                    color: '#ffffff',
+                    padding: '0.25rem 1rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.72rem',
+                    fontWeight: 900,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    boxShadow: `0 4px 10px ${theme.glowColor}`
+                  }}>
+                    {pkg.badge_text}
+                  </span>
+                )}
+
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ background: theme.bgLight, color: theme.color, padding: '0.5rem', borderRadius: '10px', display: 'flex' }}>
+                        <ThemeIcon size={18} />
+                      </div>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: theme.color }}>
+                        PACKAGE #{idx + 1}
+                      </span>
+                    </div>
+
+                    {/* Reorder Arrows */}
+                    <div style={{ display: 'flex', gap: '0.25rem' }}>
+                      <button
+                        type="button"
+                        disabled={idx === 0 || isSaving}
+                        onClick={() => handleReorder(pkg, 'up')}
+                        style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.25rem', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.4 : 1 }}
+                        title="Move Up"
+                      >
+                        <ChevronUp size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={idx === currentPackages.length - 1 || isSaving}
+                        onClick={() => handleReorder(pkg, 'down')}
+                        style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.25rem', cursor: idx === currentPackages.length - 1 ? 'not-allowed' : 'pointer', opacity: idx === currentPackages.length - 1 ? 0.4 : 1 }}
+                        title="Move Down"
+                      >
+                        <ChevronDown size={14} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#0f172a', margin: '0 0 0.5rem', lineHeight: 1.25 }}>
+                    {pkg.title}
+                  </h3>
+                  <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 1.25rem', lineHeight: 1.45, minHeight: '38px' }}>
+                    {pkg.subtitle}
+                  </p>
+
+                  <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+                      <span style={{ fontSize: '2.25rem', fontWeight: 900, color: theme.color, lineHeight: 1 }}>
+                        ${typeof pkg.price === 'number' ? pkg.price.toFixed(2) : pkg.price}
+                      </span>
+                      {pkg.original_price && (
+                        <span style={{ fontSize: '1rem', color: '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
+                          ${pkg.original_price}
+                        </span>
+                      )}
+                      <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+                        {pkg.price_unit || '/ DESIGN'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Clock size={14} style={{ color: theme.color }} /> {pkg.turnaround_time || '4–12 Hours'}
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                    {(pkg.features || []).slice(0, 4).map((f, fIdx) => (
+                      <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', color: '#334155', fontWeight: 500 }}>
+                        <CheckCircle size={13} style={{ color: '#16a34a', flexShrink: 0 }} />
+                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f}</span>
+                      </div>
+                    ))}
+                    {(pkg.features || []).length > 4 && (
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 700, paddingLeft: '1.2rem' }}>
+                        + {(pkg.features || []).length - 4} more features
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Card Action Buttons */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '0.5rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenEdit(pkg, idx)}
+                    style={{
+                      background: theme.color,
+                      color: '#ffffff',
+                      border: 'none',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '8px',
+                      fontWeight: 800,
+                      fontSize: '0.82rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.35rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Edit3 size={14} /> Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDuplicate(pkg)}
+                    disabled={isSaving}
+                    style={{
+                      background: '#f1f5f9',
+                      color: '#334155',
+                      border: '1px solid #e2e8f0',
+                      padding: '0.65rem 0.5rem',
+                      borderRadius: '8px',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.3rem',
+                      cursor: 'pointer'
+                    }}
+                    title="Clone / Duplicate"
+                  >
+                    <Copy size={13} /> Copy
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDeleteCandidate(pkg)}
+                    style={{
+                      background: '#fee2e2',
+                      color: '#dc2626',
+                      border: '1px solid #fecaca',
+                      padding: '0.65rem 0.5rem',
+                      borderRadius: '8px',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.3rem',
+                      cursor: 'pointer'
+                    }}
+                    title="Delete Package"
+                  >
+                    <Trash2 size={13} /> Del
+                  </button>
+                </div>
               </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* Edit / Create Form View with Live Sidebar Preview */
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1.35fr) minmax(340px, 0.95fr)',
+          gap: '2.5rem',
+          alignItems: 'start'
+        }}>
+          
+          {/* Left Column: Form Editor */}
+          <div style={{
+            background: '#ffffff',
+            border: '1.5px solid var(--border-color)',
+            borderRadius: '24px',
+            padding: '2rem',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)' }}>
+              <div>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--navy-900)', margin: 0 }}>
+                  {formData.id ? 'Edit Package Details' : 'Create New Package'}
+                </h3>
+                <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>
+                  All updates persist directly to Supabase and publish instantly to the live site.
+                </span>
+              </div>
+
               <button 
                 type="button" 
                 onClick={() => setEditingTier(null)}
@@ -523,15 +839,15 @@ export const DynamicPricingEditor = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.35rem' }}>
               
-              {/* Service & Tier Position */}
+              {/* Category & Order Position */}
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '1rem' }}>
                 <div className="form-group">
                   <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Service Category *</label>
                   <select 
                     className="form-control" 
-                    value={formData.service_type || 'embroidery'} 
+                    value={formData.service_type || activeCategoryTab} 
                     onChange={e => setFormData({ ...formData, service_type: e.target.value })}
                     style={{ fontWeight: 700 }}
                   >
@@ -542,30 +858,28 @@ export const DynamicPricingEditor = () => {
                 </div>
 
                 <div className="form-group">
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Package Position #</label>
-                  <select 
-                    className="form-control" 
-                    value={formData.display_order || 1} 
+                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Display Order Position #</label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="form-control"
+                    value={formData.display_order || 1}
                     onChange={e => setFormData({ ...formData, display_order: parseInt(e.target.value) || 1 })}
                     style={{ fontWeight: 700 }}
-                  >
-                    <option value={1}>Package #1 (Orange Theme - Basic / Entry)</option>
-                    <option value={2}>Package #2 (Blue Theme - Mid-Tier / Popular)</option>
-                    <option value={3}>Package #3 (Green Theme - Pro / Wholesale)</option>
-                  </select>
+                  />
                 </div>
               </div>
 
-              {/* Badge & Popular toggle */}
+              {/* Badge & Popular Highlight */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Top Badge Pill Text</label>
+                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Top Pill Badge Text</label>
                   <input 
                     type="text" 
                     className="form-control" 
                     value={formData.badge_text || ''} 
                     onChange={e => setFormData({ ...formData, badge_text: e.target.value })} 
-                    placeholder="e.g. BASIC / MOST POPULAR / PRO TIER" 
+                    placeholder="e.g. BASIC / MOST POPULAR / WHOLESALE" 
                   />
                 </div>
 
@@ -579,13 +893,13 @@ export const DynamicPricingEditor = () => {
                       style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--orange-500)' }} 
                     />
                     <label htmlFor="isPopularToggle" style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--navy-900)', cursor: 'pointer', margin: 0 }}>
-                      Highlight as 'Featured / Most Popular'
+                      Highlight as Featured (Most Popular)
                     </label>
                   </div>
                 </div>
               </div>
 
-              {/* Title & Subtitle */}
+              {/* Package Title & Subtitle */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
                   <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Package Title *</label>
@@ -606,12 +920,12 @@ export const DynamicPricingEditor = () => {
                     className="form-control" 
                     value={formData.subtitle || ''} 
                     onChange={e => setFormData({ ...formData, subtitle: e.target.value })} 
-                    placeholder="e.g. Standard logos up to 4x4 inches..." 
+                    placeholder="e.g. Commercial stitch files for caps, polos..." 
                   />
                 </div>
               </div>
 
-              {/* Pricing row */}
+              {/* Price & Unit */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
                   <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Active Price ($) *</label>
@@ -626,7 +940,7 @@ export const DynamicPricingEditor = () => {
                 </div>
 
                 <div className="form-group">
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Original Strikethrough ($)</label>
+                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Original Price ($) (Optional)</label>
                   <input 
                     type="number" 
                     step="0.01" 
@@ -649,16 +963,16 @@ export const DynamicPricingEditor = () => {
                 </div>
               </div>
 
-              {/* Turnaround & CTA Button */}
+              {/* Turnaround & CTA */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Express Delivery Turnaround</label>
+                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Delivery Turnaround</label>
                   <input 
                     type="text" 
                     className="form-control" 
                     value={formData.turnaround_time || ''} 
                     onChange={e => setFormData({ ...formData, turnaround_time: e.target.value })} 
-                    placeholder="e.g. 4–12 Hours or 3–5 Days" 
+                    placeholder="e.g. 4–12 Hours Express" 
                   />
                 </div>
 
@@ -669,45 +983,74 @@ export const DynamicPricingEditor = () => {
                     className="form-control" 
                     value={formData.button_text || ''} 
                     onChange={e => setFormData({ ...formData, button_text: e.target.value })} 
-                    placeholder="e.g. Order Left Chest Logo" 
+                    placeholder="e.g. Order Left Chest ($10.00)" 
                   />
                 </div>
               </div>
 
-              {/* Features Bullet List */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', margin: 0 }}>
-                    Feature Bullet Points Checklist
+              {/* Dynamic Features List Manager */}
+              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <label style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--navy-900)', margin: 0 }}>
+                    Package Features Checklist ({(formData.features || []).length})
                   </label>
-                  <button 
-                    type="button" 
-                    onClick={addFeature} 
-                    className="btn btn-outline btn-sm" 
-                    style={{ fontWeight: 700, fontSize: '0.75rem', padding: '0.25rem 0.65rem' }}
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={newFeatureInput}
+                    onChange={e => setNewFeatureInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddFeature(); } }}
+                    placeholder="Type new feature bullet and click Add..."
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddFeature}
+                    className="btn btn-outline"
+                    style={{ fontWeight: 800, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
                   >
-                    <Plus size={13} /> Add Feature Line
+                    <Plus size={16} /> Add Bullet
                   </button>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '280px', overflowY: 'auto' }}>
                   {(formData.features || []).map((feat, index) => (
-                    <div key={index} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <CheckCircle2 size={16} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
+                    <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f8fafc', padding: '0.45rem 0.65rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                      <CheckCircle size={15} style={{ color: '#16a34a', flexShrink: 0 }} />
                       <input 
                         type="text" 
                         className="form-control" 
                         value={feat} 
                         onChange={e => handleFeatureChange(index, e.target.value)} 
-                        placeholder="Feature line description..."
+                        style={{ background: '#ffffff', fontSize: '0.85rem' }}
                       />
                       <button 
                         type="button" 
-                        onClick={() => removeFeature(index)} 
-                        style={{ background: '#fee2e2', border: 'none', color: '#dc2626', padding: '0.45rem', borderRadius: '8px', cursor: 'pointer', flexShrink: 0 }}
+                        disabled={index === 0}
+                        onClick={() => handleMoveFeature(index, 'up')}
+                        style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: index === 0 ? 'not-allowed' : 'pointer', opacity: index === 0 ? 0.3 : 1 }}
+                        title="Move Up"
+                      >
+                        <ChevronUp size={14} />
+                      </button>
+                      <button 
+                        type="button" 
+                        disabled={index === (formData.features || []).length - 1}
+                        onClick={() => handleMoveFeature(index, 'down')}
+                        style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: index === (formData.features || []).length - 1 ? 'not-allowed' : 'pointer', opacity: index === (formData.features || []).length - 1 ? 0.3 : 1 }}
+                        title="Move Down"
+                      >
+                        <ChevronDown size={14} />
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => handleRemoveFeature(index)} 
+                        style={{ background: '#fee2e2', border: 'none', color: '#dc2626', padding: '0.35rem', borderRadius: '6px', cursor: 'pointer' }}
                         title="Remove feature"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={13} />
                       </button>
                     </div>
                   ))}
@@ -720,20 +1063,21 @@ export const DynamicPricingEditor = () => {
                   Cancel
                 </button>
                 <button type="submit" disabled={isSaving} className="btn btn-primary-orange btn-lg" style={{ fontWeight: 800, padding: '0.85rem 2rem' }}>
-                  <Save size={16} /> {isSaving ? 'Saving to Database...' : 'Save Package Changes'}
+                  <Save size={16} /> {isSaving ? 'Saving to Database...' : 'Save & Publish Changes'}
                 </button>
               </div>
             </form>
           </div>
 
           {/* Right Column: Live Customer Sidebar Preview */}
-          <div style={{ position: 'sticky', top: '2rem', overflow: 'visible', paddingTop: '1.25rem' }}>
+          <div style={{ position: 'sticky', top: '2rem', overflow: 'visible', paddingTop: '0.5rem' }}>
             <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-700)', textTransform: 'uppercase', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <Eye size={16} style={{ color: 'var(--orange-500)' }} /> Live Customer Sidebar Preview
             </div>
 
             {(() => {
-              const theme = getPackageTierTheme(formData.display_order || 1, formData.service_type || 'embroidery');
+              const previewIdx = Math.max(0, (Number(formData.display_order) || 1) - 1);
+              const theme = getPackageTierTheme(previewIdx, formData.service_type || activeCategoryTab);
               const ThemeIcon = theme.icon;
 
               return (
@@ -774,222 +1118,160 @@ export const DynamicPricingEditor = () => {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
                       <div style={{ background: theme.bgLight, color: theme.color, padding: '0.7rem', borderRadius: '12px', display: 'flex' }}>
-                        <ThemeIcon size={24} />
+                        <ThemeIcon size={22} />
                       </div>
                       <div>
                         <span style={{ fontSize: '0.72rem', fontWeight: 800, color: theme.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                           {theme.serviceLabel} · PACKAGE #{formData.display_order || 1}
                         </span>
-                        <h3 style={{ fontSize: '1.35rem', fontWeight: 900, margin: '0.15rem 0 0', color: 'var(--navy-900)', lineHeight: 1.2 }}>
+                        <h3 style={{ fontSize: '1.35rem', fontFamily: 'var(--font-heading, "Inter", sans-serif)', fontWeight: 900, margin: '0.15rem 0 0', color: 'var(--navy-900)', lineHeight: 1.2 }}>
                           {formData.title || 'Package Title'}
                         </h3>
                       </div>
                     </div>
 
-                    {formData.subtitle && (
-                      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.35rem', lineHeight: 1.5 }}>
-                        {formData.subtitle}
-                      </p>
-                    )}
+                    <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: 1.5, minHeight: '40px' }}>
+                      {formData.subtitle || 'Package description and scope will appear here.'}
+                    </p>
 
                     {/* Price Box */}
-                    <div style={{ marginBottom: '1.5rem', padding: '1.25rem', background: '#f8fafc', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                    <div style={{ marginBottom: '1.5rem', padding: '1.25rem', background: '#f8fafc', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.45rem' }}>
                         <div style={{ fontSize: '3rem', fontWeight: 900, color: theme.color, lineHeight: 1, letterSpacing: '-0.03em' }}>
-                          ${formData.price !== undefined ? formData.price : '0'}
+                          ${formData.price !== undefined && formData.price !== null ? Number(formData.price).toFixed(2) : '0.00'}
                         </div>
                         {formData.original_price && (
-                          <div style={{ fontSize: '1.2rem', color: 'var(--text-muted)', textDecoration: 'line-through', fontWeight: 700 }}>
-                            ${formData.original_price}
+                          <div style={{ fontSize: '1.25rem', color: '#94a3b8', textDecoration: 'line-through', fontWeight: 700 }}>
+                            ${Number(formData.original_price).toFixed(2)}
                           </div>
                         )}
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 800, marginTop: '0.35rem', textTransform: 'uppercase' }}>
-                        {formData.price_unit || '/ DESIGN'}
+                      <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 800, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        {formData.price_unit || (activeCategoryTab === 'patches' ? '/ PIECE' : '/ DESIGN')}
                       </div>
                     </div>
 
-                    {/* Features List */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '2rem' }}>
-                      {(formData.features || []).filter(f => f && f.trim()).map((feat, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                    {/* Features Checklist */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
+                      {(formData.features || []).map((feat, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
                           <div style={{ background: '#dcfce7', color: '#16a34a', padding: '0.2rem', borderRadius: '50%', marginTop: '2px', flexShrink: 0, display: 'flex' }}>
-                            <Check size={12} />
+                            <CheckCircle size={14} />
                           </div>
-                          <span style={{ fontSize: '0.875rem', color: 'var(--navy-900)', fontWeight: 600, lineHeight: 1.4 }}>{feat}</span>
+                          <span style={{ fontSize: '0.875rem', color: '#1e293b', fontWeight: 600, lineHeight: 1.4 }}>
+                            {feat}
+                          </span>
                         </div>
                       ))}
                     </div>
+                  </div>
 
-                    {/* CTA Button */}
-                    <div style={{
-                      padding: '0.95rem',
-                      background: theme.btnBg,
-                      color: '#ffffff',
-                      textAlign: 'center',
-                      borderRadius: '12px',
-                      fontWeight: 800,
-                      fontSize: '0.95rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.4rem',
-                      boxShadow: `0 6px 18px ${theme.glowColor}`
-                    }}>
-                      {formData.button_text || 'Order Now'} <ArrowRight size={16} />
-                    </div>
+                  {/* Action CTA */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    <button 
+                      type="button" 
+                      style={{ 
+                        width: '100%', 
+                        justifyContent: 'center', 
+                        fontWeight: 800, 
+                        fontSize: '1rem', 
+                        padding: '1rem', 
+                        borderRadius: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        background: theme.btnGradient,
+                        color: '#ffffff',
+                        border: 'none',
+                        boxShadow: `0 6px 20px ${theme.glowColor}`
+                      }}
+                    >
+                      <span>{formData.button_text || `Order (${formData.price || 0})`}</span>
+                      <ArrowRight size={16} />
+                    </button>
 
                     {formData.turnaround_time && (
-                      <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700, marginTop: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
-                        <Clock size={13} style={{ color: theme.color }} /> Express Delivery: {formData.turnaround_time}
+                      <div style={{ textAlign: 'center', fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                        <Clock size={14} style={{ color: theme.color }} /> Express Delivery: {formData.turnaround_time}
                       </div>
                     )}
                   </div>
+
                 </div>
               );
             })()}
           </div>
 
         </div>
-      ) : (
-        /* ========================================================================= */
-        /* OVERVIEW MODE: 3 Packages of the Active Service Category in Grid View     */
-        /* ========================================================================= */
-        <div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', alignItems: 'stretch', paddingTop: '1.25rem', overflow: 'visible' }}>
-            {getPackagesForCategory(activeCategoryTab).map((pkgObj) => {
-              const activeData = pkgObj.dbData || pkgObj.defaultData;
-              const IconComp = pkgObj.theme.icon;
-              const isPopular = activeData.is_popular !== undefined ? activeData.is_popular : pkgObj.defaultData.is_popular;
-              const badgeText = activeData.badge_text || pkgObj.defaultData.badge_text;
-              const price = (activeData.price !== undefined && activeData.price !== null) ? activeData.price : pkgObj.defaultData.price;
-              const origPrice = activeData.original_price || pkgObj.defaultData.original_price;
-              const features = Array.isArray(activeData.features) && activeData.features.length > 0 ? activeData.features : pkgObj.defaultData.features;
+      )}
 
-              return (
-                <div 
-                  key={pkgObj.key}
-                  className="card"
-                  style={{
-                    background: '#ffffff',
-                    border: isPopular ? `2.5px solid ${pkgObj.theme.color}` : '1.5px solid var(--border-color)',
-                    borderRadius: '24px',
-                    padding: '2.5rem 2rem 2rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    boxShadow: isPopular ? `0 18px 40px ${pkgObj.theme.glowColor}` : '0 6px 24px rgba(0, 0, 0, 0.05)',
-                    position: 'relative',
-                    overflow: 'visible'
-                  }}
-                >
-                  {/* Top Badge Pill */}
-                  {badgeText && (
-                    <span style={{
-                      position: 'absolute',
-                      top: '-14px',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      background: pkgObj.theme.color,
-                      color: '#ffffff',
-                      padding: '0.35rem 1.3rem',
-                      borderRadius: '9999px',
-                      fontSize: '0.78rem',
-                      fontWeight: 900,
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      whiteSpace: 'nowrap',
-                      zIndex: 20,
-                      boxShadow: `0 6px 16px ${pkgObj.theme.glowColor}`
-                    }}>
-                      {badgeText}
-                    </span>
-                  )}
+      {/* Delete Confirmation Modal */}
+      {deleteCandidate && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '20px',
+            padding: '2rem',
+            maxWidth: '480px',
+            width: '100%',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+            textAlign: 'center'
+          }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
+              <AlertTriangle size={28} />
+            </div>
 
-                  <div>
-                    {/* Header */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                      <div style={{ background: pkgObj.theme.bgLight, color: pkgObj.theme.color, padding: '0.7rem', borderRadius: '12px', display: 'flex' }}>
-                        <IconComp size={24} />
-                      </div>
-                      <div>
-                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: pkgObj.theme.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                          {pkgObj.theme.serviceLabel} · PACKAGE #{pkgObj.packageNumber}
-                        </span>
-                        <h3 style={{ fontSize: '1.35rem', fontWeight: 900, margin: '0.15rem 0 0', color: 'var(--navy-900)', lineHeight: 1.2 }}>
-                          {activeData.title || pkgObj.defaultData.title}
-                        </h3>
-                      </div>
-                    </div>
+            <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0f172a', margin: '0 0 0.5rem' }}>
+              Delete Pricing Package?
+            </h3>
+            <p style={{ fontSize: '0.925rem', color: '#64748b', lineHeight: 1.5, margin: '0 0 1.75rem' }}>
+              Are you sure you want to permanently delete <strong>"{deleteCandidate.title}"</strong>? This package will be removed immediately from the live website and cannot be undone.
+            </p>
 
-                    {/* Subtitle */}
-                    <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.35rem', lineHeight: 1.5, minHeight: '40px' }}>
-                      {activeData.subtitle || pkgObj.defaultData.subtitle}
-                    </p>
-
-                    {/* Price */}
-                    <div style={{ marginBottom: '1.5rem', padding: '1.25rem', background: '#f8fafc', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                        <div style={{ fontSize: '3rem', fontWeight: 900, color: pkgObj.theme.color, lineHeight: 1, letterSpacing: '-0.03em' }}>
-                          ${price}
-                        </div>
-                        {origPrice && (
-                          <div style={{ fontSize: '1.2rem', color: 'var(--text-muted)', textDecoration: 'line-through', fontWeight: 700 }}>
-                            ${origPrice}
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 800, marginTop: '0.35rem', textTransform: 'uppercase' }}>
-                        {activeData.price_unit || pkgObj.defaultData.price_unit}
-                      </div>
-                    </div>
-
-                    {/* Features list */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.75rem' }}>
-                      {features.map((feat, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
-                          <div style={{ background: '#dcfce7', color: '#16a34a', padding: '0.2rem', borderRadius: '50%', marginTop: '2px', flexShrink: 0, display: 'flex' }}>
-                            <Check size={12} />
-                          </div>
-                          <span style={{ fontSize: '0.85rem', color: 'var(--navy-900)', fontWeight: 600, lineHeight: 1.4 }}>{feat}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Edit Action Button */}
-                  <div>
-                    {activeData.turnaround_time && (
-                      <div style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
-                        <Clock size={13} style={{ color: pkgObj.theme.color }} /> Express Delivery: {activeData.turnaround_time}
-                      </div>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => handleEditPackage(pkgObj)}
-                      className="btn btn-primary-orange btn-md"
-                      style={{
-                        width: '100%',
-                        fontWeight: 800,
-                        fontSize: '0.925rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.5rem',
-                        padding: '0.85rem',
-                        background: pkgObj.theme.btnBg
-                      }}
-                    >
-                      <Edit3 size={16} /> Edit Package #{pkgObj.packageNumber} ({activeData.title})
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setDeleteCandidate(null)}
+                disabled={isDeleting}
+                className="btn btn-outline"
+                style={{ fontWeight: 700, padding: '0.75rem 1.5rem' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+                style={{
+                  background: '#dc2626',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontWeight: 800,
+                  padding: '0.75rem 1.5rem',
+                  cursor: 'pointer'
+                }}
+              >
+                {isDeleting ? 'Deleting...' : 'Yes, Delete Package'}
+              </button>
+            </div>
           </div>
         </div>
       )}
+
     </div>
   );
 };

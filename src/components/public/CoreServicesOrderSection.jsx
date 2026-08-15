@@ -23,7 +23,8 @@ import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 
 export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTabs = false, initialTier = 'standard' }) => {
   const navigate = useNavigate();
-  const { pricing = {}, pricingCards = [], patchCards = [], createOrder, protectedNavigate, showToast } = useAppState();
+  const { dynamicPricingTiers = [], createOrder, protectedNavigate, showToast } = useAppState();
+
 
   const [activeService, setActiveService] = useState(defaultService);
   const [isOrderViewOpen, setIsOrderViewOpen] = useState(false);
@@ -713,32 +714,51 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
               </p>
             </div>
 
-            <div className="grid-responsive-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-              
-              {pricingCards && pricingCards.length > 0 ? (
-                pricingCards.map((cat, idx) => (
-                  <PackageCard
-                    key={cat.id || idx}
-                    cat={cat}
-                    idx={idx}
-                    onSelect={(selectedCat) => {
-                      let tierKey = 'standard';
-                      const cId = (selectedCat.id || '').toLowerCase();
-                      if (cId.includes('basic')) tierKey = 'basic';
-                      else if (cId.includes('premium')) tierKey = 'premium';
-                      
-                      setDigitizingPackageTier(tierKey);
-                      setIsOrderViewOpen(true);
-                    }}
-                    forceCategory="embroidery"
-                  />
-                ))
-              ) : (
-                <div style={{ textAlign: 'center', gridColumn: '1 / -1', color: 'var(--text-muted)' }}>
-                  Loading pricing packages...
-                </div>
-              )}
+            <div className="grid-responsive-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2.5rem', marginBottom: '2.5rem' }}>
+              {(() => {
+                const embTiers = (dynamicPricingTiers || [])
+                  .filter(t => (t.service_type || '').toLowerCase().includes('emb'))
+                  .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+                const defaultEmb = [
+                  { id: 'emb-1', title: 'Left Chest & Cap Small Logo', subtitle: 'Commercial stitch files for caps, polos, shirts & jackets', price: 10.00, price_unit: '/ DESIGN', turnaround_time: '4–12 Hours', badge_text: 'BASIC', is_popular: false, features: ['Up to 4" x 4" Dimensions', '100% Hand-Mapped Stitch Pathing', 'Cap Profile Optimization'] },
+                  { id: 'emb-2', title: 'Mid-Size Jacket & Sleeve Design', subtitle: 'Medium complexity artwork up to 7" x 7" with calculated density', price: 20.00, price_unit: '/ DESIGN', turnaround_time: '6–12 Hours', badge_text: 'MOST POPULAR', is_popular: true, features: ['Up to 7" x 7" Artwork Area', 'Complex Multi-Color Layering', 'Free Unlimited Revisions'] },
+                  { id: 'emb-3', title: 'Full Back & 3D Puff Foam', subtitle: 'High stitch count full jacket back designs up to 12" x 12"', price: 35.00, price_unit: '/ DESIGN', turnaround_time: '8–12 Hours', badge_text: 'PRO / 3D PUFF', is_popular: false, features: ['Up to 12" x 12" Full Back Area', 'High Density 3D Puff Foam Pathing', '24/7 Priority Support'] }
+                ];
+
+                const sourceTiers = embTiers.length > 0 ? embTiers : defaultEmb;
+
+                return sourceTiers.map((t, idx) => {
+                  const cardObj = {
+                    id: t.id || `emb-tier-${idx}`,
+                    title: t.title,
+                    subTitle: t.subtitle,
+                    badge: t.badge_text,
+                    popular: Boolean(t.is_popular),
+                    rate: typeof t.price === 'number' ? `$${t.price.toFixed(2)}` : (String(t.price).startsWith('$') ? String(t.price) : `$${t.price}`),
+                    unit: t.price_unit || '/ design',
+                    delivery: t.turnaround_time,
+                    btnText: t.button_text || `Order ${t.title.split(' ')[0]}`,
+                    features: Array.isArray(t.features) ? t.features : []
+                  };
+
+                  return (
+                    <PackageCard
+                      key={cardObj.id}
+                      cat={cardObj}
+                      idx={idx}
+                      onSelect={(selectedCat) => {
+                        const tierKey = idx === 0 ? 'basic' : idx === 2 ? 'premium' : 'standard';
+                        setDigitizingPackageTier(tierKey);
+                        setIsOrderViewOpen(true);
+                      }}
+                      forceCategory="embroidery"
+                    />
+                  );
+                });
+              })()}
             </div>
+
           </div>
         ) : (
           /* Dedicated Order Configuration View */
@@ -813,24 +833,33 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                         cursor: 'pointer'
                       }}
                     >
-                      {pricingCards && pricingCards.length > 0 ? (
-                        pricingCards.map(card => {
-                          const value = card.id.replace('pcard-', '');
-                          return (
-                            <option key={card.id} value={value}>
-                              {card.badge ? `${card.badge} • ` : ''}{card.title} ({card.rate})
-                            </option>
-                          );
-                        })
-                      ) : (
-                        <>
-                          <option value="basic">⚡ Essential Tier • Basic Digitizing ($10.00)</option>
-                          <option value="standard">⭐ Most Popular • Standard Digitizing ($15.00)</option>
-                          <option value="premium">✨ VIP & Jacket Back • Premium Digitizing ($25.00)</option>
-                        </>
-                      )}
+                      {(() => {
+                        const embTiers = (dynamicPricingTiers || [])
+                          .filter(t => (t.service_type || '').toLowerCase().includes('emb'))
+                          .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+                        if (embTiers.length > 0) {
+                          return embTiers.map((t, tIdx) => {
+                            const val = tIdx === 0 ? 'basic' : tIdx === 2 ? 'premium' : 'standard';
+                            return (
+                              <option key={t.id || tIdx} value={val}>
+                                {t.badge_text ? `${t.badge_text} • ` : ''}{t.title} (${typeof t.price === 'number' ? `$${t.price.toFixed(2)}` : t.price})
+                              </option>
+                            );
+                          });
+                        }
+
+                        return (
+                          <>
+                            <option value="basic">⚡ BASIC • Left Chest & Cap ($10.00)</option>
+                            <option value="standard">⭐ MOST POPULAR • Mid-Size Jacket ($20.00)</option>
+                            <option value="premium">✨ PRO / 3D PUFF • Full Back ($35.00)</option>
+                          </>
+                        );
+                      })()}
                     </select>
                   </div>
+
                        {/* Multi-Placement Itemized Cart Configuration */}
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
