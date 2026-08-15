@@ -78,14 +78,13 @@ const DEFAULT_SERVICES = {
     id: 'embroidery',
     serviceKey: 'embroidery',
     badge: 'Factory-Grade Machine Digitizing',
-    title: 'Commercial Embroidery Digitizing',
-    highlight: 'Zero Thread Breaks. Calculated Pull Compensation. 4–12 Hr Turnaround.',
+    title: 'Commercial Embroidery Digitizing Services',
+    highlight: 'Zero Thread Breaks. Calculated Pull Compensation. Press Ready.',
     description: 'Engineered by master digitizers with 15+ years factory experience. Hand-mapped stitch pathing for caps, left chest polos, 3D puff foam, and full jacket backs with free unlimited revisions.',
     features: [
-      '100% Manual Digitizing (No Auto-Trace shortcuts)',
-      'All Machine Formats: Tajima (.DST), Wilcom (.EMB), Brother (.PES), Melco (.EXP)',
-      'Free Unlimited Production Edits & Color Sequence Sheets',
-      'Guaranteed Zero Thread Breaks on Commercial Machines'
+      '100% Manual Digitizing (Zero Auto-Trace Shortcuts)',
+      'All Machine Formats: Tajima (.DST), Wilcom (.EMB), Brother (.PES)',
+      'Guaranteed Zero Thread Breaks & Free Unlimited Production Edits'
     ],
     stats: [
       { value: '100k+', label: 'Sew-Outs' },
@@ -103,22 +102,15 @@ const DEFAULT_SERVICES = {
       {
         id: 'emb-img-1',
         title: 'Commercial Embroidery Digitizing',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/c41fb095-1b51-45b2-8990-30c9232002d8.png',
+        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/e82803b4-1dca-4138-bc49-892f57095c9a.PNG',
         display_order: 1,
         is_active: true
       },
       {
         id: 'emb-img-2',
         title: 'Precision Embroidery Sew-Out',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/9b99906f-75cc-4697-9e82-4cecf6e9de08.JPG',
+        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/f36e7a8e-db0c-4f49-a2c8-e53dca578c0a.PNG',
         display_order: 2,
-        is_active: true
-      },
-      {
-        id: 'emb-img-3',
-        title: 'High-Density Custom Embroidery',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/b8cb84c5-9241-4ce8-8a78-48a6ddf86e9a.JPG',
-        display_order: 3,
         is_active: true
       }
     ]
@@ -133,8 +125,7 @@ const DEFAULT_SERVICES = {
     features: [
       '100% Hand-Crafted Smooth Node Paths (Zero Overlapping Lines)',
       'Pantone Solid Coated Spot Color Separation Included',
-      'Master Source Suite: .AI, .EPS, .SVG & High-Res 300+ DPI PDF',
-      'Print, Vinyl Cut & Screen-Printing Production Ready'
+      'Master Source Suite: .AI, .EPS, .SVG & High-Res 300+ DPI PDF'
     ],
     stats: [
       { value: '50k+', label: 'Vectors' },
@@ -151,15 +142,15 @@ const DEFAULT_SERVICES = {
     showcase_images: [
       {
         id: 'vec-img-1',
-        title: 'Commercial Embroidery & Vector Studio',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/c41fb095-1b51-45b2-8990-30c9232002d8.png',
+        title: 'Blurry Raster to Clean Scalable Vector',
+        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/86f3f965-f16c-4c22-8ef7-4f2acf3f0086.PNG',
         display_order: 1,
         is_active: true
       },
       {
         id: 'vec-img-2',
         title: 'Precision Vector Paths',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/9b99906f-75cc-4697-9e82-4cecf6e9de08.JPG',
+        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/dcd10b4e-b7fc-41f7-8736-05c5364ae665.JPG',
         display_order: 2,
         is_active: true
       }
@@ -175,8 +166,7 @@ const DEFAULT_SERVICES = {
     features: [
       'Custom Embroidered, High-Density Woven & 3D Rubber PVC',
       'Military-Grade Velcro, Heat-Seal Iron-On & Peel Backings',
-      'Free 12-Hour Digital Proof & Doorstep Worldwide Shipping',
-      'Merrowed & Laser Cut High-Durability Borders'
+      'Free 12-Hour Digital Proof & Doorstep Worldwide Shipping'
     ],
     stats: [
       { value: '10 Pcs', label: 'Low MOQ' },
