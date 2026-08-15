@@ -784,12 +784,36 @@ export async function fetchCatalogFromSupabase() {
     const res = await fetch('/api/catalog?action=fetchAll');
     const data = await res.json();
     
-    // Parse site_config array into a map
+    // Parse site_config array into a map with robust JSON parsing
     const siteConfig = data.site_config || [];
     const configMap = {};
     siteConfig.forEach(item => {
-      configMap[item.key] = item.value;
+      if (item && item.key) {
+        if (typeof item.value === 'string') {
+          try {
+            configMap[item.key] = JSON.parse(item.value);
+          } catch (e) {
+            configMap[item.key] = item.value;
+          }
+        } else {
+          configMap[item.key] = item.value;
+        }
+      }
     });
+
+    // Extract site_settings composite or direct config rows
+    const rawSettings = typeof configMap['site_settings'] === 'object' ? configMap['site_settings'] : {};
+    const parsedAnnouncement = typeof configMap['announcement'] === 'object' 
+      ? configMap['announcement'] 
+      : (typeof rawSettings?.announcement === 'object' ? rawSettings.announcement : null);
+
+    const parsedPromotionalBanner = typeof configMap['promotionalBanner'] === 'object' 
+      ? configMap['promotionalBanner'] 
+      : (typeof rawSettings?.promotionalBanner === 'object' ? rawSettings.promotionalBanner : null);
+
+    const parsedPromoCodes = Array.isArray(configMap['promoCodes']) 
+      ? configMap['promoCodes'] 
+      : (Array.isArray(rawSettings?.promoCodes) ? rawSettings.promoCodes : null);
 
     return {
       // Original snake_case/raw keys
@@ -820,22 +844,22 @@ export async function fetchCatalogFromSupabase() {
       heroGlobalSettings: configMap['hero_global_settings'] || null,
       heroServiceText: configMap['hero_service_text'] || null,
       siteSettings: {
-        ...(typeof configMap['site_settings'] === 'object' ? configMap['site_settings'] : {}),
-        announcement: typeof configMap['announcement'] === 'object' ? configMap['announcement'] : (typeof configMap['site_settings']?.announcement === 'object' ? configMap['site_settings'].announcement : {
+        ...rawSettings,
+        announcement: parsedAnnouncement || {
           enabled: true,
           badge: 'SPECIAL PROMO',
           text: 'Get 20% OFF on All Custom Embroidery Digitizing & Vector Art Orders!',
           promoCode: 'SAVE20',
           linkText: 'Claim 20% Off',
           linkUrl: '/order',
-          theme: 'orange',
-          bgColor: '#ea580c',
+          theme: 'emerald',
+          bgColor: 'linear-gradient(90deg, #065f46 0%, #059669 50%, #065f46 100%)',
           textColor: '#ffffff',
           showCodeBadge: true,
           showCountdown: true,
           countdownHours: 24
-        }),
-        promotionalBanner: typeof configMap['promotionalBanner'] === 'object' ? configMap['promotionalBanner'] : (typeof configMap['site_settings']?.promotionalBanner === 'object' ? configMap['site_settings'].promotionalBanner : {
+        },
+        promotionalBanner: parsedPromotionalBanner || {
           enabled: true,
           title: 'First-Time Client Welcome Offer',
           description: 'Enjoy 20% off your first digitizing file or vector redraw with guaranteed zero thread breaks and free unlimited revisions.',
@@ -844,8 +868,8 @@ export async function fetchCatalogFromSupabase() {
           ctaLink: '/order',
           theme: 'navy',
           position: 'bottom-right'
-        }),
-        promoCodes: Array.isArray(configMap['promoCodes']) ? configMap['promoCodes'] : (Array.isArray(configMap['site_settings']?.promoCodes) ? configMap['site_settings'].promoCodes : [
+        },
+        promoCodes: parsedPromoCodes || [
           {
             code: 'SAVE20',
             discountType: 'percent',
@@ -854,7 +878,7 @@ export async function fetchCatalogFromSupabase() {
             description: '20% off all embroidery digitizing and vector conversion services',
             isActive: true
           }
-        ])
+        ]
       },
       pricing: configMap['pricing'] || null,
       serviceCms: {
