@@ -52,41 +52,9 @@ export const VectorArtPage = ({ hideHero = false }) => {
   const [isRush, setIsRush] = useState(false);
   const [paymentOption, setPaymentOption] = useState('bolt'); // 'bolt' | 'wallet'
   const [isOrderViewOpen, setIsOrderViewOpen] = useState(false);
-  const [vectorCards, setVectorCards] = useState([]);
-
-  React.useEffect(() => {
-    import('../../services/supabaseService').then(({ getCmsContent }) => {
-      getCmsContent('vector_cards').then(data => {
-        if (data && data.length > 0) {
-          const mappedCards = data.map((card, idx) => {
-            const isRush = card.title.toLowerCase().includes('rush');
-            const isComplex = card.title.toLowerCase().includes('complex');
-            
-            return {
-              id: `vec-${idx}`,
-              title: card.title,
-              subTitle: card.description,
-              discountTag: card.popular ? '⭐ MOST POPULAR' : (isRush ? '✨ EXPRESS' : ''),
-              badge: card.popular ? 'MOST POPULAR' : '',
-              popular: card.popular,
-              rate: card.price,
-              unit: '/ design',
-              delivery: card.turnaround,
-              complexityValue: isComplex ? 'Complex Vector Redraw' : 'Simple Vector Redraw',
-              isRushValue: isRush,
-              tierKey: isRush ? 'premium' : (card.popular ? 'standard' : 'basic'),
-              category: 'vector',
-              features: card.features,
-              btnText: `Configure Order (${card.price})`
-            };
-          });
-          setVectorCards(mappedCards);
-        }
-      });
-    });
-  }, []);
 
   const addVectorItem = () => {
+
     setVectorItems(prev => [
       ...prev,
       {
@@ -521,19 +489,24 @@ export const VectorArtPage = ({ hideHero = false }) => {
                   id: 'vec-premium',
                   category: 'vector',
                   tierKey: 'premium',
-                  title: 'Premium Mascot & Complex Vector',
-                  subTitle: 'Ideal for complex illustrations & intricate logos',
+                  title: 'Complex Illustration & Mascot',
+                  subTitle: 'Ideal for complex illustrations, mascots & intricate crests',
                   icon: Sparkles,
-                  discountTag: 'COMPLEX & RUSH',
-                  rate: '$35.00',
+                  discountTag: 'MASTER DETAIL',
+                  rate: '$45.00',
                   unit: '/ design',
-                  delivery: 'Super Rush Available',
+                  delivery: '12–24 Hours',
                   complexityValue: 'Complex Vector Redraw',
                   isRushValue: true,
+                  btnText: 'Order Complex ($45.00)',
+                  badge: 'MASTER DETAIL',
+                  popular: false,
                   features: [
-                    'Complex Mascot Node Pathing',
-                    'Super Rush Express Delivery',
-                    'VIP Studio Support'
+                    'Ultra-Intricate Fine Vector Details',
+                    'Complete Multi-Layer Organization',
+                    'Print-Ready Color Separations',
+                    'All Master Source & Vector Formats',
+                    'VIP Priority Studio Support'
                   ]
                 }
               ];
@@ -541,7 +514,6 @@ export const VectorArtPage = ({ hideHero = false }) => {
               const dbDynamicVecTiers = (dynamicPricingTiers || [])
                 .filter(t => (t.service_type || '').toLowerCase().includes('vec'))
                 .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
-
 
               const mappedDynamicVecCards = dbDynamicVecTiers.map((t, idx) => ({
                 id: t.id || `vec-tier-${idx}`,
@@ -556,15 +528,14 @@ export const VectorArtPage = ({ hideHero = false }) => {
                 delivery: t.turnaround_time || '6-12 Hours',
                 complexityValue: idx === 0 ? 'Simple Vector Redraw' : idx === 1 ? 'Standard Vector Conversion' : 'Complex Vector Redraw',
                 isRushValue: idx === 2,
-                btnText: t.button_text || `Order (${t.price})`,
+                btnText: t.button_text || `Order ${t.title.split(' ')[0]} ($${t.price})`,
                 badge: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
                 popular: Boolean(t.is_popular),
                 features: Array.isArray(t.features) ? t.features : []
               }));
 
-              const activeVecCards = mappedDynamicVecCards.length > 0 
-                ? mappedDynamicVecCards 
-                : (vectorCards.length > 0 ? vectorCards : defaultVectorCards);
+              const activeVecCards = mappedDynamicVecCards.length > 0 ? mappedDynamicVecCards : defaultVectorCards;
+
 
               return activeVecCards.map((cat, idx) => (
                 <PackageCard

@@ -33,63 +33,66 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
       id: 'patch-basic',
       category: 'patch',
       tierKey: 'basic',
-      title: 'Basic Woven Patches',
-      subTitle: 'Ideal for simple logos and bulk orders',
+      title: 'Sample Batch (10–50 Pcs)',
+      subTitle: 'Low-minimum run perfect for small brands, clubs, prototypes & event samples',
       icon: Zap,
-      discountTag: '',
-      rate: '$1.50',
-      unit: 'starting rate',
-      delivery: '7-10 Days',
-      btnText: 'Order Basic ($1.50)',
-      badge: 'ESSENTIAL',
+      discountTag: 'SAMPLE RUN',
+      rate: '$4.50',
+      unit: '/ piece',
+      delivery: '3–5 Days',
+      btnText: 'Order Sample Run ($4.50)',
+      badge: 'SAMPLE RUN',
       popular: false,
       features: [
-        'Flat stitched edge detail',
-        'Iron-on backing',
-        'Ideal for simple logos & high-volume bulk runs',
-        'Standard 7-10 day studio turnaround'
+        'Ultra-Low 10 Pieces Minimum Order',
+        '12-Hour Free Digital Production Proof',
+        'Velcro Hook & Loop or Iron-On Backings',
+        'Custom Embroidered, Woven or 3D PVC',
+        '100% Quality Inspected Before Shipping'
       ]
     },
     {
       id: 'patch-standard',
       category: 'patch',
       tierKey: 'standard',
-      title: 'Standard Embroidered Patches',
-      subTitle: '3D raised thread texture & merrowed border',
+      title: 'Production Batch (100–500 Pcs)',
+      subTitle: 'Standard volume for company uniforms, tactical gear, martial arts & apparel brands',
       icon: Trophy,
       discountTag: 'MOST POPULAR',
       rate: '$2.50',
-      unit: 'starting rate',
-      delivery: '5-7 Days',
-      btnText: 'Order Standard ($2.50)',
+      unit: '/ piece',
+      delivery: '4–7 Days',
+      btnText: 'Order Production Run ($2.50)',
       badge: 'MOST POPULAR',
       popular: true,
       features: [
-        'Classic merrowed border edges',
-        '3D raised thread texture',
-        'Velcro or heat-seal backing options',
-        'Free pre-production digital proof'
+        'Merrowed Border or Laser-Cut Edge',
+        'Up to 9 Thread Colors Included Free',
+        'Free Military-Grade Backing Choice',
+        'Free Doorstep Worldwide Express Shipping',
+        'Free Digital Proof with Unlimited Edits'
       ]
     },
     {
       id: 'patch-premium',
       category: 'patch',
       tierKey: 'premium',
-      title: 'Premium 3D PVC & Leather Patches',
-      subTitle: 'Waterproof 3D molded PVC or genuine leather',
+      title: 'Wholesale Bulk Batch (500+ Pcs)',
+      subTitle: 'Factory-direct wholesale pricing with volume discounts & priority factory line',
       icon: Sparkles,
-      discountTag: 'LUXURY & PVC',
-      rate: '$3.50',
-      unit: 'starting rate',
-      delivery: '5-7 Days',
-      btnText: 'Order Premium ($3.50)',
-      badge: 'LUXURY & PVC',
+      discountTag: 'WHOLESALE',
+      rate: '$1.50',
+      unit: '/ piece',
+      delivery: '7–10 Days',
+      btnText: 'Order Bulk Wholesale ($1.50)',
+      badge: 'WHOLESALE',
       popular: false,
       features: [
-        'High-durability waterproof PVC or genuine leather',
-        'Laser-cut precision border outlines',
-        'Tactical velcro or adhesive mounting',
-        'VIP priority production'
+        'Factory Direct Wholesale Rate ($1.50/pc)',
+        'Priority Dedicated Manufacturing Line',
+        'Custom Retail Backer Cards Available',
+        'Express Air Doorstep Global Delivery',
+        'Dedicated Production QA Manager'
       ]
     }
   ];
@@ -107,17 +110,16 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
     icon: idx === 0 ? Zap : idx === 1 ? Trophy : Sparkles,
     discountTag: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
     rate: typeof t.price === 'number' ? `$${t.price.toFixed(2)}` : (String(t.price).startsWith('$') ? String(t.price) : `$${t.price}`),
-    unit: t.price_unit || 'starting rate',
-    delivery: t.turnaround_time || '5-7 Days',
-    btnText: t.button_text || `Order (${t.price})`,
+    unit: t.price_unit || '/ piece',
+    delivery: t.turnaround_time || '4–7 Days',
+    btnText: t.button_text || `Order ${t.title.split(' ')[0]} ($${t.price})`,
     badge: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
     popular: Boolean(t.is_popular),
     features: Array.isArray(t.features) ? t.features : []
   }));
 
-  const cardsToRender = mappedDynamicPatchCards.length > 0
-    ? mappedDynamicPatchCards
-    : (patchCards && patchCards.length > 0 ? patchCards : defaultPatchCards);
+  const cardsToRender = mappedDynamicPatchCards.length > 0 ? mappedDynamicPatchCards : defaultPatchCards;
+
 
 
   const handleStartOrder = (tierKey = 'standard', cardObj = null) => {

@@ -10,7 +10,7 @@ import {
 import { PackageCard } from './PackageCard';
 
 export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
-  const { setIsOrderWizardOpen, openOrderWizard, pricingCards = [], dynamicPricingTiers = [], homePageConfig = {} } = useAppState();
+  const { setIsOrderWizardOpen, openOrderWizard, dynamicPricingTiers = [], homePageConfig = {} } = useAppState();
   const dbSettings = homePageConfig?.settings || {};
 
   const [selectedTier, setSelectedTier] = useState('standard');
@@ -19,99 +19,75 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
-  const [cardsToRender, setCardsToRender] = useState([]);
-  
-  useEffect(() => {
-    import('../../services/supabaseService').then(({ getCmsContent }) => {
-      getCmsContent('embroidery_cards').then(data => {
-        if (data && data.length > 0) {
-          const mappedCards = data.map((card, i) => ({
-            id: `pcard-${i}`,
-            category: 'embroidery',
-            tierKey: card.title.toLowerCase().includes('premium') ? 'premium' : (card.popular ? 'standard' : 'basic'),
-            title: card.title,
-            subTitle: card.description,
-            icon: i === 0 ? Zap : (i === 1 ? Trophy : Sparkles),
-            discountTag: card.popular ? 'MOST POPULAR' : '',
-            rate: card.price,
-            unit: '/ design',
-            delivery: card.turnaround,
-            btnText: `Order (${card.price})`,
-            badge: card.popular ? 'MOST POPULAR' : '',
-            popular: card.popular,
-            features: card.features
-          }));
-          setCardsToRender(mappedCards);
-        }
-      });
-    });
-  }, []);
-
   const defaultEmbroideryCards = [
     {
-      id: 'pcard-basic',
+      id: 'emb-basic',
       category: 'embroidery',
       tierKey: 'basic',
-      title: 'Basic Digitizing',
-      subTitle: 'Ideal for simple left chest / small logos',
+      title: 'Left Chest & Cap Small Logo',
+      subTitle: 'Commercial stitch files for caps, polos, shirts & jackets (.DST, .PES, .EMB)',
       icon: Zap,
-      discountTag: '',
+      discountTag: 'BASIC',
       rate: '$10.00',
       unit: '/ design',
-      delivery: '8-12 Hours',
-      btnText: 'Order Basic ($10.00)',
-      badge: 'ESSENTIAL',
+      delivery: '4–12 Hours',
+      btnText: 'Order Left Chest ($10.00)',
+      badge: 'BASIC',
       popular: false,
       features: [
-        'Standard turnaround',
-        '.DST / .PES machine files',
-        'Essential stitch paths & underlay'
+        'Up to 4" x 4" Dimensions',
+        '100% Hand-Mapped Stitch Pathing',
+        'Cap Curved Profile Optimization',
+        'Zero Thread Breaks Guaranteed',
+        'All Machine Formats (.DST/.PES/.EMB)'
       ]
     },
     {
-      id: 'pcard-standard',
+      id: 'emb-standard',
       category: 'embroidery',
       tierKey: 'standard',
-      title: 'Standard Digitizing',
-      subTitle: 'Ideal for standard left chest & caps',
+      title: 'Mid-Size Jacket & Sleeve Design',
+      subTitle: 'Medium complexity artwork up to 7" x 7" with calculated density and pull compensation',
       icon: Trophy,
       discountTag: 'MOST POPULAR',
       rate: '$20.00',
       unit: '/ design',
-      delivery: '4-8 Hours Express',
-      btnText: 'Order Standard ($20.00)',
+      delivery: '6–12 Hours',
+      btnText: 'Order Mid-Size ($20.00)',
       badge: 'MOST POPULAR',
       popular: true,
       features: [
-        '4-Hour Express Available',
-        'Free native .EMB source files',
-        '100% Free Unlimited Revisions'
+        'Up to 7" x 7" Medium Artwork Area',
+        'Complex Multi-Color Layering',
+        'Underlay Pull & Push Compensation',
+        'Free Unlimited Production Revisions',
+        'Production PDF Color Sequence Sheet'
       ]
     },
     {
-      id: 'pcard-premium',
+      id: 'emb-premium',
       category: 'embroidery',
       tierKey: 'premium',
-      title: 'Premium Digitizing',
-      subTitle: 'Ideal for Jacket Backs & Large Crests',
+      title: 'Full Back & 3D Puff Foam',
+      subTitle: 'High stitch count full jacket back designs up to 12" x 12" and specialty 3D puff foam',
       icon: Sparkles,
-      discountTag: 'VIP & COMPLEX',
-      rate: '$30.00',
+      discountTag: 'PRO / 3D PUFF',
+      rate: '$35.00',
       unit: '/ design',
-      delivery: '4-8 Hours Express',
-      btnText: 'Order Premium ($30.00)',
-      badge: 'VIP & COMPLEX',
+      delivery: '8–12 Hours',
+      btnText: 'Order Full Back ($35.00)',
+      badge: 'PRO / 3D PUFF',
       popular: false,
       features: [
-        '3D Puff Cap density pathing',
-        'Jacket back high stitch count verification',
-        '24/7 Priority studio support'
+        'Up to 12" x 12" Full Back Area',
+        'High Density 3D Puff Foam Pathing',
+        'Jacket & Hoodie Fabric Calibration',
+        'Color Stops & Trim Optimization',
+        '24/7 Priority Master Digitizer Support'
       ]
     }
   ];
 
-  const dbFilteredCards = (pricingCards || []).filter(c => matchCategory(c.category, 'embroidery'));
-  
   const dbDynamicTiers = (dynamicPricingTiers || [])
     .filter(t => matchCategory(t.service_type, 'embroidery'))
     .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
@@ -126,16 +102,15 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
     discountTag: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
     rate: typeof t.price === 'number' ? `$${t.price.toFixed(2)}` : (String(t.price).startsWith('$') ? String(t.price) : `$${t.price}`),
     unit: t.price_unit || '/ design',
-    delivery: t.turnaround_time || '4-12 Hours Express',
-    btnText: t.button_text || `Order (${t.price})`,
+    delivery: t.turnaround_time || '4–12 Hours Express',
+    btnText: t.button_text || `Order ${t.title.split(' ')[0]} ($${t.price})`,
     badge: t.badge_text || (t.is_popular ? 'MOST POPULAR' : ''),
     popular: Boolean(t.is_popular),
     features: Array.isArray(t.features) ? t.features : []
   }));
 
-  const activeCards = mappedDynamicCards.length > 0 
-    ? mappedDynamicCards 
-    : (cardsToRender.length > 0 ? cardsToRender : (dbFilteredCards.length > 0 ? dbFilteredCards : defaultEmbroideryCards));
+  const activeCards = mappedDynamicCards.length > 0 ? mappedDynamicCards : defaultEmbroideryCards;
+
 
 
   const handleSelectTier = (tierKey = 'standard', cardObj = null) => {
