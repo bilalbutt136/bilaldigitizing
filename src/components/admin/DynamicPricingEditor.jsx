@@ -20,7 +20,9 @@ import {
   Tag, 
   CheckCircle,
   ArrowRight,
-  AlertTriangle
+  AlertTriangle,
+  Sparkles,
+  LayoutGrid
 } from 'lucide-react';
 
 const PALETTES = [
@@ -273,7 +275,7 @@ export const DynamicPricingEditor = () => {
     resetAllData
   } = useAppState();
 
-  const [activeCategoryTab, setActiveCategoryTab] = useState('embroidery'); // 'embroidery' | 'vector_art' | 'patches'
+  const [activeCategoryTab, setActiveCategoryTab] = useState('all'); // 'all' | 'embroidery' | 'vector_art' | 'patches'
   const [editingTier, setEditingTier] = useState(null);
   const [formData, setFormData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
@@ -285,7 +287,7 @@ export const DynamicPricingEditor = () => {
     return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pricing catalog...</div>;
   }
 
-  // Get all packages for the active category (from DB or fallback defaults)
+  // Get all packages for a specific category (from DB or fallback defaults)
   const getCategoryPackages = (categoryKey) => {
     const dbTiers = (dynamicPricingTiers || [])
       .filter(t => matchCategory(t.service_type, categoryKey))
@@ -311,12 +313,23 @@ export const DynamicPricingEditor = () => {
     }));
   };
 
-  const currentPackages = getCategoryPackages(activeCategoryTab);
+  // Get all packages combined across all 3 services
+  const getAllPackages = () => {
+    const emb = getCategoryPackages('embroidery');
+    const vec = getCategoryPackages('vector_art');
+    const patch = getCategoryPackages('patches');
+    return [...emb, ...vec, ...patch];
+  };
+
+  const currentPackages = activeCategoryTab === 'all' 
+    ? getAllPackages() 
+    : getCategoryPackages(activeCategoryTab);
 
   const handleOpenEdit = (pkg, idx) => {
+    const effectiveService = pkg.service_type || (activeCategoryTab === 'all' ? 'embroidery' : activeCategoryTab);
     setFormData({
       id: pkg.id && !String(pkg.id).startsWith('default-') ? pkg.id : undefined,
-      service_type: pkg.service_type || activeCategoryTab,
+      service_type: effectiveService,
       display_order: pkg.display_order || (idx + 1),
       title: pkg.title || '',
       subtitle: pkg.subtitle || '',
@@ -324,8 +337,8 @@ export const DynamicPricingEditor = () => {
       is_popular: Boolean(pkg.is_popular),
       price: (pkg.price !== undefined && pkg.price !== null) ? Number(pkg.price) : 0,
       original_price: pkg.original_price ? Number(pkg.original_price) : null,
-      price_unit: pkg.price_unit || (activeCategoryTab === 'patches' ? '/ PIECE' : '/ DESIGN'),
-      turnaround_time: pkg.turnaround_time || '4–12 Hours',
+      price_unit: pkg.price_unit || (effectiveService === 'patches' ? '/ PIECE' : '/ DESIGN'),
+      turnaround_time: pkg.turnaround_time || (effectiveService === 'patches' ? '3–5 Days' : '4–12 Hours'),
       button_text: pkg.button_text || `Order ${pkg.title ? pkg.title.split(' ')[0] : 'Package'}`,
       features: Array.isArray(pkg.features) ? [...pkg.features] : []
     });
@@ -334,18 +347,20 @@ export const DynamicPricingEditor = () => {
   };
 
   const handleOpenCreate = () => {
-    const maxOrder = currentPackages.reduce((max, p) => Math.max(max, p.display_order || 0), 0);
+    const targetService = activeCategoryTab === 'all' ? 'embroidery' : activeCategoryTab;
+    const catPkgs = getCategoryPackages(targetService);
+    const maxOrder = catPkgs.reduce((max, p) => Math.max(max, p.display_order || 0), 0);
     setFormData({
-      service_type: activeCategoryTab,
+      service_type: targetService,
       display_order: maxOrder + 1,
       title: 'New Service Package',
       subtitle: 'Complete professional studio package with commercial production files',
       badge_text: 'NEW TIER',
       is_popular: false,
-      price: 20.00,
-      original_price: 30.00,
-      price_unit: activeCategoryTab === 'patches' ? '/ PIECE' : '/ DESIGN',
-      turnaround_time: '4–12 Hours',
+      price: targetService === 'patches' ? 3.50 : 20.00,
+      original_price: targetService === 'patches' ? 5.00 : 30.00,
+      price_unit: targetService === 'patches' ? '/ PIECE' : '/ DESIGN',
+      turnaround_time: targetService === 'patches' ? '4–7 Days' : '4–12 Hours',
       button_text: 'Order Package',
       features: [
         'Commercial Production File Formats Included',
@@ -359,9 +374,11 @@ export const DynamicPricingEditor = () => {
   };
 
   const handleDuplicate = async (pkg) => {
-    const maxOrder = currentPackages.reduce((max, p) => Math.max(max, p.display_order || 0), 0);
+    const targetService = pkg.service_type || (activeCategoryTab === 'all' ? 'embroidery' : activeCategoryTab);
+    const catPkgs = getCategoryPackages(targetService);
+    const maxOrder = catPkgs.reduce((max, p) => Math.max(max, p.display_order || 0), 0);
     const cloned = {
-      service_type: pkg.service_type || activeCategoryTab,
+      service_type: targetService,
       display_order: maxOrder + 1,
       title: `${pkg.title} (Copy)`,
       subtitle: pkg.subtitle || '',
@@ -369,8 +386,8 @@ export const DynamicPricingEditor = () => {
       is_popular: false,
       price: Number(pkg.price) || 0,
       original_price: pkg.original_price ? Number(pkg.original_price) : null,
-      price_unit: pkg.price_unit || (activeCategoryTab === 'patches' ? '/ PIECE' : '/ DESIGN'),
-      turnaround_time: pkg.turnaround_time || '4–12 Hours',
+      price_unit: pkg.price_unit || (targetService === 'patches' ? '/ PIECE' : '/ DESIGN'),
+      turnaround_time: pkg.turnaround_time || (targetService === 'patches' ? '3–5 Days' : '4–12 Hours'),
       button_text: pkg.button_text || 'Order Package',
       features: Array.isArray(pkg.features) ? [...pkg.features] : []
     };
@@ -393,13 +410,15 @@ export const DynamicPricingEditor = () => {
   };
 
   const handleReorder = async (pkg, direction) => {
-    const idx = currentPackages.findIndex(p => p.id === pkg.id);
+    const serviceKey = pkg.service_type || (activeCategoryTab === 'all' ? 'embroidery' : activeCategoryTab);
+    const catPkgs = getCategoryPackages(serviceKey);
+    const idx = catPkgs.findIndex(p => p.id === pkg.id);
     if (idx < 0) return;
     const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
-    if (targetIdx < 0 || targetIdx >= currentPackages.length) return;
+    if (targetIdx < 0 || targetIdx >= catPkgs.length) return;
 
-    const currentItem = currentPackages[idx];
-    const targetItem = currentPackages[targetIdx];
+    const currentItem = catPkgs[idx];
+    const targetItem = catPkgs[targetIdx];
 
     const currentOrder = currentItem.display_order || (idx + 1);
     const targetOrder = targetItem.display_order || (targetIdx + 1);
@@ -447,7 +466,8 @@ export const DynamicPricingEditor = () => {
 
     setIsSaving(true);
     try {
-      const sanitizedType = (formData.service_type || activeCategoryTab).toLowerCase().replace('-', '_');
+      const targetType = formData.service_type || (activeCategoryTab === 'all' ? 'embroidery' : activeCategoryTab);
+      const sanitizedType = String(targetType).toLowerCase().replace('-', '_');
       const normalizedServiceType = sanitizedType.startsWith('vec') 
         ? 'vector_art' 
         : sanitizedType.startsWith('patch') 
@@ -525,12 +545,41 @@ export const DynamicPricingEditor = () => {
     setFormData(prev => ({ ...prev, features }));
   };
 
+  const allPackagesCount = getAllPackages().length;
+  const embPackagesCount = getCategoryPackages('embroidery').length;
+  const vecPackagesCount = getCategoryPackages('vector_art').length;
+  const patchPackagesCount = getCategoryPackages('patches').length;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       
       {/* Category Tabs Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'inline-flex', gap: '0.4rem', background: '#f1f5f9', padding: '0.35rem', borderRadius: '14px' }}>
+        <div style={{ display: 'inline-flex', gap: '0.4rem', background: '#f1f5f9', padding: '0.35rem', borderRadius: '14px', flexWrap: 'wrap' }}>
+          
+          {/* ALL SERVICES TAB */}
+          <button
+            type="button"
+            onClick={() => { setActiveCategoryTab('all'); setEditingTier(null); }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.65rem 1.25rem',
+              borderRadius: '10px',
+              border: 'none',
+              background: activeCategoryTab === 'all' ? '#ffffff' : 'transparent',
+              color: activeCategoryTab === 'all' ? 'var(--orange-500)' : 'var(--navy-700)',
+              fontWeight: 800,
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              boxShadow: activeCategoryTab === 'all' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none'
+            }}
+          >
+            <Sparkles size={16} /> <span>All Services ({allPackagesCount})</span>
+          </button>
+
+          {/* EMBROIDERY TAB */}
           <button
             type="button"
             onClick={() => { setActiveCategoryTab('embroidery'); setEditingTier(null); }}
@@ -549,9 +598,10 @@ export const DynamicPricingEditor = () => {
               boxShadow: activeCategoryTab === 'embroidery' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none'
             }}
           >
-            <Layers size={16} /> <span>Embroidery Digitizing ({getCategoryPackages('embroidery').length})</span>
+            <Layers size={16} /> <span>Embroidery Digitizing ({embPackagesCount})</span>
           </button>
 
+          {/* VECTOR ART TAB */}
           <button
             type="button"
             onClick={() => { setActiveCategoryTab('vector_art'); setEditingTier(null); }}
@@ -570,9 +620,10 @@ export const DynamicPricingEditor = () => {
               boxShadow: activeCategoryTab === 'vector_art' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none'
             }}
           >
-            <PenTool size={16} /> <span>Vector Art Redraw ({getCategoryPackages('vector_art').length})</span>
+            <PenTool size={16} /> <span>Vector Art Redraw ({vecPackagesCount})</span>
           </button>
 
+          {/* CUSTOM PATCHES TAB */}
           <button
             type="button"
             onClick={() => { setActiveCategoryTab('patches'); setEditingTier(null); }}
@@ -591,7 +642,7 @@ export const DynamicPricingEditor = () => {
               boxShadow: activeCategoryTab === 'patches' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none'
             }}
           >
-            <Tag size={16} /> <span>Custom Patches ({getCategoryPackages('patches').length})</span>
+            <Tag size={16} /> <span>Custom Patches ({patchPackagesCount})</span>
           </button>
         </div>
 
@@ -660,27 +711,34 @@ export const DynamicPricingEditor = () => {
                       <div style={{ background: theme.bgLight, color: theme.color, padding: '0.5rem', borderRadius: '10px', display: 'flex' }}>
                         <ThemeIcon size={18} />
                       </div>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: theme.color }}>
-                        PACKAGE #{idx + 1}
-                      </span>
+                      <div>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: theme.color }}>
+                          {activeCategoryTab === 'all' ? `${theme.serviceLabel.split(' ')[0]} #${pkg.display_order || (idx + 1)}` : `PACKAGE #${idx + 1}`}
+                        </span>
+                        {activeCategoryTab === 'all' && (
+                          <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+                            {theme.serviceLabel}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Reorder Arrows */}
                     <div style={{ display: 'flex', gap: '0.25rem' }}>
                       <button
                         type="button"
-                        disabled={idx === 0 || isSaving}
+                        disabled={isSaving}
                         onClick={() => handleReorder(pkg, 'up')}
-                        style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.25rem', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.4 : 1 }}
+                        style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.25rem', cursor: 'pointer' }}
                         title="Move Up"
                       >
                         <ChevronUp size={14} />
                       </button>
                       <button
                         type="button"
-                        disabled={idx === currentPackages.length - 1 || isSaving}
+                        disabled={isSaving}
                         onClick={() => handleReorder(pkg, 'down')}
-                        style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.25rem', cursor: idx === currentPackages.length - 1 ? 'not-allowed' : 'pointer', opacity: idx === currentPackages.length - 1 ? 0.4 : 1 }}
+                        style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.25rem', cursor: 'pointer' }}
                         title="Move Down"
                       >
                         <ChevronDown size={14} />
@@ -718,7 +776,7 @@ export const DynamicPricingEditor = () => {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
                     {(pkg.features || []).slice(0, 4).map((f, fIdx) => (
                       <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', color: '#334155', fontWeight: 500 }}>
-                        <CheckCircle size={13} style={{ color: '#16a34a', flexShrink: 0 }} />
+                        <CheckCircle size={13} style={{ color: '#10b981', flexShrink: 0 }} />
                         <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f}</span>
                       </div>
                     ))}
@@ -803,30 +861,40 @@ export const DynamicPricingEditor = () => {
           })}
         </div>
       ) : (
-        /* Edit / Create Form View with Live Sidebar Preview */
+        /* Package Editor Form Modal / View */
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.35fr) minmax(340px, 0.95fr)',
-          gap: '2.5rem',
-          alignItems: 'start'
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(15, 23, 42, 0.7)',
+          backdropFilter: 'blur(6px)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1.5rem'
         }}>
-          
-          {/* Left Column: Form Editor */}
           <div style={{
             background: '#ffffff',
-            border: '1.5px solid var(--border-color)',
             borderRadius: '24px',
-            padding: '2rem',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)'
+            maxWidth: '800px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            padding: '2.5rem',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+            border: '1px solid var(--border-color)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--navy-900)', margin: 0 }}>
-                  {formData.id ? 'Edit Package Details' : 'Create New Package'}
-                </h3>
-                <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>
-                  All updates persist directly to Supabase and publish instantly to the live site.
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--orange-500)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  {editingTier === 'new-package' ? 'Add New Pricing Tier' : 'Edit Package Tier'}
                 </span>
+                <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--navy-900)', margin: '0.2rem 0 0' }}>
+                  {formData.title || 'Service Package'}
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
+                  All updates persist directly to Supabase and publish instantly to the live site.
+                </p>
               </div>
 
               <button 
@@ -847,7 +915,7 @@ export const DynamicPricingEditor = () => {
                   <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Service Category *</label>
                   <select 
                     className="form-control" 
-                    value={formData.service_type || activeCategoryTab} 
+                    value={formData.service_type || (activeCategoryTab === 'all' ? 'embroidery' : activeCategoryTab)} 
                     onChange={e => setFormData({ ...formData, service_type: e.target.value })}
                     style={{ fontWeight: 700 }}
                   >
@@ -920,59 +988,63 @@ export const DynamicPricingEditor = () => {
                     className="form-control" 
                     value={formData.subtitle || ''} 
                     onChange={e => setFormData({ ...formData, subtitle: e.target.value })} 
-                    placeholder="e.g. Commercial stitch files for caps, polos..." 
+                    placeholder="e.g. Commercial stitch files for caps, polos, shirts" 
                   />
                 </div>
               </div>
 
-              {/* Price & Unit */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+              {/* Pricing Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                 <div className="form-group">
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Active Price ($) *</label>
+                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Price ($) *</label>
                   <input 
                     type="number" 
                     step="0.01" 
+                    min="0"
+                    required
                     className="form-control" 
-                    required 
-                    value={formData.price !== undefined ? formData.price : 0} 
-                    onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} 
+                    value={formData.price ?? ''} 
+                    onChange={e => setFormData({ ...formData, price: e.target.value })} 
+                    placeholder="e.g. 10.00"
+                    style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--orange-600)' }}
                   />
                 </div>
 
                 <div className="form-group">
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Original Price ($) (Optional)</label>
+                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Strike Price ($) (Optional)</label>
                   <input 
                     type="number" 
                     step="0.01" 
+                    min="0"
                     className="form-control" 
-                    value={formData.original_price || ''} 
-                    onChange={e => setFormData({ ...formData, original_price: e.target.value ? parseFloat(e.target.value) : null })} 
+                    value={formData.original_price ?? ''} 
+                    onChange={e => setFormData({ ...formData, original_price: e.target.value })} 
                     placeholder="e.g. 15.00" 
                   />
                 </div>
 
                 <div className="form-group">
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Price Unit</label>
+                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Unit Label</label>
                   <input 
                     type="text" 
                     className="form-control" 
                     value={formData.price_unit || ''} 
                     onChange={e => setFormData({ ...formData, price_unit: e.target.value })} 
-                    placeholder="e.g. / DESIGN or / PIECE" 
+                    placeholder="/ DESIGN or / PIECE" 
                   />
                 </div>
               </div>
 
-              {/* Turnaround & CTA */}
+              {/* Turnaround Time & CTA Button Text */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Delivery Turnaround</label>
+                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Turnaround & Delivery Time</label>
                   <input 
                     type="text" 
                     className="form-control" 
                     value={formData.turnaround_time || ''} 
                     onChange={e => setFormData({ ...formData, turnaround_time: e.target.value })} 
-                    placeholder="e.g. 4–12 Hours Express" 
+                    placeholder="e.g. 4–12 Hours or 3–5 Days" 
                   />
                 </div>
 
@@ -983,225 +1055,114 @@ export const DynamicPricingEditor = () => {
                     className="form-control" 
                     value={formData.button_text || ''} 
                     onChange={e => setFormData({ ...formData, button_text: e.target.value })} 
-                    placeholder="e.g. Order Left Chest ($10.00)" 
+                    placeholder="e.g. Order Left Chest Logo" 
                   />
                 </div>
               </div>
 
-              {/* Dynamic Features List Manager */}
-              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
+              {/* Dynamic Feature Bullets Editor */}
+              <div style={{ padding: '1.25rem', background: '#f8fafc', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <label style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--navy-900)', margin: 0 }}>
-                    Package Features Checklist ({(formData.features || []).length})
+                  <label style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--navy-900)', margin: 0 }}>
+                    Package Features & Included Deliverables ({(formData.features || []).length})
                   </label>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Add, edit inline, or reorder bullet features
+                  </span>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={newFeatureInput}
-                    onChange={e => setNewFeatureInput(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddFeature(); } }}
-                    placeholder="Type new feature bullet and click Add..."
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddFeature}
-                    className="btn btn-outline"
-                    style={{ fontWeight: 800, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-                  >
-                    <Plus size={16} /> Add Bullet
-                  </button>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '280px', overflowY: 'auto' }}>
-                  {(formData.features || []).map((feat, index) => (
-                    <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f8fafc', padding: '0.45rem 0.65rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                      <CheckCircle size={15} style={{ color: '#16a34a', flexShrink: 0 }} />
+                {/* Features List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+                  {(formData.features || []).map((feat, fIdx) => (
+                    <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', width: '22px' }}>
+                        #{fIdx + 1}
+                      </span>
                       <input 
                         type="text" 
                         className="form-control" 
                         value={feat} 
-                        onChange={e => handleFeatureChange(index, e.target.value)} 
-                        style={{ background: '#ffffff', fontSize: '0.85rem' }}
+                        onChange={(e) => handleFeatureChange(fIdx, e.target.value)}
+                        style={{ fontSize: '0.85rem' }}
                       />
-                      <button 
-                        type="button" 
-                        disabled={index === 0}
-                        onClick={() => handleMoveFeature(index, 'up')}
-                        style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: index === 0 ? 'not-allowed' : 'pointer', opacity: index === 0 ? 0.3 : 1 }}
-                        title="Move Up"
+                      <button
+                        type="button"
+                        disabled={fIdx === 0}
+                        onClick={() => handleMoveFeature(fIdx, 'up')}
+                        style={{ background: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.35rem', cursor: fIdx === 0 ? 'not-allowed' : 'pointer', opacity: fIdx === 0 ? 0.3 : 1 }}
+                        title="Move feature up"
                       >
                         <ChevronUp size={14} />
                       </button>
-                      <button 
-                        type="button" 
-                        disabled={index === (formData.features || []).length - 1}
-                        onClick={() => handleMoveFeature(index, 'down')}
-                        style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: index === (formData.features || []).length - 1 ? 'not-allowed' : 'pointer', opacity: index === (formData.features || []).length - 1 ? 0.3 : 1 }}
-                        title="Move Down"
+                      <button
+                        type="button"
+                        disabled={fIdx === (formData.features || []).length - 1}
+                        onClick={() => handleMoveFeature(fIdx, 'down')}
+                        style={{ background: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.35rem', cursor: fIdx === (formData.features || []).length - 1 ? 'not-allowed' : 'pointer', opacity: fIdx === (formData.features || []).length - 1 ? 0.3 : 1 }}
+                        title="Move feature down"
                       >
                         <ChevronDown size={14} />
                       </button>
-                      <button 
-                        type="button" 
-                        onClick={() => handleRemoveFeature(index)} 
-                        style={{ background: '#fee2e2', border: 'none', color: '#dc2626', padding: '0.35rem', borderRadius: '6px', cursor: 'pointer' }}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFeature(fIdx)}
+                        style={{ background: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.35rem', cursor: 'pointer' }}
                         title="Remove feature"
                       >
-                        <Trash2 size={13} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   ))}
                 </div>
+
+                {/* Add Feature Row */}
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Type a new feature bullet and press Add Feature..."
+                    value={newFeatureInput}
+                    onChange={(e) => setNewFeatureInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddFeature();
+                      }
+                    }}
+                    style={{ fontSize: '0.85rem' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddFeature}
+                    className="btn btn-primary-orange btn-sm"
+                    style={{ fontWeight: 800, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                  >
+                    <Plus size={14} /> Add Feature
+                  </button>
+                </div>
               </div>
 
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-color)' }}>
-                <button type="button" onClick={() => setEditingTier(null)} className="btn btn-outline">
+              {/* Form Action Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingTier(null)}
+                  className="btn btn-outline"
+                  style={{ fontWeight: 700 }}
+                >
                   Cancel
                 </button>
-                <button type="submit" disabled={isSaving} className="btn btn-primary-orange btn-lg" style={{ fontWeight: 800, padding: '0.85rem 2rem' }}>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="btn btn-primary-orange"
+                  style={{ fontWeight: 800, minWidth: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                >
                   <Save size={16} /> {isSaving ? 'Saving to Database...' : 'Save & Publish Changes'}
                 </button>
               </div>
             </form>
           </div>
-
-          {/* Right Column: Live Customer Sidebar Preview */}
-          <div style={{ position: 'sticky', top: '2rem', overflow: 'visible', paddingTop: '0.5rem' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-700)', textTransform: 'uppercase', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Eye size={16} style={{ color: 'var(--orange-500)' }} /> Live Customer Sidebar Preview
-            </div>
-
-            {(() => {
-              const previewIdx = Math.max(0, (Number(formData.display_order) || 1) - 1);
-              const theme = getPackageTierTheme(previewIdx, formData.service_type || activeCategoryTab);
-              const ThemeIcon = theme.icon;
-
-              return (
-                <div style={{
-                  background: '#ffffff',
-                  border: formData.is_popular ? `2.5px solid ${theme.color}` : '1.5px solid var(--border-color)',
-                  borderRadius: '24px',
-                  padding: '2.5rem 2rem 2rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  boxShadow: formData.is_popular ? `0 18px 40px ${theme.glowColor}` : '0 6px 24px rgba(0, 0, 0, 0.05)',
-                  position: 'relative',
-                  overflow: 'visible'
-                }}>
-                  {/* Top Badge Pill */}
-                  {formData.badge_text && (
-                    <span style={{
-                      position: 'absolute',
-                      top: '-14px',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      background: theme.color,
-                      color: '#ffffff',
-                      padding: '0.35rem 1.3rem',
-                      borderRadius: '9999px',
-                      fontSize: '0.78rem',
-                      fontWeight: 900,
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      whiteSpace: 'nowrap',
-                      zIndex: 20,
-                      boxShadow: `0 6px 16px ${theme.glowColor}`
-                    }}>
-                      {formData.badge_text}
-                    </span>
-                  )}
-
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                      <div style={{ background: theme.bgLight, color: theme.color, padding: '0.7rem', borderRadius: '12px', display: 'flex' }}>
-                        <ThemeIcon size={22} />
-                      </div>
-                      <div>
-                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: theme.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                          {theme.serviceLabel} · PACKAGE #{formData.display_order || 1}
-                        </span>
-                        <h3 style={{ fontSize: '1.35rem', fontFamily: 'var(--font-heading, "Inter", sans-serif)', fontWeight: 900, margin: '0.15rem 0 0', color: 'var(--navy-900)', lineHeight: 1.2 }}>
-                          {formData.title || 'Package Title'}
-                        </h3>
-                      </div>
-                    </div>
-
-                    <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: 1.5, minHeight: '40px' }}>
-                      {formData.subtitle || 'Package description and scope will appear here.'}
-                    </p>
-
-                    {/* Price Box */}
-                    <div style={{ marginBottom: '1.5rem', padding: '1.25rem', background: '#f8fafc', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.45rem' }}>
-                        <div style={{ fontSize: '3rem', fontWeight: 900, color: theme.color, lineHeight: 1, letterSpacing: '-0.03em' }}>
-                          ${formData.price !== undefined && formData.price !== null ? Number(formData.price).toFixed(2) : '0.00'}
-                        </div>
-                        {formData.original_price && (
-                          <div style={{ fontSize: '1.25rem', color: '#94a3b8', textDecoration: 'line-through', fontWeight: 700 }}>
-                            ${Number(formData.original_price).toFixed(2)}
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 800, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                        {formData.price_unit || (activeCategoryTab === 'patches' ? '/ PIECE' : '/ DESIGN')}
-                      </div>
-                    </div>
-
-                    {/* Features Checklist */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
-                      {(formData.features || []).map((feat, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
-                          <div style={{ background: '#dcfce7', color: '#16a34a', padding: '0.2rem', borderRadius: '50%', marginTop: '2px', flexShrink: 0, display: 'flex' }}>
-                            <CheckCircle size={14} />
-                          </div>
-                          <span style={{ fontSize: '0.875rem', color: '#1e293b', fontWeight: 600, lineHeight: 1.4 }}>
-                            {feat}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Action CTA */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                    <button 
-                      type="button" 
-                      style={{ 
-                        width: '100%', 
-                        justifyContent: 'center', 
-                        fontWeight: 800, 
-                        fontSize: '1rem', 
-                        padding: '1rem', 
-                        borderRadius: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        background: theme.btnGradient,
-                        color: '#ffffff',
-                        border: 'none',
-                        boxShadow: `0 6px 20px ${theme.glowColor}`
-                      }}
-                    >
-                      <span>{formData.button_text || `Order (${formData.price || 0})`}</span>
-                      <ArrowRight size={16} />
-                    </button>
-
-                    {formData.turnaround_time && (
-                      <div style={{ textAlign: 'center', fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-                        <Clock size={14} style={{ color: theme.color }} /> Express Delivery: {formData.turnaround_time}
-                      </div>
-                    )}
-                  </div>
-
-                </div>
-              );
-            })()}
-          </div>
-
         </div>
       )}
 
@@ -1209,63 +1170,64 @@ export const DynamicPricingEditor = () => {
       {deleteCandidate && (
         <div style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          inset: 0,
           background: 'rgba(15, 23, 42, 0.75)',
           backdropFilter: 'blur(4px)',
+          zIndex: 1100,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000,
-          padding: '1rem'
+          padding: '1.5rem'
         }}>
           <div style={{
             background: '#ffffff',
             borderRadius: '20px',
-            padding: '2rem',
             maxWidth: '480px',
             width: '100%',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
-            textAlign: 'center'
+            padding: '2rem',
+            boxShadow: '0 25px 50px rgba(0,0,0,0.35)',
+            border: '1px solid #fee2e2'
           }}>
-            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
-              <AlertTriangle size={28} />
+            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
+              <AlertTriangle size={26} />
             </div>
 
-            <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0f172a', margin: '0 0 0.5rem' }}>
-              Delete Pricing Package?
+            <h3 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#991b1b', margin: '0 0 0.5rem' }}>
+              Delete Service Package?
             </h3>
-            <p style={{ fontSize: '0.925rem', color: '#64748b', lineHeight: 1.5, margin: '0 0 1.75rem' }}>
-              Are you sure you want to permanently delete <strong>"{deleteCandidate.title}"</strong>? This package will be removed immediately from the live website and cannot be undone.
+            <p style={{ fontSize: '0.9rem', color: '#64748b', lineHeight: 1.5, marginBottom: '1.5rem' }}>
+              Are you sure you want to delete <strong>"{deleteCandidate.title}"</strong>? This will permanently remove it from the database and public pricing catalog.
             </p>
 
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
               <button
                 type="button"
-                onClick={() => setDeleteCandidate(null)}
                 disabled={isDeleting}
+                onClick={() => setDeleteCandidate(null)}
                 className="btn btn-outline"
-                style={{ fontWeight: 700, padding: '0.75rem 1.5rem' }}
+                style={{ fontWeight: 700 }}
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={handleDeleteConfirm}
                 disabled={isDeleting}
+                onClick={handleDeleteConfirm}
                 style={{
                   background: '#dc2626',
                   color: '#ffffff',
                   border: 'none',
+                  padding: '0.7rem 1.4rem',
                   borderRadius: '10px',
                   fontWeight: 800,
-                  padding: '0.75rem 1.5rem',
-                  cursor: 'pointer'
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
                 }}
               >
-                {isDeleting ? 'Deleting...' : 'Yes, Delete Package'}
+                <Trash2 size={16} /> {isDeleting ? 'Deleting...' : 'Confirm Delete'}
               </button>
             </div>
           </div>
