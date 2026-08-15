@@ -11,16 +11,15 @@ import {
   CheckCircle, 
   Save, 
   X, 
-  RefreshCw, 
   Layers, 
   PenTool, 
   Tag, 
   Sparkles,
   ArrowRight,
   Clock,
-  DollarSign,
   Eye
 } from 'lucide-react';
+
 
 export const DynamicPricingEditor = () => {
   const {
