@@ -218,16 +218,17 @@ export const HeroSection = () => {
         }
       `}} />
 
-      <div className="container" style={{ position: 'relative', zIndex: 2, maxWidth: '1500px', margin: '0 auto', padding: '0 2rem' }}>
+      <div className="container" style={{ position: 'relative', zIndex: 2, maxWidth: '1280px', margin: '0 auto' }}>
         
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2.75rem' }}>
           <div style={{
             display: 'inline-flex',
-            background: 'rgba(15, 23, 42, 0.6)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            background: 'rgba(15, 23, 42, 0.65)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
             padding: '0.35rem',
             borderRadius: '9999px',
-            backdropFilter: 'blur(12px)'
+            backdropFilter: 'blur(12px)',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35)'
           }}>
             {[
               { id: 'all', label: 'All Services', icon: LayoutGrid },
@@ -248,16 +249,17 @@ export const HeroSection = () => {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.6rem',
-                    padding: '0.6rem 1.8rem',
+                    gap: '0.55rem',
+                    padding: '0.6rem 1.6rem',
                     borderRadius: '9999px',
                     border: 'none',
-                    background: isActive ? 'var(--orange-500, #ff7a00)' : 'transparent',
+                    background: isActive ? 'linear-gradient(135deg, var(--orange-500), var(--orange-600))' : 'transparent',
                     color: isActive ? '#ffffff' : '#94a3b8',
-                    fontWeight: isActive ? 700 : 500,
+                    fontWeight: isActive ? 800 : 600,
                     fontSize: '0.9rem',
                     cursor: 'pointer',
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.25s ease',
+                    boxShadow: isActive ? '0 4px 14px rgba(249, 115, 22, 0.4)' : 'none'
                   }}
                 >
                   <Icon size={16} />
@@ -270,26 +272,27 @@ export const HeroSection = () => {
 
         <div className="hero-grid" style={{
           display: 'grid',
-          gridTemplateColumns: '55% 45%',
+          gridTemplateColumns: '1.15fr 0.85fr',
           gap: '3rem',
           alignItems: 'center'
         }}>
           
           <div className="hero-left-col" style={{ textAlign: 'left' }}>
             <h1 style={{
-                fontSize: 'clamp(2rem, 3.8vw, 3.2rem)',
-                fontWeight: 800,
+                fontSize: 'clamp(2.1rem, 3.8vw, 3.25rem)',
+                fontWeight: 900,
                 lineHeight: 1.15,
                 color: '#ffffff',
-                marginBottom: '1.25rem'
+                marginBottom: '1.25rem',
+                letterSpacing: '-0.025em'
               }}
               dangerouslySetInnerHTML={{ __html: cleanHtml(activeService.title || "Premium Digitizing, Vector Art & Custom Patches") }}
             />
             
             <div style={{ 
-                fontSize: 'clamp(1.1rem, 2vw, 1.3rem)',
-                fontWeight: 600,
-                marginBottom: '1.5rem',
+                fontSize: 'clamp(1.1rem, 1.8vw, 1.25rem)',
+                fontWeight: 700,
+                marginBottom: '1.25rem',
                 color: 'var(--orange-400, #ff9433)'
               }}
               dangerouslySetInnerHTML={{ __html: cleanHtml(activeService.highlight || "Engineered for excellence, delivered in hours.") }}
@@ -297,7 +300,7 @@ export const HeroSection = () => {
 
             <div style={{
                 fontSize: '1.05rem',
-                lineHeight: 1.6,
+                lineHeight: 1.65,
                 color: '#94a3b8',
                 marginBottom: '2rem'
               }}
@@ -332,19 +335,12 @@ export const HeroSection = () => {
             <div className="hero-cta-group" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
               <button 
                 type="button"
+                className="btn btn-primary-orange btn-lg"
                 onClick={handlePrimaryClick}
                 style={{ 
-                  background: 'var(--orange-500, #ff7a00)',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '1rem 2rem',
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
+                  padding: '0.9rem 2.2rem',
+                  fontSize: '1.05rem',
+                  fontWeight: 800
                 }}
               >
                 {activeService.primary_cta || 'Get Started'} <ArrowRight size={18} />
@@ -352,16 +348,14 @@ export const HeroSection = () => {
 
               <button 
                 type="button"
+                className="btn btn-outline btn-lg"
                 onClick={handleSecondaryClick}
                 style={{ 
-                  background: 'transparent',
                   color: '#ffffff', 
-                  border: '1.5px solid rgba(255, 255, 255, 0.15)',
-                  borderRadius: '8px',
-                  padding: '1rem 2rem', 
-                  fontSize: '1rem',
-                  fontWeight: 600,
-                  cursor: 'pointer'
+                  borderColor: 'rgba(255, 255, 255, 0.25)',
+                  padding: '0.9rem 2rem', 
+                  fontSize: '1.05rem',
+                  fontWeight: 700
                 }}
               >
                  {activeService.secondary_cta || 'View Pricing'}

@@ -120,51 +120,59 @@ export const WhyChooseUs = () => {
 
 
   return (
-    <section id="why-choose-us" style={{ padding: '6rem 0', background: 'var(--bg-main)', borderTop: '1px solid var(--border-color)' }}>
+    <section id="why-choose-us" style={{ padding: '5.5rem 0', background: 'var(--bg-main)', borderTop: '1px solid var(--border-color)' }}>
       <div className="container">
         
-        {/* Trust Grid Section */}
+        {/* Trust Grid Section Header */}
         <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
-          <h2 style={{ fontSize: '2.5rem', color: 'var(--navy-950)', marginBottom: '1rem', fontWeight: 800 }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            background: 'var(--orange-50)',
+            border: '1px solid var(--orange-200)',
+            color: 'var(--orange-700)',
+            fontWeight: 800,
+            fontSize: '0.85rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            padding: '0.35rem 0.95rem',
+            borderRadius: '9999px',
+            marginBottom: '1rem'
+          }}>
+            <Award size={15} /> Industry Proven Precision
+          </div>
+
+          <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', color: 'var(--navy-950)', marginBottom: '1rem', fontWeight: 900, letterSpacing: '-0.02em' }}>
             {title}
           </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.6 }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.65 }}>
             {subtext}
           </p>
         </div>
 
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
           gap: '1.5rem',
-          marginBottom: '6rem'
+          marginBottom: '5.5rem'
         }}>
           {trustFeatures.map((item, idx) => {
             return (
               <div 
                 key={item.id || idx} 
+                className="card"
                 style={{ 
                   padding: '2rem 1.5rem',
                   background: 'var(--bg-card)',
                   border: '1px solid var(--border-color)',
                   borderRadius: '16px',
-                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.02)',
+                  boxShadow: 'var(--shadow-sm)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   textAlign: 'center',
-                  transition: 'transform 0.3s ease, boxShadow 0.3s ease, borderColor 0.3s ease',
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-5px)';
-                  e.currentTarget.style.boxShadow = '0 12px 25px rgba(0, 0, 0, 0.06)';
-                  e.currentTarget.style.borderColor = 'var(--orange-200)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'none';
-                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.02)';
-                  e.currentTarget.style.borderColor = 'var(--border-color)';
+                  cursor: 'default'
                 }}
               >
                 <div style={{
@@ -176,14 +184,15 @@ export const WhyChooseUs = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: '1.25rem'
+                  marginBottom: '1.25rem',
+                  boxShadow: '0 4px 12px rgba(249, 115, 22, 0.12)'
                 }}>
                   <IconRenderer iconName={item.icon} size={28} />
                 </div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
                   {item.title}
                 </h3>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
+                <p style={{ fontSize: '0.925rem', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
                   {item.description || item.desc}
                 </p>
               </div>
@@ -211,68 +220,55 @@ export const WhyChooseUs = () => {
             <ShieldCheck size={16} /> Seamless Step-by-Step Process
           </div>
 
-          <h2 style={{ fontSize: '2.5rem', color: 'var(--navy-950)', marginBottom: '0.75rem', fontWeight: 800 }}>
+          <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', color: 'var(--navy-950)', marginBottom: '0.75rem', fontWeight: 900, letterSpacing: '-0.02em' }}>
             {workflowTitle}
           </h2>
 
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.6 }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.65 }}>
             {workflowSubtext}
           </p>
         </div>
 
         {/* Workflow Timeline Grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-          gap: '1.5rem'
-        }}>
+        <div className="grid-responsive-4">
           {stepsToRender.map((item, idx) => {
             return (
               <div 
                 key={item.id || idx} 
+                className="card"
                 style={{ 
                   padding: '2.25rem 1.75rem', 
                   textAlign: 'left', 
                   background: 'var(--bg-card)',
                   border: '1px solid var(--border-color)',
                   borderRadius: '16px',
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)',
+                  boxShadow: 'var(--shadow-sm)',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
-                  transition: 'transform 0.3s ease, boxShadow 0.3s ease, borderColor 0.3s ease',
                   cursor: 'default'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-5px)';
-                  e.currentTarget.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.08)';
-                  e.currentTarget.style.borderColor = 'var(--orange-200)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'none';
-                  e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.03)';
-                  e.currentTarget.style.borderColor = 'var(--border-color)';
                 }}
               >
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                     <span style={{
-                      fontSize: '0.9rem',
+                      fontSize: '0.8rem',
                       fontWeight: 900,
-                      background: 'var(--orange-500)',
+                      background: 'linear-gradient(135deg, var(--orange-500), var(--orange-600))',
                       color: '#ffffff',
                       padding: '0.35rem 0.85rem',
                       borderRadius: '9999px',
-                      boxShadow: '0 4px 12px rgba(255, 122, 0, 0.3)'
+                      boxShadow: '0 4px 12px rgba(249, 115, 22, 0.35)',
+                      letterSpacing: '0.04em'
                     }}>
                       STEP {item.step_number || `0${idx + 1}`}
                     </span>
 
                     <div style={{
-                      width: '46px',
-                      height: '46px',
+                      width: '44px',
+                      height: '44px',
                       borderRadius: '12px',
-                      background: 'var(--bg-main)',
+                      background: 'var(--orange-50)',
                       border: '1px solid var(--orange-200)',
                       color: 'var(--orange-500)',
                       display: 'flex',
@@ -287,7 +283,7 @@ export const WhyChooseUs = () => {
                     {item.title}
                   </h3>
 
-                  <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+                  <p style={{ fontSize: '0.925rem', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
                     {item.description || item.desc}
                   </p>
                 </div>
@@ -300,5 +296,6 @@ export const WhyChooseUs = () => {
     </section>
   );
 };
+
 
 

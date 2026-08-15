@@ -23,7 +23,6 @@ export const PortfolioPage = () => {
 
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeItemModal, setActiveItemModal] = useState(null);
-  const [comparisonPositions, setComparisonPositions] = useState({});
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -55,10 +54,6 @@ export const PortfolioPage = () => {
     { key: 'vector', label: 'Vector Art Conversion' },
     { key: 'patches', label: 'Custom Patches' }
   ];
-
-  const handleSliderMove = (id, posPercent) => {
-    setComparisonPositions(prev => ({ ...prev, [id]: posPercent }));
-  };
 
   return (
     <div style={{ background: 'var(--bg-main)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -214,8 +209,6 @@ export const PortfolioPage = () => {
             marginBottom: '4rem'
           }}>
             {filteredItems.map((item) => {
-              const posPercent = comparisonPositions[item.id] !== undefined ? comparisonPositions[item.id] : 50;
-
               return (
                 <div
                   key={item.id}

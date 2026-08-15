@@ -1,26 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Layers, PenTool, Hexagon } from 'lucide-react';
+import { ArrowRight, Layers, PenTool, Hexagon, Sparkles } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
 import { normalizeCategory } from '../../utils/categoryUtils';
 
 export const PortfolioPreview = () => {
-  const { portfolioSamples, activeHomeServiceTab, serviceCmsContent, homePageConfig = {} } = useAppState();
+  const { portfolioSamples, activeHomeServiceTab, homePageConfig = {} } = useAppState();
   
   const dbSettings = homePageConfig?.settings || {};
   const badgeText = dbSettings.portfolio_badge || 'Our Work';
   const titleText = dbSettings.portfolio_title || 'Crafted with Precision';
   const subText = dbSettings.portfolio_sub || 'Explore a curated selection of our finest embroidery digitizing, vector art conversions, and custom patch creations.';
   
-  const rawCategories = serviceCmsContent?.['portfolio_categories'] || [
-    { key: 'all', label: 'All Portfolio' },
-    { key: 'embroidery', label: 'Embroidery Digitizing' },
-    { key: 'vector', label: 'Vector Art Conversion' },
-    { key: 'patches', label: 'Custom Patches' }
-  ];
-  const categories = rawCategories.map(c => c.label);
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('All');
   const [hoveredId, setHoveredId] = useState(null);
@@ -32,25 +25,6 @@ export const PortfolioPreview = () => {
     else if (norm === 'patches') setActiveCategory('Custom Patches');
     else setActiveCategory('All');
   }, [activeHomeServiceTab]);
-  
-  // Responsive grid logic
-  const [columns, setColumns] = useState(3);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setColumns(1);
-      } else if (window.innerWidth < 1024) {
-        setColumns(2);
-      } else {
-        setColumns(3);
-      }
-    };
-    
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const portfolioItems = portfolioSamples || [];
 
@@ -67,53 +41,50 @@ export const PortfolioPreview = () => {
     : combinedItems.filter(item => item.mappedCategory === activeCategory);
 
   return (
-    <section style={{ backgroundColor: '#ffffff', padding: '80px 20px', fontFamily: 'var(--font-body, "Inter", sans-serif)' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <section style={{ backgroundColor: '#ffffff', padding: '5.5rem 0', fontFamily: 'var(--font-body, "Inter", sans-serif)', borderTop: '1px solid var(--border-color)' }}>
+      <div className="container">
         
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+        <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
           <div style={{
-            display: 'inline-block',
-            padding: '6px 16px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            padding: '0.35rem 0.95rem',
             backgroundColor: 'var(--orange-50, #fff7ed)',
-            color: 'var(--orange-600, #e66e00)',
+            color: 'var(--orange-700, #c2410c)',
+            border: '1px solid var(--orange-200)',
             borderRadius: '9999px',
-            fontSize: '14px',
-            fontWeight: '600',
-            marginBottom: '16px',
-            letterSpacing: '0.05em',
+            fontSize: '0.85rem',
+            fontWeight: '800',
+            marginBottom: '1rem',
+            letterSpacing: '0.08em',
             textTransform: 'uppercase'
           }}>
-            {badgeText}
+            <Sparkles size={15} /> {badgeText}
           </div>
           <h2 style={{
-            fontFamily: 'var(--font-heading, "Plus Jakarta Sans", sans-serif)',
-            fontSize: 'clamp(32px, 5vw, 48px)',
-            fontWeight: '700',
+            fontFamily: 'var(--font-heading)',
+            fontSize: 'clamp(2rem, 3.5vw, 2.75rem)',
+            fontWeight: '900',
             color: 'var(--navy-950, #0f172a)',
-            marginBottom: '16px',
-            lineHeight: '1.2'
+            marginBottom: '1rem',
+            lineHeight: '1.2',
+            letterSpacing: '-0.02em'
           }}>
             {titleText}
           </h2>
           <p style={{
-            fontSize: '18px',
+            fontSize: '1.1rem',
             color: 'var(--text-muted, #64748b)',
-            maxWidth: '600px',
-            margin: '0 auto',
-            lineHeight: '1.6'
+            lineHeight: '1.65'
           }}>
             {subText}
           </p>
         </div>
 
-        {/* Grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${columns}, 1fr)`,
-          gap: '24px',
-          marginBottom: '48px'
-        }}>
+        {/* Grid using Pure CSS Responsive Grid */}
+        <div className="grid-responsive-3" style={{ marginBottom: '3.5rem' }}>
           {filteredItems.slice(0, 6).map((item) => {
             const isHovered = hoveredId === item.id;
             return (
@@ -124,16 +95,17 @@ export const PortfolioPreview = () => {
                 onClick={() => navigate(`/portfolio`)}
                 style={{
                   position: 'relative',
-                  borderRadius: '12px',
+                  borderRadius: '16px',
                   overflow: 'hidden',
                   aspectRatio: '4/3',
                   boxShadow: isHovered 
-                    ? '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' 
-                    : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                  transform: isHovered ? 'scale(1.03)' : 'scale(1)',
+                    ? 'var(--shadow-xl)' 
+                    : 'var(--shadow-sm)',
+                  transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                  transform: isHovered ? 'translateY(-6px)' : 'none',
                   cursor: 'pointer',
-                  border: isHovered ? '1px solid var(--orange-400, #ff9433)' : '1px solid transparent',
+                  border: isHovered ? '1px solid var(--orange-400)' : '1px solid var(--border-color)',
+                  background: '#0f172a'
                 }}
               >
                 {/* Background Image */}
@@ -145,7 +117,7 @@ export const PortfolioPreview = () => {
                     height: '100%',
                     objectFit: 'cover',
                     transition: 'transform 0.7s ease',
-                    transform: isHovered ? 'scale(1.1)' : 'scale(1)',
+                    transform: isHovered ? 'scale(1.08)' : 'scale(1)',
                   }}
                 />
 
@@ -157,7 +129,7 @@ export const PortfolioPreview = () => {
                   right: 0,
                   bottom: 0,
                   background: isHovered 
-                    ? 'linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.4) 50%, rgba(15, 23, 42, 0.1) 100%)' 
+                    ? 'linear-gradient(to top, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.4) 50%, rgba(15, 23, 42, 0.1) 100%)' 
                     : 'linear-gradient(to top, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0) 60%)',
                   transition: 'background 0.4s ease',
                   zIndex: 1,
@@ -167,24 +139,25 @@ export const PortfolioPreview = () => {
                 {/* Category Badge (Top Left) */}
                 <div style={{
                   position: 'absolute',
-                  top: '16px',
-                  left: '16px',
+                  top: '14px',
+                  left: '14px',
                   zIndex: 2,
-                  padding: '6px 12px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                  backdropFilter: 'blur(4px)',
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                  fontWeight: '600',
+                  padding: '5px 12px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.92)',
+                  backdropFilter: 'blur(8px)',
+                  borderRadius: '8px',
+                  fontSize: '0.75rem',
+                  fontWeight: '800',
                   color: 'var(--navy-950, #0f172a)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
                   pointerEvents: 'none'
                 }}>
-                  {item.mappedCategory === 'Embroidery' && <Layers size={14} style={{ color: 'var(--orange-500, #ff7a00)' }} />}
-                  {item.mappedCategory === 'Vector Art' && <PenTool size={14} style={{ color: 'var(--orange-500, #ff7a00)' }} />}
-                  {item.mappedCategory === 'Custom Patches' && <Hexagon size={14} style={{ color: 'var(--orange-500, #ff7a00)' }} />}
+                  {item.mappedCategory === 'Embroidery' && <Layers size={13} style={{ color: 'var(--orange-500)' }} />}
+                  {item.mappedCategory === 'Vector Art' && <PenTool size={13} style={{ color: 'var(--orange-500)' }} />}
+                  {item.mappedCategory === 'Custom Patches' && <Hexagon size={13} style={{ color: 'var(--orange-500)' }} />}
                   {item.mappedCategory}
                 </div>
 
@@ -194,34 +167,33 @@ export const PortfolioPreview = () => {
                   bottom: '0',
                   left: '0',
                   right: '0',
-                  padding: '24px',
+                  padding: '20px',
                   zIndex: 2,
-                  transform: isHovered ? 'translateY(0)' : 'translateY(24px)',
-                  transition: 'transform 0.4s ease',
+                  transform: isHovered ? 'translateY(0)' : 'translateY(12px)',
+                  transition: 'transform 0.3s ease',
                   pointerEvents: 'none'
                 }}>
                   <h3 style={{
                     color: '#ffffff',
-                    fontFamily: 'var(--font-heading, "Plus Jakarta Sans", sans-serif)',
-                    fontSize: '20px',
-                    fontWeight: '700',
-                    marginBottom: '8px',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                    fontFamily: 'var(--font-heading)',
+                    fontSize: '1.15rem',
+                    fontWeight: '800',
+                    marginBottom: '4px',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.5)',
                     margin: 0
                   }}>
                     {item.title}
                   </h3>
                   
                   <div style={{
-                    opacity: isHovered ? 1 : 0,
-                    transition: 'opacity 0.4s ease',
-                    transitionDelay: isHovered ? '0.1s' : '0s',
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    marginTop: '8px'
+                    opacity: isHovered ? 1 : 0.8,
+                    transition: 'opacity 0.3s ease',
+                    color: '#cbd5e1',
+                    fontSize: '0.85rem',
+                    fontWeight: '600',
+                    marginTop: '4px'
                   }}>
-                    {item.details || 'Premium Quality'}
+                    {item.details || 'Precision Production'}
                   </div>
                 </div>
               </div>
@@ -240,34 +212,16 @@ export const PortfolioPreview = () => {
         {filteredItems.length > 0 && (
           <div style={{ textAlign: 'center' }}>
             <button
+              className="btn btn-outline btn-lg"
               onClick={() => navigate('/portfolio')}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--orange-500, #ff7a00)';
-                e.currentTarget.style.color = '#ffffff';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = 'var(--orange-500, #ff7a00)';
-              }}
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '14px 32px',
-                border: '2px solid var(--orange-500, #ff7a00)',
-                borderRadius: '8px',
-                backgroundColor: 'transparent',
-                color: 'var(--orange-500, #ff7a00)',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                fontFamily: 'var(--font-body, "Inter", sans-serif)'
+                fontSize: '1rem',
+                fontWeight: 800,
+                padding: '0.85rem 2.25rem'
               }}
             >
               View Full Portfolio
-              <ArrowRight size={20} />
+              <ArrowRight size={18} />
             </button>
           </div>
         )}
@@ -276,3 +230,4 @@ export const PortfolioPreview = () => {
     </section>
   );
 };
+

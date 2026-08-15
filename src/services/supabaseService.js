@@ -664,6 +664,22 @@ export async function fetchHomePageContentFromSupabase() {
   }
 }
 
+export async function updateHomePageSettingsInSupabase(payloadArray) {
+  try {
+    const res = await fetch('/api/admin/homepage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ settings: payloadArray })
+    });
+    const data = await res.json();
+    return { success: res.ok && !data.error, data: data.data };
+  } catch (err) {
+    console.warn('updateHomePageSettingsInSupabase error:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+
 
 // ============================================================
 // CATALOG (DB-driven; replaces mock catalog defaults)

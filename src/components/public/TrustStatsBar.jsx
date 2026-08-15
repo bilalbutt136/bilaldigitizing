@@ -1,14 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { FileCheck, Users, Globe, Zap, ShieldCheck, Headphones } from 'lucide-react';
-
-let useAppState;
-try {
-  useAppState = require('../../context/StateContext').useAppState;
-} catch (e) {
-  useAppState = () => ({ siteSettings: {}, homePageConfig: {} });
-}
+import { FileCheck, Users, Globe, Zap, ShieldCheck, Headphones, Award } from 'lucide-react';
+import { useAppState } from '../../context/StateContext';
 
 // Icon mapper for dynamic string icon names from DB
 const IconRenderer = ({ iconName, size = 24, color = "var(--orange-500, #ff7a00)" }) => {
@@ -18,6 +12,7 @@ const IconRenderer = ({ iconName, size = 24, color = "var(--orange-500, #ff7a00)
     case 'globe': return <Globe size={size} color={color} />;
     case 'zap': return <Zap size={size} color={color} />;
     case 'headphones': return <Headphones size={size} color={color} />;
+    case 'award': return <Award size={size} color={color} />;
     case 'shieldcheck':
     case 'shield':
     default:
@@ -77,14 +72,14 @@ const AnimatedNumber = ({ end, duration = 2000, suffix = '', isStatic = false, s
 
   if (isStatic) {
     return (
-      <span ref={ref} style={{ fontWeight: '700', fontSize: '2rem', color: '#ffffff', textShadow: '0 0 20px rgba(255, 122, 0, 0.3)' }}>
+      <span ref={ref} style={{ fontWeight: '800', fontSize: '2.15rem', color: '#ffffff', textShadow: '0 0 20px rgba(255, 122, 0, 0.3)', fontFamily: 'var(--font-heading)' }}>
         {staticText}
       </span>
     );
   }
 
   return (
-    <span ref={ref} style={{ fontWeight: '700', fontSize: '2rem', color: '#ffffff', textShadow: '0 0 20px rgba(255, 122, 0, 0.3)', fontFamily: 'var(--font-heading, "Plus Jakarta Sans", sans-serif)' }}>
+    <span ref={ref} style={{ fontWeight: '800', fontSize: '2.15rem', color: '#ffffff', textShadow: '0 0 20px rgba(255, 122, 0, 0.3)', fontFamily: 'var(--font-heading)' }}>
       {formatNumber(count)}
       <span style={{ color: 'var(--orange-500, #ff7a00)' }}>{suffix}</span>
     </span>
@@ -98,7 +93,7 @@ export const TrustStatsBar = () => {
   // Fallback defaults if DB is empty
   let displayStats = dbStats.filter(s => s.is_active !== false).map(s => ({
     id: s.id,
-    icon: <IconRenderer iconName={s.icon} />,
+    icon: <IconRenderer iconName={s.icon} size={24} color="var(--orange-500)" />,
     value: s.value,
     suffix: s.suffix || (isNaN(parseInt(s.value)) ? '' : '+'),
     label: s.label,
@@ -119,38 +114,68 @@ export const TrustStatsBar = () => {
     <section 
       style={{
         backgroundColor: 'var(--navy-950, #0f172a)',
-        borderTop: '2px solid var(--orange-500, #ff7a00)',
-        padding: '3rem 1.5rem',
+        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+        padding: '3rem 0',
         position: 'relative',
-        overflow: 'hidden',
-        boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.5)'
+        overflow: 'hidden'
       }}
     >
       <div style={{
         position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
         width: '60%', height: '100%',
-        background: 'radial-gradient(ellipse at top, rgba(255, 122, 0, 0.05) 0%, rgba(15, 23, 42, 0) 70%)',
+        background: 'radial-gradient(ellipse at top, rgba(255, 122, 0, 0.08) 0%, rgba(15, 23, 42, 0) 70%)',
         pointerEvents: 'none'
       }} />
 
-      <div style={{
-        maxWidth: '1200px', margin: '0 auto', display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '2rem',
-        position: 'relative', zIndex: 1
-      }}>
-        {displayStats.map((stat, index) => (
-          <div key={stat.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '1rem', borderRight: index !== displayStats.length - 1 ? '1px solid rgba(226, 232, 240, 0.1)' : 'none' }}>
-            <div style={{ background: 'rgba(255, 122, 0, 0.1)', padding: '0.75rem', borderRadius: '50%', marginBottom: '1rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 15px rgba(255, 122, 0, 0.15)' }}>
-              {stat.icon}
+      <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+        <div className="grid-responsive-4" style={{ alignItems: 'center' }}>
+          {displayStats.map((stat) => (
+            <div 
+              key={stat.id} 
+              style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                textAlign: 'center', 
+                padding: '1.25rem 1rem',
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(255, 255, 255, 0.05)',
+                borderRadius: '16px',
+                backdropFilter: 'blur(8px)',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              <div style={{ 
+                background: 'rgba(255, 122, 0, 0.12)', 
+                padding: '0.75rem', 
+                borderRadius: '14px', 
+                marginBottom: '0.85rem', 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                boxShadow: '0 0 16px rgba(255, 122, 0, 0.2)' 
+              }}>
+                {stat.icon}
+              </div>
+              <AnimatedNumber end={stat.value} suffix={stat.suffix} isStatic={stat.isStatic} staticText={stat.staticText} />
+              <span style={{ 
+                color: '#94a3b8', 
+                fontSize: '0.85rem', 
+                fontWeight: '600', 
+                marginTop: '0.4rem', 
+                textTransform: 'uppercase', 
+                letterSpacing: '0.06em', 
+                fontFamily: 'var(--font-heading)' 
+              }}>
+                {stat.label}
+              </span>
             </div>
-            <AnimatedNumber end={stat.value} suffix={stat.suffix} isStatic={stat.isStatic} staticText={stat.staticText} />
-            <span style={{ color: 'var(--text-muted, #64748b)', fontSize: '0.875rem', fontWeight: '500', marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-body, "Inter", sans-serif)' }}>
-              {stat.label}
-            </span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );
 };
+
 

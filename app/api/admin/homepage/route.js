@@ -44,7 +44,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('[CMS API GET]', error);
-    // Return empty arrays on error (like if tables don't exist yet)
     return NextResponse.json({
       settings: {},
       trustStats: [],
@@ -56,4 +55,38 @@ export async function GET() {
     });
   }
 }
+
+export async function POST(req) {
+  try {
+    const supabase = createAdminClient();
+    const body = await req.json();
+    const { settings = [] } = body;
+
+    if (!Array.isArray(settings) || settings.length === 0) {
+      return NextResponse.json({ error: 'Invalid settings payload' }, { status: 400 });
+    }
+
+    const records = settings.map(s => ({
+      key: s.key,
+      value: typeof s.value === 'object' ? JSON.stringify(s.value) : String(s.value),
+      updated_at: new Date().toISOString()
+    }));
+
+    const { data, error } = await supabase
+      .from('home_page_settings')
+      .upsert(records, { onConflict: 'key' })
+      .select();
+
+    if (error) {
+      console.error('[CMS API POST]', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    console.error('[CMS API POST EXCEPTION]', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
 

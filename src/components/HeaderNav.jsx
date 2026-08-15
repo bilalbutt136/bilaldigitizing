@@ -5,22 +5,18 @@ import { useNavigate, useLocation } from '../utils/navigation';
 import { useAppState } from '../context/StateContext';
 import { 
   Scissors, 
-  PlusCircle, 
-  UserCheck, 
   Globe, 
-  LogIn,
-  User,
-  ChevronDown,
-  Menu,
-  X,
-  MessageSquare,
-  Bell,
-  PenTool,
-  Image as ImageIcon,
-  Award,
-  HelpCircle,
-  Truck,
-  ArrowRight
+  User, 
+  ChevronDown, 
+  Menu, 
+  X, 
+  MessageSquare, 
+  Bell, 
+  PenTool, 
+  Image as ImageIcon, 
+  Award, 
+  HelpCircle, 
+  ArrowRight 
 } from 'lucide-react';
 import { UserMenuDropdown } from './common/UserMenuDropdown';
 
@@ -62,7 +58,6 @@ export const HeaderNav = () => {
 
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [, setIsStoreOpen] = useState(false);
-  const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
   const [isSupportDropdownOpen, setIsSupportDropdownOpen] = useState(false);
@@ -147,8 +142,7 @@ export const HeaderNav = () => {
     <header style={{ position: 'sticky', top: 0, zIndex: 1000, background: isScrolled ? 'rgba(255, 255, 255, 0.85)' : '#ffffff', backdropFilter: isScrolled ? 'blur(12px)' : 'none', borderBottom: '1px solid var(--border-color)', transition: 'all 0.3s ease', boxShadow: isScrolled ? 'var(--shadow-sm)' : 'none' }}>
       {/* Main Brand Navbar */}
 
-      {/* 2. Main Brand Navbar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1.5rem', width: '100%', maxWidth: '1280px', margin: '0 auto' }}>
         {/* Brand Logo */}
         <div 
           style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', flexShrink: 0 }}

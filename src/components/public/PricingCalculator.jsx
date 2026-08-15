@@ -6,33 +6,24 @@ import {
   CheckCircle,
   Tag,
   Sparkles,
-  Zap,
-  Trophy,
-  Clock,
   Layers,
   PenTool,
-  LayoutGrid
+  ArrowRight
 } from 'lucide-react';
 
-import { useLocation } from '../../utils/navigation';
 import { PackageCard } from './PackageCard';
 import { normalizeCategory, matchCategory } from '../../utils/categoryUtils';
 
 export const PricingCalculator = () => {
-  const { pricing = {}, pricingCards = [], patchCards = [], protectedNavigate, openOrderWizard, activeHomeServiceTab, setActiveHomeServiceTab, homePageConfig = {} } = useAppState();
+  const { pricingCards = [], patchCards = [], protectedNavigate, openOrderWizard, activeHomeServiceTab, setActiveHomeServiceTab, homePageConfig = {} } = useAppState();
   
   const dbSettings = homePageConfig?.settings || {};
   const badgeText = dbSettings.pricing_badge || 'Clear & Transparent Pricing';
-  const titleAll = dbSettings.pricing_title_all || 'Choose Your Service';
   const subAll = dbSettings.pricing_sub_all || 'Select from our three core studio services below. Simple, flat-rate starting prices with zero hidden fees and no surprises.';
-  const titleCat = dbSettings.pricing_title_cat || 'Choose Your Package';
   const subCat = dbSettings.pricing_sub_cat || 'Select a package below to view our affordable, high-quality options.';
   const staticCards = homePageConfig?.pricingStaticCards || [];
 
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  
-  // Initialize with URL param or global state
+  // Initialize with global state
   const activeCategory = normalizeCategory(activeHomeServiceTab || 'all');
 
   const handleSelectPackage = (cat) => {
@@ -71,10 +62,6 @@ export const PricingCalculator = () => {
     }
   };
 
-  const minFee = pricing.minOrderFee !== undefined ? parseFloat(pricing.minOrderFee).toFixed(2) : '10.00';
-  const patchesFee = pricing.customPatchesStartingRate !== undefined ? parseFloat(pricing.customPatchesStartingRate).toFixed(2) : '1.50';
-  const vectorFee = pricing.vectorSimpleRate !== undefined ? parseFloat(pricing.vectorSimpleRate).toFixed(2) : '15.00';
-
   const allCards = [...(pricingCards || []), ...(patchCards || [])];
   
   const cardsToRender = activeCategory === 'all'
@@ -83,82 +70,59 @@ export const PricingCalculator = () => {
 
   return (
     <section id="pricing" style={{ 
-      padding: '3.5rem 0 5.5rem', 
-      background: activeCategory === 'all' ? '#f8fafc' : 'linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%)', 
-      color: activeCategory === 'all' ? '#0f172a' : '#ffffff', 
+      padding: '5.5rem 0', 
+      background: 'var(--bg-main)',
+      color: 'var(--text-main)', 
       fontFamily: 'var(--font-body, "Inter", sans-serif)',
       position: 'relative',
       overflow: 'hidden',
-      transition: 'background 0.3s ease, color 0.3s ease'
+      borderTop: '1px solid var(--border-color)'
     }}>
-      {/* Background Glow Effects */}
-      <div style={{
-        position: 'absolute',
-        top: '-10%',
-        left: '-5%',
-        width: '500px',
-        height: '500px',
-        background: activeCategory === 'all' ? 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, transparent 70%)' : 'radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%)',
-        pointerEvents: 'none',
-        zIndex: 0
-      }} />
-      <div style={{
-        position: 'absolute',
-        bottom: '-10%',
-        right: '-5%',
-        width: '500px',
-        height: '500px',
-        background: activeCategory === 'all' ? 'radial-gradient(circle, rgba(168, 85, 247, 0.05) 0%, transparent 70%)' : 'radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%)',
-        pointerEvents: 'none',
-        zIndex: 0
-      }} />
+      <div className="container">
 
-      <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-
-          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              background: 'var(--orange-50)',
-              border: '1px solid var(--orange-200)',
-              color: 'var(--orange-700)',
-              padding: '0.35rem 0.95rem',
-              borderRadius: '9999px',
-              fontSize: '0.85rem',
-              fontWeight: '800',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              marginBottom: '1rem',
-            }}>
-              <Sparkles size={16} />
-              {badgeText}
-            </div>
-            <h2 style={{
-              fontSize: 'clamp(2rem, 4vw, 2.75rem)',
-              fontFamily: 'var(--font-heading)',
-              fontWeight: '800',
-              color: activeCategory === 'all' ? '#0f172a' : '#ffffff',
-              margin: '0 0 1rem 0',
-              lineHeight: '1.2',
-            }}>
-              {activeCategory === 'all' ? (
-                <>Choose Your <span style={{ color: '#ff7a00' }}>Service</span></>
-              ) : (
-                <>Choose Your <span style={{ color: '#ff7a00' }}>Package</span></>
-              )}
-            </h2>
-            <p style={{
-              fontSize: '1.125rem',
-              color: activeCategory === 'all' ? '#64748b' : '#94a3b8',
-              maxWidth: '650px',
-              margin: '0 auto',
-            }}>
-              {activeCategory === 'all' ? subAll : subCat}
-            </p>
+        <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            background: 'var(--orange-50)',
+            border: '1px solid var(--orange-200)',
+            color: 'var(--orange-700)',
+            padding: '0.35rem 0.95rem',
+            borderRadius: '9999px',
+            fontSize: '0.85rem',
+            fontWeight: '800',
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            marginBottom: '1rem',
+          }}>
+            <Sparkles size={16} />
+            {badgeText}
           </div>
-
-          {/* Pricing Tabs Segmented Control (Removed to prevent duplication with Hero tabs) */}
+          <h2 style={{
+            fontSize: 'clamp(2rem, 3.5vw, 2.75rem)',
+            fontFamily: 'var(--font-heading)',
+            fontWeight: '900',
+            color: 'var(--navy-950)',
+            margin: '0 0 1rem 0',
+            lineHeight: '1.2',
+            letterSpacing: '-0.02em'
+          }}>
+            {activeCategory === 'all' ? (
+              <>Choose Your <span style={{ color: 'var(--orange-500)' }}>Service</span></>
+            ) : (
+              <>Choose Your <span style={{ color: 'var(--orange-500)' }}>Package</span></>
+            )}
+          </h2>
+          <p style={{
+            fontSize: '1.1rem',
+            color: 'var(--text-muted)',
+            lineHeight: '1.65',
+            margin: '0 auto',
+          }}>
+            {activeCategory === 'all' ? subAll : subCat}
+          </p>
+        </div>
 
         {/* Empty State */}
         {cardsToRender.length === 0 && (
@@ -169,140 +133,138 @@ export const PricingCalculator = () => {
 
         {/* Dynamic Pricing Category Cards Grid */}
         {activeCategory === 'all' ? (
-          <div className="grid-responsive-3" style={{
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', maxWidth: '1200px', margin: '0 auto', alignItems: 'stretch'
-          }}>
+          <div className="grid-responsive-3" style={{ alignItems: 'stretch' }}>
             {staticCards.length > 0 ? staticCards.filter(c => c.is_active !== false).sort((a,b)=>a.sort_order - b.sort_order).map((card, idx) => (
-              <div key={card.id || idx} style={{ background: card.highlight_color ? 'linear-gradient(180deg, #ffffff 0%, #ffedd5 100%)' : '#ffffff', borderRadius: '24px', padding: '2.5rem 2rem', boxShadow: card.highlight_color ? '0 20px 40px -10px rgba(234, 88, 12, 0.15)' : '0 10px 40px -10px rgba(0,0,0,0.08)', border: card.highlight_color ? '1px solid rgba(234,88,12,0.1)' : '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', transform: card.highlight_color ? 'translateY(-10px)' : 'none' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: card.highlight_color ? '#eff6ff' : (card.service === 'patch' ? '#ecfdf5' : '#fff7ed'), display: 'flex', alignItems: 'center', justifyContent: 'center', color: card.highlight_color ? '#3b82f6' : (card.service === 'patch' ? '#10b981' : '#ea580c') }}>
-                    {card.service === 'embroidery' ? <Layers size={24} /> : card.service === 'vector' ? <PenTool size={24} /> : <Tag size={24} />}
-                  </div>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.2, margin: 0, whiteSpace: 'pre-line' }}>{card.title}</h3>
-                </div>
-                <div style={{ color: card.highlight_color ? '#4f46e5' : (card.service === 'patch' ? '#059669' : '#ea580c'), fontSize: '3rem', fontWeight: 900, marginBottom: '0.25rem' }}>{card.price}</div>
-                <div style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '2rem' }}>{card.subtitle}</div>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem', flex: 1 }}>
-                  {card.features.map(f => (
-                    <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.95rem', color: '#334155', fontWeight: 500 }}>
-                      <CheckCircle size={18} style={{ color: '#10b981' }} /> {f}
+              <div key={card.id || idx} className="card" style={{ background: card.highlight_color ? 'linear-gradient(180deg, #ffffff 0%, #fff7ed 100%)' : '#ffffff', borderRadius: '20px', padding: '2.5rem 2rem', boxShadow: 'var(--shadow-md)', border: card.highlight_color ? '2px solid var(--orange-300)' : '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--orange-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--orange-500)' }}>
+                      {card.service === 'embroidery' ? <Layers size={24} /> : card.service === 'vector' ? <PenTool size={24} /> : <Tag size={24} />}
                     </div>
-                  ))}
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-950)', lineHeight: 1.2, margin: 0, whiteSpace: 'pre-line' }}>{card.title}</h3>
+                  </div>
+                  <div style={{ color: 'var(--orange-600)', fontSize: '2.75rem', fontWeight: 900, marginBottom: '0.25rem', fontFamily: 'var(--font-heading)' }}>{card.price}</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '1.75rem' }}>{card.subtitle}</div>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2.25rem' }}>
+                    {card.features.map(f => (
+                      <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.925rem', color: 'var(--navy-800)', fontWeight: 600 }}>
+                        <CheckCircle size={17} style={{ color: '#10b981', flexShrink: 0 }} /> {f}
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 
-                <button type="button" onClick={() => setActiveHomeServiceTab(card.service)} style={{ width: '100%', padding: '1rem', borderRadius: '12px', background: card.highlight_color ? '#3b82f6' : (card.service === 'patch' ? '#10b981' : '#ffffff'), border: card.highlight_color ? 'none' : (card.service === 'patch' ? 'none' : '2px solid #ea580c'), color: card.highlight_color ? '#ffffff' : (card.service === 'patch' ? '#ffffff' : '#ea580c'), fontWeight: 700, fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: card.highlight_color ? '0 4px 14px rgba(59, 130, 246, 0.4)' : (card.service === 'patch' ? '0 4px 14px rgba(16, 185, 129, 0.4)' : 'none') }}>
-                  View Packages
+                <button type="button" className="btn btn-primary-orange" onClick={() => setActiveHomeServiceTab(card.service)} style={{ width: '100%', padding: '0.85rem', fontWeight: 800, fontSize: '0.95rem' }}>
+                  View Packages <ArrowRight size={16} />
                 </button>
               </div>
             )) : (
               <>
                 {/* Card 1: Embroidery */}
-                <div style={{ background: '#ffffff', borderRadius: '24px', padding: '2.5rem 2rem', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ea580c' }}>
-                      <Layers size={24} />
-                    </div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.2, margin: 0 }}>Commercial<br/>Embroidery<br/>Digitizing</h3>
-                  </div>
-                  <div style={{ color: '#ea580c', fontSize: '3rem', fontWeight: 900, marginBottom: '0.25rem' }}>$10.00</div>
-                  <div style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '2rem' }}>STARTS $10.00</div>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem', flex: 1 }}>
-                    {['100% Manual Digitizing', 'Free Revisions Included', 'Machine-Ready Formats', 'Super Fast 4-12 Hrs Delivery'].map(f => (
-                      <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.95rem', color: '#334155', fontWeight: 500 }}>
-                        <CheckCircle size={18} style={{ color: '#10b981' }} /> {f}
+                <div className="card" style={{ background: '#ffffff', borderRadius: '20px', padding: '2.5rem 2rem', boxShadow: 'var(--shadow-md)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--orange-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--orange-500)' }}>
+                        <Layers size={24} />
                       </div>
-                    ))}
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-950)', lineHeight: 1.25, margin: 0 }}>Commercial Embroidery<br/>Digitizing</h3>
+                    </div>
+                    <div style={{ color: 'var(--orange-600)', fontSize: '2.75rem', fontWeight: 900, marginBottom: '0.25rem', fontFamily: 'var(--font-heading)' }}>$10.00</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '1.75rem' }}>STARTS $10.00 / DESIGN</div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2.25rem' }}>
+                      {['100% Manual Digitizing (No Auto-Trace)', 'Free Unlimited Revisions Included', 'DST, PES, EMB & All Formats', '4-12 Hour Express Turnaround'].map(f => (
+                        <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.925rem', color: 'var(--navy-800)', fontWeight: 600 }}>
+                          <CheckCircle size={17} style={{ color: '#10b981', flexShrink: 0 }} /> {f}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   
-                  <button type="button" onClick={() => setActiveHomeServiceTab('embroidery')} style={{ width: '100%', padding: '1rem', borderRadius: '12px', background: '#ffffff', border: '2px solid #ea580c', color: '#ea580c', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s' }}>
-                    View Packages
+                  <button type="button" className="btn btn-outline" onClick={() => setActiveHomeServiceTab('embroidery')} style={{ width: '100%', padding: '0.85rem', fontWeight: 800, fontSize: '0.95rem' }}>
+                    View Packages <ArrowRight size={16} />
                   </button>
                 </div>
 
                 {/* Card 2: Vector */}
-                <div style={{ background: 'linear-gradient(180deg, #ffffff 0%, #ffedd5 100%)', borderRadius: '24px', padding: '2.5rem 2rem', boxShadow: '0 20px 40px -10px rgba(234, 88, 12, 0.15)', border: '1px solid rgba(234,88,12,0.1)', display: 'flex', flexDirection: 'column', transform: 'translateY(-10px)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
-                      <PenTool size={24} />
-                    </div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.2, margin: 0 }}>Raster to Scalable<br/>Vector Redraw</h3>
-                  </div>
-                  <div style={{ color: '#4f46e5', fontSize: '3rem', fontWeight: 900, marginBottom: '0.25rem' }}>$30.00</div>
-                  <div style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '2rem' }}>STARTS $15.00 FLAT</div>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem', flex: 1 }}>
-                    {['100% Hand-Drawn Node Paths', 'Pantone Spot Color Separation', 'Master Source Files Included', '6-12 Hrs Turnaround'].map(f => (
-                      <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.95rem', color: '#334155', fontWeight: 500 }}>
-                        <CheckCircle size={18} style={{ color: '#10b981' }} /> {f}
+                <div className="card" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fff7ed 100%)', borderRadius: '20px', padding: '2.5rem 2rem', boxShadow: 'var(--shadow-lg)', border: '2px solid var(--orange-400)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', transform: 'translateY(-6px)' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--orange-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--orange-600)' }}>
+                        <PenTool size={24} />
                       </div>
-                    ))}
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-950)', lineHeight: 1.25, margin: 0 }}>Raster to Scalable<br/>Vector Redraw</h3>
+                    </div>
+                    <div style={{ color: 'var(--orange-600)', fontSize: '2.75rem', fontWeight: 900, marginBottom: '0.25rem', fontFamily: 'var(--font-heading)' }}>$15.00</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '1.75rem' }}>STARTS $15.00 FLAT</div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2.25rem' }}>
+                      {['100% Hand-Drawn Node Paths', 'Pantone Spot Color Separation', 'Master AI, EPS, SVG, PDF Files', '6-12 Hour Fast Delivery'].map(f => (
+                        <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.925rem', color: 'var(--navy-800)', fontWeight: 600 }}>
+                          <CheckCircle size={17} style={{ color: '#10b981', flexShrink: 0 }} /> {f}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   
-                  <button type="button" onClick={() => setActiveHomeServiceTab('vector')} style={{ width: '100%', padding: '1rem', borderRadius: '12px', background: '#3b82f6', border: 'none', color: '#ffffff', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)' }}>
-                    View Packages
+                  <button type="button" className="btn btn-primary-orange" onClick={() => setActiveHomeServiceTab('vector-art')} style={{ width: '100%', padding: '0.85rem', fontWeight: 800, fontSize: '0.95rem' }}>
+                    View Packages <ArrowRight size={16} />
                   </button>
                 </div>
 
                 {/* Card 3: Patches */}
-                <div style={{ background: '#ffffff', borderRadius: '24px', padding: '2.5rem 2rem', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
-                      <Tag size={24} />
-                    </div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.2, margin: 0 }}>Physical Custom<br/>Patches & Emblems</h3>
-                  </div>
-                  <div style={{ color: '#059669', fontSize: '3rem', fontWeight: 900, marginBottom: '0.25rem' }}>$1.50</div>
-                  <div style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '2rem' }}>STARTS $1.50 / PATCH</div>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem', flex: 1 }}>
-                    {['Velcro & Iron-On Backing', 'Classic Merrowed Borders', 'Waterproof 3D Molded PVC', '3-5 Days Production'].map(f => (
-                      <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.95rem', color: '#334155', fontWeight: 500 }}>
-                        <CheckCircle size={18} style={{ color: '#10b981' }} /> {f}
+                <div className="card" style={{ background: '#ffffff', borderRadius: '20px', padding: '2.5rem 2rem', boxShadow: 'var(--shadow-md)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--orange-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--orange-500)' }}>
+                        <Tag size={24} />
                       </div>
-                    ))}
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-950)', lineHeight: 1.25, margin: 0 }}>Physical Custom<br/>Patches & Emblems</h3>
+                    </div>
+                    <div style={{ color: 'var(--orange-600)', fontSize: '2.75rem', fontWeight: 900, marginBottom: '0.25rem', fontFamily: 'var(--font-heading)' }}>$1.50</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '1.75rem' }}>STARTS $1.50 / PIECE</div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2.25rem' }}>
+                      {['Velcro, Iron-On & Peel Backings', 'Classic Merrowed Border Options', 'Embroidered, Woven & 3D PVC', 'Express Doorstep Delivery'].map(f => (
+                        <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.925rem', color: 'var(--navy-800)', fontWeight: 600 }}>
+                          <CheckCircle size={17} style={{ color: '#10b981', flexShrink: 0 }} /> {f}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   
-                  <button type="button" onClick={() => setActiveHomeServiceTab('patch')} style={{ width: '100%', padding: '1rem', borderRadius: '12px', background: '#10b981', border: 'none', color: '#ffffff', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)' }}>
-                    View Packages
+                  <button type="button" className="btn btn-outline" onClick={() => setActiveHomeServiceTab('patches')} style={{ width: '100%', padding: '0.85rem', fontWeight: 800, fontSize: '0.95rem' }}>
+                    View Packages <ArrowRight size={16} />
                   </button>
                 </div>
               </>
             )}
           </div>
         ) : cardsToRender.length > 0 && (
-          <div className="grid-responsive-3" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '1.5rem',
-            maxWidth: '1200px',
-            margin: '0 auto',
-            alignItems: 'stretch'
-          }}>
-          {cardsToRender.map((cat, idx) => (
-            <PackageCard 
-              key={cat.id || idx} 
-              cat={cat} 
-              idx={idx} 
-              onSelect={handleSelectPackage} 
-              forceCategory={activeCategory} 
-            />
-          ))}
-        </div>
+          <div className="grid-responsive-3" style={{ alignItems: 'stretch' }}>
+            {cardsToRender.map((cat, idx) => (
+              <PackageCard 
+                key={cat.id || idx} 
+                cat={cat} 
+                idx={idx} 
+                onSelect={handleSelectPackage} 
+                forceCategory={activeCategory} 
+              />
+            ))}
+          </div>
         )}
 
         {/* Closing Footer Note */}
         <div style={{
           textAlign: 'center',
-          marginTop: '2.5rem',
           padding: '0.85rem 1.5rem',
           background: 'var(--orange-50)',
           border: '1px solid var(--orange-200)',
           borderRadius: 'var(--radius-md)',
           maxWidth: '800px',
-          margin: '2.5rem auto 0',
-          color: 'var(--orange-800)',
+          margin: '3rem auto 0',
+          color: 'var(--orange-900)',
           fontSize: '0.9rem',
           fontWeight: 700,
           display: 'flex',
@@ -310,8 +272,8 @@ export const PricingCalculator = () => {
           justifyContent: 'center',
           gap: '0.5rem'
         }}>
-          <Sparkles size={16} style={{ color: '#ea580c', flexShrink: 0 }} />
-          <span>Prices are per design. Mixing services? Use Add to order list and checkout once.</span>
+          <Sparkles size={16} style={{ color: 'var(--orange-600)', flexShrink: 0 }} />
+          <span>Flat rates per design. Multiple files? Add them all in one order with instant express checkout.</span>
         </div>
 
       </div>
