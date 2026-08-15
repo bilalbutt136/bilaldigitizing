@@ -30,9 +30,11 @@ import {
   upsertCatalogDataToSupabase,
   fetchHomePageContentFromSupabase,
   updateHomePageSettingsInSupabase,
+  saveHeroServiceViaApi,
   ORDER_STATUSES,
   validateStatusTransition
 } from '../services/supabaseService';
+
 import { playNotificationSound } from '../utils/audioNotification';
 
 const StateContext = createContext();
@@ -906,9 +908,14 @@ export const StateProvider = ({ children }) => {
 
   const updateHeroSlides = async (newSlides) => {
     setHeroSlides(newSlides);
-    await saveCmsConfigToSupabase('hero_slides', newSlides);
-    await upsertCatalogDataToSupabase('hero_slides', newSlides);
+    const res = await saveHeroServiceViaApi(null, newSlides);
+    if (!res || !res.success) {
+      await saveCmsConfigToSupabase('hero_slides', newSlides);
+      await upsertCatalogDataToSupabase('hero_slides', newSlides);
+    }
+    return res;
   };
+
 
 
   const updateHeroServiceText = (newData) => {

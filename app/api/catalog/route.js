@@ -3,7 +3,11 @@ import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const ALLOWED_TABLES = ['services', 'pricing_cards', 'patch_cards', 'store_products', 'pricing_tiers', 'portfolio', 'sew_outs', 'hero_slides', 'digitizers', 'site_config', 'faqs', 'testimonials'];
+
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();

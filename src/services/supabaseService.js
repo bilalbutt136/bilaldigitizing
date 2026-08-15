@@ -517,6 +517,21 @@ export async function upsertCatalogDataToSupabase(tableName, dataArray) {
   }
 }
 
+export const saveHeroServiceViaApi = async (serviceData, allSlides = null) => {
+  try {
+    const res = await fetch('/api/admin/services', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ serviceData, allSlides })
+    });
+    const result = await res.json();
+    return result;
+  } catch (err) {
+    console.error('saveHeroServiceViaApi error:', err);
+    return { success: false, error: err.message };
+  }
+};
+
 export const upsertHeroContent = async (data) => {
   try {
     const dbPayload = data.map(h => ({

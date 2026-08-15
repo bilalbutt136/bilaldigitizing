@@ -21,6 +21,7 @@ import {
   Zap
 } from 'lucide-react';
 
+
 const ICON_MAP = {
   Star,
   Globe,
@@ -47,7 +48,7 @@ export const HeroSection = () => {
 
   const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
 
-  // Fallback high-quality curated showcase data
+  // Fallback curated showcase data if not yet loaded from DB
   const showcaseData = {
     all: {
       badge: 'Complete Studio Capabilities',
@@ -58,6 +59,11 @@ export const HeroSection = () => {
         'Embroidery Digitizing: Starts $10.00 Flat · 100% Hand Pathing · 0 Thread Breaks',
         'Vector Art Redraw: Starts $15.00 Flat · Pantone Spot Colors · Master AI/EPS/SVG',
         'Custom Physical Patches: Starts $1.50 / Piece · Velcro & Iron-On · Doorstep Delivery'
+      ],
+      packages: [
+        { id: 'pkg-all-1', name: 'Embroidery Digitizing', price: '$10.00', turnaround: '4–12 Hrs', description: 'Tajima .DST, Wilcom .EMB & Brother .PES with 0 thread breaks.' },
+        { id: 'pkg-all-2', name: 'Vector Art Redraw', price: '$15.00', turnaround: '6–12 Hrs', description: 'Pixel-perfect Bézier node curves with Pantone spot color separation.' },
+        { id: 'pkg-all-3', name: 'Custom Patches', price: '$1.50 / pc', turnaround: '3–5 Days', description: 'Embroidered, woven, and 3D PVC patches with Velcro and Iron-On.' }
       ],
       stats: [
         { value: '1,200+', label: 'Clients', icon: 'Star' },
@@ -86,6 +92,11 @@ export const HeroSection = () => {
         'Free Unlimited Production Edits & Color Sequence Sheets',
         'Packages: Left Chest ($10), Mid-Size ($20), Full Back & 3D Puff ($35)'
       ],
+      packages: [
+        { id: 'pkg-emb-1', name: 'Left Chest & Cap Logo', price: '$10.00', turnaround: '4–12 Hrs', description: 'Standard logos up to 4" x 4" optimized for structured caps and polos.' },
+        { id: 'pkg-emb-2', name: 'Mid-Size Jacket / Sleeve', price: '$20.00', turnaround: '6–12 Hrs', description: 'Medium complexity artwork up to 7" x 7" with density compensation.' },
+        { id: 'pkg-emb-3', name: 'Full Jacket Back & 3D Puff', price: '$35.00', turnaround: '8–12 Hrs', description: 'High stitch count full back designs and specialty 3D puff foam.' }
+      ],
       stats: [
         { value: '100k+', label: 'Sew-Outs', icon: 'Star' },
         { value: '0', label: 'Thread Breaks', icon: 'Zap' },
@@ -113,6 +124,11 @@ export const HeroSection = () => {
         'Master Source Suite: .AI, .EPS, .SVG & High-Res 300+ DPI PDF',
         'Packages: Simple Logo ($15), Medium Detail ($25), Complex Art ($45)'
       ],
+      packages: [
+        { id: 'pkg-vec-1', name: 'Simple Logo & Text Redraw', price: '$15.00', turnaround: '6–12 Hrs', description: 'Clean typographic logos and basic shapes with crisp vector nodes.' },
+        { id: 'pkg-vec-2', name: 'Medium Detail Artwork', price: '$25.00', turnaround: '8–12 Hrs', description: 'Multi-color logos and illustrations with Pantone spot color matching.' },
+        { id: 'pkg-vec-3', name: 'Complex Intricate Art', price: '$45.00', turnaround: '12–24 Hrs', description: 'Intricate crests, photographic traces, and mascot illustrations.' }
+      ],
       stats: [
         { value: '50k+', label: 'Vectors', icon: 'Star' },
         { value: 'Sharp', label: 'Cut Paths', icon: 'Zap' },
@@ -139,6 +155,11 @@ export const HeroSection = () => {
         'Military-Grade Velcro, Heat-Seal Iron-On & Peel Backings',
         'Free 12-Hour Digital Proof & Doorstep Worldwide Shipping',
         'Quantity Tiers: Sample (10-50 pcs), Production (100-500 pcs), Bulk ($1.50/pc)'
+      ],
+      packages: [
+        { id: 'pkg-patch-1', name: 'Sample Batch (10–50 Pcs)', price: '$4.50 / pc', turnaround: '3–5 Days', description: 'Low 10 pcs minimum with 12-Hr free proofing and Velcro / Iron-on.' },
+        { id: 'pkg-patch-2', name: 'Production Batch (100–500 Pcs)', price: '$2.50 / pc', turnaround: '4–7 Days', description: 'Standard run for uniforms and apparel with merrowed borders.' },
+        { id: 'pkg-patch-3', name: 'Bulk Wholesale (500+ Pcs)', price: '$1.50 / pc', turnaround: '7–10 Days', description: 'Factory wholesale pricing with priority line and free delivery.' }
       ],
       stats: [
         { value: '10 Pcs', label: 'Low MOQ', icon: 'Star' },
@@ -170,19 +191,22 @@ export const HeroSection = () => {
   const highlight = matchedSlide?.highlight || currentContent.highlight;
   const description = matchedSlide?.description || currentContent.description;
 
-  const rawFeatures = matchedSlide?.features || currentContent.features;
+  const rawFeatures = matchedSlide?.features || (matchedSlide?.trust_points?.[0]?.features) || currentContent.features;
   const featuresList = Array.isArray(rawFeatures)
     ? rawFeatures.map(f => typeof f === 'string' ? f : f.text)
     : currentContent.features;
+
+  const rawPackages = matchedSlide?.packages || (matchedSlide?.trust_points?.[0]?.packages) || currentContent.packages;
+  const packagesList = Array.isArray(rawPackages) ? rawPackages : (currentContent.packages || []);
 
   const rawStats = matchedSlide?.stats || (matchedSlide?.trust_points?.[0]?.stats) || currentContent.stats;
   const statsList = Array.isArray(rawStats) ? rawStats : currentContent.stats;
 
   const primaryCtaText = matchedSlide?.primary_cta || matchedSlide?.primaryCta || currentContent.primary_cta;
-  const primaryBtnAction = matchedSlide?.primary_btn_action || currentContent.primary_btn_action;
+  const primaryBtnAction = matchedSlide?.primary_btn_action || matchedSlide?.trust_points?.[0]?.primaryBtnAction || currentContent.primary_btn_action;
   
   const secondaryCtaText = matchedSlide?.secondary_cta || matchedSlide?.secondaryCta || currentContent.secondary_cta;
-  const secondaryBtnAction = matchedSlide?.secondary_btn_action || currentContent.secondary_btn_action;
+  const secondaryBtnAction = matchedSlide?.secondary_btn_action || matchedSlide?.trust_points?.[0]?.secondaryBtnAction || currentContent.secondary_btn_action;
 
   const previewTitle = matchedSlide?.previewTitle || matchedSlide?.trust_points?.[0]?.previewTitle || currentContent.previewTitle;
   const beforeImage = matchedSlide?.beforeImg || matchedSlide?.trust_points?.[0]?.previewBefore || currentContent.beforeImg;
@@ -387,7 +411,7 @@ export const HeroSection = () => {
           alignItems: 'center'
         }}>
           
-          {/* Left Column: Dynamic Service Copy, Benefits & CTAs */}
+          {/* Left Column: Dynamic Service Copy, Benefits, Packages & CTAs */}
           <div className="hero-left-content" style={{ textAlign: 'left' }}>
             
             {/* Dynamic Badge */}
@@ -444,6 +468,41 @@ export const HeroSection = () => {
             }}>
               {description}
             </p>
+
+            {/* Dynamic Service Packages Mini-Cards */}
+            {packagesList && packagesList.length > 0 && (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: '0.85rem',
+                marginBottom: '1.75rem'
+              }}>
+                {packagesList.map((pkg, idx) => (
+                  <div 
+                    key={pkg.id || idx}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '12px',
+                      padding: '0.85rem 1rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.25rem'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.825rem', fontWeight: 800, color: '#f1f5f9' }}>{pkg.name}</span>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--orange-400)' }}>{pkg.price}</span>
+                    </div>
+                    {pkg.turnaround && (
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <Clock size={12} style={{ color: 'var(--orange-500)' }} /> {pkg.turnaround}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Service Features Checkmarks List */}
             <div style={{
@@ -690,3 +749,5 @@ export const HeroSection = () => {
     </section>
   );
 };
+
+export default HeroSection;

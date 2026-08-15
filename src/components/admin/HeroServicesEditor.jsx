@@ -15,9 +15,12 @@ import {
   Trash2, 
   Image as ImageIcon,
   Upload,
-  RefreshCw
+  RefreshCw,
+  DollarSign,
+  Clock,
+  Package
 } from 'lucide-react';
-
+import { saveHeroServiceViaApi } from '../../services/supabaseService';
 
 const DEFAULT_SERVICES = {
   all: {
@@ -31,6 +34,32 @@ const DEFAULT_SERVICES = {
       'Embroidery Digitizing: Starts $10.00 Flat · 100% Hand Pathing · 0 Thread Breaks',
       'Vector Art Redraw: Starts $15.00 Flat · Pantone Spot Colors · Master AI/EPS/SVG',
       'Custom Physical Patches: Starts $1.50 / Piece · Velcro & Iron-On · Doorstep Delivery'
+    ],
+    packages: [
+      {
+        id: 'pkg-all-1',
+        name: 'Commercial Embroidery Digitizing',
+        price: '$10.00',
+        turnaround: '4–12 Hours',
+        description: 'Tajima .DST, Wilcom .EMB & Brother .PES with free unlimited revisions and zero thread breaks.',
+        features: ['100% Manual Digitizing', 'Free Unlimited Edits', 'PDF Sequence Sheet', 'All Formats (.DST/.PES/.EMB)']
+      },
+      {
+        id: 'pkg-all-2',
+        name: 'Scalable Vector Art Redraw',
+        price: '$15.00',
+        turnaround: '6–12 Hours',
+        description: 'Pixel-perfect Bézier node curves with Pantone spot color separation for screen printing.',
+        features: ['Hand-Drawn Vector Nodes', 'Pantone Spot Colors', 'Master Suite (.AI/.EPS/.SVG)', 'High-Res 300 DPI PDF']
+      },
+      {
+        id: 'pkg-all-3',
+        name: 'Custom Physical Manufactured Patches',
+        price: '$1.50 / pc',
+        turnaround: '3–5 Days',
+        description: 'Embroidered, woven, and 3D PVC patches with Velcro and Iron-On backings delivered globally.',
+        features: ['Embroidered / Woven / PVC', 'Velcro & Iron-On Backings', '12-Hr Free Digital Proof', 'Global Doorstep Delivery']
+      }
     ],
     stats: [
       { value: '1,200+', label: 'Clients' },
@@ -61,6 +90,32 @@ const DEFAULT_SERVICES = {
       'Free Unlimited Production Edits & Color Sequence Sheets',
       'Packages: Left Chest ($10), Mid-Size ($20), Full Back & 3D Puff ($35)'
     ],
+    packages: [
+      {
+        id: 'pkg-emb-1',
+        name: 'Left Chest & Cap Small Logo',
+        price: '$10.00',
+        turnaround: '4–12 Hours',
+        description: 'Standard logos up to 4" x 4" optimized for structured caps, polos, and left-chest apparel.',
+        features: ['Up to 4" x 4" Size', 'Cap & Flat Optimization', 'Underlay Compensation', 'Free Machine Formats']
+      },
+      {
+        id: 'pkg-emb-2',
+        name: 'Mid-Size Jacket & Sleeve Design',
+        price: '$20.00',
+        turnaround: '6–12 Hours',
+        description: 'Medium complexity artwork up to 7" x 7" with calculated density and pull compensation.',
+        features: ['Up to 7" x 7" Size', 'Complex Multi-Color Pathing', 'Unlimited Free Revisions', 'Production PDF Sheet']
+      },
+      {
+        id: 'pkg-emb-3',
+        name: 'Full Jacket Back & 3D Puff',
+        price: '$35.00',
+        turnaround: '8–12 Hours',
+        description: 'High stitch count full back designs up to 12" x 12" and specialty 3D puff foam digitizing.',
+        features: ['Up to 12" x 12" Full Back', '3D Puff Foam Layering', 'High Density Pathing', 'Priority Expedited QA']
+      }
+    ],
     stats: [
       { value: '100k+', label: 'Sew-Outs' },
       { value: '0', label: 'Thread Breaks' },
@@ -89,6 +144,32 @@ const DEFAULT_SERVICES = {
       'Pantone Solid Coated Spot Color Separation Included',
       'Master Source Suite: .AI, .EPS, .SVG & High-Res 300+ DPI PDF',
       'Packages: Simple Logo ($15), Medium Detail ($25), Complex Art ($45)'
+    ],
+    packages: [
+      {
+        id: 'pkg-vec-1',
+        name: 'Simple Logo & Typography Redraw',
+        price: '$15.00',
+        turnaround: '6–12 Hours',
+        description: 'Clean typographic logos, basic shapes, and clean line work converted to crisp vector nodes.',
+        features: ['Clean Bézier Curves', 'Sharp Vector Nodes', 'AI, EPS, SVG, PDF', 'Infinite Scalability']
+      },
+      {
+        id: 'pkg-vec-2',
+        name: 'Medium Detail Artwork with Colors',
+        price: '$25.00',
+        turnaround: '8–12 Hours',
+        description: 'Multi-color logos, badges, and detailed illustrations with Pantone spot color matching.',
+        features: ['Pantone PMS Color Match', 'Separated Color Layers', 'Gradients & Blends', 'Cut-Path Vinyl Friendly']
+      },
+      {
+        id: 'pkg-vec-3',
+        name: 'Complex Intricate Illustration',
+        price: '$45.00',
+        turnaround: '12–24 Hours',
+        description: 'Highly intricate artwork, photographic traces, crests, and mascot illustrations.',
+        features: ['Intricate Fine Lines', 'Complete Layer Organization', 'Print-Ready Color Separations', 'Master Source Files']
+      }
     ],
     stats: [
       { value: '50k+', label: 'Vectors' },
@@ -119,6 +200,32 @@ const DEFAULT_SERVICES = {
       'Free 12-Hour Digital Proof & Doorstep Worldwide Shipping',
       'Quantity Tiers: Sample (10-50 pcs), Production (100-500 pcs), Bulk ($1.50/pc)'
     ],
+    packages: [
+      {
+        id: 'pkg-patch-1',
+        name: 'Sample Quantity Batch (10–50 Pcs)',
+        price: '$4.50 / pc',
+        turnaround: '3–5 Days',
+        description: 'Low-minimum run perfect for small brands, clubs, and prototype testing before mass production.',
+        features: ['Low 10 Pcs Minimum', '12-Hr Free Proofing', 'Velcro / Iron-On', '100% Quality Checked']
+      },
+      {
+        id: 'pkg-patch-2',
+        name: 'Production Batch (100–500 Pcs)',
+        price: '$2.50 / pc',
+        turnaround: '4–7 Days',
+        description: 'Standard volume for uniform programs, merchandise, and tactical apparel.',
+        features: ['Merrowed or Laser Border', 'Free Custom Backing', 'Up to 9 Thread Colors', 'Free Doorstep Shipping']
+      },
+      {
+        id: 'pkg-patch-3',
+        name: 'Wholesale Bulk Batch (500+ Pcs)',
+        price: '$1.50 / pc',
+        turnaround: '7–10 Days',
+        description: 'Factory direct wholesale pricing with volume discounts and priority manufacturing line.',
+        features: ['Factory Direct Rates', 'Custom Packaging Available', 'Express Global Delivery', 'Dedicated Production QA']
+      }
+    ],
     stats: [
       { value: '10 Pcs', label: 'Low MOQ' },
       { value: '12-Hr', label: 'Free Proof' },
@@ -138,7 +245,7 @@ const DEFAULT_SERVICES = {
 };
 
 export const HeroServicesEditor = () => {
-  const { heroSlides = [], updateHeroSlides, showToast } = useAppState();
+  const { heroSlides = [], setHeroSlides, showToast } = useAppState();
   const [selectedService, setSelectedService] = useState('all');
   const [formState, setFormState] = useState(DEFAULT_SERVICES.all);
   const [isSaving, setIsSaving] = useState(false);
@@ -162,12 +269,13 @@ export const HeroServicesEditor = () => {
         title: existing.title || defaults.title,
         highlight: existing.highlight || defaults.highlight,
         description: existing.description || defaults.description,
-        features: Array.isArray(existing.features) ? existing.features.map(f => typeof f === 'string' ? f : f.text) : defaults.features,
+        features: Array.isArray(existing.features) ? existing.features.map(f => typeof f === 'string' ? f : f.text) : (existing.trust_points?.[0]?.features || defaults.features),
+        packages: Array.isArray(existing.packages) && existing.packages.length > 0 ? existing.packages : (existing.trust_points?.[0]?.packages || defaults.packages),
         stats: Array.isArray(existing.stats) ? existing.stats : (existing.trust_points?.[0]?.stats || defaults.stats),
-        primary_cta: existing.primary_cta || defaults.primary_cta,
-        primary_btn_action: existing.primary_btn_action || defaults.primary_btn_action,
-        secondary_cta: existing.secondary_cta || defaults.secondary_cta,
-        secondary_btn_action: existing.secondary_btn_action || defaults.secondary_btn_action,
+        primary_cta: existing.primary_cta || existing.primaryCta || defaults.primary_cta,
+        primary_btn_action: existing.primary_btn_action || existing.trust_points?.[0]?.primaryBtnAction || defaults.primary_btn_action,
+        secondary_cta: existing.secondary_cta || existing.secondaryCta || defaults.secondary_cta,
+        secondary_btn_action: existing.secondary_btn_action || existing.trust_points?.[0]?.secondaryBtnAction || defaults.secondary_btn_action,
         previewTitle: existing.previewTitle || existing.trust_points?.[0]?.previewTitle || defaults.previewTitle,
         beforeImg: existing.beforeImg || existing.trust_points?.[0]?.previewBefore || defaults.beforeImg,
         afterImg: existing.afterImg || existing.banner_image || defaults.afterImg,
@@ -213,6 +321,39 @@ export const HeroServicesEditor = () => {
     }));
   };
 
+  // Package tier modifications
+  const handlePackageChange = (index, field, value) => {
+    setFormState(prev => {
+      const updatedPkgs = [...(prev.packages || [])];
+      updatedPkgs[index] = { ...updatedPkgs[index], [field]: value };
+      return { ...prev, packages: updatedPkgs };
+    });
+  };
+
+  const handleAddPackage = () => {
+    setFormState(prev => ({
+      ...prev,
+      packages: [
+        ...(prev.packages || []),
+        {
+          id: `pkg-${Date.now()}`,
+          name: 'New Package Tier',
+          price: '$20.00',
+          turnaround: '6–12 Hours',
+          description: 'Package tier description and scope.',
+          features: ['Feature line 1', 'Feature line 2']
+        }
+      ]
+    }));
+  };
+
+  const handleRemovePackage = (index) => {
+    setFormState(prev => ({
+      ...prev,
+      packages: prev.packages.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleImageFileUpload = async (file, targetField) => {
     if (!file) return;
     setUploadingState(prev => ({ ...prev, [targetField]: true }));
@@ -231,9 +372,9 @@ export const HeroServicesEditor = () => {
       const data = await res.json();
       if (data.success && data.url) {
         setFormState(prev => ({ ...prev, [targetField]: data.url }));
-        showToast('Image uploaded and optimized successfully!', 'success');
+        showToast('Image uploaded and saved online successfully!', 'success');
       } else {
-        showToast(data.error || 'Failed to upload image.', 'error');
+        showToast(data.error || 'Failed to upload image file.', 'error');
       }
     } catch (err) {
       console.error('Upload exception:', err);
@@ -245,6 +386,17 @@ export const HeroServicesEditor = () => {
 
   const handleSave = async (e) => {
     if (e) e.preventDefault();
+
+    // 1. Form Validation
+    if (!formState.title || !formState.title.trim()) {
+      showToast('Please provide a valid service title.', 'error');
+      return;
+    }
+    if (!formState.description || !formState.description.trim()) {
+      showToast('Please provide a valid service description.', 'error');
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -255,7 +407,7 @@ export const HeroServicesEditor = () => {
         updated_at: new Date().toISOString()
       };
 
-      // Merge into heroSlides array
+      // Merge into complete heroSlides array
       const existingIdx = (heroSlides || []).findIndex(
         s => s.id?.toLowerCase() === selectedService || s.serviceKey?.toLowerCase() === selectedService
       );
@@ -267,14 +419,22 @@ export const HeroServicesEditor = () => {
         newSlides = [...(heroSlides || []), updatedItem];
       }
 
-      if (updateHeroSlides) {
-        await updateHeroSlides(newSlides);
-      }
+      // 2. Save directly to backend API endpoint
+      const result = await saveHeroServiceViaApi(updatedItem, newSlides);
 
-      showToast(`Homepage "${formState.title}" saved successfully to live database!`, 'success');
+      if (result && result.success) {
+        // 3. Update React Global State
+        if (setHeroSlides) {
+          setHeroSlides(result.allSlides || newSlides);
+        }
+        showToast('Service updated successfully.', 'success');
+      } else {
+        console.error('Save failed:', result?.error);
+        showToast(result?.error || 'Unable to save service. Please try again.', 'error');
+      }
     } catch (err) {
-      console.error('Save error:', err);
-      showToast('Error saving changes to database.', 'error');
+      console.error('Save exception:', err);
+      showToast('Unable to save service. Please try again.', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -283,7 +443,7 @@ export const HeroServicesEditor = () => {
   const handleResetDefaults = () => {
     if (confirm(`Reset "${selectedService}" service to studio default values?`)) {
       setFormState(DEFAULT_SERVICES[selectedService] || DEFAULT_SERVICES.all);
-      showToast('Form reset to default values. Click Save to publish.', 'info');
+      showToast('Form reset to default values. Click Save & Publish Service to apply.', 'info');
     }
   };
 
@@ -297,20 +457,20 @@ export const HeroServicesEditor = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       
-      {/* Header Info */}
+      {/* Header Bar */}
       <div className="card" style={{ padding: '1.5rem 1.75rem', background: '#ffffff', borderRadius: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Sparkles size={20} style={{ color: 'var(--orange-500)' }} />
-              Homepage Services & Hero Showcase Editor
+              Live Homepage Services & Showcase Control Center
             </h3>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: '0.35rem 0 0' }}>
-              Edit headlines, descriptions, features, trust stats, and upload before/after comparison images for each service tab on the homepage.
+              Edit headlines, descriptions, packages, prices, trust stats, and before/after comparison images with direct Supabase persistence.
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
             <button
               type="button"
               className="btn btn-outline btn-sm"
@@ -321,18 +481,18 @@ export const HeroServicesEditor = () => {
             </button>
             <button
               type="button"
-              className="btn btn-primary-orange btn-sm"
+              className="btn btn-primary-orange btn-md"
               onClick={handleSave}
               disabled={isSaving}
-              style={{ fontWeight: 800 }}
+              style={{ fontWeight: 800, minWidth: '180px' }}
             >
-              <Save size={14} /> {isSaving ? 'Saving to Database...' : 'Save Service Changes'}
+              <Save size={16} /> {isSaving ? 'Saving...' : 'Save & Publish Service'}
             </button>
           </div>
         </div>
       </div>
 
-      {/* 4 Service Switcher Navigation */}
+      {/* 4 Service Tabs Switcher */}
       <div style={{
         display: 'flex',
         gap: '0.5rem',
@@ -376,10 +536,10 @@ export const HeroServicesEditor = () => {
       {/* Main Edit Form */}
       <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
         
-        {/* Section 1: Core Copy & Typography */}
+        {/* Section 1: Core Service Information */}
         <div className="card" style={{ padding: '2rem', background: '#ffffff', borderRadius: '16px' }}>
           <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span>📝</span> Service Copy & Messaging
+            <span>📝</span> Service Information & Headings
           </h4>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
@@ -414,7 +574,7 @@ export const HeroServicesEditor = () => {
 
           <div className="form-group" style={{ marginBottom: '1.25rem' }}>
             <label style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.35rem', display: 'block' }}>
-              Main Headline (H1)
+              Main Headline (H1 / Service Title)
             </label>
             <input
               type="text"
@@ -428,20 +588,132 @@ export const HeroServicesEditor = () => {
 
           <div className="form-group">
             <label style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.35rem', display: 'block' }}>
-              Description Text
+              Service Description
             </label>
             <textarea
               className="form-control"
               rows={3}
               value={formState.description || ''}
               onChange={(e) => handleFieldChange('description', e.target.value)}
-              placeholder="Full service description..."
+              placeholder="Full service description that displays on the homepage..."
               required
             />
           </div>
         </div>
 
-        {/* Section 2: Key Features Checklist */}
+        {/* Section 2: Service Packages & Pricing Tiers */}
+        <div className="card" style={{ padding: '2rem', background: '#ffffff', borderRadius: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <div>
+              <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Package size={20} style={{ color: 'var(--orange-500)' }} />
+                Service Packages & Starting Prices
+              </h4>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
+                Package tiers shown for this service on the homepage and services section.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={handleAddPackage}
+              style={{ fontWeight: 700 }}
+            >
+              <Plus size={14} /> Add Package
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+            {(formState.packages || []).map((pkg, idx) => (
+              <div
+                key={pkg.id || idx}
+                style={{
+                  padding: '1.25rem',
+                  background: '#f8fafc',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-color)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.75rem'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase' }}>
+                    Package #{idx + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePackage(idx)}
+                    style={{
+                      background: '#fee2e2',
+                      border: 'none',
+                      color: '#dc2626',
+                      padding: '0.35rem',
+                      borderRadius: '6px',
+                      cursor: 'pointer'
+                    }}
+                    title="Remove package"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+
+                <div className="form-group">
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.2rem' }}>Package Name</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={pkg.name || ''}
+                    onChange={(e) => handlePackageChange(idx, 'name', e.target.value)}
+                    placeholder="e.g. Left Chest & Cap Logo"
+                    required
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem', marginBottom: '0.2rem' }}>
+                      <DollarSign size={12} /> Price
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={pkg.price || ''}
+                      onChange={(e) => handlePackageChange(idx, 'price', e.target.value)}
+                      placeholder="e.g. $10.00"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem', marginBottom: '0.2rem' }}>
+                      <Clock size={12} /> Turnaround
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={pkg.turnaround || ''}
+                      onChange={(e) => handlePackageChange(idx, 'turnaround', e.target.value)}
+                      placeholder="e.g. 4–12 Hours"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.2rem' }}>Short Description</label>
+                  <textarea
+                    className="form-control"
+                    rows={2}
+                    value={pkg.description || ''}
+                    onChange={(e) => handlePackageChange(idx, 'description', e.target.value)}
+                    placeholder="Brief package description..."
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Section 3: Key Features Checklist */}
         <div className="card" style={{ padding: '2rem', background: '#ffffff', borderRadius: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
             <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -489,7 +761,7 @@ export const HeroServicesEditor = () => {
           </div>
         </div>
 
-        {/* Section 3: Trust Stats (4 Badges) */}
+        {/* Section 4: Trust Stats (4 Badges) */}
         <div className="card" style={{ padding: '2rem', background: '#ffffff', borderRadius: '16px' }}>
           <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span>⭐</span> Trust Badges & Metrics
@@ -522,10 +794,10 @@ export const HeroServicesEditor = () => {
           </div>
         </div>
 
-        {/* Section 4: CTA Buttons Configuration */}
+        {/* Section 5: CTA Buttons Configuration */}
         <div className="card" style={{ padding: '2rem', background: '#ffffff', borderRadius: '16px' }}>
           <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span>🚀</span> Call to Action Buttons
+            <span>🚀</span> Call to Action Buttons & Destinations
           </h4>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
@@ -541,6 +813,7 @@ export const HeroServicesEditor = () => {
                   value={formState.primary_cta || ''}
                   onChange={(e) => handleFieldChange('primary_cta', e.target.value)}
                   placeholder="e.g. Order Embroidery Digitizing"
+                  required
                 />
               </div>
               <div className="form-group">
@@ -551,6 +824,7 @@ export const HeroServicesEditor = () => {
                   value={formState.primary_btn_action || ''}
                   onChange={(e) => handleFieldChange('primary_btn_action', e.target.value)}
                   placeholder="e.g. /order or #pricing"
+                  required
                 />
               </div>
             </div>
@@ -583,7 +857,7 @@ export const HeroServicesEditor = () => {
           </div>
         </div>
 
-        {/* Section 5: Interactive Comparison Showcase with Direct Image Upload */}
+        {/* Section 6: Interactive Comparison Showcase with Direct Image Upload */}
         <div className="card" style={{ padding: '2rem', background: '#ffffff', borderRadius: '16px' }}>
           <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <ImageIcon size={20} style={{ color: 'var(--orange-500)' }} />
@@ -750,7 +1024,7 @@ export const HeroServicesEditor = () => {
         </div>
 
         {/* Bottom Save Bar */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', paddingBottom: '2rem' }}>
           <button
             type="button"
             className="btn btn-outline"
