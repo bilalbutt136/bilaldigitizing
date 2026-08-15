@@ -18,7 +18,8 @@ import {
   ShieldCheck,
   LayoutGrid,
   Sparkles,
-  Zap
+  Zap,
+  PackageCheck
 } from 'lucide-react';
 
 export const HeroSection = () => {
@@ -56,8 +57,8 @@ export const HeroSection = () => {
       primaryCta: 'Get Started Now',
       secondaryCta: 'Explore Packages',
       previewTitle: 'All Studio Production Results',
-      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1000',
-      afterImg: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=1000',
+      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
+      afterImg: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=800',
       beforeTag: 'Raw Artwork',
       afterTag: 'Finished Production'
     },
@@ -81,8 +82,8 @@ export const HeroSection = () => {
       primaryCta: 'Order Embroidery Digitizing',
       secondaryCta: 'View Embroidery Packages',
       previewTitle: 'Raw Art to High-Density Sew-Out',
-      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1000',
-      afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1000',
+      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
+      afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=800',
       beforeTag: 'Original Logo',
       afterTag: 'Digitized Sew-Out'
     },
@@ -106,8 +107,8 @@ export const HeroSection = () => {
       primaryCta: 'Order Vector Art Conversion',
       secondaryCta: 'View Vector Packages',
       previewTitle: 'Blurry Raster to Clean Scalable Vector',
-      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1000',
-      afterImg: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=1000',
+      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
+      afterImg: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=800',
       beforeTag: 'Blurry Pixelated Raster',
       afterTag: 'Sharp Vector Nodes'
     },
@@ -131,8 +132,8 @@ export const HeroSection = () => {
       primaryCta: 'Order Custom Patches',
       secondaryCta: 'Get Free Patch Proof',
       previewTitle: 'Artwork to Physical Manufactured Patch',
-      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1000',
-      afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1000',
+      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
+      afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=800',
       beforeTag: 'Design Artwork',
       afterTag: 'Manufactured Patch'
     }
@@ -190,7 +191,7 @@ export const HeroSection = () => {
     <section style={{
       background: 'linear-gradient(135deg, var(--navy-950, #0f172a) 0%, var(--navy-900, #0f172a) 60%, #1e1b4b 100%)',
       color: '#ffffff',
-      padding: '4.5rem 0 6.5rem', // Generous top & bottom breathing room
+      padding: '2.5rem 0 5.5rem',
       position: 'relative',
       overflow: 'hidden'
     }}>
@@ -258,19 +259,19 @@ export const HeroSection = () => {
 
       <div className="container" style={{ position: 'relative', zIndex: 1 }}>
         
-        {/* Top 4 Navigation Tabs Switcher with comfortable spacing */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3.75rem' }}>
+        {/* Top 4 Navigation Tabs Switcher (Exactly as in the user screenshot) */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem' }}>
           <div style={{
             display: 'inline-flex',
-            background: 'rgba(15, 23, 42, 0.8)',
-            border: '1px solid rgba(255, 255, 255, 0.16)',
-            padding: '0.4rem',
+            background: 'rgba(15, 23, 42, 0.75)',
+            border: '1px solid rgba(255, 255, 255, 0.14)',
+            padding: '0.35rem',
             borderRadius: '9999px',
-            backdropFilter: 'blur(20px)',
-            boxShadow: '0 12px 36px rgba(0, 0, 0, 0.45)',
+            backdropFilter: 'blur(16px)',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)',
             flexWrap: 'wrap',
             justifyContent: 'center',
-            gap: '0.35rem'
+            gap: '0.3rem'
           }}>
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -284,7 +285,7 @@ export const HeroSection = () => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.55rem',
-                    padding: '0.7rem 1.85rem',
+                    padding: '0.65rem 1.65rem',
                     borderRadius: '9999px',
                     border: 'none',
                     background: isSelected 
@@ -292,10 +293,10 @@ export const HeroSection = () => {
                       : 'transparent',
                     color: isSelected ? '#ffffff' : '#94a3b8',
                     fontWeight: isSelected ? 800 : 600,
-                    fontSize: '0.95rem',
+                    fontSize: '0.925rem',
                     cursor: 'pointer',
                     transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                    boxShadow: isSelected ? '0 4px 18px rgba(249, 115, 22, 0.5)' : 'none'
+                    boxShadow: isSelected ? '0 4px 16px rgba(249, 115, 22, 0.45)' : 'none'
                   }}
                   onMouseEnter={(e) => {
                     if (!isSelected) {
@@ -310,7 +311,7 @@ export const HeroSection = () => {
                     }
                   }}
                 >
-                  <Icon size={17} />
+                  <Icon size={16} />
                   <span>{tab.label}</span>
                 </button>
               );
@@ -318,10 +319,10 @@ export const HeroSection = () => {
           </div>
         </div>
 
-        {/* 2-Column Hero Dynamic Presentation (Equally balanced 1fr 1fr for larger image showcase) */}
+        {/* 2-Column Hero Dynamic Presentation */}
         <div className="hero-grid-layout" style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateColumns: '1.12fr 0.88fr',
           gap: '3.5rem',
           alignItems: 'center'
         }}>
@@ -351,7 +352,7 @@ export const HeroSection = () => {
 
             {/* Dynamic Main Title */}
             <h1 style={{
-              fontSize: 'clamp(2.2rem, 3.6vw, 3.15rem)',
+              fontSize: 'clamp(2.15rem, 3.8vw, 3.25rem)',
               fontWeight: 900,
               lineHeight: 1.14,
               color: '#ffffff',
@@ -364,22 +365,22 @@ export const HeroSection = () => {
 
             {/* Dynamic Highlight / Subheading */}
             <div style={{
-              fontSize: 'clamp(1.05rem, 1.5vw, 1.18rem)',
+              fontSize: 'clamp(1.05rem, 1.6vw, 1.2rem)',
               fontWeight: 700,
               color: 'var(--orange-400)',
               marginBottom: '1.15rem',
-              lineHeight: 1.45
+              lineHeight: 1.4
             }}>
               {highlight}
             </div>
 
             {/* Dynamic Description */}
             <p style={{
-              fontSize: '1.025rem',
+              fontSize: '1.05rem',
               lineHeight: 1.65,
               color: '#94a3b8',
               marginBottom: '1.75rem',
-              maxWidth: '620px'
+              maxWidth: '640px'
             }}>
               {description}
             </p>
@@ -462,43 +463,41 @@ export const HeroSection = () => {
 
           </div>
 
-          {/* Right Column: Larger, High-Impact Interactive Before/After Showcase Box */}
+          {/* Right Column: Interactive Before/After Showcase Box */}
           <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
             <div style={{
-              background: 'rgba(15, 23, 42, 0.7)',
-              border: '1px solid rgba(255, 255, 255, 0.16)',
-              borderRadius: '24px',
-              padding: '1.5rem',
-              boxShadow: '0 30px 60px -15px rgba(0, 0, 0, 0.7)',
+              background: 'rgba(15, 23, 42, 0.6)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '20px',
+              padding: '1.25rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
               width: '100%',
-              maxWidth: '720px', // Enlarged width
-              backdropFilter: 'blur(20px)'
+              maxWidth: '650px',
+              backdropFilter: 'blur(16px)'
             }}>
               
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.15rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <div>
                   <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem', letterSpacing: '0.06em' }}>
                     <span className="blinking-green-dot" /> SHOWCASE
                   </div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ffffff', marginTop: '2px' }}>
+                  <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginTop: '2px' }}>
                     {currentContent.previewTitle}
                   </div>
                 </div>
               </div>
 
-              {/* Enlarged Interactive Comparison Slider (Taller & Wider with generous aspect ratio) */}
+              {/* Interactive Comparison Slider */}
               <div 
                 style={{
                   position: 'relative',
                   width: '100%',
-                  aspectRatio: '16/11', // Taller and larger image viewing area
-                  minHeight: '380px',
-                  borderRadius: '16px',
+                  aspectRatio: '16/10',
+                  borderRadius: '14px',
                   overflow: 'hidden',
                   cursor: 'ew-resize',
                   userSelect: 'none',
-                  background: '#090d16',
-                  boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.5)'
+                  background: '#090d16'
                 }}
                 onMouseMove={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
@@ -514,7 +513,7 @@ export const HeroSection = () => {
                 {/* After Finished Image */}
                 <img 
                   src={afterImage} 
-                  alt="After Production Preview" 
+                  alt="After" 
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                   draggable="false" 
                 />
@@ -532,7 +531,7 @@ export const HeroSection = () => {
                 }}>
                   <img 
                     src={beforeImage} 
-                    alt="Before Raw Artwork Preview" 
+                    alt="Before" 
                     style={{ 
                       width: '100%', 
                       height: '100%', 
@@ -546,9 +545,8 @@ export const HeroSection = () => {
                     top: 0,
                     bottom: 0,
                     right: 0,
-                    width: '3px',
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    boxShadow: '0 0 10px rgba(255, 255, 255, 0.8)'
+                    width: '2px',
+                    background: 'rgba(255, 255, 255, 0.9)'
                   }} />
                 </div>
 
@@ -559,7 +557,7 @@ export const HeroSection = () => {
                   left: `${sliderPos}%`,
                   width: '4px',
                   background: 'var(--orange-500)',
-                  boxShadow: '0 0 20px rgba(255, 122, 0, 1)',
+                  boxShadow: '0 0 16px rgba(255, 122, 0, 0.9)',
                   transform: 'translateX(-50%)'
                 }}>
                   <div style={{
@@ -567,39 +565,38 @@ export const HeroSection = () => {
                     top: '50%',
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
-                    width: '40px',
-                    height: '40px',
+                    width: '36px',
+                    height: '36px',
                     background: 'var(--orange-500)',
                     color: '#ffffff',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 4px 18px rgba(0, 0, 0, 0.6)',
+                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.5)',
                     border: '3px solid #ffffff'
                   }}>
-                    <MoveHorizontal size={20} />
+                    <MoveHorizontal size={18} />
                   </div>
                 </div>
 
                 {/* Before Label Badge */}
                 <span style={{
                   position: 'absolute',
-                  bottom: '16px',
-                  left: '16px',
-                  background: 'rgba(15, 23, 42, 0.9)',
-                  backdropFilter: 'blur(8px)',
+                  bottom: '14px',
+                  left: '14px',
+                  background: 'rgba(15, 23, 42, 0.88)',
+                  backdropFilter: 'blur(6px)',
                   color: '#ffffff',
-                  fontSize: '0.78rem',
+                  fontSize: '0.75rem',
                   fontWeight: 800,
-                  padding: '0.4rem 0.85rem',
-                  borderRadius: '8px',
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '6px',
                   letterSpacing: '0.04em',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.45rem',
-                  border: '1px solid rgba(239, 68, 68, 0.45)',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)'
+                  gap: '0.4rem',
+                  border: '1px solid rgba(239, 68, 68, 0.4)'
                 }}>
                   <span className="blinking-red-dot" />
                   <span>{currentContent.beforeTag}</span>
@@ -608,19 +605,19 @@ export const HeroSection = () => {
                 {/* After Label Badge */}
                 <span style={{
                   position: 'absolute',
-                  bottom: '16px',
-                  right: '16px',
+                  bottom: '14px',
+                  right: '14px',
                   background: 'var(--orange-500)',
                   color: '#ffffff',
-                  fontSize: '0.78rem',
+                  fontSize: '0.75rem',
                   fontWeight: 800,
-                  padding: '0.4rem 0.85rem',
-                  borderRadius: '8px',
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '6px',
                   letterSpacing: '0.04em',
-                  boxShadow: '0 4px 16px rgba(249, 115, 22, 0.5)',
+                  boxShadow: '0 4px 12px rgba(249, 115, 22, 0.4)',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.45rem'
+                  gap: '0.4rem'
                 }}>
                   <span className="blinking-green-dot" />
                   <span>{currentContent.afterTag}</span>
