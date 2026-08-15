@@ -444,6 +444,13 @@ export const HeroSection = () => {
           0%, 100% { opacity: 1; transform: scale(1.1); }
           50% { opacity: 0.35; transform: scale(0.85); }
         }
+        .hero-cta-buttons-row {
+          display: flex !important;
+          flex-direction: row !important;
+          flex-wrap: nowrap !important;
+          align-items: center !important;
+          gap: 0.85rem !important;
+        }
         @media (max-width: 1024px) {
           .hero-grid-layout {
             grid-template-columns: 1fr !important;
@@ -456,6 +463,16 @@ export const HeroSection = () => {
             justify-content: center !important;
           }
           .hero-cta-buttons-row {
+            justify-content: center !important;
+          }
+        }
+        @media (max-width: 640px) {
+          .hero-cta-buttons-row {
+            flex-direction: column !important;
+            width: 100% !important;
+          }
+          .hero-cta-buttons-row button {
+            width: 100% !important;
             justify-content: center !important;
           }
         }
@@ -511,10 +528,10 @@ export const HeroSection = () => {
           </div>
         </div>
 
-        {/* 2-Column Hero Dynamic Presentation (Wider Showcase Column - Aligned to Top) */}
+        {/* 2-Column Hero Dynamic Presentation (Balanced 50/50 Grid - Aligned to Top) */}
         <div className="hero-grid-layout" style={{
           display: 'grid',
-          gridTemplateColumns: '0.92fr 1.08fr',
+          gridTemplateColumns: '1fr 1fr',
           gap: '2.5rem',
           alignItems: 'flex-start'
         }}>
@@ -572,7 +589,7 @@ export const HeroSection = () => {
               lineHeight: 1.55,
               color: '#94a3b8',
               marginBottom: '1.25rem',
-              maxWidth: '560px'
+              maxWidth: '580px'
             }}>
               {description}
             </p>
@@ -596,21 +613,33 @@ export const HeroSection = () => {
               ))}
             </div>
 
-            {/* CTA Buttons Group */}
-            <div className="hero-cta-buttons-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.85rem', marginBottom: '1.5rem' }}>
+            {/* CTA Buttons Group (Always Side-by-Side on Desktop/Tablet) */}
+            <div className="hero-cta-buttons-row" style={{
+              display: 'flex',
+              flexDirection: 'row',
+              flexWrap: 'nowrap',
+              alignItems: 'center',
+              gap: '0.85rem',
+              marginBottom: '1.5rem'
+            }}>
               <button 
                 type="button"
                 className="btn btn-primary-orange btn-lg"
                 onClick={handlePrimaryAction}
                 style={{ 
-                  padding: '0.85rem 2rem',
-                  fontSize: '1rem',
-                  fontWeight: 800
+                  padding: '0.85rem 1.6rem',
+                  fontSize: '0.95rem',
+                  fontWeight: 800,
+                  whiteSpace: 'nowrap',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  flexShrink: 0
                 }}
               >
-                <Upload size={17} />
-                {primaryCtaText}
-                <ArrowRight size={17} />
+                <Upload size={16} />
+                <span>{primaryCtaText}</span>
+                <ArrowRight size={16} />
               </button>
 
               <button 
@@ -620,12 +649,17 @@ export const HeroSection = () => {
                 style={{ 
                   color: '#ffffff', 
                   borderColor: 'rgba(255, 255, 255, 0.25)',
-                  padding: '0.85rem 1.75rem', 
-                  fontSize: '1rem',
-                  fontWeight: 700
+                  padding: '0.85rem 1.4rem', 
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  whiteSpace: 'nowrap',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
                 }}
               >
-                {secondaryCtaText}
+                <span>{secondaryCtaText}</span>
               </button>
             </div>
 
