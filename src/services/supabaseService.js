@@ -833,7 +833,43 @@ export async function fetchCatalogFromSupabase() {
       pricingCards: data.pricing_cards || [],
       heroGlobalSettings: configMap['hero_global_settings'] || null,
       heroServiceText: configMap['hero_service_text'] || null,
-      siteSettings: configMap['site_settings'] || null,
+      siteSettings: {
+        ...(typeof configMap['site_settings'] === 'object' ? configMap['site_settings'] : {}),
+        announcement: typeof configMap['announcement'] === 'object' ? configMap['announcement'] : (typeof configMap['site_settings']?.announcement === 'object' ? configMap['site_settings'].announcement : {
+          enabled: true,
+          badge: 'SPECIAL PROMO',
+          text: 'Get 20% OFF on All Custom Embroidery Digitizing & Vector Art Orders!',
+          promoCode: 'SAVE20',
+          linkText: 'Claim 20% Off',
+          linkUrl: '/order',
+          theme: 'orange',
+          bgColor: '#ea580c',
+          textColor: '#ffffff',
+          showCodeBadge: true,
+          showCountdown: true,
+          countdownHours: 24
+        }),
+        promotionalBanner: typeof configMap['promotionalBanner'] === 'object' ? configMap['promotionalBanner'] : (typeof configMap['site_settings']?.promotionalBanner === 'object' ? configMap['site_settings'].promotionalBanner : {
+          enabled: true,
+          title: 'First-Time Client Welcome Offer',
+          description: 'Enjoy 20% off your first digitizing file or vector redraw with guaranteed zero thread breaks and free unlimited revisions.',
+          promoCode: 'WELCOME20',
+          ctaText: 'Start Your Order',
+          ctaLink: '/order',
+          theme: 'navy',
+          position: 'bottom-right'
+        }),
+        promoCodes: Array.isArray(configMap['promoCodes']) ? configMap['promoCodes'] : (Array.isArray(configMap['site_settings']?.promoCodes) ? configMap['site_settings'].promoCodes : [
+          {
+            code: 'SAVE20',
+            discountType: 'percent',
+            discountValue: 20,
+            minOrder: 10,
+            description: '20% off all embroidery digitizing and vector conversion services',
+            isActive: true
+          }
+        ])
+      },
       pricing: configMap['pricing'] || null,
       serviceCms: {
         trust_features: configMap['trust_features'] || [],

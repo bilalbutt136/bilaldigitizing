@@ -108,7 +108,42 @@ export const StateProvider = ({ children }) => {
     rotatingTexts: 'Commercial Embroidery, Scalable Vector Art, Custom Physical Patches'
   });
   const [heroServiceText, setHeroServiceText] = useState({});
-  const [siteSettings, setSiteSettings] = useState({});
+  const [siteSettings, setSiteSettings] = useState({
+    announcement: {
+      enabled: true,
+      badge: 'SPECIAL PROMO',
+      text: 'Get 20% OFF on All Custom Embroidery Digitizing & Vector Art Orders!',
+      promoCode: 'SAVE20',
+      linkText: 'Claim 20% Off',
+      linkUrl: '/order',
+      theme: 'orange',
+      bgColor: '#ea580c',
+      textColor: '#ffffff',
+      showCodeBadge: true,
+      showCountdown: true,
+      countdownHours: 24
+    },
+    promotionalBanner: {
+      enabled: true,
+      title: 'First-Time Client Welcome Offer',
+      description: 'Enjoy 20% off your first digitizing file or vector redraw with guaranteed zero thread breaks and free unlimited revisions.',
+      promoCode: 'WELCOME20',
+      ctaText: 'Start Your Order',
+      ctaLink: '/order',
+      theme: 'navy',
+      position: 'bottom-right'
+    },
+    promoCodes: [
+      {
+        code: 'SAVE20',
+        discountType: 'percent',
+        discountValue: 20,
+        minOrder: 10,
+        description: '20% off all embroidery digitizing and vector conversion services',
+        isActive: true
+      }
+    ]
+  });
   const [digitizers, setDigitizers] = useState([]);
 
   // Admin whitelist (server-managed via public.admins table)
@@ -924,9 +959,18 @@ export const StateProvider = ({ children }) => {
     showToast('Hero section text updated successfully!', 'success');
   };
 
-  const updateSiteSettings = (newSettings) => {
-    setSiteSettings(newSettings);
-    saveCmsConfigToSupabase('site_settings', newSettings);
+  const updateSiteSettings = async (newSettings) => {
+    setSiteSettings(prev => ({ ...prev, ...newSettings }));
+    await saveCmsConfigToSupabase('site_settings', newSettings);
+    if (newSettings.announcement) {
+      await saveCmsConfigToSupabase('announcement', newSettings.announcement);
+    }
+    if (newSettings.promotionalBanner) {
+      await saveCmsConfigToSupabase('promotionalBanner', newSettings.promotionalBanner);
+    }
+    if (newSettings.promoCodes) {
+      await saveCmsConfigToSupabase('promoCodes', newSettings.promoCodes);
+    }
   };
 
   const saveCmsData = (key, value) => {
