@@ -20,8 +20,7 @@ import {
   ChevronDown,
   Eye,
   EyeOff,
-  Clock,
-  Sliders
+  Clock
 } from 'lucide-react';
 
 import { saveHeroServiceViaApi } from '../../services/supabaseService';
@@ -54,31 +53,22 @@ const DEFAULT_SERVICES = {
     showcase_images: [
       {
         id: 'all-img-1',
-        title: 'Commercial Embroidery Sew-Out',
-        before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1000',
-        after_image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1000',
-        before_tag: 'Raw Artwork',
-        after_tag: 'Embroidery Sew-Out',
+        title: 'Factory-Grade Commercial Embroidery Sew-Out',
+        image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1000',
         display_order: 1,
         is_active: true
       },
       {
         id: 'all-img-2',
-        title: 'Precision Scalable Vector Redraw',
-        before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1000',
-        after_image_url: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=1000',
-        before_tag: 'Pixelated Raster',
-        after_tag: 'Crisp Vector Paths',
+        title: 'Precision Scalable Vector Art Redraw',
+        image_url: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=1000',
         display_order: 2,
         is_active: true
       },
       {
         id: 'all-img-3',
         title: 'Physical Manufactured Custom Patches',
-        before_image_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&q=80&w=1000',
-        after_image_url: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=1000',
-        before_tag: 'Emblem Design',
-        after_tag: 'Manufactured Patch',
+        image_url: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=1000',
         display_order: 3,
         is_active: true
       }
@@ -113,30 +103,21 @@ const DEFAULT_SERVICES = {
       {
         id: 'emb-img-1',
         title: 'Left Chest & Polo Logo Digitizing',
-        before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1000',
-        after_image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1000',
-        before_tag: 'Original Logo',
-        after_tag: 'Digitized Sew-Out',
+        image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1000',
         display_order: 1,
         is_active: true
       },
       {
         id: 'emb-img-2',
         title: '3D Puff Raised Foam Cap Embroidery',
-        before_image_url: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&q=80&w=1000',
-        after_image_url: 'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&q=80&w=1000',
-        before_tag: 'Flat Artwork',
-        after_tag: '3D Puff Cap',
+        image_url: 'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&q=80&w=1000',
         display_order: 2,
         is_active: true
       },
       {
         id: 'emb-img-3',
         title: 'Full Jacket Back High-Stitch Masterpiece',
-        before_image_url: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&q=80&w=1000',
-        after_image_url: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=1000',
-        before_tag: 'Design Graphic',
-        after_tag: '85k Stitch Sew-Out',
+        image_url: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=1000',
         display_order: 3,
         is_active: true
       }
@@ -171,20 +152,14 @@ const DEFAULT_SERVICES = {
       {
         id: 'vec-img-1',
         title: 'Blurry Logo to Razor-Sharp Vector Nodes',
-        before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1000',
-        after_image_url: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=1000',
-        before_tag: 'Blurry Raster',
-        after_tag: 'Sharp Vector',
+        image_url: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=1000',
         display_order: 1,
         is_active: true
       },
       {
         id: 'vec-img-2',
         title: 'Pantone Spot Color Separation for Press',
-        before_image_url: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=1000',
-        after_image_url: 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&q=80&w=1000',
-        before_tag: 'Multi-Tone Art',
-        after_tag: 'PMS Color Separated',
+        image_url: 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&q=80&w=1000',
         display_order: 2,
         is_active: true
       }
@@ -219,20 +194,14 @@ const DEFAULT_SERVICES = {
       {
         id: 'pat-img-1',
         title: 'Tactical Hook & Loop Velcro Patch',
-        before_image_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&q=80&w=1000',
-        after_image_url: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=1000',
-        before_tag: 'Design Artwork',
-        after_tag: 'Manufactured Patch',
+        image_url: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=1000',
         display_order: 1,
         is_active: true
       },
       {
         id: 'pat-img-2',
-        title: 'High-Density Merrowed Border Emblem',
-        before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1000',
-        after_image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1000',
-        before_tag: 'Emblem Vector',
-        after_tag: 'Embroidered Border',
+        title: 'High-Density Merrowed Border Uniform Patch',
+        image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1000',
         display_order: 2,
         is_active: true
       }
@@ -256,20 +225,27 @@ export const HeroServicesEditor = () => {
     
     if (existing) {
       // Parse showcase images
-      let showcaseImages = existing.showcase_images || existing.showcaseImages || existing.trust_points?.[0]?.showcase_images || [];
-      if (!Array.isArray(showcaseImages) || showcaseImages.length === 0) {
-        // Fallback: build from beforeImg & afterImg or defaults
-        const beforeImg = existing.beforeImg || existing.trust_points?.[0]?.previewBefore || defaults.showcase_images[0]?.before_image_url;
-        const afterImg = existing.afterImg || existing.banner_image || defaults.showcase_images[0]?.after_image_url;
-        if (afterImg) {
+      let rawImages = existing.showcase_images || existing.showcaseImages || existing.trust_points?.[0]?.showcase_images || [];
+      let showcaseImages = [];
+
+      if (Array.isArray(rawImages) && rawImages.length > 0) {
+        showcaseImages = rawImages.map((img, i) => ({
+          id: img.id || `img-${i}`,
+          title: img.title || `Showcase Image #${i + 1}`,
+          image_url: img.image_url || img.after_image_url || img.afterImg || img.before_image_url || img.beforeImg || '',
+          display_order: Number(img.display_order) || (i + 1),
+          is_active: img.is_active !== false
+        })).filter(img => Boolean(img.image_url));
+      }
+
+      if (showcaseImages.length === 0) {
+        const fallbackImg = existing.afterImg || existing.banner_image || existing.beforeImg || defaults.showcase_images[0]?.image_url;
+        if (fallbackImg) {
           showcaseImages = [
             {
-              id: `${selectedService}-legacy-1`,
+              id: `${selectedService}-img-1`,
               title: existing.previewTitle || defaults.previewTitle,
-              before_image_url: beforeImg,
-              after_image_url: afterImg,
-              before_tag: existing.beforeTag || 'Raw Artwork',
-              after_tag: existing.afterTag || 'Finished Production',
+              image_url: fallbackImg,
               display_order: 1,
               is_active: true
             }
@@ -342,11 +318,8 @@ export const HeroServicesEditor = () => {
     const maxOrder = images.reduce((max, img) => Math.max(max, img.display_order || 0), 0);
     const newImageItem = {
       id: `img-${Date.now()}`,
-      title: `Showcase Item #${images.length + 1}`,
-      before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1000',
-      after_image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1000',
-      before_tag: 'BEFORE',
-      after_tag: 'AFTER',
+      title: `Showcase Image #${images.length + 1}`,
+      image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1000',
       display_order: maxOrder + 1,
       is_active: true
     };
@@ -373,7 +346,6 @@ export const HeroServicesEditor = () => {
     images[index] = images[targetIdx];
     images[targetIdx] = temp;
 
-    // Recalculate display_orders
     const reordered = images.map((img, i) => ({ ...img, display_order: i + 1 }));
     setFormState(prev => ({ ...prev, showcase_images: reordered }));
   };
@@ -394,10 +366,9 @@ export const HeroServicesEditor = () => {
     });
   };
 
-  const handleImageFileUpload = async (file, imageIndex, field) => {
+  const handleImageFileUpload = async (file, imageIndex) => {
     if (!file) return;
-    const uploadKey = `${imageIndex}_${field}`;
-    setUploadingState(prev => ({ ...prev, [uploadKey]: true }));
+    setUploadingState(prev => ({ ...prev, [imageIndex]: true }));
 
     try {
       const formData = new FormData();
@@ -412,8 +383,8 @@ export const HeroServicesEditor = () => {
       const data = await response.json();
       if (data.url || data.secure_url) {
         const uploadedUrl = data.secure_url || data.url;
-        handleShowcaseImageChange(imageIndex, field, uploadedUrl);
-        showToast('Image uploaded successfully!', 'success');
+        handleShowcaseImageChange(imageIndex, 'image_url', uploadedUrl);
+        showToast('Showcase image uploaded successfully!', 'success');
       } else {
         throw new Error(data.error || 'Upload returned no URL');
       }
@@ -421,7 +392,7 @@ export const HeroServicesEditor = () => {
       console.error('Image upload failed:', err);
       showToast('Image upload failed: ' + err.message, 'error');
     } finally {
-      setUploadingState(prev => ({ ...prev, [uploadKey]: false }));
+      setUploadingState(prev => ({ ...prev, [imageIndex]: false }));
     }
   };
 
@@ -437,7 +408,10 @@ export const HeroServicesEditor = () => {
 
     try {
       const images = (formState.showcase_images || []).map((img, idx) => ({
-        ...img,
+        id: img.id || `img-${idx}`,
+        title: img.title || `Showcase Image #${idx + 1}`,
+        image_url: img.image_url || '',
+        after_image_url: img.image_url || '',
         display_order: Number(img.display_order) || (idx + 1),
         is_active: img.is_active !== false
       }));
@@ -448,10 +422,8 @@ export const HeroServicesEditor = () => {
         serviceKey: selectedService,
         slideshow_interval: Number(formState.slideshow_interval) || 5,
         showcase_images: images,
-        beforeImg: images[0]?.before_image_url || '',
-        afterImg: images[0]?.after_image_url || '',
-        beforeTag: images[0]?.before_tag || 'BEFORE',
-        afterTag: images[0]?.after_tag || 'AFTER'
+        afterImg: images[0]?.image_url || '',
+        banner_image: images[0]?.image_url || ''
       };
 
       const result = await saveHeroServiceViaApi(payload);
@@ -631,10 +603,10 @@ export const HeroServicesEditor = () => {
             <div>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <ImageIcon size={20} style={{ color: 'var(--orange-500)' }} />
-                2. Multiple Showcase Images & Slideshow Manager ({(formState.showcase_images || []).length})
+                2. Multiple Showcase Images (Auto-Changes Every {formState.slideshow_interval || 5}s) ({(formState.showcase_images || []).length})
               </h3>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
-                Upload multiple Before & After image samples for <strong>{selectedService.toUpperCase()}</strong>. The slideshow will automatically rotate through all active images on the home page.
+                Upload multiple high-quality showcase images for <strong>{selectedService.toUpperCase()}</strong>. The homepage hero will automatically cycle through all active images every {formState.slideshow_interval || 5} seconds.
               </p>
             </div>
 
@@ -668,13 +640,10 @@ export const HeroServicesEditor = () => {
             </div>
           </div>
 
-          {/* List of Showcase Images */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Grid of Showcase Image Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
             {(formState.showcase_images || []).map((item, idx) => {
-              const beforeUploadKey = `${idx}_before_image_url`;
-              const afterUploadKey = `${idx}_after_image_url`;
-              const isBeforeUploading = uploadingState[beforeUploadKey];
-              const isAfterUploading = uploadingState[afterUploadKey];
+              const isUploading = uploadingState[idx];
 
               return (
                 <div
@@ -684,90 +653,102 @@ export const HeroServicesEditor = () => {
                     border: item.is_active ? '1.5px solid var(--border-color)' : '1.5px dashed #cbd5e1',
                     borderRadius: '16px',
                     padding: '1.25rem',
-                    boxShadow: item.is_active ? '0 2px 10px rgba(0,0,0,0.03)' : 'none',
+                    boxShadow: item.is_active ? '0 4px 16px rgba(0,0,0,0.04)' : 'none',
                     opacity: item.is_active ? 1 : 0.75,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: '1rem',
                     transition: 'all 0.2s'
                   }}
                 >
                   {/* Top Bar of Image Card */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.65rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                      <span style={{
-                        background: item.is_active ? 'var(--orange-500)' : '#94a3b8',
-                        color: '#ffffff',
-                        fontSize: '0.75rem',
-                        fontWeight: 900,
-                        padding: '0.2rem 0.6rem',
-                        borderRadius: '6px'
-                      }}>
-                        SLIDE #{idx + 1}
-                      </span>
-                      <strong style={{ fontSize: '0.95rem', color: 'var(--navy-950)' }}>
-                        {item.title || `Showcase Item #${idx + 1}`}
-                      </strong>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{
+                          background: item.is_active ? 'var(--orange-500)' : '#94a3b8',
+                          color: '#ffffff',
+                          fontSize: '0.75rem',
+                          fontWeight: 900,
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: '6px'
+                        }}>
+                          IMAGE #{idx + 1}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        {/* Active/Inactive Toggle */}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleShowcaseActive(idx)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            background: item.is_active ? '#ecfdf5' : '#f1f5f9',
+                            color: item.is_active ? '#059669' : '#64748b',
+                            border: `1px solid ${item.is_active ? '#a7f3d0' : '#e2e8f0'}`,
+                            padding: '0.3rem 0.55rem',
+                            borderRadius: '6px',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                          }}
+                          title={item.is_active ? 'Click to disable from slideshow' : 'Click to enable in slideshow'}
+                        >
+                          {item.is_active ? <Eye size={12} /> : <EyeOff size={12} />}
+                          <span>{item.is_active ? 'Active' : 'Disabled'}</span>
+                        </button>
+
+                        {/* Move Up/Down Reorder */}
+                        <button
+                          type="button"
+                          disabled={idx === 0}
+                          onClick={() => handleMoveShowcaseImage(idx, 'up')}
+                          style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.3rem', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1 }}
+                          title="Move Up"
+                        >
+                          <ChevronUp size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={idx === (formState.showcase_images || []).length - 1}
+                          onClick={() => handleMoveShowcaseImage(idx, 'down')}
+                          style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.3rem', cursor: idx === (formState.showcase_images || []).length - 1 ? 'not-allowed' : 'pointer', opacity: idx === (formState.showcase_images || []).length - 1 ? 0.3 : 1 }}
+                          title="Move Down"
+                        >
+                          <ChevronDown size={13} />
+                        </button>
+
+                        {/* Delete */}
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteShowcaseImage(idx)}
+                          style={{ background: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.3rem', cursor: 'pointer' }}
+                          title="Delete Image"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      {/* Active/Inactive Toggle */}
-                      <button
-                        type="button"
-                        onClick={() => handleToggleShowcaseActive(idx)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          background: item.is_active ? '#ecfdf5' : '#f1f5f9',
-                          color: item.is_active ? '#059669' : '#64748b',
-                          border: `1px solid ${item.is_active ? '#a7f3d0' : '#e2e8f0'}`,
-                          padding: '0.35rem 0.65rem',
-                          borderRadius: '6px',
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          cursor: 'pointer'
-                        }}
-                        title={item.is_active ? 'Click to disable from slideshow' : 'Click to enable in slideshow'}
-                      >
-                        {item.is_active ? <Eye size={13} /> : <EyeOff size={13} />}
-                        <span>{item.is_active ? 'Active' : 'Disabled'}</span>
-                      </button>
+                    {/* Image Preview Thumbnail */}
+                    {item.image_url ? (
+                      <div style={{ width: '100%', height: '160px', borderRadius: '10px', overflow: 'hidden', marginBottom: '0.85rem', background: '#090d16', border: '1px solid #e2e8f0' }}>
+                        <img src={item.image_url} alt="Showcase preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    ) : (
+                      <div style={{ width: '100%', height: '140px', borderRadius: '10px', background: '#f1f5f9', border: '1.5px dashed #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.85rem', color: '#94a3b8', fontSize: '0.85rem' }}>
+                        No Image Uploaded
+                      </div>
+                    )}
 
-                      {/* Move Up/Down Reorder */}
-                      <button
-                        type="button"
-                        disabled={idx === 0}
-                        onClick={() => handleMoveShowcaseImage(idx, 'up')}
-                        style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.35rem', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1 }}
-                        title="Move Up"
-                      >
-                        <ChevronUp size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        disabled={idx === (formState.showcase_images || []).length - 1}
-                        onClick={() => handleMoveShowcaseImage(idx, 'down')}
-                        style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.35rem', cursor: idx === (formState.showcase_images || []).length - 1 ? 'not-allowed' : 'pointer', opacity: idx === (formState.showcase_images || []).length - 1 ? 0.3 : 1 }}
-                        title="Move Down"
-                      >
-                        <ChevronDown size={14} />
-                      </button>
-
-                      {/* Delete */}
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteShowcaseImage(idx)}
-                        style={{ background: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.35rem', cursor: 'pointer' }}
-                        title="Delete Image Slide"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Title & Tags Row */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                    <div>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--navy-800)', display: 'block', marginBottom: '0.2rem' }}>
-                        Slide Title / Caption
+                    {/* Title / Caption Input */}
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--navy-900)', display: 'block', marginBottom: '0.25rem' }}>
+                        Image Caption / Title
                       </label>
                       <input
                         type="text"
@@ -778,124 +759,37 @@ export const HeroServicesEditor = () => {
                         style={{ fontSize: '0.85rem' }}
                       />
                     </div>
-
-                    <div>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--navy-800)', display: 'block', marginBottom: '0.2rem' }}>
-                        Before Tag
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={item.before_tag || ''}
-                        onChange={(e) => handleShowcaseImageChange(idx, 'before_tag', e.target.value)}
-                        placeholder="e.g. BEFORE / RAW ART"
-                        style={{ fontSize: '0.85rem' }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--navy-800)', display: 'block', marginBottom: '0.2rem' }}>
-                        After Tag
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={item.after_tag || ''}
-                        onChange={(e) => handleShowcaseImageChange(idx, 'after_tag', e.target.value)}
-                        placeholder="e.g. AFTER / SEW-OUT"
-                        style={{ fontSize: '0.85rem' }}
-                      />
-                    </div>
                   </div>
 
-                  {/* Image Upload Columns (Before & After) */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-                    
-                    {/* Left: Before Image */}
-                    <div style={{ padding: '1rem', background: '#fff1f2', borderRadius: '12px', border: '1px solid #fecdd3' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#991b1b' }}>Before Image (Left Side)</span>
-                        <span style={{ fontSize: '0.68rem', background: '#ffe4e6', color: '#be123c', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 700 }}>RAW ART</span>
-                      </div>
-
-                      {/* Thumbnail Preview */}
-                      {item.before_image_url && (
-                        <div style={{ width: '100%', height: '110px', borderRadius: '8px', overflow: 'hidden', marginBottom: '0.65rem', background: '#000' }}>
-                          <img src={item.before_image_url} alt="Before preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        </div>
-                      )}
-
-                      {/* Upload Button */}
-                      <label style={{ display: 'block', width: '100%', marginBottom: '0.5rem' }}>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          style={{ display: 'none' }}
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files[0]) {
-                              handleImageFileUpload(e.target.files[0], idx, 'before_image_url');
-                            }
-                          }}
-                        />
-                        <span className="btn btn-outline btn-sm" style={{ width: '100%', fontSize: '0.78rem', fontWeight: 700, borderColor: '#f87171', color: '#991b1b', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-                          {isBeforeUploading ? <RefreshCw size={13} className="spin-icon" /> : <Upload size={13} />}
-                          <span>{isBeforeUploading ? 'Uploading...' : 'Upload File'}</span>
-                        </span>
-                      </label>
-
+                  {/* Upload & URL Row */}
+                  <div>
+                    <label style={{ display: 'block', width: '100%', marginBottom: '0.5rem' }}>
                       <input
-                        type="url"
-                        className="form-control"
-                        placeholder="Or paste image URL..."
-                        value={item.before_image_url || ''}
-                        onChange={(e) => handleShowcaseImageChange(idx, 'before_image_url', e.target.value)}
-                        style={{ fontSize: '0.8rem' }}
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleImageFileUpload(e.target.files[0], idx);
+                          }
+                        }}
                       />
-                    </div>
+                      <span className="btn btn-outline btn-sm" style={{ width: '100%', fontSize: '0.8rem', fontWeight: 700, borderColor: 'var(--orange-500)', color: 'var(--orange-600)', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', cursor: 'pointer' }}>
+                        {isUploading ? <RefreshCw size={13} className="spin-icon" /> : <Upload size={13} />}
+                        <span>{isUploading ? 'Uploading to Storage...' : 'Upload Image File'}</span>
+                      </span>
+                    </label>
 
-                    {/* Right: After Image */}
-                    <div style={{ padding: '1rem', background: '#ecfdf5', borderRadius: '12px', border: '1px solid #a7f3d0' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#065f46' }}>After Image (Right Side)</span>
-                        <span style={{ fontSize: '0.68rem', background: '#d1fae5', color: '#047857', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 700 }}>FINISHED PRODUCT</span>
-                      </div>
-
-                      {/* Thumbnail Preview */}
-                      {item.after_image_url && (
-                        <div style={{ width: '100%', height: '110px', borderRadius: '8px', overflow: 'hidden', marginBottom: '0.65rem', background: '#000' }}>
-                          <img src={item.after_image_url} alt="After preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        </div>
-                      )}
-
-                      {/* Upload Button */}
-                      <label style={{ display: 'block', width: '100%', marginBottom: '0.5rem' }}>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          style={{ display: 'none' }}
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files[0]) {
-                              handleImageFileUpload(e.target.files[0], idx, 'after_image_url');
-                            }
-                          }}
-                        />
-                        <span className="btn btn-outline btn-sm" style={{ width: '100%', fontSize: '0.78rem', fontWeight: 700, borderColor: '#34d399', color: '#065f46', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-                          {isAfterUploading ? <RefreshCw size={13} className="spin-icon" /> : <Upload size={13} />}
-                          <span>{isAfterUploading ? 'Uploading...' : 'Upload File'}</span>
-                        </span>
-                      </label>
-
-                      <input
-                        type="url"
-                        className="form-control"
-                        placeholder="Or paste image URL..."
-                        value={item.after_image_url || ''}
-                        onChange={(e) => handleShowcaseImageChange(idx, 'after_image_url', e.target.value)}
-                        style={{ fontSize: '0.8rem' }}
-                      />
-                    </div>
-
+                    <input
+                      type="url"
+                      className="form-control"
+                      placeholder="Or paste direct Image URL..."
+                      value={item.image_url || ''}
+                      onChange={(e) => handleShowcaseImageChange(idx, 'image_url', e.target.value)}
+                      style={{ fontSize: '0.8rem' }}
+                    />
                   </div>
+
                 </div>
               );
             })}

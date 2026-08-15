@@ -19,8 +19,7 @@ import {
   Sparkles,
   Zap,
   ChevronLeft,
-  ChevronRight,
-  Eye
+  ChevronRight
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -62,30 +61,21 @@ const DEFAULT_SERVICE_DATA = {
       {
         id: 'all-1',
         title: 'Factory-Grade Commercial Embroidery Sew-Out',
-        before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=900',
-        after_image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=900',
-        before_tag: 'RAW ARTWORK',
-        after_tag: 'EMBROIDERY SEW-OUT',
+        image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1000',
         display_order: 1,
         is_active: true
       },
       {
         id: 'all-2',
         title: 'Precision Scalable Vector Art Redraw',
-        before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=900',
-        after_image_url: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=900',
-        before_tag: 'PIXELATED RASTER',
-        after_tag: 'SCALABLE VECTOR',
+        image_url: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=1000',
         display_order: 2,
         is_active: true
       },
       {
         id: 'all-3',
         title: 'Physical Manufactured Custom Patches',
-        before_image_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&q=80&w=900',
-        after_image_url: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=900',
-        before_tag: 'EMBLEM DESIGN',
-        after_tag: 'MANUFACTURED PATCH',
+        image_url: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=1000',
         display_order: 3,
         is_active: true
       }
@@ -118,41 +108,22 @@ const DEFAULT_SERVICE_DATA = {
       {
         id: 'emb-1',
         title: 'Left Chest & Polo Logo Digitizing',
-        before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=900',
-        after_image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=900',
-        before_tag: 'ORIGINAL LOGO',
-        after_tag: 'DIGITIZED SEW-OUT',
+        image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1000',
         display_order: 1,
         is_active: true
       },
       {
         id: 'emb-2',
         title: '3D Puff Raised Foam Cap Embroidery',
-        before_image_url: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&q=80&w=900',
-        after_image_url: 'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&q=80&w=900',
-        before_tag: '2D FLAT LOGO',
-        after_tag: '3D PUFF CAP',
+        image_url: 'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&q=80&w=1000',
         display_order: 2,
         is_active: true
       },
       {
         id: 'emb-3',
-        title: 'Mid-Size Jacket & Sleeve Design',
-        before_image_url: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=900',
-        after_image_url: 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&q=80&w=900',
-        before_tag: 'VECTOR ARTWORK',
-        after_tag: 'SATIN EMBROIDERY',
+        title: 'Full Jacket Back High-Stitch Masterpiece',
+        image_url: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=1000',
         display_order: 3,
-        is_active: true
-      },
-      {
-        id: 'emb-4',
-        title: 'Full Jacket Back Master Design',
-        before_image_url: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&q=80&w=900',
-        after_image_url: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=900',
-        before_tag: 'DESIGN GRAPHIC',
-        after_tag: '85K STITCH SEW-OUT',
-        display_order: 4,
         is_active: true
       }
     ]
@@ -184,31 +155,15 @@ const DEFAULT_SERVICE_DATA = {
       {
         id: 'vec-1',
         title: 'Blurry Logo to Razor-Sharp Vector Nodes',
-        before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=900',
-        after_image_url: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=900',
-        before_tag: 'PIXELATED JPG',
-        after_tag: 'CLEAN VECTOR AI/EPS',
+        image_url: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=1000',
         display_order: 1,
         is_active: true
       },
       {
         id: 'vec-2',
         title: 'Pantone Spot Color Separation for Press',
-        before_image_url: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=900',
-        after_image_url: 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&q=80&w=900',
-        before_tag: 'MULTI-TONE ART',
-        after_tag: 'PMS COLOR SEPARATED',
+        image_url: 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&q=80&w=1000',
         display_order: 2,
-        is_active: true
-      },
-      {
-        id: 'vec-3',
-        title: 'Complex Mascot & Crest Illustration',
-        before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=900',
-        after_image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=900',
-        before_tag: 'RAW SKETCH',
-        after_tag: 'MASTER VECTOR ART',
-        display_order: 3,
         is_active: true
       }
     ]
@@ -240,31 +195,15 @@ const DEFAULT_SERVICE_DATA = {
       {
         id: 'pat-1',
         title: 'Tactical Hook & Loop Velcro Patch',
-        before_image_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&q=80&w=900',
-        after_image_url: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=900',
-        before_tag: 'DESIGN ARTWORK',
-        after_tag: 'VELCRO PATCH',
+        image_url: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=1000',
         display_order: 1,
         is_active: true
       },
       {
         id: 'pat-2',
         title: 'High-Density Merrowed Border Uniform Patch',
-        before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=900',
-        after_image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=900',
-        before_tag: 'EMBLEM VECTOR',
-        after_tag: 'MERROWED PATCH',
+        image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1000',
         display_order: 2,
-        is_active: true
-      },
-      {
-        id: 'pat-3',
-        title: '3D Rubber PVC Molded Waterproof Patch',
-        before_image_url: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&q=80&w=900',
-        after_image_url: 'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&q=80&w=900',
-        before_tag: '2D DESIGN',
-        after_tag: '3D MOLDED PVC',
-        display_order: 3,
         is_active: true
       }
     ]
@@ -282,7 +221,6 @@ export const HeroSection = () => {
   } = useAppState();
 
   const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
-  const [showOriginalArt, setShowOriginalArt] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isFading, setIsFading] = useState(false);
 
@@ -322,31 +260,24 @@ export const HeroSection = () => {
     
     if (Array.isArray(images) && images.length > 0) {
       const activeList = images
-        .filter(img => img.is_active !== false && (img.after_image_url || img.image_url || img.before_image_url))
+        .filter(img => img.is_active !== false && (img.image_url || img.after_image_url || img.afterImg || img.before_image_url || img.beforeImg))
         .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
       if (activeList.length > 0) {
         return activeList.map((img, i) => ({
           id: img.id || `img-${i}`,
-          title: img.title || `Showcase Item #${i + 1}`,
-          beforeImg: img.before_image_url || img.beforeImg || '',
-          afterImg: img.after_image_url || img.image_url || img.afterImg || img.before_image_url || '',
-          beforeTag: img.before_tag || img.beforeTag || 'RAW ARTWORK',
-          afterTag: img.after_tag || img.afterTag || 'FINISHED PRODUCTION'
+          title: img.title || `Showcase Image #${i + 1}`,
+          imageUrl: img.image_url || img.after_image_url || img.afterImg || img.before_image_url || img.beforeImg || ''
         }));
       }
     }
 
     // Fallback: check legacy single image in matchedSlide
-    const legacyBefore = matchedSlide?.beforeImg || matchedSlide?.trust_points?.[0]?.previewBefore;
-    const legacyAfter = matchedSlide?.afterImg || matchedSlide?.banner_image;
-    if (legacyAfter || legacyBefore) {
+    const legacyImg = matchedSlide?.afterImg || matchedSlide?.banner_image || matchedSlide?.beforeImg;
+    if (legacyImg) {
       return [{
-        id: `${activeTab}-legacy-1`,
+        id: `${activeTab}-img-1`,
         title: previewTitle,
-        beforeImg: legacyBefore || '',
-        afterImg: legacyAfter || legacyBefore,
-        beforeTag: matchedSlide?.beforeTag || 'RAW ARTWORK',
-        afterTag: matchedSlide?.afterTag || 'FINISHED PRODUCTION'
+        imageUrl: legacyImg
       }];
     }
 
@@ -354,20 +285,16 @@ export const HeroSection = () => {
     return (defaultContent.showcase_images || []).map((img, i) => ({
       id: img.id || `default-${i}`,
       title: img.title,
-      beforeImg: img.before_image_url,
-      afterImg: img.after_image_url,
-      beforeTag: img.before_tag,
-      afterTag: img.after_tag
+      imageUrl: img.image_url
     }));
   }, [matchedSlide, defaultContent, activeTab, previewTitle]);
 
   // Reset slide index when activeTab changes
   useEffect(() => {
     setCurrentSlideIdx(0);
-    setShowOriginalArt(false);
   }, [activeTab]);
 
-  // Automatic slideshow timer: changes image smoothly every 4-5 seconds
+  // Automatic slideshow timer: changes image smoothly every 5 seconds
   useEffect(() => {
     if (activeShowcaseImages.length <= 1) return; // No slideshow if only 1 image
     if (isHovered) return; // Pause on interaction
@@ -376,7 +303,6 @@ export const HeroSection = () => {
       setIsFading(true);
       setTimeout(() => {
         setCurrentSlideIdx(prev => (prev + 1) % activeShowcaseImages.length);
-        setShowOriginalArt(false);
         setIsFading(false);
       }, 250);
     }, slideshowIntervalSec * 1000);
@@ -398,7 +324,6 @@ export const HeroSection = () => {
     setIsFading(true);
     setTimeout(() => {
       setCurrentSlideIdx(idx);
-      setShowOriginalArt(false);
       setIsFading(false);
     }, 200);
   };
@@ -407,7 +332,6 @@ export const HeroSection = () => {
     setIsFading(true);
     setTimeout(() => {
       setCurrentSlideIdx(prev => (prev === 0 ? activeShowcaseImages.length - 1 : prev - 1));
-      setShowOriginalArt(false);
       setIsFading(false);
     }, 200);
   };
@@ -416,7 +340,6 @@ export const HeroSection = () => {
     setIsFading(true);
     setTimeout(() => {
       setCurrentSlideIdx(prev => (prev + 1) % activeShowcaseImages.length);
-      setShowOriginalArt(false);
       setIsFading(false);
     }, 200);
   };
@@ -470,15 +393,6 @@ export const HeroSection = () => {
     { id: 'vector-art', label: 'Vector Art', icon: PenTool },
     { id: 'patches', label: 'Patches', icon: Tag }
   ];
-
-  // Active displayed image URL (default: full finished image; togglable to raw art if available)
-  const displayImageUrl = (showOriginalArt && currentImage?.beforeImg) 
-    ? currentImage.beforeImg 
-    : (currentImage?.afterImg || currentImage?.beforeImg);
-
-  const displayTag = (showOriginalArt && currentImage?.beforeImg)
-    ? (currentImage?.beforeTag || 'RAW ARTWORK')
-    : (currentImage?.afterTag || 'FINISHED PRODUCTION');
 
   return (
     <section style={{
@@ -731,7 +645,7 @@ export const HeroSection = () => {
 
           </div>
 
-          {/* Right Column: Full, Clear Showing Showcase Card (No half-cut image) */}
+          {/* Right Column: Clean, Full Showcase Image Card (Auto-rotates every 5s) */}
           <div 
             style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
             onMouseEnter={() => setIsHovered(true)}
@@ -760,49 +674,22 @@ export const HeroSection = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  {/* Before / After Toggle (if Before image exists) */}
-                  {currentImage?.beforeImg && currentImage?.beforeImg !== currentImage?.afterImg && (
-                    <button
-                      type="button"
-                      onClick={() => setShowOriginalArt(prev => !prev)}
-                      style={{
-                        background: showOriginalArt ? '#c2410c' : 'rgba(255, 255, 255, 0.1)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                        color: '#ffffff',
-                        padding: '0.2rem 0.65rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.3rem'
-                      }}
-                      title="Toggle between Original Artwork and Finished Production"
-                    >
-                      <Eye size={12} />
-                      <span>{showOriginalArt ? 'Show Finished' : 'Show Original'}</span>
-                    </button>
-                  )}
-
-                  {hasMultipleImages && (
-                    <span style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      padding: '0.2rem 0.55rem',
-                      borderRadius: '9999px',
-                      color: '#cbd5e1'
-                    }}>
-                      {currentSlideIdx + 1} / {activeShowcaseImages.length}
-                    </span>
-                  )}
-                </div>
+                {hasMultipleImages && (
+                  <span style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    padding: '0.2rem 0.55rem',
+                    borderRadius: '9999px',
+                    color: '#cbd5e1'
+                  }}>
+                    {currentSlideIdx + 1} / {activeShowcaseImages.length}
+                  </span>
+                )}
               </div>
 
-              {/* Full, Clear Showcase Image Container (100% visible, no half cuts) */}
+              {/* Full, Clear Showcase Image Container (Auto-changes every 5s) */}
               <div 
                 style={{
                   position: 'relative',
@@ -817,9 +704,9 @@ export const HeroSection = () => {
                   border: '1px solid rgba(255, 255, 255, 0.08)'
                 }}
               >
-                {/* Full, Clear Image (Never Cut in Half) */}
+                {/* Full, Clear Showcase Image */}
                 <img 
-                  src={displayImageUrl} 
+                  src={currentImage?.imageUrl} 
                   alt={currentImage?.title || "Studio Showcase"} 
                   style={{ 
                     width: '100%', 
@@ -838,14 +725,14 @@ export const HeroSection = () => {
                       onClick={(e) => { e.stopPropagation(); handlePrev(); }}
                       style={{
                         position: 'absolute',
-                        left: '8px',
+                        left: '10px',
                         top: '50%',
                         transform: 'translateY(-50%)',
                         background: 'rgba(15, 23, 42, 0.8)',
                         border: '1px solid rgba(255, 255, 255, 0.25)',
                         borderRadius: '50%',
-                        width: '32px',
-                        height: '32px',
+                        width: '34px',
+                        height: '34px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -859,7 +746,7 @@ export const HeroSection = () => {
                       onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(15, 23, 42, 0.8)'}
                       title="Previous Showcase Image"
                     >
-                      <ChevronLeft size={16} />
+                      <ChevronLeft size={18} />
                     </button>
 
                     <button
@@ -867,14 +754,14 @@ export const HeroSection = () => {
                       onClick={(e) => { e.stopPropagation(); handleNext(); }}
                       style={{
                         position: 'absolute',
-                        right: '8px',
+                        right: '10px',
                         top: '50%',
                         transform: 'translateY(-50%)',
                         background: 'rgba(15, 23, 42, 0.8)',
                         border: '1px solid rgba(255, 255, 255, 0.25)',
                         borderRadius: '50%',
-                        width: '32px',
-                        height: '32px',
+                        width: '34px',
+                        height: '34px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -888,29 +775,10 @@ export const HeroSection = () => {
                       onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(15, 23, 42, 0.8)'}
                       title="Next Showcase Image"
                     >
-                      <ChevronRight size={16} />
+                      <ChevronRight size={18} />
                     </button>
                   </>
                 )}
-
-                {/* Status Tag Badge */}
-                <span style={{
-                  position: 'absolute',
-                  bottom: '10px',
-                  right: '10px',
-                  background: showOriginalArt ? 'rgba(180, 83, 9, 0.9)' : 'rgba(234, 88, 12, 0.92)',
-                  backdropFilter: 'blur(6px)',
-                  color: '#ffffff',
-                  padding: '0.25rem 0.7rem',
-                  borderRadius: '6px',
-                  fontSize: '0.72rem',
-                  fontWeight: 800,
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em'
-                }}>
-                  {displayTag}
-                </span>
               </div>
 
               {/* Bottom Pagination Dots with Brand Orange Active Bar (if multiple images) */}
