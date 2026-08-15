@@ -15,6 +15,7 @@ import { ClientLiveChatWidget } from '../src/components/customer/ClientLiveChatW
 import ToastContainer from './ToastContainer';
 import GlobalUploadModal from '../src/components/common/GlobalUploadModal';
 import { MetaPixelTracker } from '../src/components/common/MetaPixelTracker';
+import { VisitorPromotionBanner } from '../src/components/public/VisitorPromotionBanner';
 
 const getMetadataBase = () => {
   const envUrl = (process.env.NEXT_PUBLIC_SITE_URL || '').trim();
@@ -133,6 +134,7 @@ export default function RootLayout({ children }) {
             <ToastContainer />
             <GlobalUploadModal />
             <MetaPixelTracker />
+            <VisitorPromotionBanner />
           </div>
         </StateProvider>
       </body>
