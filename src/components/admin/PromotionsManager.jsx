@@ -510,16 +510,26 @@ export const PromotionsManager = () => {
           {/* Theme Selector */}
           <div>
             <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', display: 'block', marginBottom: '0.65rem' }}>
-              Visual Gradient Theme
+              Visual Gradient Themes
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem', marginBottom: '1.25rem' }}>
               {PRESET_THEMES.map(theme => {
                 const isSelected = formData.announcement.theme === theme.id;
                 return (
                   <button
                     key={theme.id}
                     type="button"
-                    onClick={() => handleAnnouncementChange('theme', theme.id)}
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        announcement: {
+                          ...prev.announcement,
+                          theme: theme.id,
+                          bgColor: theme.bg,
+                          textColor: theme.text
+                        }
+                      }));
+                    }}
                     style={{
                       background: theme.bg,
                       color: theme.text,
@@ -538,6 +548,59 @@ export const PromotionsManager = () => {
                   </button>
                 );
               })}
+            </div>
+
+            {/* Custom Background and Text Color */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1rem', background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-900)', display: 'block', marginBottom: '0.3rem' }}>
+                  Custom Background (HEX or CSS Gradient)
+                </label>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <input
+                    type="color"
+                    value={formData.announcement.bgColor?.startsWith('#') ? formData.announcement.bgColor : '#ea580c'}
+                    onChange={(e) => {
+                      handleAnnouncementChange('bgColor', e.target.value);
+                      handleAnnouncementChange('theme', 'custom');
+                    }}
+                    style={{ width: '36px', height: '36px', border: 'none', borderRadius: '6px', cursor: 'pointer', padding: 0 }}
+                  />
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="e.g. #ea580c or linear-gradient(...)"
+                    value={formData.announcement.bgColor || ''}
+                    onChange={(e) => {
+                      handleAnnouncementChange('bgColor', e.target.value);
+                      handleAnnouncementChange('theme', 'custom');
+                    }}
+                    style={{ fontSize: '0.85rem' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-900)', display: 'block', marginBottom: '0.3rem' }}>
+                  Text Color
+                </label>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <input
+                    type="color"
+                    value={formData.announcement.textColor?.startsWith('#') ? formData.announcement.textColor : '#ffffff'}
+                    onChange={(e) => handleAnnouncementChange('textColor', e.target.value)}
+                    style={{ width: '36px', height: '36px', border: 'none', borderRadius: '6px', cursor: 'pointer', padding: 0 }}
+                  />
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="#ffffff"
+                    value={formData.announcement.textColor || '#ffffff'}
+                    onChange={(e) => handleAnnouncementChange('textColor', e.target.value)}
+                    style={{ fontSize: '0.85rem' }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

@@ -48,29 +48,34 @@ export const AnnouncementBar = () => {
 
   const handleActionClick = () => {
     const target = announcement.linkUrl || '/order';
+    const promoCode = announcement.promoCode || 'SAVE20';
     if (target.startsWith('#')) {
       const el = document.getElementById(target.substring(1));
       if (el) el.scrollIntoView({ behavior: 'smooth' });
       else navigate(target);
     } else if (target === '/order' || target.includes('orderWizard')) {
       if (openOrderWizard) {
-        openOrderWizard({ promoCode: announcement.promoCode || 'SAVE20' });
+        openOrderWizard({ promoCode });
       } else {
-        protectedNavigate('customer', true, { promoCode: announcement.promoCode || 'SAVE20' });
+        protectedNavigate('customer', true, { promoCode });
       }
     } else {
       navigate(target);
     }
   };
 
-  const themeStyle = THEMES[announcement.theme] || THEMES.orange;
+  // Determine dynamic background and text color
+  const backgroundStyle = announcement.bgColor && announcement.bgColor.length > 3
+    ? announcement.bgColor
+    : (THEMES[announcement.theme]?.bg || THEMES.orange.bg);
+  const textStyle = announcement.textColor || THEMES[announcement.theme]?.text || '#ffffff';
 
   return (
     <aside 
       aria-label="Promotional announcement"
       style={{
-        background: themeStyle.bg,
-        color: themeStyle.text,
+        background: backgroundStyle,
+        color: textStyle,
         padding: '0.5rem 1rem',
         display: 'flex',
         alignItems: 'center',
@@ -81,7 +86,8 @@ export const AnnouncementBar = () => {
         fontWeight: 600,
         letterSpacing: '0.01em',
         boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.15)'
+        borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
+        transition: 'background 0.3s ease, color 0.3s ease'
       }}
     >
       <div style={{

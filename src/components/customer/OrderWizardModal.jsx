@@ -11,7 +11,8 @@ import {
   FileCode,
   Trash2,
   Sparkles,
-  Plus
+  Plus,
+  Tag
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 import { matchCategory } from '../../utils/categoryUtils';
@@ -30,9 +31,9 @@ export const OrderWizardModal = () => {
     walletBalance,
     setIsDepositModalOpen,
     dynamicPricingTiers = [],
-    serviceCmsContent = {}
+    serviceCmsContent = {},
+    siteSettings = {}
   } = useAppState();
-
 
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
@@ -40,6 +41,10 @@ export const OrderWizardModal = () => {
   const [isPaid, setIsPaid] = useState(false);
   const [pendingOrderId, setPendingOrderId] = useState('');
   
+  // Promo code & discount coupon state
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState(null);
+
   // Itemized Placements Cart State with default initial placement item
   const [placementItems, setPlacementItems] = useState([
     { id: 1, packageTier: 'standard', placementType: 'left_chest', quantity: 1, quantityInput: '1', specificNotes: '', files: [] }
@@ -80,29 +85,82 @@ export const OrderWizardModal = () => {
     }
   ]);
 
+  const applyPromoCode = (codeToApply) => {
+    if (!codeToApply || !codeToApply.trim()) return;
+    const clean = codeToApply.trim().toUpperCase();
+    
+    // Check promoCodes list from siteSettings
+    const activeCoupons = Array.isArray(siteSettings?.promoCodes) ? siteSettings.promoCodes : [];
+    const found = activeCoupons.find(c => c.code?.toUpperCase() === clean && c.isActive !== false);
+
+    if (found) {
+      setAppliedPromo({
+        code: found.code,
+        discountType: found.discountType || 'percent',
+        discountValue: Number(found.discountValue) || 20,
+        description: found.description || `${found.discountValue}% Off Special Promotion`
+      });
+      if (showToast) showToast(`🎉 Promo code ${clean} applied (${found.discountValue}% OFF)!`, 'success');
+    } else if (clean === 'SAVE20' || clean === 'WELCOME20') {
+      setAppliedPromo({
+        code: clean,
+        discountType: 'percent',
+        discountValue: 20,
+        description: '20% Off Special Promotion'
+      });
+      if (showToast) showToast(`🎉 Promo code ${clean} applied (20% OFF)!`, 'success');
+    } else if (clean === 'WELCOME10') {
+      setAppliedPromo({
+        code: clean,
+        discountType: 'percent',
+        discountValue: 10,
+        description: '10% Off First-Time Client Offer'
+      });
+      if (showToast) showToast(`🎉 Promo code ${clean} applied (10% OFF)!`, 'success');
+    } else if (clean === 'FREESAMPLE') {
+      setAppliedPromo({
+        code: clean,
+        discountType: 'fixed',
+        discountValue: 10,
+        description: '$10 Credit Towards Order'
+      });
+      if (showToast) showToast(`🎉 Promo code ${clean} applied ($10 Credit)!`, 'success');
+    } else {
+      if (showToast) showToast(`Promo code ${clean} is invalid or expired`, 'error');
+    }
+  };
+
   React.useEffect(() => {
     setPatchQuantityInput(String(patchQuantity));
   }, [patchQuantity]);
 
   React.useEffect(() => {
-    if (isOrderWizardOpen && orderWizardInitialData) {
-      if (orderWizardInitialData.tierKey || orderWizardInitialData.tier) {
-        setPlacementItems(prev => prev.map((item, idx) => {
-          if (idx === 0) return { ...item, packageTier: orderWizardInitialData.tierKey || orderWizardInitialData.tier };
-          return item;
-        }));
+    if (isOrderWizardOpen) {
+      const code = orderWizardInitialData?.promoCode || siteSettings?.announcement?.promoCode || 'SAVE20';
+      if (code) {
+        setPromoCodeInput(code);
+        applyPromoCode(code);
       }
-      if (orderWizardInitialData.type) {
-        setType(orderWizardInitialData.type);
-      }
-      if (orderWizardInitialData.patchStyle) setPatchStyle(orderWizardInitialData.patchStyle);
-      if (orderWizardInitialData.patchBacking) setPatchBacking(orderWizardInitialData.patchBacking);
-      if (orderWizardInitialData.patchQuantity) setPatchQuantity(orderWizardInitialData.patchQuantity);
-      if (orderWizardInitialData.serviceCategory || orderWizardInitialData.title) {
-        setServiceCategory(orderWizardInitialData.serviceCategory || orderWizardInitialData.title);
-      }
-      if (orderWizardInitialData.placementType) {
-        setPlacementType(orderWizardInitialData.placementType);
+
+      if (orderWizardInitialData) {
+        if (orderWizardInitialData.tierKey || orderWizardInitialData.tier) {
+          setPlacementItems(prev => prev.map((item, idx) => {
+            if (idx === 0) return { ...item, packageTier: orderWizardInitialData.tierKey || orderWizardInitialData.tier };
+            return item;
+          }));
+        }
+        if (orderWizardInitialData.type) {
+          setType(orderWizardInitialData.type);
+        }
+        if (orderWizardInitialData.patchStyle) setPatchStyle(orderWizardInitialData.patchStyle);
+        if (orderWizardInitialData.patchBacking) setPatchBacking(orderWizardInitialData.patchBacking);
+        if (orderWizardInitialData.patchQuantity) setPatchQuantity(orderWizardInitialData.patchQuantity);
+        if (orderWizardInitialData.serviceCategory || orderWizardInitialData.title) {
+          setServiceCategory(orderWizardInitialData.serviceCategory || orderWizardInitialData.title);
+        }
+        if (orderWizardInitialData.placementType) {
+          setPlacementType(orderWizardInitialData.placementType);
+        }
       }
     }
   }, [isOrderWizardOpen, orderWizardInitialData]);
@@ -319,13 +377,25 @@ export const OrderWizardModal = () => {
       const totalQty = safePlacementItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
       const allowRush = totalQty === 1;
       const rushSurcharge = (isRush && allowRush) ? 10.00 : 0;
-      const finalPrice = baseSubtotal + rushSurcharge;
+      
+      let promoDiscountAmount = 0;
+      if (appliedPromo) {
+        if (appliedPromo.discountType === 'percent') {
+          promoDiscountAmount = parseFloat(((baseSubtotal * appliedPromo.discountValue) / 100).toFixed(2));
+        } else {
+          promoDiscountAmount = parseFloat(Math.min(baseSubtotal, appliedPromo.discountValue).toFixed(2));
+        }
+      }
+
+      const finalPrice = Math.max(0, parseFloat((baseSubtotal - promoDiscountAmount + rushSurcharge).toFixed(2)));
 
       return {
         serviceTitle: 'Vector Art & Color Separation',
         currentTier: 'mixed',
         baseTierRate: 0,
         baseSubtotal,
+        promoDiscountAmount,
+        appliedPromo,
         totalPlacementQuantity: totalQty,
         rushSurcharge,
         finalPrice,
@@ -377,6 +447,17 @@ export const OrderWizardModal = () => {
         };
       });
 
+      let promoDiscountAmount = 0;
+      if (appliedPromo) {
+        if (appliedPromo.discountType === 'percent') {
+          promoDiscountAmount = parseFloat(((baseSubtotal * appliedPromo.discountValue) / 100).toFixed(2));
+        } else {
+          promoDiscountAmount = parseFloat(Math.min(baseSubtotal, appliedPromo.discountValue).toFixed(2));
+        }
+      }
+
+      const finalPrice = Math.max(0, parseFloat((baseSubtotal - promoDiscountAmount).toFixed(2)));
+
       return {
         serviceTitle: 'Physical Custom Patches & Emblems',
         patchStyle: safePatchItems[0]?.patchStyle || 'Embroidered',
@@ -385,9 +466,11 @@ export const OrderWizardModal = () => {
         patchHeight: parseFloat(safePatchItems[0]?.patchHeight) || 3.0,
         rateEach: placementBreakdown[0]?.priceEach || 0,
         baseSubtotal,
+        promoDiscountAmount,
+        appliedPromo,
         totalPlacementQuantity: totalQty,
         rushSurcharge: 0,
-        finalPrice: baseSubtotal,
+        finalPrice,
         placementBreakdown
       };
     } else {
@@ -440,9 +523,18 @@ export const OrderWizardModal = () => {
       const discountAmount = (baseSubtotal * discountPercent) / 100;
       const discountedSubtotal = baseSubtotal - discountAmount;
 
+      let promoDiscountAmount = 0;
+      if (appliedPromo) {
+        if (appliedPromo.discountType === 'percent') {
+          promoDiscountAmount = parseFloat(((discountedSubtotal * appliedPromo.discountValue) / 100).toFixed(2));
+        } else {
+          promoDiscountAmount = parseFloat(Math.min(discountedSubtotal, appliedPromo.discountValue).toFixed(2));
+        }
+      }
+
       const allowRush = totalPlacementQuantity === 1;
       const rushSurcharge = (isRush && allowRush) ? (parseFloat(pricing?.rushSurcharge) || 10.00) : 0;
-      const finalPrice = discountedSubtotal + rushSurcharge;
+      const finalPrice = Math.max(0, parseFloat((discountedSubtotal - promoDiscountAmount + rushSurcharge).toFixed(2)));
 
       return {
         serviceTitle: 'Embroidery Digitizing',
@@ -452,6 +544,8 @@ export const OrderWizardModal = () => {
         discountPercent,
         discountAmount,
         discountedSubtotal,
+        promoDiscountAmount,
+        appliedPromo,
         totalPlacementQuantity,
         rushSurcharge,
         finalPrice,
@@ -526,6 +620,16 @@ export const OrderWizardModal = () => {
         patchStyle,
         patchBacking,
         patchBorderStyle,
+        patchWidth,
+        patchHeight,
+        patchQuantity,
+        patchItems,
+        notes: notes.trim(),
+        totalPrice: finalPrice,
+        original_price: pricingDetails?.baseSubtotal || finalPrice,
+        discount_amount: pricingDetails?.promoDiscountAmount || 0,
+        applied_promo_code: appliedPromo?.code || null,
+        uploadedFiles: uploadedCloudinaryFiles,
         patchWidth,
         patchHeight,
         patchQuantity,
@@ -1292,6 +1396,97 @@ export const OrderWizardModal = () => {
                       <span>Subtotal:</span>
                       <span style={{ color: 'var(--orange-400)' }}>${pricingDetails.baseSubtotal.toFixed(2)}</span>
                     </div>
+
+                    {pricingDetails.discountAmount > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', fontWeight: 800, color: '#86efac' }}>
+                        <span>Quantity Bulk Discount ({pricingDetails.discountPercent}%):</span>
+                        <span>-${pricingDetails.discountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {pricingDetails.promoDiscountAmount > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', fontWeight: 800, color: '#86efac' }}>
+                        <span>Promo Discount ({appliedPromo?.code}):</span>
+                        <span>-${pricingDetails.promoDiscountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Promo / Discount Coupon Input */}
+                  <div style={{ background: 'rgba(255, 255, 255, 0.05)', borderRadius: '10px', padding: '0.75rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-400)', display: 'flex', alignItems: 'center', gap: '0.3rem', textTransform: 'uppercase' }}>
+                        <Tag size={12} /> Promo / Coupon Code
+                      </span>
+                      {appliedPromo && (
+                        <span style={{ fontSize: '0.7rem', color: '#86efac', fontWeight: 800 }}>
+                          ✓ {appliedPromo.code} Active
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.4rem' }}>
+                      <input
+                        type="text"
+                        placeholder="e.g. SAVE20"
+                        value={promoCodeInput}
+                        onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
+                        style={{
+                          flex: 1,
+                          background: 'rgba(0, 0, 0, 0.4)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '6px',
+                          padding: '0.4rem 0.6rem',
+                          color: '#ffffff',
+                          fontSize: '0.8rem',
+                          fontWeight: 800,
+                          letterSpacing: '0.05em'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => applyPromoCode(promoCodeInput)}
+                        style={{
+                          background: 'var(--orange-500)',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '0.4rem 0.75rem',
+                          fontSize: '0.75rem',
+                          fontWeight: 800,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Apply
+                      </button>
+                      {appliedPromo && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAppliedPromo(null);
+                            setPromoCodeInput('');
+                          }}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.1)',
+                            color: '#cbd5e1',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '0.4rem 0.55rem',
+                            fontSize: '0.75rem',
+                            cursor: 'pointer'
+                          }}
+                          title="Remove promo code"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+
+                    {appliedPromo && (
+                      <div style={{ marginTop: '0.4rem', fontSize: '0.72rem', color: '#86efac' }}>
+                        🎉 Promo Code <strong>{appliedPromo.code}</strong> applied ({appliedPromo.discountType === 'percent' ? `${appliedPromo.discountValue}% OFF` : `$${appliedPromo.discountValue} OFF`})!
+                      </div>
+                    )}
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
