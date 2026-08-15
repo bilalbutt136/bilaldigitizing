@@ -18,9 +18,20 @@ import {
   ShieldCheck,
   LayoutGrid,
   Sparkles,
-  Zap,
-  PackageCheck
+  Zap
 } from 'lucide-react';
+
+const ICON_MAP = {
+  Star,
+  Globe,
+  Clock,
+  ShieldCheck,
+  Zap,
+  CheckCircle2,
+  Tag,
+  Layers,
+  PenTool
+};
 
 export const HeroSection = () => {
   const navigate = useNavigate();
@@ -36,7 +47,7 @@ export const HeroSection = () => {
 
   const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
 
-  // Fallback high-quality curated showcase images
+  // Fallback high-quality curated showcase data
   const showcaseData = {
     all: {
       badge: 'Complete Studio Capabilities',
@@ -44,18 +55,20 @@ export const HeroSection = () => {
       highlight: 'Three Master Services. Factory-Grade Precision. 4–12 Hr Delivery.',
       description: 'From machine-ready stitch files (.DST, .PES, .EMB) and crisp spot-color vector art (.AI, .EPS, .SVG) to physical custom patches with Velcro and Iron-On backings delivered straight to your door.',
       features: [
-        { icon: Layers, text: 'Embroidery Digitizing: Starts $10.00 Flat · 100% Hand Pathing · 0 Thread Breaks' },
-        { icon: PenTool, text: 'Vector Art Redraw: Starts $15.00 Flat · Pantone Spot Colors · Master AI/EPS/SVG' },
-        { icon: Tag, text: 'Custom Physical Patches: Starts $1.50 / Piece · Velcro & Iron-On · Doorstep Delivery' }
+        'Embroidery Digitizing: Starts $10.00 Flat · 100% Hand Pathing · 0 Thread Breaks',
+        'Vector Art Redraw: Starts $15.00 Flat · Pantone Spot Colors · Master AI/EPS/SVG',
+        'Custom Physical Patches: Starts $1.50 / Piece · Velcro & Iron-On · Doorstep Delivery'
       ],
       stats: [
-        { value: '1,200+', label: 'Clients', icon: Star },
-        { value: '45+', label: 'Countries', icon: Globe },
-        { value: '4-Hr', label: 'Express', icon: Clock },
-        { value: '100%', label: 'Guaranteed', icon: ShieldCheck }
+        { value: '1,200+', label: 'Clients', icon: 'Star' },
+        { value: '45+', label: 'Countries', icon: 'Globe' },
+        { value: '4-Hr', label: 'Express', icon: 'Clock' },
+        { value: '100%', label: 'Guaranteed', icon: 'ShieldCheck' }
       ],
-      primaryCta: 'Get Started Now',
-      secondaryCta: 'Explore Packages',
+      primary_cta: 'Get Started Now',
+      primary_btn_action: '#pricing',
+      secondary_cta: 'Explore Packages',
+      secondary_btn_action: '/pricing',
       previewTitle: 'All Studio Production Results',
       beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
       afterImg: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=800',
@@ -68,19 +81,21 @@ export const HeroSection = () => {
       highlight: 'Zero Thread Breaks. Calculated Pull Compensation. 4–12 Hr Turnaround.',
       description: 'Engineered by master digitizers with 15+ years factory experience. Hand-mapped stitch pathing for caps, left chest polos, 3D puff foam, and full jacket backs with free unlimited revisions.',
       features: [
-        { icon: CheckCircle2, text: '100% Manual Digitizing (No Auto-Trace shortcuts)' },
-        { icon: CheckCircle2, text: 'All Machine Formats: Tajima (.DST), Wilcom (.EMB), Brother (.PES), Melco (.EXP)' },
-        { icon: CheckCircle2, text: 'Free Unlimited Production Edits & Color Sequence Sheets' },
-        { icon: CheckCircle2, text: 'Packages: Left Chest ($10), Mid-Size ($20), Full Back & 3D Puff ($35)' }
+        '100% Manual Digitizing (No Auto-Trace shortcuts)',
+        'All Machine Formats: Tajima (.DST), Wilcom (.EMB), Brother (.PES), Melco (.EXP)',
+        'Free Unlimited Production Edits & Color Sequence Sheets',
+        'Packages: Left Chest ($10), Mid-Size ($20), Full Back & 3D Puff ($35)'
       ],
       stats: [
-        { value: '100k+', label: 'Sew-Outs', icon: Star },
-        { value: '0', label: 'Thread Breaks', icon: Zap },
-        { value: '4-12 Hr', label: 'Delivery', icon: Clock },
-        { value: '100%', label: 'Guaranteed', icon: ShieldCheck }
+        { value: '100k+', label: 'Sew-Outs', icon: 'Star' },
+        { value: '0', label: 'Thread Breaks', icon: 'Zap' },
+        { value: '4-12 Hr', label: 'Delivery', icon: 'Clock' },
+        { value: '100%', label: 'Guaranteed', icon: 'ShieldCheck' }
       ],
-      primaryCta: 'Order Embroidery Digitizing',
-      secondaryCta: 'View Embroidery Packages',
+      primary_cta: 'Order Embroidery Digitizing',
+      primary_btn_action: '/order',
+      secondary_cta: 'View Embroidery Packages',
+      secondary_btn_action: '/services/embroidery-digitizing',
       previewTitle: 'Raw Art to High-Density Sew-Out',
       beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
       afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=800',
@@ -93,19 +108,21 @@ export const HeroSection = () => {
       highlight: 'Hand-Drawn Bézier Curves. Pantone Color Separation. Press Ready.',
       description: 'Convert blurry low-res JPGs, PNGs, and sketches into razor-sharp vector graphics with clean anchor nodes, exact Pantone (PMS) matching, and separated layers for screen printing and vinyl cutting.',
       features: [
-        { icon: CheckCircle2, text: '100% Hand-Crafted Smooth Node Paths (Zero Overlapping Lines)' },
-        { icon: CheckCircle2, text: 'Pantone Solid Coated Spot Color Separation Included' },
-        { icon: CheckCircle2, text: 'Master Source Suite: .AI, .EPS, .SVG & High-Res 300+ DPI PDF' },
-        { icon: CheckCircle2, text: 'Packages: Simple Logo ($15), Medium Detail ($25), Complex Art ($45)' }
+        '100% Hand-Crafted Smooth Node Paths (Zero Overlapping Lines)',
+        'Pantone Solid Coated Spot Color Separation Included',
+        'Master Source Suite: .AI, .EPS, .SVG & High-Res 300+ DPI PDF',
+        'Packages: Simple Logo ($15), Medium Detail ($25), Complex Art ($45)'
       ],
       stats: [
-        { value: '50k+', label: 'Vectors', icon: Star },
-        { value: 'Sharp', label: 'Cut Paths', icon: Zap },
-        { value: '6-12 Hr', label: 'Delivery', icon: Clock },
-        { value: '100%', label: 'Scale-Free', icon: ShieldCheck }
+        { value: '50k+', label: 'Vectors', icon: 'Star' },
+        { value: 'Sharp', label: 'Cut Paths', icon: 'Zap' },
+        { value: '6-12 Hr', label: 'Delivery', icon: 'Clock' },
+        { value: '100%', label: 'Scale-Free', icon: 'ShieldCheck' }
       ],
-      primaryCta: 'Order Vector Art Conversion',
-      secondaryCta: 'View Vector Packages',
+      primary_cta: 'Order Vector Art Conversion',
+      primary_btn_action: '/order',
+      secondary_cta: 'View Vector Packages',
+      secondary_btn_action: '/services/vector-tracing',
       previewTitle: 'Blurry Raster to Clean Scalable Vector',
       beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
       afterImg: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=800',
@@ -118,19 +135,21 @@ export const HeroSection = () => {
       highlight: 'Embroidered, Woven & 3D Molded PVC. Doorstep Delivery.',
       description: 'Custom manufactured physical patches for uniforms, tactical gear, hats, and apparel brands. Available with Velcro hook & loop, iron-on, or adhesive backings with free digital proofs before production.',
       features: [
-        { icon: CheckCircle2, text: 'Custom Embroidered, High-Density Woven & 3D Rubber PVC' },
-        { icon: CheckCircle2, text: 'Military-Grade Velcro, Heat-Seal Iron-On & Peel Backings' },
-        { icon: CheckCircle2, text: 'Free 12-Hour Digital Proof & Doorstep Worldwide Shipping' },
-        { icon: CheckCircle2, text: 'Quantity Tiers: Sample (10-50 pcs), Production (100-500 pcs), Bulk ($1.50/pc)' }
+        'Custom Embroidered, High-Density Woven & 3D Rubber PVC',
+        'Military-Grade Velcro, Heat-Seal Iron-On & Peel Backings',
+        'Free 12-Hour Digital Proof & Doorstep Worldwide Shipping',
+        'Quantity Tiers: Sample (10-50 pcs), Production (100-500 pcs), Bulk ($1.50/pc)'
       ],
       stats: [
-        { value: '10 Pcs', label: 'Low MOQ', icon: Star },
-        { value: '12-Hr', label: 'Free Proof', icon: Zap },
-        { value: '3-5 Day', label: 'Production', icon: Clock },
-        { value: 'Global', label: 'Doorstep Delivery', icon: Globe }
+        { value: '10 Pcs', label: 'Low MOQ', icon: 'Star' },
+        { value: '12-Hr', label: 'Free Proof', icon: 'Zap' },
+        { value: '3-5 Day', label: 'Production', icon: 'Clock' },
+        { value: 'Global', label: 'Doorstep Delivery', icon: 'Globe' }
       ],
-      primaryCta: 'Order Custom Patches',
-      secondaryCta: 'Get Free Patch Proof',
+      primary_cta: 'Order Custom Patches',
+      primary_btn_action: '/order',
+      secondary_cta: 'Get Free Patch Proof',
+      secondary_btn_action: '/custom-patches',
       previewTitle: 'Artwork to Physical Manufactured Patch',
       beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
       afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=800',
@@ -141,16 +160,35 @@ export const HeroSection = () => {
 
   const currentContent = showcaseData[activeTab] || showcaseData.all;
 
-  // Real-time DB Slide Override if present in heroSlides
-  const matchedSlide = heroSlides.find(s => s.id?.toLowerCase()?.includes(activeTab) || s.serviceKey?.toLowerCase()?.includes(activeTab));
+  // Real-time DB Slide Override from heroSlides
+  const matchedSlide = (heroSlides || []).find(
+    s => s.id?.toLowerCase() === activeTab || s.serviceKey?.toLowerCase() === activeTab
+  );
 
+  const badge = matchedSlide?.badge || currentContent.badge;
   const title = matchedSlide?.title || currentContent.title;
   const highlight = matchedSlide?.highlight || currentContent.highlight;
   const description = matchedSlide?.description || currentContent.description;
-  const primaryCtaText = matchedSlide?.primary_cta || currentContent.primaryCta;
-  const secondaryCtaText = matchedSlide?.secondary_cta || currentContent.secondaryCta;
-  const beforeImage = matchedSlide?.trust_points?.[0]?.previewBefore || currentContent.beforeImg;
-  const afterImage = matchedSlide?.banner_image || currentContent.afterImg;
+
+  const rawFeatures = matchedSlide?.features || currentContent.features;
+  const featuresList = Array.isArray(rawFeatures)
+    ? rawFeatures.map(f => typeof f === 'string' ? f : f.text)
+    : currentContent.features;
+
+  const rawStats = matchedSlide?.stats || (matchedSlide?.trust_points?.[0]?.stats) || currentContent.stats;
+  const statsList = Array.isArray(rawStats) ? rawStats : currentContent.stats;
+
+  const primaryCtaText = matchedSlide?.primary_cta || matchedSlide?.primaryCta || currentContent.primary_cta;
+  const primaryBtnAction = matchedSlide?.primary_btn_action || currentContent.primary_btn_action;
+  
+  const secondaryCtaText = matchedSlide?.secondary_cta || matchedSlide?.secondaryCta || currentContent.secondary_cta;
+  const secondaryBtnAction = matchedSlide?.secondary_btn_action || currentContent.secondary_btn_action;
+
+  const previewTitle = matchedSlide?.previewTitle || matchedSlide?.trust_points?.[0]?.previewTitle || currentContent.previewTitle;
+  const beforeImage = matchedSlide?.beforeImg || matchedSlide?.trust_points?.[0]?.previewBefore || currentContent.beforeImg;
+  const afterImage = matchedSlide?.afterImg || matchedSlide?.banner_image || currentContent.afterImg;
+  const beforeTag = matchedSlide?.beforeTag || matchedSlide?.trust_points?.[0]?.previewTag || currentContent.beforeTag;
+  const afterTag = matchedSlide?.afterTag || matchedSlide?.trust_points?.[0]?.previewTagAfter || currentContent.afterTag;
 
   const handleTabClick = (tabId) => {
     if (setActiveHomeServiceTab) {
@@ -159,25 +197,47 @@ export const HeroSection = () => {
     setSliderPos(50);
   };
 
-  const handlePrimaryAction = () => {
-    const serviceType = activeTab === 'patches' ? 'patch' : (activeTab === 'vector-art' ? 'vector' : (activeTab === 'embroidery' ? 'embroidery' : 'all'));
-    if (openOrderWizard) {
-      openOrderWizard({ type: serviceType });
+  const resolveAction = (actionStr, defaultBehavior) => {
+    if (!actionStr) {
+      defaultBehavior();
+      return;
+    }
+    if (actionStr.startsWith('#')) {
+      const el = document.getElementById(actionStr.substring(1));
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      else navigate(actionStr);
+    } else if (actionStr.includes('orderWizard') || actionStr === '/order') {
+      const sType = activeTab === 'patches' ? 'patch' : (activeTab === 'vector-art' ? 'vector' : (activeTab === 'embroidery' ? 'embroidery' : 'all'));
+      if (openOrderWizard) openOrderWizard({ type: sType });
+      else protectedNavigate('customer', true, { type: sType });
     } else {
-      protectedNavigate('customer', true, { type: serviceType });
+      navigate(actionStr);
     }
   };
 
+  const handlePrimaryAction = () => {
+    resolveAction(primaryBtnAction, () => {
+      const serviceType = activeTab === 'patches' ? 'patch' : (activeTab === 'vector-art' ? 'vector' : (activeTab === 'embroidery' ? 'embroidery' : 'all'));
+      if (openOrderWizard) {
+        openOrderWizard({ type: serviceType });
+      } else {
+        protectedNavigate('customer', true, { type: serviceType });
+      }
+    });
+  };
+
   const handleSecondaryAction = () => {
-    if (activeTab === 'embroidery') {
-      navigate('/services/embroidery-digitizing');
-    } else if (activeTab === 'vector-art') {
-      navigate('/services/vector-tracing');
-    } else if (activeTab === 'patches') {
-      navigate('/custom-patches');
-    } else {
-      navigate('/pricing');
-    }
+    resolveAction(secondaryBtnAction, () => {
+      if (activeTab === 'embroidery') {
+        navigate('/services/embroidery-digitizing');
+      } else if (activeTab === 'vector-art') {
+        navigate('/services/vector-tracing');
+      } else if (activeTab === 'patches') {
+        navigate('/custom-patches');
+      } else {
+        navigate('/pricing');
+      }
+    });
   };
 
   const tabs = [
@@ -259,7 +319,7 @@ export const HeroSection = () => {
 
       <div className="container" style={{ position: 'relative', zIndex: 1 }}>
         
-        {/* Top 4 Navigation Tabs Switcher (Exactly as in the user screenshot) */}
+        {/* Top 4 Navigation Tabs Switcher */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem' }}>
           <div style={{
             display: 'inline-flex',
@@ -347,7 +407,7 @@ export const HeroSection = () => {
               marginBottom: '1.25rem'
             }}>
               <Sparkles size={14} />
-              {currentContent.badge}
+              {badge}
             </div>
 
             {/* Dynamic Main Title */}
@@ -396,15 +456,12 @@ export const HeroSection = () => {
               padding: '1.15rem 1.35rem',
               borderRadius: '14px'
             }}>
-              {currentContent.features.map((feat, idx) => {
-                const FeatIcon = feat.icon || CheckCircle2;
-                return (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', fontSize: '0.925rem', color: '#e2e8f0', fontWeight: 600 }}>
-                    <FeatIcon size={17} style={{ color: 'var(--orange-400)', flexShrink: 0, marginTop: '2px' }} />
-                    <span style={{ lineHeight: 1.45 }}>{feat.text}</span>
-                  </div>
-                );
-              })}
+              {featuresList.map((featText, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', fontSize: '0.925rem', color: '#e2e8f0', fontWeight: 600 }}>
+                  <CheckCircle2 size={17} style={{ color: 'var(--orange-400)', flexShrink: 0, marginTop: '2px' }} />
+                  <span style={{ lineHeight: 1.45 }}>{featText}</span>
+                </div>
+              ))}
             </div>
 
             {/* Trust Metrics Row */}
@@ -414,11 +471,11 @@ export const HeroSection = () => {
               gap: '1.5rem',
               marginBottom: '2.5rem'
             }}>
-              {currentContent.stats.map((stat, i) => {
-                const StatIcon = stat.icon || Star;
+              {statsList.map((stat, i) => {
+                const IconComp = ICON_MAP[stat.icon] || Star;
                 return (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <StatIcon size={18} style={{ color: 'var(--orange-500)' }} />
+                    <IconComp size={18} style={{ color: 'var(--orange-500)' }} />
                     <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#e2e8f0' }}>
                       <strong style={{ color: 'var(--orange-400)', marginRight: '4px' }}>{stat.value}</strong>
                       {stat.label}
@@ -482,7 +539,7 @@ export const HeroSection = () => {
                     <span className="blinking-green-dot" /> SHOWCASE
                   </div>
                   <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginTop: '2px' }}>
-                    {currentContent.previewTitle}
+                    {previewTitle}
                   </div>
                 </div>
               </div>
@@ -599,7 +656,7 @@ export const HeroSection = () => {
                   border: '1px solid rgba(239, 68, 68, 0.4)'
                 }}>
                   <span className="blinking-red-dot" />
-                  <span>{currentContent.beforeTag}</span>
+                  <span>{beforeTag}</span>
                 </span>
 
                 {/* After Label Badge */}
@@ -620,7 +677,7 @@ export const HeroSection = () => {
                   gap: '0.4rem'
                 }}>
                   <span className="blinking-green-dot" />
-                  <span>{currentContent.afterTag}</span>
+                  <span>{afterTag}</span>
                 </span>
 
               </div>
