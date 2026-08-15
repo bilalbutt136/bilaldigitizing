@@ -198,7 +198,7 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
       {/* SECTION 1: High-Impact Hero & Overview Banner */}
       {!hideHero && (
         <section style={{ 
-          padding: '5rem 0 4rem', 
+          padding: '3rem 0 2.5rem', 
           background: 'linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%)', 
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           position: 'relative',
@@ -239,18 +239,18 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
             fontSize: '0.85rem',
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
-            padding: '0.4rem 1rem',
+            padding: '0.35rem 0.95rem',
             borderRadius: '9999px',
-            marginBottom: '1rem'
+            marginBottom: '0.85rem'
           }}>
             <Package size={16} /> {dbSettings.patch_hero_badge || 'DEDICATED CUSTOM PATCHES & EMBLEMS STUDIO'}
           </div>
 
-          <h1 style={{ fontSize: '3rem', color: '#ffffff', fontWeight: 900, marginBottom: '1rem', lineHeight: 1.15 }}>
+          <h1 style={{ fontSize: 'clamp(2.2rem, 3.5vw, 2.85rem)', color: '#ffffff', fontWeight: 900, marginBottom: '0.85rem', lineHeight: 1.15 }}>
             {dbSettings.patch_hero_title || 'Custom Woven, Embroidered & 3D PVC Patches'}
           </h1>
 
-          <p style={{ color: '#94a3b8', fontSize: '1.15rem', lineHeight: 1.65, marginBottom: '2rem' }}>
+          <p style={{ color: '#94a3b8', fontSize: '1.05rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
             {dbSettings.patch_hero_sub || 'Turn your brand logos, insignia, and artwork into high-durability physical patches. Hand-crafted precision with factory-direct pricing starting from '}
             {dbSettings.patch_hero_price && <strong style={{ color: 'var(--orange-400)' }}>{dbSettings.patch_hero_price}</strong>}
           </p>

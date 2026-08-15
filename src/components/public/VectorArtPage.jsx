@@ -331,7 +331,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
         <section style={{
           background: 'linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%)',
           color: '#ffffff',
-          padding: '4.5rem 0 3.5rem',
+          padding: '3rem 0 2.5rem',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           position: 'relative',
           overflow: 'hidden'
@@ -362,16 +362,16 @@ export const VectorArtPage = ({ hideHero = false }) => {
               letterSpacing: '0.08em',
               padding: '0.35rem 0.95rem',
               borderRadius: '9999px',
-              marginBottom: '1.25rem'
+              marginBottom: '0.85rem'
             }}>
               <Zap size={16} /> {dbSettings.vector_hero_badge || 'Dedicated Vector Redraw Studio'}
             </div>
 
-            <h1 style={{ fontSize: '2.8rem', fontWeight: 800, color: '#ffffff', marginBottom: '1rem', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+            <h1 style={{ fontSize: 'clamp(2.2rem, 3.5vw, 2.85rem)', fontWeight: 800, color: '#ffffff', marginBottom: '0.85rem', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
               {dbSettings.vector_hero_title || 'Custom Vector Art Conversion & Redraws'}
             </h1>
 
-            <p style={{ fontSize: '1.1rem', color: '#94a3b8', lineHeight: 1.6, marginBottom: '2rem' }}>
+            <p style={{ fontSize: '1.05rem', color: '#94a3b8', lineHeight: 1.6, marginBottom: '1.5rem' }}>
               {dbSettings.vector_hero_sub || 'Transform low-resolution JPEGs, PNGs, hand-drawn sketches, or pixelated logos into 100% hand-drawn, razor-sharp scalable vector graphics (.AI, .EPS, .SVG, .PDF, .CDR).'}
             </p>
 
