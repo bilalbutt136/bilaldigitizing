@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { PackageCard } from './PackageCard';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
+import { matchCategory } from '../../utils/categoryUtils';
 
 export const VectorArtPage = ({ hideHero = false }) => {
   const navigate = useNavigate();

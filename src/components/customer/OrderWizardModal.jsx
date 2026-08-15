@@ -14,6 +14,7 @@ import {
   Plus
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
+import { matchCategory } from '../../utils/categoryUtils';
 
 export const OrderWizardModal = () => {
   const { 
