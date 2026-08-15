@@ -53,22 +53,22 @@ const DEFAULT_SERVICES = {
     showcase_images: [
       {
         id: 'all-img-1',
-        title: 'Factory-Grade Commercial Embroidery Sew-Out',
-        image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1000',
+        title: 'Commercial Embroidery Digitizing',
+        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/c41fb095-1b51-45b2-8990-30c9232002d8.png',
         display_order: 1,
         is_active: true
       },
       {
         id: 'all-img-2',
-        title: 'Precision Scalable Vector Art Redraw',
-        image_url: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=1000',
+        title: 'Precision Embroidery Sew-Out',
+        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/9b99906f-75cc-4697-9e82-4cecf6e9de08.JPG',
         display_order: 2,
         is_active: true
       },
       {
         id: 'all-img-3',
-        title: 'Physical Manufactured Custom Patches',
-        image_url: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=1000',
+        title: 'High-Density Custom Embroidery',
+        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/b8cb84c5-9241-4ce8-8a78-48a6ddf86e9a.JPG',
         display_order: 3,
         is_active: true
       }
@@ -102,22 +102,22 @@ const DEFAULT_SERVICES = {
     showcase_images: [
       {
         id: 'emb-img-1',
-        title: 'Left Chest & Polo Logo Digitizing',
-        image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1000',
+        title: 'Commercial Embroidery Digitizing',
+        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/c41fb095-1b51-45b2-8990-30c9232002d8.png',
         display_order: 1,
         is_active: true
       },
       {
         id: 'emb-img-2',
-        title: '3D Puff Raised Foam Cap Embroidery',
-        image_url: 'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&q=80&w=1000',
+        title: 'Precision Embroidery Sew-Out',
+        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/9b99906f-75cc-4697-9e82-4cecf6e9de08.JPG',
         display_order: 2,
         is_active: true
       },
       {
         id: 'emb-img-3',
-        title: 'Full Jacket Back High-Stitch Masterpiece',
-        image_url: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=1000',
+        title: 'High-Density Custom Embroidery',
+        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/b8cb84c5-9241-4ce8-8a78-48a6ddf86e9a.JPG',
         display_order: 3,
         is_active: true
       }
@@ -151,15 +151,15 @@ const DEFAULT_SERVICES = {
     showcase_images: [
       {
         id: 'vec-img-1',
-        title: 'Blurry Logo to Razor-Sharp Vector Nodes',
-        image_url: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=1000',
+        title: 'Commercial Embroidery & Vector Studio',
+        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/c41fb095-1b51-45b2-8990-30c9232002d8.png',
         display_order: 1,
         is_active: true
       },
       {
         id: 'vec-img-2',
-        title: 'Pantone Spot Color Separation for Press',
-        image_url: 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&q=80&w=1000',
+        title: 'Precision Vector Paths',
+        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/9b99906f-75cc-4697-9e82-4cecf6e9de08.JPG',
         display_order: 2,
         is_active: true
       }
@@ -193,15 +193,15 @@ const DEFAULT_SERVICES = {
     showcase_images: [
       {
         id: 'pat-img-1',
-        title: 'Tactical Hook & Loop Velcro Patch',
-        image_url: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=1000',
+        title: 'Manufactured Custom Patches',
+        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/b8cb84c5-9241-4ce8-8a78-48a6ddf86e9a.JPG',
         display_order: 1,
         is_active: true
       },
       {
         id: 'pat-img-2',
-        title: 'High-Density Merrowed Border Uniform Patch',
-        image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1000',
+        title: 'High-Density Uniform Emblem',
+        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/c41fb095-1b51-45b2-8990-30c9232002d8.png',
         display_order: 2,
         is_active: true
       }
