@@ -521,12 +521,12 @@ export const HeroSection = () => {
           </div>
         </div>
 
-        {/* 2-Column Hero Dynamic Presentation (Wider Showcase Column) */}
+        {/* 2-Column Hero Dynamic Presentation (Wider Showcase Column - Aligned to Top) */}
         <div className="hero-grid-layout" style={{
           display: 'grid',
           gridTemplateColumns: '0.92fr 1.08fr',
           gap: '2.5rem',
-          alignItems: 'center'
+          alignItems: 'flex-start'
         }}>
           
           {/* Left Column: Dynamic Service Copy, Benefits, Packages & CTAs */}
@@ -705,29 +705,36 @@ export const HeroSection = () => {
                 )}
               </div>
 
-              {/* Full, Clear Showcase Image Container (Auto-changes every 5s) */}
+              {/* Full, Clear Showcase Image Container (Auto-changes every 5s - Auto-Adjusted Full Image) */}
               <div 
                 style={{
                   position: 'relative',
                   width: '100%',
                   aspectRatio: '16/10',
-                  maxHeight: '410px',
+                  minHeight: '320px',
+                  maxHeight: '430px',
                   borderRadius: '16px',
                   overflow: 'hidden',
-                  background: '#090d16',
+                  background: 'radial-gradient(circle at center, #1e293b 0%, #090d16 100%)',
                   opacity: isFading ? 0.35 : 1,
                   transition: 'opacity 0.25s ease-in-out',
-                  border: '1px solid rgba(255, 255, 255, 0.08)'
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
-                {/* Full, Clear Showcase Image */}
+                {/* Full, Auto-Adjusted Showcase Image (Never cut off or incomplete) */}
                 <img 
                   src={currentImage?.imageUrl} 
                   alt={currentImage?.title || "Studio Showcase"} 
                   style={{ 
-                    width: '100%', 
-                    height: '100%', 
-                    objectFit: 'cover',
+                    maxWidth: '100%', 
+                    maxHeight: '100%', 
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain',
+                    objectPosition: 'center',
                     display: 'block'
                   }} 
                   draggable="false" 
