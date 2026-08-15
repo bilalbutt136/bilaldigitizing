@@ -560,7 +560,7 @@ export const DynamicPricingEditor = () => {
 
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem', paddingTop: '1.25rem', overflow: 'visible' }}>
           {filteredTiers.length === 0 ? (
             <div style={{ padding: '3.5rem 2rem', textAlign: 'center', background: '#fff', borderRadius: '16px', gridColumn: '1 / -1', border: '1px solid var(--border-color)' }}>
               <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📦</div>
@@ -589,6 +589,7 @@ export const DynamicPricingEditor = () => {
                     borderRadius: '16px', 
                     border: tier.is_popular ? '2px solid var(--orange-500)' : '1px solid var(--border-color)', 
                     position: 'relative',
+                    overflow: 'visible',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
@@ -596,7 +597,7 @@ export const DynamicPricingEditor = () => {
                   }}
                 >
                   {tier.is_popular && (
-                    <span style={{ position: 'absolute', top: '-11px', left: '50%', transform: 'translateX(-50%)', background: 'var(--orange-500)', color: '#fff', padding: '0.25rem 0.9rem', borderRadius: '9999px', fontSize: '0.72rem', fontWeight: 800 }}>
+                    <span style={{ position: 'absolute', top: '-13px', left: '50%', transform: 'translateX(-50%)', background: 'var(--orange-500)', color: '#fff', padding: '0.3rem 1.1rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800, whiteSpace: 'nowrap', zIndex: 10, boxShadow: '0 4px 10px rgba(234,88,12,0.3)' }}>
                       MOST POPULAR
                     </span>
                   )}

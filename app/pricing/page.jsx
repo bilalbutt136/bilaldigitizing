@@ -15,123 +15,121 @@ export default function PricingPage() {
         type: serviceType,
         category: serviceType,
         title,
-        rate: `$${price}`
+        rate: typeof price === 'number' ? `$${price.toFixed(2)}` : (String(price).startsWith('$') ? String(price) : `$${price}`)
       });
     }
   };
 
-  // Extract the single primary/most popular package for each of the 3 services
-  const embroideryTier = dynamicPricingTiers.find(t => matchCategory(t.service_type, 'embroidery') && t.is_popular) 
-    || dynamicPricingTiers.find(t => matchCategory(t.service_type, 'embroidery'))
-    || {
-      id: 'default-emb',
-      service_type: 'embroidery',
-      title: 'Commercial Embroidery Digitizing',
-      subtitle: 'Tajima .DST, Wilcom .EMB & Brother .PES with 0 thread breaks',
-      badge_text: 'Most Popular',
-      price: 10,
-      original_price: 20,
-      price_unit: '/ design',
-      turnaround_time: '4–12 Hours',
-      features: [
-        '100% Manual Digitizing (0 Auto-Trace)',
-        'Zero Thread Breaks Guaranteed',
-        'Free Unlimited Revisions',
-        'All Machine Formats Included'
-      ],
-      button_text: 'Order Embroidery',
-      is_popular: true
-    };
+  // Find DB records if available, with robust default packages
+  const dbEmb = dynamicPricingTiers.find(t => matchCategory(t.service_type, 'embroidery'));
+  const dbVec = dynamicPricingTiers.find(t => matchCategory(t.service_type, 'vector_art'));
+  const dbPatch = dynamicPricingTiers.find(t => matchCategory(t.service_type, 'patches'));
 
-  const vectorTier = dynamicPricingTiers.find(t => matchCategory(t.service_type, 'vector_art') && t.is_popular) 
-    || dynamicPricingTiers.find(t => matchCategory(t.service_type, 'vector_art'))
-    || {
-      id: 'default-vec',
-      service_type: 'vector_art',
-      title: 'Scalable Vector Art Redraw',
-      subtitle: 'Raster to crisp Bézier vector nodes (.AI, .EPS, .SVG, .PDF)',
-      badge_text: 'Best Value',
-      price: 15,
-      original_price: 25,
-      price_unit: '/ design',
-      turnaround_time: '6–12 Hours',
-      features: [
-        'Hand-Drawn Bézier Vector Nodes',
-        'Pantone (PMS) Color Separation',
-        'Screen-Printing & Cut-Ready Layers',
-        'Master Source Suite Included'
-      ],
-      button_text: 'Order Vector Art',
-      is_popular: false
-    };
+  const defaultEmbFeatures = [
+    '100% Manual Hand-Mapped Pathing (No Auto-Trace)',
+    'Zero Thread Breaks Guaranteed',
+    'Free Unlimited Production Revisions',
+    'All Machine Formats: Tajima .DST, Wilcom .EMB, Brother .PES',
+    'Production PDF Color Sequence Sheet Included'
+  ];
 
-  const patchTier = dynamicPricingTiers.find(t => matchCategory(t.service_type, 'patches') && t.is_popular) 
-    || dynamicPricingTiers.find(t => matchCategory(t.service_type, 'patches'))
-    || {
-      id: 'default-patch',
-      service_type: 'patches',
-      title: 'Custom Physical Patches',
-      subtitle: 'Embroidered, woven & 3D PVC emblems delivered to your door',
-      badge_text: 'Low 10 Pcs MOQ',
-      price: 1.50,
-      original_price: 3.00,
-      price_unit: '/ piece',
-      turnaround_time: '3–5 Days',
-      features: [
-        'Embroidered, Woven & Rubber PVC',
-        'Military Velcro & Iron-On Backings',
-        'Free 12-Hour Digital Production Proof',
-        'Doorstep Worldwide Delivery'
-      ],
-      button_text: 'Order Custom Patches',
-      is_popular: false
-    };
+  const defaultVecFeatures = [
+    'Hand-Drawn Smooth Bézier Vector Nodes',
+    'Pantone (PMS) Spot Color Separation',
+    'Screen-Printing & Cut-Ready Layers',
+    'Master Source Suite: .AI, .EPS, .SVG, .PDF',
+    'Infinite 100% Crisp Resolution Scaling'
+  ];
+
+  const defaultPatchFeatures = [
+    'Embroidered, High-Density Woven & Rubber PVC',
+    'Military Velcro, Heat-Seal Iron-On & Peel Backings',
+    'Free 12-Hour Digital Production Proof',
+    'Laser Cut & Merrowed Border Options',
+    'Doorstep Worldwide Express Shipping'
+  ];
 
   const threePackages = [
     {
-      ...embroideryTier,
+      id: dbEmb?.id || 'embroidery-core',
+      serviceType: 'embroidery',
+      badgeText: 'BASIC',
+      badgeColor: '#ea580c',
+      isPopular: false,
+      categoryLabel: 'EMBROIDERY DIGITIZING',
+      title: (dbEmb?.title && dbEmb.title !== 'Logo' && dbEmb.title !== 'Untitled') ? dbEmb.title : 'Embroidery Digitizing',
+      subtitle: (dbEmb?.subtitle && dbEmb.subtitle !== 'Logo') ? dbEmb.subtitle : 'Commercial stitch files for caps, polos, shirts & jackets (.DST, .PES, .EMB)',
+      price: (dbEmb?.price !== undefined && dbEmb.price > 0) ? dbEmb.price : 10,
+      originalPrice: dbEmb?.original_price || 15,
+      priceUnit: dbEmb?.price_unit || '/ DESIGN',
+      turnaround: dbEmb?.turnaround_time || '4–12 Hours',
+      features: (Array.isArray(dbEmb?.features) && dbEmb.features.filter(f => f && f.trim()).length >= 2) 
+        ? dbEmb.features.filter(f => f && f.trim()) 
+        : defaultEmbFeatures,
+      buttonText: 'Order Embroidery Now',
       theme: {
-        label: 'Embroidery Digitizing',
         icon: Layers,
-        color: 'var(--orange-600)',
-        bgLight: 'rgba(249, 115, 22, 0.12)',
-        btnClass: 'btn btn-primary-orange btn-lg',
-        btnStyle: { boxShadow: '0 6px 20px rgba(234, 88, 12, 0.35)' },
-        orderCat: 'embroidery'
+        color: '#ea580c',
+        bgLight: 'rgba(234, 88, 12, 0.12)',
+        btnStyle: { background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)', color: '#fff', border: 'none', boxShadow: '0 6px 20px rgba(234, 88, 12, 0.35)' }
       }
     },
     {
-      ...vectorTier,
+      id: dbVec?.id || 'vector-core',
+      serviceType: 'vector',
+      badgeText: 'BEST VALUE',
+      badgeColor: '#2563eb',
+      isPopular: true,
+      categoryLabel: 'VECTOR ART CONVERSION',
+      title: (dbVec?.title && dbVec.title !== 'Untitled') ? dbVec.title : 'Scalable Vector Art Redraw',
+      subtitle: dbVec?.subtitle || 'Raster to crisp Bézier vector nodes (.AI, .EPS, .SVG, .PDF)',
+      price: (dbVec?.price !== undefined && dbVec.price > 0) ? dbVec.price : 15,
+      originalPrice: dbVec?.original_price || 25,
+      priceUnit: dbVec?.price_unit || '/ DESIGN',
+      turnaround: dbVec?.turnaround_time || '6–12 Hours',
+      features: (Array.isArray(dbVec?.features) && dbVec.features.filter(f => f && f.trim()).length >= 2) 
+        ? dbVec.features.filter(f => f && f.trim()) 
+        : defaultVecFeatures,
+      buttonText: 'Order Vector Art Now',
       theme: {
-        label: 'Vector Art Conversion',
         icon: PenTool,
         color: '#2563eb',
         bgLight: 'rgba(37, 99, 235, 0.12)',
-        btnClass: 'btn btn-lg',
-        btnStyle: { background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', color: '#fff', border: 'none', boxShadow: '0 6px 20px rgba(37, 99, 235, 0.35)' },
-        orderCat: 'vector'
+        btnStyle: { background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', color: '#fff', border: 'none', boxShadow: '0 6px 20px rgba(37, 99, 235, 0.35)' }
       }
     },
     {
-      ...patchTier,
+      id: dbPatch?.id || 'patches-core',
+      serviceType: 'patch',
+      badgeText: 'POPULAR',
+      badgeColor: '#059669',
+      isPopular: false,
+      categoryLabel: 'CUSTOM MANUFACTURED PATCHES',
+      title: (dbPatch?.title && dbPatch.title !== 'Vector tracing' && dbPatch.title !== 'Untitled') ? dbPatch.title : 'Custom Physical Patches',
+      subtitle: (dbPatch?.subtitle && dbPatch.subtitle !== 'Logo into AI') ? dbPatch.subtitle : 'Custom manufactured physical emblems delivered straight to your door',
+      price: (dbPatch?.price !== undefined && dbPatch.price > 0 && dbPatch.price <= 10) ? dbPatch.price : 1.50,
+      originalPrice: dbPatch?.original_price || 3.00,
+      priceUnit: dbPatch?.price_unit || '/ PIECE',
+      turnaround: dbPatch?.turnaround_time || '3–5 Days',
+      features: (Array.isArray(dbPatch?.features) && dbPatch.features.filter(f => f && f.trim()).length >= 2) 
+        ? dbPatch.features.filter(f => f && f.trim()) 
+        : defaultPatchFeatures,
+      buttonText: 'Order Custom Patches',
       theme: {
-        label: 'Custom Manufactured Patches',
         icon: Tag,
         color: '#059669',
         bgLight: 'rgba(16, 185, 129, 0.12)',
-        btnClass: 'btn btn-lg',
-        btnStyle: { background: 'linear-gradient(135deg, #059669 0%, #047857 100%)', color: '#fff', border: 'none', boxShadow: '0 6px 20px rgba(16, 185, 129, 0.35)' },
-        orderCat: 'patch'
+        btnStyle: { background: 'linear-gradient(135deg, #059669 0%, #047857 100%)', color: '#fff', border: 'none', boxShadow: '0 6px 20px rgba(16, 185, 129, 0.35)' }
       }
     }
   ];
 
   return (
     <main style={{ padding: '8rem 2rem 6rem', background: 'var(--navy-100)', minHeight: '100vh', color: 'var(--text-main)', fontFamily: 'var(--font-body, "Inter", sans-serif)' }}>
-      <div className="container" style={{ maxWidth: '1240px', margin: '0 auto' }}>
+      <div className="container" style={{ maxWidth: '1240px', margin: '0 auto', overflow: 'visible' }}>
         
         {/* Header Hero */}
-        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -160,51 +158,57 @@ export default function PricingPage() {
           </p>
         </div>
 
-        {/* The 3 Core Packages Grid */}
+        {/* The 3 Core Packages Grid with Breathing Room for Top Badges */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
           gap: '2.5rem',
-          alignItems: 'stretch'
+          alignItems: 'stretch',
+          paddingTop: '1.75rem',
+          overflow: 'visible'
         }}>
-          {threePackages.map((pkg, idx) => {
+          {threePackages.map((pkg) => {
             const IconComp = pkg.theme.icon;
-            const isHighlight = pkg.is_popular || idx === 0;
 
             return (
               <div 
-                key={pkg.id || idx} 
+                key={pkg.id} 
                 className="card" 
                 style={{
                   background: '#ffffff',
-                  border: isHighlight ? '2.5px solid var(--orange-500)' : '1.5px solid var(--border-color)',
+                  border: pkg.isPopular ? '2.5px solid var(--orange-500)' : '1.5px solid var(--border-color)',
                   borderRadius: '24px',
-                  padding: '2.75rem 2.25rem',
+                  padding: '2.75rem 2.25rem 2.25rem',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
-                  boxShadow: isHighlight ? '0 18px 40px rgba(234, 88, 12, 0.18)' : '0 6px 24px rgba(0, 0, 0, 0.05)',
+                  boxShadow: pkg.isPopular ? '0 18px 40px rgba(234, 88, 12, 0.18)' : '0 6px 24px rgba(0, 0, 0, 0.05)',
                   transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                   position: 'relative',
-                  transform: isHighlight ? 'translateY(-8px)' : 'none'
+                  overflow: 'visible',
+                  transform: pkg.isPopular ? 'translateY(-8px)' : 'none'
                 }}
               >
-                {pkg.badge_text && (
+                {/* Top Badge Button / Pill */}
+                {pkg.badgeText && (
                   <span style={{
                     position: 'absolute',
-                    top: '-13px',
+                    top: '-15px',
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    background: isHighlight ? 'var(--orange-500)' : 'var(--navy-900)',
+                    background: pkg.isPopular ? 'var(--orange-500)' : pkg.badgeColor,
                     color: '#ffffff',
-                    padding: '0.35rem 1.25rem',
+                    padding: '0.4rem 1.4rem',
                     borderRadius: '9999px',
                     fontSize: '0.78rem',
-                    fontWeight: 800,
-                    letterSpacing: '0.06em',
-                    boxShadow: isHighlight ? '0 4px 14px rgba(234, 88, 12, 0.4)' : '0 4px 10px rgba(0,0,0,0.2)'
+                    fontWeight: 900,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    whiteSpace: 'nowrap',
+                    zIndex: 20,
+                    boxShadow: pkg.isPopular ? '0 6px 16px rgba(234, 88, 12, 0.45)' : '0 4px 14px rgba(0, 0, 0, 0.25)'
                   }}>
-                    {isHighlight ? `⭐ ${pkg.badge_text.toUpperCase()}` : pkg.badge_text.toUpperCase()}
+                    {pkg.badgeText}
                   </span>
                 )}
 
@@ -216,7 +220,7 @@ export default function PricingPage() {
                     </div>
                     <div>
                       <span style={{ fontSize: '0.75rem', fontWeight: 800, color: pkg.theme.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                        {pkg.theme.label}
+                        {pkg.categoryLabel}
                       </span>
                       <h3 style={{ fontSize: '1.45rem', fontFamily: 'var(--font-heading)', fontWeight: 900, margin: '0.15rem 0 0', color: 'var(--navy-900)', lineHeight: 1.2 }}>
                         {pkg.title}
@@ -236,20 +240,20 @@ export default function PricingPage() {
                       <div style={{ fontSize: '3.25rem', fontWeight: 900, color: pkg.theme.color, lineHeight: 1, letterSpacing: '-0.03em' }}>
                         ${pkg.price}
                       </div>
-                      {pkg.original_price && (
+                      {pkg.originalPrice && (
                         <div style={{ fontSize: '1.35rem', color: 'var(--text-muted)', textDecoration: 'line-through', fontWeight: 700 }}>
-                          ${pkg.original_price}
+                          ${pkg.originalPrice}
                         </div>
                       )}
                     </div>
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 800, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      {pkg.price_unit || '/ design'}
+                      {pkg.priceUnit}
                     </div>
                   </div>
 
                   {/* Features Checklist */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2.5rem' }}>
-                    {(Array.isArray(pkg.features) ? pkg.features : []).map((feat, i) => (
+                    {pkg.features.map((feat, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
                         <div style={{ background: '#dcfce7', color: '#16a34a', padding: '0.25rem', borderRadius: '50%', marginTop: '2px', flexShrink: 0 }}>
                           <CheckCircle size={14} />
@@ -265,8 +269,7 @@ export default function PricingPage() {
                 {/* Bottom Order CTA */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <button 
-                    onClick={() => handleOrder(pkg.theme.orderCat, pkg.title, pkg.price)}
-                    className={pkg.theme.btnClass}
+                    onClick={() => handleOrder(pkg.serviceType, pkg.title, pkg.price)}
                     style={{ 
                       width: '100%', 
                       justifyContent: 'center', 
@@ -277,16 +280,17 @@ export default function PricingPage() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.5rem',
+                      cursor: 'pointer',
                       ...(pkg.theme.btnStyle || {}) 
                     }}
                   >
-                    <span>{pkg.button_text || 'Order Now'}</span>
+                    <span>{pkg.buttonText}</span>
                     <ArrowRight size={18} />
                   </button>
 
-                  {pkg.turnaround_time && (
+                  {pkg.turnaround && (
                     <div style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-                      <Clock size={14} style={{ color: pkg.theme.color }} /> Express Delivery: {pkg.turnaround_time}
+                      <Clock size={14} style={{ color: pkg.theme.color }} /> Express Delivery: {pkg.turnaround}
                     </div>
                   )}
                 </div>
