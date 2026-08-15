@@ -19,13 +19,15 @@ export const AnnouncementBar = () => {
   const [copied, setCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  const announcement = siteSettings?.announcement;
+
   useEffect(() => {
     setMounted(true);
-    const dismissed = sessionStorage.getItem('announcementDismissed');
-    setIsDismissed(dismissed === 'true');
-  }, []);
-
-  const announcement = siteSettings?.announcement;
+    if (announcement?.text) {
+      const dismissKey = 'announcement_dismissed_' + encodeURIComponent(announcement.text);
+      setIsDismissed(sessionStorage.getItem(dismissKey) === 'true');
+    }
+  }, [announcement?.text, announcement?.enabled]);
 
   if (!mounted || isDismissed || !announcement?.enabled || !announcement?.text) {
     return null;
@@ -33,7 +35,10 @@ export const AnnouncementBar = () => {
 
   const handleDismiss = () => {
     setIsDismissed(true);
-    sessionStorage.setItem('announcementDismissed', 'true');
+    if (announcement?.text) {
+      const dismissKey = 'announcement_dismissed_' + encodeURIComponent(announcement.text);
+      sessionStorage.setItem(dismissKey, 'true');
+    }
   };
 
   const handleCopyCode = (e) => {

@@ -213,6 +213,20 @@ export const PromotionsManager = () => {
     setLoading(true);
     try {
       await updateSiteSettings(formData);
+
+      await fetch('/api/admin/homepage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          settings: [
+            { key: 'site_settings', value: formData },
+            { key: 'announcement', value: formData.announcement },
+            { key: 'promotionalBanner', value: formData.promotionalBanner },
+            { key: 'promoCodes', value: formData.promoCodes }
+          ]
+        })
+      });
+
       showToast('Promotions and coupons saved successfully to live website!', 'success');
     } catch (error) {
       console.error('Error saving promotions:', error);

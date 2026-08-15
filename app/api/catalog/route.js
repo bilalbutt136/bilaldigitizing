@@ -144,7 +144,8 @@ export async function POST(request) {
         upsertPayload = cleaned;
       }
 
-      const { data: savedData, error } = await supabase.from(tableName).upsert(upsertPayload, { onConflict: 'id' }).select().single();
+      const conflictTarget = tableName === 'site_config' ? 'key' : 'id';
+      const { data: savedData, error } = await supabase.from(tableName).upsert(upsertPayload, { onConflict: conflictTarget }).select().single();
       if (error) {
         console.error(`[Catalog API upsert error on ${tableName}]:`, error);
         throw error;

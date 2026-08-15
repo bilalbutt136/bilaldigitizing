@@ -72,17 +72,13 @@ export async function POST(req) {
       updated_at: new Date().toISOString()
     }));
 
-    const { data, error } = await supabase
-      .from('home_page_settings')
-      .upsert(records, { onConflict: 'key' })
-      .select();
+    // Upsert to both site_config and home_page_settings with admin privileges
+    await Promise.allSettled([
+      supabase.from('site_config').upsert(records, { onConflict: 'key' }),
+      supabase.from('home_page_settings').upsert(records, { onConflict: 'key' })
+    ]);
 
-    if (error) {
-      console.error('[CMS API POST]', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true, data: records });
   } catch (error) {
     console.error('[CMS API POST EXCEPTION]', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

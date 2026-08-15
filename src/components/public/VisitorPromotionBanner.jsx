@@ -13,16 +13,18 @@ export const VisitorPromotionBanner = () => {
   const banner = siteSettings?.promotionalBanner;
 
   useEffect(() => {
-    // Only show for non-authenticated visitors or public browsers
-    const dismissed = sessionStorage.getItem('visitorPromoDismissed');
-    if (dismissed !== 'true' && banner?.enabled) {
-      const timer = setTimeout(() => {
-        setIsDismissed(false);
-        setIsVisible(true);
-      }, 2500);
-      return () => clearTimeout(timer);
+    if (banner?.title && banner?.enabled) {
+      const dismissKey = 'visitor_promo_dismissed_' + encodeURIComponent(banner.title);
+      const dismissed = sessionStorage.getItem(dismissKey);
+      if (dismissed !== 'true') {
+        const timer = setTimeout(() => {
+          setIsDismissed(false);
+          setIsVisible(true);
+        }, 1500);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [banner?.enabled]);
+  }, [banner?.enabled, banner?.title]);
 
   if (isDismissed || !isVisible || !banner?.enabled || !banner?.title) {
     return null;
@@ -31,7 +33,10 @@ export const VisitorPromotionBanner = () => {
   const handleDismiss = () => {
     setIsVisible(false);
     setTimeout(() => setIsDismissed(true), 300);
-    sessionStorage.setItem('visitorPromoDismissed', 'true');
+    if (banner?.title) {
+      const dismissKey = 'visitor_promo_dismissed_' + encodeURIComponent(banner.title);
+      sessionStorage.setItem(dismissKey, 'true');
+    }
   };
 
   const handleClaim = () => {

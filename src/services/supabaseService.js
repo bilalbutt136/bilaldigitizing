@@ -430,20 +430,6 @@ export async function saveCmsConfigToSupabase(key, value) {
   if (!key) return false;
 
   try {
-    const serializedValue = typeof value === 'object' ? JSON.stringify(value) : value;
-
-    if (isSupabaseConfigured && supabase) {
-      const { error } = await supabase
-        .from('site_config')
-        .upsert({ key, value: serializedValue, updated_at: new Date().toISOString() }, { onConflict: 'key' });
-
-      if (!error) {
-        return true;
-      }
-      console.warn(`Supabase direct upsert site_config [${key}] warning:`, error?.message);
-    }
-
-    // Fallback: save via server-side API
     const res = await fetch('/api/admin/homepage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -451,7 +437,7 @@ export async function saveCmsConfigToSupabase(key, value) {
     });
     return res.ok;
   } catch (err) {
-    console.warn(`Supabase upsert site_config [${key}] exception:`, err);
+    console.warn(`saveCmsConfigToSupabase [${key}] exception:`, err);
     return false;
   }
 }
