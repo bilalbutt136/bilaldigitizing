@@ -37,6 +37,24 @@ export const StudioServicesManager = () => {
 
         <button
           type="button"
+          onClick={() => setActiveTab('dynamic_pricing')}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'dynamic_pricing' ? '3px solid var(--orange-500)' : '3px solid transparent',
+            padding: '0.65rem 1.25rem',
+            fontWeight: 800,
+            fontSize: '0.925rem',
+            color: activeTab === 'dynamic_pricing' ? 'var(--orange-500)' : 'var(--navy-600)',
+            cursor: 'pointer',
+            transition: 'all 0.18s ease'
+          }}
+        >
+          Storefront Pricing Packages (3 Core Services)
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab('base_rates')}
           style={{
             background: 'transparent',
@@ -52,25 +70,8 @@ export const StudioServicesManager = () => {
         >
           Base Rates & Service Cards
         </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('dynamic_pricing')}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            borderBottom: activeTab === 'dynamic_pricing' ? '3px solid var(--orange-500)' : '3px solid transparent',
-            padding: '0.65rem 1.25rem',
-            fontWeight: 800,
-            fontSize: '0.925rem',
-            color: activeTab === 'dynamic_pricing' ? 'var(--orange-500)' : 'var(--navy-600)',
-            cursor: 'pointer',
-            transition: 'all 0.18s ease'
-          }}
-        >
-          Dynamic Pricing Tiers
-        </button>
       </div>
+
 
       <div>
         {activeTab === 'homepage_services' && <HeroServicesEditor />}
