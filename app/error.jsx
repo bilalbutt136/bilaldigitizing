@@ -1,12 +1,23 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { RefreshCw, Home, AlertCircle } from 'lucide-react';
+import { RefreshCw, Home, AlertCircle, RotateCcw } from 'lucide-react';
 
 export default function Error({ error, reset }) {
   useEffect(() => {
     console.error('Next.js Client Exception Caught:', error);
   }, [error]);
+
+  const handleHardReset = () => {
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.clear();
+        window.location.href = '/';
+      }
+    } catch {
+      window.location.href = '/';
+    }
+  };
 
   return (
     <div style={{
@@ -41,7 +52,24 @@ export default function Error({ error, reset }) {
         A temporary client-side state discrepancy occurred. Click below to reconnect or return to the main dashboard.
       </p>
 
-      <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+      {error?.message && (
+        <div style={{
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          padding: '0.6rem 1rem',
+          borderRadius: '8px',
+          color: '#64748b',
+          fontSize: '0.78rem',
+          fontFamily: 'monospace',
+          marginBottom: '1.5rem',
+          maxWidth: '520px',
+          overflowWrap: 'break-word'
+        }}>
+          {error.message}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
         <button
           onClick={() => reset()}
           className="btn btn-primary-orange"
@@ -50,13 +78,13 @@ export default function Error({ error, reset }) {
           <RefreshCw size={16} /> Reconnect Session
         </button>
 
-        <a
-          href="/"
+        <button
+          onClick={handleHardReset}
           className="btn btn-outline"
-          style={{ padding: '0.6rem 1.25rem', fontWeight: 700, gap: '0.4rem', textDecoration: 'none' }}
+          style={{ padding: '0.6rem 1.25rem', fontWeight: 700, gap: '0.4rem', cursor: 'pointer' }}
         >
-          <Home size={16} /> Go to Home
-        </a>
+          <RotateCcw size={16} /> Reset & Home
+        </button>
       </div>
     </div>
   );

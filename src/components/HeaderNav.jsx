@@ -57,14 +57,11 @@ export const HeaderNav = () => {
   const currentPath = mounted ? (location?.pathname || '') : '';
 
   const [isServicesOpen, setIsServicesOpen] = useState(false);
-  const [, setIsStoreOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
   const [isSupportDropdownOpen, setIsSupportDropdownOpen] = useState(false);
 
   const servicesDropdownRef = useRef(null);
-  const storeDropdownRef = useRef(null);
-  const pricingDropdownRef = useRef(null);
   const notificationDropdownRef = useRef(null);
   const supportDropdownRef = useRef(null);
 
@@ -72,12 +69,6 @@ export const HeaderNav = () => {
     const handleClickOutside = (e) => {
       if (servicesDropdownRef.current && !servicesDropdownRef.current.contains(e.target)) {
         setIsServicesOpen(false);
-      }
-      if (storeDropdownRef.current && !storeDropdownRef.current.contains(e.target)) {
-        setIsStoreOpen(false);
-      }
-      if (pricingDropdownRef.current && !pricingDropdownRef.current.contains(e.target)) {
-        setIsPricingOpen(false);
       }
       if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(e.target)) {
         setIsNotificationDropdownOpen(false);
