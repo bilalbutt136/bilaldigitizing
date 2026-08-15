@@ -14,15 +14,11 @@ import {
   Copy, 
   ChevronUp, 
   ChevronDown, 
-  Eye, 
   Layers, 
   PenTool, 
   Tag, 
   CheckCircle,
-  ArrowRight,
-  AlertTriangle,
-  Sparkles,
-  LayoutGrid
+  AlertTriangle
 } from 'lucide-react';
 
 const PALETTES = [
@@ -275,7 +271,7 @@ export const DynamicPricingEditor = () => {
     resetAllData
   } = useAppState();
 
-  const [activeCategoryTab, setActiveCategoryTab] = useState('all'); // 'all' | 'embroidery' | 'vector_art' | 'patches'
+  const [activeCategoryTab, setActiveCategoryTab] = useState('embroidery'); // 'embroidery' | 'vector_art' | 'patches'
   const [editingTier, setEditingTier] = useState(null);
   const [formData, setFormData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
@@ -313,23 +309,12 @@ export const DynamicPricingEditor = () => {
     }));
   };
 
-  // Get all packages combined across all 3 services
-  const getAllPackages = () => {
-    const emb = getCategoryPackages('embroidery');
-    const vec = getCategoryPackages('vector_art');
-    const patch = getCategoryPackages('patches');
-    return [...emb, ...vec, ...patch];
-  };
-
-  const currentPackages = activeCategoryTab === 'all' 
-    ? getAllPackages() 
-    : getCategoryPackages(activeCategoryTab);
+  const currentPackages = getCategoryPackages(activeCategoryTab);
 
   const handleOpenEdit = (pkg, idx) => {
-    const effectiveService = pkg.service_type || (activeCategoryTab === 'all' ? 'embroidery' : activeCategoryTab);
     setFormData({
       id: pkg.id && !String(pkg.id).startsWith('default-') ? pkg.id : undefined,
-      service_type: effectiveService,
+      service_type: pkg.service_type || activeCategoryTab,
       display_order: pkg.display_order || (idx + 1),
       title: pkg.title || '',
       subtitle: pkg.subtitle || '',
@@ -337,8 +322,8 @@ export const DynamicPricingEditor = () => {
       is_popular: Boolean(pkg.is_popular),
       price: (pkg.price !== undefined && pkg.price !== null) ? Number(pkg.price) : 0,
       original_price: pkg.original_price ? Number(pkg.original_price) : null,
-      price_unit: pkg.price_unit || (effectiveService === 'patches' ? '/ PIECE' : '/ DESIGN'),
-      turnaround_time: pkg.turnaround_time || (effectiveService === 'patches' ? '3–5 Days' : '4–12 Hours'),
+      price_unit: pkg.price_unit || (activeCategoryTab === 'patches' ? '/ PIECE' : '/ DESIGN'),
+      turnaround_time: pkg.turnaround_time || (activeCategoryTab === 'patches' ? '3–5 Days' : '4–12 Hours'),
       button_text: pkg.button_text || `Order ${pkg.title ? pkg.title.split(' ')[0] : 'Package'}`,
       features: Array.isArray(pkg.features) ? [...pkg.features] : []
     });
@@ -347,20 +332,18 @@ export const DynamicPricingEditor = () => {
   };
 
   const handleOpenCreate = () => {
-    const targetService = activeCategoryTab === 'all' ? 'embroidery' : activeCategoryTab;
-    const catPkgs = getCategoryPackages(targetService);
-    const maxOrder = catPkgs.reduce((max, p) => Math.max(max, p.display_order || 0), 0);
+    const maxOrder = currentPackages.reduce((max, p) => Math.max(max, p.display_order || 0), 0);
     setFormData({
-      service_type: targetService,
+      service_type: activeCategoryTab,
       display_order: maxOrder + 1,
       title: 'New Service Package',
       subtitle: 'Complete professional studio package with commercial production files',
       badge_text: 'NEW TIER',
       is_popular: false,
-      price: targetService === 'patches' ? 3.50 : 20.00,
-      original_price: targetService === 'patches' ? 5.00 : 30.00,
-      price_unit: targetService === 'patches' ? '/ PIECE' : '/ DESIGN',
-      turnaround_time: targetService === 'patches' ? '4–7 Days' : '4–12 Hours',
+      price: activeCategoryTab === 'patches' ? 3.50 : 20.00,
+      original_price: activeCategoryTab === 'patches' ? 5.00 : 30.00,
+      price_unit: activeCategoryTab === 'patches' ? '/ PIECE' : '/ DESIGN',
+      turnaround_time: activeCategoryTab === 'patches' ? '4–7 Days' : '4–12 Hours',
       button_text: 'Order Package',
       features: [
         'Commercial Production File Formats Included',
@@ -374,11 +357,9 @@ export const DynamicPricingEditor = () => {
   };
 
   const handleDuplicate = async (pkg) => {
-    const targetService = pkg.service_type || (activeCategoryTab === 'all' ? 'embroidery' : activeCategoryTab);
-    const catPkgs = getCategoryPackages(targetService);
-    const maxOrder = catPkgs.reduce((max, p) => Math.max(max, p.display_order || 0), 0);
+    const maxOrder = currentPackages.reduce((max, p) => Math.max(max, p.display_order || 0), 0);
     const cloned = {
-      service_type: targetService,
+      service_type: pkg.service_type || activeCategoryTab,
       display_order: maxOrder + 1,
       title: `${pkg.title} (Copy)`,
       subtitle: pkg.subtitle || '',
@@ -386,8 +367,8 @@ export const DynamicPricingEditor = () => {
       is_popular: false,
       price: Number(pkg.price) || 0,
       original_price: pkg.original_price ? Number(pkg.original_price) : null,
-      price_unit: pkg.price_unit || (targetService === 'patches' ? '/ PIECE' : '/ DESIGN'),
-      turnaround_time: pkg.turnaround_time || (targetService === 'patches' ? '3–5 Days' : '4–12 Hours'),
+      price_unit: pkg.price_unit || (activeCategoryTab === 'patches' ? '/ PIECE' : '/ DESIGN'),
+      turnaround_time: pkg.turnaround_time || (activeCategoryTab === 'patches' ? '3–5 Days' : '4–12 Hours'),
       button_text: pkg.button_text || 'Order Package',
       features: Array.isArray(pkg.features) ? [...pkg.features] : []
     };
@@ -410,15 +391,13 @@ export const DynamicPricingEditor = () => {
   };
 
   const handleReorder = async (pkg, direction) => {
-    const serviceKey = pkg.service_type || (activeCategoryTab === 'all' ? 'embroidery' : activeCategoryTab);
-    const catPkgs = getCategoryPackages(serviceKey);
-    const idx = catPkgs.findIndex(p => p.id === pkg.id);
+    const idx = currentPackages.findIndex(p => p.id === pkg.id);
     if (idx < 0) return;
     const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
-    if (targetIdx < 0 || targetIdx >= catPkgs.length) return;
+    if (targetIdx < 0 || targetIdx >= currentPackages.length) return;
 
-    const currentItem = catPkgs[idx];
-    const targetItem = catPkgs[targetIdx];
+    const currentItem = currentPackages[idx];
+    const targetItem = currentPackages[targetIdx];
 
     const currentOrder = currentItem.display_order || (idx + 1);
     const targetOrder = targetItem.display_order || (targetIdx + 1);
@@ -466,7 +445,7 @@ export const DynamicPricingEditor = () => {
 
     setIsSaving(true);
     try {
-      const targetType = formData.service_type || (activeCategoryTab === 'all' ? 'embroidery' : activeCategoryTab);
+      const targetType = formData.service_type || activeCategoryTab;
       const sanitizedType = String(targetType).toLowerCase().replace('-', '_');
       const normalizedServiceType = sanitizedType.startsWith('vec') 
         ? 'vector_art' 
@@ -545,7 +524,6 @@ export const DynamicPricingEditor = () => {
     setFormData(prev => ({ ...prev, features }));
   };
 
-  const allPackagesCount = getAllPackages().length;
   const embPackagesCount = getCategoryPackages('embroidery').length;
   const vecPackagesCount = getCategoryPackages('vector_art').length;
   const patchPackagesCount = getCategoryPackages('patches').length;
@@ -557,28 +535,6 @@ export const DynamicPricingEditor = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'inline-flex', gap: '0.4rem', background: '#f1f5f9', padding: '0.35rem', borderRadius: '14px', flexWrap: 'wrap' }}>
           
-          {/* ALL SERVICES TAB */}
-          <button
-            type="button"
-            onClick={() => { setActiveCategoryTab('all'); setEditingTier(null); }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              padding: '0.65rem 1.25rem',
-              borderRadius: '10px',
-              border: 'none',
-              background: activeCategoryTab === 'all' ? '#ffffff' : 'transparent',
-              color: activeCategoryTab === 'all' ? 'var(--orange-500)' : 'var(--navy-700)',
-              fontWeight: 800,
-              fontSize: '0.875rem',
-              cursor: 'pointer',
-              boxShadow: activeCategoryTab === 'all' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none'
-            }}
-          >
-            <Sparkles size={16} /> <span>All Services ({allPackagesCount})</span>
-          </button>
-
           {/* EMBROIDERY TAB */}
           <button
             type="button"
@@ -711,34 +667,27 @@ export const DynamicPricingEditor = () => {
                       <div style={{ background: theme.bgLight, color: theme.color, padding: '0.5rem', borderRadius: '10px', display: 'flex' }}>
                         <ThemeIcon size={18} />
                       </div>
-                      <div>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: theme.color }}>
-                          {activeCategoryTab === 'all' ? `${theme.serviceLabel.split(' ')[0]} #${pkg.display_order || (idx + 1)}` : `PACKAGE #${idx + 1}`}
-                        </span>
-                        {activeCategoryTab === 'all' && (
-                          <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
-                            {theme.serviceLabel}
-                          </div>
-                        )}
-                      </div>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: theme.color }}>
+                        PACKAGE #{idx + 1}
+                      </span>
                     </div>
 
                     {/* Reorder Arrows */}
                     <div style={{ display: 'flex', gap: '0.25rem' }}>
                       <button
                         type="button"
-                        disabled={isSaving}
+                        disabled={idx === 0 || isSaving}
                         onClick={() => handleReorder(pkg, 'up')}
-                        style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.25rem', cursor: 'pointer' }}
+                        style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.25rem', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1 }}
                         title="Move Up"
                       >
                         <ChevronUp size={14} />
                       </button>
                       <button
                         type="button"
-                        disabled={isSaving}
+                        disabled={idx === currentPackages.length - 1 || isSaving}
                         onClick={() => handleReorder(pkg, 'down')}
-                        style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.25rem', cursor: 'pointer' }}
+                        style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.25rem', cursor: idx === currentPackages.length - 1 ? 'not-allowed' : 'pointer', opacity: idx === currentPackages.length - 1 ? 0.3 : 1 }}
                         title="Move Down"
                       >
                         <ChevronDown size={14} />
@@ -915,7 +864,7 @@ export const DynamicPricingEditor = () => {
                   <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Service Category *</label>
                   <select 
                     className="form-control" 
-                    value={formData.service_type || (activeCategoryTab === 'all' ? 'embroidery' : activeCategoryTab)} 
+                    value={formData.service_type || activeCategoryTab} 
                     onChange={e => setFormData({ ...formData, service_type: e.target.value })}
                     style={{ fontWeight: 700 }}
                   >
