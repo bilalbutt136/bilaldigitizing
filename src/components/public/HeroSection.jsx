@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { normalizeCategory } from '../../utils/categoryUtils';
@@ -18,9 +18,10 @@ import {
   ShieldCheck,
   LayoutGrid,
   Sparkles,
-  Zap
+  Zap,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
-
 
 const ICON_MAP = {
   Star,
@@ -34,6 +35,242 @@ const ICON_MAP = {
   PenTool
 };
 
+const DEFAULT_SERVICE_DATA = {
+  all: {
+    badge: 'Complete Studio Capabilities',
+    title: 'Commercial Embroidery, Scalable Vector Art & Custom Patches',
+    highlight: 'Three Master Services. Factory-Grade Precision. 4–12 Hr Delivery.',
+    description: 'From machine-ready stitch files (.DST, .PES, .EMB) and crisp spot-color vector art (.AI, .EPS, .SVG) to physical custom patches with Velcro and Iron-On backings delivered straight to your door.',
+    features: [
+      'Embroidery Digitizing: Starts $10.00 Flat · 100% Hand Pathing · 0 Thread Breaks',
+      'Vector Art Redraw: Starts $15.00 Flat · Pantone Spot Colors · Master AI/EPS/SVG',
+      'Custom Physical Patches: Starts $1.50 / Piece · Velcro & Iron-On · Doorstep Delivery'
+    ],
+    stats: [
+      { value: '1,200+', label: 'Clients', icon: 'Star' },
+      { value: '45+', label: 'Countries', icon: 'Globe' },
+      { value: '4-Hr', label: 'Express', icon: 'Clock' },
+      { value: '100%', label: 'Guaranteed', icon: 'ShieldCheck' }
+    ],
+    primary_cta: 'Get Started Now',
+    primary_btn_action: '#pricing',
+    secondary_cta: 'Explore Packages',
+    secondary_btn_action: '/pricing',
+    previewTitle: 'All Studio Production Results',
+    slideshow_interval: 5,
+    showcase_images: [
+      {
+        id: 'all-1',
+        title: 'Factory-Grade Commercial Embroidery Sew-Out',
+        before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=900',
+        after_image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=900',
+        before_tag: 'RAW ARTWORK',
+        after_tag: 'EMBROIDERY SEW-OUT',
+        display_order: 1,
+        is_active: true
+      },
+      {
+        id: 'all-2',
+        title: 'Precision Scalable Vector Art Redraw',
+        before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=900',
+        after_image_url: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=900',
+        before_tag: 'PIXELATED RASTER',
+        after_tag: 'SCALABLE VECTOR',
+        display_order: 2,
+        is_active: true
+      },
+      {
+        id: 'all-3',
+        title: 'Physical Manufactured Custom Patches',
+        before_image_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&q=80&w=900',
+        after_image_url: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=900',
+        before_tag: 'EMBLEM DESIGN',
+        after_tag: 'MANUFACTURED PATCH',
+        display_order: 3,
+        is_active: true
+      }
+    ]
+  },
+  embroidery: {
+    badge: 'Factory-Grade Machine Digitizing',
+    title: 'Commercial Embroidery Digitizing',
+    highlight: 'Zero Thread Breaks. Calculated Pull Compensation. 4–12 Hr Turnaround.',
+    description: 'Engineered by master digitizers with 15+ years factory experience. Hand-mapped stitch pathing for caps, left chest polos, 3D puff foam, and full jacket backs with free unlimited revisions.',
+    features: [
+      '100% Manual Digitizing (No Auto-Trace shortcuts)',
+      'All Machine Formats: Tajima (.DST), Wilcom (.EMB), Brother (.PES), Melco (.EXP)',
+      'Free Unlimited Production Edits & Color Sequence Sheets',
+      'Guaranteed Zero Thread Breaks on Commercial Machines'
+    ],
+    stats: [
+      { value: '100k+', label: 'Sew-Outs', icon: 'Star' },
+      { value: '0', label: 'Thread Breaks', icon: 'Zap' },
+      { value: '4-12 Hr', label: 'Delivery', icon: 'Clock' },
+      { value: '100%', label: 'Guaranteed', icon: 'ShieldCheck' }
+    ],
+    primary_cta: 'Order Embroidery Digitizing',
+    primary_btn_action: '/order',
+    secondary_cta: 'View Embroidery Packages',
+    secondary_btn_action: '/services/embroidery-digitizing',
+    previewTitle: 'Raw Art to High-Density Sew-Out',
+    slideshow_interval: 5,
+    showcase_images: [
+      {
+        id: 'emb-1',
+        title: 'Left Chest & Polo Logo Digitizing',
+        before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=900',
+        after_image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=900',
+        before_tag: 'ORIGINAL LOGO',
+        after_tag: 'DIGITIZED SEW-OUT',
+        display_order: 1,
+        is_active: true
+      },
+      {
+        id: 'emb-2',
+        title: '3D Puff Raised Foam Cap Embroidery',
+        before_image_url: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&q=80&w=900',
+        after_image_url: 'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&q=80&w=900',
+        before_tag: '2D FLAT LOGO',
+        after_tag: '3D PUFF CAP',
+        display_order: 2,
+        is_active: true
+      },
+      {
+        id: 'emb-3',
+        title: 'Mid-Size Jacket & Sleeve Design',
+        before_image_url: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=900',
+        after_image_url: 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&q=80&w=900',
+        before_tag: 'VECTOR ARTWORK',
+        after_tag: 'SATIN EMBROIDERY',
+        display_order: 3,
+        is_active: true
+      },
+      {
+        id: 'emb-4',
+        title: 'Full Jacket Back Master Design',
+        before_image_url: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&q=80&w=900',
+        after_image_url: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=900',
+        before_tag: 'DESIGN GRAPHIC',
+        after_tag: '85K STITCH SEW-OUT',
+        display_order: 4,
+        is_active: true
+      }
+    ]
+  },
+  'vector-art': {
+    badge: 'Resolution-Independent Vector Tracing',
+    title: 'Raster to Scalable Vector Art Conversion',
+    highlight: 'Hand-Drawn Bézier Curves. Pantone Color Separation. Press Ready.',
+    description: 'Convert blurry low-res JPGs, PNGs, and sketches into razor-sharp vector graphics with clean anchor nodes, exact Pantone (PMS) matching, and separated layers for screen printing and vinyl cutting.',
+    features: [
+      '100% Hand-Crafted Smooth Node Paths (Zero Overlapping Lines)',
+      'Pantone Solid Coated Spot Color Separation Included',
+      'Master Source Suite: .AI, .EPS, .SVG & High-Res 300+ DPI PDF',
+      'Print, Vinyl Cut & Screen-Printing Production Ready'
+    ],
+    stats: [
+      { value: '50k+', label: 'Vectors', icon: 'Star' },
+      { value: 'Sharp', label: 'Cut Paths', icon: 'Zap' },
+      { value: '6-12 Hr', label: 'Delivery', icon: 'Clock' },
+      { value: '100%', label: 'Scale-Free', icon: 'ShieldCheck' }
+    ],
+    primary_cta: 'Order Vector Art Conversion',
+    primary_btn_action: '/order',
+    secondary_cta: 'View Vector Packages',
+    secondary_btn_action: '/services/vector-tracing',
+    previewTitle: 'Blurry Raster to Clean Scalable Vector',
+    slideshow_interval: 5,
+    showcase_images: [
+      {
+        id: 'vec-1',
+        title: 'Blurry Logo to Razor-Sharp Vector Nodes',
+        before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=900',
+        after_image_url: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=900',
+        before_tag: 'PIXELATED JPG',
+        after_tag: 'CLEAN VECTOR AI/EPS',
+        display_order: 1,
+        is_active: true
+      },
+      {
+        id: 'vec-2',
+        title: 'Pantone Spot Color Separation for Press',
+        before_image_url: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=900',
+        after_image_url: 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&q=80&w=900',
+        before_tag: 'MULTI-TONE ART',
+        after_tag: 'PMS COLOR SEPARATED',
+        display_order: 2,
+        is_active: true
+      },
+      {
+        id: 'vec-3',
+        title: 'Complex Mascot & Crest Illustration',
+        before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=900',
+        after_image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=900',
+        before_tag: 'RAW SKETCH',
+        after_tag: 'MASTER VECTOR ART',
+        display_order: 3,
+        is_active: true
+      }
+    ]
+  },
+  patches: {
+    badge: 'Custom Manufactured Emblems',
+    title: 'Premium Physical Custom Patches',
+    highlight: 'Embroidered, Woven & 3D Molded PVC. Doorstep Delivery.',
+    description: 'Custom manufactured physical patches for uniforms, tactical gear, hats, and apparel brands. Available with Velcro hook & loop, iron-on, or adhesive backings with free digital proofs before production.',
+    features: [
+      'Custom Embroidered, High-Density Woven & 3D Rubber PVC',
+      'Military-Grade Velcro, Heat-Seal Iron-On & Peel Backings',
+      'Free 12-Hour Digital Proof & Doorstep Worldwide Shipping',
+      'Merrowed & Laser Cut High-Durability Borders'
+    ],
+    stats: [
+      { value: '10 Pcs', label: 'Low MOQ', icon: 'Star' },
+      { value: '12-Hr', label: 'Free Proof', icon: 'Zap' },
+      { value: '3-5 Day', label: 'Production', icon: 'Clock' },
+      { value: 'Global', label: 'Doorstep Delivery', icon: 'Globe' }
+    ],
+    primary_cta: 'Order Custom Patches',
+    primary_btn_action: '/order',
+    secondary_cta: 'Get Free Patch Proof',
+    secondary_btn_action: '/custom-patches',
+    previewTitle: 'Artwork to Physical Manufactured Patch',
+    slideshow_interval: 5,
+    showcase_images: [
+      {
+        id: 'pat-1',
+        title: 'Tactical Hook & Loop Velcro Patch',
+        before_image_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&q=80&w=900',
+        after_image_url: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=900',
+        before_tag: 'DESIGN ARTWORK',
+        after_tag: 'VELCRO PATCH',
+        display_order: 1,
+        is_active: true
+      },
+      {
+        id: 'pat-2',
+        title: 'High-Density Merrowed Border Uniform Patch',
+        before_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=900',
+        after_image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=900',
+        before_tag: 'EMBLEM VECTOR',
+        after_tag: 'MERROWED PATCH',
+        display_order: 2,
+        is_active: true
+      },
+      {
+        id: 'pat-3',
+        title: '3D Rubber PVC Molded Waterproof Patch',
+        before_image_url: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&q=80&w=900',
+        after_image_url: 'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&q=80&w=900',
+        before_tag: '2D DESIGN',
+        after_tag: '3D MOLDED PVC',
+        display_order: 3,
+        is_active: true
+      }
+    ]
+  }
+};
+
 export const HeroSection = () => {
   const navigate = useNavigate();
   const { 
@@ -44,160 +281,141 @@ export const HeroSection = () => {
     heroSlides = []
   } = useAppState();
 
+  const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
   const [sliderPos, setSliderPos] = useState(50);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isFading, setIsFading] = useState(false);
 
   const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
-
-  // Fallback curated showcase data if not yet loaded from DB
-  const showcaseData = {
-    all: {
-      badge: 'Complete Studio Capabilities',
-      title: 'Commercial Embroidery, Scalable Vector Art & Custom Patches',
-      highlight: 'Three Master Services. Factory-Grade Precision. 4–12 Hr Delivery.',
-      description: 'From machine-ready stitch files (.DST, .PES, .EMB) and crisp spot-color vector art (.AI, .EPS, .SVG) to physical custom patches with Velcro and Iron-On backings delivered straight to your door.',
-      features: [
-        'Embroidery Digitizing: Starts $10.00 Flat · 100% Hand Pathing · 0 Thread Breaks',
-        'Vector Art Redraw: Starts $15.00 Flat · Pantone Spot Colors · Master AI/EPS/SVG',
-        'Custom Physical Patches: Starts $1.50 / Piece · Velcro & Iron-On · Doorstep Delivery'
-      ],
-      stats: [
-        { value: '1,200+', label: 'Clients', icon: 'Star' },
-        { value: '45+', label: 'Countries', icon: 'Globe' },
-        { value: '4-Hr', label: 'Express', icon: 'Clock' },
-        { value: '100%', label: 'Guaranteed', icon: 'ShieldCheck' }
-      ],
-      primary_cta: 'Get Started Now',
-      primary_btn_action: '#pricing',
-      secondary_cta: 'Explore Packages',
-      secondary_btn_action: '/pricing',
-      previewTitle: 'All Studio Production Results',
-      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
-      afterImg: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=800',
-      beforeTag: 'Raw Artwork',
-      afterTag: 'Finished Production'
-    },
-    embroidery: {
-      badge: 'Factory-Grade Machine Digitizing',
-      title: 'Commercial Embroidery Digitizing',
-      highlight: 'Zero Thread Breaks. Calculated Pull Compensation. 4–12 Hr Turnaround.',
-      description: 'Engineered by master digitizers with 15+ years factory experience. Hand-mapped stitch pathing for caps, left chest polos, 3D puff foam, and full jacket backs with free unlimited revisions.',
-      features: [
-        '100% Manual Digitizing (No Auto-Trace shortcuts)',
-        'All Machine Formats: Tajima (.DST), Wilcom (.EMB), Brother (.PES), Melco (.EXP)',
-        'Free Unlimited Production Edits & Color Sequence Sheets',
-        'Guaranteed Zero Thread Breaks on Commercial Machines'
-      ],
-      stats: [
-        { value: '100k+', label: 'Sew-Outs', icon: 'Star' },
-        { value: '0', label: 'Thread Breaks', icon: 'Zap' },
-        { value: '4-12 Hr', label: 'Delivery', icon: 'Clock' },
-        { value: '100%', label: 'Guaranteed', icon: 'ShieldCheck' }
-      ],
-      primary_cta: 'Order Embroidery Digitizing',
-      primary_btn_action: '/order',
-      secondary_cta: 'View Embroidery Packages',
-      secondary_btn_action: '/services/embroidery-digitizing',
-      previewTitle: 'Raw Art to High-Density Sew-Out',
-      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
-      afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=800',
-      beforeTag: 'Original Logo',
-      afterTag: 'Digitized Sew-Out'
-    },
-    'vector-art': {
-      badge: 'Resolution-Independent Vector Tracing',
-      title: 'Raster to Scalable Vector Art Conversion',
-      highlight: 'Hand-Drawn Bézier Curves. Pantone Color Separation. Press Ready.',
-      description: 'Convert blurry low-res JPGs, PNGs, and sketches into razor-sharp vector graphics with clean anchor nodes, exact Pantone (PMS) matching, and separated layers for screen printing and vinyl cutting.',
-      features: [
-        '100% Hand-Crafted Smooth Node Paths (Zero Overlapping Lines)',
-        'Pantone Solid Coated Spot Color Separation Included',
-        'Master Source Suite: .AI, .EPS, .SVG & High-Res 300+ DPI PDF',
-        'Print, Vinyl Cut & Screen-Printing Production Ready'
-      ],
-      stats: [
-        { value: '50k+', label: 'Vectors', icon: 'Star' },
-        { value: 'Sharp', label: 'Cut Paths', icon: 'Zap' },
-        { value: '6-12 Hr', label: 'Delivery', icon: 'Clock' },
-        { value: '100%', label: 'Scale-Free', icon: 'ShieldCheck' }
-      ],
-      primary_cta: 'Order Vector Art Conversion',
-      primary_btn_action: '/order',
-      secondary_cta: 'View Vector Packages',
-      secondary_btn_action: '/services/vector-tracing',
-      previewTitle: 'Blurry Raster to Clean Scalable Vector',
-      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
-      afterImg: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=800',
-      beforeTag: 'Blurry Pixelated Raster',
-      afterTag: 'Sharp Vector Nodes'
-    },
-    patches: {
-      badge: 'Custom Manufactured Emblems',
-      title: 'Premium Physical Custom Patches',
-      highlight: 'Embroidered, Woven & 3D Molded PVC. Doorstep Delivery.',
-      description: 'Custom manufactured physical patches for uniforms, tactical gear, hats, and apparel brands. Available with Velcro hook & loop, iron-on, or adhesive backings with free digital proofs before production.',
-      features: [
-        'Custom Embroidered, High-Density Woven & 3D Rubber PVC',
-        'Military-Grade Velcro, Heat-Seal Iron-On & Peel Backings',
-        'Free 12-Hour Digital Proof & Doorstep Worldwide Shipping',
-        'Merrowed & Laser Cut High-Durability Borders'
-      ],
-      stats: [
-        { value: '10 Pcs', label: 'Low MOQ', icon: 'Star' },
-        { value: '12-Hr', label: 'Free Proof', icon: 'Zap' },
-        { value: '3-5 Day', label: 'Production', icon: 'Clock' },
-        { value: 'Global', label: 'Doorstep Delivery', icon: 'Globe' }
-      ],
-      primary_cta: 'Order Custom Patches',
-      primary_btn_action: '/order',
-      secondary_cta: 'Get Free Patch Proof',
-      secondary_btn_action: '/custom-patches',
-      previewTitle: 'Artwork to Physical Manufactured Patch',
-      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
-      afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=800',
-      beforeTag: 'Design Artwork',
-      afterTag: 'Manufactured Patch'
-    }
-  };
-
-
-  const currentContent = showcaseData[activeTab] || showcaseData.all;
+  const defaultContent = DEFAULT_SERVICE_DATA[activeTab] || DEFAULT_SERVICE_DATA.all;
 
   // Real-time DB Slide Override from heroSlides
   const matchedSlide = (heroSlides || []).find(
     s => s.id?.toLowerCase() === activeTab || s.serviceKey?.toLowerCase() === activeTab
   );
 
-  const badge = matchedSlide?.badge || currentContent.badge;
-  const title = matchedSlide?.title || currentContent.title;
-  const highlight = matchedSlide?.highlight || currentContent.highlight;
-  const description = matchedSlide?.description || currentContent.description;
+  const badge = matchedSlide?.badge || defaultContent.badge;
+  const title = matchedSlide?.title || defaultContent.title;
+  const highlight = matchedSlide?.highlight || defaultContent.highlight;
+  const description = matchedSlide?.description || defaultContent.description;
 
-  const rawFeatures = matchedSlide?.features || (matchedSlide?.trust_points?.[0]?.features) || currentContent.features;
+  const rawFeatures = matchedSlide?.features || (matchedSlide?.trust_points?.[0]?.features) || defaultContent.features;
   const featuresList = Array.isArray(rawFeatures)
     ? rawFeatures.map(f => typeof f === 'string' ? f : f.text)
-    : currentContent.features;
+    : defaultContent.features;
 
-  const rawStats = matchedSlide?.stats || (matchedSlide?.trust_points?.[0]?.stats) || currentContent.stats;
-  const statsList = Array.isArray(rawStats) ? rawStats : currentContent.stats;
+  const rawStats = matchedSlide?.stats || (matchedSlide?.trust_points?.[0]?.stats) || defaultContent.stats;
+  const statsList = Array.isArray(rawStats) ? rawStats : defaultContent.stats;
 
-
-  const primaryCtaText = matchedSlide?.primary_cta || matchedSlide?.primaryCta || currentContent.primary_cta;
-  const primaryBtnAction = matchedSlide?.primary_btn_action || matchedSlide?.trust_points?.[0]?.primaryBtnAction || currentContent.primary_btn_action;
+  const primaryCtaText = matchedSlide?.primary_cta || matchedSlide?.primaryCta || defaultContent.primary_cta;
+  const primaryBtnAction = matchedSlide?.primary_btn_action || matchedSlide?.trust_points?.[0]?.primaryBtnAction || defaultContent.primary_btn_action;
   
-  const secondaryCtaText = matchedSlide?.secondary_cta || matchedSlide?.secondaryCta || currentContent.secondary_cta;
-  const secondaryBtnAction = matchedSlide?.secondary_btn_action || matchedSlide?.trust_points?.[0]?.secondaryBtnAction || currentContent.secondary_btn_action;
+  const secondaryCtaText = matchedSlide?.secondary_cta || matchedSlide?.secondaryCta || defaultContent.secondary_cta;
+  const secondaryBtnAction = matchedSlide?.secondary_btn_action || matchedSlide?.trust_points?.[0]?.secondaryBtnAction || defaultContent.secondary_btn_action;
 
-  const previewTitle = matchedSlide?.previewTitle || matchedSlide?.trust_points?.[0]?.previewTitle || currentContent.previewTitle;
-  const beforeImage = matchedSlide?.beforeImg || matchedSlide?.trust_points?.[0]?.previewBefore || currentContent.beforeImg;
-  const afterImage = matchedSlide?.afterImg || matchedSlide?.banner_image || currentContent.afterImg;
-  const beforeTag = matchedSlide?.beforeTag || matchedSlide?.trust_points?.[0]?.previewTag || currentContent.beforeTag;
-  const afterTag = matchedSlide?.afterTag || matchedSlide?.trust_points?.[0]?.previewTagAfter || currentContent.afterTag;
+  const previewTitle = matchedSlide?.previewTitle || matchedSlide?.trust_points?.[0]?.previewTitle || defaultContent.previewTitle;
+  const slideshowIntervalSec = Number(matchedSlide?.slideshow_interval || matchedSlide?.trust_points?.[0]?.slideshow_interval) || defaultContent.slideshow_interval || 5;
+
+  // Multi-image collection parsing
+  const activeShowcaseImages = React.useMemo(() => {
+    let images = matchedSlide?.showcase_images || matchedSlide?.showcaseImages || matchedSlide?.trust_points?.[0]?.showcase_images || [];
+    
+    if (Array.isArray(images) && images.length > 0) {
+      const activeList = images
+        .filter(img => img.is_active !== false && (img.after_image_url || img.image_url))
+        .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+      if (activeList.length > 0) {
+        return activeList.map((img, i) => ({
+          id: img.id || `img-${i}`,
+          title: img.title || `Showcase Item #${i + 1}`,
+          beforeImg: img.before_image_url || img.beforeImg || '',
+          afterImg: img.after_image_url || img.image_url || img.afterImg || '',
+          beforeTag: img.before_tag || img.beforeTag || 'BEFORE',
+          afterTag: img.after_tag || img.afterTag || 'AFTER'
+        }));
+      }
+    }
+
+    // Fallback: check legacy single image in matchedSlide
+    const legacyBefore = matchedSlide?.beforeImg || matchedSlide?.trust_points?.[0]?.previewBefore;
+    const legacyAfter = matchedSlide?.afterImg || matchedSlide?.banner_image;
+    if (legacyAfter) {
+      return [{
+        id: `${activeTab}-legacy-1`,
+        title: previewTitle,
+        beforeImg: legacyBefore || '',
+        afterImg: legacyAfter,
+        beforeTag: matchedSlide?.beforeTag || 'RAW ARTWORK',
+        afterTag: matchedSlide?.afterTag || 'FINISHED SEW-OUT'
+      }];
+    }
+
+    // Default curated collection
+    return (defaultContent.showcase_images || []).map((img, i) => ({
+      id: img.id || `default-${i}`,
+      title: img.title,
+      beforeImg: img.before_image_url,
+      afterImg: img.after_image_url,
+      beforeTag: img.before_tag,
+      afterTag: img.after_tag
+    }));
+  }, [matchedSlide, defaultContent, activeTab, previewTitle]);
+
+  // Reset slide index when activeTab changes
+  useEffect(() => {
+    setCurrentSlideIdx(0);
+    setSliderPos(50);
+  }, [activeTab]);
+
+  // Automatic slideshow timer
+  useEffect(() => {
+    if (activeShowcaseImages.length <= 1) return; // Do not run slideshow if only 1 image
+    if (isHovered) return; // Pause on interaction
+
+    const timer = setInterval(() => {
+      setIsFading(true);
+      setTimeout(() => {
+        setCurrentSlideIdx(prev => (prev + 1) % activeShowcaseImages.length);
+        setIsFading(false);
+      }, 250);
+    }, slideshowIntervalSec * 1000);
+
+    return () => clearInterval(timer);
+  }, [isHovered, activeShowcaseImages.length, slideshowIntervalSec]);
+
+  const currentImage = activeShowcaseImages[currentSlideIdx] || activeShowcaseImages[0];
+  const hasMultipleImages = activeShowcaseImages.length > 1;
 
   const handleTabClick = (tabId) => {
     if (setActiveHomeServiceTab) {
       setActiveHomeServiceTab(tabId);
     }
     setSliderPos(50);
+  };
+
+  const handleDotClick = (idx) => {
+    if (idx === currentSlideIdx) return;
+    setIsFading(true);
+    setTimeout(() => {
+      setCurrentSlideIdx(idx);
+      setIsFading(false);
+    }, 200);
+  };
+
+  const handlePrev = () => {
+    setIsFading(true);
+    setTimeout(() => {
+      setCurrentSlideIdx(prev => (prev === 0 ? activeShowcaseImages.length - 1 : prev - 1));
+      setIsFading(false);
+    }, 200);
+  };
+
+  const handleNext = () => {
+    setIsFading(true);
+    setTimeout(() => {
+      setCurrentSlideIdx(prev => (prev + 1) % activeShowcaseImages.length);
+      setIsFading(false);
+    }, 200);
   };
 
   const resolveAction = (actionStr, defaultBehavior) => {
@@ -289,15 +507,6 @@ export const HeroSection = () => {
           box-shadow: 0 0 8px #22c55e;
           display: inline-block;
           animation: blink 1.2s infinite ease-in-out;
-        }
-        .blinking-red-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: #ef4444;
-          box-shadow: 0 0 8px #ef4444;
-          display: inline-block;
-          animation: blink 1.2s infinite ease-in-out 0.6s;
         }
         @keyframes blink {
           0%, 100% { opacity: 1; transform: scale(1.1); }
@@ -523,48 +732,72 @@ export const HeroSection = () => {
 
           </div>
 
-          {/* Right Column: Interactive Before/After Showcase Box */}
-          <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+          {/* Right Column: Interactive Before/After Multi-Image Showcase Box */}
+          <div 
+            style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
             <div style={{
-              background: 'rgba(15, 23, 42, 0.6)',
+              background: 'rgba(15, 23, 42, 0.7)',
               border: '1px solid rgba(255, 255, 255, 0.12)',
-              borderRadius: '20px',
-              padding: '1.25rem',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
+              borderRadius: '24px',
+              padding: '1.35rem',
+              boxShadow: '0 25px 60px -12px rgba(0, 0, 0, 0.7)',
               width: '100%',
               maxWidth: '650px',
-              backdropFilter: 'blur(16px)'
+              backdropFilter: 'blur(16px)',
+              position: 'relative'
             }}>
               
+              {/* Header Title & Slide Index Counter */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <div>
                   <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem', letterSpacing: '0.06em' }}>
-                    <span className="blinking-green-dot" /> SHOWCASE
+                    <span className="blinking-green-dot" /> SHOWCASE SLIDESHOW
                   </div>
                   <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginTop: '2px' }}>
-                    {previewTitle}
+                    {currentImage?.title || previewTitle}
                   </div>
                 </div>
+
+                {hasMultipleImages && (
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    padding: '0.2rem 0.6rem',
+                    borderRadius: '9999px',
+                    color: '#94a3b8'
+                  }}>
+                    {currentSlideIdx + 1} / {activeShowcaseImages.length}
+                  </span>
+                )}
               </div>
 
-              {/* Interactive Comparison Slider */}
+              {/* Interactive Comparison Slider Container */}
               <div 
                 style={{
                   position: 'relative',
                   width: '100%',
                   aspectRatio: '16/10',
-                  borderRadius: '14px',
+                  borderRadius: '16px',
                   overflow: 'hidden',
-                  cursor: 'ew-resize',
+                  cursor: currentImage?.beforeImg ? 'ew-resize' : 'default',
                   userSelect: 'none',
-                  background: '#090d16'
+                  background: '#090d16',
+                  opacity: isFading ? 0.3 : 1,
+                  transition: 'opacity 0.25s ease-in-out'
                 }}
                 onMouseMove={(e) => {
+                  if (!currentImage?.beforeImg) return;
                   const rect = e.currentTarget.getBoundingClientRect();
                   const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
                   setSliderPos((x / rect.width) * 100);
                 }}
                 onTouchMove={(e) => {
+                  if (!currentImage?.beforeImg) return;
                   const rect = e.currentTarget.getBoundingClientRect();
                   const x = Math.max(0, Math.min(e.touches[0].clientX - rect.left, rect.width));
                   setSliderPos((x / rect.width) * 100);
@@ -572,118 +805,216 @@ export const HeroSection = () => {
               >
                 {/* After Finished Image */}
                 <img 
-                  src={afterImage} 
-                  alt="After" 
+                  src={currentImage?.afterImg || currentImage?.beforeImg} 
+                  alt={currentImage?.title || "Showcase Finished"} 
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                   draggable="false" 
                 />
                 
-                {/* Before Image with ClipPath */}
-                <div style={{ 
-                  position: 'absolute', 
-                  top: 0, 
-                  left: 0, 
-                  bottom: 0, 
-                  right: 0,
-                  width: '100%',
-                  height: '100%',
-                  clipPath: `polygon(0 0, ${sliderPos}% 0, ${sliderPos}% 100%, 0 100%)`,
-                }}>
-                  <img 
-                    src={beforeImage} 
-                    alt="Before" 
-                    style={{ 
-                      width: '100%', 
-                      height: '100%', 
-                      objectFit: 'cover',
-                      filter: beforeImage === afterImage ? 'grayscale(100%) blur(4px) contrast(1.2)' : 'none'
-                    }} 
-                    draggable="false" 
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    bottom: 0,
-                    right: 0,
-                    width: '2px',
-                    background: 'rgba(255, 255, 255, 0.9)'
-                  }} />
-                </div>
+                {/* Before Image with ClipPath (if beforeImg exists) */}
+                {currentImage?.beforeImg && currentImage?.beforeImg !== currentImage?.afterImg && (
+                  <>
+                    <div style={{ 
+                      position: 'absolute', 
+                      top: 0, 
+                      left: 0, 
+                      bottom: 0, 
+                      right: 0,
+                      width: '100%',
+                      height: '100%',
+                      clipPath: `polygon(0 0, ${sliderPos}% 0, ${sliderPos}% 100%, 0 100%)`,
+                    }}>
+                      <img 
+                        src={currentImage.beforeImg} 
+                        alt="Before" 
+                        style={{ 
+                          width: '100%', 
+                          height: '100%', 
+                          objectFit: 'cover'
+                        }} 
+                        draggable="false" 
+                      />
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        bottom: 0,
+                        right: 0,
+                        width: '2px',
+                        background: 'rgba(255, 255, 255, 0.9)'
+                      }} />
+                    </div>
 
-                {/* Handle Divider */}
-                <div style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: `${sliderPos}%`,
-                  width: '4px',
-                  background: 'var(--orange-500)',
-                  boxShadow: '0 0 16px rgba(255, 122, 0, 0.9)',
-                  transform: 'translateX(-50%)'
-                }}>
-                  <div style={{
+                    {/* Handle Divider */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: `${sliderPos}%`,
+                      width: '4px',
+                      background: 'var(--orange-500)',
+                      boxShadow: '0 0 16px rgba(255, 122, 0, 0.9)',
+                      transform: 'translateX(-50%)',
+                      pointerEvents: 'none'
+                    }}>
+                      <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: '34px',
+                        height: '34px',
+                        background: 'var(--orange-500)',
+                        color: '#ffffff',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 4px 14px rgba(0, 0, 0, 0.5)',
+                        border: '2.5px solid #ffffff'
+                      }}>
+                        <MoveHorizontal size={16} />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Subtle Previous/Next Arrow Controls (if multiple images) */}
+                {hasMultipleImages && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+                      style={{
+                        position: 'absolute',
+                        left: '10px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'rgba(15, 23, 42, 0.75)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '50%',
+                        width: '34px',
+                        height: '34px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        color: '#ffffff',
+                        backdropFilter: 'blur(6px)',
+                        zIndex: 10,
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--orange-500)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(15, 23, 42, 0.75)'}
+                      title="Previous Showcase Image"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleNext(); }}
+                      style={{
+                        position: 'absolute',
+                        right: '10px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'rgba(15, 23, 42, 0.75)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '50%',
+                        width: '34px',
+                        height: '34px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        color: '#ffffff',
+                        backdropFilter: 'blur(6px)',
+                        zIndex: 10,
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--orange-500)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(15, 23, 42, 0.75)'}
+                      title="Next Showcase Image"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </>
+                )}
+
+                {/* Before Tag Badge */}
+                {currentImage?.beforeImg && (
+                  <span style={{
                     position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: '36px',
-                    height: '36px',
-                    background: 'var(--orange-500)',
+                    bottom: '12px',
+                    left: '12px',
+                    background: 'rgba(15, 23, 42, 0.85)',
+                    backdropFilter: 'blur(6px)',
                     color: '#ffffff',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.5)',
-                    border: '3px solid #ffffff'
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '8px',
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
                   }}>
-                    <MoveHorizontal size={18} />
-                  </div>
-                </div>
+                    {currentImage?.beforeTag || 'BEFORE'}
+                  </span>
+                )}
 
-                {/* Before Label Badge */}
+                {/* After Tag Badge */}
                 <span style={{
                   position: 'absolute',
-                  bottom: '14px',
-                  left: '14px',
-                  background: 'rgba(15, 23, 42, 0.88)',
+                  bottom: '12px',
+                  right: '12px',
+                  background: 'rgba(234, 88, 12, 0.9)',
                   backdropFilter: 'blur(6px)',
                   color: '#ffffff',
-                  fontSize: '0.75rem',
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '8px',
+                  fontSize: '0.72rem',
                   fontWeight: 800,
-                  padding: '0.35rem 0.75rem',
-                  borderRadius: '6px',
-                  letterSpacing: '0.04em',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  border: '1px solid rgba(239, 68, 68, 0.4)'
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
                 }}>
-                  <span className="blinking-red-dot" />
-                  <span>{beforeTag}</span>
+                  {currentImage?.afterTag || 'AFTER'}
                 </span>
-
-                {/* After Label Badge */}
-                <span style={{
-                  position: 'absolute',
-                  bottom: '14px',
-                  right: '14px',
-                  background: 'var(--orange-500)',
-                  color: '#ffffff',
-                  fontSize: '0.75rem',
-                  fontWeight: 800,
-                  padding: '0.35rem 0.75rem',
-                  borderRadius: '6px',
-                  letterSpacing: '0.04em',
-                  boxShadow: '0 4px 12px rgba(249, 115, 22, 0.4)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem'
-                }}>
-                  <span className="blinking-green-dot" />
-                  <span>{afterTag}</span>
-                </span>
-
               </div>
+
+              {/* Bottom Pagination Dots with Brand Orange Active Bar (if multiple images) */}
+              {hasMultipleImages && (
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  marginTop: '1.15rem'
+                }}>
+                  {activeShowcaseImages.map((imgItem, idx) => {
+                    const isActive = idx === currentSlideIdx;
+                    return (
+                      <button
+                        key={imgItem.id || idx}
+                        type="button"
+                        onClick={() => handleDotClick(idx)}
+                        style={{
+                          height: '7px',
+                          width: isActive ? '24px' : '7px',
+                          borderRadius: '9999px',
+                          border: 'none',
+                          background: isActive ? 'var(--orange-500, #ea580c)' : 'rgba(255, 255, 255, 0.25)',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                          padding: 0,
+                          boxShadow: isActive ? '0 0 10px rgba(234, 88, 12, 0.6)' : 'none'
+                        }}
+                        title={`Slide ${idx + 1}: ${imgItem.title}`}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+
             </div>
           </div>
 

@@ -168,7 +168,7 @@ export async function POST(request) {
         rate_label: slide.rate_label || '',
         primary_cta: slide.primary_cta || slide.primaryCta || '',
         secondary_cta: slide.secondary_cta || slide.secondaryCta || '',
-        banner_image: slide.afterImg || slide.banner_image || '',
+        banner_image: slide.afterImg || slide.banner_image || (slide.showcase_images?.[0]?.after_image_url) || '',
         trust_points: [
           {
             stats: slide.stats || [],
@@ -179,7 +179,9 @@ export async function POST(request) {
             previewTag: slide.beforeTag || 'Raw Artwork',
             previewTagAfter: slide.afterTag || 'Finished Production',
             primaryBtnAction: slide.primary_btn_action || '',
-            secondaryBtnAction: slide.secondary_btn_action || ''
+            secondaryBtnAction: slide.secondary_btn_action || '',
+            showcase_images: slide.showcase_images || slide.showcaseImages || [],
+            slideshow_interval: slide.slideshow_interval || 5
           }
         ],
         sort_order: idx,
