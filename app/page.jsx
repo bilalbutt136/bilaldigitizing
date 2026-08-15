@@ -5,7 +5,6 @@ import { useAppState } from '../src/context/StateContext';
 import { HeroSection } from '../src/components/public/HeroSection';
 import { TrustStatsBar } from '../src/components/public/TrustStatsBar';
 import { WhyChooseUs } from '../src/components/public/WhyChooseUs';
-import { ServicesSection } from '../src/components/public/ServicesSection';
 import { PortfolioPreview } from '../src/components/public/PortfolioPreview';
 import { TestimonialsFAQ } from '../src/components/public/TestimonialsFAQ';
 import { FinalCTA } from '../src/components/public/FinalCTA';
@@ -22,7 +21,6 @@ export default function HomePage() {
       <HeroSection />
       <TrustStatsBar />
       <WhyChooseUs />
-      <ServicesSection />
       <PortfolioPreview />
       <TestimonialsFAQ />
       <FinalCTA />

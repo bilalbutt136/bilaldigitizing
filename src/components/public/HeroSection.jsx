@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { normalizeCategory } from '../../utils/categoryUtils';
@@ -17,170 +17,215 @@ import {
   Clock,
   ShieldCheck,
   LayoutGrid,
-  HeartHandshake,
-  Award,
+  Sparkles,
   Zap,
-  TrendingUp,
-  ThumbsUp
+  PackageCheck
 } from 'lucide-react';
-
-const ICON_MAP = {
-  Star,
-  Globe,
-  Clock,
-  ShieldCheck,
-  HeartHandshake,
-  Award,
-  Zap,
-  TrendingUp,
-  ThumbsUp,
-  CheckCircle2,
-  Tag
-};
 
 export const HeroSection = () => {
   const navigate = useNavigate();
   const { 
     protectedNavigate, 
     openOrderWizard, 
-    activeHomeServiceTab, 
-    setActiveHomeServiceTab, 
-    serviceCmsContent = {},
-    heroSlides,
-    heroGlobalSettings,
-    heroServiceText = {}
+    activeHomeServiceTab = 'all', 
+    setActiveHomeServiceTab,
+    heroSlides = []
   } = useAppState();
 
   const [sliderPos, setSliderPos] = useState(50);
-  const [textIndex, setTextIndex] = useState(0);
 
-  // Fallback for global settings
-  const globalTitle = heroGlobalSettings?.title || "Premium Embroidery, Vector Art & Patches";
-  const rotatingStr = heroGlobalSettings?.rotatingTexts || "Commercial Embroidery, Scalable Vector Art, Custom Physical Patches";
-  const rotatingTextsArr = rotatingStr.split(',').map(s => s.trim());
+  const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTextIndex((prev) => (prev + 1) % rotatingTextsArr.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [rotatingTextsArr.length]);
-
-  const currentKey = activeHomeServiceTab === 'patches' ? 'patch' : (activeHomeServiceTab || 'all');
-  const targetKey = currentKey === 'patch' ? 'patches' : currentKey;
-
-  // Real-time Database Content Binding
-  let activeSlide = null;
-  if (heroSlides && heroSlides.length > 0) {
-    activeSlide = heroSlides.find(s => s.id?.toLowerCase()?.includes(targetKey) || s.serviceKey?.toLowerCase()?.includes(targetKey)) || heroSlides[0];
-  }
-
-  const activeService = activeSlide;
-
-  if (!activeService) {
-    return (
-      <section style={{
-        background: 'linear-gradient(135deg, var(--navy-950, #0f172a) 0%, var(--navy-800, #1e293b) 100%)',
-        color: '#ffffff',
-        padding: '8rem 0',
-        textAlign: 'center'
-      }}>
-        <div style={{ opacity: 0.7, fontSize: '1.2rem' }}>Loading studio configuration...</div>
-      </section>
-    );
-  }
-
-  const resolveAction = (actionStr, defaultBehavior) => {
-    if (!actionStr) {
-      defaultBehavior();
-      return;
+  // Fallback high-quality curated showcase images
+  const showcaseData = {
+    all: {
+      badge: 'Complete Studio Capabilities',
+      title: 'Commercial Embroidery, Scalable Vector Art & Custom Patches',
+      highlight: 'Three Master Services. Factory-Grade Precision. 4–12 Hr Delivery.',
+      description: 'From machine-ready stitch files (.DST, .PES, .EMB) and crisp spot-color vector art (.AI, .EPS, .SVG) to physical custom patches with Velcro and Iron-On backings delivered straight to your door.',
+      features: [
+        { icon: Layers, text: 'Embroidery Digitizing: Starts $10.00 Flat · 100% Hand Pathing · 0 Thread Breaks' },
+        { icon: PenTool, text: 'Vector Art Redraw: Starts $15.00 Flat · Pantone Spot Colors · Master AI/EPS/SVG' },
+        { icon: Tag, text: 'Custom Physical Patches: Starts $1.50 / Piece · Velcro & Iron-On · Doorstep Delivery' }
+      ],
+      stats: [
+        { value: '1,200+', label: 'Clients', icon: Star },
+        { value: '45+', label: 'Countries', icon: Globe },
+        { value: '4-Hr', label: 'Express', icon: Clock },
+        { value: '100%', label: 'Guaranteed', icon: ShieldCheck }
+      ],
+      primaryCta: 'Get Started Now',
+      secondaryCta: 'Explore Packages',
+      previewTitle: 'All Studio Production Results',
+      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
+      afterImg: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=800',
+      beforeTag: 'Raw Artwork',
+      afterTag: 'Finished Production'
+    },
+    embroidery: {
+      badge: 'Factory-Grade Machine Digitizing',
+      title: 'Commercial Embroidery Digitizing',
+      highlight: 'Zero Thread Breaks. Calculated Pull Compensation. 4–12 Hr Turnaround.',
+      description: 'Engineered by master digitizers with 15+ years factory experience. Hand-mapped stitch pathing for caps, left chest polos, 3D puff foam, and full jacket backs with free unlimited revisions.',
+      features: [
+        { icon: CheckCircle2, text: '100% Manual Digitizing (No Auto-Trace shortcuts)' },
+        { icon: CheckCircle2, text: 'All Machine Formats: Tajima (.DST), Wilcom (.EMB), Brother (.PES), Melco (.EXP)' },
+        { icon: CheckCircle2, text: 'Free Unlimited Production Edits & Color Sequence Sheets' },
+        { icon: CheckCircle2, text: 'Packages: Left Chest ($10), Mid-Size ($20), Full Back & 3D Puff ($35)' }
+      ],
+      stats: [
+        { value: '100k+', label: 'Sew-Outs', icon: Star },
+        { value: '0', label: 'Thread Breaks', icon: Zap },
+        { value: '4-12 Hr', label: 'Delivery', icon: Clock },
+        { value: '100%', label: 'Guaranteed', icon: ShieldCheck }
+      ],
+      primaryCta: 'Order Embroidery Digitizing',
+      secondaryCta: 'View Embroidery Packages',
+      previewTitle: 'Raw Art to High-Density Sew-Out',
+      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
+      afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=800',
+      beforeTag: 'Original Logo',
+      afterTag: 'Digitized Sew-Out'
+    },
+    'vector-art': {
+      badge: 'Resolution-Independent Vector Tracing',
+      title: 'Raster to Scalable Vector Art Conversion',
+      highlight: 'Hand-Drawn Bézier Curves. Pantone Color Separation. Press Ready.',
+      description: 'Convert blurry low-res JPGs, PNGs, and sketches into razor-sharp vector graphics with clean anchor nodes, exact Pantone (PMS) matching, and separated layers for screen printing and vinyl cutting.',
+      features: [
+        { icon: CheckCircle2, text: '100% Hand-Crafted Smooth Node Paths (Zero Overlapping Lines)' },
+        { icon: CheckCircle2, text: 'Pantone Solid Coated Spot Color Separation Included' },
+        { icon: CheckCircle2, text: 'Master Source Suite: .AI, .EPS, .SVG & High-Res 300+ DPI PDF' },
+        { icon: CheckCircle2, text: 'Packages: Simple Logo ($15), Medium Detail ($25), Complex Art ($45)' }
+      ],
+      stats: [
+        { value: '50k+', label: 'Vectors', icon: Star },
+        { value: 'Sharp', label: 'Cut Paths', icon: Zap },
+        { value: '6-12 Hr', label: 'Delivery', icon: Clock },
+        { value: '100%', label: 'Scale-Free', icon: ShieldCheck }
+      ],
+      primaryCta: 'Order Vector Art Conversion',
+      secondaryCta: 'View Vector Packages',
+      previewTitle: 'Blurry Raster to Clean Scalable Vector',
+      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
+      afterImg: 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=800',
+      beforeTag: 'Blurry Pixelated Raster',
+      afterTag: 'Sharp Vector Nodes'
+    },
+    patches: {
+      badge: 'Custom Manufactured Emblems',
+      title: 'Premium Physical Custom Patches',
+      highlight: 'Embroidered, Woven & 3D Molded PVC. Doorstep Delivery.',
+      description: 'Custom manufactured physical patches for uniforms, tactical gear, hats, and apparel brands. Available with Velcro hook & loop, iron-on, or adhesive backings with free digital proofs before production.',
+      features: [
+        { icon: CheckCircle2, text: 'Custom Embroidered, High-Density Woven & 3D Rubber PVC' },
+        { icon: CheckCircle2, text: 'Military-Grade Velcro, Heat-Seal Iron-On & Peel Backings' },
+        { icon: CheckCircle2, text: 'Free 12-Hour Digital Proof & Doorstep Worldwide Shipping' },
+        { icon: CheckCircle2, text: 'Quantity Tiers: Sample (10-50 pcs), Production (100-500 pcs), Bulk ($1.50/pc)' }
+      ],
+      stats: [
+        { value: '10 Pcs', label: 'Low MOQ', icon: Star },
+        { value: '12-Hr', label: 'Free Proof', icon: Zap },
+        { value: '3-5 Day', label: 'Production', icon: Clock },
+        { value: 'Global', label: 'Doorstep Delivery', icon: Globe }
+      ],
+      primaryCta: 'Order Custom Patches',
+      secondaryCta: 'Get Free Patch Proof',
+      previewTitle: 'Artwork to Physical Manufactured Patch',
+      beforeImg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
+      afterImg: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=800',
+      beforeTag: 'Design Artwork',
+      afterTag: 'Manufactured Patch'
     }
-    if (actionStr.startsWith('#')) {
-      const el = document.getElementById(actionStr.substring(1));
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-      else navigate(actionStr);
-    } else if (actionStr.includes('orderWizard') || actionStr === '/order') {
-      if (openOrderWizard) openOrderWizard({ type: currentKey });
-      else protectedNavigate('customer', true);
+  };
+
+  const currentContent = showcaseData[activeTab] || showcaseData.all;
+
+  // Real-time DB Slide Override if present in heroSlides
+  const matchedSlide = heroSlides.find(s => s.id?.toLowerCase()?.includes(activeTab) || s.serviceKey?.toLowerCase()?.includes(activeTab));
+
+  const title = matchedSlide?.title || currentContent.title;
+  const highlight = matchedSlide?.highlight || currentContent.highlight;
+  const description = matchedSlide?.description || currentContent.description;
+  const primaryCtaText = matchedSlide?.primary_cta || currentContent.primaryCta;
+  const secondaryCtaText = matchedSlide?.secondary_cta || currentContent.secondaryCta;
+  const beforeImage = matchedSlide?.trust_points?.[0]?.previewBefore || currentContent.beforeImg;
+  const afterImage = matchedSlide?.banner_image || currentContent.afterImg;
+
+  const handleTabClick = (tabId) => {
+    if (setActiveHomeServiceTab) {
+      setActiveHomeServiceTab(tabId);
+    }
+    setSliderPos(50);
+  };
+
+  const handlePrimaryAction = () => {
+    const serviceType = activeTab === 'patches' ? 'patch' : (activeTab === 'vector-art' ? 'vector' : (activeTab === 'embroidery' ? 'embroidery' : 'all'));
+    if (openOrderWizard) {
+      openOrderWizard({ type: serviceType });
     } else {
-      navigate(actionStr);
+      protectedNavigate('customer', true, { type: serviceType });
     }
   };
 
-  const handlePrimaryClick = () => {
-    resolveAction(activeService.primary_btn_action, () => {
-      if (currentKey === 'all') {
-        const el = document.getElementById('pricing');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        if (openOrderWizard) openOrderWizard({ type: currentKey });
-        else protectedNavigate('customer', true);
-      }
-    });
+  const handleSecondaryAction = () => {
+    if (activeTab === 'embroidery') {
+      navigate('/services/embroidery-digitizing');
+    } else if (activeTab === 'vector-art') {
+      navigate('/services/vector-tracing');
+    } else if (activeTab === 'patches') {
+      navigate('/custom-patches');
+    } else {
+      navigate('/pricing');
+    }
   };
 
-  const handleSecondaryClick = () => {
-    resolveAction(activeService.secondary_btn_action, () => {
-      if (currentKey === 'all') {
-        if (openOrderWizard) openOrderWizard({ type: 'all' });
-        else protectedNavigate('customer', true);
-      } else {
-        const el = document.getElementById('pricing');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }
-    });
-  };
-
-  const cleanHtml = (html) => {
-    if (typeof html !== 'string') return html;
-    return html.replace(/&nbsp;/g, ' ');
-  };
+  const tabs = [
+    { id: 'all', label: 'All Services', icon: LayoutGrid },
+    { id: 'embroidery', label: 'Embroidery', icon: Layers },
+    { id: 'vector-art', label: 'Vector Art', icon: PenTool },
+    { id: 'patches', label: 'Patches', icon: Tag }
+  ];
 
   return (
     <section style={{
-      background: 'linear-gradient(135deg, var(--navy-950, #0f172a) 0%, var(--navy-800, #1e293b) 100%)',
+      background: 'linear-gradient(135deg, var(--navy-950, #0f172a) 0%, var(--navy-900, #0f172a) 60%, #1e1b4b 100%)',
       color: '#ffffff',
-      padding: '2.5rem 0 6rem',
+      padding: '2.5rem 0 5.5rem',
       position: 'relative',
       overflow: 'hidden'
     }}>
-      {/* Background Accent Lights */}
+      {/* Ambient Glows */}
       <div style={{
         position: 'absolute',
-        top: '-20%',
-        left: '-10%',
-        width: '800px',
-        height: '800px',
-        background: 'radial-gradient(circle, rgba(255, 122, 0, 0.12) 0%, transparent 60%)',
+        top: '-15%',
+        left: '-5%',
+        width: '700px',
+        height: '700px',
+        background: 'radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, transparent 60%)',
         pointerEvents: 'none',
-        animation: 'pulse 8s ease-in-out infinite alternate'
+        zIndex: 0
       }} />
       <div style={{
         position: 'absolute',
-        bottom: '-20%',
-        right: '-10%',
+        bottom: '-15%',
+        right: '-5%',
         width: '600px',
         height: '600px',
-        background: 'radial-gradient(circle, rgba(255, 122, 0, 0.08) 0%, transparent 60%)',
-        pointerEvents: 'none'
+        background: 'radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 60%)',
+        pointerEvents: 'none',
+        zIndex: 0
       }} />
 
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes pulse {
-          0% { transform: scale(1); opacity: 0.8; }
-          100% { transform: scale(1.1); opacity: 1; }
-        }
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes blinkingDot {
-          0%, 100% { opacity: 1; transform: scale(1.1); }
-          50% { opacity: 0.25; transform: scale(0.75); }
-        }
-        .hero-text-rotate {
+        .blinking-green-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #22c55e;
+          box-shadow: 0 0 8px #22c55e;
           display: inline-block;
-          animation: fadeUp 0.5s ease forwards;
+          animation: blink 1.2s infinite ease-in-out;
         }
         .blinking-red-dot {
           width: 8px;
@@ -189,77 +234,81 @@ export const HeroSection = () => {
           background: #ef4444;
           box-shadow: 0 0 8px #ef4444;
           display: inline-block;
-          animation: blinkingDot 1.2s infinite ease-in-out;
+          animation: blink 1.2s infinite ease-in-out 0.6s;
         }
-        .blinking-green-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: #22c55e;
-          box-shadow: 0 0 8px #22c55e;
-          display: inline-block;
-          animation: blinkingDot 1.2s infinite ease-in-out 0.6s;
+        @keyframes blink {
+          0%, 100% { opacity: 1; transform: scale(1.1); }
+          50% { opacity: 0.3; transform: scale(0.8); }
         }
         @media (max-width: 1024px) {
-          .hero-grid {
+          .hero-grid-layout {
             grid-template-columns: 1fr !important;
-            gap: 4rem !important;
+            gap: 3.5rem !important;
           }
-          .hero-left-col {
-            max-width: 100% !important;
+          .hero-left-content {
             text-align: center !important;
           }
-          .hero-trust-badges {
+          .hero-trust-badges-row {
             justify-content: center !important;
           }
-          .hero-cta-group {
+          .hero-cta-buttons-row {
             justify-content: center !important;
           }
         }
       `}} />
 
-      <div className="container" style={{ position: 'relative', zIndex: 2, maxWidth: '1280px', margin: '0 auto' }}>
+      <div className="container" style={{ position: 'relative', zIndex: 1 }}>
         
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2.75rem' }}>
+        {/* Top 4 Navigation Tabs Switcher (Exactly as in the user screenshot) */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem' }}>
           <div style={{
             display: 'inline-flex',
-            background: 'rgba(15, 23, 42, 0.65)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
+            background: 'rgba(15, 23, 42, 0.75)',
+            border: '1px solid rgba(255, 255, 255, 0.14)',
             padding: '0.35rem',
             borderRadius: '9999px',
-            backdropFilter: 'blur(12px)',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35)'
+            backdropFilter: 'blur(16px)',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            gap: '0.3rem'
           }}>
-            {[
-              { id: 'all', label: 'All Services', icon: LayoutGrid },
-              { id: 'embroidery', label: 'Embroidery', icon: Layers },
-              { id: 'vector-art', label: 'Vector Art', icon: PenTool },
-              { id: 'patches', label: 'Patches', icon: Tag }
-            ].map(tab => {
+            {tabs.map((tab) => {
               const Icon = tab.icon;
-              const isActive = normalizeCategory(activeHomeServiceTab) === normalizeCategory(tab.id);
+              const isSelected = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => {
-                    if (setActiveHomeServiceTab) setActiveHomeServiceTab(tab.id);
-                    setSliderPos(50);
-                  }}
+                  onClick={() => handleTabClick(tab.id)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.55rem',
-                    padding: '0.6rem 1.6rem',
+                    padding: '0.65rem 1.65rem',
                     borderRadius: '9999px',
                     border: 'none',
-                    background: isActive ? 'linear-gradient(135deg, var(--orange-500), var(--orange-600))' : 'transparent',
-                    color: isActive ? '#ffffff' : '#94a3b8',
-                    fontWeight: isActive ? 800 : 600,
-                    fontSize: '0.9rem',
+                    background: isSelected 
+                      ? 'linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%)' 
+                      : 'transparent',
+                    color: isSelected ? '#ffffff' : '#94a3b8',
+                    fontWeight: isSelected ? 800 : 600,
+                    fontSize: '0.925rem',
                     cursor: 'pointer',
-                    transition: 'all 0.25s ease',
-                    boxShadow: isActive ? '0 4px 14px rgba(249, 115, 22, 0.4)' : 'none'
+                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                    boxShadow: isSelected ? '0 4px 16px rgba(249, 115, 22, 0.45)' : 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.color = '#ffffff';
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.color = '#94a3b8';
+                      e.currentTarget.style.background = 'transparent';
+                    }
                   }}
                 >
                   <Icon size={16} />
@@ -270,131 +319,185 @@ export const HeroSection = () => {
           </div>
         </div>
 
-        <div className="hero-grid" style={{
+        {/* 2-Column Hero Dynamic Presentation */}
+        <div className="hero-grid-layout" style={{
           display: 'grid',
-          gridTemplateColumns: '1.15fr 0.85fr',
-          gap: '3rem',
+          gridTemplateColumns: '1.12fr 0.88fr',
+          gap: '3.5rem',
           alignItems: 'center'
         }}>
           
-          <div className="hero-left-col" style={{ textAlign: 'left' }}>
-            <h1 style={{
-                fontSize: 'clamp(2.1rem, 3.8vw, 3.25rem)',
-                fontWeight: 900,
-                lineHeight: 1.15,
-                color: '#ffffff',
-                marginBottom: '1.25rem',
-                letterSpacing: '-0.025em'
-              }}
-              dangerouslySetInnerHTML={{ __html: cleanHtml(activeService.title || "Premium Digitizing, Vector Art & Custom Patches") }}
-            />
+          {/* Left Column: Dynamic Service Copy, Benefits & CTAs */}
+          <div className="hero-left-content" style={{ textAlign: 'left' }}>
             
-            <div style={{ 
-                fontSize: 'clamp(1.1rem, 1.8vw, 1.25rem)',
-                fontWeight: 700,
-                marginBottom: '1.25rem',
-                color: 'var(--orange-400, #ff9433)'
-              }}
-              dangerouslySetInnerHTML={{ __html: cleanHtml(activeService.highlight || "Engineered for excellence, delivered in hours.") }}
-            />
-
+            {/* Dynamic Badge */}
             <div style={{
-                fontSize: '1.05rem',
-                lineHeight: 1.65,
-                color: '#94a3b8',
-                marginBottom: '2rem'
-              }}
-              dangerouslySetInnerHTML={{ __html: cleanHtml(activeService.description || "Transform your brand assets with professional digitizing and vector conversion services.") }}
-            />
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              background: 'rgba(249, 115, 22, 0.15)',
+              border: '1px solid rgba(249, 115, 22, 0.35)',
+              color: 'var(--orange-400)',
+              padding: '0.35rem 0.95rem',
+              borderRadius: '9999px',
+              fontSize: '0.825rem',
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              marginBottom: '1.25rem'
+            }}>
+              <Sparkles size={14} />
+              {currentContent.badge}
+            </div>
 
-            <div className="hero-trust-badges" style={{
+            {/* Dynamic Main Title */}
+            <h1 style={{
+              fontSize: 'clamp(2.15rem, 3.8vw, 3.25rem)',
+              fontWeight: 900,
+              lineHeight: 1.14,
+              color: '#ffffff',
+              marginBottom: '1rem',
+              letterSpacing: '-0.025em',
+              fontFamily: 'var(--font-heading)'
+            }}>
+              {title}
+            </h1>
+
+            {/* Dynamic Highlight / Subheading */}
+            <div style={{
+              fontSize: 'clamp(1.05rem, 1.6vw, 1.2rem)',
+              fontWeight: 700,
+              color: 'var(--orange-400)',
+              marginBottom: '1.15rem',
+              lineHeight: 1.4
+            }}>
+              {highlight}
+            </div>
+
+            {/* Dynamic Description */}
+            <p style={{
+              fontSize: '1.05rem',
+              lineHeight: 1.65,
+              color: '#94a3b8',
+              marginBottom: '1.75rem',
+              maxWidth: '640px'
+            }}>
+              {description}
+            </p>
+
+            {/* Service Features Checkmarks List */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem',
+              marginBottom: '2.25rem',
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              padding: '1.15rem 1.35rem',
+              borderRadius: '14px'
+            }}>
+              {currentContent.features.map((feat, idx) => {
+                const FeatIcon = feat.icon || CheckCircle2;
+                return (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', fontSize: '0.925rem', color: '#e2e8f0', fontWeight: 600 }}>
+                    <FeatIcon size={17} style={{ color: 'var(--orange-400)', flexShrink: 0, marginTop: '2px' }} />
+                    <span style={{ lineHeight: 1.45 }}>{feat.text}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Trust Metrics Row */}
+            <div className="hero-trust-badges-row" style={{
               display: 'flex',
               flexWrap: 'wrap',
               gap: '1.5rem',
               marginBottom: '2.5rem'
             }}>
-              {(activeService.trust_points?.[0]?.stats || [
-                { value: '1,200+', label: 'Clients', icon: 'Star' },
-                { value: '45+', label: 'Countries', icon: 'Globe' },
-                { value: '4-Hr', label: 'Express', icon: 'Clock' },
-                { value: '100%', label: 'Guaranteed', icon: 'ShieldCheck' }
-              ]).map((b, i) => {
-                const IconComp = ICON_MAP[b.icon] || Star;
+              {currentContent.stats.map((stat, i) => {
+                const StatIcon = stat.icon || Star;
                 return (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <IconComp size={18} style={{ color: 'var(--orange-500, #ff7a00)' }} />
-                    <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>
-                      {b.value && <span style={{ color: 'var(--orange-500)' }}>{b.value} </span>}
-                      {b.label}
+                    <StatIcon size={18} style={{ color: 'var(--orange-500)' }} />
+                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#e2e8f0' }}>
+                      <strong style={{ color: 'var(--orange-400)', marginRight: '4px' }}>{stat.value}</strong>
+                      {stat.label}
                     </span>
                   </div>
                 );
               })}
             </div>
 
-            <div className="hero-cta-group" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+            {/* CTA Buttons Group */}
+            <div className="hero-cta-buttons-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
               <button 
                 type="button"
                 className="btn btn-primary-orange btn-lg"
-                onClick={handlePrimaryClick}
+                onClick={handlePrimaryAction}
                 style={{ 
-                  padding: '0.9rem 2.2rem',
+                  padding: '0.95rem 2.25rem',
                   fontSize: '1.05rem',
                   fontWeight: 800
                 }}
               >
-                {activeService.primary_cta || 'Get Started'} <ArrowRight size={18} />
+                <Upload size={18} />
+                {primaryCtaText}
+                <ArrowRight size={18} />
               </button>
 
               <button 
                 type="button"
                 className="btn btn-outline btn-lg"
-                onClick={handleSecondaryClick}
+                onClick={handleSecondaryAction}
                 style={{ 
                   color: '#ffffff', 
                   borderColor: 'rgba(255, 255, 255, 0.25)',
-                  padding: '0.9rem 2rem', 
+                  padding: '0.95rem 2rem', 
                   fontSize: '1.05rem',
                   fontWeight: 700
                 }}
               >
-                 {activeService.secondary_cta || 'View Pricing'}
+                {secondaryCtaText}
               </button>
             </div>
+
           </div>
 
+          {/* Right Column: Interactive Before/After Showcase Box */}
           <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
             <div style={{
-              background: 'rgba(15, 23, 42, 0.4)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: 'rgba(15, 23, 42, 0.6)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
               borderRadius: '20px',
               padding: '1.25rem',
-              boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.5)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
               width: '100%',
               maxWidth: '650px',
-              backdropFilter: 'blur(12px)'
+              backdropFilter: 'blur(16px)'
             }}>
+              
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--orange-400, #ff9433)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <span className="blinking-green-dot" /> Showcase
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem', letterSpacing: '0.06em' }}>
+                    <span className="blinking-green-dot" /> SHOWCASE
                   </div>
-                  <div style={{ fontSize: '1rem', fontWeight: 700, color: '#ffffff' }}>
-                    {activeService.trust_points?.[0]?.previewTitle || "Professional Results"}
+                  <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginTop: '2px' }}>
+                    {currentContent.previewTitle}
                   </div>
                 </div>
               </div>
 
+              {/* Interactive Comparison Slider */}
               <div 
                 style={{
                   position: 'relative',
                   width: '100%',
                   aspectRatio: '16/10',
-                  borderRadius: '12px',
+                  borderRadius: '14px',
                   overflow: 'hidden',
                   cursor: 'ew-resize',
                   userSelect: 'none',
-                  background: '#000'
+                  background: '#090d16'
                 }}
                 onMouseMove={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
@@ -407,52 +510,53 @@ export const HeroSection = () => {
                   setSliderPos((x / rect.width) * 100);
                 }}
               >
-                {(() => {
-                  const fallback = 'https://images.unsplash.com/photo-1620660605929-e1fcc13bb221?auto=format&fit=crop&q=80&w=800';
-                  const imgAfter = activeService.banner_image || fallback;
-                  const imgBefore = activeService.trust_points?.[0]?.previewBefore || null;
-                  return (
-                    <>
-                      <img src={imgAfter} alt="After" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable="false" />
-                      
-                      <div style={{ 
-                        position: 'absolute', 
-                        top: 0, 
-                        left: 0, 
-                        bottom: 0,
-                        right: 0,
-                        width: '100%',
-                        height: '100%',
-                        clipPath: `polygon(0 0, ${sliderPos}% 0, ${sliderPos}% 100%, 0 100%)`,
-                      }}>
-                        <img 
-                          src={imgBefore || imgAfter} 
-                          alt="Before" 
-                          style={{ 
-                            width: '100%', height: '100%', objectFit: 'cover',
-                            filter: imgBefore ? 'none' : 'grayscale(100%) blur(4px) contrast(1.2)'
-                          }} 
-                          draggable="false" 
-                        />
-                        <div style={{
-                          position: 'absolute',
-                          top: 0,
-                          bottom: 0,
-                          right: 0,
-                          width: '2px',
-                          background: 'rgba(255, 255, 255, 0.8)'
-                        }} />
-                      </div>
-                    </>
-                  );
-                })()}
+                {/* After Finished Image */}
+                <img 
+                  src={afterImage} 
+                  alt="After" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  draggable="false" 
+                />
+                
+                {/* Before Image with ClipPath */}
+                <div style={{ 
+                  position: 'absolute', 
+                  top: 0, 
+                  left: 0, 
+                  bottom: 0, 
+                  right: 0,
+                  width: '100%',
+                  height: '100%',
+                  clipPath: `polygon(0 0, ${sliderPos}% 0, ${sliderPos}% 100%, 0 100%)`,
+                }}>
+                  <img 
+                    src={beforeImage} 
+                    alt="Before" 
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'cover',
+                      filter: beforeImage === afterImage ? 'grayscale(100%) blur(4px) contrast(1.2)' : 'none'
+                    }} 
+                    draggable="false" 
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    bottom: 0,
+                    right: 0,
+                    width: '2px',
+                    background: 'rgba(255, 255, 255, 0.9)'
+                  }} />
+                </div>
 
+                {/* Handle Divider */}
                 <div style={{
                   position: 'absolute',
                   top: '50%',
                   left: `${sliderPos}%`,
                   width: '4px',
-                  background: 'var(--orange-500, #ff7a00)',
+                  background: 'var(--orange-500)',
                   boxShadow: '0 0 16px rgba(255, 122, 0, 0.9)',
                   transform: 'translateX(-50%)'
                 }}>
@@ -463,66 +567,68 @@ export const HeroSection = () => {
                     transform: 'translate(-50%, -50%)',
                     width: '36px',
                     height: '36px',
-                    background: 'var(--orange-500, #ff7a00)',
+                    background: 'var(--orange-500)',
                     color: '#ffffff',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     boxShadow: '0 4px 14px rgba(0, 0, 0, 0.5)',
-                    border: '3px solid #ffffff',
-                    animation: 'handlePulseBlink 2s infinite ease-in-out'
+                    border: '3px solid #ffffff'
                   }}>
                     <MoveHorizontal size={18} />
                   </div>
                 </div>
 
-                {/* Overlay Labels with Blinking Dots */}
+                {/* Before Label Badge */}
                 <span style={{
                   position: 'absolute',
-                  bottom: '16px',
-                  left: '16px',
-                  background: 'rgba(15, 23, 42, 0.85)',
-                  backdropFilter: 'blur(4px)',
+                  bottom: '14px',
+                  left: '14px',
+                  background: 'rgba(15, 23, 42, 0.88)',
+                  backdropFilter: 'blur(6px)',
                   color: '#ffffff',
                   fontSize: '0.75rem',
-                  fontWeight: 700,
-                  padding: '0.4rem 0.8rem',
+                  fontWeight: 800,
+                  padding: '0.35rem 0.75rem',
                   borderRadius: '6px',
-                  letterSpacing: '0.05em',
+                  letterSpacing: '0.04em',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.4rem',
                   border: '1px solid rgba(239, 68, 68, 0.4)'
                 }}>
                   <span className="blinking-red-dot" />
-                  <span>{activeService.trust_points?.[0]?.previewTag || 'Before'}</span>
+                  <span>{currentContent.beforeTag}</span>
                 </span>
 
+                {/* After Label Badge */}
                 <span style={{
                   position: 'absolute',
-                  bottom: '16px',
-                  right: '16px',
-                  background: 'var(--orange-500, #ff7a00)',
+                  bottom: '14px',
+                  right: '14px',
+                  background: 'var(--orange-500)',
                   color: '#ffffff',
                   fontSize: '0.75rem',
-                  fontWeight: 700,
-                  padding: '0.4rem 0.8rem',
+                  fontWeight: 800,
+                  padding: '0.35rem 0.75rem',
                   borderRadius: '6px',
-                  letterSpacing: '0.05em',
-                  boxShadow: '0 4px 12px rgba(255, 122, 0, 0.4)',
+                  letterSpacing: '0.04em',
+                  boxShadow: '0 4px 12px rgba(249, 115, 22, 0.4)',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.4rem'
                 }}>
                   <span className="blinking-green-dot" />
-                  <span>{activeService.trust_points?.[0]?.previewTagAfter || 'After'}</span>
+                  <span>{currentContent.afterTag}</span>
                 </span>
+
               </div>
             </div>
           </div>
 
         </div>
+
       </div>
     </section>
   );
