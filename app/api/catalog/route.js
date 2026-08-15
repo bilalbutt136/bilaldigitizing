@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
@@ -99,12 +100,20 @@ export async function POST(request) {
     if (action === 'upsert') {
       const { error } = await supabase.from(tableName).upsert(payload, { onConflict: 'id' });
       if (error) throw error;
+      try {
+        revalidatePath('/pricing');
+        revalidatePath('/');
+      } catch {}
       return NextResponse.json({ success: true });
     }
     
     if (action === 'delete') {
       const { error } = await supabase.from(tableName).delete().eq('id', payload.id);
       if (error) throw error;
+      try {
+        revalidatePath('/pricing');
+        revalidatePath('/');
+      } catch {}
       return NextResponse.json({ success: true });
     }
 
@@ -118,6 +127,10 @@ export async function POST(request) {
         const { error } = await supabase.from(tableName).insert(cleanData);
         if (error) throw error;
       }
+      try {
+        revalidatePath('/pricing');
+        revalidatePath('/');
+      } catch {}
       return NextResponse.json({ success: true });
     }
 

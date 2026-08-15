@@ -53,20 +53,20 @@ export default function PricingPage() {
     {
       id: dbEmb?.id || 'embroidery-core',
       serviceType: 'embroidery',
-      badgeText: 'BASIC',
+      badgeText: dbEmb?.badge_text || 'BASIC',
       badgeColor: '#ea580c',
-      isPopular: false,
+      isPopular: dbEmb?.is_popular !== undefined ? dbEmb.is_popular : false,
       categoryLabel: 'EMBROIDERY DIGITIZING',
-      title: (dbEmb?.title && dbEmb.title !== 'Logo' && dbEmb.title !== 'Untitled') ? dbEmb.title : 'Embroidery Digitizing',
-      subtitle: (dbEmb?.subtitle && dbEmb.subtitle !== 'Logo') ? dbEmb.subtitle : 'Commercial stitch files for caps, polos, shirts & jackets (.DST, .PES, .EMB)',
-      price: (dbEmb?.price !== undefined && dbEmb.price > 0) ? dbEmb.price : 10,
+      title: dbEmb?.title || 'Embroidery Digitizing',
+      subtitle: dbEmb?.subtitle || 'Commercial stitch files for caps, polos, shirts & jackets (.DST, .PES, .EMB)',
+      price: (dbEmb?.price !== undefined && dbEmb?.price !== null) ? dbEmb.price : 10,
       originalPrice: dbEmb?.original_price || 15,
       priceUnit: dbEmb?.price_unit || '/ DESIGN',
       turnaround: dbEmb?.turnaround_time || '4–12 Hours',
-      features: (Array.isArray(dbEmb?.features) && dbEmb.features.filter(f => f && f.trim()).length >= 2) 
+      features: (Array.isArray(dbEmb?.features) && dbEmb.features.filter(f => f && f.trim()).length > 0) 
         ? dbEmb.features.filter(f => f && f.trim()) 
         : defaultEmbFeatures,
-      buttonText: 'Order Embroidery Now',
+      buttonText: dbEmb?.button_text || 'Order Embroidery Now',
       theme: {
         icon: Layers,
         color: '#ea580c',
@@ -77,20 +77,20 @@ export default function PricingPage() {
     {
       id: dbVec?.id || 'vector-core',
       serviceType: 'vector',
-      badgeText: 'BEST VALUE',
+      badgeText: dbVec?.badge_text || 'BEST VALUE',
       badgeColor: '#2563eb',
-      isPopular: true,
+      isPopular: dbVec?.is_popular !== undefined ? dbVec.is_popular : true,
       categoryLabel: 'VECTOR ART CONVERSION',
-      title: (dbVec?.title && dbVec.title !== 'Untitled') ? dbVec.title : 'Scalable Vector Art Redraw',
+      title: dbVec?.title || 'Scalable Vector Art Redraw',
       subtitle: dbVec?.subtitle || 'Raster to crisp Bézier vector nodes (.AI, .EPS, .SVG, .PDF)',
-      price: (dbVec?.price !== undefined && dbVec.price > 0) ? dbVec.price : 15,
+      price: (dbVec?.price !== undefined && dbVec?.price !== null) ? dbVec.price : 15,
       originalPrice: dbVec?.original_price || 25,
       priceUnit: dbVec?.price_unit || '/ DESIGN',
       turnaround: dbVec?.turnaround_time || '6–12 Hours',
-      features: (Array.isArray(dbVec?.features) && dbVec.features.filter(f => f && f.trim()).length >= 2) 
+      features: (Array.isArray(dbVec?.features) && dbVec.features.filter(f => f && f.trim()).length > 0) 
         ? dbVec.features.filter(f => f && f.trim()) 
         : defaultVecFeatures,
-      buttonText: 'Order Vector Art Now',
+      buttonText: dbVec?.button_text || 'Order Vector Art Now',
       theme: {
         icon: PenTool,
         color: '#2563eb',
@@ -101,20 +101,20 @@ export default function PricingPage() {
     {
       id: dbPatch?.id || 'patches-core',
       serviceType: 'patch',
-      badgeText: 'POPULAR',
+      badgeText: dbPatch?.badge_text || 'POPULAR',
       badgeColor: '#059669',
-      isPopular: false,
+      isPopular: dbPatch?.is_popular !== undefined ? dbPatch.is_popular : false,
       categoryLabel: 'CUSTOM MANUFACTURED PATCHES',
-      title: (dbPatch?.title && dbPatch.title !== 'Vector tracing' && dbPatch.title !== 'Untitled') ? dbPatch.title : 'Custom Physical Patches',
-      subtitle: (dbPatch?.subtitle && dbPatch.subtitle !== 'Logo into AI') ? dbPatch.subtitle : 'Custom manufactured physical emblems delivered straight to your door',
-      price: (dbPatch?.price !== undefined && dbPatch.price > 0 && dbPatch.price <= 10) ? dbPatch.price : 1.50,
+      title: dbPatch?.title || 'Custom Physical Patches',
+      subtitle: dbPatch?.subtitle || 'Custom manufactured physical emblems delivered straight to your door',
+      price: (dbPatch?.price !== undefined && dbPatch?.price !== null) ? dbPatch.price : 1.50,
       originalPrice: dbPatch?.original_price || 3.00,
       priceUnit: dbPatch?.price_unit || '/ PIECE',
       turnaround: dbPatch?.turnaround_time || '3–5 Days',
-      features: (Array.isArray(dbPatch?.features) && dbPatch.features.filter(f => f && f.trim()).length >= 2) 
+      features: (Array.isArray(dbPatch?.features) && dbPatch.features.filter(f => f && f.trim()).length > 0) 
         ? dbPatch.features.filter(f => f && f.trim()) 
         : defaultPatchFeatures,
-      buttonText: 'Order Custom Patches',
+      buttonText: dbPatch?.button_text || 'Order Custom Patches',
       theme: {
         icon: Tag,
         color: '#059669',
@@ -123,6 +123,7 @@ export default function PricingPage() {
       }
     }
   ];
+
 
   return (
     <main style={{ padding: '8rem 2rem 6rem', background: 'var(--navy-100)', minHeight: '100vh', color: 'var(--text-main)', fontFamily: 'var(--font-body, "Inter", sans-serif)' }}>
