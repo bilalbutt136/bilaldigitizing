@@ -10,6 +10,7 @@ import { SystemSettingsManager } from './SystemSettingsManager';
 import { AdminChatInbox } from './AdminChatInbox';
 import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
+import { PortfolioManager } from './PortfolioManager';
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -115,6 +116,7 @@ export const AdminDashboard = () => {
   // Calculations & KPI metrics with safe fallbacks
   const safeOrders = Array.isArray(orders) ? orders : [];
   const safeClients = Array.isArray(clients) ? clients : [];
+  const safePortfolio = Array.isArray(portfolioSamples) ? portfolioSamples : [];
 
   const totalRevenue = safeOrders.reduce((acc, curr) => acc + (parseFloat(curr?.price) || 0), 0);
   const activeJobsCount = safeOrders.filter(o => o?.status !== 'completed').length;
@@ -137,14 +139,15 @@ export const AdminDashboard = () => {
       ]
     },
     {
-      title: 'SERVICES',
+      title: 'SERVICES & PRICING',
       items: [
-        { id: 'services', label: 'Service Rates', icon: Sliders }
+        { id: 'services', label: 'Service Rates & Tiers', icon: Sliders }
       ]
     },
     {
-      title: 'STUDIO CONTENT',
+      title: 'STUDIO CONTENT & GALLERY',
       items: [
+        { id: 'portfolio', label: 'Portfolio Gallery', icon: Image, badge: safePortfolio.length },
         { id: 'promotions', label: 'Promotions', icon: TrendingUp },
         { id: 'contact', label: 'Contact Info', icon: Phone }
       ]
@@ -203,7 +206,8 @@ export const AdminDashboard = () => {
             </span>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0, lineHeight: 1.1 }}>
               {activeTab === 'dashboard' && 'Admin Operations'}
-              {activeTab === 'services' && 'Service Rates'}
+              {activeTab === 'services' && 'Service Rates & Tiers'}
+              {activeTab === 'portfolio' && 'Portfolio & Work Gallery'}
               {activeTab === 'clients' && 'Client Directory'}
               {activeTab === 'chat' && 'Inbox & Support'}
               {activeTab === 'promotions' && 'Promotions'}
@@ -584,6 +588,7 @@ export const AdminDashboard = () => {
         )}
 
         {activeTab === 'services' && <StudioServicesManager />}
+        {activeTab === 'portfolio' && <PortfolioManager />}
         {activeTab === 'clients' && <ClientDirectory />}
         {activeTab === 'chat' && <AdminChatInbox />}
         {activeTab === 'promotions' && <PromotionsManager />}

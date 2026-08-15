@@ -10,76 +10,103 @@ import {
   Zap, 
   Maximize2, 
   X, 
-  Filter,
-  CheckCircle2,
-  UploadCloud
+  CheckCircle2, 
+  UploadCloud,
+  Eye,
+  Layers,
+  PenTool,
+  Tag,
+  ShieldCheck,
+  FileCheck
 } from 'lucide-react';
 
-
+const CATEGORIES = [
+  { key: 'all', label: 'All Projects', icon: Sparkles },
+  { key: 'embroidery', label: 'Embroidery Digitizing', icon: Layers },
+  { key: 'vector', label: 'Vector Art Conversion', icon: PenTool },
+  { key: 'patches', label: 'Custom Patches', icon: Tag }
+];
 
 export const PortfolioPage = () => {
   const navigate = useNavigate();
-  const { portfolioSamples = [], serviceCmsContent = {} } = useAppState();
+  const { portfolioSamples = [], openOrderWizard, protectedNavigate } = useAppState();
 
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeItemModal, setActiveItemModal] = useState(null);
+  const [showOriginalInModal, setShowOriginalInModal] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
-  const combinedItems = portfolioSamples && portfolioSamples.length > 0
-    ? portfolioSamples.filter(s => s.is_active !== false).map((s, idx) => ({
-        id: s.id || `sample-${idx}`,
-        category: (s.category || '').toLowerCase().includes('vector') ? 'vector' : (s.category || '').toLowerCase().includes('patch') ? 'patches' : 'embroidery',
-        categoryLabel: s.category === 'general' ? 'Embroidery Digitizing' : (s.category || 'Embroidery Digitizing'),
-        title: s.title || 'Custom Digitized Design',
-        description: s.description || 'Commercial machine file pathing with smooth underlay foundation.',
-        beforeImg: s.original_image || s.before_img || s.originalImage || s.beforeImg || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
-        afterImg: s.digitized_image || s.after_img || s.digitizedImage || s.afterImg || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
-        stitchCount: s.stitch_count || s.stitchCount || '10,500 Stitches',
-        colors: s.colors || 'Multi-Color Thread',
-        formats: Array.isArray(s.formats) ? s.formats.join(', ') : (s.formats || 'DST, PES, EMB, SVG'),
-        clientType: s.client_type || s.clientType || 'Commercial Studio Client'
-      }))
-    : [];
+  // Normalize and parse items from database
+  const combinedItems = (portfolioSamples || [])
+    .filter(s => s.is_active !== false)
+    .map((s, idx) => {
+      const catLower = (s.category || '').toLowerCase();
+      const mappedCategoryKey = catLower.includes('vector') ? 'vector' : catLower.includes('patch') ? 'patches' : 'embroidery';
+      const mappedCategoryLabel = mappedCategoryKey === 'vector' ? 'Vector Art Redraw' : mappedCategoryKey === 'patches' ? 'Custom Patches' : 'Embroidery Digitizing';
+      const finishedImg = s.digitized_image || s.digitizedImage || s.afterImg || s.after_img || s.image || s.original_image || '';
+      const beforeImg = s.original_image || s.originalImage || s.beforeImg || s.before_img || '';
+
+      return {
+        id: s.id || `portfolio-${idx}`,
+        categoryKey: mappedCategoryKey,
+        categoryLabel: mappedCategoryLabel,
+        title: s.title || 'Custom Studio Artwork',
+        description: s.description || 'Precision commercial digitized file pathing and smooth production foundation.',
+        afterImg: finishedImg,
+        beforeImg: beforeImg,
+        stitchCount: s.stitch_count || s.stitchCount || (mappedCategoryKey === 'embroidery' ? 'Commercial Density' : ''),
+        colors: s.colors || (mappedCategoryKey === 'vector' ? 'Pantone Spot Colors' : 'Standard Thread Colors'),
+        formats: typeof s.formats === 'string' ? s.formats : (Array.isArray(s.formats) ? s.formats.join(', ') : (mappedCategoryKey === 'vector' ? 'AI, EPS, SVG, PDF' : 'DST, PES, EMB')),
+        clientType: s.client_type || s.clientType || 'Commercial Client'
+      };
+    })
+    .filter(item => Boolean(item.afterImg));
 
   const filteredItems = activeFilter === 'all' 
     ? combinedItems 
-    : combinedItems.filter(item => item.category === activeFilter);
+    : combinedItems.filter(item => item.categoryKey === activeFilter);
 
-  const filterTabs = serviceCmsContent?.['portfolio_categories'] || [
-    { key: 'all', label: 'All Portfolio' },
-    { key: 'embroidery', label: 'Embroidery Digitizing' },
-    { key: 'vector', label: 'Vector Art Conversion' },
-    { key: 'patches', label: 'Custom Patches' }
-  ];
+  const handleStartOrder = (item) => {
+    setActiveItemModal(null);
+    const serviceType = item.categoryKey === 'patches' ? 'patch' : item.categoryKey === 'vector' ? 'vector' : 'embroidery';
+    if (openOrderWizard) {
+      openOrderWizard({
+        type: serviceType,
+        category: item.categoryLabel,
+        title: item.title
+      });
+    } else {
+      protectedNavigate('customer', true, { type: serviceType });
+    }
+  };
 
   return (
-    <div style={{ background: 'var(--bg-main)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ background: 'var(--bg-main, #f8fafc)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
       {/* 1. Page Header Banner */}
-      <div style={{
-        background: 'linear-gradient(135deg, var(--navy-950) 0%, var(--navy-900) 100%)',
+      <section style={{
+        background: 'linear-gradient(135deg, var(--navy-950, #0f172a) 0%, #0b1329 60%, #1e1b4b 100%)',
         color: '#ffffff',
-        padding: '3.75rem 0 3.25rem',
+        padding: '3.5rem 0 3rem',
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
         position: 'relative',
         overflow: 'hidden'
       }}>
+        {/* Ambient Glows */}
         <div style={{
           position: 'absolute',
-          top: '-80px',
-          right: '-80px',
-          width: '350px',
-          height: '350px',
-          background: 'rgba(249, 115, 22, 0.15)',
-          borderRadius: '50%',
-          filter: 'blur(80px)',
+          top: '-15%',
+          right: '-5%',
+          width: '500px',
+          height: '500px',
+          background: 'radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, transparent 65%)',
           pointerEvents: 'none'
         }} />
 
-        <div className="container">
+        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
           {/* Breadcrumbs */}
           <div style={{ 
             display: 'flex', 
@@ -115,407 +142,490 @@ export const PortfolioPage = () => {
               borderRadius: '9999px',
               marginBottom: '1rem'
             }}>
-              <Sparkles size={15} /> Commercial Stitch & Vector Gallery
+              <Sparkles size={15} /> Commercial Production Gallery
             </div>
 
-            <h1 style={{ 
-              fontSize: '2.85rem', 
-              fontFamily: 'var(--font-heading)', 
-              fontWeight: 800, 
-              color: '#ffffff', 
-              marginBottom: '1rem',
+            <h1 style={{
+              fontSize: 'clamp(2.2rem, 3.5vw, 3rem)',
+              fontWeight: 900,
+              color: '#ffffff',
               lineHeight: 1.15,
-              letterSpacing: '-0.02em'
+              marginBottom: '0.85rem',
+              letterSpacing: '-0.02em',
+              fontFamily: 'var(--font-heading)'
             }}>
-              Stitchout & Vector Portfolio
+              Real Production Sew-Outs & Vector Art Gallery
             </h1>
 
-            <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: 1.65, marginBottom: '2.25rem' }}>
-              Explore our real digitized sew-outs, 3D puff cap pathing, clean vector restorations, and physical embroidered patch samples delivered to 1,200+ commercial embroidery shops.
-            </p>
-
-            {/* Quick Stat Badges */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '1.5rem',
-              fontSize: '0.9rem',
-              color: '#e2e8f0',
-              fontWeight: 700
+            <p style={{
+              fontSize: '1.1rem',
+              color: '#94a3b8',
+              lineHeight: 1.6,
+              margin: 0
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <CheckCircle2 size={17} style={{ color: '#10b981' }} /> 10,000+ Completed Designs
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <CheckCircle2 size={17} style={{ color: '#10b981' }} /> 99.8% Zero Thread Break Rate
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <CheckCircle2 size={17} style={{ color: '#10b981' }} /> 4-Hour Express Turnaround
-              </div>
-            </div>
+              Explore verified commercial embroidery stitch-outs, crisp scalable vector conversions, and physical custom patches created for apparel brands and embroidery shops worldwide.
+            </p>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* 2. Main Portfolio Section */}
-      <section style={{ padding: '4rem 0 5.5rem', flex: 1 }}>
+      {/* 2. Main Content & Category Switcher */}
+      <section style={{ padding: '3.5rem 0 5rem', flex: 1 }}>
         <div className="container">
+          
+          {/* Category Filter Tabs */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem' }}>
+            <div style={{
+              display: 'inline-flex',
+              background: '#ffffff',
+              border: '1.5px solid var(--border-color)',
+              padding: '0.35rem',
+              borderRadius: '9999px',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              gap: '0.25rem'
+            }}>
+              {CATEGORIES.map(cat => {
+                const IconComp = cat.icon;
+                const isSelected = activeFilter === cat.key;
+                const count = cat.key === 'all' 
+                  ? combinedItems.length 
+                  : combinedItems.filter(i => i.categoryKey === cat.key).length;
 
-          {/* Filter Category Tabs */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-            gap: '0.75rem',
-            marginBottom: '3.5rem'
-          }}>
-            {filterTabs.map(tab => {
-              const isActive = activeFilter === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActiveFilter(tab.key)}
-                  style={{
-                    background: isActive ? 'var(--orange-500)' : '#ffffff',
-                    color: isActive ? '#ffffff' : 'var(--navy-800)',
-                    border: isActive ? '1.5px solid var(--orange-500)' : '1.5px solid var(--border-color)',
-                    padding: '0.65rem 1.35rem',
-                    borderRadius: '9999px',
-                    fontWeight: 800,
-                    fontSize: '0.9rem',
-                    cursor: 'pointer',
-                    boxShadow: isActive ? '0 4px 14px rgba(249, 115, 22, 0.35)' : 'var(--shadow-sm)',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem'
-                  }}
-                >
-                  {tab.key === 'all' && <Filter size={15} />}
-                  {tab.label}
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={cat.key}
+                    type="button"
+                    onClick={() => setActiveFilter(cat.key)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.6rem 1.35rem',
+                      borderRadius: '9999px',
+                      border: 'none',
+                      background: isSelected 
+                        ? 'linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%)' 
+                        : 'transparent',
+                      color: isSelected ? '#ffffff' : 'var(--navy-800)',
+                      fontWeight: isSelected ? 800 : 600,
+                      fontSize: '0.875rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      boxShadow: isSelected ? '0 4px 12px rgba(249, 115, 22, 0.3)' : 'none'
+                    }}
+                  >
+                    <IconComp size={15} />
+                    <span>{cat.label}</span>
+                    <span style={{
+                      background: isSelected ? 'rgba(255, 255, 255, 0.25)' : '#f1f5f9',
+                      color: isSelected ? '#ffffff' : '#64748b',
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      padding: '0.1rem 0.45rem',
+                      borderRadius: '9999px'
+                    }}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Portfolio Grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(330px, 1fr))',
-            gap: '2.25rem',
-            marginBottom: '4rem'
-          }}>
-            {filteredItems.map((item) => {
-              return (
-                <div
-                  key={item.id}
-                  className="card"
-                  style={{
-                    background: '#ffffff',
-                    border: '1.5px solid var(--border-color)',
-                    borderRadius: 'var(--radius-lg)',
-                    overflow: 'hidden',
-                    boxShadow: 'var(--shadow-md)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  <div>
-                    {/* Interactive Image Preview */}
-                    <div 
-                      style={{ 
-                        position: 'relative', 
-                        height: '240px', 
-                        overflow: 'hidden', 
-                        background: '#0f172a',
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => setActiveItemModal(item)}
-                    >
-                      {/* Final Finished Image */}
-                      <img 
-                        src={item.afterImg || item.image || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80'} 
-                        alt={`${item.title || 'Portfolio'} Finished Artwork`}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s ease' }}
-                        onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
-                        onMouseOut={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80';
-                        }}
-                      />
+          {filteredItems.length === 0 ? (
+            <div className="card" style={{ padding: '4rem 2rem', textAlign: 'center', background: '#ffffff', border: '1.5px dashed var(--border-color)', borderRadius: '20px', maxWidth: '600px', margin: '0 auto' }}>
+              <Sparkles size={40} style={{ color: 'var(--orange-500)', margin: '0 auto 1rem' }} />
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
+                Curating New Projects
+              </h3>
+              <p style={{ fontSize: '0.925rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+                Our master digitizers are currently finalizing new production sew-outs for this category. Check back soon or request a custom sample for your logo.
+              </p>
+              <button
+                type="button"
+                className="btn btn-primary-orange btn-md"
+                onClick={() => navigate('/order')}
+                style={{ fontWeight: 800 }}
+              >
+                Submit Custom Artwork
+              </button>
+            </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+              gap: '2rem'
+            }}>
+              {filteredItems.map((item) => {
+                const isVector = item.categoryKey === 'vector';
+                const isPatch = item.categoryKey === 'patches';
+                const badgeBg = isVector ? 'rgba(6, 182, 212, 0.12)' : isPatch ? 'rgba(168, 85, 247, 0.12)' : 'rgba(249, 115, 22, 0.12)';
+                const badgeColor = isVector ? '#0891b2' : isPatch ? '#9333ea' : '#ea580c';
 
-                      {/* Category Pill */}
-                      <span style={{
-                        position: 'absolute',
-                        bottom: '10px',
-                        left: '10px',
-                        background: 'rgba(15, 23, 42, 0.88)',
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        color: 'var(--orange-400)',
-                        fontSize: '0.725rem',
-                        fontWeight: 800,
-                        padding: '0.25rem 0.75rem',
-                        borderRadius: '9999px',
-                        pointerEvents: 'none'
-                      }}>
-                        {item.categoryLabel}
-                      </span>
-
-                      {/* Interactive Zoom Overlay */}
+                return (
+                  <div
+                    key={item.id}
+                    className="card"
+                    onClick={() => {
+                      setShowOriginalInModal(false);
+                      setActiveItemModal(item);
+                    }}
+                    style={{
+                      background: '#ffffff',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '20px',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-6px)';
+                      e.currentTarget.style.boxShadow = '0 16px 36px rgba(0, 0, 0, 0.08)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.04)';
+                    }}
+                  >
+                    <div>
+                      {/* Image Box */}
                       <div style={{
-                        position: 'absolute',
-                        bottom: '10px',
-                        right: '10px',
-                        background: 'rgba(15, 23, 42, 0.75)',
-                        color: '#ffffff',
-                        padding: '0.3rem 0.6rem',
-                        borderRadius: '6px',
-                        fontSize: '0.725rem',
-                        fontWeight: 700,
+                        position: 'relative',
+                        width: '100%',
+                        height: '240px',
+                        background: 'radial-gradient(circle at center, #1e293b 0%, #090d16 100%)',
+                        overflow: 'hidden',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.3rem',
-                        pointerEvents: 'none'
+                        justifyContent: 'center'
                       }}>
-                        <Maximize2 size={13} /> Inspect
-                      </div>
-                    </div>
+                        <img
+                          src={item.afterImg}
+                          alt={item.title}
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            objectFit: 'contain',
+                            transition: 'transform 0.4s ease'
+                          }}
+                        />
 
-                    {/* Clean Card Body Caption */}
-                    <div style={{ padding: '1.25rem 1.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem' }}>
-                      <div>
-                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0 0 0.25rem 0', lineHeight: 1.3 }}>
-                          {item.title}
-                        </h3>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                          {item.categoryLabel} • {item.formats}
+                        {/* Top Category Badge */}
+                        <div style={{ position: 'absolute', top: '12px', left: '12px' }}>
+                          <span style={{
+                            background: badgeBg,
+                            color: badgeColor,
+                            border: `1px solid ${badgeColor}40`,
+                            fontSize: '0.725rem',
+                            fontWeight: 800,
+                            padding: '0.3rem 0.75rem',
+                            borderRadius: '9999px',
+                            backdropFilter: 'blur(8px)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.06em'
+                          }}>
+                            {item.categoryLabel}
+                          </span>
+                        </div>
+
+                        {/* Inspect Zoom Icon */}
+                        <div style={{
+                          position: 'absolute',
+                          top: '12px',
+                          right: '12px',
+                          background: 'rgba(15, 23, 42, 0.75)',
+                          color: '#ffffff',
+                          borderRadius: '50%',
+                          width: '32px',
+                          height: '32px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backdropFilter: 'blur(6px)'
+                        }}>
+                          <Maximize2 size={15} />
                         </div>
                       </div>
 
-                      <span style={{ fontSize: '0.75rem', fontWeight: 800, background: '#fff7ed', color: 'var(--orange-600)', border: '1px solid #ffedd5', padding: '0.3rem 0.7rem', borderRadius: '9999px', flexShrink: 0 }}>
-                        ⚡ {item.stitchCount}
+                      {/* Content Info */}
+                      <div style={{ padding: '1.5rem' }}>
+                        <h3 style={{
+                          fontSize: '1.15rem',
+                          fontWeight: 800,
+                          color: 'var(--navy-950)',
+                          margin: '0 0 0.5rem',
+                          lineHeight: 1.3
+                        }}>
+                          {item.title}
+                        </h3>
+
+                        <p style={{
+                          fontSize: '0.875rem',
+                          color: 'var(--text-muted)',
+                          lineHeight: 1.55,
+                          margin: '0 0 1rem',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden'
+                        }}>
+                          {item.description}
+                        </p>
+
+                        {/* Tags Pill Bar */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
+                          {item.stitchCount && (
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, background: '#f1f5f9', color: '#334155', padding: '0.25rem 0.6rem', borderRadius: '6px' }}>
+                              ⚡ {item.stitchCount}
+                            </span>
+                          )}
+                          {item.formats && (
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, background: '#f1f5f9', color: '#334155', padding: '0.25rem 0.6rem', borderRadius: '6px' }}>
+                              📁 {item.formats}
+                            </span>
+                          )}
+                          {item.beforeImg && (
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, background: '#ecfdf5', color: '#059669', padding: '0.25rem 0.6rem', borderRadius: '6px' }}>
+                              ✓ Before & After
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card Footer Button */}
+                    <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border-color)', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+                        {item.clientType}
+                      </span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--orange-600)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        Inspect Project <ArrowRight size={14} />
                       </span>
                     </div>
+
                   </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Dynamic Bottom Conversion CTA Banner */}
-          {(() => {
-            const getCtaConfig = (filter) => {
-              switch (filter) {
-                case 'patches':
-                  return {
-                    badge: '📦 CUSTOM PATCH MANUFACTURE',
-                    heading: 'Ready to Order Custom Patches?',
-                    subtext: 'Configure custom manufactured patches with velcro, iron-on, or sew-on backing, merrowed border options, and fast 3-5 day studio production.',
-                    btnText: 'Order Custom Patches Now',
-                    route: '/custom-patches'
-                  };
-                case 'vector':
-                  return {
-                    badge: '📐 VECTOR TRACING & REDRAW',
-                    heading: 'Ready to Convert Your Vector Artwork?',
-                    subtext: 'Transform low-res logos, raster JPGs, and sketches into clean, 100% hand-drawn scalable vector files (.AI, .EPS, .SVG, .PDF) in 6-12 hours.',
-                    btnText: 'Order Vector Tracing Now',
-                    route: '/services/vector-tracing'
-                  };
-                case 'embroidery':
-                case 'all':
-                default:
-                  return {
-                    badge: '⚡ COMMERCIAL QUALITY GUARANTEE',
-                    heading: 'Ready to Digitize Your Logo?',
-                    subtext: 'Submit your logo today and receive commercial machine-ready files (.DST, .PES, .EMB) in as fast as 4 hours with unlimited free revisions.',
-                    btnText: 'Upload Your Artwork Now',
-                    route: '/services/embroidery-digitizing'
-                  };
-              }
-            };
-
-            const cta = getCtaConfig(activeFilter);
-
-            return (
-              <div style={{
-                background: 'linear-gradient(135deg, var(--navy-900) 0%, #ff7a00 100%)',
-                borderRadius: 'var(--radius-lg)',
-                padding: '3.5rem 2.5rem',
-                color: '#ffffff',
-                textAlign: 'center',
-                boxShadow: '0 16px 40px rgba(15, 23, 42, 0.2)',
-                position: 'relative',
-                overflow: 'hidden'
-              }}>
-                <div style={{ maxWidth: '720px', margin: '0 auto' }}>
-                  <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    background: 'rgba(255, 255, 255, 0.15)',
-                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                    color: '#ffffff',
-                    fontWeight: 800,
-                    fontSize: '0.825rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    padding: '0.35rem 0.95rem',
-                    borderRadius: '9999px',
-                    marginBottom: '1rem'
-                  }}>
-                    <Zap size={16} /> {cta.badge}
-                  </div>
-
-                  <h2 style={{ fontSize: '2.4rem', fontWeight: 800, color: '#ffffff', marginBottom: '1rem' }}>
-                    {cta.heading}
-                  </h2>
-
-                  <p style={{ fontSize: '1.1rem', color: '#f1f5f9', lineHeight: 1.6, marginBottom: '2.25rem' }}>
-                    {cta.subtext}
-                  </p>
-
-                  <button
-                    type="button"
-                    className="btn btn-navy btn-lg"
-                    style={{
-                      fontWeight: 800,
-                      fontSize: '1.05rem',
-                      padding: '0.95rem 2.25rem',
-                      background: '#0f172a',
-                      backgroundColor: '#0f172a',
-                      color: '#ffffff',
-                      border: '2px solid rgba(255, 255, 255, 0.25)',
-                      borderRadius: '10px',
-                      boxShadow: '0 8px 25px rgba(15, 23, 42, 0.4)',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.6rem',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onClick={() => {
-                      navigate(cta.route);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                  >
-                    <UploadCloud size={20} style={{ color: 'var(--orange-400)' }} /> {cta.btnText} <ArrowRight size={18} />
-                  </button>
-                </div>
-              </div>
-            );
-          })()}
+                );
+              })}
+            </div>
+          )}
 
         </div>
       </section>
 
-      {/* Lightbox Preview Modal */}
+      {/* 3. LIGHTBOX / INSPECTION MODAL */}
       {activeItemModal && (
-        <div 
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 9999,
-            background: 'rgba(15, 23, 42, 0.92)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '2rem'
-          }}
-          onClick={() => setActiveItemModal(null)}
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(15, 23, 42, 0.85)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1.5rem',
+          overflowY: 'auto'
+        }}
+        onClick={() => setActiveItemModal(null)}
         >
-          <div 
-            style={{
-              background: '#ffffff',
-              borderRadius: 'var(--radius-lg)',
-              maxWidth: '850px',
-              width: '100%',
-              overflow: 'hidden',
-              boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
-              position: 'relative'
-            }}
-            onClick={(e) => e.stopPropagation()}
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '24px',
+            maxWidth: '900px',
+            width: '100%',
+            maxHeight: '92vh',
+            overflowY: 'auto',
+            boxShadow: '0 30px 80px rgba(0,0,0,0.4)',
+            border: '1px solid var(--border-color)',
+            display: 'grid',
+            gridTemplateColumns: '1.15fr 0.85fr',
+            overflow: 'hidden'
+          }}
+          onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
+            {/* Left Side: High-Res Image Display */}
             <div style={{
-              padding: '1.25rem 1.75rem',
-              background: 'var(--navy-900)',
-              color: '#ffffff',
+              background: 'radial-gradient(circle at center, #1e293b 0%, #090d16 100%)',
+              padding: '2rem',
               display: 'flex',
+              flexDirection: 'column',
               justifyContent: 'space-between',
-              alignItems: 'center'
+              alignItems: 'center',
+              position: 'relative'
             }}>
+              
+              {/* Optional Toggle if before image exists */}
+              {activeItemModal.beforeImg ? (
+                <div style={{
+                  display: 'inline-flex',
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  borderRadius: '9999px',
+                  padding: '0.25rem',
+                  backdropFilter: 'blur(8px)',
+                  marginBottom: '1rem',
+                  border: '1px solid rgba(255, 255, 255, 0.2)'
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowOriginalInModal(false)}
+                    style={{
+                      background: !showOriginalInModal ? 'var(--orange-500)' : 'transparent',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '9999px',
+                      padding: '0.35rem 0.85rem',
+                      fontWeight: 800,
+                      fontSize: '0.78rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Digitized Production
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowOriginalInModal(true)}
+                    style={{
+                      background: showOriginalInModal ? 'var(--orange-500)' : 'transparent',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '9999px',
+                      padding: '0.35rem 0.85rem',
+                      fontWeight: 800,
+                      fontSize: '0.78rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Original Artwork
+                  </button>
+                </div>
+              ) : (
+                <div style={{ height: '30px' }} />
+              )}
+
+              {/* Main Image */}
+              <div style={{ width: '100%', height: '360px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img
+                  src={showOriginalInModal && activeItemModal.beforeImg ? activeItemModal.beforeImg : activeItemModal.afterImg}
+                  alt={activeItemModal.title}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                    borderRadius: '12px'
+                  }}
+                />
+              </div>
+
+              <div style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 600, marginTop: '1rem' }}>
+                {showOriginalInModal ? 'Showing Customer Raw Artwork' : 'Showing Master Commercial File Sew-Out'}
+              </div>
+            </div>
+
+            {/* Right Side: Specifications & Order Action */}
+            <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#ffffff' }}>
               <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  {activeItemModal.categoryLabel}
-                </span>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                  <span style={{
+                    background: 'var(--orange-50)',
+                    color: 'var(--orange-600)',
+                    border: '1px solid var(--orange-200)',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    padding: '0.3rem 0.75rem',
+                    borderRadius: '9999px',
+                    textTransform: 'uppercase'
+                  }}>
+                    {activeItemModal.categoryLabel}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveItemModal(null)}
+                    style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '0.4rem', cursor: 'pointer' }}
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 0.75rem', lineHeight: 1.25 }}>
                   {activeItemModal.title}
-                </h3>
-              </div>
+                </h2>
 
-              <button
-                type="button"
-                onClick={() => setActiveItemModal(null)}
-                style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', padding: '0.4rem' }}
-              >
-                <X size={24} />
-              </button>
-            </div>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 1.5rem' }}>
+                  {activeItemModal.description}
+                </p>
 
-            {/* Modal Image Previews Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', padding: '1.5rem', background: '#0f172a' }}>
-              <div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#94a3b8', marginBottom: '0.5rem', textTransform: 'uppercase' }}>
-                  Original Artwork (Before)
+                {/* Technical Specifications Grid */}
+                <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                  
+                  {activeItemModal.stitchCount && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                      <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Stitch Density:</span>
+                      <strong style={{ color: 'var(--navy-900)' }}>{activeItemModal.stitchCount}</strong>
+                    </div>
+                  )}
+
+                  {activeItemModal.formats && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                      <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Formats Included:</span>
+                      <strong style={{ color: 'var(--navy-900)' }}>{activeItemModal.formats}</strong>
+                    </div>
+                  )}
+
+                  {activeItemModal.colors && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                      <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Thread & Color:</span>
+                      <strong style={{ color: 'var(--navy-900)' }}>{activeItemModal.colors}</strong>
+                    </div>
+                  )}
+
+                  {activeItemModal.clientType && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                      <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Application:</span>
+                      <strong style={{ color: 'var(--navy-900)' }}>{activeItemModal.clientType}</strong>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Quality Guarantee:</span>
+                    <strong style={{ color: '#059669', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <ShieldCheck size={15} /> 100% Machine Tested
+                    </strong>
+                  </div>
                 </div>
-                <img 
-                  src={activeItemModal.beforeImg} 
-                  alt="Original" 
-                  style={{ width: '100%', height: '280px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}
-                />
               </div>
-              <div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--orange-400)', marginBottom: '0.5rem', textTransform: 'uppercase' }}>
-                  Digitized Sew-Out (After)
-                </div>
-                <img 
-                  src={activeItemModal.afterImg} 
-                  alt="Digitized" 
-                  style={{ width: '100%', height: '280px', objectFit: 'cover', borderRadius: '8px', border: '1.5px solid var(--orange-500)' }}
-                />
-              </div>
-            </div>
 
-            {/* Modal Footer Info */}
-            <div style={{ padding: '1.5rem 1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff' }}>
-              <p style={{ margin: 0, fontSize: '0.925rem', color: 'var(--text-muted)', maxWidth: '550px' }}>
-                {activeItemModal.description}
-              </p>
-              <button
-                type="button"
-                className="btn btn-primary-orange"
-                onClick={() => {
-                  setActiveItemModal(null);
-                  navigate('/services/embroidery-digitizing');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                style={{ fontWeight: 800, padding: '0.65rem 1.35rem' }}
-              >
-                Order This Style <ArrowRight size={16} />
-              </button>
+              {/* Order Button */}
+              <div>
+                <button
+                  type="button"
+                  className="btn btn-primary-orange btn-lg"
+                  onClick={() => handleStartOrder(activeItemModal)}
+                  style={{ width: '100%', fontWeight: 800, padding: '0.9rem', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                >
+                  <UploadCloud size={18} />
+                  <span>Order Design Like This</span>
+                  <ArrowRight size={18} />
+                </button>
+                <div style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.6rem' }}>
+                  Free Unlimited Revisions · 4–12 Hour Turnaround
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 };
+
+export default PortfolioPage;

@@ -558,12 +558,62 @@ export const upsertHeroContent = async (data) => {
   } catch { return false; }
 };
 export const upsertPricingTiers = (data) => upsertCatalogDataToSupabase('pricing_cards', data);
+export const savePortfolioItemViaApi = async (item) => {
+  try {
+    const res = await fetch('/api/catalog', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'upsert',
+        tableName: 'portfolio',
+        payload: {
+          id: item.id || `port-${Date.now()}`,
+          title: item.title || 'Custom Studio Artwork',
+          category: item.category || 'Embroidery',
+          description: item.description || '',
+          original_image: item.original_image || item.originalImage || item.beforeImg || '',
+          digitized_image: item.digitized_image || item.digitizedImage || item.afterImg || item.image_url || '',
+          stitch_count: item.stitch_count !== undefined ? String(item.stitch_count) : (item.stitchCount || ''),
+          colors: item.colors || 'Standard',
+          formats: Array.isArray(item.formats) ? JSON.stringify(item.formats) : (item.formats || 'DST, PES, EMB'),
+          client_type: item.client_type || item.clientType || 'Commercial Client',
+          sort_order: Number(item.sort_order) || 0,
+          is_active: item.is_active !== false,
+          updated_at: new Date().toISOString()
+        }
+      })
+    });
+    return await res.json();
+  } catch (err) {
+    console.error('savePortfolioItemViaApi error:', err);
+    return { success: false, error: err.message };
+  }
+};
+
+export const deletePortfolioItemViaApi = async (id) => {
+  try {
+    const res = await fetch('/api/catalog', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'delete',
+        tableName: 'portfolio',
+        payload: { id }
+      })
+    });
+    return await res.json();
+  } catch (err) {
+    console.error('deletePortfolioItemViaApi error:', err);
+    return { success: false, error: err.message };
+  }
+};
+
 export const upsertPortfolioItems = async (data) => {
   try {
     const dbPayload = data.map(item => ({
       id: item.id,
       title: item.title || 'Untitled',
-      category: item.category || 'general',
+      category: item.category || 'Embroidery',
       original_image: item.originalImage || item.original_image || item.beforeImg || item.before_img || '',
       digitized_image: item.digitizedImage || item.digitized_image || item.afterImg || item.after_img || item.image || '',
       stitch_count: item.stitchCount !== undefined ? String(item.stitchCount) : (item.stitch_count || '0'),
@@ -574,10 +624,10 @@ export const upsertPortfolioItems = async (data) => {
       formats: item.formats || 'DST, EMB',
       client_type: item.clientType || item.client_type || 'regular'
     }));
-    const res = await fetch('/api/admin/cms/portfolio', {
+    const res = await fetch('/api/catalog', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dbPayload)
+      body: JSON.stringify({ action: 'upsertMany', tableName: 'portfolio', payload: dbPayload })
     });
     return res.ok;
   } catch { return false; }
