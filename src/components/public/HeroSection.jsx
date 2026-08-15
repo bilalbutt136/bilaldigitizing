@@ -541,7 +541,7 @@ export const HeroSection = () => {
         }
       `}} />
 
-      <div className="container" style={{ position: 'relative', zIndex: 1, maxWidth: '1240px' }}>
+      <div className="container" style={{ position: 'relative', zIndex: 1, maxWidth: '1360px' }}>
         
         {/* Top 4 Navigation Tabs Switcher */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
@@ -591,10 +591,10 @@ export const HeroSection = () => {
           </div>
         </div>
 
-        {/* 2-Column Hero Dynamic Presentation (Balanced Viewport Fit) */}
+        {/* 2-Column Hero Dynamic Presentation (Wider Showcase Column) */}
         <div className="hero-grid-layout" style={{
           display: 'grid',
-          gridTemplateColumns: '1.08fr 0.92fr',
+          gridTemplateColumns: '0.92fr 1.08fr',
           gap: '2.5rem',
           alignItems: 'center'
         }}>
@@ -740,11 +740,11 @@ export const HeroSection = () => {
             <div style={{
               background: 'rgba(15, 23, 42, 0.75)',
               border: '1.5px solid rgba(255, 255, 255, 0.14)',
-              borderRadius: '22px',
-              padding: '1.25rem',
+              borderRadius: '24px',
+              padding: '1.35rem',
               boxShadow: '0 20px 50px -10px rgba(0, 0, 0, 0.7)',
               width: '100%',
-              maxWidth: '580px',
+              maxWidth: '680px',
               backdropFilter: 'blur(16px)',
               position: 'relative'
             }}>
@@ -755,7 +755,7 @@ export const HeroSection = () => {
                   <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem', letterSpacing: '0.06em' }}>
                     <span className="blinking-green-dot" /> LIVE SHOWCASE
                   </div>
-                  <div style={{ fontSize: '1rem', fontWeight: 800, color: '#ffffff', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '320px' }}>
+                  <div style={{ fontSize: '1rem', fontWeight: 800, color: '#ffffff', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '380px' }}>
                     {currentImage?.title || previewTitle}
                   </div>
                 </div>
@@ -808,8 +808,8 @@ export const HeroSection = () => {
                   position: 'relative',
                   width: '100%',
                   aspectRatio: '16/10',
-                  maxHeight: '360px',
-                  borderRadius: '14px',
+                  maxHeight: '410px',
+                  borderRadius: '16px',
                   overflow: 'hidden',
                   background: '#090d16',
                   opacity: isFading ? 0.35 : 1,
