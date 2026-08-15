@@ -640,19 +640,47 @@ export const upsertDigitizers = async (data) => {
 
 export async function upsertPricingTier(tierData) {
   try {
-    const payload = { ...tierData, updated_at: new Date().toISOString() };
-    if (!payload.id) delete payload.id;
+    let service_type = (tierData.service_type || 'embroidery').toLowerCase().replace('-', '_');
+    if (service_type.startsWith('vec')) {
+      service_type = 'vector_art';
+    } else if (service_type.startsWith('patch')) {
+      service_type = 'patches';
+    } else {
+      service_type = 'embroidery';
+    }
+
+    const payload = {
+      ...tierData,
+      service_type,
+      price: Number(tierData.price) || 0,
+      original_price: tierData.original_price ? Number(tierData.original_price) : null,
+      display_order: Number(tierData.display_order) || 0,
+      is_popular: Boolean(tierData.is_popular),
+      features: Array.isArray(tierData.features) ? tierData.features.filter(f => f && f.trim()) : [],
+      updated_at: new Date().toISOString()
+    };
+    if (!payload.id || (typeof payload.id === 'string' && (payload.id === 'new' || payload.id.startsWith('new-')))) {
+      delete payload.id;
+    }
+
     const res = await fetch('/api/catalog', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'upsert', tableName: 'pricing_tiers', payload })
     });
-    return res.ok;
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      console.warn('upsertPricingTier API error:', errJson);
+      return false;
+    }
+    return true;
   } catch (err) {
     console.warn('upsertPricingTier exception:', err);
     return false;
   }
 }
+
 
 export async function deletePricingTier(tierId) {
   try {
