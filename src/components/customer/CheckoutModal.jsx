@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { X, CheckCircle, Loader2 } from 'lucide-react';
+import { X, CheckCircle, Loader2, Copy, Check, ShieldCheck, ExternalLink, ArrowRight, Wallet } from 'lucide-react';
 import { getAuthHeaders } from '../../services/supabaseService';
 
 // Authentic Branded Payment Method SVG Components
@@ -43,11 +43,10 @@ const CardBrandIcon = () => (
   }}>
     <svg width="30" height="20" viewBox="0 0 32 22" fill="none">
       <rect width="32" height="22" rx="4" fill="#0f172a" />
-      <rect y="4" width="32" height="3.5" fill="#38bdf8" />
-      <rect x="3.5" y="13" width="5.5" height="4" rx="1" fill="#fbbf24" />
-      {/* Mastercard Brand Circles */}
-      <circle cx="21" cy="15" r="3.2" fill="#eb001b" />
-      <circle cx="25" cy="15" r="3.2" fill="#f79e1b" fillOpacity="0.85" />
+      <rect y="4" width="32" height="4" fill="#f97316" />
+      <rect x="4" y="14" width="6" height="3" rx="1.5" fill="#e2e8f0" />
+      <circle cx="24" cy="15.5" r="2.5" fill="#ef4444" fillOpacity="0.9" />
+      <circle cx="27" cy="15.5" r="2.5" fill="#f59e0b" fillOpacity="0.9" />
     </svg>
   </div>
 );
@@ -61,14 +60,12 @@ const ApplePayBrandIcon = () => (
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 3px 8px rgba(0,0,0,0.2)',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+    color: '#ffffff',
     flexShrink: 0
   }}>
-    <svg width="28" height="18" viewBox="0 0 48 20" fill="#ffffff">
-      <path d="M7.7 7.7c-.5.6-1.3 1-2.1 1-.1-.8.2-1.6.7-2.1.5-.6 1.4-1 2.1-1 .1.8-.2 1.6-.7 2.1zm2.2 1.1c-.8-.1-1.6.4-2 .4s-1.1-.4-1.8-.4c-.9 0-1.8.5-2.3 1.4-1 1.7-.3 4.2.7 5.6.5.7 1.1 1.5 1.9 1.4.7 0 1-.5 1.9-.5s1.1.5 1.9.5c.8 0 1.3-.7 1.8-1.4.6-.8.8-1.6.8-1.7-.1 0-1.5-.6-1.5-2.2 0-1.4 1.1-2.1 1.2-2.1-.7-1-1.7-1-2.1-1z" />
-      <path d="M19 6.2h3.5c2.3 0 3.8 1.5 3.8 3.7 0 2.3-1.6 3.8-3.9 3.8H20.7v4.6H19V6.2zm3.4 6c1.4 0 2.2-.9 2.2-2.3 0-1.4-.8-2.3-2.2-2.3h-1.7v4.6h1.7z" />
-      <path d="M28.4 14.5c0-1.7 1.3-2.6 3.7-2.7l2-.1v-.6c0-.9-.6-1.5-1.7-1.5-1 0-1.6.5-1.8 1.2h-1.5c.2-1.5 1.5-2.4 3.4-2.4 2 0 3.2 1 3.2 2.7v7.2h-1.6v-1.6c-.6 1.1-1.8 1.8-3.1 1.8-1.7 0-2.6-1-2.6-2.6zm5.7-1.2v-.8l-1.8.1c-1.4.1-2.2.6-2.2 1.6 0 .9.7 1.4 1.7 1.4 1.3 0 2.3-.9 2.3-2.3z" />
-      <path d="M39.6 21.8l2-5.7-3.4-7.8h1.8l2.5 6 2.4-6h1.8l-5.3 12.1h-1.8z" />
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.87-.9.04-2 .6-2.65 1.36-.58.68-.99 1.74-.86 2.78 1.01.08 2.05-.52 2.59-1.27z" />
     </svg>
   </div>
 );
@@ -134,6 +131,35 @@ const CashAppBrandIcon = () => (
   </div>
 );
 
+// Client-side fallback Solana address parser from URL
+const extractClientSolanaAddress = (url) => {
+  if (!url || typeof url !== 'string') return null;
+  try {
+    const parsed = new URL(url);
+    const param = parsed.searchParams.get('address') || 
+                  parsed.searchParams.get('solanaAddress') || 
+                  parsed.searchParams.get('wallet') || 
+                  parsed.searchParams.get('to') || 
+                  parsed.searchParams.get('recipient') ||
+                  parsed.searchParams.get('destination');
+    if (param && param.length >= 32 && param.length <= 44) {
+      return param;
+    }
+  } catch {}
+
+  const matches = url.match(/[1-9A-HJ-NP-Za-km-z]{32,44}/g);
+  if (matches && matches.length > 0) {
+    const valid = matches.find(m => 
+      !m.toLowerCase().includes('http') && 
+      !m.toLowerCase().includes('boltpayouts') && 
+      !m.toLowerCase().includes('taptapup') &&
+      !m.toLowerCase().includes('checkout')
+    );
+    if (valid) return valid;
+  }
+  return null;
+};
+
 export const CheckoutModal = () => {
   const { 
     isCheckoutModalOpen, 
@@ -149,9 +175,11 @@ export const CheckoutModal = () => {
   } = useAppState();
 
   const [isPaid, setIsPaid] = useState(false);
-  const [isIframeLoaded, setIsIframeLoaded] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [extractedSolanaAddress, setExtractedSolanaAddress] = useState('');
+  const [hasCopiedAddress, setHasCopiedAddress] = useState(false);
+  const [showCardInstructions, setShowCardInstructions] = useState(false);
 
   const paymentMethods = [
     { 
@@ -258,15 +286,20 @@ export const CheckoutModal = () => {
       const data = await res.json();
       
       if (data.success && data.paymentUrl) {
+        const resolvedSolana = data.solanaAddress || extractClientSolanaAddress(data.paymentUrl) || '';
+        setExtractedSolanaAddress(resolvedSolana);
+        setHasCopiedAddress(false);
+
         setCheckoutSession({
           ...checkoutSession,
           url: data.paymentUrl,
-          invoiceId: data.invoice?.id
+          invoiceId: data.invoice?.id,
+          amount: data.amount || checkoutSession.amount,
+          solanaAddress: resolvedSolana
         });
         
-        if (['card', 'dollarpay_apple_pay', 'dollarpay_google_pay'].includes(methodId)) {
-          window.open(data.paymentUrl, '_blank');
-        }
+        // Show 2-step Solana address copy instruction view
+        setShowCardInstructions(true);
       } else {
         throw new Error(data.error || 'Failed to initialize payment gateway.');
       }
@@ -327,9 +360,11 @@ export const CheckoutModal = () => {
     setTimeout(() => {
       setCheckoutSession(null);
       setIsPaid(false);
-      setIsIframeLoaded(false);
       setSelectedMethod(null);
       setIsInitializing(false);
+      setShowCardInstructions(false);
+      setExtractedSolanaAddress('');
+      setHasCopiedAddress(false);
     }, 300);
   };
 
@@ -388,7 +423,8 @@ export const CheckoutModal = () => {
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center',
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{ 
@@ -397,14 +433,14 @@ export const CheckoutModal = () => {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: isPaid ? '#10b981' : 'var(--orange-400)'
             }}>
-              {isPaid ? <CheckCircle size={20} /> : <Loader2 size={18} style={{ animation: (isInitializing || (!isIframeLoaded && checkoutSession.url)) ? 'spin 2s linear infinite' : 'none' }} />}
+              {isPaid ? <CheckCircle size={20} /> : <ShieldCheck size={20} />}
             </div>
             <div>
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#ffffff' }}>
-                {isPaid ? 'Payment Successful' : 'Secure Checkout'}
+                {isPaid ? 'Payment Successful' : (showCardInstructions ? 'Card Payment Setup' : 'Secure Checkout')}
               </h3>
               <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8' }}>
-                {isPaid ? 'Your order is now in production.' : '256-Bit Encrypted Payment Processing'}
+                {isPaid ? 'Your order is now in production.' : '256-Bit SSL Encrypted Payment Gateway'}
               </p>
             </div>
           </div>
@@ -425,7 +461,7 @@ export const CheckoutModal = () => {
         </div>
 
         {/* Content */}
-        <div style={{ position: 'relative', width: '100%', minHeight: '460px', display: 'flex', flexDirection: 'column', background: '#f8fafc' }}>
+        <div style={{ position: 'relative', width: '100%', minHeight: '440px', display: 'flex', flexDirection: 'column', background: '#f8fafc', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
           
           {isPaid ? (
             <div style={{ 
@@ -448,12 +484,215 @@ export const CheckoutModal = () => {
                 Return to Dashboard
               </button>
             </div>
-          ) : !checkoutSession.url ? (
+          ) : showCardInstructions && checkoutSession?.url ? (
+            /* 2-Step Card / Wallet Payment Instruction Modal */
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+              
+              <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  background: '#ecfdf5',
+                  color: '#059669',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '999px',
+                  border: '1px solid #a7f3d0',
+                  marginBottom: '0.5rem'
+                }}>
+                  <ShieldCheck size={14} /> Secure Checkout Initialized
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 0.2rem' }}>
+                  Complete in 2 Easy Steps
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                  Amount: <strong style={{ color: 'var(--orange-600)' }}>${parseFloat(checkoutSession.amount || 0).toFixed(2)}</strong>
+                </p>
+              </div>
+
+              {/* Step 1 */}
+              <div style={{
+                background: '#ffffff',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: '14px',
+                padding: '1rem',
+                marginBottom: '0.85rem',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.5rem' }}>
+                  <span style={{
+                    width: '22px',
+                    height: '22px',
+                    borderRadius: '50%',
+                    background: 'var(--orange-500)',
+                    color: '#ffffff',
+                    fontSize: '0.75rem',
+                    fontWeight: 900,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>1</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                    Copy Your Receiving Address:
+                  </span>
+                </div>
+
+                <div style={{
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '10px',
+                  padding: '0.65rem 0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem'
+                }}>
+                  <code style={{
+                    fontFamily: 'monospace',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    color: 'var(--navy-900)',
+                    wordBreak: 'break-all',
+                    lineHeight: 1.3
+                  }}>
+                    {extractedSolanaAddress || 'Checkout receiving link ready'}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const textToCopy = extractedSolanaAddress || checkoutSession?.url;
+                      if (textToCopy) {
+                        navigator.clipboard?.writeText(textToCopy);
+                        setHasCopiedAddress(true);
+                        showToast('Address copied to clipboard!', 'success');
+                        setTimeout(() => setHasCopiedAddress(false), 3000);
+                      }
+                    }}
+                    style={{
+                      background: hasCopiedAddress ? '#16a34a' : 'var(--orange-500)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.45rem 0.75rem',
+                      fontSize: '0.78rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {hasCopiedAddress ? (
+                      <>
+                        <Check size={13} /> Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={13} /> Copy Address
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Step 2 */}
+              <div style={{
+                background: '#ffffff',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: '14px',
+                padding: '1rem',
+                marginBottom: '1rem',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.5rem' }}>
+                  <span style={{
+                    width: '22px',
+                    height: '22px',
+                    borderRadius: '50%',
+                    background: 'var(--navy-900)',
+                    color: '#ffffff',
+                    fontSize: '0.75rem',
+                    fontWeight: 900,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>2</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                    Paste on Checkout Portal:
+                  </span>
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                  <li>Tap <strong>Proceed to Payment</strong> below to open the checkout portal.</li>
+                  <li>Paste this address when the system asks for the address to complete your payment.</li>
+                </ul>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (checkoutSession?.url) {
+                      window.open(checkoutSession.url, '_blank');
+                    }
+                  }}
+                  className="btn btn-primary-orange"
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem',
+                    fontSize: '0.95rem',
+                    fontWeight: 900,
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 15px rgba(249, 115, 22, 0.35)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Proceed to Payment <ExternalLink size={16} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCardInstructions(false);
+                    setSelectedMethod(null);
+                  }}
+                  style={{
+                    background: 'transparent',
+                    color: 'var(--text-muted)',
+                    border: 'none',
+                    padding: '0.4rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textAlign: 'center'
+                  }}
+                >
+                  ← Choose Different Payment Method
+                </button>
+              </div>
+
+              {/* Live Polling Status */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <span className="spinner-border spinner-border-sm" style={{ width: '12px', height: '12px' }}></span>
+                Awaiting payment confirmation...
+              </div>
+
+            </div>
+          ) : (
+            /* Method Selection View */
             <div style={{ padding: '1.5rem', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
               <div style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '1.25rem', textAlign: 'center', marginBottom: '1.25rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
                 <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>TOTAL AMOUNT DUE</div>
                 <div style={{ color: 'var(--orange-600)', fontSize: '2.2rem', fontWeight: 900, fontFamily: 'var(--font-heading)' }}>
-                  ${checkoutSession.amount?.toFixed(2)}
+                  ${parseFloat(checkoutSession.amount || 0).toFixed(2)}
                 </div>
               </div>
               
@@ -534,76 +773,6 @@ export const CheckoutModal = () => {
                 })}
               </div>
             </div>
-          ) : (
-            <>
-              {['card', 'dollarpay_apple_pay', 'dollarpay_google_pay'].includes(selectedMethod) ? (
-                <div style={{ padding: '3rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
-                  <Loader2 size={48} style={{ color: 'var(--orange-500)', animation: 'spin 2s linear infinite', marginBottom: '1.5rem' }} />
-                  <h3 style={{ color: 'var(--navy-950)', fontSize: '1.35rem', fontWeight: 900, marginBottom: '0.5rem' }}>Complete Payment in New Tab</h3>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem', marginBottom: '2rem', maxWidth: '320px', lineHeight: 1.5 }}>
-                    We opened a secure checkout page in a new tab. Please finalize your transaction there—this window will automatically confirm upon receipt.
-                  </p>
-                  <button 
-                    onClick={() => window.open(checkoutSession.url, '_blank')} 
-                    style={{ background: '#ffffff', color: 'var(--navy-900)', border: '1.5px solid #cbd5e1', padding: '0.75rem 1.5rem', borderRadius: '10px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 800, transition: 'all 0.2s ease', boxShadow: '0 2px 6px rgba(0,0,0,0.04)' }}
-                    onMouseOver={(e) => { e.currentTarget.style.background = '#f1f5f9'; }}
-                    onMouseOut={(e) => { e.currentTarget.style.background = '#ffffff'; }}
-                  >
-                    Re-open Checkout Tab
-                  </button>
-                </div>
-              ) : (
-                <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                  <h3 style={{ color: 'var(--navy-950)', fontSize: '1.25rem', fontWeight: 900, marginBottom: '1.25rem', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>🧾</span> Invoice & Receipt
-                  </h3>
-                  
-                  <div style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 700 }}>Invoice ID:</span>
-                      <span style={{ color: 'var(--navy-950)', fontSize: '0.85rem', fontWeight: 900, background: '#f1f5f9', padding: '0.2rem 0.6rem', borderRadius: '6px' }}>
-                        #{checkoutSession.invoiceId || 'PENDING'}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 700 }}>Payment Method:</span>
-                      <span style={{ color: 'var(--navy-950)', fontSize: '0.85rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        {paymentMethods.find(m => m.id === selectedMethod)?.name || 'Digital Wallet'}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 700 }}>Payment Status:</span>
-                      <span style={{ color: '#d97706', fontSize: '0.75rem', fontWeight: 900, background: '#fef3c7', padding: '0.25rem 0.65rem', borderRadius: '999px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Awaiting Payment
-                      </span>
-                    </div>
-                    
-                    <div style={{ height: '1px', background: '#e2e8f0', margin: '1.25rem 0' }} />
-                    
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: 'var(--navy-950)', fontSize: '1.1rem', fontWeight: 900 }}>Total Amount:</span>
-                      <span style={{ color: 'var(--orange-600)', fontSize: '1.5rem', fontWeight: 900, fontFamily: 'var(--font-heading)' }}>
-                        ${checkoutSession.amount?.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div style={{ marginTop: 'auto' }}>
-                    <button 
-                      onClick={() => window.open(checkoutSession.url, '_blank')}
-                      style={{ background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', color: '#fff', border: 'none', padding: '1rem', borderRadius: '12px', fontSize: '1.05rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px -6px rgba(255,122,0,0.5)', width: '100%', transition: 'all 0.2s ease', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
-                      onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                      onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                    >
-                      Pay Invoice Now 
-                    </button>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textAlign: 'center', marginTop: '0.85rem', marginBottom: 0 }}>
-                      Opens the 256-bit encrypted checkout portal in a secure window.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </>
           )}
 
         </div>
