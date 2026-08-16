@@ -252,7 +252,53 @@ export const PromotionsManager = () => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+          {/* Master Promotion System Switch */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.65rem',
+            background: '#ffffff',
+            padding: '0.35rem 0.85rem',
+            borderRadius: '9999px',
+            border: '1.5px solid var(--border-color)',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
+          }}>
+            <span style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+              Master Status:
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const isCurrentlyAnyEnabled = formData.announcement.enabled || formData.promotionalBanner.enabled;
+                const nextState = !isCurrentlyAnyEnabled;
+                setFormData(prev => ({
+                  ...prev,
+                  announcement: { ...prev.announcement, enabled: nextState },
+                  promotionalBanner: { ...prev.promotionalBanner, enabled: nextState }
+                }));
+                showToast(nextState ? 'Promotions turned ON' : 'Promotions turned OFF', 'success');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                background: (formData.announcement.enabled || formData.promotionalBanner.enabled) ? '#22c55e' : '#94a3b8',
+                color: '#ffffff',
+                border: 'none',
+                padding: '0.35rem 0.95rem',
+                borderRadius: '9999px',
+                fontWeight: 800,
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#ffffff' }}></span>
+              {(formData.announcement.enabled || formData.promotionalBanner.enabled) ? 'PROMOTIONS ON' : 'PROMOTIONS OFF'}
+            </button>
+          </div>
+
           <button
             type="button"
             onClick={handleSave}

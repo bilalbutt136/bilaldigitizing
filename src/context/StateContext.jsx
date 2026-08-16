@@ -354,7 +354,7 @@ export const StateProvider = ({ children }) => {
       const tablesToSync = [
         'services', 'pricing_tiers', 'patch_cards', 'store_products', 
         'portfolio_items', 'sew_outs', 'hero_slides', 'digitizers', 'cms_content',
-        'faqs', 'testimonials'
+        'faqs', 'testimonials', 'site_config', 'home_page_settings'
       ];
       
       tablesToSync.forEach(table => {
@@ -390,6 +390,25 @@ export const StateProvider = ({ children }) => {
       });
       
       catalogChannel.subscribe();
+    }
+
+    // Local instant cross-tab sync listeners
+    const handleLocalSync = (e) => {
+      if (e.detail) {
+        setSiteSettings(prev => ({ ...prev, ...e.detail }));
+      }
+    };
+    const handleStorageSync = (e) => {
+      if (e.key === 'site_settings_live' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setSiteSettings(prev => ({ ...prev, ...parsed }));
+        } catch {}
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('site_settings_updated', handleLocalSync);
+      window.addEventListener('storage', handleStorageSync);
     }
 
     // Supabase Realtime: Global Chat Notifications
@@ -960,7 +979,31 @@ export const StateProvider = ({ children }) => {
   };
 
   const updateSiteSettings = async (newSettings) => {
-    setSiteSettings(prev => ({ ...prev, ...newSettings }));
+    setSiteSettings(prev => {
+      const merged = {
+        ...prev,
+        ...newSettings,
+        announcement: {
+          ...(prev?.announcement || {}),
+          ...(newSettings?.announcement || {})
+        },
+        promotionalBanner: {
+          ...(prev?.promotionalBanner || {}),
+          ...(newSettings?.promotionalBanner || {})
+        },
+        promoCodes: newSettings?.promoCodes || prev?.promoCodes || []
+      };
+
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('site_settings_live', JSON.stringify(merged));
+          window.dispatchEvent(new CustomEvent('site_settings_updated', { detail: merged }));
+        } catch (e) {}
+      }
+
+      return merged;
+    });
+
     await saveCmsConfigToSupabase('site_settings', newSettings);
     if (newSettings.announcement) {
       await saveCmsConfigToSupabase('announcement', newSettings.announcement);

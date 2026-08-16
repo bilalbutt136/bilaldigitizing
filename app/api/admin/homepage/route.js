@@ -1,5 +1,22 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+function revalidateAllSitePages() {
+  try {
+    revalidatePath('/', 'layout');
+    revalidatePath('/pricing');
+    revalidatePath('/services/embroidery-digitizing');
+    revalidatePath('/services/vector-tracing');
+    revalidatePath('/custom-patches');
+    revalidatePath('/');
+  } catch (e) {
+    console.warn('[Revalidate Error]:', e);
+  }
+}
 
 export async function GET() {
   try {
@@ -41,6 +58,10 @@ export async function GET() {
       workflowSteps: workflowSteps || [],
       pricingStaticCards: pricingStaticCards || [],
       pricingTiers: pricingTiers || []
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+      }
     });
   } catch (error) {
     console.error('[CMS API GET]', error);
@@ -78,7 +99,13 @@ export async function POST(req) {
       supabase.from('home_page_settings').upsert(records, { onConflict: 'key' })
     ]);
 
-    return NextResponse.json({ success: true, data: records });
+    revalidateAllSitePages();
+
+    return NextResponse.json({ success: true, data: records }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+      }
+    });
   } catch (error) {
     console.error('[CMS API POST EXCEPTION]', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
