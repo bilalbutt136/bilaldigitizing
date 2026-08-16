@@ -194,46 +194,90 @@ export const PromotionsManager = () => {
     showToast(`Promo code ${cleanCode} added!`, 'success');
   };
 
-  const handleToggleCoupon = (codeToToggle) => {
-    setFormData(prev => ({
-      ...prev,
-      promoCodes: prev.promoCodes.map(c => c.code === codeToToggle ? { ...c, isActive: !c.isActive } : c)
-    }));
-  };
-
-  const handleDeleteCoupon = (codeToDelete) => {
-    setFormData(prev => ({
-      ...prev,
-      promoCodes: prev.promoCodes.filter(c => c.code !== codeToDelete)
-    }));
-    showToast('Promo code removed', 'success');
-  };
-
-  const handleSave = async () => {
+  const persistSettings = async (updatedSettings, successMsg) => {
     setLoading(true);
     try {
-      await updateSiteSettings(formData);
+      await updateSiteSettings(updatedSettings);
 
       await fetch('/api/admin/homepage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           settings: [
-            { key: 'site_settings', value: formData },
-            { key: 'announcement', value: formData.announcement },
-            { key: 'promotionalBanner', value: formData.promotionalBanner },
-            { key: 'promoCodes', value: formData.promoCodes }
+            { key: 'site_settings', value: updatedSettings },
+            { key: 'announcement', value: updatedSettings.announcement },
+            { key: 'promotionalBanner', value: updatedSettings.promotionalBanner },
+            { key: 'promoCodes', value: updatedSettings.promoCodes }
           ]
         })
       });
 
-      showToast('Promotions and coupons saved successfully to live website!', 'success');
+      if (successMsg) {
+        showToast(successMsg, 'success');
+      }
     } catch (error) {
       console.error('Error saving promotions:', error);
       showToast('Failed to save promotions settings. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleToggleMaster = async () => {
+    const isCurrentlyAnyEnabled = formData.announcement.enabled || formData.promotionalBanner.enabled;
+    const nextState = !isCurrentlyAnyEnabled;
+    const updated = {
+      ...formData,
+      announcement: { ...formData.announcement, enabled: nextState },
+      promotionalBanner: { ...formData.promotionalBanner, enabled: nextState }
+    };
+    setFormData(updated);
+    await persistSettings(updated, nextState ? 'Promotions turned ON (Live on website)' : 'Promotions turned OFF (Hidden from website)');
+  };
+
+  const handleToggleAnnouncement = async () => {
+    const nextState = !formData.announcement.enabled;
+    const updated = {
+      ...formData,
+      announcement: { ...formData.announcement, enabled: nextState }
+    };
+    setFormData(updated);
+    await persistSettings(updated, nextState ? 'Top Announcement Ribbon is now LIVE' : 'Top Announcement Ribbon is now HIDDEN');
+  };
+
+  const handleToggleBanner = async () => {
+    const nextState = !formData.promotionalBanner.enabled;
+    const updated = {
+      ...formData,
+      promotionalBanner: { ...formData.promotionalBanner, enabled: nextState }
+    };
+    setFormData(updated);
+    await persistSettings(updated, nextState ? 'Visitor Welcome Offer is now LIVE' : 'Visitor Welcome Offer is now HIDDEN');
+  };
+
+  const handleToggleCoupon = async (codeToToggle) => {
+    const updatedCodes = formData.promoCodes.map(c => c.code === codeToToggle ? { ...c, isActive: !c.isActive } : c);
+    const updated = {
+      ...formData,
+      promoCodes: updatedCodes
+    };
+    setFormData(updated);
+    const toggledItem = updatedCodes.find(c => c.code === codeToToggle);
+    await persistSettings(updated, `Promo code ${codeToToggle} is now ${toggledItem?.isActive ? 'Active' : 'Disabled'}`);
+  };
+
+  const handleDeleteCoupon = async (codeToDelete) => {
+    const updatedCodes = formData.promoCodes.filter(c => c.code !== codeToDelete);
+    const updated = {
+      ...formData,
+      promoCodes: updatedCodes
+    };
+    setFormData(updated);
+    await persistSettings(updated, `Promo code ${codeToDelete} removed`);
+  };
+
+  const handleSave = async () => {
+    await persistSettings(formData, 'Promotions and coupons saved successfully to live website!');
   };
 
   const currentTheme = PRESET_THEMES.find(t => t.id === formData.announcement.theme) || PRESET_THEMES[0];
@@ -269,16 +313,7 @@ export const PromotionsManager = () => {
             </span>
             <button
               type="button"
-              onClick={() => {
-                const isCurrentlyAnyEnabled = formData.announcement.enabled || formData.promotionalBanner.enabled;
-                const nextState = !isCurrentlyAnyEnabled;
-                setFormData(prev => ({
-                  ...prev,
-                  announcement: { ...prev.announcement, enabled: nextState },
-                  promotionalBanner: { ...prev.promotionalBanner, enabled: nextState }
-                }));
-                showToast(nextState ? 'Promotions turned ON' : 'Promotions turned OFF', 'success');
-              }}
+              onClick={handleToggleMaster}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -470,7 +505,7 @@ export const PromotionsManager = () => {
 
             <button
               type="button"
-              onClick={() => handleAnnouncementChange('enabled', !formData.announcement.enabled)}
+              onClick={handleToggleAnnouncement}
               style={{
                 background: formData.announcement.enabled ? 'var(--orange-500)' : '#cbd5e1',
                 color: '#ffffff',
@@ -851,7 +886,7 @@ export const PromotionsManager = () => {
 
             <button
               type="button"
-              onClick={() => handleBannerChange('enabled', !formData.promotionalBanner.enabled)}
+              onClick={handleToggleBanner}
               style={{
                 background: formData.promotionalBanner.enabled ? 'var(--orange-500)' : '#cbd5e1',
                 color: '#ffffff',
