@@ -14,18 +14,28 @@ import {
   X
 } from 'lucide-react';
 
-// Helper to clean and deduplicate conversation threads by client email
+// Helper to clean, deduplicate, and sort conversation threads by latest message time
 const deduplicateThreads = (rawList) => {
   if (!Array.isArray(rawList)) return [];
   const map = new Map();
   rawList.forEach(conv => {
     const cleanMessages = (conv.messages || []).filter(m => m.id);
 
-    const key = (conv.clientEmail || conv.clientName || conv.id || '').toLowerCase().trim();
+    const key = (conv.id || conv.clientEmail || conv.clientName || '').toLowerCase().trim();
     if (!key) return;
 
+    const lastMsg = cleanMessages[cleanMessages.length - 1];
+    const lastTime = lastMsg?.timestamp && !isNaN(new Date(lastMsg.timestamp).getTime())
+      ? new Date(lastMsg.timestamp).getTime()
+      : (conv.updatedAt ? new Date(conv.updatedAt).getTime() : 0);
+
     if (!map.has(key)) {
-      map.set(key, { ...conv, unreadCount: cleanMessages.length > 0 ? conv.unreadCount : 0, messages: cleanMessages });
+      map.set(key, { 
+        ...conv, 
+        unreadCount: cleanMessages.length > 0 ? conv.unreadCount : 0, 
+        messages: cleanMessages,
+        lastMessageTime: lastTime
+      });
     } else {
       const existing = map.get(key);
       const combinedMessages = [...(existing.messages || [])];
@@ -34,14 +44,27 @@ const deduplicateThreads = (rawList) => {
           combinedMessages.push(m);
         }
       });
+      const updatedLastMsg = combinedMessages[combinedMessages.length - 1];
+      const updatedLastTime = updatedLastMsg?.timestamp && !isNaN(new Date(updatedLastMsg.timestamp).getTime())
+        ? new Date(updatedLastMsg.timestamp).getTime()
+        : (existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0);
+
       map.set(key, {
         ...existing,
         messages: combinedMessages,
-        unreadCount: combinedMessages.length > 0 ? Math.max(existing.unreadCount || 0, conv.unreadCount || 0) : 0
+        unreadCount: combinedMessages.length > 0 ? Math.max(existing.unreadCount || 0, conv.unreadCount || 0) : 0,
+        lastMessageTime: updatedLastTime
       });
     }
   });
-  return Array.from(map.values());
+
+  const list = Array.from(map.values());
+  list.sort((a, b) => {
+    const timeA = a.lastMessageTime || (a.updatedAt ? new Date(a.updatedAt).getTime() : 0);
+    const timeB = b.lastMessageTime || (b.updatedAt ? new Date(b.updatedAt).getTime() : 0);
+    return timeB - timeA;
+  });
+  return list;
 };
 
 export const AdminChatInbox = () => {
@@ -49,7 +72,7 @@ export const AdminChatInbox = () => {
 
   const [conversations, setConversations] = useState([]);
 
-  const [activeChatId, setActiveChatId] = useState('chat-1');
+  const [activeChatId, setActiveChatId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMode, setFilterMode] = useState('all'); // 'all' | 'unread'
   const [replyInput, setReplyInput] = useState('');
@@ -64,7 +87,11 @@ export const AdminChatInbox = () => {
       if (!isMounted) return;
       const data = await fetchConversations();
       if (data && data.length > 0 && isMounted) {
-        setConversations(deduplicateThreads(data));
+        const sorted = deduplicateThreads(data);
+        setConversations(sorted);
+        if (!activeChatId && sorted[0]?.id) {
+          setActiveChatId(sorted[0].id);
+        }
       }
     };
     

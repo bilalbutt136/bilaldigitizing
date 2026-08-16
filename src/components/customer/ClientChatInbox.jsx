@@ -60,14 +60,30 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   const clientName = activeUser.name || 'Client';
   const clientCompany = activeUser.company || 'Studio Client';
 
-  // Build unified thread list combining general support and active order discussions
+  // Build unified thread list combining general support and active order discussions with chat history
   const buildThreadList = (remoteConvs = []) => {
     const threadMap = new Map();
 
     // 1. General Studio Support Thread
     const generalId = 'general-support';
-    const remoteGeneral = remoteConvs.find(c => c.id === generalId || (!c.orderId && !c.order_id));
+    const remoteGeneral = remoteConvs.find(c => c.id === generalId || (!c.orderId && !c.order_id && !c.id?.startsWith('order-')));
     
+    const generalMessages = remoteGeneral?.messages || [
+      {
+        id: 'welcome-msg',
+        sender: 'admin',
+        senderName: 'Master Digitizer Support',
+        text: `Welcome ${clientName}! How can our senior embroidery and vector production team assist you today?`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }
+    ];
+
+    const genLastMsg = generalMessages[generalMessages.length - 1];
+    const genLastTimestamp = genLastMsg?.timestamp || remoteGeneral?.updatedAt || remoteGeneral?.created_at;
+    const genLastTime = genLastTimestamp && !isNaN(new Date(genLastTimestamp).getTime())
+      ? new Date(genLastTimestamp).getTime()
+      : 0;
+
     threadMap.set(generalId, {
       id: generalId,
       title: 'B Digitizing Studio Live Support',
@@ -77,19 +93,12 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
       status: 'online',
       unreadCount: remoteGeneral?.unreadCount || 0,
-      messages: remoteGeneral?.messages || [
-        {
-          id: 'welcome-msg',
-          sender: 'admin',
-          senderName: 'Master Digitizer Support',
-          text: `Welcome ${clientName}! How can our senior embroidery and vector production team assist you today?`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ],
-      updatedAt: remoteGeneral?.updatedAt || new Date().toISOString()
+      messages: generalMessages,
+      lastMessageTime: genLastTime,
+      updatedAt: genLastTimestamp || new Date().toISOString()
     });
 
-    // 2. Order-specific Threads for the client's orders
+    // 2. Order-specific Threads ONLY for orders that have chat history (or currently targeted)
     const myOrders = Array.isArray(orders) ? orders.filter(o => {
       const ordEmail = (o.client_email || o.clientEmail || '').toLowerCase().trim();
       return !clientEmail || ordEmail === clientEmail || !ordEmail;
@@ -103,11 +112,12 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       const ordMessages = Array.isArray(ord.messages) ? ord.messages.map(m => ({
         id: m.id || `msg-${Math.random()}`,
         sender: m.senderRole === 'admin' ? 'admin' : (m.sender === 'admin' ? 'admin' : 'client'),
-        senderName: m.sender || (m.senderRole === 'admin' ? 'Master Digitizer' : clientName),
+        senderName: m.sender || m.senderName || (m.senderRole === 'admin' ? 'Master Digitizer' : clientName),
         text: m.text || m.message || '',
         attachment: m.attachment || m.attachments?.[0]?.name || null,
         attachmentUrl: m.attachmentUrl || m.attachments?.[0]?.url || null,
-        timestamp: m.timestamp ? (new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : 'Recent'
+        timestamp: m.timestamp ? (new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : 'Recent',
+        rawTimestamp: m.timestamp || m.created_at
       })) : [];
 
       const remoteMsgs = Array.isArray(remoteOrderConv?.messages) ? remoteOrderConv.messages : [];
@@ -118,6 +128,21 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           combinedMessages.push(rm);
         }
       });
+
+      const isTargetedOrder = initialOrderId && (initialOrderId === ord.id || initialOrderId === `order-${ord.id}`);
+      const isCurrentlyActive = activeChatId === orderThreadId;
+      const hasChatHistory = combinedMessages.length > 0;
+
+      // Filter: only show orders that actually have messages or are actively opened
+      if (!hasChatHistory && !isTargetedOrder && !isCurrentlyActive) {
+        return;
+      }
+
+      const lastMsg = combinedMessages[combinedMessages.length - 1];
+      const ordLastTimestamp = lastMsg?.rawTimestamp || lastMsg?.timestamp || remoteOrderConv?.updatedAt || ord.updatedAt || ord.createdAt;
+      const ordLastTime = ordLastTimestamp && !isNaN(new Date(ordLastTimestamp).getTime())
+        ? new Date(ordLastTimestamp).getTime()
+        : 0;
 
       threadMap.set(orderThreadId, {
         id: orderThreadId,
@@ -133,13 +158,23 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         artworkUrl: ord.artworkUrl || ord.image_url || ord.logo,
         unreadCount: remoteOrderConv?.unreadCount || 0,
         messages: combinedMessages,
-        updatedAt: ord.updatedAt || ord.createdAt || new Date().toISOString()
+        lastMessageTime: ordLastTime,
+        updatedAt: ordLastTimestamp || new Date().toISOString()
       });
     });
 
-    // 3. Include any other remote conversations belonging to this client
+    // 3. Include any other remote conversations belonging to this client with messages
     remoteConvs.forEach(conv => {
       if (!threadMap.has(conv.id)) {
+        const msgs = conv.messages || [];
+        if (msgs.length === 0 && conv.id !== activeChatId) return;
+
+        const lastMsg = msgs[msgs.length - 1];
+        const convTimestamp = lastMsg?.timestamp || conv.updatedAt || conv.created_at;
+        const convTime = convTimestamp && !isNaN(new Date(convTimestamp).getTime())
+          ? new Date(convTimestamp).getTime()
+          : 0;
+
         threadMap.set(conv.id, {
           id: conv.id,
           title: conv.orderTitle || conv.clientName || 'Support Thread',
@@ -147,15 +182,22 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           orderTitle: conv.orderTitle || 'Direct Support',
           serviceType: 'general',
           unreadCount: conv.unreadCount || 0,
-          messages: conv.messages || [],
-          updatedAt: conv.updatedAt || conv.created_at || new Date().toISOString()
+          messages: msgs,
+          lastMessageTime: convTime,
+          updatedAt: convTimestamp || new Date().toISOString()
         });
       }
     });
 
     const threadList = Array.from(threadMap.values());
-    // Sort by latest message / update
-    threadList.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+    
+    // Sort strictly by latest message timestamp (descending)
+    threadList.sort((a, b) => {
+      const timeA = a.lastMessageTime || (a.updatedAt ? new Date(a.updatedAt).getTime() : 0);
+      const timeB = b.lastMessageTime || (b.updatedAt ? new Date(b.updatedAt).getTime() : 0);
+      return timeB - timeA;
+    });
+
     return threadList;
   };
 
@@ -189,6 +231,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           if (fullThreads.some(t => t.id === targetId)) {
             setActiveChatId(targetId);
           }
+        } else if (!activeChatId && fullThreads[0]?.id) {
+          setActiveChatId(fullThreads[0].id);
         }
       }
     };
@@ -218,7 +262,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
         setConversations(prev => {
           const safePrev = Array.isArray(prev) ? prev : [];
-          return safePrev.map(thread => {
+          const msgTime = new Date(newMsg.timestamp).getTime() || Date.now();
+          const updated = safePrev.map(thread => {
             if (thread.id === newMsg.conversation_id || (thread.rawOrderId && newMsg.conversation_id?.includes(thread.rawOrderId))) {
               const alreadyHas = (thread.messages || []).some(m => m.id === newMsg.id || (m.text === newMsg.text && m.timestamp === newMsg.timestamp));
               if (alreadyHas) return thread;
@@ -226,10 +271,18 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 ...thread,
                 messages: [...(thread.messages || []), newMsg],
                 unreadCount: activeChatId === thread.id ? 0 : (thread.unreadCount || 0) + (newMsg.sender === 'admin' ? 1 : 0),
+                lastMessageTime: msgTime,
                 updatedAt: new Date().toISOString()
               };
             }
             return thread;
+          });
+
+          // Sort by latest message time
+          return [...updated].sort((a, b) => {
+            const timeA = a.lastMessageTime || (a.updatedAt ? new Date(a.updatedAt).getTime() : 0);
+            const timeB = b.lastMessageTime || (b.updatedAt ? new Date(b.updatedAt).getTime() : 0);
+            return timeB - timeA;
           });
         });
       },
@@ -242,19 +295,18 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           const safePrev = Array.isArray(prev) ? prev : [];
           const exists = safePrev.some(c => c.id === conv.id);
           if (!exists) {
-            return [
-              {
-                id: conv.id,
-                title: conv.order_title || conv.title || 'Support Thread',
-                orderId: conv.order_id || 'Direct Discussion',
-                orderTitle: conv.order_title || 'Support',
-                serviceType: 'general',
-                unreadCount: 0,
-                messages: [],
-                updatedAt: conv.created_at || new Date().toISOString()
-              },
-              ...safePrev
-            ];
+            const newThread = {
+              id: conv.id,
+              title: conv.order_title || conv.title || 'Support Thread',
+              orderId: conv.order_id || 'Direct Discussion',
+              orderTitle: conv.order_title || 'Support',
+              serviceType: 'general',
+              unreadCount: 0,
+              messages: [],
+              lastMessageTime: Date.now(),
+              updatedAt: conv.created_at || new Date().toISOString()
+            };
+            return [newThread, ...safePrev];
           }
           return safePrev.map(c => c.id === conv.id ? { ...c, ...conv } : c);
         });
@@ -318,18 +370,30 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       timestamp: new Date().toISOString()
     };
 
-    // Optimistic state update in conversations list
-    setConversations(prev => prev.map(conv => {
-      if (conv.id === activeChat.id) {
-        return {
-          ...conv,
-          unreadCount: 0,
-          messages: [...(conv.messages || []), newMsg],
-          updatedAt: new Date().toISOString()
-        };
-      }
-      return conv;
-    }));
+    // Optimistic state update in conversations list + sort by latest message time
+    const nowTime = Date.now();
+    const nowIso = new Date().toISOString();
+
+    setConversations(prev => {
+      const updated = prev.map(conv => {
+        if (conv.id === activeChat.id) {
+          return {
+            ...conv,
+            unreadCount: 0,
+            messages: [...(conv.messages || []), newMsg],
+            lastMessageTime: nowTime,
+            updatedAt: nowIso
+          };
+        }
+        return conv;
+      });
+
+      return [...updated].sort((a, b) => {
+        const timeA = a.lastMessageTime || (a.updatedAt ? new Date(a.updatedAt).getTime() : 0);
+        const timeB = b.lastMessageTime || (b.updatedAt ? new Date(b.updatedAt).getTime() : 0);
+        return timeB - timeA;
+      });
+    });
 
     // Optimistic state update in orders context if order thread
     if (activeChat.rawOrderId && typeof setOrders === 'function') {
@@ -486,6 +550,74 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 Live Support
               </button>
             </div>
+
+            {/* Optional Selector to Start Chat on an Order without History */}
+            {(() => {
+              const myOrdersList = Array.isArray(orders) ? orders.filter(o => {
+                const ordEmail = (o.client_email || o.clientEmail || '').toLowerCase().trim();
+                return !clientEmail || ordEmail === clientEmail || !ordEmail;
+              }) : [];
+              const availableOrdersToStart = myOrdersList.filter(ord => !conversations.some(c => c.id === `order-${ord.id}` || c.rawOrderId === ord.id));
+
+              if (availableOrdersToStart.length === 0) return null;
+
+              return (
+                <div style={{ marginTop: '0.65rem' }}>
+                  <select
+                    className="form-control"
+                    style={{
+                      width: '100%',
+                      fontSize: '0.75rem',
+                      padding: '0.35rem 0.5rem',
+                      height: '32px',
+                      borderRadius: '8px',
+                      background: '#f8fafc',
+                      border: '1px dashed var(--border-color)',
+                      color: 'var(--navy-900)',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                    onChange={(e) => {
+                      const ordId = e.target.value;
+                      if (ordId) {
+                        const selectedOrd = myOrdersList.find(o => String(o.id) === String(ordId));
+                        if (selectedOrd) {
+                          const newThreadId = `order-${selectedOrd.id}`;
+                          const newThread = {
+                            id: newThreadId,
+                            orderId: formatOrderId(selectedOrd.id),
+                            rawOrderId: selectedOrd.id,
+                            title: selectedOrd.title || `Order ${formatOrderId(selectedOrd.id)}`,
+                            orderTitle: selectedOrd.title,
+                            orderObj: selectedOrd,
+                            serviceType: selectedOrd.type || selectedOrd.serviceCategory || 'embroidery',
+                            serviceCategory: selectedOrd.serviceCategory || 'Embroidery Digitizing',
+                            orderStatus: selectedOrd.status || 'submitted',
+                            price: parseFloat(selectedOrd.price || 0),
+                            artworkUrl: selectedOrd.artworkUrl || selectedOrd.image_url || selectedOrd.logo,
+                            unreadCount: 0,
+                            messages: [],
+                            lastMessageTime: Date.now(),
+                            updatedAt: new Date().toISOString()
+                          };
+                          setConversations(prev => [newThread, ...prev]);
+                          setActiveChatId(newThreadId);
+                        }
+                        e.target.value = '';
+                      }
+                    }}
+                    defaultValue=""
+                  >
+                    <option value="" disabled>💬 + Discuss Another Order...</option>
+                    {availableOrdersToStart.map(ord => (
+                      <option key={ord.id} value={ord.id}>
+                        {formatOrderId(ord.id)} — {ord.title || ord.serviceCategory || 'Order'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Conversation List Feed */}
