@@ -293,7 +293,7 @@ export const ClientLiveChatWidget = () => {
 
   return (
     <>
-      {/* Standalone Circular Floating Action Button (Hidden from bottom UI, triggered via top header Chat button) */}
+      {/* Standalone Circular Floating Action Button */}
       {!isOpen && (
         <button
           id="floating-chat-trigger"
@@ -301,34 +301,34 @@ export const ClientLiveChatWidget = () => {
           className="live-chat-floating-button floating-chat-trigger"
           onClick={() => setIsOpen(!isOpen)}
           style={{
-            display: 'none',
+            display: 'flex',
             position: 'fixed',
             bottom: '24px',
             right: '24px',
             zIndex: 8500,
-            width: '56px',
-            height: '56px',
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
-          color: '#ffffff',
-          border: '2px solid rgba(255, 255, 255, 0.3)',
-          boxShadow: '0 10px 28px rgba(29, 78, 216, 0.5), 0 4px 12px rgba(0, 0, 0, 0.25)',
-          cursor: 'pointer',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-          transform: 'scale(1)'
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.transform = 'scale(1.08)';
-          e.currentTarget.style.boxShadow = '0 14px 34px rgba(29, 78, 216, 0.6), 0 6px 16px rgba(0, 0, 0, 0.3)';
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.transform = 'scale(1)';
-          e.currentTarget.style.boxShadow = '0 10px 28px rgba(29, 78, 216, 0.5), 0 4px 12px rgba(0, 0, 0, 0.25)';
-        }}
-        aria-label="Toggle Live Support Chat"
-      >
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, var(--orange-500) 0%, #ea580c 100%)',
+            color: '#ffffff',
+            border: '2px solid rgba(255, 255, 255, 0.4)',
+            boxShadow: '0 10px 28px rgba(249, 115, 22, 0.45), 0 4px 12px rgba(0, 0, 0, 0.2)',
+            cursor: 'pointer',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            transform: 'scale(1)'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'scale(1.08)';
+            e.currentTarget.style.boxShadow = '0 14px 34px rgba(249, 115, 22, 0.6), 0 6px 16px rgba(0, 0, 0, 0.25)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = '0 10px 28px rgba(249, 115, 22, 0.45), 0 4px 12px rgba(0, 0, 0, 0.2)';
+          }}
+          aria-label="Toggle Live Support Chat"
+        >
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {isOpen ? (
             <X size={24} style={{ color: '#ffffff' }} />

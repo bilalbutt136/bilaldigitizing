@@ -985,6 +985,20 @@ export async function fetchOrderMessagesFromSupabase(orderId) {
 }
 
 export async function addOrderMessageInSupabase(orderId, text, senderName, senderRole = 'client', attachments = []) {
+  const msgPayload = {
+    id: `msg-${Date.now()}`,
+    conversation_id: `order-${orderId}`,
+    order_id: orderId,
+    sender: senderRole === 'admin' ? 'admin' : 'client',
+    sender_name: senderName,
+    text,
+    attachment: attachments?.[0]?.name || null,
+    timestamp: new Date().toISOString()
+  };
+
+  // Instant broadcast over WebSocket channel
+  broadcastLiveMessage(msgPayload);
+
   try {
     const headers = await getAuthHeaders();
     await fetch('/api/orders', {
@@ -1191,11 +1205,21 @@ export async function fetchConversations() {
 }
 
 export async function addChatMessage(chatId, messageObj) {
+  const fullMsg = {
+    ...messageObj,
+    conversation_id: chatId,
+    timestamp: messageObj.timestamp || new Date().toISOString()
+  };
+
+  // Instant broadcast across all active browser windows
+  broadcastLiveMessage(fullMsg);
+
   try {
+    const headers = await getAuthHeaders();
     await fetch('/api/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'insertMessage', payload: { ...messageObj, conversation_id: chatId } })
+      headers,
+      body: JSON.stringify({ action: 'insertMessage', payload: fullMsg })
     });
     return true;
   } catch { return false; }
@@ -1203,9 +1227,10 @@ export async function addChatMessage(chatId, messageObj) {
 
 export async function markConversationAsRead(chatId) {
   try {
+    const headers = await getAuthHeaders();
     await fetch('/api/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ action: 'markAsRead', payload: { conversation_id: chatId } })
     });
     return true;
@@ -1213,45 +1238,90 @@ export async function markConversationAsRead(chatId) {
 }
 
 /**
- * Supabase Realtime Subscription for Live Messages & Conversations
- * Listens directly to PostgreSQL mutations without HTTP polling.
+ * Global Shared Supabase Realtime Hub for Live Messages & Conversations
+ * Combines ultra-low-latency WebSocket Broadcast with PostgreSQL mutations replication.
  */
-export function subscribeToLiveMessages(onMessageChange, onConversationChange) {
-  if (!isSupabaseConfigured || !supabase) return () => {};
+let globalChatChannel = null;
+const messageListeners = new Set();
+const conversationListeners = new Set();
 
-  const channelId = `chat-rt-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-  const channel = supabase.channel(channelId);
+export function getSharedChatChannel() {
+  if (!isSupabaseConfigured || !supabase) return null;
+  if (!globalChatChannel) {
+    globalChatChannel = supabase.channel('bdigitizing-live-chat-hub', {
+      config: {
+        broadcast: { self: false }
+      }
+    });
 
-  if (onMessageChange) {
-    channel.on(
+    // 1. Instant WebSocket broadcast listener
+    globalChatChannel.on('broadcast', { event: 'new_message' }, (event) => {
+      if (event.payload) {
+        messageListeners.forEach(listener => {
+          try { listener({ eventType: 'INSERT', new: event.payload, record: event.payload }); } catch (err) {}
+        });
+      }
+    });
+
+    globalChatChannel.on('broadcast', { event: 'conversation_update' }, (event) => {
+      if (event.payload) {
+        conversationListeners.forEach(listener => {
+          try { listener({ eventType: 'UPDATE', new: event.payload, record: event.payload }); } catch (err) {}
+        });
+      }
+    });
+
+    // 2. Postgres replication listeners
+    globalChatChannel.on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'messages' },
       (payload) => {
-        onMessageChange(payload);
+        messageListeners.forEach(listener => {
+          try { listener(payload); } catch (err) {}
+        });
       }
     );
-  }
 
-  if (onConversationChange) {
-    channel.on(
+    globalChatChannel.on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'conversations' },
       (payload) => {
-        onConversationChange(payload);
+        conversationListeners.forEach(listener => {
+          try { listener(payload); } catch (err) {}
+        });
       }
     );
-  }
 
-  channel.subscribe((status) => {
-    if (status === 'SUBSCRIBED') {
-      // Realtime connection active
+    globalChatChannel.subscribe();
+  }
+  return globalChatChannel;
+}
+
+export function broadcastLiveMessage(messagePayload) {
+  try {
+    const channel = getSharedChatChannel();
+    if (channel) {
+      channel.send({
+        type: 'broadcast',
+        event: 'new_message',
+        payload: messagePayload
+      });
     }
-  });
+  } catch (err) {
+    console.warn('Broadcast live message notice:', err);
+  }
+}
+
+export function subscribeToLiveMessages(onMessageChange, onConversationChange) {
+  if (onMessageChange) messageListeners.add(onMessageChange);
+  if (onConversationChange) conversationListeners.add(onConversationChange);
+
+  // Initialize shared realtime channel
+  getSharedChatChannel();
 
   return () => {
-    try {
-      supabase.removeChannel(channel);
-    } catch {}
+    if (onMessageChange) messageListeners.delete(onMessageChange);
+    if (onConversationChange) conversationListeners.delete(onConversationChange);
   };
 }
 
