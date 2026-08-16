@@ -29,6 +29,11 @@ const formatChatTime = (timestamp) => {
   }
 };
 
+const isSupportId = (id) => {
+  if (!id) return false;
+  return id === 'general-support' || String(id).startsWith('support-');
+};
+
 export const ClientLiveChatWidget = () => {
   const [mounted, setMounted] = useState(false);
 
@@ -62,7 +67,9 @@ export const ClientLiveChatWidget = () => {
   const clientCompany = activeUser?.company || `${cleanName}'s Account`;
   const avatarUrl = activeUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0f172a&color=fff`;
 
-  const targetConvId = clientEmail ? `support-${clientEmail}` : 'general-support';
+  const targetConvId = clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')
+    ? `support-${clientEmail}`
+    : 'general-support';
 
   useEffect(() => {
     if (!mounted || isExcluded) return;
@@ -71,7 +78,7 @@ export const ClientLiveChatWidget = () => {
     const loadChats = async () => {
       if (!isMounted) return;
       if (isSupabaseConfigured) {
-        const data = await fetchConversations();
+        const data = await fetchConversations(clientEmail);
         if (data && data.length > 0 && isMounted) {
           setChats(data);
         }
@@ -108,7 +115,8 @@ export const ClientLiveChatWidget = () => {
           const isTargetConv = (c) => 
             c.id === newMsg.conversation_id || 
             c.id === targetConvId ||
-            (newMsg.conversation_id === 'general-support' && (c.id === 'general-support' || !c.orderId));
+            (isSupportId(c.id) && isSupportId(newMsg.conversation_id)) ||
+            (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail);
           const exists = safePrev.some(isTargetConv);
 
           if (!exists) {
@@ -151,7 +159,7 @@ export const ClientLiveChatWidget = () => {
 
         setChats(prev => {
           const safePrev = Array.isArray(prev) ? prev : [];
-          const exists = safePrev.some(c => c.id === conv.id);
+          const exists = safePrev.some(c => c.id === conv.id || (isSupportId(c.id) && isSupportId(conv.id)));
           if (!exists) {
             const newThread = {
               id: conv.id,
@@ -168,12 +176,17 @@ export const ClientLiveChatWidget = () => {
             };
             return [newThread, ...safePrev];
           }
-          return safePrev.map(c => c.id === conv.id ? { 
-            ...c, 
-            ...conv,
-            unreadCount: conv.client_unread_count ?? c.unreadCount ?? 0,
-            clientUnreadCount: conv.client_unread_count ?? c.clientUnreadCount ?? 0
-          } : c);
+          return safePrev.map(c => {
+            if (c.id === conv.id || (isSupportId(c.id) && isSupportId(conv.id))) {
+              return {
+                ...c, 
+                ...conv,
+                unreadCount: conv.client_unread_count ?? c.unreadCount ?? 0,
+                clientUnreadCount: conv.client_unread_count ?? c.clientUnreadCount ?? 0
+              };
+            }
+            return c;
+          });
         });
       }
     );
@@ -203,7 +216,7 @@ export const ClientLiveChatWidget = () => {
   const safeChats = Array.isArray(chats) ? chats : [];
   const clientThread = safeChats.find(c => 
     c.id === targetConvId ||
-    c.id === 'general-support' || 
+    (isSupportId(c.id) && isSupportId(targetConvId)) ||
     (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail) ||
     (!c.orderId && !c.order_id && !c.id?.startsWith('order-'))
   ) || {
@@ -243,7 +256,9 @@ export const ClientLiveChatWidget = () => {
         }
         markConversationAsRead(clientThread.id);
         setChats(prev => (Array.isArray(prev) ? prev : []).map(c => 
-          c.id === clientThread.id ? { ...c, unreadCount: 0, clientUnreadCount: 0 } : c
+          (c.id === clientThread.id || (isSupportId(c.id) && isSupportId(clientThread.id))) 
+            ? { ...c, unreadCount: 0, clientUnreadCount: 0 } 
+            : c
         ));
       }
     }
@@ -262,7 +277,7 @@ export const ClientLiveChatWidget = () => {
     const nowIso = new Date().toISOString();
 
     const newMsg = {
-      id: 'msg-client-' + Date.now(),
+      id: 'msg-client-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
       conversation_id: convId,
       sender: 'client',
       senderName: cleanName,
@@ -276,11 +291,14 @@ export const ClientLiveChatWidget = () => {
 
     setChats(prev => {
       const safePrev = Array.isArray(prev) ? prev : [];
-      const exists = safePrev.some(c => c.id === convId || (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail));
+      const isTarget = (c) => c.id === convId || (isSupportId(c.id) && isSupportId(convId)) || (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail);
+      const exists = safePrev.some(isTarget);
 
       if (exists) {
         return safePrev.map(c => {
-          if (c.id === convId || (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail)) {
+          if (isTarget(c)) {
+            const alreadyHas = (c.messages || []).some(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(new Date(m.timestamp) - new Date(newMsg.timestamp)) < 2000));
+            if (alreadyHas) return c;
             return {
               ...c,
               unreadCount: 0,

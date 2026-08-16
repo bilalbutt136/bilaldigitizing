@@ -1224,7 +1224,7 @@ export function getSharedChatChannel() {
   if (!globalChatChannel) {
     globalChatChannel = supabase.channel('bdigitizing-live-chat-hub', {
       config: {
-        broadcast: { self: false }
+        broadcast: { self: true }
       }
     });
 
@@ -1272,6 +1272,14 @@ export function getSharedChatChannel() {
 }
 
 export function broadcastLiveMessage(messagePayload) {
+  if (!messagePayload) return;
+
+  // 1. Instantly trigger all active listeners in the current tab/window
+  messageListeners.forEach(listener => {
+    try { listener({ eventType: 'INSERT', new: messagePayload, record: messagePayload }); } catch (err) {}
+  });
+
+  // 2. Broadcast across WebSocket channel to all other tabs/devices
   try {
     const channel = getSharedChatChannel();
     if (channel) {
