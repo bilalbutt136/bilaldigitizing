@@ -31,6 +31,8 @@ import {
   fetchHomePageContentFromSupabase,
   updateHomePageSettingsInSupabase,
   saveHeroServiceViaApi,
+  fetchConversations,
+  subscribeToLiveMessages,
   ORDER_STATUSES,
   validateStatusTransition
 } from '../services/supabaseService';
@@ -224,6 +226,46 @@ export const StateProvider = ({ children }) => {
   };
 
   const unreadNotificationsCount = notifications.filter(n => !n.read).length;
+
+  // Global Chat Unread Counter (Synced across customer and admin)
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+
+  const refreshUnreadChatCount = React.useCallback(async () => {
+    try {
+      if (!isSupabaseConfigured) return;
+      const convs = await fetchConversations();
+      if (Array.isArray(convs)) {
+        const total = convs.reduce((sum, c) => sum + (c.unreadCount || c.adminUnreadCount || c.clientUnreadCount || 0), 0);
+        setUnreadChatCount(total);
+      }
+    } catch (err) {
+      console.warn('Refresh unread count notice:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated && !authUser) {
+      setUnreadChatCount(0);
+      return;
+    }
+    refreshUnreadChatCount();
+
+    const handleReadUpdate = () => {
+      refreshUnreadChatCount();
+    };
+
+    window.addEventListener('bdigi_read_update', handleReadUpdate);
+    const unsubscribe = subscribeToLiveMessages(() => {
+      refreshUnreadChatCount();
+    }, () => {
+      refreshUnreadChatCount();
+    });
+
+    return () => {
+      window.removeEventListener('bdigi_read_update', handleReadUpdate);
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, [isAuthenticated, authUser, refreshUnreadChatCount]);
 
   const showToast = (message, type = 'info') => {
     setToast({ message, type, id: Date.now() });
@@ -1234,6 +1276,7 @@ export const StateProvider = ({ children }) => {
       depositFunds, deductWalletBalance,
       toast, showToast,
       notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead, unreadNotificationsCount,
+      unreadChatCount, refreshUnreadChatCount,
       createOrder, updateOrderStatus, addRevisionRequest, addOrderMessage, cancelOrder,
       completeOrder, deleteOrder, ORDER_STATUSES, assignDigitizer
     }}>

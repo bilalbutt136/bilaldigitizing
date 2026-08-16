@@ -121,12 +121,17 @@ export const AdminDashboard = () => {
     const handleReadSync = () => {
       if (isMounted) loadAdminUnreadCount();
     };
+    const handleOpenOrderChat = () => {
+      setActiveTab('chat');
+    };
     window.addEventListener('bdigi_read_update', handleReadSync);
+    window.addEventListener('bdigi_open_order_chat', handleOpenOrderChat);
 
     return () => {
       isMounted = false;
       if (typeof unsubscribe === 'function') unsubscribe();
       window.removeEventListener('bdigi_read_update', handleReadSync);
+      window.removeEventListener('bdigi_open_order_chat', handleOpenOrderChat);
     };
   }, [mounted, activeTab]);
 

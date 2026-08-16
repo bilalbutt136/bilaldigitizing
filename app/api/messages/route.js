@@ -20,7 +20,7 @@ export async function GET(request) {
       const cleanUserEmail = (user.email || '').toLowerCase().trim();
       let convQuery = supabase.from('conversations').select('*').order('updated_at', { ascending: false });
 
-      // If not an admin, show customer's conversations, support threads, or generic support
+      // If not an admin, only show this customer's conversations, support threads, or generic support
       if (!isAdmin) {
         convQuery = convQuery.or(`client_email.ilike.${cleanUserEmail},id.eq.general-support,id.ilike.support-${cleanUserEmail}%`);
       }
@@ -56,8 +56,14 @@ export async function GET(request) {
             sender_name: m.sender_name,
             text: m.text,
             attachment: m.attachment,
+            is_read: m.is_read || false,
             timestamp: m.timestamp || m.created_at
           }));
+
+        // Compute role-appropriate unread count
+        const unreadCount = isAdmin 
+          ? (conv.admin_unread_count ?? conv.unread_count ?? 0)
+          : (conv.client_unread_count ?? 0);
 
         return {
           id: conv.id,
@@ -68,7 +74,9 @@ export async function GET(request) {
           orderTitle: conv.order_title,
           avatar: conv.avatar,
           status: conv.status || 'online',
-          unreadCount: conv.unread_count || 0,
+          unreadCount: unreadCount,
+          adminUnreadCount: conv.admin_unread_count ?? conv.unread_count ?? 0,
+          clientUnreadCount: conv.client_unread_count ?? 0,
           createdAt: conv.created_at,
           updatedAt: conv.updated_at,
           messages: mappedMessages
@@ -102,6 +110,7 @@ export async function GET(request) {
         sender_name: m.sender_name,
         text: m.text,
         attachment: m.attachment,
+        is_read: m.is_read || false,
         timestamp: m.timestamp || m.created_at
       }));
       
@@ -146,6 +155,8 @@ export async function POST(request) {
         avatar: payload.avatar || null,
         status: payload.status || 'online',
         unread_count: payload.unreadCount || payload.unread_count || 0,
+        admin_unread_count: payload.adminUnreadCount ?? (isAdmin ? 0 : 1),
+        client_unread_count: payload.clientUnreadCount ?? (isAdmin ? 1 : 0),
         updated_at: new Date().toISOString()
       };
 
@@ -165,7 +176,9 @@ export async function POST(request) {
         orderTitle: conv.order_title,
         avatar: conv.avatar,
         status: conv.status,
-        unreadCount: conv.unread_count,
+        unreadCount: isAdmin ? (conv.admin_unread_count ?? conv.unread_count ?? 0) : (conv.client_unread_count ?? 0),
+        adminUnreadCount: conv.admin_unread_count ?? conv.unread_count ?? 0,
+        clientUnreadCount: conv.client_unread_count ?? 0,
         createdAt: conv.created_at,
         updatedAt: conv.updated_at,
         messages: payload.messages || []
@@ -175,9 +188,14 @@ export async function POST(request) {
     }
     
     if (action === 'insertMessage') {
-      const convId = payload.conversation_id || 'general-support';
+      let convId = payload.conversation_id || 'general-support';
       const rawOrderId = payload.order_id || (convId.startsWith('order-') ? convId.replace('order-', '') : null);
       const isOrder = Boolean(rawOrderId);
+
+      // If generic support and client is logged in, ensure conversation ID is unique to client
+      if (!isOrder && (convId === 'general-support' || convId.startsWith('support-'))) {
+        convId = `support-${cleanUserEmail}`;
+      }
 
       // Upsert conversation to prevent Foreign Key constraint violations
       try {
@@ -191,9 +209,9 @@ export async function POST(request) {
           }
 
           const fallbackName = user?.user_metadata?.full_name || (user?.email ? user.email.split('@')[0] : 'Client');
-          const finalClientName = isAdmin ? 'Admin' : (payload.sender_name || payload.senderName || fallbackName);
+          const finalClientName = isAdmin ? (orderInfo?.client_name || 'Client') : (payload.sender_name || payload.senderName || fallbackName);
           const finalClientEmail = isAdmin ? (orderInfo?.client_email || 'client@studio.com') : cleanUserEmail;
-          const finalOrderTitle = orderInfo?.title || payload.order_title || payload.orderTitle || (isOrder ? `Order #${rawOrderId}` : 'Direct Support');
+          const finalOrderTitle = orderInfo?.title || payload.order_title || payload.orderTitle || (isOrder ? `Order #${rawOrderId}` : 'Live Support');
 
           await supabase.from('conversations').insert([{
             id: convId,
@@ -203,7 +221,10 @@ export async function POST(request) {
             client_email: finalClientEmail,
             client_company: payload.company || 'Studio Client',
             status: 'online',
-            unread_count: 0,
+            unread_count: isAdmin ? 0 : 1,
+            admin_unread_count: isAdmin ? 0 : 1,
+            client_unread_count: isAdmin ? 1 : 0,
+            created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }]);
         }
@@ -217,6 +238,7 @@ export async function POST(request) {
         ? (payload.sender_name || 'Support')
         : (payload.sender_name || payload.senderName || (user?.user_metadata?.full_name || (user?.email ? user.email.split('@')[0] : 'Client')));
 
+      const nowIso = new Date().toISOString();
       const dbPayload = {
         id: payload.id || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         conversation_id: convId,
@@ -224,7 +246,9 @@ export async function POST(request) {
         sender_name: actualSenderName,
         text: payload.text || '',
         attachment: payload.attachment || null,
-        timestamp: payload.timestamp || new Date().toISOString()
+        is_read: false,
+        timestamp: payload.timestamp || nowIso,
+        created_at: nowIso
       };
       
       const { error } = await supabase.from('messages').insert([dbPayload]);
@@ -242,24 +266,40 @@ export async function POST(request) {
             sender_role: actualSender,
             is_staff: isAdmin,
             message: dbPayload.text,
-            attachment: dbPayload.attachment
+            attachment: dbPayload.attachment,
+            is_read: false,
+            created_at: nowIso
           }]);
         } catch (omErr) {
           console.warn('order_messages mirror notice:', omErr.message);
         }
       }
 
-      // Update the conversation's updated_at and unread count
+      // Update the conversation's updated_at and dual role unread counts
       try {
-        if (!isAdmin) {
-          const { data: convData } = await supabase.from('conversations').select('unread_count').eq('id', convId).maybeSingle();
-          const newCount = convData ? (convData.unread_count || 0) + 1 : 1;
+        const { data: convData } = await supabase.from('conversations').select('admin_unread_count, client_unread_count, unread_count').eq('id', convId).maybeSingle();
+        
+        if (isAdmin) {
+          // Admin replied -> Increment client unread, reset admin unread
+          const newClientCount = (convData?.client_unread_count || 0) + 1;
           await supabase.from('conversations')
-            .update({ updated_at: new Date().toISOString(), unread_count: newCount })
+            .update({ 
+              updated_at: nowIso, 
+              client_unread_count: newClientCount,
+              admin_unread_count: 0,
+              unread_count: 0 
+            })
             .eq('id', convId);
         } else {
+          // Client replied -> Increment admin unread, reset client unread
+          const newAdminCount = (convData?.admin_unread_count || convData?.unread_count || 0) + 1;
           await supabase.from('conversations')
-            .update({ updated_at: new Date().toISOString() })
+            .update({ 
+              updated_at: nowIso, 
+              admin_unread_count: newAdminCount,
+              unread_count: newAdminCount,
+              client_unread_count: 0 
+            })
             .eq('id', convId);
         }
       } catch (cntErr) {
@@ -273,11 +313,35 @@ export async function POST(request) {
       const { conversation_id } = payload;
       
       if (conversation_id) {
-        const { error } = await supabase.from('conversations')
-          .update({ unread_count: 0 })
-          .eq('id', conversation_id);
-        if (error) {
-          console.warn('[Messages API markAsRead warning]:', error.message);
+        const nowIso = new Date().toISOString();
+        if (isAdmin) {
+          // Admin marks conversation read
+          await supabase.from('conversations')
+            .update({ admin_unread_count: 0, unread_count: 0, updated_at: nowIso })
+            .eq('id', conversation_id);
+          
+          await supabase.from('messages')
+            .update({ is_read: true })
+            .eq('conversation_id', conversation_id)
+            .neq('sender', 'admin');
+        } else {
+          // Client marks conversation read
+          await supabase.from('conversations')
+            .update({ client_unread_count: 0, updated_at: nowIso })
+            .eq('id', conversation_id);
+          
+          await supabase.from('messages')
+            .update({ is_read: true })
+            .eq('conversation_id', conversation_id)
+            .eq('sender', 'admin');
+        }
+
+        const rawOrderId = conversation_id.startsWith('order-') ? conversation_id.replace('order-', '') : null;
+        if (rawOrderId) {
+          await supabase.from('order_messages')
+            .update({ is_read: true })
+            .eq('order_id', rawOrderId)
+            .eq('is_staff', !isAdmin);
         }
       }
       

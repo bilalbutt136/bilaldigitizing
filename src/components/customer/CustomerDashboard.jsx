@@ -156,6 +156,19 @@ export const CustomerDashboard = () => {
     }
   }, [activeTab]);
 
+  React.useEffect(() => {
+    const handleOpenOrderChat = (e) => {
+      if (e.detail?.orderId) {
+        setSelectedOrderChatId(e.detail.orderId);
+        setActiveTab('support');
+      }
+    };
+    window.addEventListener('bdigi_open_order_chat', handleOpenOrderChat);
+    return () => {
+      window.removeEventListener('bdigi_open_order_chat', handleOpenOrderChat);
+    };
+  }, []);
+
   // Strict Category Helper Functions
   const isStoreOrder = (o) => {
     const typeStr = (o?.type || '').toLowerCase();

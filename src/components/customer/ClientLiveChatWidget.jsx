@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { playNotificationSound } from '../../utils/audioNotification';
-import { supabase, isSupabaseConfigured } from '../../lib/supabase/client';
-import { fetchConversations, addChatMessage, createConversation, subscribeToLiveMessages, markConversationAsRead } from '../../services/supabaseService';
+import { isSupabaseConfigured } from '../../lib/supabase/client';
+import { fetchConversations, addChatMessage, subscribeToLiveMessages, markConversationAsRead } from '../../services/supabaseService';
 import {
   MessageSquare,
   X,
@@ -13,6 +13,21 @@ import {
   Minimize2,
   Maximize2
 } from 'lucide-react';
+
+const formatChatTime = (timestamp) => {
+  if (!timestamp) return 'Just now';
+  try {
+    const d = new Date(timestamp);
+    if (isNaN(d.getTime())) return String(timestamp);
+    const isToday = new Date().toDateString() === d.toDateString();
+    if (isToday) {
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  } catch {
+    return 'Just now';
+  }
+};
 
 export const ClientLiveChatWidget = () => {
   const [mounted, setMounted] = useState(false);
@@ -36,6 +51,19 @@ export const ClientLiveChatWidget = () => {
       window.location.pathname.startsWith('/secure-admin-login')
     ));
 
+  const activeUser = authUser || currentUser || {
+    name: 'Guest Client',
+    email: 'guest@bdigitizing.pro',
+    company: 'Public Visitor'
+  };
+
+  const cleanName = (activeUser?.name || 'Client').replace(/\s*\(ADMIN\)/gi, '').trim();
+  const clientEmail = (activeUser?.email || 'guest@bdigitizing.pro').toLowerCase().trim();
+  const clientCompany = activeUser?.company || `${cleanName}'s Account`;
+  const avatarUrl = activeUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0f172a&color=fff`;
+
+  const targetConvId = clientEmail ? `support-${clientEmail}` : 'general-support';
+
   useEffect(() => {
     if (!mounted || isExcluded) return;
     let isMounted = true;
@@ -47,11 +75,6 @@ export const ClientLiveChatWidget = () => {
         if (data && data.length > 0 && isMounted) {
           setChats(data);
         }
-      } else {
-        try {
-          const saved = typeof window !== 'undefined' && localStorage.getItem('bdigi_admin_chats');
-          if (saved && isMounted) setChats(JSON.parse(saved));
-        } catch {}
       }
     };
 
@@ -72,6 +95,7 @@ export const ClientLiveChatWidget = () => {
           senderName: record.sender === 'admin' ? 'Support' : (record.sender_name || cleanName),
           text: record.text,
           attachment: record.attachment,
+          is_read: record.is_read || false,
           timestamp: record.timestamp || record.created_at || new Date().toISOString()
         };
 
@@ -81,19 +105,23 @@ export const ClientLiveChatWidget = () => {
 
         setChats(prev => {
           const safePrev = Array.isArray(prev) ? prev : [];
-          const isTargetConv = (c) => c.id === newMsg.conversation_id || (newMsg.conversation_id === 'general-support' && (c.id === 'general-support' || !c.orderId));
+          const isTargetConv = (c) => 
+            c.id === newMsg.conversation_id || 
+            c.id === targetConvId ||
+            (newMsg.conversation_id === 'general-support' && (c.id === 'general-support' || !c.orderId));
           const exists = safePrev.some(isTargetConv);
 
           if (!exists) {
             const newThread = {
               id: newMsg.conversation_id,
-              clientName: newMsg.senderName || 'Client',
+              clientName: newMsg.senderName || cleanName,
               clientEmail: clientEmail,
               clientCompany: clientCompany,
               orderId: 'General Inquiries',
               orderTitle: 'Live Support',
               status: 'online',
-              unreadCount: 0,
+              unreadCount: newMsg.sender === 'admin' ? 1 : 0,
+              clientUnreadCount: newMsg.sender === 'admin' ? 1 : 0,
               messages: [newMsg],
               updatedAt: newMsg.timestamp
             };
@@ -102,11 +130,13 @@ export const ClientLiveChatWidget = () => {
 
           return safePrev.map(c => {
             if (isTargetConv(c)) {
-              const alreadyHas = (c.messages || []).some(m => m.id === newMsg.id || (m.text === newMsg.text && m.timestamp === newMsg.timestamp));
+              const alreadyHas = (c.messages || []).some(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(new Date(m.timestamp) - new Date(newMsg.timestamp)) < 2000));
               if (alreadyHas) return c;
               return {
                 ...c,
                 messages: [...(c.messages || []), newMsg],
+                unreadCount: isOpen ? 0 : (c.unreadCount || 0) + (newMsg.sender === 'admin' ? 1 : 0),
+                clientUnreadCount: isOpen ? 0 : (c.clientUnreadCount || 0) + (newMsg.sender === 'admin' ? 1 : 0),
                 updatedAt: newMsg.timestamp
               };
             }
@@ -125,19 +155,25 @@ export const ClientLiveChatWidget = () => {
           if (!exists) {
             const newThread = {
               id: conv.id,
-              clientName: conv.client_name || 'Client',
-              clientEmail: conv.client_email || '',
-              clientCompany: conv.client_company || 'Studio Client',
+              clientName: conv.client_name || cleanName,
+              clientEmail: conv.client_email || clientEmail,
+              clientCompany: conv.client_company || clientCompany,
               orderId: conv.order_id || 'Support',
               orderTitle: conv.order_title || 'Direct Support',
               status: 'online',
-              unreadCount: 0,
+              unreadCount: conv.client_unread_count ?? 0,
+              clientUnreadCount: conv.client_unread_count ?? 0,
               messages: [],
               updatedAt: conv.created_at || new Date().toISOString()
             };
             return [newThread, ...safePrev];
           }
-          return safePrev.map(c => c.id === conv.id ? { ...c, ...conv } : c);
+          return safePrev.map(c => c.id === conv.id ? { 
+            ...c, 
+            ...conv,
+            unreadCount: conv.client_unread_count ?? c.unreadCount ?? 0,
+            clientUnreadCount: conv.client_unread_count ?? c.clientUnreadCount ?? 0
+          } : c);
         });
       }
     );
@@ -146,57 +182,32 @@ export const ClientLiveChatWidget = () => {
       isMounted = false;
       if (typeof unsubscribe === 'function') unsubscribe();
     };
-  }, [mounted, isExcluded]);
+  }, [mounted, isExcluded, clientEmail, cleanName, clientCompany, targetConvId, isOpen]);
 
-  // Real-time Event Listener for incoming admin replies across tabs and windows
+  // Real-time Event Listener for opening chat programmatically
   useEffect(() => {
     if (!mounted || isExcluded) return;
-    const syncChats = (e) => {
-      if (e.type === 'bdigi_chat_update' && e.detail) {
-        setChats(e.detail);
-        playNotificationSound('receive');
-      } else if (e.key === 'bdigi_admin_chats' && e.newValue) {
-        try {
-          setChats(JSON.parse(e.newValue));
-          playNotificationSound('receive');
-        } catch { }
-      }
-    };
 
     const handleOpenChat = () => {
       setIsOpen(true);
       setIsMinimized(false);
     };
 
-    window.addEventListener('storage', syncChats);
-    window.addEventListener('bdigi_chat_update', syncChats);
     window.addEventListener('bdigi_open_chat', handleOpenChat);
     return () => {
-      window.removeEventListener('storage', syncChats);
-      window.removeEventListener('bdigi_chat_update', syncChats);
       window.removeEventListener('bdigi_open_chat', handleOpenChat);
     };
   }, [mounted, isExcluded]);
 
-  const activeUser = authUser || currentUser || {
-    name: 'Guest Client',
-    email: 'guest@bdigitizing.pro',
-    company: 'Public Visitor'
-  };
-
-  const cleanName = (activeUser?.name || 'Client').replace(/\s*\(ADMIN\)/gi, '').trim();
-  const clientEmail = (activeUser?.email || 'guest@bdigitizing.pro').toLowerCase().trim();
-  const clientCompany = activeUser?.company || `${cleanName}'s Account`;
-  const avatarUrl = activeUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0f172a&color=fff`;
-
   // Safely resolve the active chat thread for regular support chat
   const safeChats = Array.isArray(chats) ? chats : [];
   const clientThread = safeChats.find(c => 
+    c.id === targetConvId ||
     c.id === 'general-support' || 
     (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail) ||
     (!c.orderId && !c.order_id && !c.id?.startsWith('order-'))
   ) || {
-    id: 'general-support',
+    id: targetConvId,
     messages: []
   };
 
@@ -232,7 +243,7 @@ export const ClientLiveChatWidget = () => {
         }
         markConversationAsRead(clientThread.id);
         setChats(prev => (Array.isArray(prev) ? prev : []).map(c => 
-          c.id === clientThread.id ? { ...c, unreadCount: 0 } : c
+          c.id === clientThread.id ? { ...c, unreadCount: 0, clientUnreadCount: 0 } : c
         ));
       }
     }
@@ -247,31 +258,33 @@ export const ClientLiveChatWidget = () => {
     e?.preventDefault();
     if (!messageInput.trim() && !attachedFile) return;
 
-    const targetConvId = clientThread.id || 'general-support';
+    const convId = clientThread.id || targetConvId;
     const nowIso = new Date().toISOString();
 
     const newMsg = {
       id: 'msg-client-' + Date.now(),
-      conversation_id: targetConvId,
+      conversation_id: convId,
       sender: 'client',
       senderName: cleanName,
       sender_name: cleanName,
       client_email: clientEmail,
       text: messageInput.trim() || (attachedFile ? `Attached file: ${attachedFile.name}` : ''),
       attachment: attachedFile ? attachedFile.name : null,
-      timestamp: nowIso
+      timestamp: nowIso,
+      created_at: nowIso
     };
 
     setChats(prev => {
       const safePrev = Array.isArray(prev) ? prev : [];
-      const exists = safePrev.some(c => c.id === targetConvId || (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail));
+      const exists = safePrev.some(c => c.id === convId || (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail));
 
       if (exists) {
         return safePrev.map(c => {
-          if (c.id === targetConvId || (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail)) {
+          if (c.id === convId || (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail)) {
             return {
               ...c,
               unreadCount: 0,
+              clientUnreadCount: 0,
               messages: [...(c.messages || []), newMsg],
               updatedAt: nowIso
             };
@@ -281,7 +294,7 @@ export const ClientLiveChatWidget = () => {
       }
 
       const newThread = {
-        id: targetConvId,
+        id: convId,
         clientName: cleanName,
         clientEmail: clientEmail,
         company: clientCompany,
@@ -290,20 +303,16 @@ export const ClientLiveChatWidget = () => {
         orderTitle: 'Live Digitizer & Studio Helpdesk',
         status: 'online',
         unreadCount: 0,
+        clientUnreadCount: 0,
         messages: [newMsg],
         updatedAt: nowIso
       };
       return [newThread, ...safePrev];
     });
 
-    try {
-      localStorage.setItem('bdigi_admin_chats', JSON.stringify(chats));
-      window.dispatchEvent(new CustomEvent('bdigi_chat_update', { detail: chats }));
-    } catch { }
-
     if (isSupabaseConfigured) {
       try {
-        await addChatMessage(targetConvId, newMsg);
+        await addChatMessage(convId, newMsg);
       } catch (err) {
         console.warn('Persist widget message notice:', err);
       }
@@ -471,7 +480,7 @@ export const ClientLiveChatWidget = () => {
               </div>
 
               <div>
-                <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#ffffff', leading: 1.1 }}>
+                <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#ffffff', lineHeight: 1.1 }}>
                   Bilal Digitizing Support
                 </div>
                 <div style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 700 }}>
@@ -600,7 +609,7 @@ export const ClientLiveChatWidget = () => {
                         fontWeight: 700,
                         padding: '0 0.2rem'
                       }}>
-                        {isClient ? 'You' : 'Support'} • {msg.timestamp}
+                        {isClient ? 'You' : 'Support'} • {formatChatTime(msg.timestamp)}
                       </div>
 
                       <div style={{
@@ -700,7 +709,15 @@ export const ClientLiveChatWidget = () => {
                   <button
                     type="submit"
                     className="btn btn-primary-orange"
-                    style={{ height: '36px', width: '36px', padding: 0, borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                    disabled={!messageInput.trim() && !attachedFile}
+                    style={{
+                      height: '36px',
+                      padding: '0 1rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      fontSize: '0.85rem'
+                    }}
                   >
                     <Send size={15} />
                   </button>
@@ -708,7 +725,6 @@ export const ClientLiveChatWidget = () => {
               </form>
             </>
           )}
-
         </div>
       )}
     </>

@@ -48,7 +48,8 @@ export const HeaderNav = () => {
     notifications = [],
     markNotificationAsRead,
     markAllNotificationsAsRead,
-    unreadNotificationsCount = 0
+    unreadNotificationsCount = 0,
+    unreadChatCount = 0
   } = useAppState();
 
   const safeCurrentView = mounted ? currentView : 'public';

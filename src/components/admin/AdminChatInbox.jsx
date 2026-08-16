@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { supabase, isSupabaseConfigured } from '../../lib/supabase/client';
+import { isSupabaseConfigured } from '../../lib/supabase/client';
 import { fetchConversations, addChatMessage, markConversationAsRead, subscribeToLiveMessages } from '../../services/supabaseService';
 import { playNotificationSound } from '../../utils/audioNotification';
 import {
@@ -13,6 +13,21 @@ import {
   ChevronRight,
   X
 } from 'lucide-react';
+
+const formatChatTime = (timestamp) => {
+  if (!timestamp) return 'Just now';
+  try {
+    const d = new Date(timestamp);
+    if (isNaN(d.getTime())) return String(timestamp);
+    const isToday = new Date().toDateString() === d.toDateString();
+    if (isToday) {
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  } catch {
+    return 'Just now';
+  }
+};
 
 // Helper to resolve real customer name, real email, and exact order type & number
 export const resolveThreadInfo = (conv, orders = []) => {
@@ -82,10 +97,13 @@ const deduplicateThreads = (rawList) => {
       ? new Date(lastMsg.timestamp).getTime()
       : (conv.updatedAt ? new Date(conv.updatedAt).getTime() : 0);
 
+    const convUnread = conv.adminUnreadCount ?? conv.unreadCount ?? 0;
+
     if (!map.has(key)) {
       map.set(key, { 
         ...conv, 
-        unreadCount: cleanMessages.length > 0 ? conv.unreadCount : 0, 
+        unreadCount: convUnread, 
+        adminUnreadCount: convUnread,
         messages: cleanMessages,
         lastMessageTime: lastTime
       });
@@ -93,7 +111,7 @@ const deduplicateThreads = (rawList) => {
       const existing = map.get(key);
       const combinedMessages = [...(existing.messages || [])];
       cleanMessages.forEach(m => {
-        if (!combinedMessages.some(ex => ex.id === m.id || (ex.text === m.text && ex.timestamp === m.timestamp))) {
+        if (!combinedMessages.some(ex => ex.id === m.id || (ex.text === m.text && Math.abs(new Date(ex.timestamp) - new Date(m.timestamp)) < 2000))) {
           combinedMessages.push(m);
         }
       });
@@ -102,10 +120,13 @@ const deduplicateThreads = (rawList) => {
         ? new Date(updatedLastMsg.timestamp).getTime()
         : (existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0);
 
+      const combinedUnread = Math.max(existing.adminUnreadCount || 0, convUnread);
+
       map.set(key, {
         ...existing,
         messages: combinedMessages,
-        unreadCount: combinedMessages.length > 0 ? Math.max(existing.unreadCount || 0, conv.unreadCount || 0) : 0,
+        unreadCount: combinedUnread,
+        adminUnreadCount: combinedUnread,
         lastMessageTime: updatedLastTime
       });
     }
@@ -165,6 +186,7 @@ export const AdminChatInbox = () => {
           senderName: record.sender_name,
           text: record.text,
           attachment: record.attachment,
+          is_read: record.is_read || false,
           timestamp: record.timestamp || record.created_at || new Date().toISOString()
         };
 
@@ -179,7 +201,7 @@ export const AdminChatInbox = () => {
             // New conversation thread initiated - prepend locally
             const newThread = {
               id: newMsg.conversation_id,
-              clientName: newMsg.senderName || 'Client',
+              clientName: newMsg.senderName || 'Customer',
               clientEmail: '',
               clientCompany: 'Customer',
               orderId: 'Support',
@@ -187,25 +209,31 @@ export const AdminChatInbox = () => {
               avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
               status: 'online',
               unreadCount: newMsg.sender === 'client' ? 1 : 0,
+              adminUnreadCount: newMsg.sender === 'client' ? 1 : 0,
               messages: [newMsg],
-              updatedAt: newMsg.timestamp
+              updatedAt: newMsg.timestamp,
+              lastMessageTime: Date.now()
             };
             return [newThread, ...safePrev];
           }
 
-          return safePrev.map(c => {
+          const updated = safePrev.map(c => {
             if (c.id === newMsg.conversation_id) {
-              const alreadyHas = (c.messages || []).some(m => m.id === newMsg.id || (m.text === newMsg.text && m.timestamp === newMsg.timestamp));
+              const alreadyHas = (c.messages || []).some(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(new Date(m.timestamp) - new Date(newMsg.timestamp)) < 2000));
               if (alreadyHas) return c;
               return {
                 ...c,
                 messages: [...(c.messages || []), newMsg],
                 unreadCount: activeChatId === c.id ? 0 : (c.unreadCount || 0) + (newMsg.sender === 'client' ? 1 : 0),
-                updatedAt: newMsg.timestamp
+                adminUnreadCount: activeChatId === c.id ? 0 : (c.adminUnreadCount || 0) + (newMsg.sender === 'client' ? 1 : 0),
+                updatedAt: newMsg.timestamp,
+                lastMessageTime: Date.now()
               };
             }
             return c;
           });
+
+          return [...updated].sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
         });
       },
       (convPayload) => {
@@ -219,36 +247,34 @@ export const AdminChatInbox = () => {
           if (!exists) {
             const newThread = {
               id: conv.id,
-              clientName: conv.client_name || 'Client',
+              clientName: conv.client_name || 'Customer',
               clientEmail: conv.client_email || '',
               clientCompany: conv.client_company || 'Studio Client',
               orderId: conv.order_id || 'Support',
               orderTitle: conv.order_title || 'Direct Support',
               avatar: conv.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
               status: 'online',
-              unreadCount: 0,
+              unreadCount: conv.admin_unread_count ?? conv.unread_count ?? 0,
+              adminUnreadCount: conv.admin_unread_count ?? conv.unread_count ?? 0,
               messages: [],
-              updatedAt: conv.created_at || new Date().toISOString()
+              updatedAt: conv.created_at || new Date().toISOString(),
+              lastMessageTime: Date.now()
             };
             return [newThread, ...safePrev];
           }
-          return safePrev.map(c => c.id === conv.id ? { ...c, ...conv } : c);
+          return safePrev.map(c => c.id === conv.id ? { 
+            ...c, 
+            ...conv,
+            unreadCount: conv.admin_unread_count ?? conv.unread_count ?? c.unreadCount ?? 0,
+            adminUnreadCount: conv.admin_unread_count ?? conv.unread_count ?? c.adminUnreadCount ?? 0
+          } : c);
         });
       }
     );
 
-    // Cross-tab and window event listener for instant local sync
-    const handleLocalSync = (e) => {
-      if (e.detail && Array.isArray(e.detail)) {
-        setConversations(deduplicateThreads(e.detail));
-      }
-    };
-    window.addEventListener('bdigi_chat_update', handleLocalSync);
-
     return () => {
       isMounted = false;
       if (typeof unsubscribe === 'function') unsubscribe();
-      window.removeEventListener('bdigi_chat_update', handleLocalSync);
     };
   }, [activeChatId]);
 
@@ -274,6 +300,9 @@ export const AdminChatInbox = () => {
   const getThreadUnreadCount = (conv) => {
     if (!conv) return 0;
     if (activeChatId === conv.id) return 0;
+    if (typeof conv.adminUnreadCount === 'number' && conv.adminUnreadCount > 0) {
+      return conv.adminUnreadCount;
+    }
     const lastRead = typeof window !== 'undefined' ? parseInt(localStorage.getItem('bdigi_read_admin_' + conv.id) || '0', 10) : 0;
     const msgs = conv.messages || [];
     return msgs.filter(m => {
@@ -292,7 +321,7 @@ export const AdminChatInbox = () => {
     }
     markConversationAsRead(chatId);
     setConversations(prev => prev.map(c => 
-      c.id === chatId ? { ...c, unreadCount: 0 } : c
+      c.id === chatId ? { ...c, unreadCount: 0, adminUnreadCount: 0 } : c
     ));
   };
 
@@ -305,26 +334,22 @@ export const AdminChatInbox = () => {
       }
       markConversationAsRead(activeChat.id);
       setConversations(prev => prev.map(c => 
-        c.id === activeChat.id ? { ...c, unreadCount: 0 } : c
+        c.id === activeChat.id ? { ...c, unreadCount: 0, adminUnreadCount: 0 } : c
       ));
     }
   }, [activeChatId, activeChat?.id]);
 
-  // Filter conversations based on search and selected filterMode
   const filteredConversations = conversations.filter(conv => {
-    const isOrder = conv.id?.startsWith('order-') || Boolean(conv.orderId && conv.orderId !== 'Support' && conv.orderId !== 'General Inquiries');
+    const info = resolveThreadInfo(conv, orders);
     const matchesSearch = 
-      (conv.clientName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (conv.clientEmail || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (conv.clientCompany || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (conv.orderId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (conv.orderTitle || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (conv.title || '').toLowerCase().includes(searchTerm.toLowerCase());
+      (info.customerName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (info.customerEmail || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (info.orderNum || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (info.orderTitle || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     if (!matchesSearch) return false;
+
     const unreadNum = getThreadUnreadCount(conv);
-    if (filterMode === 'direct') return !isOrder;
-    if (filterMode === 'orders') return isOrder;
     if (filterMode === 'unread') return unreadNum > 0;
     return true;
   });
@@ -334,6 +359,7 @@ export const AdminChatInbox = () => {
     if (!replyInput.trim() && !attachedFile) return;
     if (!currentActiveChatId) return;
 
+    const nowIso = new Date().toISOString();
     const newMsg = {
       id: 'msg-' + Date.now(),
       conversation_id: currentActiveChatId,
@@ -342,7 +368,8 @@ export const AdminChatInbox = () => {
       sender_name: 'Support',
       text: replyInput.trim() || (attachedFile ? `Attached file: ${attachedFile.name}` : ''),
       attachment: attachedFile ? attachedFile.name : null,
-      timestamp: new Date().toISOString()
+      timestamp: nowIso,
+      created_at: nowIso
     };
 
     // Optimistic UI update
@@ -351,8 +378,10 @@ export const AdminChatInbox = () => {
         return {
           ...conv,
           unreadCount: 0,
+          adminUnreadCount: 0,
           messages: [...(conv.messages || []), newMsg],
-          updatedAt: new Date().toISOString()
+          updatedAt: nowIso,
+          lastMessageTime: Date.now()
         };
       }
       return conv;
@@ -361,7 +390,7 @@ export const AdminChatInbox = () => {
     setReplyInput('');
     setAttachedFile(null);
     playNotificationSound('send');
-    showToast(`Reply sent to ${activeChat.clientName || 'Client'}!`, 'success');
+    showToast(`Reply sent to ${activeInfo.customerName || 'Customer'}!`, 'success');
 
     if (isSupabaseConfigured) {
       try {
@@ -398,99 +427,116 @@ export const AdminChatInbox = () => {
     }}>
 
       {/* Inbox Outer Layout */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '340px 1fr',
-        flex: 1,
-        height: '100%',
-        overflow: 'hidden'
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: '340px 1fr', 
+        height: '100%', 
+        minHeight: 0, 
+        overflow: 'hidden' 
       }}>
 
-        {/* ================= LEFT SIDEBAR CONVERSATIONS LIST ================= */}
+        {/* Sidebar / Left Column: Conversations Directory */}
         <div style={{
           borderRight: '1.5px solid var(--border-color)',
-          background: '#f8fafc',
+          background: 'var(--card-bg)',
           display: 'flex',
           flexDirection: 'column',
           height: '100%',
+          minHeight: 0,
           overflow: 'hidden'
         }}>
-
-          {/* Header & Search Bar */}
-          <div style={{ padding: '1.25rem 1rem 1rem', borderBottom: '1px solid var(--border-color)', background: '#ffffff', flexShrink: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+          {/* Header */}
+          <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', background: '#ffffff' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <MessageSquare size={20} style={{ color: 'var(--orange-500)' }} />
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  background: 'rgba(255, 122, 0, 0.1)',
+                  color: 'var(--orange-500)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <MessageSquare size={16} />
+                </div>
+                <h3 style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0 }}>
                   Client Inbox
                 </h3>
               </div>
-              <span style={{ fontSize: '0.75rem', background: '#fff7ed', color: 'var(--orange-600)', fontWeight: 800, padding: '0.15rem 0.55rem', borderRadius: '9999px', border: '1px solid var(--orange-300)' }}>
-                {conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)} Unread
+
+              <span style={{
+                fontSize: '0.725rem',
+                fontWeight: 800,
+                color: 'var(--orange-600)',
+                background: 'rgba(255, 122, 0, 0.1)',
+                padding: '0.2rem 0.5rem',
+                borderRadius: '6px'
+              }}>
+                {conversations.reduce((sum, c) => sum + (c.adminUnreadCount || c.unreadCount || 0), 0)} Unread
               </span>
             </div>
 
             {/* Search Input */}
-            <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
-              <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
+            <div style={{ position: 'relative', marginBottom: '0.65rem' }}>
+              <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input
                 type="text"
-                className="form-control"
-                placeholder="Search client, company, or order..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ paddingLeft: '2.1rem', fontSize: '0.825rem', height: '36px' }}
+                placeholder="Search clients, orders, email..."
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem 0.5rem 2.2rem',
+                  fontSize: '0.825rem',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  outline: 'none',
+                  background: '#ffffff'
+                }}
               />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                >
+                  <X size={13} />
+                </button>
+              )}
             </div>
 
-            {/* Category Filter Tabs */}
-            <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '2px' }}>
+            {/* Filter Toggle */}
+            <div style={{ display: 'flex', gap: '0.35rem' }}>
               <button
-                type="button"
                 className={`btn btn-sm ${filterMode === 'all' ? 'btn-primary-orange' : 'btn-outline'}`}
+                style={{ padding: '0.25rem 0.65rem', fontSize: '0.725rem', borderRadius: '6px' }}
                 onClick={() => setFilterMode('all')}
-                style={{ fontSize: '0.725rem', padding: '0.2rem 0.45rem', whiteSpace: 'nowrap' }}
               >
                 All ({conversations.length})
               </button>
               <button
-                type="button"
-                className={`btn btn-sm ${filterMode === 'direct' ? 'btn-primary-orange' : 'btn-outline'}`}
-                onClick={() => setFilterMode('direct')}
-                style={{ fontSize: '0.725rem', padding: '0.2rem 0.45rem', whiteSpace: 'nowrap' }}
-              >
-                Direct Helpdesk
-              </button>
-              <button
-                type="button"
-                className={`btn btn-sm ${filterMode === 'orders' ? 'btn-primary-orange' : 'btn-outline'}`}
-                onClick={() => setFilterMode('orders')}
-                style={{ fontSize: '0.725rem', padding: '0.2rem 0.45rem', whiteSpace: 'nowrap' }}
-              >
-                Order Chats
-              </button>
-              <button
-                type="button"
                 className={`btn btn-sm ${filterMode === 'unread' ? 'btn-primary-orange' : 'btn-outline'}`}
+                style={{ padding: '0.25rem 0.65rem', fontSize: '0.725rem', borderRadius: '6px' }}
                 onClick={() => setFilterMode('unread')}
-                style={{ fontSize: '0.725rem', padding: '0.2rem 0.45rem', whiteSpace: 'nowrap' }}
               >
                 Unread ({conversations.filter(c => getThreadUnreadCount(c) > 0).length})
               </button>
             </div>
           </div>
 
-          {/* Conversations Scroll List */}
-          <div style={{ overflowY: 'auto', flex: 1, overscrollBehavior: 'contain', padding: '0.5rem' }}>
+          {/* Conversations Thread Feed */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
             {filteredConversations.length === 0 ? (
-              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                No active chat threads found.
+              <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                <MessageSquare size={24} style={{ margin: '0 auto 0.5rem', opacity: 0.3 }} />
+                <p style={{ margin: 0 }}>No conversations found</p>
               </div>
             ) : (
-              filteredConversations.map(conv => {
-                const isActive = conv.id === activeChat.id;
-                const lastMsg = conv.messages[conv.messages.length - 1] || {};
+              filteredConversations.map((conv) => {
+                const isActive = conv.id === activeChatId;
                 const info = resolveThreadInfo(conv, orders);
+                const lastMsg = (conv.messages || [])[(conv.messages || []).length - 1] || {};
                 const threadUnread = getThreadUnreadCount(conv);
 
                 return (
@@ -543,7 +589,7 @@ export const AdminChatInbox = () => {
                             {info.customerName}
                           </div>
                           <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', flexShrink: 0, marginLeft: '0.35rem' }}>
-                            {lastMsg.timestamp ? (new Date(lastMsg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : ''}
+                            {formatChatTime(lastMsg.timestamp)}
                           </span>
                         </div>
 
@@ -607,309 +653,251 @@ export const AdminChatInbox = () => {
           </div>
         </div>
 
-
-        {/* ================= RIGHT MESSAGING WINDOW ================= */}
-        <div style={{ display: 'flex', flexDirection: 'column', background: '#ffffff', height: '100%', overflow: 'hidden' }}>
-
-          {!activeChat ? (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem', textAlign: 'center', background: '#f8fafc' }}>
-              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#fff7ed', color: 'var(--orange-500)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem', boxShadow: '0 4px 14px rgba(249, 115, 22, 0.2)' }}>
-                <MessageSquare size={32} />
-              </div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
-                No Active Client Support Conversations
-              </h3>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', maxWidth: '400px', lineHeight: 1.55 }}>
-                Chat threads will appear here automatically in real-time when registered clients initiate a message or support request from their portal.
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Header Bar */}
-              {(() => {
-                const activeInfo = resolveThreadInfo(activeChat, orders);
-
-                return (
-                  <div style={{
-                    padding: '1rem 1.5rem',
-                    borderBottom: '1.5px solid var(--border-color)',
-                    background: 'var(--navy-950)',
-                    color: '#ffffff',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: '0.75rem',
-                    flexShrink: 0
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                      <div style={{ position: 'relative' }}>
-                        {activeInfo.isOrder ? (
-                          <div style={{ width: '44px', height: '44px', borderRadius: '8px', background: 'var(--navy-900)', color: 'var(--orange-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, border: '2px solid var(--orange-500)' }}>
-                            {activeInfo.orderNum ? activeInfo.orderNum.substring(0, 5) : 'ORD'}
-                          </div>
-                        ) : (
-                          <img
-                            src={activeChat.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeInfo.customerName)}&background=0f172a&color=fff`}
-                            alt={activeInfo.customerName}
-                            style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--orange-500)' }}
-                          />
-                        )}
-                        <span style={{
-                          position: 'absolute',
-                          bottom: 0,
-                          right: 0,
-                          width: '12px',
-                          height: '12px',
-                          borderRadius: '50%',
-                          background: activeChat.status === 'online' ? '#10b981' : '#94a3b8',
-                          border: '2px solid #ffffff'
-                        }} />
-                      </div>
-
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
-                            {activeInfo.customerName}
-                          </h4>
-                          {activeInfo.isOrder ? (
-                            <span style={{ fontSize: '0.68rem', background: 'rgba(249, 115, 22, 0.25)', color: 'var(--orange-400)', border: '1px solid var(--orange-500)', padding: '0.1rem 0.45rem', borderRadius: '9999px', fontWeight: 800 }}>
-                              🧵 {activeInfo.serviceCategory} — {activeInfo.orderNum}
-                            </span>
-                          ) : (
-                            <span style={{ fontSize: '0.68rem', background: 'rgba(16, 185, 129, 0.25)', color: '#34d399', border: '1px solid #10b981', padding: '0.1rem 0.45rem', borderRadius: '9999px', fontWeight: 800 }}>
-                              🟢 Support
-                            </span>
-                          )}
-                        </div>
-
-                        <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          {activeInfo.customerEmail ? <span>✉️ {activeInfo.customerEmail}</span> : <span>✉️ Client Direct Channel</span>}
-                          {activeInfo.isOrder && (
-                            <>
-                              <span>•</span>
-                              <span style={{ color: '#f97316', fontWeight: 700 }}>{activeInfo.serviceCategory} {activeInfo.orderNum}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
+        {/* Chat Feed / Right Canvas */}
+        {activeChat ? (
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            height: '100%', 
+            minHeight: 0, 
+            background: '#ffffff', 
+            overflow: 'hidden' 
+          }}>
+            {/* Header Canvas */}
+            <div style={{
+              padding: '0.85rem 1.5rem',
+              borderBottom: '1.5px solid var(--border-color)',
+              background: '#ffffff',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexShrink: 0
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div style={{ position: 'relative' }}>
+                  {activeInfo.isOrder ? (
+                    <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'var(--navy-900)', color: 'var(--orange-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.85rem', border: '1.5px solid var(--orange-500)' }}>
+                      {activeInfo.orderNum ? activeInfo.orderNum.substring(0, 5) : 'ORD'}
                     </div>
+                  ) : (
+                    <img
+                      src={activeChat.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeInfo.customerName)}&background=0f172a&color=fff`}
+                      alt={activeInfo.customerName}
+                      style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-color)' }}
+                    />
+                  )}
+                  <span style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    width: '11px',
+                    height: '11px',
+                    borderRadius: '50%',
+                    background: activeChat.status === 'online' ? '#10b981' : '#94a3b8',
+                    border: '2px solid #ffffff'
+                  }} />
+                </div>
 
-                    {/* Header Quick Actions */}
-                    {activeInfo.isOrder && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline"
-                          style={{ color: '#ffffff', borderColor: 'rgba(255, 255, 255, 0.3)', fontSize: '0.78rem' }}
-                          onClick={() => {
-                            const matchOrd = activeInfo.matchOrd || orders.find(o => String(o.id) === String(activeInfo.rawId)) || { id: activeInfo.rawId, title: activeChat.orderTitle, clientName: activeInfo.customerName };
-                            setSelectedOrderForDrawer(matchOrd);
-                          }}
-                        >
-                          Inspect {activeInfo.serviceCategory} {activeInfo.orderNum} Details <ChevronRight size={14} />
-                        </button>
-                      </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0 }}>
+                      {activeInfo.customerName}
+                    </h3>
+                    <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.45rem', borderRadius: '4px', background: activeInfo.isOrder ? '#fff7ed' : '#ecfdf5', color: activeInfo.isOrder ? '#ea580c' : '#059669', border: `1px solid ${activeInfo.isOrder ? '#fed7aa' : '#a7f3d0'}`, fontWeight: 800 }}>
+                      {activeInfo.isOrder ? activeInfo.orderSubtitle : 'Support Conversation'}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                    {activeInfo.customerEmail && (
+                      <span>📧 <strong style={{ color: 'var(--navy-800)' }}>{activeInfo.customerEmail}</strong></span>
+                    )}
+                    {activeChat.company && (
+                      <span>🏢 {activeChat.company}</span>
                     )}
                   </div>
-                );
-              })()}
-
-              {/* Messages Feed Container */}
-              <div
-                ref={chatFeedRef}
-                style={{
-                  flex: 1,
-                  padding: '1.5rem',
-                  overflowY: 'auto',
-                  overscrollBehavior: 'contain',
-                  background: '#f8fafc',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1rem'
-                }}
-              >
-                {/* System Info Banner */}
-                <div style={{ textAlign: 'center', margin: '0.5rem 0 1rem' }}>
-                  <span style={{
-                    fontSize: '0.75rem',
-                    background: '#ffffff',
-                    border: '1px solid var(--border-color)',
-                    color: 'var(--text-muted)',
-                    padding: '0.35rem 0.95rem',
-                    borderRadius: '9999px',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
-                  }}>
-                    🔒 End-to-End Encrypted Customer Support Channel • Order {activeChat.orderId}
-                  </span>
                 </div>
-
-                {/* Empty Chat State Placeholder */}
-                {activeChat.messages.length === 0 && (
-                  <div style={{ textAlign: 'center', padding: '3.5rem 1rem', color: 'var(--text-muted)' }}>
-                    <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: '#fff7ed', color: 'var(--orange-500)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.75rem' }}>
-                      <MessageSquare size={26} />
-                    </div>
-                    <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--navy-900)' }}>
-                      No messages yet
-                    </div>
-                    <div style={{ fontSize: '0.825rem', marginTop: '0.25rem', color: 'var(--text-muted)' }}>
-                      Type a reply below to start direct communication with {activeChat.clientName}.
-                    </div>
-                  </div>
-                )}
-
-                {/* Message Bubbles */}
-                {activeChat.messages.map((msg) => {
-                  const isAdmin = msg.sender === 'admin';
-
-                  return (
-                    <div
-                      key={msg.id}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: isAdmin ? 'flex-end' : 'flex-start'
-                      }}
-                    >
-                      <div style={{
-                        fontSize: '0.72rem',
-                        color: 'var(--text-muted)',
-                        marginBottom: '0.25rem',
-                        fontWeight: 700,
-                        padding: '0 0.25rem'
-                      }}>
-                        {isAdmin ? 'Support' : (activeInfo.customerName || msg.senderName || 'Customer')} • {msg.timestamp}
-                      </div>
-
-                      <div style={{
-                        maxWidth: '75%',
-                        padding: '0.85rem 1.15rem',
-                        borderRadius: isAdmin ? '18px 18px 2px 18px' : '18px 18px 18px 2px',
-                        background: isAdmin ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' : '#ffffff',
-                        color: isAdmin ? '#ffffff' : 'var(--navy-900)',
-                        border: isAdmin ? '1.5px solid #0f172a' : '1.5px solid var(--border-color)',
-                        boxShadow: '0 3px 10px rgba(0,0,0,0.05)',
-                        fontSize: '0.9rem',
-                        lineHeight: 1.5
-                      }}>
-                        {msg.text}
-
-                        {msg.attachment && (
-                          <div style={{
-                            marginTop: '0.5rem',
-                            paddingTop: '0.5rem',
-                            borderTop: isAdmin ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid var(--border-color)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.4rem',
-                            fontSize: '0.78rem',
-                            fontWeight: 700,
-                            color: isAdmin ? '#f97316' : 'var(--navy-900)'
-                          }}>
-                            <Paperclip size={14} /> {msg.attachment}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-
-                <div ref={messagesEndRef} />
               </div>
 
-              {/* Messaging Input Area */}
-              <form onSubmit={handleSendMessage} style={{ padding: '1rem 1.5rem 1.25rem', borderTop: '1.5px solid var(--border-color)', background: '#ffffff' }}>
-                {attachedFile && (
-                  <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    background: '#fff7ed',
-                    border: '1px solid var(--orange-400)',
-                    color: 'var(--orange-800)',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    padding: '0.25rem 0.75rem',
-                    borderRadius: '9999px',
-                    marginBottom: '0.65rem'
-                  }}>
-                    <Paperclip size={14} /> Attached: {attachedFile.name} ({attachedFile.size})
-                    <button type="button" onClick={() => setAttachedFile(null)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', padding: 0 }}>
-                      <X size={14} />
-                    </button>
-                  </div>
-                )}
+              {/* View Order Link if thread is for an active order */}
+              {activeInfo.isOrder && activeInfo.matchOrd && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedOrderForDrawer(activeInfo.matchOrd)}
+                  className="btn btn-sm btn-outline"
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 800, padding: '0.4rem 0.85rem' }}
+                >
+                  Inspect Order Tracker <ChevronRight size={14} />
+                </button>
+              )}
+            </div>
 
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileAttach}
-                    style={{ display: 'none' }}
-                  />
+            {/* Messages Feed */}
+            <div 
+              ref={chatFeedRef}
+              style={{
+                flex: 1,
+                padding: '1.5rem',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+                background: '#f8fafc'
+              }}
+            >
+              {activeChat.messages.length === 0 ? (
+                <div style={{ textAlign: 'center', margin: 'auto', color: 'var(--text-muted)' }}>
+                  <MessageSquare size={32} style={{ margin: '0 auto 0.5rem', opacity: 0.3 }} />
+                  <p style={{ fontWeight: 700, margin: 0 }}>No messages yet in this conversation</p>
+                  <p style={{ fontSize: '0.8rem', margin: '0.25rem 0 0' }}>Type a reply below to reach out to the customer.</p>
+                </div>
+              ) : null}
 
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
+              {/* Message Bubbles */}
+              {activeChat.messages.map((msg) => {
+                const isAdmin = msg.sender === 'admin';
+
+                return (
+                  <div
+                    key={msg.id}
                     style={{
-                      background: '#f1f5f9',
-                      border: '1.5px solid var(--border-color)',
-                      color: 'var(--navy-700)',
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: 'var(--radius-sm)',
                       display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      flexShrink: 0
+                      flexDirection: 'column',
+                      alignItems: isAdmin ? 'flex-end' : 'flex-start'
                     }}
-                    title="Attach Proof / File"
                   >
-                    <Paperclip size={18} />
-                  </button>
+                    <div style={{
+                      fontSize: '0.72rem',
+                      color: 'var(--text-muted)',
+                      marginBottom: '0.25rem',
+                      fontWeight: 700,
+                      padding: '0 0.25rem'
+                    }}>
+                      {isAdmin ? 'Support' : (activeInfo.customerName || msg.senderName || 'Customer')} • {formatChatTime(msg.timestamp)}
+                    </div>
 
-                  <textarea
-                    className="form-control"
-                    rows={1}
-                    placeholder={`Type message reply to ${activeChat.clientName}... (Press Enter to send, Shift+Enter for new line)`}
-                    value={replyInput}
-                    onChange={(e) => setReplyInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage(e);
-                      }
-                    }}
-                    style={{ 
-                      flex: 1, 
-                      minHeight: '42px', 
-                      maxHeight: '120px', 
+                    <div style={{
+                      maxWidth: '75%',
+                      padding: '0.85rem 1.15rem',
+                      borderRadius: isAdmin ? '18px 18px 2px 18px' : '18px 18px 18px 2px',
+                      background: isAdmin ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' : '#ffffff',
+                      color: isAdmin ? '#ffffff' : 'var(--navy-900)',
+                      border: isAdmin ? '1.5px solid #0f172a' : '1.5px solid var(--border-color)',
+                      boxShadow: '0 3px 10px rgba(0,0,0,0.05)',
                       fontSize: '0.9rem',
-                      lineHeight: 1.45,
-                      padding: '0.6rem 0.85rem',
-                      resize: 'none',
-                      borderRadius: '8px'
-                    }}
-                  />
+                      lineHeight: 1.5
+                    }}>
+                      {msg.text}
 
-                  <button
-                    type="submit"
-                    className="btn btn-primary-orange"
-                    disabled={!replyInput.trim() && !attachedFile}
-                    style={{ height: '42px', padding: '0 1.25rem', gap: '0.5rem', flexShrink: 0, fontWeight: 700 }}
-                  >
-                    <Send size={16} /> Send Reply
+                      {msg.attachment && (
+                        <div style={{
+                          marginTop: '0.5rem',
+                          paddingTop: '0.5rem',
+                          borderTop: isAdmin ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid var(--border-color)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          color: isAdmin ? '#f97316' : 'var(--navy-900)'
+                        }}>
+                          <Paperclip size={14} /> {msg.attachment}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Messaging Input Area */}
+            <form onSubmit={handleSendMessage} style={{ padding: '1rem 1.5rem 1.25rem', borderTop: '1.5px solid var(--border-color)', background: '#ffffff' }}>
+              {attachedFile && (
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  background: '#fff7ed',
+                  border: '1px solid var(--orange-400)',
+                  color: 'var(--orange-800)',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '9999px',
+                  marginBottom: '0.65rem'
+                }}>
+                  <Paperclip size={13} /> {attachedFile.name} ({attachedFile.size})
+                  <button type="button" onClick={() => setAttachedFile(null)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', padding: 0 }}>
+                    <X size={13} />
                   </button>
                 </div>
-              </form>
-            </>
-          )}
+              )}
 
-        </div>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileAttach}
+                  style={{ display: 'none' }}
+                />
 
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    background: '#f1f5f9',
+                    border: '1.5px solid var(--border-color)',
+                    color: 'var(--navy-700)',
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: 'var(--radius-sm)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    flexShrink: 0
+                  }}
+                  title="Attach File"
+                >
+                  <Paperclip size={18} />
+                </button>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder={`Reply to ${activeInfo.customerName}...`}
+                  value={replyInput}
+                  onChange={(e) => setReplyInput(e.target.value)}
+                  style={{ flex: 1, height: '42px', fontSize: '0.9rem' }}
+                />
+
+                <button
+                  type="submit"
+                  className="btn btn-primary-orange"
+                  disabled={!replyInput.trim() && !attachedFile}
+                  style={{
+                    height: '42px',
+                    padding: '0 1.25rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    fontWeight: 800
+                  }}
+                >
+                  Send <Send size={16} />
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
+            Select a conversation thread to view messages
+          </div>
+        )}
       </div>
+
     </div>
   );
 };
