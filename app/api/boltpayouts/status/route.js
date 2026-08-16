@@ -21,13 +21,15 @@ export async function GET(request) {
       return NextResponse.json({ success: false, error: 'Missing invoiceId' }, { status: 400 });
     }
 
+    const cleanUserEmail = user.email.toLowerCase().trim();
+
     let query = supabaseAdmin
       .from('invoices')
-      .select('status, amount, payment_method, client_email')
-      .eq('id', invoiceId);
+      .select('*')
+      .or(`id.eq.${invoiceId},bolt_order_id.eq.${invoiceId}`);
 
     if (!isAdmin) {
-      query = query.eq('client_email', user.email);
+      query = query.ilike('client_email', cleanUserEmail);
     }
 
     const { data: invoice } = await query.maybeSingle();
@@ -40,7 +42,9 @@ export async function GET(request) {
       success: true,
       status: invoice.status,
       amount: invoice.amount,
-      payment_method: invoice.payment_method
+      payment_method: invoice.payment_method || invoice.method,
+      method: invoice.method || invoice.payment_method,
+      invoice: invoice
     });
 
   } catch (err) {

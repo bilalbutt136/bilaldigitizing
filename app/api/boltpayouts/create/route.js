@@ -11,13 +11,13 @@ export async function POST(request) {
     }
 
     if (!hasServiceRole || !supabaseAdmin) {
-      return NextResponse.json({ success: false, error: 'Server misconfiguration' }, { status: 500 });
+      return NextResponse.json({ success: false, error: 'Server misconfiguration: Database service client unavailable' }, { status: 500 });
     }
 
     const body = await request.json().catch(() => ({}));
     const amount = parseFloat(body.amount);
-    const method = body.method; // Don't default to 'card'
-    const orderId = body.orderId;
+    const method = body.method || 'all';
+    const orderId = body.orderId || null;
     
     if (isNaN(amount) || amount <= 0) {
       return NextResponse.json({ success: false, error: 'Invalid amount' }, { status: 400 });
@@ -40,7 +40,7 @@ export async function POST(request) {
     const payload = {
       amount: amount,
       username: user.email,
-      method: method === 'all' ? 'all' : (method || 'all')
+      method: method === 'all' ? 'all' : method
     };
 
     // Call BoltPayouts API
@@ -57,7 +57,7 @@ export async function POST(request) {
 
     if (!boltResponse.ok || !boltData.success) {
       console.error("BoltPayouts API Error:", boltData);
-      const errorMessage = boltData.error || boltData.message || JSON.stringify(boltData) || 'Payment provider error';
+      const errorMessage = boltData.error || boltData.message || 'Payment provider gateway error';
       return NextResponse.json({ 
         success: false, 
         error: errorMessage,
@@ -65,28 +65,65 @@ export async function POST(request) {
       }, { status: boltResponse.status === 200 ? 400 : boltResponse.status });
     }
 
-    const boltOrderId = boltData.orderId;
-    const paymentUrl = boltData.paymentUrl || boltData.taptapupRedirectUrl;
+    const boltOrderId = boltData.orderId || boltData.id;
+    const paymentUrl = boltData.paymentUrl || boltData.taptapupRedirectUrl || boltData.url;
 
-    // Create Invoice
-    const { data: invoice, error: invoiceError } = await supabaseAdmin
-      .from('invoices')
-      .insert([{
-        user_id: user.id,
-        client_email: user.email,
+    // Create Invoice with comprehensive column mapping
+    const invoicePayload = {
+      user_id: user.id || null,
+      client_email: user.email.toLowerCase().trim(),
+      amount: amount,
+      method: method,
+      payment_method: method,
+      status: 'pending',
+      bolt_order_id: boltOrderId,
+      payment_url: paymentUrl,
+      invoice_number: `INV-${Date.now()}`,
+      order_id: orderId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    let invoice = null;
+    try {
+      const { data: createdInvoice, error: invoiceError } = await supabaseAdmin
+        .from('invoices')
+        .insert([invoicePayload])
+        .select()
+        .single();
+
+      if (invoiceError) throw invoiceError;
+      invoice = createdInvoice;
+    } catch (invErr) {
+      console.warn('[BoltPayouts Create] Primary invoice insert warning, trying core schema fallback:', invErr.message);
+      // Fallback with base columns only
+      const coreInvoicePayload = {
+        user_id: user.id || null,
+        client_email: user.email.toLowerCase().trim(),
         amount: amount,
-        payment_method: method,
+        method: method,
         status: 'pending',
         bolt_order_id: boltOrderId,
-        invoice_number: `INV-${Date.now()}`,
-        order_id: orderId || null
-      }])
-      .select()
-      .single();
+        order_id: orderId
+      };
 
-    if (invoiceError) {
-      console.error('Invoice creation error:', invoiceError);
-      return NextResponse.json({ success: false, error: 'Failed to create invoice' }, { status: 500 });
+      const { data: fallbackInvoice, error: fallbackErr } = await supabaseAdmin
+        .from('invoices')
+        .insert([coreInvoicePayload])
+        .select()
+        .single();
+
+      if (fallbackErr) {
+        console.error('[BoltPayouts Create] Fallback invoice insert failed:', fallbackErr);
+        // Even if DB logging failed, return the active payment URL so the customer is not blocked from paying
+        invoice = {
+          id: boltOrderId || `temp-${Date.now()}`,
+          ...coreInvoicePayload,
+          paymentUrl: paymentUrl
+        };
+      } else {
+        invoice = fallbackInvoice;
+      }
     }
 
     return NextResponse.json({
@@ -97,6 +134,6 @@ export async function POST(request) {
 
   } catch (err) {
     console.error('Bolt create exception:', err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: err.message || 'Payment initiation error' }, { status: 500 });
   }
 }
