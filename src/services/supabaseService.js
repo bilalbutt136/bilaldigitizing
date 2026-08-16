@@ -1043,9 +1043,15 @@ export async function depositWalletViaApi(amount, paymentMethod = 'Card / Manual
 
 export async function deductWalletViaApi(amount, paymentMethod = 'Studio Wallet Credit', orderId = null) {
   try {
-    const sessionRes = await supabase.auth.getSession().catch(() => null);
-    const token = sessionRes?.data?.session?.access_token;
-    if (!token) return { success: false, error: 'Not authenticated.' };
+    let sessionRes = await supabase.auth.getSession().catch(() => null);
+    let token = sessionRes?.data?.session?.access_token;
+    
+    if (!token) {
+      const refreshRes = await supabase.auth.refreshSession().catch(() => null);
+      token = refreshRes?.data?.session?.access_token;
+    }
+
+    if (!token) return { success: false, error: 'Authentication session expired. Please sign in again.' };
 
     const res = await fetch('/api/wallet', {
       method: 'POST',

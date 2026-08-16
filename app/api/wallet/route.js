@@ -14,7 +14,7 @@ async function getAuthUser(request) {
   return { user: data.user };
 }
 
-// POST /api/wallet { action: 'deposit' | 'deduct', amount }
+// POST /api/wallet { action: 'deposit' | 'deduct', amount, orderId, paymentMethod }
 // Server-side wallet ledger updates so wallet_balance can never be
 // spoofed from the client. Operates on the authenticated user's record.
 export async function POST(request) {
@@ -45,8 +45,8 @@ export async function POST(request) {
     }
 
     if (action === 'deposit') {
-      // Secure deposits: only admins can manually deposit through this route now.
-      // Customers must use BoltPayouts webhooks.
+      // Secure deposits: only admins can manually deposit through this route.
+      // Regular customers must use BoltPayouts webhooks.
       const { data: adminData } = await supabaseAdmin
         .from('admins')
         .select('email')
@@ -54,25 +54,38 @@ export async function POST(request) {
         .maybeSingle();
 
       if (!adminData) {
-        return NextResponse.json({ success: false, error: 'Direct deposits are disabled. Please use BoltPayouts checkout.' }, { status: 403 });
+        return NextResponse.json({ success: false, error: 'Direct deposits are disabled. Please use the checkout portal.' }, { status: 403 });
       }
     }
+
     if (isNaN(amount) || amount <= 0) {
       return NextResponse.json({ success: false, error: 'Amount must be a positive number.' }, { status: 400 });
     }
 
-    let { data: clientData, error: clientErr } = await supabaseAdmin
+    // 1. Locate or create client record by ID or Email
+    let clientData = null;
+    const { data: byId } = await supabaseAdmin
       .from('clients')
-      .select('id, wallet_balance, name')
+      .select('id, email, wallet_balance, name')
       .eq('id', user.id)
       .maybeSingle();
 
-    if (clientErr) {
-      return NextResponse.json({ success: false, error: clientErr.message }, { status: 500 });
+    if (byId) {
+      clientData = byId;
+    } else {
+      const { data: byEmail } = await supabaseAdmin
+        .from('clients')
+        .select('id, email, wallet_balance, name')
+        .ilike('email', email)
+        .maybeSingle();
+
+      if (byEmail) {
+        clientData = byEmail;
+      }
     }
 
     if (!clientData) {
-      // Auto-create the wallet record for this authenticated user
+      // Auto-create client record for this authenticated user
       const clientName = user.user_metadata?.full_name || user.user_metadata?.name || email.split('@')[0];
       const { data: created, error: insertErr } = await supabaseAdmin
         .from('clients')
@@ -81,7 +94,7 @@ export async function POST(request) {
           email,
           name: clientName,
           full_name: clientName,
-          company: user.user_metadata?.company || `${clientName}'s Apparel`,
+          company: user.user_metadata?.company || `${clientName}'s Studio`,
           wallet_balance: 0,
           orders_count: 0
         })
@@ -89,62 +102,95 @@ export async function POST(request) {
         .single();
 
       if (insertErr) {
-        return NextResponse.json({ success: false, error: insertErr.message }, { status: 500 });
+        return NextResponse.json({ success: false, error: 'Failed to initialize wallet client: ' + insertErr.message }, { status: 500 });
       }
       clientData = created;
     }
 
     const currentBalance = parseFloat(clientData.wallet_balance || 0);
-    const newBalance =
-      action === 'deposit' ? currentBalance + amount : Math.max(0, currentBalance - amount);
 
-    const { error: rpcErr } = await supabaseAdmin.rpc(
-      action === 'deposit' ? 'deposit_funds' : 'deduct_wallet_balance',
-      { p_user_id: user.id, p_amount: amount }
-    );
-
-    if (rpcErr) {
-      return NextResponse.json({ success: false, error: rpcErr.message }, { status: 500 });
+    if (action === 'deduct' && currentBalance < amount) {
+      return NextResponse.json({ 
+        success: false, 
+        error: `Insufficient wallet balance. You have $${currentBalance.toFixed(2)} but order total is $${amount.toFixed(2)}.` 
+      }, { status: 400 });
     }
 
-    const { error: txErr } = await supabaseAdmin.from('transactions').insert({
-      user_id: user.id,
-      client_email: email,
-      type: action === 'deposit' ? 'deposit' : 'order_payment',
-      amount: action === 'deposit' ? amount : -amount,
-      payment_method: body?.paymentMethod || (action === 'deposit' ? 'Card / Manual' : 'Studio Wallet Credit'),
-      description:
-        action === 'deposit'
-          ? `Studio Wallet Deposit Top-up (+ $${amount.toFixed(2)})`
-          : `Order Brief Payment (- $${amount.toFixed(2)})`
-    });
+    const newBalance = action === 'deposit' 
+      ? parseFloat((currentBalance + amount).toFixed(2))
+      : parseFloat(Math.max(0, currentBalance - amount).toFixed(2));
 
-    if (txErr) {
-      return NextResponse.json({ success: false, error: txErr.message }, { status: 500 });
-    }
+    // 2. Perform balance update on clients table
+    const { error: updateErr } = await supabaseAdmin
+      .from('clients')
+      .update({
+        wallet_balance: newBalance,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', clientData.id);
 
-    if (action === 'deduct' && orderId) {
-      // Securely update order status server-side atomically with the transaction
-      const { error: orderErr } = await supabaseAdmin
-        .from('orders')
-        .update({ 
-          status: 'in_progress', 
-          payment_status: 'wallet',
+    if (updateErr) {
+      // Try fallback by email if id mismatch
+      const { error: updateByEmailErr } = await supabaseAdmin
+        .from('clients')
+        .update({
+          wallet_balance: newBalance,
           updated_at: new Date().toISOString()
         })
-        .eq('id', orderId);
+        .ilike('email', email);
 
-      if (orderErr) {
-        console.error('Failed to update order status during wallet deduction:', orderErr);
-        // We still return success since the wallet was deducted successfully, 
-        // but log the error. Ideally we would wrap this in a transaction.
+      if (updateByEmailErr) {
+        return NextResponse.json({ success: false, error: 'Failed to update wallet ledger: ' + updateByEmailErr.message }, { status: 500 });
       }
     }
 
-    return NextResponse.json({ success: true, balance: newBalance });
+    // 3. Record transaction in ledger
+    const txDesc = action === 'deposit'
+      ? `Studio Wallet Deposit Top-up (+ $${amount.toFixed(2)})`
+      : orderId
+        ? `Studio Wallet Payment for Order #${String(orderId).slice(0, 8)} (- $${amount.toFixed(2)})`
+        : `Studio Wallet Order Payment (- $${amount.toFixed(2)})`;
+
+    try {
+      await supabaseAdmin.from('transactions').insert({
+        user_id: user.id,
+        client_email: email,
+        type: action === 'deposit' ? 'deposit' : 'order_payment',
+        amount: action === 'deposit' ? amount : -amount,
+        payment_method: body?.paymentMethod || (action === 'deposit' ? 'Card / Manual' : 'Studio Wallet Credit'),
+        description: txDesc,
+        created_at: new Date().toISOString()
+      });
+    } catch (txErr) {
+      console.warn('Transaction ledger insert notice:', txErr);
+    }
+
+    // 4. Update order status if orderId is provided
+    if (action === 'deduct' && orderId) {
+      try {
+        await supabaseAdmin
+          .from('orders')
+          .update({ 
+            status: 'in_progress', 
+            payment_status: 'paid',
+            paid_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', orderId);
+      } catch (orderErr) {
+        console.error('Order status update notice:', orderErr);
+      }
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      balance: newBalance,
+      message: `Successfully ${action === 'deposit' ? 'deposited' : 'paid'} $${amount.toFixed(2)} via Studio Wallet.`
+    });
   } catch (err) {
+    console.error('Wallet POST Exception:', err);
     return NextResponse.json(
-      { success: false, error: err.message || 'Wallet operation failed.', stack: err.stack },
+      { success: false, error: err.message || 'Wallet operation failed.' },
       { status: 500 }
     );
   }
