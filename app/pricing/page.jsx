@@ -442,10 +442,10 @@ export default function PricingPage() {
         {/* 3 Packages Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: '2.5rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '1.5rem',
           alignItems: 'stretch',
-          paddingTop: '1.75rem',
+          paddingTop: '1.25rem',
           overflow: 'visible'
         }}>
           {displayedPackages.map((pkg) => {
@@ -457,37 +457,37 @@ export default function PricingPage() {
                 className="card" 
                 style={{
                   background: '#ffffff',
-                  border: pkg.isPopular ? `2.5px solid ${pkg.theme.color}` : '1.5px solid var(--border-color)',
-                  borderRadius: '24px',
-                  padding: '2.75rem 2.25rem 2.25rem',
+                  border: pkg.isPopular ? `2px solid ${pkg.theme.color}` : '1.5px solid var(--border-color)',
+                  borderRadius: '18px',
+                  padding: '1.75rem 1.4rem 1.35rem',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
-                  boxShadow: pkg.isPopular ? `0 18px 40px ${pkg.theme.glowColor}` : '0 6px 24px rgba(0, 0, 0, 0.05)',
-                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                  boxShadow: pkg.isPopular ? `0 12px 30px ${pkg.theme.glowColor}` : '0 4px 16px rgba(0, 0, 0, 0.04)',
+                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                   position: 'relative',
                   overflow: 'visible',
-                  transform: pkg.isPopular ? 'translateY(-8px)' : 'none'
+                  transform: pkg.isPopular ? 'translateY(-4px)' : 'none'
                 }}
               >
                 {/* Top Badge Pill */}
                 {pkg.badgeText && (
                   <span style={{
                     position: 'absolute',
-                    top: '-15px',
+                    top: '-12px',
                     left: '50%',
                     transform: 'translateX(-50%)',
                     background: pkg.theme.color,
                     color: '#ffffff',
-                    padding: '0.4rem 1.4rem',
+                    padding: '0.25rem 1rem',
                     borderRadius: '9999px',
-                    fontSize: '0.78rem',
+                    fontSize: '0.7rem',
                     fontWeight: 900,
-                    letterSpacing: '0.08em',
+                    letterSpacing: '0.06em',
                     textTransform: 'uppercase',
                     whiteSpace: 'nowrap',
                     zIndex: 20,
-                    boxShadow: `0 6px 16px ${pkg.theme.glowColor}`
+                    boxShadow: `0 4px 12px ${pkg.theme.glowColor}`
                   }}>
                     {pkg.badgeText}
                   </span>
@@ -495,51 +495,51 @@ export default function PricingPage() {
 
                 <div>
                   {/* Category Header */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                    <div style={{ background: pkg.theme.bgLight, color: pkg.theme.color, padding: '0.75rem', borderRadius: '14px', display: 'flex' }}>
-                      <IconComp size={26} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.85rem' }}>
+                    <div style={{ background: pkg.theme.bgLight, color: pkg.theme.color, padding: '0.5rem', borderRadius: '10px', display: 'flex', flexShrink: 0 }}>
+                      <IconComp size={20} />
                     </div>
-                    <div>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: pkg.theme.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: pkg.theme.color, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>
                         {pkg.categoryLabel}
                       </span>
-                      <h3 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-heading)', fontWeight: 900, margin: '0.15rem 0 0', color: 'var(--navy-900)', lineHeight: 1.2 }}>
+                      <h3 style={{ fontSize: '1.125rem', fontFamily: 'var(--font-heading)', fontWeight: 900, margin: '0.1rem 0 0', color: 'var(--navy-900)', lineHeight: 1.25, minHeight: '2.8rem', display: 'flex', alignItems: 'center' }}>
                         {pkg.title}
                       </h3>
                     </div>
                   </div>
 
                   {pkg.subtitle && (
-                    <p style={{ fontSize: '0.925rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: 1.5, minHeight: '44px' }}>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem', lineHeight: 1.45, minHeight: '2.8rem' }}>
                       {pkg.subtitle}
                     </p>
                   )}
 
                   {/* Price Box */}
-                  <div style={{ marginBottom: '1.75rem', padding: '1.35rem', background: '#f8fafc', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                      <div style={{ fontSize: '3.25rem', fontWeight: 900, color: pkg.theme.color, lineHeight: 1, letterSpacing: '-0.03em' }}>
+                  <div style={{ marginBottom: '1.15rem', padding: '0.85rem 1rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+                      <div style={{ fontSize: '2.25rem', fontWeight: 900, color: pkg.theme.color, lineHeight: 1, letterSpacing: '-0.03em' }}>
                         ${pkg.price}
                       </div>
                       {pkg.originalPrice && (
-                        <div style={{ fontSize: '1.35rem', color: 'var(--text-muted)', textDecoration: 'line-through', fontWeight: 700 }}>
+                        <div style={{ fontSize: '1.1rem', color: 'var(--text-muted)', textDecoration: 'line-through', fontWeight: 700 }}>
                           ${pkg.originalPrice}
                         </div>
                       )}
                     </div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 800, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 800, marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       {pkg.priceUnit}
                     </div>
                   </div>
 
                   {/* Features Checklist */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2.5rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.35rem' }}>
                     {pkg.features.map((feat, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
-                        <div style={{ background: '#dcfce7', color: '#16a34a', padding: '0.25rem', borderRadius: '50%', marginTop: '2px', flexShrink: 0 }}>
-                          <CheckCircle size={14} />
+                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                        <div style={{ background: '#dcfce7', color: '#16a34a', padding: '0.15rem', borderRadius: '50%', marginTop: '2px', flexShrink: 0, display: 'flex' }}>
+                          <CheckCircle size={13} />
                         </div>
-                        <span style={{ fontSize: '0.925rem', color: 'var(--navy-800)', fontWeight: 600, lineHeight: 1.45 }}>
+                        <span style={{ fontSize: '0.825rem', color: 'var(--navy-800)', fontWeight: 600, lineHeight: 1.35 }}>
                           {feat}
                         </span>
                       </div>
@@ -548,33 +548,36 @@ export default function PricingPage() {
                 </div>
 
                 {/* Bottom Order CTA */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                   <button 
                     onClick={() => handleOrder(pkg.serviceType, pkg.title, pkg.price)}
                     style={{ 
                       width: '100%', 
                       justifyContent: 'center', 
                       fontWeight: 800, 
-                      fontSize: '1.05rem', 
-                      padding: '1.15rem', 
-                      borderRadius: '14px',
+                      fontSize: '0.9rem', 
+                      padding: '0.75rem 1rem', 
+                      borderRadius: '10px',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.5rem',
+                      gap: '0.4rem',
                       cursor: 'pointer',
                       background: pkg.theme.btnBg,
                       color: '#ffffff',
                       border: 'none',
-                      boxShadow: `0 6px 20px ${pkg.theme.glowColor}`
+                      boxShadow: `0 4px 14px ${pkg.theme.glowColor}`,
+                      transition: 'transform 0.2s ease'
                     }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                   >
                     <span>{pkg.buttonText}</span>
-                    <ArrowRight size={18} />
+                    <ArrowRight size={15} />
                   </button>
 
                   {pkg.turnaround && (
-                    <div style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-                      <Clock size={14} style={{ color: pkg.theme.color }} /> Express Delivery: {pkg.turnaround}
+                    <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+                      <Clock size={13} style={{ color: pkg.theme.color }} /> Express Delivery: {pkg.turnaround}
                     </div>
                   )}
                 </div>
