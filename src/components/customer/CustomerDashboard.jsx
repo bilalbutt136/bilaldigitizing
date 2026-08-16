@@ -184,8 +184,30 @@ export const CustomerDashboard = () => {
   };
 
   return (
-    <div className="dashboard-main-container" style={{ padding: '1.5rem 0 8rem', background: 'var(--bg-main)', minHeight: 'calc(100vh - 80px)' }}>
-      <div className="client-portal-fluid-container" style={{ maxWidth: '1680px', width: '100%', padding: '0 2.25rem', margin: '0 auto', boxSizing: 'border-box' }}>
+    <div 
+      className="dashboard-main-container" 
+      style={{ 
+        padding: activeTab === 'support' ? '0.75rem 0 0' : '1.5rem 0 8rem', 
+        background: 'var(--bg-main)', 
+        minHeight: activeTab === 'support' ? 'calc(100vh - 75px)' : 'calc(100vh - 80px)',
+        height: activeTab === 'support' ? 'calc(100vh - 75px)' : 'auto',
+        overflow: activeTab === 'support' ? 'hidden' : 'visible',
+        boxSizing: 'border-box'
+      }}
+    >
+      <div 
+        className="client-portal-fluid-container" 
+        style={{ 
+          maxWidth: '1680px', 
+          width: '100%', 
+          padding: '0 2.25rem', 
+          margin: '0 auto', 
+          boxSizing: 'border-box',
+          height: activeTab === 'support' ? '100%' : 'auto',
+          display: activeTab === 'support' ? 'flex' : 'block',
+          flexDirection: 'column'
+        }}
+      >
 
         {/* 1. TOP STICKY HEADER BAR FOR MOBILE APP UI */}
         <div 
@@ -388,7 +410,11 @@ export const CustomerDashboard = () => {
             display: 'grid',
             gridTemplateColumns: '280px 1fr',
             gap: '2rem',
-            alignItems: 'start'
+            alignItems: 'start',
+            flex: activeTab === 'support' ? 1 : 'none',
+            height: activeTab === 'support' ? '100%' : 'auto',
+            minHeight: 0,
+            overflow: activeTab === 'support' ? 'hidden' : 'visible'
           }}
         >
 
@@ -414,7 +440,14 @@ export const CustomerDashboard = () => {
           {/* ==================================================================
               RIGHT CONTENT WORKSPACE PANE
              ================================================================== */}
-          <main style={{ minWidth: 0 }}>
+          <main style={{ 
+            minWidth: 0,
+            height: activeTab === 'support' ? '100%' : 'auto',
+            minHeight: 0,
+            display: activeTab === 'support' ? 'flex' : 'block',
+            flexDirection: 'column',
+            overflow: activeTab === 'support' ? 'hidden' : 'visible'
+          }}>
             
             {/* TAB 0: MAIN CLIENT DASHBOARD */}
             {activeTab === 'dashboard' && (
@@ -928,7 +961,7 @@ export const CustomerDashboard = () => {
 
             {/* TAB 4: LIVE SUPPORT & ORDER CHAT INBOX */}
             {activeTab === 'support' && (
-              <div style={{ height: 'calc(100vh - 140px)', minHeight: '650px', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ flex: 1, height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <ClientChatInbox initialOrderId={selectedOrderChatId} />
               </div>
             )}

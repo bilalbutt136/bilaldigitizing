@@ -24,7 +24,8 @@ import {
   Package,
   PackageCheck,
   ExternalLink,
-  Zap
+  Zap,
+  MessageSquare
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 
