@@ -470,15 +470,56 @@ export const ClientLiveChatWidget = () => {
                 </div>
 
                 {(clientThread.messages || []).length === 0 && (
-                  <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--text-muted)' }}>
+                  <div style={{ textAlign: 'center', padding: '1.5rem 0.5rem', color: 'var(--text-muted)' }}>
                     <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#fff7ed', color: 'var(--orange-500)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
                       <MessageSquare size={20} />
                     </div>
-                    <div style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--navy-900)' }}>
-                      Start a Conversation
+                    <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--navy-900)' }}>
+                      Live Digitizer Support
                     </div>
-                    <div style={{ fontSize: '0.78rem', marginTop: '0.2rem', color: 'var(--text-muted)' }}>
-                      Type your message or attach artwork files below to chat live with our digitizers.
+                    <div style={{ fontSize: '0.78rem', marginTop: '0.25rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                      Ask questions, request custom embroidery quotes, or discuss active orders in real time.
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'left' }}>
+                      {[
+                        '🧵 I need a custom embroidery digitizing quote',
+                        '⏱️ What are standard and rush turnaround times?',
+                        '📦 Inquire about active digitizing or patch order',
+                        '💬 Connect with Senior Digitizing Technician'
+                      ].map((prompt, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setMessageInput(prompt);
+                          }}
+                          style={{
+                            background: '#ffffff',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '8px',
+                            padding: '0.55rem 0.75rem',
+                            fontSize: '0.78rem',
+                            color: 'var(--navy-800)',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            transition: 'all 0.15s ease'
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.borderColor = 'var(--orange-500)';
+                            e.currentTarget.style.color = 'var(--orange-600)';
+                            e.currentTarget.style.background = '#fff7ed';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.borderColor = 'var(--border-color)';
+                            e.currentTarget.style.color = 'var(--navy-800)';
+                            e.currentTarget.style.background = '#ffffff';
+                          }}
+                        >
+                          {prompt}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}

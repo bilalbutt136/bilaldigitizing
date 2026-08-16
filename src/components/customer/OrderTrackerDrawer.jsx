@@ -838,7 +838,11 @@ export const OrderTrackerDrawer = () => {
                           </div>
                         ))}
                         {ord.messages?.map(msg => {
-                           const isMsgAdmin = msg.senderRole === 'admin';
+                           const isMsgAdmin = msg.senderRole === 'admin' || msg.sender === 'admin';
+                           const displayTime = msg.timestamp && !isNaN(new Date(msg.timestamp).getTime()) 
+                             ? new Date(msg.timestamp).toLocaleString() 
+                             : (msg.timestamp || 'Recent');
+                           const displayName = msg.senderName || msg.sender || (isMsgAdmin ? 'Master Digitizer' : 'Client');
                            return (
                             <div key={`msg-${msg.id}`} style={{ 
                                background: isMsgAdmin ? 'var(--navy-900)' : '#ffffff', 
@@ -850,7 +854,7 @@ export const OrderTrackerDrawer = () => {
                                width: '85%'
                             }}>
                               <div style={{ fontSize: '0.75rem', color: isMsgAdmin ? 'var(--orange-400)' : 'var(--text-muted)', fontWeight: 700, marginBottom: '0.4rem' }}>
-                                {msg.sender} • {new Date(msg.timestamp).toLocaleString()}
+                                {displayName} • {displayTime}
                               </div>
                               <div style={{ fontSize: '0.9rem', whiteSpace: 'pre-wrap' }}>{msg.text}</div>
                             </div>

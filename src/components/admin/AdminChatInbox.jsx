@@ -221,25 +221,23 @@ export const AdminChatInbox = () => {
 
     const newMsg = {
       id: 'msg-' + Date.now(),
+      conversation_id: currentActiveChatId,
       sender: 'admin',
-      senderName: 'Support Agent (You)',
+      senderName: 'Master Digitizer Support',
+      sender_name: 'Master Digitizer Support',
       text: replyInput.trim() || (attachedFile ? `Attached file: ${attachedFile.name}` : ''),
       attachment: attachedFile ? attachedFile.name : null,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: new Date().toISOString()
     };
 
-    const saved = await addChatMessage(currentActiveChatId, newMsg);
-    if (!saved) {
-      showToast('Error sending message', 'error');
-      return;
-    }
-
+    // Optimistic UI update
     setConversations(prev => prev.map(conv => {
       if (conv.id === currentActiveChatId) {
         return {
           ...conv,
           unreadCount: 0,
-          messages: [...(conv.messages || []), newMsg]
+          messages: [...(conv.messages || []), newMsg],
+          updatedAt: new Date().toISOString()
         };
       }
       return conv;
@@ -248,7 +246,15 @@ export const AdminChatInbox = () => {
     setReplyInput('');
     setAttachedFile(null);
     playNotificationSound('send');
-    showToast(`Reply sent to ${activeChat.clientName}!`, 'success');
+    showToast(`Reply sent to ${activeChat.clientName || 'Client'}!`, 'success');
+
+    if (isSupabaseConfigured) {
+      try {
+        await addChatMessage(currentActiveChatId, newMsg);
+      } catch (err) {
+        console.warn('Admin persist message notice:', err);
+      }
+    }
   };
 
   const handleFileAttach = (e) => {
@@ -681,19 +687,35 @@ export const AdminChatInbox = () => {
                     <Paperclip size={18} />
                   </button>
 
-                  <input
-                    type="text"
+                  <textarea
                     className="form-control"
-                    placeholder={`Type message reply to ${activeChat.clientName}...`}
+                    rows={1}
+                    placeholder={`Type message reply to ${activeChat.clientName}... (Press Enter to send, Shift+Enter for new line)`}
                     value={replyInput}
                     onChange={(e) => setReplyInput(e.target.value)}
-                    style={{ flex: 1, height: '42px', fontSize: '0.9rem' }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage(e);
+                      }
+                    }}
+                    style={{ 
+                      flex: 1, 
+                      minHeight: '42px', 
+                      maxHeight: '120px', 
+                      fontSize: '0.9rem',
+                      lineHeight: 1.45,
+                      padding: '0.6rem 0.85rem',
+                      resize: 'none',
+                      borderRadius: '8px'
+                    }}
                   />
 
                   <button
                     type="submit"
                     className="btn btn-primary-orange"
-                    style={{ height: '42px', padding: '0 1.35rem', fontWeight: 800, gap: '0.4rem', flexShrink: 0 }}
+                    disabled={!replyInput.trim() && !attachedFile}
+                    style={{ height: '42px', padding: '0 1.25rem', gap: '0.5rem', flexShrink: 0, fontWeight: 700 }}
                   >
                     <Send size={16} /> Send Reply
                   </button>
