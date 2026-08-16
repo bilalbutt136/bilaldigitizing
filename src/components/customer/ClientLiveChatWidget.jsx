@@ -29,8 +29,17 @@ export const ClientLiveChatWidget = () => {
   const [attachedFile, setAttachedFile] = useState(null);
   const [chats, setChats] = useState([]);
 
+  // Check if admin user or admin page to avoid mounting customer chat on admin screens
+  const isExcluded = authUser?.role === 'admin' || 
+    (typeof window !== 'undefined' && (
+      window.location.pathname.startsWith('/admin') || 
+      window.location.pathname.startsWith('/secure-admin-login')
+    ));
+
   useEffect(() => {
+    if (!mounted || isExcluded) return;
     let isMounted = true;
+
     const loadChats = async () => {
       if (!isMounted) return;
       if (isSupabaseConfigured) {
@@ -46,7 +55,7 @@ export const ClientLiveChatWidget = () => {
       }
     };
 
-    // Initial load once
+    // Initial load once on mount
     loadChats();
 
     // Supabase Realtime Live Message Subscription
@@ -74,8 +83,19 @@ export const ClientLiveChatWidget = () => {
           const safePrev = Array.isArray(prev) ? prev : [];
           const exists = safePrev.some(c => c.id === newMsg.conversation_id);
           if (!exists) {
-            loadChats();
-            return safePrev;
+            const newThread = {
+              id: newMsg.conversation_id,
+              clientName: newMsg.senderName || 'Client',
+              clientEmail: '',
+              clientCompany: 'Customer',
+              orderId: 'Support',
+              orderTitle: 'Live Support',
+              status: 'online',
+              unreadCount: 0,
+              messages: [newMsg],
+              updatedAt: newMsg.timestamp
+            };
+            return [newThread, ...safePrev];
           }
 
           return safePrev.map(c => {
@@ -101,8 +121,19 @@ export const ClientLiveChatWidget = () => {
           const safePrev = Array.isArray(prev) ? prev : [];
           const exists = safePrev.some(c => c.id === conv.id);
           if (!exists) {
-            loadChats();
-            return safePrev;
+            const newThread = {
+              id: conv.id,
+              clientName: conv.client_name || 'Client',
+              clientEmail: conv.client_email || '',
+              clientCompany: conv.client_company || 'Studio Client',
+              orderId: conv.order_id || 'Support',
+              orderTitle: conv.order_title || 'Direct Support',
+              status: 'online',
+              unreadCount: 0,
+              messages: [],
+              updatedAt: conv.created_at || new Date().toISOString()
+            };
+            return [newThread, ...safePrev];
           }
           return safePrev.map(c => c.id === conv.id ? { ...c, ...conv } : c);
         });
@@ -113,7 +144,9 @@ export const ClientLiveChatWidget = () => {
       isMounted = false;
       if (typeof unsubscribe === 'function') unsubscribe();
     };
-  }, []);
+  }, [mounted, isExcluded]);
+
+  if (!mounted || isExcluded) return null;
 
   // Real-time Event Listener for incoming admin replies across tabs and windows
   useEffect(() => {

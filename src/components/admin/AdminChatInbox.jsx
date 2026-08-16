@@ -93,14 +93,27 @@ export const AdminChatInbox = () => {
         }
 
         setConversations(prev => {
-          const exists = prev.some(c => c.id === newMsg.conversation_id);
+          const safePrev = Array.isArray(prev) ? prev : [];
+          const exists = safePrev.some(c => c.id === newMsg.conversation_id);
           if (!exists) {
-            // New conversation thread initiated, fetch latest
-            loadChats();
-            return prev;
+            // New conversation thread initiated - prepend locally
+            const newThread = {
+              id: newMsg.conversation_id,
+              clientName: newMsg.senderName || 'Client',
+              clientEmail: '',
+              clientCompany: 'Customer',
+              orderId: 'Support',
+              orderTitle: 'Live Support',
+              avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
+              status: 'online',
+              unreadCount: newMsg.sender === 'client' ? 1 : 0,
+              messages: [newMsg],
+              updatedAt: newMsg.timestamp
+            };
+            return [newThread, ...safePrev];
           }
 
-          return prev.map(c => {
+          return safePrev.map(c => {
             if (c.id === newMsg.conversation_id) {
               const alreadyHas = (c.messages || []).some(m => m.id === newMsg.id || (m.text === newMsg.text && m.timestamp === newMsg.timestamp));
               if (alreadyHas) return c;
@@ -121,12 +134,25 @@ export const AdminChatInbox = () => {
         if (!conv) return;
 
         setConversations(prev => {
-          const exists = prev.some(c => c.id === conv.id);
+          const safePrev = Array.isArray(prev) ? prev : [];
+          const exists = safePrev.some(c => c.id === conv.id);
           if (!exists) {
-            loadChats();
-            return prev;
+            const newThread = {
+              id: conv.id,
+              clientName: conv.client_name || 'Client',
+              clientEmail: conv.client_email || '',
+              clientCompany: conv.client_company || 'Studio Client',
+              orderId: conv.order_id || 'Support',
+              orderTitle: conv.order_title || 'Direct Support',
+              avatar: conv.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
+              status: 'online',
+              unreadCount: 0,
+              messages: [],
+              updatedAt: conv.created_at || new Date().toISOString()
+            };
+            return [newThread, ...safePrev];
           }
-          return prev.map(c => c.id === conv.id ? { ...c, ...conv } : c);
+          return safePrev.map(c => c.id === conv.id ? { ...c, ...conv } : c);
         });
       }
     );

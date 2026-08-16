@@ -27,7 +27,6 @@ import {
   PenTool,
   X
 } from 'lucide-react';
-import { ClientLiveChatWidget } from './ClientLiveChatWidget';
 import { ClientSidebar } from './ClientSidebar';
 import { EmbroideryDigitizingPage } from '../public/EmbroideryDigitizingPage';
 import { VectorArtPage } from '../public/VectorArtPage';
@@ -1020,9 +1019,6 @@ export const CustomerDashboard = () => {
           onClose={() => setLightboxOrder(null)} 
         />
       )}
-
-      {/* Floating Live Chat Support Widget */}
-      <ClientLiveChatWidget />
 
       {/* 3. FIXED BOTTOM NAVIGATION BAR FOR MOBILE VIEWPORTS */}
       <div 
