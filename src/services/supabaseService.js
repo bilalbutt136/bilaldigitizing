@@ -973,9 +973,10 @@ export async function fetchOrderMessagesFromSupabase(orderId) {
 
 export async function addOrderMessageInSupabase(orderId, text, senderName, senderRole = 'client', attachments = []) {
   try {
+    const headers = await getAuthHeaders();
     await fetch('/api/orders', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ 
         action: 'addMessage', 
         payload: { order_id: orderId, message: text, is_staff: senderRole === 'admin', sender_name: senderName }

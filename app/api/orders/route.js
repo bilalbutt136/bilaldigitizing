@@ -238,13 +238,37 @@ export async function POST(request) {
     if (action === 'addMessage') {
       if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       if (!isAdmin) {
-        const { data: orderData, error: orderError } = await supabase.from('orders').select('client_email').eq('id', payload.order_id).single();
+        const { data: orderData, error: orderError } = await supabase.from('orders').select('client_email, title').eq('id', payload.order_id).single();
         if (orderError || orderData?.client_email !== user.email) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
       }
       const { error } = await supabase.from('order_messages').insert([payload]);
       if (error) throw error;
+
+      // Mirror to messages & conversations for unified real-time chat sync
+      try {
+        const convId = `order-${payload.order_id}`;
+        await supabase.from('conversations').upsert({
+          id: convId,
+          order_id: payload.order_id,
+          order_title: payload.order_title || 'Order Discussion',
+          client_email: user.email,
+          client_name: payload.sender_name || user.user_metadata?.full_name || 'Client',
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+
+        await supabase.from('messages').insert({
+          conversation_id: convId,
+          sender: payload.is_staff ? 'admin' : 'client',
+          sender_name: payload.sender_name || (payload.is_staff ? 'Master Digitizer' : 'Client'),
+          text: payload.message,
+          created_at: new Date().toISOString()
+        });
+      } catch (convErr) {
+        console.warn('Mirror order message to chat notice:', convErr);
+      }
+
       return NextResponse.json({ success: true });
     }
     

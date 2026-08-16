@@ -804,9 +804,22 @@ export const OrderTrackerDrawer = () => {
 
                 {/* 3. Messages & Revisions */}
                 <div>
-                  <h4 style={{ fontSize: '1.1rem', color: 'var(--navy-900)', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontWeight: 700 }}>
-                    Messages & Revisions
-                  </h4>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                    <h4 style={{ fontSize: '1.1rem', color: 'var(--navy-900)', margin: 0, fontWeight: 700 }}>
+                      Messages & Revisions
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        window.dispatchEvent(new CustomEvent('bdigi_open_order_chat', { detail: { orderId: ord.id } }));
+                        onClose();
+                      }}
+                      className="btn btn-outline btn-sm"
+                      style={{ fontSize: '0.75rem', gap: '0.35rem', borderColor: 'var(--orange-500)', color: 'var(--orange-600)' }}
+                    >
+                      <MessageSquare size={13} /> Open in Live Chat Inbox 💬
+                    </button>
+                  </div>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem', maxHeight: '400px', overflowY: 'auto' }}>
                     {(!ord.messages || ord.messages.length === 0) && (!ord.revisions || ord.revisions.length === 0) ? (

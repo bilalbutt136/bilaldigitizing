@@ -28,6 +28,7 @@ import {
   X
 } from 'lucide-react';
 import { ClientSidebar } from './ClientSidebar';
+import { ClientChatInbox } from './ClientChatInbox';
 import { EmbroideryDigitizingPage } from '../public/EmbroideryDigitizingPage';
 import { VectorArtPage } from '../public/VectorArtPage';
 import { CustomPatchesSection } from '../public/CustomPatchesSection';
@@ -49,6 +50,7 @@ export const CustomerDashboard = () => {
   } = useAppState();
 
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'digitizing' | 'vector' | 'patches' | 'profile' | 'support' | 'settings'
+  const [selectedOrderChatId, setSelectedOrderChatId] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [lightboxOrder, setLightboxOrder] = useState(null);
@@ -174,13 +176,11 @@ export const CustomerDashboard = () => {
     }
   };
 
-  const handleOpenLiveSupport = () => {
-    const chatBtn = document.querySelector('.live-chat-floating-button');
-    if (chatBtn) {
-      chatBtn.click();
-    } else if (showToast) {
-      showToast('Connecting to 24/7 Live Support Agent...', 'info');
+  const handleOpenLiveSupport = (orderId = null) => {
+    if (orderId) {
+      setSelectedOrderChatId(orderId);
     }
+    setActiveTab('support');
   };
 
   return (
@@ -926,43 +926,10 @@ export const CustomerDashboard = () => {
               </div>
             )}
 
-            {/* TAB 4: LIVE SUPPORT CHAT */}
+            {/* TAB 4: LIVE SUPPORT & ORDER CHAT INBOX */}
             {activeTab === 'support' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div className="card" style={{ padding: '2rem', background: '#ffffff', border: '1.5px solid var(--border-color)', borderRadius: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '1rem' }}>
-                    <div style={{ background: '#ecfdf5', color: '#10b981', padding: '0.75rem', borderRadius: '12px' }}>
-                      <MessageSquare size={26} />
-                    </div>
-                    <div>
-                      <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
-                        24/7 Studio Live Support Chat
-                      </h2>
-                      <div style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.15rem' }}>
-                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} /> Direct Digitizing Engineer Connectivity Online
-                      </div>
-                    </div>
-                  </div>
-
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '1.75rem' }}>
-                    Connect directly with senior pathing digitizers and vector engineers for urgent revisions, stitch adjustment advice, machine format inquiries, or custom quote approvals.
-                  </p>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.75rem' }}>
-                    <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700 }}>Average Response SLA</div>
-                      <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--navy-900)', marginTop: '0.2rem' }}>&lt; 5 Minutes</div>
-                    </div>
-                    <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700 }}>Support Availability</div>
-                      <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--navy-900)', marginTop: '0.2rem' }}>24/7 / 365 Days</div>
-                    </div>
-                  </div>
-
-                  <button className="btn btn-primary-orange btn-lg" onClick={handleOpenLiveSupport} style={{ fontWeight: 800 }}>
-                    <MessageSquare size={20} /> Open Live Chat Window Now
-                  </button>
-                </div>
+              <div style={{ height: 'calc(100vh - 140px)', minHeight: '650px', display: 'flex', flexDirection: 'column' }}>
+                <ClientChatInbox initialOrderId={selectedOrderChatId} />
               </div>
             )}
 
