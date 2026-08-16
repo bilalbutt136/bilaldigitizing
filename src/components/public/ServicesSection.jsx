@@ -155,6 +155,10 @@ export const ServicesSection = () => {
     ]
   };
 
+  if (activeTab === 'all') {
+    return null;
+  }
+
   return (
     <section id="services" style={{ 
       padding: '5.5rem 0 6rem', 
@@ -197,9 +201,6 @@ export const ServicesSection = () => {
             lineHeight: '1.18',
             letterSpacing: '-0.025em'
           }}>
-            {activeTab === 'all' && (
-              <>Everything Your Brand Needs For <span style={{ color: 'var(--orange-500)' }}>Production</span></>
-            )}
             {activeTab === 'embroidery' && (
               <>Commercial <span style={{ color: 'var(--orange-500)' }}>Embroidery Digitizing</span></>
             )}
@@ -217,229 +218,11 @@ export const ServicesSection = () => {
             lineHeight: '1.65',
             margin: '0 auto',
           }}>
-            {activeTab === 'all' && 'Explore our 3 core studio capabilities below. Choose a specific service tab for in-depth technical details, packages, turnaround times, and instant ordering.'}
             {activeTab === 'embroidery' && 'Master machine-ready embroidery stitch files (.DST, .PES, .EMB) with zero thread breaks, calculated pull compensation, and free unlimited revisions.'}
             {activeTab === 'vector-art' && 'Clean, infinitely scalable vector graphics (.AI, .EPS, .SVG, .PDF) with hand-drawn Bézier curves and Pantone color separations ready for press.'}
             {activeTab === 'patches' && 'Custom embroidered, high-density woven, 3D molded PVC, and laser-engraved leather emblems delivered straight to your door.'}
           </p>
         </div>
-
-        {/* ====================================================================
-            VIEW 1: DEFAULT STATE — ALL SERVICES (3 Core Overview Cards)
-           ==================================================================== */}
-        {activeTab === 'all' && (
-          <div className="grid-responsive-3" style={{ alignItems: 'stretch' }}>
-            
-            {/* Card 1: Embroidery */}
-            <div className="card" style={{
-              background: '#ffffff',
-              borderRadius: '20px',
-              padding: '2.5rem 2rem',
-              boxShadow: 'var(--shadow-md)',
-              border: '1px solid var(--border-color)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between'
-            }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--orange-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--orange-500)' }}>
-                    <Layers size={24} />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-700)', background: 'var(--orange-50)', padding: '0.2rem 0.6rem', borderRadius: '9999px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                      Core Service 1
-                    </span>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-950)', margin: '0.2rem 0 0 0', lineHeight: 1.25 }}>
-                      Embroidery Digitizing
-                    </h3>
-                  </div>
-                </div>
-
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-                  Precision machine-ready stitch files engineered with calculated pull compensation, underlay structural integrity, and smooth pathing for all commercial machines.
-                </p>
-
-                <div style={{ color: 'var(--orange-600)', fontSize: '2.5rem', fontWeight: 900, marginBottom: '0.25rem', fontFamily: 'var(--font-heading)' }}>
-                  ${embMinPrice.toFixed(2)}
-                </div>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
-                  STARTS ${embMinPrice.toFixed(2)} FLAT / DESIGN
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
-                  {[
-                    '100% Manual Digitizing (No Auto-Trace)',
-                    'Zero Thread Breaks Guarantee',
-                    'All Machine Formats (.DST, .PES, .EMB)',
-                    '4–12 Hour Express Turnaround'
-                  ].map((feat) => (
-                    <div key={feat} style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.9rem', color: 'var(--navy-800)', fontWeight: 600 }}>
-                      <CheckCircle size={16} style={{ color: '#10b981', flexShrink: 0 }} />
-                      <span>{feat}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Available Packages Pill */}
-                <div style={{ padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.5rem', fontSize: '0.825rem', color: 'var(--navy-800)' }}>
-                  <strong style={{ color: 'var(--navy-950)' }}>Available Packages:</strong> {embPackagesSummary}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                <button
-                  type="button"
-                  className="btn btn-primary-orange"
-                  onClick={() => handleSelectTab('embroidery')}
-                  style={{ width: '100%', padding: '0.85rem', fontWeight: 800, fontSize: '0.95rem' }}
-                >
-                  Explore Embroidery Details <ArrowRight size={16} />
-                </button>
-              </div>
-            </div>
-
-            {/* Card 2: Vector Art */}
-            <div className="card" style={{
-              background: 'linear-gradient(180deg, #ffffff 0%, #fff7ed 100%)',
-              borderRadius: '20px',
-              padding: '2.5rem 2rem',
-              boxShadow: 'var(--shadow-lg)',
-              border: '2px solid var(--orange-400)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              transform: 'translateY(-6px)'
-            }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--orange-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--orange-600)' }}>
-                    <PenTool size={24} />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-700)', background: 'var(--orange-100)', padding: '0.2rem 0.6rem', borderRadius: '9999px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                      Core Service 2
-                    </span>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-950)', margin: '0.2rem 0 0 0', lineHeight: 1.25 }}>
-                      Vector Art Conversion
-                    </h3>
-                  </div>
-                </div>
-
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-                  Hand-crafted Bézier curve node tracing and Pantone spot color separation converting low-res JPGs/PNGs into infinitely scalable vector files.
-                </p>
-
-                <div style={{ color: 'var(--orange-600)', fontSize: '2.5rem', fontWeight: 900, marginBottom: '0.25rem', fontFamily: 'var(--font-heading)' }}>
-                  ${vecMinPrice.toFixed(2)}
-                </div>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
-                  STARTS ${vecMinPrice.toFixed(2)} FLAT / DESIGN
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
-                  {[
-                    '100% Hand-Drawn Node Precision',
-                    'Pantone Spot Color Separation Included',
-                    'Master Source Suite (.AI, .EPS, .SVG, .PDF)',
-                    '6–12 Hour Rapid Turnaround'
-                  ].map((feat) => (
-                    <div key={feat} style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.9rem', color: 'var(--navy-800)', fontWeight: 600 }}>
-                      <CheckCircle size={16} style={{ color: '#10b981', flexShrink: 0 }} />
-                      <span>{feat}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Available Packages Pill */}
-                <div style={{ padding: '0.75rem 1rem', background: '#ffffff', borderRadius: '10px', border: '1px solid var(--orange-200)', marginBottom: '1.5rem', fontSize: '0.825rem', color: 'var(--navy-800)' }}>
-                  <strong style={{ color: 'var(--navy-950)' }}>Available Packages:</strong> {vecPackagesSummary}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                <button
-                  type="button"
-                  className="btn btn-primary-orange"
-                  onClick={() => handleSelectTab('vector-art')}
-                  style={{ width: '100%', padding: '0.85rem', fontWeight: 800, fontSize: '0.95rem' }}
-                >
-                  Explore Vector Details <ArrowRight size={16} />
-                </button>
-              </div>
-            </div>
-
-            {/* Card 3: Custom Patches */}
-            <div className="card" style={{
-              background: '#ffffff',
-              borderRadius: '20px',
-              padding: '2.5rem 2rem',
-              boxShadow: 'var(--shadow-md)',
-              border: '1px solid var(--border-color)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between'
-            }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--orange-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--orange-500)' }}>
-                    <Tag size={24} />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-700)', background: 'var(--orange-50)', padding: '0.2rem 0.6rem', borderRadius: '9999px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                      Core Service 3
-                    </span>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-950)', margin: '0.2rem 0 0 0', lineHeight: 1.25 }}>
-                      Custom Physical Patches
-                    </h3>
-                  </div>
-                </div>
-
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-                  Physical custom patches crafted with high-density threads, 3D rubber PVC, or laser-engraved leather with Velcro, Iron-On, or Peel & Stick backings.
-                </p>
-
-                <div style={{ color: 'var(--orange-600)', fontSize: '2.5rem', fontWeight: 900, marginBottom: '0.25rem', fontFamily: 'var(--font-heading)' }}>
-                  ${patchMinPrice.toFixed(2)}
-                </div>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
-                  STARTS ${patchMinPrice.toFixed(2)} / PIECE
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
-                  {[
-                    'Velcro, Iron-On & Peel & Stick Backings',
-                    'Classic Merrowed or Laser Cut Borders',
-                    'Free Digital Proof & Sew-Out Photos',
-                    'Express Doorstep Global Delivery'
-                  ].map((feat) => (
-                    <div key={feat} style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.9rem', color: 'var(--navy-800)', fontWeight: 600 }}>
-                      <CheckCircle size={16} style={{ color: '#10b981', flexShrink: 0 }} />
-                      <span>{feat}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Available Packages Pill */}
-                <div style={{ padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.5rem', fontSize: '0.825rem', color: 'var(--navy-800)' }}>
-                  <strong style={{ color: 'var(--navy-950)' }}>Available Packages:</strong> {patchPackagesSummary}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                <button
-                  type="button"
-                  className="btn btn-primary-orange"
-                  onClick={() => handleSelectTab('patches')}
-                  style={{ width: '100%', padding: '0.85rem', fontWeight: 800, fontSize: '0.95rem' }}
-                >
-                  Explore Patches Details <ArrowRight size={16} />
-                </button>
-              </div>
-            </div>
-
-          </div>
-        )}
 
         {/* ====================================================================
             VIEW 2: EMBROIDERY TAB (Dynamic Embroidery Packages)
