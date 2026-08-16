@@ -515,19 +515,30 @@ export default function PricingPage() {
                     </p>
                   )}
 
-                  {/* Price Box */}
-                  <div style={{ marginBottom: '1.15rem', padding: '0.85rem 1rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+                  {/* Price Box - Centered in the middle */}
+                  <div style={{
+                    marginBottom: '1.15rem',
+                    padding: '0.85rem 1rem',
+                    background: '#f8fafc',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-color)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.45rem' }}>
                       <div style={{ fontSize: '2.25rem', fontWeight: 900, color: pkg.theme.color, lineHeight: 1, letterSpacing: '-0.03em' }}>
-                        ${pkg.price}
+                        ${typeof pkg.price === 'number' ? pkg.price.toFixed(2) : parseFloat(String(pkg.price).replace(/[^\d.]/g, '') || 0).toFixed(2)}
                       </div>
                       {pkg.originalPrice && (
                         <div style={{ fontSize: '1.1rem', color: 'var(--text-muted)', textDecoration: 'line-through', fontWeight: 700 }}>
-                          ${pkg.originalPrice}
+                          ${typeof pkg.originalPrice === 'number' ? pkg.originalPrice.toFixed(2) : parseFloat(String(pkg.originalPrice).replace(/[^\d.]/g, '') || 0).toFixed(2)}
                         </div>
                       )}
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 800, marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 800, marginTop: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'center' }}>
                       {pkg.priceUnit}
                     </div>
                   </div>

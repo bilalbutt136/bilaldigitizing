@@ -70,32 +70,29 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
   const tierTheme = getTierTheme(idx, rawService);
   const IconComp = cat.icon || (idx === 0 ? Zap : idx === 1 ? Trophy : Sparkles);
   
-  // Rate Formatting
-  let numericPrice = (cat.price !== undefined && cat.price !== null) ? Number(cat.price) : null;
+  // Rate Formatting with exact 2 decimal places e.g. $4.50, $15.00
+  let numericPrice = (cat.price !== undefined && cat.price !== null && cat.price !== '') ? parseFloat(cat.price) : null;
   let displayRate = '$10.00';
 
   if (numericPrice !== null && !isNaN(numericPrice)) {
     displayRate = `$${numericPrice.toFixed(2)}`;
   } else if (cat.rate) {
     const rawRateStr = String(cat.rate).replace(/\/.*$/, '').trim();
-    const priceMatch = rawRateStr.match(/\$?\d+(?:\.\d{2})?/);
+    const priceMatch = rawRateStr.match(/\d+(?:\.\d+)?/);
     if (priceMatch) {
-      displayRate = priceMatch[0].startsWith('$') ? priceMatch[0] : `$${priceMatch[0]}`;
+      displayRate = `$${parseFloat(priceMatch[0]).toFixed(2)}`;
     } else {
       displayRate = rawRateStr.startsWith('$') ? rawRateStr : `$${rawRateStr}`;
     }
   }
 
-  // Strike price formatting
+  // Strike price formatting with exact 2 decimal places e.g. $5.00, $20.00
   let displayStrikePrice = null;
   const rawOrig = cat.original_price ?? cat.originalPrice ?? cat.strikePrice;
   if (rawOrig !== undefined && rawOrig !== null && rawOrig !== '') {
-    if (typeof rawOrig === 'number') {
-      displayStrikePrice = `$${rawOrig.toFixed(2)}`;
-    } else if (String(rawOrig).startsWith('$')) {
-      displayStrikePrice = String(rawOrig);
-    } else if (!isNaN(parseFloat(rawOrig))) {
-      displayStrikePrice = `$${parseFloat(rawOrig).toFixed(2)}`;
+    const parsedOrig = typeof rawOrig === 'number' ? rawOrig : parseFloat(String(rawOrig).replace(/[^\d.]/g, ''));
+    if (!isNaN(parsedOrig)) {
+      displayStrikePrice = `$${parsedOrig.toFixed(2)}`;
     }
   }
   
@@ -170,9 +167,20 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
           </p>
         )}
 
-        {/* Price Box */}
-        <div style={{ marginBottom: '1.15rem', padding: '0.85rem 1rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+        {/* Price Box - Centered in the middle */}
+        <div style={{
+          marginBottom: '1.15rem',
+          padding: '0.85rem 1rem',
+          background: '#f8fafc',
+          borderRadius: '12px',
+          border: '1px solid #e2e8f0',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center'
+        }}>
+          <div style={{ display: 'inline-flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.45rem' }}>
             <div style={{ fontSize: '2.25rem', fontWeight: 900, color: tierTheme.color, lineHeight: 1, letterSpacing: '-0.03em' }}>
               {displayRate}
             </div>
@@ -182,7 +190,7 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
               </div>
             )}
           </div>
-          <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 800, marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 800, marginTop: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'center' }}>
             {unitText}
           </div>
         </div>
