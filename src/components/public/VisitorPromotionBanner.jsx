@@ -3,16 +3,35 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Tag, ArrowRight, X, Gift, Check } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
+import { usePathname } from 'next/navigation';
 
 export const VisitorPromotionBanner = () => {
-  const { siteSettings, openOrderWizard, protectedNavigate, isAuthenticated } = useAppState();
+  const { siteSettings, openOrderWizard, protectedNavigate, isAuthenticated, currentView, authUser } = useAppState();
+  const pathname = usePathname() || '';
+  
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(true);
   const [copied, setCopied] = useState(false);
 
   const banner = siteSettings?.promotionalBanner;
 
+  // Strict check: Never show promotional welcome banner on Admin routes or to Admin users
+  const isAdminRoute = 
+    pathname.startsWith('/admin') || 
+    pathname.startsWith('/secure-admin-login') ||
+    pathname.includes('/admin');
+  const isAdminUser = 
+    authUser?.role === 'admin' || 
+    currentView === 'admin' || 
+    (typeof window !== 'undefined' && (window.location.pathname.includes('admin') || window.location.pathname.includes('secure-admin-login')));
+
   useEffect(() => {
+    if (isAdminRoute || isAdminUser) {
+      setIsVisible(false);
+      setIsDismissed(true);
+      return;
+    }
+
     if (banner?.title && banner?.enabled) {
       const dismissKey = 'visitor_promo_dismissed_' + encodeURIComponent(banner.title);
       const dismissed = sessionStorage.getItem(dismissKey);
@@ -24,9 +43,9 @@ export const VisitorPromotionBanner = () => {
         return () => clearTimeout(timer);
       }
     }
-  }, [banner?.enabled, banner?.title]);
+  }, [banner?.enabled, banner?.title, isAdminRoute, isAdminUser]);
 
-  if (isDismissed || !isVisible || !banner?.enabled || !banner?.title) {
+  if (isAdminRoute || isAdminUser || isDismissed || !isVisible || !banner?.enabled || !banner?.title) {
     return null;
   }
 
@@ -98,95 +117,132 @@ export const VisitorPromotionBanner = () => {
           borderRadius: '9999px',
           fontSize: '0.72rem',
           fontWeight: 900,
-          textTransform: 'uppercase',
-          letterSpacing: '0.04em'
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase'
         }}>
-          <Gift size={12} />
-          <span>Special Offer</span>
+          <Gift size={12} /> Special Welcome Offer
         </div>
-
+        
         <button
-          type="button"
           onClick={handleDismiss}
           style={{
-            background: 'rgba(255,255,255,0.1)',
+            background: 'rgba(255, 255, 255, 0.08)',
             border: 'none',
             borderRadius: '50%',
             width: '24px',
             height: '24px',
-            color: '#94a3b8',
-            cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            color: '#94a3b8',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+            e.currentTarget.style.color = '#ffffff';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+            e.currentTarget.style.color = '#94a3b8';
           }}
         >
           <X size={14} />
         </button>
       </div>
 
-      {/* Title & Description */}
-      <h4 style={{ fontSize: '1rem', fontWeight: 900, color: '#ffffff', margin: '0 0 0.35rem', lineHeight: 1.25 }}>
-        {banner.title}
+      {/* Title & Body Text */}
+      <h4 style={{
+        margin: '0 0 0.35rem 0',
+        fontSize: '1.05rem',
+        fontWeight: 900,
+        color: '#ffffff',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.4rem',
+        lineHeight: 1.3
+      }}>
+        {banner.title} <Sparkles size={16} style={{ color: 'var(--orange-400)' }} />
       </h4>
-
-      {banner.description && (
-        <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0 0 0.85rem', lineHeight: 1.45 }}>
-          {banner.description}
+      
+      {banner.message && (
+        <p style={{
+          margin: '0 0 0.85rem 0',
+          fontSize: '0.82rem',
+          color: '#cbd5e1',
+          lineHeight: 1.45
+        }}>
+          {banner.message}
         </p>
       )}
 
-      {/* Code Badge & Action Button */}
-      <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+      {/* Promo Code & Action Box */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        marginTop: '0.65rem'
+      }}>
         {banner.promoCode && (
           <button
-            type="button"
             onClick={handleCopyCode}
             style={{
-              background: 'rgba(0,0,0,0.4)',
-              border: '1px dashed rgba(255,255,255,0.4)',
-              color: '#ffffff',
-              padding: '0.45rem 0.65rem',
-              borderRadius: '8px',
-              fontSize: '0.75rem',
-              fontWeight: 900,
-              cursor: 'pointer',
+              flex: 1,
               display: 'flex',
               alignItems: 'center',
-              gap: '0.3rem',
-              fontFamily: 'monospace'
+              justifyContent: 'center',
+              gap: '0.4rem',
+              background: copied ? '#059669' : 'rgba(255, 255, 255, 0.1)',
+              border: `1.5px dashed ${copied ? '#34d399' : 'rgba(249, 115, 22, 0.6)'}`,
+              borderRadius: '10px',
+              padding: '0.55rem 0.75rem',
+              color: '#ffffff',
+              fontSize: '0.82rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              fontFamily: 'monospace',
+              letterSpacing: '0.05em'
             }}
-            title="Click to copy"
+            title="Click to copy promo code"
           >
-            <Tag size={12} />
-            <span>{banner.promoCode}</span>
-            <span style={{ fontSize: '0.68rem', color: copied ? '#86efac' : 'rgba(255,255,255,0.7)', fontWeight: 800 }}>
-              {copied ? '✓' : 'Copy'}
-            </span>
+            {copied ? (
+              <>
+                <Check size={14} /> COPIED!
+              </>
+            ) : (
+              <>
+                <Tag size={13} style={{ color: 'var(--orange-400)' }} /> {banner.promoCode}
+              </>
+            )}
           </button>
         )}
 
         <button
-          type="button"
           onClick={handleClaim}
-          className="btn btn-primary-orange"
           style={{
-            flex: 1,
-            padding: '0.5rem 0.85rem',
-            fontSize: '0.8rem',
-            fontWeight: 900,
+            flex: banner.promoCode ? 1.2 : 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '0.35rem',
-            borderRadius: '8px'
+            background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+            border: 'none',
+            borderRadius: '10px',
+            padding: '0.6rem 0.85rem',
+            color: '#ffffff',
+            fontSize: '0.82rem',
+            fontWeight: 900,
+            cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(249, 115, 22, 0.4)',
+            transition: 'all 0.2s ease'
           }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
         >
-          <span>{banner.ctaText || 'Claim Offer'}</span>
-          <ArrowRight size={13} />
+          {banner.buttonText || 'Claim Offer'} <ArrowRight size={14} />
         </button>
       </div>
-
     </div>
   );
 };
