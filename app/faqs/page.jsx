@@ -1,45 +1,47 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { ChevronDown, MessageCircle } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ChevronDown, MessageCircle, Search, Sparkles, HelpCircle, Layers, PenTool, Tag, CreditCard, ShieldCheck, Mail, ArrowRight } from 'lucide-react';
 import { useAppState } from '../../src/context/StateContext';
 
 const MASTER_DEFAULT_FAQS = [
   {
     category: 'Commercial Embroidery Digitizing',
+    icon: 'Layers',
     questions: [
       {
-        q: 'What embroidery machine formats do you provide?',
-        a: 'We provide all commercial and home embroidery formats including Tajima (.DST), Wilcom (.EMB), Brother/Baby Lock (.PES, .PEC), Barudan (.DSB, .DAT), Melco (.EXP), Janome (.JEF, .SEW), Husqvarna/Pfaff (.VP3, .VIP, .HUS), and Singer (.XXX). We also include a detailed PDF Production Worksheet with stitch count, exact dimensions, color sequence, and run time.'
+        q: 'What commercial and home embroidery machine formats do you provide?',
+        a: 'We export to all commercial and home machine formats: Tajima (.DST), Wilcom Master (.EMB), Brother/Baby Lock (.PES, .PEC), Barudan (.DSB, .DAT), Melco (.EXP), Janome (.JEF, .SEW), Husqvarna/Pfaff (.VP3, .VIP, .HUS), and Singer (.XXX). Every delivery also includes a high-resolution PDF Production Worksheet with stitch count, exact dimensions, thread color run sheet, and machine run-time calculations.'
       },
       {
-        q: 'How do you guarantee zero thread breaks and machine-ready quality?',
-        a: 'With 25+ years of factory-floor digitizing experience, every stitch file is manually digitized (never auto-traced). We engineer precise pull-and-push compensation tailored to your specific fabric (piqué knit, performance fleece, twill, leather, canvas), apply structured dual-underlay pathing, and program gradual lead-in angles to eliminate needle deflection and thread breaks at high speeds (1,000+ SPM).'
+        q: 'How do you guarantee zero thread breaks and machine-ready sew-outs?',
+        a: 'Backed by 25+ years of factory digitizing experience, every design is 100% manually digitized (zero auto-trace). We engineer fabric-specific push-and-pull compensation (piqué knit, performance fleece, twill, leather, canvas), apply structured dual-underlay pathing, and program gradual lead-in stitch angles to eliminate needle deflection and thread breaks at high speeds (1,000+ SPM).'
       },
       {
-        q: 'How do you digitize 3D Puff embroidery for structured caps and hats?',
-        a: 'For 3D Foam / Puff embroidery, we digitize dedicated capping stitches to cleanly slice the EVA foam edges, program double density satin columns (0.18mm - 0.22mm), adjust pull compensation outward by 0.3mm–0.5mm, and sequence the design center-outward so cap seams do not distort.'
+        q: 'How do you digitize 3D Puff / Foam embroidery for structured caps and hats?',
+        a: 'For 3D Foam / Puff embroidery, we digitize dedicated capping stitches to cleanly slice the EVA foam edges, program double density satin columns (0.18mm - 0.22mm), adjust pull compensation outward by +0.35mm–0.50mm, and sequence the design center-outward so the front cap seam does not distort or push off-register.'
       },
       {
         q: 'What is the standard turnaround time for digitizing orders?',
-        a: 'Our standard turnaround is 12 to 24 hours. We also offer an express rush service delivered within 4 to 6 hours for time-sensitive commercial production deadlines, available 24/7.'
+        a: 'Our standard turnaround is 12 to 24 hours. We also offer an express rush service delivered within 4 to 6 hours for time-sensitive commercial production deadlines, operating 24 hours a day, 7 days a week.'
       },
       {
         q: 'Can you digitize tiny text and intricate small details for left chest logos?',
-        a: 'Yes. For small lettering down to 4mm (0.15 inch), we utilize specialized single-run underlay, precise start/stop knots, and 60-weight thread optimization to ensure crisp, readable text without knotting or puckering.'
+        a: 'Yes. For small lettering down to 4mm (0.15 inch), we utilize specialized single-run underlay, precise start/stop knots, and 60-weight thread optimization to ensure crisp, legible text without knotting, birdnesting, or fabric puckering.'
       }
     ]
   },
   {
-    category: 'Vector Art & Screen Print Separations',
+    category: 'Vector Art & Spot Color Separations',
+    icon: 'PenTool',
     questions: [
       {
-        q: 'What vector file formats will I receive?',
-        a: 'You receive complete master vector files in Adobe Illustrator (.AI), Scalable Vector Graphics (.SVG), Encapsulated PostScript (.EPS), Print-Ready Vector (.PDF), CorelDRAW (.CDR upon request), and high-resolution transparent 300 DPI (.PNG) files.'
+        q: 'What vector master file formats will I receive?',
+        a: 'You receive complete master vector files in Adobe Illustrator (.AI), Scalable Vector Graphics (.SVG), Encapsulated PostScript (.EPS), Print-Ready Vector (.PDF), CorelDRAW (.CDR upon request), and ultra-high-resolution transparent 300 DPI (.PNG) files.'
       },
       {
         q: 'Can you convert blurry, low-resolution JPG or mobile phone photos into vector art?',
-        a: 'Absolutely. We do not use automated live-trace tools which create messy jagged nodes. Our artists manually redraw every Bézier curve, reconstruct lost geometry, identify original typography, and deliver mathematically pure, infinitely scalable vector artwork.'
+        a: 'Absolutely. We do not use automated live-trace tools which generate thousands of messy jagged nodes. Our artists manually redraw every Bézier curve, reconstruct lost geometry, identify original typography, and deliver mathematically pure, infinitely scalable vector artwork.'
       },
       {
         q: 'Do your vector conversions include Pantone (PMS) spot color separations?',
@@ -53,10 +55,11 @@ const MASTER_DEFAULT_FAQS = [
   },
   {
     category: 'Custom Physical Patches & Manufacturing',
+    icon: 'Tag',
     questions: [
       {
         q: 'What types of custom patches do you manufacture?',
-        a: 'We manufacture four commercial-grade patch styles: (1) Classic 100% Embroidered Twill Patches with raised texture, (2) Ultra-High Density Woven Patches for photographic fine details, (3) 3D Molded Waterproof PVC Rubber Patches, and (4) Laser-Engraved Genuine & Faux Leather Patches.'
+        a: 'We manufacture four commercial-grade patch styles: (1) Classic 100% Embroidered Twill Patches with textured Rayon threads, (2) Ultra-High Density Woven Patches for photographic fine details, (3) 3D Molded Waterproof PVC Rubber Patches, and (4) Laser-Engraved Genuine & Faux Leather Patches.'
       },
       {
         q: 'What patch backing options are available?',
@@ -74,6 +77,7 @@ const MASTER_DEFAULT_FAQS = [
   },
   {
     category: 'Billing, Payment Gateways & Security',
+    icon: 'CreditCard',
     questions: [
       {
         q: 'What payment methods and gateways do you accept?',
@@ -95,6 +99,7 @@ const MASTER_DEFAULT_FAQS = [
   },
   {
     category: 'Revisions, Turnaround & 100% Satisfaction Guarantee',
+    icon: 'ShieldCheck',
     questions: [
       {
         q: 'What is your revision policy?',
@@ -111,6 +116,9 @@ const MASTER_DEFAULT_FAQS = [
 export default function FAQsPage() {
   const { faqs: dbFaqs = [] } = useAppState() || {};
   const [faqs, setFaqs] = useState(MASTER_DEFAULT_FAQS);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [openIndex, setOpenIndex] = useState('0-0');
 
   useEffect(() => {
     if (dbFaqs && dbFaqs.length > 0) {
@@ -128,7 +136,30 @@ export default function FAQsPage() {
     }
   }, [dbFaqs]);
 
-  const [openIndex, setOpenIndex] = useState('0-0');
+  const categories = useMemo(() => {
+    return ['All', ...faqs.map(f => f.category)];
+  }, [faqs]);
+
+  const filteredFaqs = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+    return faqs
+      .filter(section => selectedCategory === 'All' || section.category === selectedCategory)
+      .map(section => {
+        if (!query) return section;
+        const matchingQuestions = section.questions.filter(
+          q => q.q.toLowerCase().includes(query) || q.a.toLowerCase().includes(query)
+        );
+        return {
+          ...section,
+          questions: matchingQuestions
+        };
+      })
+      .filter(section => section.questions.length > 0);
+  }, [faqs, searchQuery, selectedCategory]);
+
+  const totalQuestionsCount = useMemo(() => {
+    return filteredFaqs.reduce((acc, s) => acc + s.questions.length, 0);
+  }, [filteredFaqs]);
 
   const toggleAccordion = (index) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -155,117 +186,405 @@ export default function FAQsPage() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
         />
       )}
-      <div className="container" style={{ maxWidth: '900px', margin: '0 auto', padding: '0 1.5rem' }}>
+      <div className="container" style={{ maxWidth: '980px', margin: '0 auto', padding: '0 1.5rem' }}>
         
-        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-          <h1 style={{ fontSize: '2.8rem', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '1rem', letterSpacing: '-0.02em' }}>
-            Frequently Asked Questions
+        {/* Hero Section Header */}
+        <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            background: 'var(--orange-50)',
+            border: '1px solid var(--orange-200)',
+            color: 'var(--orange-700)',
+            padding: '0.4rem 1rem',
+            borderRadius: '9999px',
+            fontSize: '0.85rem',
+            fontWeight: '800',
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            marginBottom: '1.25rem'
+          }}>
+            <Sparkles size={16} />
+            25+ Years Industry Knowledge Base
+          </div>
+
+          <h1 style={{
+            fontSize: 'clamp(2.2rem, 4vw, 3.2rem)',
+            fontWeight: 900,
+            fontFamily: 'var(--font-heading)',
+            color: 'var(--navy-950)',
+            marginBottom: '1.25rem',
+            letterSpacing: '-0.025em',
+            lineHeight: 1.15
+          }}>
+            Frequently Asked <span style={{ color: 'var(--orange-500)' }}>Questions</span>
           </h1>
-          <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
-            Everything you need to know about our services, processes, and policies. Can't find the answer you're looking for? Feel free to contact our 24/7 support.
+
+          <p style={{
+            fontSize: '1.125rem',
+            color: 'var(--text-muted)',
+            maxWidth: '680px',
+            margin: '0 auto',
+            lineHeight: 1.65
+          }}>
+            Search our master production archive for clear, authoritative answers regarding commercial embroidery digitizing, vector separations, patch manufacturing, file formats, rush turnarounds, and billing policies.
           </p>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
-          {faqs.map((section, sIdx) => (
-            <div key={sIdx}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1.5rem', borderBottom: '2px solid var(--border-color)', paddingBottom: '0.75rem' }}>
-                {section.category}
-              </h2>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {section.questions.map((faq, qIdx) => {
-                  const idx = `${sIdx}-${qIdx}`;
-                  const isOpen = openIndex === idx;
-                  
-                  return (
-                    <div 
-                      key={qIdx} 
-                      style={{ 
-                        background: '#ffffff', 
-                        borderRadius: '12px', 
-                        border: '1px solid var(--border-color)',
-                        overflow: 'hidden',
-                        boxShadow: isOpen ? '0 10px 25px rgba(0,0,0,0.05)' : 'none',
-                        transition: 'all 0.3s ease'
-                      }}
-                    >
-                      <button
-                        onClick={() => toggleAccordion(idx)}
-                        style={{
-                          width: '100%',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '1.5rem',
-                          background: 'transparent',
-                          border: 'none',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          color: isOpen ? 'var(--orange-600)' : 'var(--navy-900)',
-                        }}
-                      >
-                        <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>{faq.q}</span>
-                        <ChevronDown 
-                          size={20} 
-                          style={{ 
-                            transform: isOpen ? 'rotate(180deg)' : 'rotate(0)', 
-                            transition: 'transform 0.3s ease',
-                            color: isOpen ? 'var(--orange-500)' : 'var(--navy-400)'
-                          }} 
-                        />
-                      </button>
-                      
+        {/* Live Search Bar */}
+        <div style={{
+          position: 'relative',
+          marginBottom: '2rem',
+          maxWidth: '720px',
+          margin: '0 auto 2rem'
+        }}>
+          <div style={{
+            position: 'absolute',
+            left: '1.25rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: 'var(--orange-500)',
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <Search size={20} />
+          </div>
+          <input
+            type="text"
+            className="form-control"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search questions, machine formats, puff foam, PMS colors, refunds..."
+            style={{
+              padding: '1rem 1.25rem 1rem 3.25rem',
+              borderRadius: '14px',
+              fontSize: '1.05rem',
+              border: '2px solid var(--border-color)',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
+              background: '#ffffff'
+            }}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              style={{
+                position: 'absolute',
+                right: '1rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: '#e2e8f0',
+                border: 'none',
+                borderRadius: '999px',
+                padding: '0.25rem 0.6rem',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        {/* Interactive Category Filter Pills */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '0.5rem',
+          flexWrap: 'wrap',
+          marginBottom: '3rem'
+        }}>
+          {categories.map((cat) => {
+            const isSelected = selectedCategory === cat;
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => { setSelectedCategory(cat); setOpenIndex(null); }}
+                style={{
+                  padding: '0.55rem 1.15rem',
+                  borderRadius: '999px',
+                  border: isSelected ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
+                  background: isSelected ? 'var(--orange-500)' : '#ffffff',
+                  color: isSelected ? '#ffffff' : 'var(--navy-800)',
+                  fontWeight: isSelected ? 800 : 600,
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
+                  boxShadow: isSelected ? '0 4px 12px rgba(249, 115, 22, 0.25)' : 'none',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {cat}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Results Counter */}
+        {searchQuery && (
+          <div style={{ marginBottom: '1.5rem', fontSize: '0.95rem', color: 'var(--navy-800)', fontWeight: 700 }}>
+            Found {totalQuestionsCount} matching question{totalQuestionsCount === 1 ? '' : 's'} for "{searchQuery}"
+          </div>
+        )}
+
+        {/* Accordion List */}
+        {filteredFaqs.length === 0 ? (
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            padding: '3.5rem 2rem',
+            textAlign: 'center',
+            border: '1px solid var(--border-color)',
+            boxShadow: 'var(--shadow-sm)'
+          }}>
+            <HelpCircle size={48} style={{ color: 'var(--orange-400)', marginBottom: '1rem' }} />
+            <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.5rem' }}>
+              No matching questions found
+            </h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+              Try searching with different keywords, or connect with our 24/7 support engineers for immediate help.
+            </p>
+            <button
+              type="button"
+              className="btn btn-primary-orange"
+              onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }}
+            >
+              Reset Search
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+            {filteredFaqs.map((section, sIdx) => (
+              <div key={sIdx}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  marginBottom: '1.25rem',
+                  borderBottom: '2px solid #e2e8f0',
+                  paddingBottom: '0.75rem'
+                }}>
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    background: 'var(--orange-50)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--orange-600)'
+                  }}>
+                    <Layers size={18} />
+                  </div>
+                  <h2 style={{
+                    fontSize: '1.35rem',
+                    fontWeight: 800,
+                    color: 'var(--navy-950)',
+                    fontFamily: 'var(--font-heading)',
+                    margin: 0
+                  }}>
+                    {section.category}
+                  </h2>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  {section.questions.map((faq, qIdx) => {
+                    const idx = `${sIdx}-${qIdx}`;
+                    const isOpen = openIndex === idx;
+                    
+                    return (
                       <div 
+                        key={qIdx} 
                         style={{ 
-                          maxHeight: isOpen ? '500px' : '0', 
-                          overflow: 'hidden', 
-                          transition: 'max-height 0.3s ease-in-out',
-                          background: '#f8fafc'
+                          background: '#ffffff', 
+                          borderRadius: '14px', 
+                          border: isOpen ? '1.5px solid var(--orange-400)' : '1px solid var(--border-color)',
+                          overflow: 'hidden',
+                          boxShadow: isOpen ? '0 10px 25px rgba(249, 115, 22, 0.08)' : '0 2px 8px rgba(0,0,0,0.02)',
+                          transition: 'all 0.25s ease'
                         }}
                       >
-                        <div style={{ padding: '0 1.5rem 1.5rem 1.5rem', color: 'var(--text-muted)', lineHeight: 1.7 }}>
-                          {faq.a}
+                        <button
+                          onClick={() => toggleAccordion(idx)}
+                          style={{
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '1.25rem 1.5rem',
+                            background: isOpen ? '#fffaf5' : 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            color: isOpen ? 'var(--orange-600)' : 'var(--navy-950)',
+                            gap: '1rem'
+                          }}
+                        >
+                          <span style={{ fontSize: '1.05rem', fontWeight: 800, lineHeight: 1.4 }}>
+                            {faq.q}
+                          </span>
+                          <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '8px',
+                            background: isOpen ? 'var(--orange-500)' : '#f1f5f9',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            transition: 'all 0.2s ease'
+                          }}>
+                            <ChevronDown 
+                              size={18} 
+                              style={{ 
+                                transform: isOpen ? 'rotate(180deg)' : 'rotate(0)', 
+                                transition: 'transform 0.25s ease',
+                                color: isOpen ? '#ffffff' : 'var(--navy-700)'
+                              }} 
+                            />
+                          </div>
+                        </button>
+                        
+                        <div 
+                          style={{ 
+                            maxHeight: isOpen ? '600px' : '0', 
+                            overflow: 'hidden', 
+                            transition: 'max-height 0.3s ease-in-out',
+                            background: '#ffffff'
+                          }}
+                        >
+                          <div style={{
+                            padding: '0 1.5rem 1.5rem 1.5rem',
+                            color: 'var(--navy-800)',
+                            fontSize: '0.975rem',
+                            lineHeight: 1.75,
+                            borderTop: '1px solid rgba(0,0,0,0.04)',
+                            paddingTop: '1rem'
+                          }}>
+                            {faq.a}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
         
-        <div style={{ marginTop: '4rem', background: 'var(--navy-900)', borderRadius: '16px', padding: '3rem 2rem', textAlign: 'center', color: '#ffffff' }}>
-          <MessageCircle size={40} style={{ color: 'var(--orange-500)', marginBottom: '1rem' }} />
-          <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.75rem' }}>Still have questions?</h3>
-          <p style={{ color: 'var(--navy-200)', marginBottom: '1.5rem', maxWidth: '400px', margin: '0 auto 2rem auto' }}>
-            Our team is available 24/7 to assist you with any custom requests or specific inquiries.
+        {/* Support & Quote CTA Card (High-Contrast Professional Theme) */}
+        <div style={{
+          marginTop: '4.5rem',
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          borderRadius: '24px',
+          padding: '3.5rem 2.5rem',
+          textAlign: 'center',
+          color: '#ffffff',
+          boxShadow: '0 20px 40px rgba(15, 23, 42, 0.15)',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '64px',
+            height: '64px',
+            borderRadius: '16px',
+            background: 'rgba(249, 115, 22, 0.15)',
+            border: '1px solid rgba(249, 115, 22, 0.3)',
+            color: 'var(--orange-400)',
+            marginBottom: '1.5rem'
+          }}>
+            <MessageCircle size={32} />
+          </div>
+
+          <h3 style={{
+            fontSize: 'clamp(1.75rem, 3vw, 2.2rem)',
+            fontWeight: 900,
+            fontFamily: 'var(--font-heading)',
+            color: '#ffffff',
+            marginBottom: '0.85rem',
+            lineHeight: 1.2
+          }}>
+            Need Dedicated Support or a Custom Quote?
+          </h3>
+
+          <p style={{
+            color: '#cbd5e1',
+            fontSize: '1.05rem',
+            lineHeight: 1.65,
+            maxWidth: '560px',
+            margin: '0 auto 2.25rem auto'
+          }}>
+            Our senior digitizers and production engineers are on standby <strong>24/7/365</strong> to review your artwork, recommend optimal fabric stabilizers, and answer any custom inquiries.
           </p>
-          <button 
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('bdigi_open_chat'));
-                setTimeout(() => {
-                  const chatBtn = document.querySelector('.live-chat-floating-button') || document.querySelector('[data-chat-trigger="true"]');
-                  if (chatBtn) chatBtn.click();
-                }, 100);
-              }
-            }}
-            style={{
-              background: 'linear-gradient(135deg, #ff7a00, #ff9d40)',
-              color: '#ffffff',
-              border: 'none',
-              padding: '0.85rem 2rem',
-              borderRadius: '999px',
-              fontSize: '1rem',
-              fontWeight: 800,
-              cursor: 'pointer',
-              boxShadow: '0 4px 15px rgba(255, 122, 0, 0.3)'
-            }}
-          >
-            Chat with Support
-          </button>
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '1rem',
+            flexWrap: 'wrap'
+          }}>
+            <button 
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('bdigi_open_chat'));
+                  setTimeout(() => {
+                    const chatBtn = document.querySelector('.live-chat-floating-button') || document.querySelector('[data-chat-trigger="true"]');
+                    if (chatBtn) chatBtn.click();
+                  }, 100);
+                }
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                color: '#ffffff',
+                border: 'none',
+                padding: '0.95rem 2.25rem',
+                borderRadius: '999px',
+                fontSize: '1rem',
+                fontWeight: 900,
+                cursor: 'pointer',
+                boxShadow: '0 8px 25px rgba(249, 115, 22, 0.4)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                transition: 'transform 0.15s ease'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+            >
+              Start 24/7 Live Chat <ArrowRight size={18} />
+            </button>
+
+            <a
+              href="mailto:orders@bdigitizing-pro.com"
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#ffffff',
+                padding: '0.95rem 2rem',
+                borderRadius: '999px',
+                fontSize: '1rem',
+                fontWeight: 800,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                transition: 'background 0.2s ease'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.16)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+            >
+              <Mail size={18} /> Email Production Desk
+            </a>
+          </div>
         </div>
 
       </div>
