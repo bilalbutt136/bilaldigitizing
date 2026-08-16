@@ -157,12 +157,12 @@ export const CheckoutModal = () => {
       </style>
 
       <div style={{
-        background: '#0f172a',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        background: '#ffffff',
+        border: '1px solid #cbd5e1',
         borderRadius: '24px',
         width: '100%',
         maxWidth: '520px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+        boxShadow: '0 25px 60px -15px rgba(15, 23, 42, 0.25)',
         position: 'relative',
         overflow: 'hidden',
         display: 'flex',
@@ -173,27 +173,27 @@ export const CheckoutModal = () => {
         {/* Header */}
         <div style={{ 
           padding: '1.25rem 1.5rem', 
-          borderBottom: '1px solid rgba(255,255,255,0.05)', 
+          borderBottom: '1px solid #334155', 
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center',
-          background: 'rgba(255,255,255,0.02)'
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{ 
-              width: '32px', height: '32px', borderRadius: '50%', 
-              background: isPaid ? 'rgba(16, 185, 129, 0.15)' : 'rgba(56, 189, 248, 0.15)',
+              width: '34px', height: '34px', borderRadius: '50%', 
+              background: isPaid ? 'rgba(16, 185, 129, 0.2)' : 'rgba(249, 115, 22, 0.2)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: isPaid ? '#10b981' : '#38bdf8'
+              color: isPaid ? '#10b981' : 'var(--orange-400)'
             }}>
               {isPaid ? <CheckCircle size={18} /> : <Loader2 size={18} style={{ animation: (isInitializing || (!isIframeLoaded && checkoutSession.url)) ? 'spin 2s linear infinite' : 'none' }} />}
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#ffffff' }}>
                 {isPaid ? 'Payment Successful' : 'Secure Checkout'}
               </h3>
-              <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>
-                {isPaid ? 'Your order is now being processed.' : 'Complete your payment via BoltPayouts'}
+              <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8' }}>
+                {isPaid ? 'Your order is now in production.' : '256-Bit Encrypted Payment Processing'}
               </p>
             </div>
           </div>
@@ -201,37 +201,37 @@ export const CheckoutModal = () => {
           <button 
             onClick={handleClose}
             style={{ 
-              background: 'rgba(255, 255, 255, 0.05)', border: 'none', color: '#cbd5e1', 
+              background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#cbd5e1', 
               width: '32px', height: '32px', borderRadius: '50%', 
               display: 'flex', alignItems: 'center', justifyContent: 'center', 
               cursor: 'pointer', transition: 'all 0.2s ease' 
             }}
-            onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }}
-            onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#cbd5e1'; }}
+            onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = '#fff'; }}
+            onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#cbd5e1'; }}
           >
             <X size={16} />
           </button>
         </div>
 
         {/* Content */}
-        <div style={{ position: 'relative', width: '100%', minHeight: '480px', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ position: 'relative', width: '100%', minHeight: '460px', display: 'flex', flexDirection: 'column', background: '#f8fafc' }}>
           
           {isPaid ? (
             <div style={{ 
               flex: 1, display: 'flex', flexDirection: 'column', 
               alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem', textAlign: 'center' 
             }}>
-              <CheckCircle size={64} style={{ color: '#10b981', marginBottom: '1.5rem' }} />
-              <h2 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Thank You!</h2>
-              <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '2rem', maxWidth: '300px' }}>
-                We've received your payment. Your order has been marked as paid and sent to our digitizing team.
+              <CheckCircle size={64} style={{ color: '#16a34a', marginBottom: '1.5rem' }} />
+              <h2 style={{ color: 'var(--navy-950)', fontSize: '1.6rem', fontWeight: 900, marginBottom: '0.5rem' }}>Thank You!</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem', marginBottom: '2rem', maxWidth: '340px' }}>
+                We've received your payment. Your design order has been assigned to our master digitizing desk.
               </p>
               <button 
                 onClick={handleClose}
                 style={{ 
                   background: 'var(--orange-500)', color: '#fff', border: 'none', 
-                  padding: '0.75rem 2rem', borderRadius: '999px', fontSize: '0.9rem', 
-                  fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(255, 122, 0, 0.3)' 
+                  padding: '0.85rem 2rem', borderRadius: '12px', fontSize: '0.95rem', 
+                  fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 15px rgba(255, 122, 0, 0.35)' 
                 }}
               >
                 Return to Dashboard
@@ -239,10 +239,15 @@ export const CheckoutModal = () => {
             </div>
           ) : !checkoutSession.url ? (
             <div style={{ padding: '2rem' }}>
-              <h4 style={{ color: '#fff', margin: '0 0 1.5rem 0', fontSize: '1.1rem', textAlign: 'center' }}>
-                Total to Pay: <span style={{ color: 'var(--orange-400)', fontWeight: 900 }}>${checkoutSession.amount?.toFixed(2)}</span>
-              </h4>
-              <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1.25rem', textAlign: 'center' }}>Select a payment method to continue</p>
+              <div style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '1.25rem', textAlign: 'center', marginBottom: '1.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>TOTAL AMOUNT DUE</div>
+                <div style={{ color: 'var(--orange-600)', fontSize: '2rem', fontWeight: 900, fontFamily: 'var(--font-heading)' }}>
+                  ${checkoutSession.amount?.toFixed(2)}
+                </div>
+              </div>
+              <p style={{ color: 'var(--navy-900)', fontSize: '0.9rem', fontWeight: 800, marginBottom: '1rem', textAlign: 'center' }}>
+                Select your preferred payment method:
+              </p>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
                 {paymentMethods.map(method => (
@@ -251,34 +256,35 @@ export const CheckoutModal = () => {
                     onClick={() => handleSelectMethod(method.id)}
                     disabled={isInitializing}
                     style={{
-                      background: 'rgba(255, 255, 255, 0.03)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '12px',
-                      padding: '1rem',
+                      background: '#ffffff',
+                      border: '1.5px solid #e2e8f0',
+                      borderRadius: '14px',
+                      padding: '1rem 1.25rem',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '1rem',
                       cursor: isInitializing ? 'not-allowed' : 'pointer',
                       transition: 'all 0.2s ease',
-                      opacity: isInitializing && selectedMethod !== method.id ? 0.5 : 1
+                      opacity: isInitializing && selectedMethod !== method.id ? 0.5 : 1,
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
                     }}
                     onMouseOver={(e) => {
                       if (!isInitializing) {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                        e.currentTarget.style.background = '#fff7ed';
+                        e.currentTarget.style.borderColor = 'var(--orange-500)';
                       }
                     }}
                     onMouseOut={(e) => {
                       if (!isInitializing) {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
-                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                        e.currentTarget.style.background = '#ffffff';
+                        e.currentTarget.style.borderColor = '#e2e8f0';
                       }
                     }}
                   >
                     <span style={{ fontSize: '1.5rem' }}>{method.icon}</span>
-                    <span style={{ color: '#fff', fontWeight: 600, fontSize: '1rem' }}>{method.name}</span>
+                    <span style={{ color: 'var(--navy-950)', fontWeight: 800, fontSize: '0.95rem' }}>{method.name}</span>
                     {isInitializing && selectedMethod === method.id && (
-                      <Loader2 size={18} style={{ animation: 'spin 1s linear infinite', color: '#fff', marginLeft: 'auto' }} />
+                      <Loader2 size={18} style={{ animation: 'spin 1s linear infinite', color: 'var(--orange-500)', marginLeft: 'auto' }} />
                     )}
                   </button>
                 ))}
@@ -288,51 +294,51 @@ export const CheckoutModal = () => {
             <>
               {['card', 'dollarpay_apple_pay', 'dollarpay_google_pay'].includes(selectedMethod) ? (
                 <div style={{ padding: '3rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
-                  <Loader2 size={48} style={{ color: 'var(--orange-400)', animation: 'spin 2s linear infinite', marginBottom: '1.5rem' }} />
-                  <h3 style={{ color: '#fff', fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>Complete Payment in New Tab</h3>
-                  <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '2rem', maxWidth: '300px', lineHeight: 1.5 }}>
-                    We opened a secure checkout page in a new window. Please complete your payment there, and this window will automatically update once confirmed.
+                  <Loader2 size={48} style={{ color: 'var(--orange-500)', animation: 'spin 2s linear infinite', marginBottom: '1.5rem' }} />
+                  <h3 style={{ color: 'var(--navy-950)', fontSize: '1.35rem', fontWeight: 900, marginBottom: '0.5rem' }}>Complete Payment in New Tab</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem', marginBottom: '2rem', maxWidth: '320px', lineHeight: 1.5 }}>
+                    We opened a secure checkout page in a new tab. Please finalize your transaction there—this window will automatically confirm upon receipt.
                   </p>
                   <button 
                     onClick={() => window.open(checkoutSession.url, '_blank')} 
-                    style={{ background: 'rgba(255,255,255,0.05)', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.15)', padding: '0.65rem 1.25rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, transition: 'all 0.2s ease' }}
-                    onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }}
-                    onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#cbd5e1'; }}
+                    style={{ background: '#ffffff', color: 'var(--navy-900)', border: '1.5px solid #cbd5e1', padding: '0.75rem 1.5rem', borderRadius: '10px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 800, transition: 'all 0.2s ease', boxShadow: '0 2px 6px rgba(0,0,0,0.04)' }}
+                    onMouseOver={(e) => { e.currentTarget.style.background = '#f1f5f9'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.background = '#ffffff'; }}
                   >
                     Re-open Checkout Tab
                   </button>
                 </div>
               ) : (
                 <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                  <h3 style={{ color: '#fff', fontSize: '1.25rem', fontWeight: 800, marginBottom: '1.25rem', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                  <h3 style={{ color: 'var(--navy-950)', fontSize: '1.25rem', fontWeight: 900, marginBottom: '1.25rem', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                     <span style={{ fontSize: '1.5rem' }}>🧾</span> Invoice & Receipt
                   </h3>
                   
-                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.2)' }}>
+                  <div style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
-                      <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 600 }}>Invoice ID:</span>
-                      <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 800, background: 'rgba(255,255,255,0.05)', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 700 }}>Invoice ID:</span>
+                      <span style={{ color: 'var(--navy-950)', fontSize: '0.85rem', fontWeight: 900, background: '#f1f5f9', padding: '0.2rem 0.6rem', borderRadius: '6px' }}>
                         #{checkoutSession.invoiceId || 'PENDING'}
                       </span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
-                      <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 600 }}>Payment Method:</span>
-                      <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 700 }}>Payment Method:</span>
+                      <span style={{ color: 'var(--navy-950)', fontSize: '0.85rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         {paymentMethods.find(m => m.id === selectedMethod)?.icon} {paymentMethods.find(m => m.id === selectedMethod)?.name || 'Digital Wallet'}
                       </span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
-                      <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 600 }}>Payment Status:</span>
-                      <span style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: 800, background: 'rgba(245, 158, 11, 0.15)', padding: '0.25rem 0.6rem', borderRadius: '999px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Unpaid
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 700 }}>Payment Status:</span>
+                      <span style={{ color: '#d97706', fontSize: '0.75rem', fontWeight: 900, background: '#fef3c7', padding: '0.25rem 0.65rem', borderRadius: '999px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Awaiting Payment
                       </span>
                     </div>
                     
-                    <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '1.25rem 0' }} />
+                    <div style={{ height: '1px', background: '#e2e8f0', margin: '1.25rem 0' }} />
                     
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 800 }}>Total Amount:</span>
-                      <span style={{ color: 'var(--orange-400)', fontSize: '1.4rem', fontWeight: 900 }}>
+                      <span style={{ color: 'var(--navy-950)', fontSize: '1.1rem', fontWeight: 900 }}>Total Amount:</span>
+                      <span style={{ color: 'var(--orange-600)', fontSize: '1.5rem', fontWeight: 900, fontFamily: 'var(--font-heading)' }}>
                         ${checkoutSession.amount?.toFixed(2)}
                       </span>
                     </div>
@@ -341,14 +347,14 @@ export const CheckoutModal = () => {
                   <div style={{ marginTop: 'auto' }}>
                     <button 
                       onClick={() => window.open(checkoutSession.url, '_blank')}
-                      style={{ background: 'var(--orange-500)', color: '#fff', border: 'none', padding: '1rem', borderRadius: '12px', fontSize: '1rem', fontWeight: 800, cursor: 'pointer', boxShadow: '0 8px 20px -6px rgba(255,122,0,0.5)', width: '100%', transition: 'all 0.2s ease', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
+                      style={{ background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', color: '#fff', border: 'none', padding: '1rem', borderRadius: '12px', fontSize: '1.05rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px -6px rgba(255,122,0,0.5)', width: '100%', transition: 'all 0.2s ease', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
                       onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
                       onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                     >
                       Pay Invoice Now 
                     </button>
-                    <p style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center', marginTop: '1rem', marginBottom: 0 }}>
-                      Clicking the button above will open the secure checkout portal in a new tab.
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textAlign: 'center', marginTop: '0.85rem', marginBottom: 0 }}>
+                      Opens the 256-bit encrypted checkout portal in a secure window.
                     </p>
                   </div>
                 </div>

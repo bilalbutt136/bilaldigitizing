@@ -707,12 +707,12 @@ export const OrderWizardModal = () => {
       overflowY: 'auto'
     }}>
       <div style={{
-        background: '#0f172a',
-        border: '1px solid rgba(255, 255, 255, 0.15)',
-        borderRadius: '20px',
+        background: '#ffffff',
+        border: '1px solid #cbd5e1',
+        borderRadius: '24px',
         width: '100%',
         maxWidth: '1140px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+        boxShadow: '0 25px 60px -15px rgba(15, 23, 42, 0.25)',
         overflow: 'hidden',
         margin: 'auto'
       }}>
@@ -722,15 +722,27 @@ export const OrderWizardModal = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '1.25rem 1.75rem',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          background: '#0f172a',
+          borderBottom: '1px solid #334155',
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
           color: '#ffffff',
-          borderRadius: '20px 20px 0 0'
+          borderRadius: '24px 24px 0 0'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <Sparkles size={22} style={{ color: 'var(--orange-400)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              background: 'rgba(249, 115, 22, 0.15)',
+              border: '1px solid rgba(249, 115, 22, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--orange-400)'
+            }}>
+              <Sparkles size={20} />
+            </div>
             <div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#ffffff', margin: 0, letterSpacing: '-0.01em' }}>
                 {type === 'all' ? 'Choose Your Service' : `Configure ${pricingDetails?.serviceTitle || 'Order'}`}
               </h3>
               <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.1rem' }}>
@@ -740,88 +752,103 @@ export const OrderWizardModal = () => {
           </div>
 
           <button 
+            type="button"
             onClick={() => setIsOrderWizardOpen(false)}
-            style={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', color: '#cbd5e1', width: '34px', height: '34px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            style={{ background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#cbd5e1', width: '34px', height: '34px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
+            onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'; e.currentTarget.style.color = '#ffffff'; }}
+            onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; e.currentTarget.style.color = '#cbd5e1'; }}
           >
             <X size={18} />
           </button>
         </div>
 
         {type === 'all' ? (
-          <div style={{ padding: '4rem 2rem', textAlign: 'center', background: '#0f172a' }}>
+          <div style={{ padding: '3.5rem 2rem', textAlign: 'center', background: '#f8fafc' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
               
               {/* Embroidery */}
-              <div onClick={() => setType('embroidery')} style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '2.5rem 1.5rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center' }} onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--orange-500)'; e.currentTarget.style.transform = 'translateY(-4px)'; }} onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.transform = 'none'; }}>
-                <div style={{ color: 'var(--orange-400)', marginBottom: '1.5rem', background: 'rgba(255,122,0,0.1)', padding: '1rem', borderRadius: '50%' }}>
-                  <Sparkles size={40} />
+              <div onClick={() => setType('embroidery')} style={{ background: '#ffffff', border: '2px solid #e2e8f0', borderRadius: '20px', padding: '2.5rem 1.5rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.04)' }} onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--orange-500)'; e.currentTarget.style.transform = 'translateY(-4px)'; }} onMouseOut={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.transform = 'none'; }}>
+                <div style={{ color: 'var(--orange-500)', marginBottom: '1.25rem', background: 'var(--orange-50)', padding: '1rem', borderRadius: '50%', border: '1px solid var(--orange-200)' }}>
+                  <Sparkles size={36} />
                 </div>
-                <h3 style={{ color: '#ffffff', fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.75rem' }}>Embroidery Digitizing</h3>
-                <p style={{ color: '#94a3b8', fontSize: '0.95rem', margin: 0, lineHeight: 1.5 }}>Convert logos to machine-ready files. Starting at $10.00.</p>
+                <h3 style={{ color: 'var(--navy-950)', fontSize: '1.35rem', fontWeight: 900, marginBottom: '0.5rem' }}>Embroidery Digitizing</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem', margin: 0, lineHeight: 1.5 }}>Machine-ready files (.DST, .PES, .EMB) with zero thread breaks. Starting at $10.00.</p>
               </div>
 
               {/* Vector */}
-              <div onClick={() => setType('vector')} style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '2.5rem 1.5rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center' }} onMouseOver={e => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.transform = 'translateY(-4px)'; }} onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.transform = 'none'; }}>
-                <div style={{ color: '#3b82f6', marginBottom: '1.5rem', background: 'rgba(59,130,246,0.1)', padding: '1rem', borderRadius: '50%' }}>
-                  <FileCode size={40} />
+              <div onClick={() => setType('vector')} style={{ background: '#ffffff', border: '2px solid #e2e8f0', borderRadius: '20px', padding: '2.5rem 1.5rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.04)' }} onMouseOver={e => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.transform = 'translateY(-4px)'; }} onMouseOut={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.transform = 'none'; }}>
+                <div style={{ color: '#2563eb', marginBottom: '1.25rem', background: '#eff6ff', padding: '1rem', borderRadius: '50%', border: '1px solid #bfdbfe' }}>
+                  <FileCode size={36} />
                 </div>
-                <h3 style={{ color: '#ffffff', fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.75rem' }}>Vector Art Redraw</h3>
-                <p style={{ color: '#94a3b8', fontSize: '0.95rem', margin: 0, lineHeight: 1.5 }}>Scale raster images to crisp vectors. Starting at $15.00.</p>
+                <h3 style={{ color: 'var(--navy-950)', fontSize: '1.35rem', fontWeight: 900, marginBottom: '0.5rem' }}>Vector Art Redraw</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem', margin: 0, lineHeight: 1.5 }}>Scalable vector graphics (.AI, .EPS, .SVG) with Pantone color matching. Starting at $15.00.</p>
               </div>
 
               {/* Patches */}
-              <div onClick={() => setType('patch')} style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '2.5rem 1.5rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center' }} onMouseOver={e => { e.currentTarget.style.borderColor = '#10b981'; e.currentTarget.style.transform = 'translateY(-4px)'; }} onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.transform = 'none'; }}>
-                <div style={{ color: '#10b981', marginBottom: '1.5rem', background: 'rgba(16,185,129,0.1)', padding: '1rem', borderRadius: '50%' }}>
-                  <FileCheck size={40} />
+              <div onClick={() => setType('patch')} style={{ background: '#ffffff', border: '2px solid #e2e8f0', borderRadius: '20px', padding: '2.5rem 1.5rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.04)' }} onMouseOver={e => { e.currentTarget.style.borderColor = '#10b981'; e.currentTarget.style.transform = 'translateY(-4px)'; }} onMouseOut={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.transform = 'none'; }}>
+                <div style={{ color: '#059669', marginBottom: '1.25rem', background: '#ecfdf5', padding: '1rem', borderRadius: '50%', border: '1px solid #a7f3d0' }}>
+                  <FileCheck size={36} />
                 </div>
-                <h3 style={{ color: '#ffffff', fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.75rem' }}>Custom Patches</h3>
-                <p style={{ color: '#94a3b8', fontSize: '0.95rem', margin: 0, lineHeight: 1.5 }}>Physical embroidered or PVC patches. Starting at $1.50.</p>
+                <h3 style={{ color: 'var(--navy-950)', fontSize: '1.35rem', fontWeight: 900, marginBottom: '0.5rem' }}>Custom Physical Patches</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem', margin: 0, lineHeight: 1.5 }}>Embroidered, Woven, PVC rubber, and Leather emblems. Starting at $1.50/pc.</p>
               </div>
 
             </div>
           </div>
         ) : (
-        <form onSubmit={handleSubmit} style={{ padding: '1.75rem' }}>
+        <form onSubmit={handleSubmit} style={{ padding: '1.75rem', background: '#f8fafc' }}>
 
-          <div className="configurator-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.75rem', alignItems: 'start' }}>
+          <div className="configurator-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.75rem', alignItems: 'start' }}>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               
               {/* Step 1: Configure Service Options */}
-              <div style={{ padding: '1.5rem', background: '#1e293b', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ffffff', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Sparkles size={18} style={{ color: 'var(--orange-400)' }} /> Step 1: Configure {pricingDetails.serviceTitle} Options
-                </h3>
+              <div style={{ padding: '1.75rem', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '18px', display: 'flex', flexDirection: 'column', gap: '1.35rem', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.85rem' }}>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Sparkles size={18} style={{ color: 'var(--orange-500)' }} /> Step 1: Configure {pricingDetails.serviceTitle} Options
+                  </h3>
+                </div>
 
-                {/* 1. EMBROIDERY DIGITIZING */}
+                {/* 1. EMBROIDERY DIGITIZING & VECTOR REDRAW */}
                 {['embroidery', 'vector'].includes(type) && (
                   <>
                     {/* Interactive Placements Cart */}
                     <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                        <label style={{ fontSize: '0.875rem', fontWeight: 800, color: '#ffffff' }}>
-                          📍 Configure Order Placement Items ({placementItems.length} Item{placementItems.length > 1 ? 's' : ''}) *
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <label style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          📍 Configure Order Placements ({placementItems.length} Item{placementItems.length > 1 ? 's' : ''}) *
                         </label>
-                        <button type="button" onClick={addPlacementItem} style={{ background: 'rgba(255, 122, 0, 0.2)', border: '1px solid var(--orange-500)', color: 'var(--orange-400)', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}>
-                          + Add Another Placement
+                        <button type="button" onClick={addPlacementItem} style={{ background: 'var(--orange-50)', border: '1px solid var(--orange-300)', color: 'var(--orange-700)', padding: '0.4rem 0.85rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', transition: 'all 0.15s' }}>
+                          <Plus size={14} /> Add Another Placement
                         </button>
                       </div>
 
                       {placementItems.map((item, index) => (
-                        <div key={item.id} style={{ background: '#0f172a', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '10px', padding: '0.85rem 1rem', marginBottom: '0.75rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-                            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--orange-400)' }}>Placement Item #{index + 1}</span>
+                        <div key={item.id} style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '1.15rem', marginBottom: '1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ background: 'var(--orange-500)', color: '#ffffff', fontSize: '0.75rem', fontWeight: 900, padding: '0.2rem 0.6rem', borderRadius: '999px' }}>
+                                #{index + 1}
+                              </span>
+                              <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--navy-950)' }}>
+                                Placement Item #{index + 1}
+                              </span>
+                            </div>
+
                             {placementItems.length > 1 && (
-                              <button type="button" onClick={() => removePlacementItem(item.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
-                                <Trash2 size={16} />
+                              <button type="button" onClick={() => removePlacementItem(item.id)} style={{ background: '#fee2e2', border: '1px solid #fca5a5', color: '#dc2626', borderRadius: '6px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                <Trash2 size={13} /> Remove
                               </button>
                             )}
                           </div>
 
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
                             <div>
-                              <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Package Tier *</label>
-                              <select value={item.packageTier || 'standard'} onChange={(e) => updatePlacementItem(item.id, 'packageTier', e.target.value)} className="form-control" style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem' }}>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                Package Tier *
+                              </label>
+                              <select value={item.packageTier || 'standard'} onChange={(e) => updatePlacementItem(item.id, 'packageTier', e.target.value)} className="form-control" style={{ background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px' }}>
                                 {(() => {
                                   const matchingTiers = (dynamicPricingTiers || [])
                                     .filter(t => matchCategory(t.service_type, type))
@@ -848,32 +875,23 @@ export const OrderWizardModal = () => {
                                     );
                                   }
 
-                                  if (type === 'patch') {
-                                    return (
-                                      <>
-                                        <option value="basic">⚡ Sample Batch ($4.50/pc)</option>
-                                        <option value="standard">⭐ Production Batch ($2.50/pc)</option>
-                                        <option value="premium">✨ Wholesale Bulk ($1.50/pc)</option>
-                                      </>
-                                    );
-                                  }
-
                                   return (
                                     <>
-                                      <option value="basic">⚡ Left Chest & Cap ($10.00)</option>
-                                      <option value="standard">⭐ Mid-Size Jacket ($20.00)</option>
-                                      <option value="premium">✨ Full Back & 3D ($35.00)</option>
+                                      <option value="basic">⚡ Left Chest & Cap ($10.00 Flat)</option>
+                                      <option value="standard">⭐ Mid-Size Jacket ($20.00 Flat)</option>
+                                      <option value="premium">✨ Full Back & 3D ($35.00 Flat)</option>
                                     </>
                                   );
                                 })()}
                               </select>
                             </div>
 
-
                             {type === 'embroidery' ? (
                               <div>
-                                <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Placement Location</label>
-                                <select value={item.placementType} onChange={(e) => updatePlacementItem(item.id, 'placementType', e.target.value)} className="form-control" style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem' }}>
+                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                  Placement Location
+                                </label>
+                                <select value={item.placementType} onChange={(e) => updatePlacementItem(item.id, 'placementType', e.target.value)} className="form-control" style={{ background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px' }}>
                                   {PLACEMENT_OPTIONS.map(plc => (
                                     <option key={plc.id} value={plc.id}>{plc.label}</option>
                                   ))}
@@ -881,47 +899,56 @@ export const OrderWizardModal = () => {
                               </div>
                             ) : (
                               <div>
-                                <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Design Name *</label>
-                                <input type="text" value={item.placementType || ''} onChange={(e) => updatePlacementItem(item.id, 'placementType', e.target.value)} placeholder="e.g. Left Chest Logo" className="form-control" style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem' }} />
+                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                  Design Label / Name *
+                                </label>
+                                <input type="text" value={item.placementType || ''} onChange={(e) => updatePlacementItem(item.id, 'placementType', e.target.value)} placeholder="e.g. Front Chest Artwork" className="form-control" style={{ background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px' }} />
                               </div>
                             )}
 
                             <div>
-                              <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Quantity</label>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                Quantity
+                              </label>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                <button type="button" onClick={() => updatePlacementItem(item.id, 'quantity', Math.max(1, item.quantity - 1))} style={{ width: '32px', height: '34px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}>-</button>
-                                <input type="text" value={item.quantityInput} onChange={(e) => updatePlacementItem(item.id, 'quantityInput', e.target.value)} className="form-control" style={{ textAlign: 'center', background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800, padding: '0.3rem' }} />
-                                <button type="button" onClick={() => updatePlacementItem(item.id, 'quantity', item.quantity + 1)} style={{ width: '32px', height: '34px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}>+</button>
+                                <button type="button" onClick={() => updatePlacementItem(item.id, 'quantity', Math.max(1, item.quantity - 1))} style={{ width: '34px', height: '36px', background: '#f1f5f9', border: '1.5px solid #cbd5e1', color: 'var(--navy-900)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>-</button>
+                                <input type="text" value={item.quantityInput} onChange={(e) => updatePlacementItem(item.id, 'quantityInput', e.target.value)} className="form-control" style={{ textAlign: 'center', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontWeight: 800, padding: '0.35rem', borderRadius: '8px' }} />
+                                <button type="button" onClick={() => updatePlacementItem(item.id, 'quantity', item.quantity + 1)} style={{ width: '34px', height: '36px', background: '#f1f5f9', border: '1.5px solid #cbd5e1', color: 'var(--navy-900)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>+</button>
                               </div>
                             </div>
                           </div>
 
                           {/* Dedicated File Upload Zone for this Placement */}
-                          <div style={{ background: '#1e293b', padding: '0.65rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', marginTop: '0.6rem' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.3rem' }}>
-                              <span>📎 Reference File for Placement #{index + 1} *</span>
+                          <div style={{ background: '#ffffff', padding: '0.9rem', borderRadius: '10px', border: '1px solid #e2e8f0', marginTop: '0.85rem' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.4rem' }}>
+                              <span>📎 Reference Artwork File for Item #{index + 1} *</span>
                               {item.files && item.files.length > 0 && (
-                                <span style={{ color: 'var(--orange-400)', fontWeight: 800 }}>{item.files.length} File{item.files.length > 1 ? 's' : ''}</span>
+                                <span style={{ color: 'var(--orange-600)', fontWeight: 800 }}>✓ {item.files.length} File Attached</span>
                               )}
                             </label>
 
                             <div
                               onClick={() => document.getElementById(`modal-plc-file-${item.id}`)?.click()}
                               style={{
-                                border: '1.5px dashed rgba(255, 122, 0, 0.45)',
-                                background: '#0f172a',
-                                borderRadius: '6px',
-                                padding: '0.5rem',
+                                border: '2px dashed var(--orange-300)',
+                                background: '#fffaf5',
+                                borderRadius: '8px',
+                                padding: '0.85rem 1rem',
                                 textAlign: 'center',
                                 cursor: 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                gap: '0.4rem'
+                                gap: '0.5rem',
+                                transition: 'all 0.15s'
                               }}
+                              onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--orange-500)'; e.currentTarget.style.background = '#fff7ed'; }}
+                              onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--orange-300)'; e.currentTarget.style.background = '#fffaf5'; }}
                             >
-                              <Upload size={14} style={{ color: 'var(--orange-400)' }} />
-                              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e2e8f0' }}>Upload File for Item #{index + 1}</span>
+                              <Upload size={16} style={{ color: 'var(--orange-500)' }} />
+                              <span style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--orange-800)' }}>
+                                Click to Upload or Drag File for Item #{index + 1} (.JPG, .PNG, .PDF, .AI)
+                              </span>
                               <input
                                 type="file"
                                 id={`modal-plc-file-${item.id}`}
@@ -932,15 +959,15 @@ export const OrderWizardModal = () => {
                             </div>
 
                             {item.files && item.files.length > 0 && (
-                              <div style={{ marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                              <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                                 {item.files.map(f => (
-                                  <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.3rem 0.5rem', background: '#0f172a', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.72rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                      <FileCode size={12} style={{ color: 'var(--orange-400)' }} />
-                                      <span style={{ fontWeight: 700, color: '#ffffff' }}>{f.name}</span>
+                                  <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.4rem 0.65rem', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '0.78rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                      <FileCode size={14} style={{ color: 'var(--orange-500)' }} />
+                                      <span style={{ fontWeight: 800, color: 'var(--navy-950)' }}>{f.name}</span>
                                     </div>
-                                    <button type="button" onClick={() => removeFileFromPlacement(item.id, f.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}>
-                                      <Trash2 size={12} />
+                                    <button type="button" onClick={() => removeFileFromPlacement(item.id, f.id)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', padding: 0, fontWeight: 800 }}>
+                                      <Trash2 size={13} />
                                     </button>
                                   </div>
                                 ))}
@@ -949,33 +976,57 @@ export const OrderWizardModal = () => {
                           </div>
                         </div>
                       ))}
+
                       {type === 'embroidery' && (
-                        <>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
                           <div>
-                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Target Garment Fabric *</label>
-                            <select value={fabricType} onChange={(e) => setFabricType(e.target.value)} className="form-control" style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.15)', color: '#ffffff' }}>
-                              <option value="Pique Cotton Polo">Pique Polo Cotton</option>
-                              <option value="Fleece Hoodie">Fleece Hoodie / Sweatshirt</option>
-                              <option value="Structured Cap 3D Foam">Structured Cap / Hat (3D Foam)</option>
-                              <option value="Performance Dry-Fit">Performance Dry-Fit Polyester</option>
-                              <option value="Towel / Terry Cloth">Towel / Thick Plush Terry</option>
-                              <option value="Leather / Canvas">Leather / Heavy Canvas</option>
+                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.4rem' }}>
+                              Target Garment Fabric *
+                            </label>
+                            <select value={fabricType} onChange={(e) => setFabricType(e.target.value)} className="form-control" style={{ background: '#ffffff', border: '1.5px solid #cbd5e1', color: 'var(--navy-950)', fontWeight: 700, borderRadius: '8px' }}>
+                              <option value="Pique Cotton Polo">Pique Polo Cotton (Pull compensation calibrated)</option>
+                              <option value="Fleece Hoodie">Fleece Hoodie / Sweatshirt (High loft underlay)</option>
+                              <option value="Structured Cap 3D Foam">Structured Cap / Hat (3D Foam Capped)</option>
+                              <option value="Performance Dry-Fit">Performance Dry-Fit Polyester (Anti-puckering)</option>
+                              <option value="Towel / Terry Cloth">Towel / Thick Plush Terry (Solvy topping)</option>
+                              <option value="Leather / Canvas">Leather / Heavy Canvas (Sharp needle acute)</option>
                               <option value="Softshell Jacket">Softshell Jacket / Outerwear</option>
                             </select>
                           </div>
 
                           <div>
-                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Required Machine File Formats</label>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.5rem' }}>
-                              {(serviceCmsContent?.['format_options'] || [{id: 'dst', label: '.DST'}, {id: 'pes', label: '.PES'}, {id: 'exp', label: '.EXP'}, {id: 'jef', label: '.JEF'}, {id: 'emb', label: '.EMB'}]).map(fmt => (
-                                <div key={fmt.id} onClick={() => toggleFormat(fmt.id)} style={{ padding: '0.5rem', background: requestedFormats.includes(fmt.id) ? 'rgba(255, 122, 0, 0.2)' : '#0f172a', border: requestedFormats.includes(fmt.id) ? '1.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                  <input type="checkbox" checked={requestedFormats.includes(fmt.id)} onChange={() => {}} style={{ accentColor: 'var(--orange-500)' }} />
-                                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffffff' }}>{fmt.label}</span>
-                                </div>
-                              ))}
+                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.4rem' }}>
+                              Required Machine File Formats
+                            </label>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.5rem' }}>
+                              {(serviceCmsContent?.['format_options'] || [{id: 'dst', label: '.DST (Universal)'}, {id: 'pes', label: '.PES (Brother)'}, {id: 'exp', label: '.EXP (Melco)'}, {id: 'jef', label: '.JEF (Janome)'}, {id: 'emb', label: '.EMB (Wilcom)'}]).map(fmt => {
+                                const isChecked = requestedFormats.includes(fmt.id);
+                                return (
+                                  <div 
+                                    key={fmt.id} 
+                                    onClick={() => toggleFormat(fmt.id)} 
+                                    style={{ 
+                                      padding: '0.6rem 0.8rem', 
+                                      background: isChecked ? '#fff7ed' : '#ffffff', 
+                                      border: isChecked ? '1.5px solid var(--orange-500)' : '1.5px solid #cbd5e1', 
+                                      borderRadius: '8px', 
+                                      cursor: 'pointer', 
+                                      display: 'flex', 
+                                      alignItems: 'center', 
+                                      gap: '0.45rem',
+                                      transition: 'all 0.15s'
+                                    }}
+                                  >
+                                    <input type="checkbox" checked={isChecked} onChange={() => {}} style={{ accentColor: 'var(--orange-500)' }} />
+                                    <span style={{ fontSize: '0.8rem', fontWeight: isChecked ? 900 : 700, color: isChecked ? 'var(--orange-800)' : 'var(--navy-800)' }}>
+                                      {fmt.label}
+                                    </span>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
-                        </>
+                        </div>
                       )}
                     </div>
                   </>
@@ -983,387 +1034,321 @@ export const OrderWizardModal = () => {
 
                 {/* 2. VECTOR ART & COLOR SEPARATION */}
                 {type === 'vector' && (
-                  <>
-
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Required Vector Formats</label>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.5rem' }}>
-                        {(serviceCmsContent?.['vector_format_options'] || [{id: 'ai', ext: '.AI'}, {id: 'eps', ext: '.EPS'}, {id: 'svg', ext: '.SVG'}, {id: 'pdf', ext: '.PDF'}, {id: 'cdr', ext: '.CDR'}, {id: 'psd', ext: '.PSD'}]).map(fmt => (
-                          <div key={fmt.id || fmt.ext} onClick={() => toggleFormat((fmt.id || fmt.ext).toLowerCase())} style={{ padding: '0.5rem', background: requestedFormats.includes((fmt.id || fmt.ext).toLowerCase()) ? 'rgba(255, 122, 0, 0.2)' : '#0f172a', border: requestedFormats.includes((fmt.id || fmt.ext).toLowerCase()) ? '1.5px solid var(--orange-500)' : '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <input type="checkbox" checked={requestedFormats.includes((fmt.id || fmt.ext).toLowerCase())} onChange={() => {}} style={{ accentColor: 'var(--orange-500)' }} />
-                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffffff' }}>{fmt.ext || fmt.name || fmt}</span>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.4rem' }}>
+                      Required Vector File Deliverables
+                    </label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.5rem' }}>
+                      {(serviceCmsContent?.['vector_format_options'] || [{id: 'ai', ext: '.AI (Illustrator)'}, {id: 'eps', ext: '.EPS (Vector)'}, {id: 'svg', ext: '.SVG (Scalable)'}, {id: 'pdf', ext: '.PDF (Print Ready)'}, {id: 'cdr', ext: '.CDR (CorelDraw)'}]).map(fmt => {
+                        const fmtId = (fmt.id || fmt.ext).toLowerCase();
+                        const isChecked = requestedFormats.includes(fmtId);
+                        return (
+                          <div 
+                            key={fmt.id || fmt.ext} 
+                            onClick={() => toggleFormat(fmtId)} 
+                            style={{ 
+                              padding: '0.6rem 0.8rem', 
+                              background: isChecked ? '#fff7ed' : '#ffffff', 
+                              border: isChecked ? '1.5px solid var(--orange-500)' : '1.5px solid #cbd5e1', 
+                              borderRadius: '8px', 
+                              cursor: 'pointer', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '0.45rem',
+                              transition: 'all 0.15s'
+                            }}
+                          >
+                            <input type="checkbox" checked={isChecked} onChange={() => {}} style={{ accentColor: 'var(--orange-500)' }} />
+                            <span style={{ fontSize: '0.8rem', fontWeight: isChecked ? 900 : 700, color: isChecked ? 'var(--orange-800)' : 'var(--navy-800)' }}>
+                              {fmt.ext || fmt.name || fmt}
+                            </span>
                           </div>
-                        ))}
-                      </div>
+                        );
+                      })}
                     </div>
-                  </>
+                  </div>
                 )}
 
                 {/* 3. PHYSICAL CUSTOM PATCHES */}
                 {type === 'patch' && (
-                  <>
-                    {/* 2. Configure Multi-Item Custom Patch List */}
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
-                        <div>
-                          <label style={{ fontSize: '0.9rem', fontWeight: 800, color: '#ffffff', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            📍 Configure Patch Items ({patchItems.length} {patchItems.length === 1 ? 'Item' : 'Items'}) *
-                          </label>
-                          <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.15rem' }}>
-                            Add distinct patch items with individual materials, backing options, quantities, and logo artwork.
-                          </div>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <div>
+                        <label style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          📍 Configure Patch Items ({patchItems.length} {patchItems.length === 1 ? 'Item' : 'Items'}) *
+                        </label>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                          Configure individual materials, backing options, quantities, and logo artwork.
                         </div>
-                        <span style={{ fontSize: '0.78rem', color: 'var(--orange-400)', fontWeight: 800, background: 'rgba(255,122,0,0.12)', padding: '0.25rem 0.65rem', borderRadius: '9999px', border: '1px solid rgba(255,122,0,0.3)' }}>
-                          Total Quantity: {pricingDetails.totalPlacementQuantity} Pcs
-                        </span>
                       </div>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--orange-700)', fontWeight: 900, background: 'var(--orange-50)', padding: '0.3rem 0.75rem', borderRadius: '9999px', border: '1px solid var(--orange-200)' }}>
+                        Total Quantity: {pricingDetails.totalPlacementQuantity} Pcs
+                      </span>
+                    </div>
 
-                      {/* Patch Rows Container */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {patchItems.map((item, index) => {
-                          const itemQty = Math.max(0, parseInt(item.quantityInput !== undefined ? item.quantityInput : item.quantity, 10) || 0);
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {patchItems.map((item, index) => {
+                        const itemQty = Math.max(0, parseInt(item.quantityInput !== undefined ? item.quantityInput : item.quantity, 10) || 0);
 
-                          let materialBase = 2.50;
-                          if (item.patchStyle === 'Woven') materialBase = 1.50;
-                          if (item.patchStyle === 'Embroidered') materialBase = 2.50;
-                          if (item.patchStyle === 'PVC' || item.patchStyle === 'Leather') materialBase = 3.50;
+                        let materialBase = 2.50;
+                        if (item.patchStyle === 'Woven') materialBase = 1.50;
+                        if (item.patchStyle === 'Embroidered') materialBase = 2.50;
+                        if (item.patchStyle === 'PVC' || item.patchStyle === 'Leather') materialBase = 3.50;
 
-                          let backingAddon = 0;
-                          if (item.patchBacking === 'Velcro') backingAddon = 0.40;
-                          if (item.patchBacking === 'Adhesive') backingAddon = 0.25;
+                        let backingAddon = 0;
+                        if (item.patchBacking === 'Velcro') backingAddon = 0.40;
+                        if (item.patchBacking === 'Adhesive') backingAddon = 0.25;
 
-                          const rateEach = (materialBase + backingAddon).toFixed(2);
-                          const itemSubtotal = (parseFloat(rateEach) * itemQty).toFixed(2);
+                        const rateEach = (materialBase + backingAddon).toFixed(2);
+                        const itemSubtotal = (parseFloat(rateEach) * itemQty).toFixed(2);
 
-                          return (
-                            <div
-                              key={item.id}
-                              style={{
-                                background: '#0f172a',
-                                border: '1.5px solid rgba(255, 255, 255, 0.12)',
-                                borderRadius: '12px',
-                                padding: '1.15rem',
-                                position: 'relative'
-                              }}
-                            >
-                              {/* Row Header */}
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', borderBottom: '1px dashed rgba(255, 255, 255, 0.1)', paddingBottom: '0.6rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                  <span style={{ background: 'var(--orange-500)', color: '#ffffff', fontWeight: 800, fontSize: '0.72rem', width: '22px', height: '22px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    {index + 1}
-                                  </span>
-                                  <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#ffffff' }}>
-                                    Patch Item #{index + 1}
-                                  </span>
-                                </div>
-
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                                  <span style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--orange-400)' }}>
-                                    ${rateEach}/ea • Subtotal: ${itemSubtotal}
-                                  </span>
-
-                                  {patchItems.length > 1 && (
-                                    <button
-                                      type="button"
-                                      onClick={() => removePatchItem(item.id)}
-                                      title="Remove Patch Item"
-                                      style={{
-                                        background: 'rgba(239, 68, 68, 0.15)',
-                                        border: '1px solid rgba(239, 68, 68, 0.3)',
-                                        color: '#ef4444',
-                                        width: '28px',
-                                        height: '28px',
-                                        borderRadius: '6px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        cursor: 'pointer'
-                                      }}
-                                    >
-                                      <Trash2 size={15} />
-                                    </button>
-                                  )}
-                                </div>
+                        return (
+                          <div
+                            key={item.id}
+                            style={{
+                              background: '#f8fafc',
+                              border: '1.5px solid #e2e8f0',
+                              borderRadius: '14px',
+                              padding: '1.25rem',
+                              position: 'relative'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.6rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span style={{ background: 'var(--orange-500)', color: '#ffffff', fontWeight: 900, fontSize: '0.75rem', width: '24px', height: '24px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  {index + 1}
+                                </span>
+                                <span style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                                  Patch Item #{index + 1}
+                                </span>
                               </div>
 
-                              {/* Row Content Grid */}
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem', alignItems: 'end' }}>
-                                
-                                {/* Patch Material Style */}
-                                <div>
-                                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                                    Patch Craft / Material *
-                                  </label>
-                                  <select
-                                    value={item.patchStyle || 'Embroidered'}
-                                    onChange={(e) => updatePatchItem(item.id, 'patchStyle', e.target.value)}
-                                    className="form-control"
-                                    style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.85rem', fontWeight: 700 }}
-                                  >
-                                    {patchCards && patchCards.length > 0 ? (
-                                      patchCards.map(card => {
-                                        const value = card.title.includes('Embroidered') ? 'Embroidered' : card.title.includes('Woven') ? 'Woven' : 'PVC';
-                                        return (
-                                          <option key={card.id} value={value}>
-                                            {card.badge ? `${card.badge} • ` : ''}{card.title} ({card.rate})
-                                          </option>
-                                        );
-                                      })
-                                    ) : (
-                                      <>
-                                        <option value="Embroidered">🧵 Embroidered Patch ($2.50/ea)</option>
-                                        <option value="Woven">🌐 Micro Woven Patch ($1.50/ea)</option>
-                                        <option value="PVC">⚡ 3D Rubber PVC Patch ($3.50/ea)</option>
-                                        <option value="Leather">🪵 Debossed Leather Patch ($3.50/ea)</option>
-                                      </>
-                                    )}
-                                  </select>
-                                </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                                <span style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--orange-700)' }}>
+                                  ${rateEach}/ea • Subtotal: ${itemSubtotal}
+                                </span>
 
-                                {/* Backing Option */}
-                                <div>
-                                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                                    Backing Attachment *
-                                  </label>
-                                  <select
-                                    value={item.patchBacking || 'Iron-On'}
-                                    onChange={(e) => updatePatchItem(item.id, 'patchBacking', e.target.value)}
-                                    className="form-control"
-                                    style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.85rem', fontWeight: 700 }}
-                                  >
-                                    <option value="Iron-On">🔴 Iron-On / Heat Seal</option>
-                                    <option value="Velcro">⚡ Tactical Velcro Hook & Loop (+$0.40)</option>
-                                    <option value="Adhesive">📌 Peel & Stick Adhesive (+$0.25)</option>
-                                    <option value="Sew-On">🪡 Standard Sew-On (Felt Backing)</option>
-                                  </select>
-                                </div>
-
-                                {/* Width & Height */}
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                                  <div>
-                                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', marginBottom: '0.2rem' }}>Width (in)</label>
-                                    <input
-                                      type="number"
-                                      step="0.25"
-                                      min="1.0"
-                                      max="8.0"
-                                      value={item.patchWidth || 3.0}
-                                      onChange={(e) => updatePatchItem(item.id, 'patchWidth', parseFloat(e.target.value) || 3.0)}
-                                      className="form-control"
-                                      style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800 }}
-                                    />
-                                  </div>
-                                  <div>
-                                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', marginBottom: '0.2rem' }}>Height (in)</label>
-                                    <input
-                                      type="number"
-                                      step="0.25"
-                                      min="1.0"
-                                      max="8.0"
-                                      value={item.patchHeight || 3.0}
-                                      onChange={(e) => updatePatchItem(item.id, 'patchHeight', parseFloat(e.target.value) || 3.0)}
-                                      className="form-control"
-                                      style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 800 }}
-                                    />
-                                  </div>
-                                </div>
-
-                                {/* Item Quantity */}
-                                <div>
-                                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                                    Quantity (min. 50 Pcs) *
-                                  </label>
-                                  <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                    value={item.quantityInput !== undefined ? item.quantityInput : item.quantity}
-                                    onFocus={(e) => e.target.select()}
-                                    onChange={(e) => updatePatchItem(item.id, 'quantityInput', e.target.value)}
-                                    onBlur={() => {
-                                      if (!item.quantityInput || parseInt(item.quantityInput, 10) < 50) {
-                                        updatePatchItem(item.id, 'quantityInput', '50');
-                                      }
-                                    }}
-                                    className="form-control"
-                                    placeholder="min. 50"
+                                {patchItems.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removePatchItem(item.id)}
+                                    title="Remove Patch Item"
                                     style={{
-                                      background: '#1e293b',
-                                      color: '#ffffff',
-                                      border: (item.quantityInput === '' || parseInt(item.quantityInput, 10) < 50) ? '1.5px solid #fb923c' : '1px solid rgba(255,255,255,0.15)',
-                                      fontWeight: 800
-                                    }}
-                                  />
-                                </div>
-
-                                {/* Specific Notes */}
-                                <div style={{ gridColumn: 'span 2' }}>
-                                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                                    Specific Thread Colors / Custom Notes (Optional)
-                                  </label>
-                                  <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="e.g. Black merrowed edge, Pantone color matches..."
-                                    value={item.specificNotes || ''}
-                                    onChange={(e) => updatePatchItem(item.id, 'specificNotes', e.target.value)}
-                                    style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem' }}
-                                  />
-                                </div>
-
-                                {/* Requirement 3: Dedicated Logo / Artwork File Upload Zone for this Patch Item */}
-                                <div style={{ gridColumn: 'span 2', background: '#1e293b', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', marginTop: '0.35rem' }}>
-                                  <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                                    <span>📎 Upload Logo / Artwork File for Patch Item #{index + 1} *</span>
-                                    {item.files && item.files.length > 0 && (
-                                      <span style={{ color: 'var(--orange-400)', fontWeight: 800 }}>{item.files.length} File{item.files.length > 1 ? 's' : ''} Attached</span>
-                                    )}
-                                  </label>
-
-                                  <div
-                                    onClick={() => document.getElementById(`patch-file-input-${item.id}`)?.click()}
-                                    style={{
-                                      border: '1.5px dashed rgba(255, 122, 0, 0.45)',
-                                      background: '#0f172a',
-                                      borderRadius: '8px',
-                                      padding: '0.65rem 0.85rem',
-                                      textAlign: 'center',
-                                      cursor: 'pointer',
+                                      background: '#fee2e2',
+                                      border: '1px solid #fca5a5',
+                                      color: '#dc2626',
+                                      borderRadius: '6px',
+                                      padding: '0.3rem 0.55rem',
                                       display: 'flex',
                                       alignItems: 'center',
-                                      justifyContent: 'center',
-                                      gap: '0.5rem'
+                                      gap: '0.25rem',
+                                      fontSize: '0.75rem',
+                                      fontWeight: 800,
+                                      cursor: 'pointer'
                                     }}
                                   >
-                                    <Upload size={15} style={{ color: 'var(--orange-400)' }} />
-                                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#e2e8f0' }}>
-                                      Click or drop design artwork for Patch Item #{index + 1} (.PNG, .JPG, .AI, .PDF)
-                                    </span>
-                                    <input
-                                      type="file"
-                                      id={`patch-file-input-${item.id}`}
-                                      multiple
-                                      style={{ display: 'none' }}
-                                      onChange={(e) => handlePatchFileUpload(item.id, e.target.files)}
-                                    />
-                                  </div>
+                                    <Trash2 size={13} /> Remove
+                                  </button>
+                                )}
+                              </div>
+                            </div>
 
-                                  {/* Attached files list */}
-                                  {item.files && item.files.length > 0 && (
-                                    <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                                      {item.files.map(f => (
-                                        <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.35rem 0.6rem', background: '#0f172a', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.75rem' }}>
-                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                            {f.previewUrl ? (
-                                              <img src={f.previewUrl} alt="preview" style={{ width: '22px', height: '22px', objectFit: 'cover', borderRadius: '4px' }} />
-                                            ) : (
-                                              <FileCheck size={14} style={{ color: 'var(--orange-400)' }} />
-                                            )}
-                                            <span style={{ color: '#ffffff', fontWeight: 700 }}>{f.name}</span>
-                                          </div>
-                                          <button
-                                            type="button"
-                                            onClick={() => removePatchItemFile(item.id, f.id)}
-                                            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 800, fontSize: '0.75rem' }}
-                                          >
-                                            ✕
-                                          </button>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem', alignItems: 'end' }}>
+                              <div>
+                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                  Patch Craft / Material *
+                                </label>
+                                <select
+                                  value={item.patchStyle || 'Embroidered'}
+                                  onChange={(e) => updatePatchItem(item.id, 'patchStyle', e.target.value)}
+                                  className="form-control"
+                                  style={{ background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px' }}
+                                >
+                                  <option value="Embroidered">🧵 Embroidered Patch ($2.50/ea)</option>
+                                  <option value="Woven">🌐 Micro Woven Patch ($1.50/ea)</option>
+                                  <option value="PVC">⚡ 3D Rubber PVC Patch ($3.50/ea)</option>
+                                  <option value="Leather">🪵 Debossed Leather Patch ($3.50/ea)</option>
+                                </select>
                               </div>
 
+                              <div>
+                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                  Backing Attachment *
+                                </label>
+                                <select
+                                  value={item.patchBacking || 'Iron-On'}
+                                  onChange={(e) => updatePatchItem(item.id, 'patchBacking', e.target.value)}
+                                  className="form-control"
+                                  style={{ background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px' }}
+                                >
+                                  <option value="Iron-On">🔴 Iron-On / Heat Seal</option>
+                                  <option value="Velcro">⚡ Tactical Velcro Hook & Loop (+$0.40)</option>
+                                  <option value="Adhesive">📌 Peel & Stick Adhesive (+$0.25)</option>
+                                  <option value="Sew-On">🪡 Standard Sew-On (Felt Backing)</option>
+                                </select>
+                              </div>
+
+                              <div>
+                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                  Quantity (min. 50 Pcs) *
+                                </label>
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  value={item.quantityInput !== undefined ? item.quantityInput : item.quantity}
+                                  onFocus={(e) => e.target.select()}
+                                  onChange={(e) => updatePatchItem(item.id, 'quantityInput', e.target.value)}
+                                  onBlur={() => {
+                                    if (!item.quantityInput || parseInt(item.quantityInput, 10) < 50) {
+                                      updatePatchItem(item.id, 'quantityInput', '50');
+                                    }
+                                  }}
+                                  className="form-control"
+                                  placeholder="min. 50"
+                                  style={{
+                                    background: '#ffffff',
+                                    color: 'var(--navy-950)',
+                                    border: (item.quantityInput === '' || parseInt(item.quantityInput, 10) < 50) ? '1.5px solid #fb923c' : '1.5px solid #cbd5e1',
+                                    fontWeight: 800,
+                                    borderRadius: '8px'
+                                  }}
+                                />
+                              </div>
+
+                              <div style={{ gridColumn: 'span 2', background: '#ffffff', padding: '0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0', marginTop: '0.35rem' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.4rem' }}>
+                                  <span>📎 Upload Logo / Artwork for Patch Item #{index + 1} *</span>
+                                  {item.files && item.files.length > 0 && (
+                                    <span style={{ color: 'var(--orange-600)', fontWeight: 800 }}>✓ {item.files.length} File Attached</span>
+                                  )}
+                                </label>
+
+                                <div
+                                  onClick={() => document.getElementById(`patch-file-input-${item.id}`)?.click()}
+                                  style={{
+                                    border: '2px dashed var(--orange-300)',
+                                    background: '#fffaf5',
+                                    borderRadius: '8px',
+                                    padding: '0.75rem 1rem',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.5rem'
+                                  }}
+                                >
+                                  <Upload size={16} style={{ color: 'var(--orange-500)' }} />
+                                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--orange-800)' }}>
+                                    Click or drop artwork file (.PNG, .JPG, .AI, .PDF)
+                                  </span>
+                                  <input
+                                    type="file"
+                                    id={`patch-file-input-${item.id}`}
+                                    multiple
+                                    style={{ display: 'none' }}
+                                    onChange={(e) => handlePatchFileUpload(item.id, e.target.files)}
+                                  />
+                                </div>
+
+                                {item.files && item.files.length > 0 && (
+                                  <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                                    {item.files.map(f => (
+                                      <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.4rem 0.65rem', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '0.78rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                          <FileCheck size={14} style={{ color: 'var(--orange-500)' }} />
+                                          <span style={{ color: 'var(--navy-950)', fontWeight: 800 }}>{f.name}</span>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => removePatchItemFile(item.id, f.id)}
+                                          style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 800 }}
+                                        >
+                                          ✕
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Requirement 4: + Add Another Patch Item Button */}
-                      <button
-                        type="button"
-                        onClick={addPatchItem}
-                        style={{
-                          width: '100%',
-                          marginTop: '0.85rem',
-                          padding: '0.65rem',
-                          background: 'rgba(255, 122, 0, 0.1)',
-                          border: '1.5px dashed var(--orange-500)',
-                          borderRadius: '10px',
-                          color: 'var(--orange-400)',
-                          fontWeight: 800,
-                          fontSize: '0.85rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '0.4rem'
-                        }}
-                      >
-                        <Plus size={16} /> + Add Another Patch Item
-                      </button>
+                          </div>
+                        );
+                      })}
                     </div>
 
-                    {/* Instant Live Price Summary Box */}
-                    <div style={{
-                      background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(15, 23, 42, 0.95) 100%)',
-                      border: '1.5px solid rgba(249, 115, 22, 0.35)',
-                      borderRadius: '10px',
-                      padding: '0.85rem 1.15rem',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginTop: '0.5rem'
-                    }}>
-                      <div>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#ffffff' }}>
-                          Physical Custom Patches ({patchItems.length} {patchItems.length === 1 ? 'Item' : 'Distinct Items'})
-                        </div>
-                        <div style={{ fontSize: '0.73rem', color: '#cbd5e1', marginTop: '0.15rem' }}>
-                          Total Quantity: <strong style={{ color: 'var(--orange-400)' }}>{pricingDetails.totalPlacementQuantity} Pcs</strong>
-                        </div>
-                      </div>
-
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '0.7rem', color: '#cbd5e1', fontWeight: 700, textTransform: 'uppercase' }}>ESTIMATED TOTAL</div>
-                        <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#ffffff' }}>
-                          ${pricingDetails.finalPrice.toFixed(2)}
-                        </div>
-                      </div>
-                    </div>
-                  </>
+                    <button
+                      type="button"
+                      onClick={addPatchItem}
+                      style={{
+                        width: '100%',
+                        marginTop: '0.85rem',
+                        padding: '0.75rem',
+                        background: 'var(--orange-50)',
+                        border: '1.5px dashed var(--orange-400)',
+                        borderRadius: '10px',
+                        color: 'var(--orange-700)',
+                        fontWeight: 800,
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.4rem'
+                      }}
+                    >
+                      <Plus size={16} /> + Add Another Patch Item
+                    </button>
+                  </div>
                 )}
 
+                {/* Express Rush Delivery Option */}
                 {pricingDetails.totalPlacementQuantity === 1 && type !== 'patch' && (
                   <div 
                     onClick={() => setIsRush(!isRush)}
                     style={{
-                      background: isRush ? 'linear-gradient(135deg, rgba(255, 122, 0, 0.25) 0%, rgba(255, 122, 0, 0.1) 100%)' : '#0f172a',
-                      border: isRush ? '2px solid var(--orange-500)' : '1px solid rgba(255, 255, 255, 0.15)',
-                      padding: '0.85rem 1rem',
-                      borderRadius: '10px',
+                      background: isRush ? 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)' : '#ffffff',
+                      border: isRush ? '2px solid var(--orange-500)' : '1.5px solid #cbd5e1',
+                      padding: '1rem 1.25rem',
+                      borderRadius: '12px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      boxShadow: isRush ? '0 4px 12px rgba(249, 115, 22, 0.15)' : 'none',
+                      transition: 'all 0.15s'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                      <Zap size={20} style={{ color: 'var(--orange-400)' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '8px',
+                        background: isRush ? 'var(--orange-500)' : 'var(--orange-50)',
+                        color: isRush ? '#ffffff' : 'var(--orange-600)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <Zap size={20} />
+                      </div>
                       <div>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ffffff', display: 'block' }}>Super Rush (2-4 Hrs / Express) Turnaround</span>
-                        <span style={{ fontSize: '0.73rem', color: '#cbd5e1' }}>Need urgent delivery? Get your completed file in 2–4 hours (+$10.00)</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--navy-950)', display: 'block' }}>
+                          ⚡ Super Rush (2–4 Hrs / Express) Turnaround
+                        </span>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                          Need urgent delivery? Get your completed file in 2–4 hours (+$10.00)
+                        </span>
                       </div>
                     </div>
-                    <input type="checkbox" checked={isRush} onChange={() => {}} style={{ width: '18px', height: '18px', accentColor: 'var(--orange-500)', cursor: 'pointer' }} />
+                    <input type="checkbox" checked={isRush} onChange={() => {}} style={{ width: '20px', height: '20px', accentColor: 'var(--orange-500)', cursor: 'pointer' }} />
                   </div>
                 )}
 
-                {/* Additional Instructions / Custom Notes (Optional) */}
-                <div style={{ marginTop: '1.25rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#cbd5e1', marginBottom: '0.4rem' }}>
+                {/* Additional Instructions / Custom Notes */}
+                <div style={{ marginTop: '0.5rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.4rem' }}>
                     Additional Instructions / Custom Notes (Optional)
                   </label>
                   <textarea
@@ -1371,8 +1356,8 @@ export const OrderWizardModal = () => {
                     className="form-control"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="e.g. Need specific color adjustments, custom file formats, or special placement notes..."
-                    style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.875rem' }}
+                    placeholder="e.g. Need specific thread colors (Madeira/Isacord), special sizing requirements, or machine model..."
+                    style={{ background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.875rem', borderRadius: '8px' }}
                   />
                 </div>
               </div>
@@ -1380,57 +1365,52 @@ export const OrderWizardModal = () => {
 
             {/* Sticky Live Order Summary Panel */}
             <div style={{ position: 'sticky', top: '10px' }}>
-              <div style={{ padding: '1.5rem', background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#ffffff', marginBottom: '1.15rem', borderBottom: '1px solid rgba(255,255,255,0.12)', paddingBottom: '0.75rem' }}>
+              <div style={{ padding: '1.75rem', background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '18px', boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '1.15rem', borderBottom: '2px solid #f1f5f9', paddingBottom: '0.75rem', letterSpacing: '-0.01em' }}>
                   Order Summary
                 </h3>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
                     <span>Selected Service:</span>
-                    <strong style={{ color: 'var(--orange-400)' }}>{pricingDetails.serviceTitle}</strong>
+                    <strong style={{ color: 'var(--orange-600)', fontWeight: 800 }}>{pricingDetails.serviceTitle}</strong>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
-                    <span>Selected Tier:</span>
-                    <strong style={{ color: '#ffffff', textTransform: 'capitalize' }}>
-                      {pricingDetails.currentTier} (${(pricingDetails.rateEach || pricingDetails.baseTierRate || 10).toFixed(2)})
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
+                    <span>Total Items / Placements:</span>
+                    <strong style={{ color: 'var(--navy-950)', fontWeight: 800 }}>
+                      {pricingDetails.totalPlacementQuantity} {type === 'patch' ? 'Pcs' : 'File(s)'}
                     </strong>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
-                    <span>Total Quantity:</span>
-                    <span style={{ color: '#ffffff', fontWeight: 700 }}>
-                      {pricingDetails.totalPlacementQuantity} Pcs
-                    </span>
-                  </div>
-
-                  <div style={{ background: '#0f172a', padding: '0.75rem 0.85rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                    <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {/* Items Breakdown Box */}
+                  <div style={{ background: '#f8fafc', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 900, color: 'var(--orange-700)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       📍 ITEMS BREAKDOWN ({pricingDetails.placementBreakdown.length}):
                     </div>
                     {pricingDetails.placementBreakdown.map((item, idx) => (
-                      <div key={item.id || idx} style={{ display: 'flex', flexDirection: 'column', borderBottom: idx < pricingDetails.placementBreakdown.length - 1 ? '1px dashed rgba(255,255,255,0.08)' : 'none', paddingBottom: '0.35rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#e2e8f0' }}>
+                      <div key={item.id || idx} style={{ display: 'flex', flexDirection: 'column', borderBottom: idx < pricingDetails.placementBreakdown.length - 1 ? '1px dashed #e2e8f0' : 'none', paddingBottom: '0.35rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', color: 'var(--navy-900)' }}>
                           <span>#{item.index} {item.label} (x{item.quantity}):</span>
-                          <strong style={{ color: '#ffffff' }}>${item.subtotal.toFixed(2)}</strong>
+                          <strong style={{ color: 'var(--navy-950)' }}>${item.subtotal.toFixed(2)}</strong>
                         </div>
                       </div>
                     ))}
-                    <div style={{ borderTop: '1px dashed rgba(255,255,255,0.15)', paddingTop: '0.35rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', fontWeight: 800, color: '#ffffff' }}>
+
+                    <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-950)' }}>
                       <span>Subtotal:</span>
-                      <span style={{ color: 'var(--orange-400)' }}>${pricingDetails.baseSubtotal.toFixed(2)}</span>
+                      <span style={{ color: 'var(--orange-600)' }}>${pricingDetails.baseSubtotal.toFixed(2)}</span>
                     </div>
 
                     {pricingDetails.discountAmount > 0 && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', fontWeight: 800, color: '#86efac' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', fontWeight: 800, color: '#16a34a' }}>
                         <span>Quantity Bulk Discount ({pricingDetails.discountPercent}%):</span>
                         <span>-${pricingDetails.discountAmount.toFixed(2)}</span>
                       </div>
                     )}
 
                     {pricingDetails.promoDiscountAmount > 0 && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', fontWeight: 800, color: '#86efac' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', fontWeight: 800, color: '#16a34a' }}>
                         <span>Promo Discount ({appliedPromo?.code}{appliedPromo?.discountType === 'percent' ? ` - ${appliedPromo.discountValue}% OFF` : ` - $${appliedPromo.discountValue} OFF`}):</span>
                         <span>-${pricingDetails.promoDiscountAmount.toFixed(2)}</span>
                       </div>
@@ -1438,13 +1418,13 @@ export const OrderWizardModal = () => {
                   </div>
 
                   {/* Promo / Discount Coupon Input */}
-                  <div style={{ background: 'rgba(255, 255, 255, 0.05)', borderRadius: '10px', padding: '0.75rem', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-400)', display: 'flex', alignItems: 'center', gap: '0.3rem', textTransform: 'uppercase' }}>
-                        <Tag size={12} /> Promo / Coupon Code
+                  <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '0.85rem', border: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 900, color: 'var(--orange-700)', display: 'flex', alignItems: 'center', gap: '0.35rem', textTransform: 'uppercase' }}>
+                        <Tag size={13} /> Promo / Coupon Code
                       </span>
                       {appliedPromo && (
-                        <span style={{ fontSize: '0.7rem', color: '#86efac', fontWeight: 800 }}>
+                        <span style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 900 }}>
                           ✓ {appliedPromo.code} Active
                         </span>
                       )}
@@ -1458,13 +1438,13 @@ export const OrderWizardModal = () => {
                         onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
                         style={{
                           flex: 1,
-                          background: 'rgba(0, 0, 0, 0.4)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                          borderRadius: '6px',
-                          padding: '0.4rem 0.6rem',
-                          color: '#ffffff',
-                          fontSize: '0.8rem',
-                          fontWeight: 800,
+                          background: '#ffffff',
+                          border: '1.5px solid #cbd5e1',
+                          borderRadius: '8px',
+                          padding: '0.45rem 0.65rem',
+                          color: 'var(--navy-950)',
+                          fontSize: '0.85rem',
+                          fontWeight: 900,
                           letterSpacing: '0.05em'
                         }}
                       />
@@ -1475,11 +1455,12 @@ export const OrderWizardModal = () => {
                           background: 'var(--orange-500)',
                           color: '#ffffff',
                           border: 'none',
-                          borderRadius: '6px',
-                          padding: '0.4rem 0.75rem',
-                          fontSize: '0.75rem',
-                          fontWeight: 800,
-                          cursor: 'pointer'
+                          borderRadius: '8px',
+                          padding: '0.45rem 0.85rem',
+                          fontSize: '0.8rem',
+                          fontWeight: 900,
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 8px rgba(249, 115, 22, 0.25)'
                         }}
                       >
                         Apply
@@ -1492,12 +1473,13 @@ export const OrderWizardModal = () => {
                             setPromoCodeInput('');
                           }}
                           style={{
-                            background: 'rgba(255, 255, 255, 0.1)',
-                            color: '#cbd5e1',
-                            border: 'none',
-                            borderRadius: '6px',
-                            padding: '0.4rem 0.55rem',
-                            fontSize: '0.75rem',
+                            background: '#fee2e2',
+                            color: '#dc2626',
+                            border: '1px solid #fca5a5',
+                            borderRadius: '8px',
+                            padding: '0.45rem 0.65rem',
+                            fontSize: '0.8rem',
+                            fontWeight: 800,
                             cursor: 'pointer'
                           }}
                           title="Remove promo code"
@@ -1508,24 +1490,24 @@ export const OrderWizardModal = () => {
                     </div>
 
                     {appliedPromo && (
-                      <div style={{ marginTop: '0.4rem', fontSize: '0.72rem', color: '#86efac' }}>
+                      <div style={{ marginTop: '0.45rem', fontSize: '0.78rem', color: '#16a34a', fontWeight: 700 }}>
                         🎉 Promo Code <strong>{appliedPromo.code}</strong> applied ({appliedPromo.discountType === 'percent' ? `${appliedPromo.discountValue}% OFF` : `$${appliedPromo.discountValue} OFF`})!
                       </div>
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                     <span>Turnaround Guarantee:</span>
-                    <span style={{ color: '#ffffff', fontWeight: 700 }}>
-                      {type === 'patch' ? '📦 3-5 Days Shipping' : isRush ? '⚡ 2-4 Hours Super Rush' : '8-12 Hours Standard'}
-                    </span>
+                    <strong style={{ color: 'var(--navy-950)', fontWeight: 800 }}>
+                      {type === 'patch' ? '📦 7-10 Days Prod. + Shipping' : isRush ? '⚡ 2-4 Hours Super Rush' : '8-12 Hours Standard'}
+                    </strong>
                   </div>
                 </div>
 
-                <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.15)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                <div style={{ borderTop: '2px solid #f1f5f9', paddingTop: '1.15rem', marginTop: '0.5rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
-                    <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff' }}>Total Price:</span>
-                    <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--orange-400)' }}>
+                    <span style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--navy-950)' }}>Total Price:</span>
+                    <span style={{ fontSize: '2.2rem', fontWeight: 900, color: 'var(--orange-600)', fontFamily: 'var(--font-heading)' }}>
                       ${pricingDetails.finalPrice.toFixed(2)}
                     </span>
                   </div>
@@ -1535,11 +1517,11 @@ export const OrderWizardModal = () => {
                     className="btn btn-primary-orange"
                     style={{
                       width: '100%',
-                      padding: '0.9rem',
+                      padding: '1rem',
                       fontSize: '1.05rem',
-                      fontWeight: 800,
-                      borderRadius: '10px',
-                      boxShadow: '0 8px 24px rgba(255, 122, 0, 0.35)',
+                      fontWeight: 900,
+                      borderRadius: '12px',
+                      boxShadow: '0 8px 24px rgba(249, 115, 22, 0.35)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -1550,8 +1532,8 @@ export const OrderWizardModal = () => {
                     Complete Order (${pricingDetails.finalPrice.toFixed(2)}) <ArrowRight size={18} />
                   </button>
 
-                  <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.85rem' }}>
-                    ✓ 100% Quality Guaranteed • Free Unlimited Revisions
+                  <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.85rem', fontWeight: 600 }}>
+                    ✓ 100% Quality Guaranteed • Free Unlimited Revisions • 256-Bit SSL Encrypted
                   </div>
                 </div>
               </div>
