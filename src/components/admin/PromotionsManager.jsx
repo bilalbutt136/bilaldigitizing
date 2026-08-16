@@ -40,10 +40,12 @@ export const PromotionsManager = () => {
 
   const [formData, setFormData] = useState({
     announcement: {
-      enabled: true,
+      enabled: false,
       badge: 'SPECIAL PROMO',
       text: 'Get 20% OFF on All Custom Embroidery Digitizing & Vector Art Orders!',
       promoCode: 'SAVE20',
+      discountValue: 20,
+      discountType: 'percent',
       linkText: 'Claim 20% Off',
       linkUrl: '/order',
       theme: 'orange',
@@ -54,7 +56,7 @@ export const PromotionsManager = () => {
       countdownHours: 24
     },
     promotionalBanner: {
-      enabled: true,
+      enabled: false,
       title: 'First-Time Client Welcome Offer',
       description: 'Enjoy 20% off your first digitizing file or vector redraw with guaranteed zero thread breaks and free unlimited revisions.',
       promoCode: 'WELCOME20',
@@ -101,6 +103,8 @@ export const PromotionsManager = () => {
           badge: siteSettings.announcement?.badge || prev.announcement.badge,
           text: siteSettings.announcement?.text || prev.announcement.text,
           promoCode: siteSettings.announcement?.promoCode || prev.announcement.promoCode,
+          discountValue: siteSettings.announcement?.discountValue !== undefined ? Number(siteSettings.announcement.discountValue) : prev.announcement.discountValue,
+          discountType: siteSettings.announcement?.discountType || prev.announcement.discountType,
           linkText: siteSettings.announcement?.linkText || prev.announcement.linkText,
           linkUrl: siteSettings.announcement?.linkUrl || prev.announcement.linkUrl,
           theme: siteSettings.announcement?.theme || prev.announcement.theme,
@@ -134,6 +138,36 @@ export const PromotionsManager = () => {
         [field]: value
       }
     }));
+  };
+
+  const handleAnnouncementDiscountChange = (newVal) => {
+    const numericVal = Math.max(1, Math.min(100, Number(newVal) || 0));
+    setFormData(prev => {
+      const currentCode = prev.announcement.promoCode || 'SAVE20';
+      // Sync matching coupon in promoCodes list
+      const updatedPromoCodes = prev.promoCodes.map(c => {
+        if (c.code?.toUpperCase() === currentCode.toUpperCase()) {
+          return { ...c, discountValue: numericVal, description: `${numericVal}% off promotion` };
+        }
+        return c;
+      });
+
+      // Update text if it had percentage mention
+      const updatedText = prev.announcement.text.replace(/\d+%/g, `${numericVal}%`);
+      const updatedLinkText = prev.announcement.linkText.replace(/\d+%/g, `${numericVal}%`);
+
+      return {
+        ...prev,
+        announcement: {
+          ...prev.announcement,
+          discountValue: numericVal,
+          discountType: 'percent',
+          text: updatedText,
+          linkText: updatedLinkText
+        },
+        promoCodes: updatedPromoCodes
+      };
+    });
   };
 
   const handleBannerChange = (field, value) => {
@@ -555,6 +589,58 @@ export const PromotionsManager = () => {
                 onChange={(e) => handleAnnouncementChange('promoCode', e.target.value.toUpperCase())}
                 placeholder="e.g. SAVE20"
               />
+            </div>
+          </div>
+
+          {/* Discount Percentage Selector & Presets */}
+          <div className="form-group" style={{ background: '#f8fafc', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <label style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--navy-950)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Percent size={15} style={{ color: 'var(--orange-500)' }} /> Promotional Discount Rate (% OFF)
+              </label>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                Auto-applies to Order Wizard & Checkout
+              </span>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+              {[10, 15, 20, 25, 30, 40, 50].map((pct) => {
+                const isSelected = Number(formData.announcement.discountValue) === pct;
+                return (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => handleAnnouncementDiscountChange(pct)}
+                    style={{
+                      padding: '0.35rem 0.85rem',
+                      borderRadius: '8px',
+                      border: isSelected ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
+                      background: isSelected ? 'var(--orange-500)' : '#ffffff',
+                      color: isSelected ? '#ffffff' : 'var(--navy-800)',
+                      fontWeight: isSelected ? 800 : 600,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {pct}% OFF
+                  </button>
+                );
+              })}
+
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginLeft: 'auto' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--navy-800)' }}>Custom:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  className="form-control"
+                  style={{ width: '75px', padding: '0.3rem 0.5rem', textAlign: 'center', fontWeight: 800 }}
+                  value={formData.announcement.discountValue || 20}
+                  onChange={(e) => handleAnnouncementDiscountChange(e.target.value)}
+                />
+                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>%</span>
+              </div>
             </div>
           </div>
 

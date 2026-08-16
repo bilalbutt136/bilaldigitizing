@@ -89,45 +89,70 @@ export const OrderWizardModal = () => {
     if (!codeToApply || !codeToApply.trim()) return;
     const clean = codeToApply.trim().toUpperCase();
     
-    // Check promoCodes list from siteSettings
+    // 1. Check promoCodes list from siteSettings
     const activeCoupons = Array.isArray(siteSettings?.promoCodes) ? siteSettings.promoCodes : [];
     const found = activeCoupons.find(c => c.code?.toUpperCase() === clean && c.isActive !== false);
 
+    // 2. Check Top Announcement Bar configuration
+    const announcement = siteSettings?.announcement;
+    const isAnnouncementCode = announcement?.promoCode && announcement.promoCode.toUpperCase() === clean;
+
+    // 3. Check Visitor Promotion Banner configuration
+    const banner = siteSettings?.promotionalBanner;
+    const isBannerCode = banner?.promoCode && banner.promoCode.toUpperCase() === clean;
+
+    let discountVal = 20;
+    let discountType = 'percent';
+    let desc = `${clean} Promotional Discount`;
+
     if (found) {
-      setAppliedPromo({
-        code: found.code,
-        discountType: found.discountType || 'percent',
-        discountValue: Number(found.discountValue) || 20,
-        description: found.description || `${found.discountValue}% Off Special Promotion`
-      });
-      if (showToast) showToast(`🎉 Promo code ${clean} applied (${found.discountValue}% OFF)!`, 'success');
+      discountVal = Number(found.discountValue) || 20;
+      discountType = found.discountType || 'percent';
+      desc = found.description || `${discountVal}% Off Special Promotion`;
+    } else if (isAnnouncementCode) {
+      if (announcement.discountValue !== undefined && announcement.discountValue !== null) {
+        discountVal = Number(announcement.discountValue);
+      } else if (announcement.text) {
+        const match = announcement.text.match(/(\d+)%/);
+        if (match) discountVal = Number(match[1]);
+      }
+      discountType = announcement.discountType || 'percent';
+      desc = announcement.text || `${discountVal}% Off Announcement Offer`;
+    } else if (isBannerCode) {
+      if (banner.discountValue !== undefined && banner.discountValue !== null) {
+        discountVal = Number(banner.discountValue);
+      } else if (banner.description || banner.title) {
+        const match = `${banner.title} ${banner.description}`.match(/(\d+)%/);
+        if (match) discountVal = Number(match[1]);
+      }
+      discountType = 'percent';
+      desc = banner.title || `${discountVal}% Off Welcome Offer`;
     } else if (clean === 'SAVE20' || clean === 'WELCOME20') {
-      setAppliedPromo({
-        code: clean,
-        discountType: 'percent',
-        discountValue: 20,
-        description: '20% Off Special Promotion'
-      });
-      if (showToast) showToast(`🎉 Promo code ${clean} applied (20% OFF)!`, 'success');
+      discountVal = 20;
+      discountType = 'percent';
+      desc = '20% Off Special Promotion';
     } else if (clean === 'WELCOME10') {
-      setAppliedPromo({
-        code: clean,
-        discountType: 'percent',
-        discountValue: 10,
-        description: '10% Off First-Time Client Offer'
-      });
-      if (showToast) showToast(`🎉 Promo code ${clean} applied (10% OFF)!`, 'success');
+      discountVal = 10;
+      discountType = 'percent';
+      desc = '10% Off First-Time Client Offer';
     } else if (clean === 'FREESAMPLE') {
-      setAppliedPromo({
-        code: clean,
-        discountType: 'fixed',
-        discountValue: 10,
-        description: '$10 Credit Towards Order'
-      });
-      if (showToast) showToast(`🎉 Promo code ${clean} applied ($10 Credit)!`, 'success');
+      discountVal = 10;
+      discountType = 'fixed';
+      desc = '$10 Credit Towards Order';
     } else {
       if (showToast) showToast(`Promo code ${clean} is invalid or expired`, 'error');
+      return;
     }
+
+    setAppliedPromo({
+      code: clean,
+      discountType,
+      discountValue: discountVal,
+      description: desc
+    });
+
+    const discountLabel = discountType === 'percent' ? `${discountVal}% OFF` : `$${discountVal.toFixed(2)} OFF`;
+    if (showToast) showToast(`🎉 Promo code ${clean} applied (${discountLabel})!`, 'success');
   };
 
   React.useEffect(() => {
@@ -1406,7 +1431,7 @@ export const OrderWizardModal = () => {
 
                     {pricingDetails.promoDiscountAmount > 0 && (
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', fontWeight: 800, color: '#86efac' }}>
-                        <span>Promo Discount ({appliedPromo?.code}):</span>
+                        <span>Promo Discount ({appliedPromo?.code}{appliedPromo?.discountType === 'percent' ? ` - ${appliedPromo.discountValue}% OFF` : ` - $${appliedPromo.discountValue} OFF`}):</span>
                         <span>-${pricingDetails.promoDiscountAmount.toFixed(2)}</span>
                       </div>
                     )}
