@@ -99,27 +99,43 @@ export async function POST(request) {
       if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       const { primaryDbRow, orderFiles } = payload;
       
+      const primaryArtworkUrl = 
+        primaryDbRow.artworkUrl || 
+        primaryDbRow.image_url || 
+        primaryDbRow.logo || 
+        (orderFiles && orderFiles[0]?.public_url) || 
+        (orderFiles && orderFiles[0]?.file_url) || 
+        null;
+
       const mappedDbRow = {
         id: primaryDbRow.id,
         title: primaryDbRow.title || 'Service Order',
-        client_name: primaryDbRow.clientName || 'Valued Client',
+        client_name: primaryDbRow.clientName || user.user_metadata?.full_name || 'Valued Client',
         client_email: user.email,
-        service_category: primaryDbRow.serviceCategory || primaryDbRow.type || 'Digitizing',
-        service_type: primaryDbRow.type,
+        service_category: primaryDbRow.serviceCategory || primaryDbRow.type || 'Embroidery Digitizing',
+        service_type: primaryDbRow.type || 'digitizing',
         fabric_type: primaryDbRow.fabricType || null,
         requested_formats: primaryDbRow.requestedFormats || ['dst'],
-        is_rush: primaryDbRow.isRush || false,
-        price: primaryDbRow.price || 15.00,
+        is_rush: Boolean(primaryDbRow.isRush),
+        price: parseFloat(primaryDbRow.price || 15.00),
+        cost: parseFloat(primaryDbRow.price || 15.00),
+        status: primaryDbRow.status || 'submitted',
+        payment_status: primaryDbRow.paymentStatus || 'pending',
+        artwork_url: primaryArtworkUrl,
+        image_url: primaryArtworkUrl,
+        logo: primaryArtworkUrl,
+        user_id: user.id,
         notes: JSON.stringify({
-          notes: primaryDbRow.notes,
+          notes: primaryDbRow.notes || '',
           patchStyle: primaryDbRow.patchStyle,
           patchBacking: primaryDbRow.patchBacking,
           patchBorderStyle: primaryDbRow.patchBorderStyle,
           patchWidth: primaryDbRow.patchWidth,
           patchHeight: primaryDbRow.patchHeight,
           patchQuantity: primaryDbRow.patchQuantity,
-          patchItems: primaryDbRow.patchItems,
-          placementItems: primaryDbRow.placementItems
+          patchItems: primaryDbRow.patchItems || [],
+          placementItems: primaryDbRow.placementItems || [],
+          uploadedFiles: orderFiles || []
         })
       };
 
@@ -131,7 +147,22 @@ export async function POST(request) {
       
       if (orderFiles && orderFiles.length > 0) {
         for (let file of orderFiles) {
-          await supabase.from('order_files').insert([file]);
+          if (!file.file_url && !file.public_url) continue;
+          try {
+            await supabase.from('order_files').insert([{
+              order_id: mappedDbRow.id,
+              file_name: file.file_name || file.name || 'artwork_file',
+              file_format: file.file_format || file.format || file.file_name?.split('.').pop() || 'png',
+              file_type: 'client_artwork',
+              bucket_name: file.bucket_name || 'client-uploads',
+              file_path: file.file_path || file.public_url || file.file_url,
+              public_url: file.public_url || file.file_url,
+              file_url: file.file_url || file.public_url,
+              uploaded_by: 'client'
+            }]);
+          } catch (fileInsertErr) {
+            console.warn('order_files insert notice:', fileInsertErr);
+          }
         }
       }
       return NextResponse.json({ success: true, order: insertedOrder[0] });

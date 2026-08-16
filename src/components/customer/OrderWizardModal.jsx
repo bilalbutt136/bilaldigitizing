@@ -701,31 +701,74 @@ export const OrderWizardModal = () => {
     setIsProcessingPayment(true);
 
     try {
-      // Upload all files to Cloudinary first
-      const allFiles = type === 'patch' 
-        ? patchItems.flatMap(item => item.files || []) 
-        : placementItems.flatMap(item => item.files || []);
+      // 1. Process and upload files per placement / patch item
+      const updatedPlacementItems = [];
+      const updatedPatchItems = [];
+      const allUploadedFiles = [];
 
-      const uploadedCloudinaryFiles = [];
-      for (const fileItem of allFiles) {
-        if (fileItem.rawFile) {
-          const uploaded = await uploadFileToCloudinaryFull(fileItem.rawFile, 'client-uploads', 'orders');
-          if (uploaded) {
-            uploadedCloudinaryFiles.push(uploaded);
-          } else {
-            uploadedCloudinaryFiles.push({ name: fileItem.name, error: 'Upload failed' });
+      if (type === 'patch') {
+        for (const item of patchItems) {
+          const itemFiles = [];
+          for (const fileItem of (item.files || [])) {
+            if (fileItem.rawFile) {
+              const uploaded = await uploadFileToCloudinaryFull(fileItem.rawFile, 'client-uploads', 'orders');
+              if (uploaded && uploaded.url) {
+                const fileObj = {
+                  id: fileItem.id,
+                  name: fileItem.name,
+                  url: uploaded.url,
+                  public_url: uploaded.url,
+                  size: uploaded.size || fileItem.size,
+                  type: fileItem.type || 'image/png',
+                  format: uploaded.format || fileItem.name?.split('.').pop()
+                };
+                itemFiles.push(fileObj);
+                allUploadedFiles.push(fileObj);
+              }
+            } else if (fileItem.url) {
+              itemFiles.push(fileItem);
+              allUploadedFiles.push(fileItem);
+            }
           }
-        } else {
-          uploadedCloudinaryFiles.push({ name: fileItem.name }); // Fallback if no rawFile
+          updatedPatchItems.push({ ...item, files: itemFiles });
+        }
+      } else {
+        for (const item of placementItems) {
+          const itemFiles = [];
+          for (const fileItem of (item.files || [])) {
+            if (fileItem.rawFile) {
+              const uploaded = await uploadFileToCloudinaryFull(fileItem.rawFile, 'client-uploads', 'orders');
+              if (uploaded && uploaded.url) {
+                const fileObj = {
+                  id: fileItem.id,
+                  name: fileItem.name,
+                  url: uploaded.url,
+                  public_url: uploaded.url,
+                  size: uploaded.size || fileItem.size,
+                  type: fileItem.type || 'image/png',
+                  format: uploaded.format || fileItem.name?.split('.').pop()
+                };
+                itemFiles.push(fileObj);
+                allUploadedFiles.push(fileObj);
+              }
+            } else if (fileItem.url) {
+              itemFiles.push(fileItem);
+              allUploadedFiles.push(fileItem);
+            }
+          }
+          updatedPlacementItems.push({ ...item, files: itemFiles });
         }
       }
+
+      const primaryArtworkUrl = allUploadedFiles[0]?.url || null;
 
       const orderData = {
         title: orderTitle,
         type,
-        serviceCategory: pricingDetails?.serviceTitle || type || 'Embroidery Digitizing',
+        serviceCategory: pricingDetails?.serviceTitle || (type === 'patch' ? 'Custom Patches' : type === 'vector' ? 'Vector Tracing' : 'Embroidery Digitizing'),
         price: parseFloat(finalPrice),
-        placementItems,
+        placementItems: updatedPlacementItems,
+        patchItems: updatedPatchItems,
         fabricType,
         requestedFormats,
         isRush,
@@ -735,20 +778,15 @@ export const OrderWizardModal = () => {
         patchWidth,
         patchHeight,
         patchQuantity,
-        patchItems,
         notes: notes.trim(),
         totalPrice: finalPrice,
         original_price: pricingDetails?.baseSubtotal || finalPrice,
         discount_amount: pricingDetails?.promoDiscountAmount || 0,
         applied_promo_code: appliedPromo?.code || null,
-        uploadedFiles: uploadedCloudinaryFiles,
-        patchWidth,
-        patchHeight,
-        patchQuantity,
-        patchItems,
-        notes: notes.trim(),
-        totalPrice: finalPrice,
-        uploadedFiles: uploadedCloudinaryFiles,
+        artworkUrl: primaryArtworkUrl,
+        image_url: primaryArtworkUrl,
+        logo: primaryArtworkUrl,
+        uploadedFiles: allUploadedFiles,
         paymentStatus: 'pending' // Enforce pending payment status
       };
 

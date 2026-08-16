@@ -538,24 +538,66 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
       `Custom Order`
     );
 
-    // Upload files to Cloudinary first
-    const allFiles = activeService === 'patches' 
-      ? patchItems.flatMap(item => item.files || []) 
-      : placementItems.flatMap(item => item.files || []);
+    // 1. Process and upload files per placement / patch item
+    const updatedPlacementItems = [];
+    const updatedPatchItems = [];
+    const allUploadedFiles = [];
 
-    const uploadedCloudinaryFiles = [];
-    for (const fileItem of allFiles) {
-      if (fileItem.rawFile) {
-        const uploaded = await uploadFileToCloudinaryFull(fileItem.rawFile, 'client-uploads', 'orders');
-        if (uploaded) {
-          uploadedCloudinaryFiles.push(uploaded);
-        } else {
-          uploadedCloudinaryFiles.push({ name: fileItem.name, error: 'Upload failed' });
+    if (activeService === 'patches') {
+      for (const item of patchItems) {
+        const itemFiles = [];
+        for (const fileItem of (item.files || [])) {
+          if (fileItem.rawFile) {
+            const uploaded = await uploadFileToCloudinaryFull(fileItem.rawFile, 'client-uploads', 'orders');
+            if (uploaded && uploaded.url) {
+              const fileObj = {
+                id: fileItem.id,
+                name: fileItem.name,
+                url: uploaded.url,
+                public_url: uploaded.url,
+                size: uploaded.size || fileItem.size,
+                type: fileItem.type || 'image/png',
+                format: uploaded.format || fileItem.name?.split('.').pop()
+              };
+              itemFiles.push(fileObj);
+              allUploadedFiles.push(fileObj);
+            }
+          } else if (fileItem.url) {
+            itemFiles.push(fileItem);
+            allUploadedFiles.push(fileItem);
+          }
         }
-      } else {
-        uploadedCloudinaryFiles.push({ name: fileItem.name }); // Fallback if no rawFile
+        updatedPatchItems.push({ ...item, files: itemFiles });
+      }
+    } else {
+      for (const item of placementItems) {
+        const itemFiles = [];
+        for (const fileItem of (item.files || [])) {
+          if (fileItem.rawFile) {
+            const uploaded = await uploadFileToCloudinaryFull(fileItem.rawFile, 'client-uploads', 'orders');
+            if (uploaded && uploaded.url) {
+              const fileObj = {
+                id: fileItem.id,
+                name: fileItem.name,
+                url: uploaded.url,
+                public_url: uploaded.url,
+                size: uploaded.size || fileItem.size,
+                type: fileItem.type || 'image/png',
+                format: uploaded.format || fileItem.name?.split('.').pop()
+              };
+              itemFiles.push(fileObj);
+              allUploadedFiles.push(fileObj);
+            }
+          } else if (fileItem.url) {
+            itemFiles.push(fileItem);
+            allUploadedFiles.push(fileItem);
+          }
+        }
+        updatedPlacementItems.push({ ...item, files: itemFiles });
       }
     }
+
+    const primaryArtworkUrl = allUploadedFiles[0]?.url || null;
 
     const newOrderPayload = {
       title: orderTitle,
@@ -570,11 +612,14 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
       isRush: activeService === 'digitizing' ? isRush : (activeService === 'vector' ? (totalPlacementCount === 1 && isRush) : false),
       notes,
       requestedFormats: activeService === 'vector' ? vectorFormats : targetFormats,
-      uploadedFiles: uploadedCloudinaryFiles, // Replaced legacy global uploads with structured Cloudinary objects
+      artworkUrl: primaryArtworkUrl,
+      image_url: primaryArtworkUrl,
+      logo: primaryArtworkUrl,
+      uploadedFiles: allUploadedFiles,
       specifications: {
         placementsSummary,
-        placementItems: activeService === 'digitizing' || activeService === 'vector' ? placementItems : undefined,
-        patchItems: activeService === 'patches' ? patchItems : undefined,
+        placementItems: activeService === 'digitizing' || activeService === 'vector' ? updatedPlacementItems : undefined,
+        patchItems: activeService === 'patches' ? updatedPatchItems : undefined,
         totalPlacementCount,
         fabricType,
         tshirtColor,

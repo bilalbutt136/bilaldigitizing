@@ -363,7 +363,20 @@ export const OrderManagementTable = () => {
               </tr>
             ) : (
               filteredOrders.map((ord) => {
-                const artworkImg = ord.image_url || ord.logo || ord.file_path || ord.file_url || ord.artworkUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
+                const artworkImg = 
+                  ord.artworkUrl || 
+                  ord.image_url || 
+                  ord.logo || 
+                  ord.uploadedFiles?.[0]?.url || 
+                  ord.uploadedFiles?.[0]?.public_url || 
+                  ord.placementItems?.[0]?.files?.[0]?.url || 
+                  ord.patchItems?.[0]?.files?.[0]?.url || 
+                  ord.vectorItems?.[0]?.files?.[0]?.url || 
+                  ord.order_files?.[0]?.public_url || 
+                  ord.order_files?.[0]?.file_url || 
+                  ord.file_path || 
+                  ord.file_url || 
+                  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
                 const msgCount = ord.messages?.length || 0;
 
                 return (

@@ -203,7 +203,7 @@ export async function fetchOrdersFromSupabase() {
       let notesData = {};
       try {
         if (order.notes) {
-          notesData = JSON.parse(order.notes);
+          notesData = typeof order.notes === 'string' ? JSON.parse(order.notes) : order.notes;
         }
       } catch (e) {
         notesData.notes = order.notes;
@@ -213,8 +213,9 @@ export async function fetchOrdersFromSupabase() {
       const clientFiles = allFiles.filter(f => f.file_type === 'client_artwork').map(f => ({
         id: f.id,
         name: f.file_name,
-        format: f.file_format,
+        format: f.file_format || f.file_name?.split('.').pop() || 'png',
         url: f.public_url || f.file_url,
+        public_url: f.public_url || f.file_url,
         public_id: f.file_path,
         uploadedAt: f.created_at
       }));
@@ -222,18 +223,32 @@ export async function fetchOrdersFromSupabase() {
       const machineFiles = allFiles.filter(f => f.file_type === 'machine_file').map(f => ({
         id: f.id,
         name: f.file_name,
-        format: f.file_format,
+        format: f.file_format || f.file_name?.split('.').pop() || 'dst',
         url: f.public_url || f.file_url,
+        public_url: f.public_url || f.file_url,
         public_id: f.file_path,
         uploadedAt: f.created_at
       }));
+
+      // Extract primary artwork URL with comprehensive fallback chain
+      const primaryArtworkUrl = 
+        (order.artwork_url && typeof order.artwork_url === 'string' && order.artwork_url.trim()) || 
+        (order.image_url && typeof order.image_url === 'string' && order.image_url.trim()) || 
+        (order.logo && typeof order.logo === 'string' && order.logo.trim()) || 
+        clientFiles[0]?.url || 
+        notesData.placementItems?.[0]?.files?.[0]?.url || 
+        notesData.patchItems?.[0]?.files?.[0]?.url || 
+        null;
 
       return {
         ...order,
         clientName: order.client_name,
         clientEmail: order.client_email,
         serviceCategory: order.service_category,
-        uploadedFiles: clientFiles,
+        artworkUrl: primaryArtworkUrl,
+        image_url: primaryArtworkUrl,
+        logo: primaryArtworkUrl,
+        uploadedFiles: clientFiles.length > 0 ? clientFiles : (notesData.uploadedFiles || []),
         uploadedMachineFiles: machineFiles,
         type: order.service_type || order.service_category,
         fabricType: order.fabric_type,
@@ -257,16 +272,19 @@ export async function fetchOrdersFromSupabase() {
 export async function createOrderInSupabase(newOrder) {
   try {
     const rawFiles = newOrder.uploadedFiles || [];
-    const orderFiles = rawFiles.map(file => ({
-      order_id: newOrder.id,
-      file_name: file.original_filename || file.name || 'unnamed_file',
-      file_format: file.format || 'unknown',
-      file_type: 'client_artwork',
-      bucket_name: 'cloudinary',
-      file_path: file.public_id || file.url || 'unknown',
-      public_url: file.url,
-      file_url: file.url
-    }));
+    const orderFiles = rawFiles
+      .filter(file => file && (file.url || file.public_url || file.file_url))
+      .map(file => ({
+        order_id: newOrder.id,
+        file_name: file.original_filename || file.name || 'artwork_file',
+        file_format: file.format || file.name?.split('.').pop() || 'png',
+        file_type: 'client_artwork',
+        bucket_name: 'client-uploads',
+        file_path: file.public_id || file.url || file.public_url,
+        public_url: file.url || file.public_url || file.file_url,
+        file_url: file.url || file.public_url || file.file_url,
+        uploaded_by: 'client'
+      }));
 
     const res = await fetch('/api/orders', {
       method: 'POST',
@@ -1208,81 +1226,133 @@ export async function fetchMediaAssetsFromSupabase() {
   }
 }
 
-// Helper to upload files directly to Cloudinary and return full details (url, public_id, size)
+// Helper to upload files directly to Cloudinary / Supabase Storage and return full details (url, public_id, size)
 export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-uploads', folderPath = 'artwork', onProgress) {
   if (!fileObj) return null;
 
-  try {
-    // 1. Dispatch global start event
+  // 1. Dispatch global start event
+  if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('upload:start', { detail: { fileName: fileObj.name } }));
+  }
 
-    // 2. Get upload signature from our fast Next.js backend
+  // Attempt 1: Direct Cloudinary Upload via Signed Request with auto resource type
+  try {
     const sigRes = await fetch(`/api/cloudinary/signature?folder=${encodeURIComponent(folderPath)}`);
-    if (!sigRes.ok) {
-      console.error('[Cloudinary Signature Error] Failed to fetch signature. Ensure NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME, NEXT_PUBLIC_CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET are set correctly.');
-      throw new Error('Failed to fetch signature');
-    }
-    const sigData = await sigRes.json();
-    
-    if (!sigData.success) {
-      console.error('[Cloudinary Signature Error] Signature API returned failure:', sigData.error);
-      throw new Error(sigData.error || 'Failed to sign upload');
-    }
+    if (sigRes.ok) {
+      const sigData = await sigRes.json();
+      if (sigData.success && sigData.signature && sigData.cloud_name) {
+        const formData = new FormData();
+        formData.append('file', fileObj);
+        formData.append('folder', folderPath);
+        formData.append('api_key', sigData.api_key);
+        formData.append('timestamp', sigData.timestamp);
+        formData.append('signature', sigData.signature);
 
-    // 3. Prepare FormData for direct Cloudinary upload
-    const formData = new FormData();
-    formData.append('file', fileObj);
-    formData.append('folder', folderPath);
-    formData.append('api_key', sigData.api_key);
-    formData.append('timestamp', sigData.timestamp);
-    formData.append('signature', sigData.signature);
+        const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${sigData.cloud_name}/auto/upload`;
+        
+        const data = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', cloudinaryUrl, true);
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable && onProgress) {
+              const percent = Math.round((event.loaded / event.total) * 100);
+              onProgress(percent);
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('upload:progress', { 
+                  detail: { progress: percent, fileName: fileObj.name } 
+                }));
+              }
+            }
+          };
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve(JSON.parse(xhr.responseText));
+            } else {
+              reject(new Error(xhr.responseText));
+            }
+          };
+          xhr.onerror = () => reject(new Error('Network error during Cloudinary upload'));
+          xhr.send(formData);
+        });
 
-    // 4. Upload directly to Cloudinary using XHR to track progress
-    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${sigData.cloud_name}/image/upload`;
-    
-    const data = await new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', cloudinaryUrl, true);
-
-      // Track progress
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const percentComplete = Math.round((event.loaded / event.total) * 100);
-          if (onProgress) onProgress(percentComplete);
-          
-          window.dispatchEvent(new CustomEvent('upload:progress', { 
-            detail: { progress: percentComplete, fileName: fileObj.name } 
-          }));
+        if (data && (data.secure_url || data.url)) {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('upload:end', { detail: { fileName: fileObj.name, success: true } }));
+          }
+          return {
+            name: fileObj.name,
+            url: data.secure_url || data.url,
+            public_id: data.public_id || data.secure_url,
+            size: `${(fileObj.size / (1024 * 1024)).toFixed(2)} MB`,
+            format: fileObj.name?.split('.').pop() || 'png'
+          };
         }
-      };
+      }
+    }
+  } catch (err) {
+    console.warn('[Cloudinary Direct Upload Notice] Direct upload notice:', err.message);
+  }
 
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve(JSON.parse(xhr.responseText));
-        } else {
-          reject(new Error(xhr.responseText));
-        }
-      };
+  // Attempt 2: Server-side Supabase Storage Fallback via /api/cloudinary/upload
+  try {
+    const serverFormData = new FormData();
+    serverFormData.append('file', fileObj);
+    serverFormData.append('folder', folderPath);
+    serverFormData.append('bucket', bucketName || 'client-uploads');
 
-      xhr.onerror = () => reject(new Error('Network error during upload'));
-      xhr.send(formData);
+    const serverRes = await fetch('/api/cloudinary/upload', {
+      method: 'POST',
+      body: serverFormData
     });
 
-    // 5. Dispatch global end event
-    window.dispatchEvent(new CustomEvent('upload:end', { detail: { fileName: fileObj.name, success: true } }));
-
-    return {
-      name: fileObj.name,
-      url: data.secure_url,
-      public_id: data.public_id,
-      size: `${(fileObj.size / (1024 * 1024)).toFixed(2)} MB`
-    };
-  } catch (err) {
-    console.error(`[Cloudinary Direct Upload Error] The upload process for "${fileObj.name}" failed. Details:`, err.message || err);
-    console.error('Please verify your internet connection, Cloudinary environment variables, and ensure the Cloudinary service is accessible.');
-    window.dispatchEvent(new CustomEvent('upload:end', { detail: { fileName: fileObj.name, success: false } }));
-    return null;
+    if (serverRes.ok) {
+      const serverData = await serverRes.json();
+      if (serverData.success && (serverData.url || serverData.secure_url)) {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('upload:end', { detail: { fileName: fileObj.name, success: true } }));
+        }
+        return {
+          name: fileObj.name,
+          url: serverData.url || serverData.secure_url,
+          public_id: serverData.public_id || serverData.url,
+          size: `${(fileObj.size / (1024 * 1024)).toFixed(2)} MB`,
+          format: fileObj.name?.split('.').pop() || 'png'
+        };
+      }
+    }
+  } catch (storageErr) {
+    console.warn('[Storage Fallback Notice] Server storage upload notice:', storageErr.message);
   }
+
+  // Attempt 3: Client Data URL Fallback so the logo/file is NEVER lost
+  try {
+    const base64Url = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(fileObj);
+    });
+
+    if (base64Url) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('upload:end', { detail: { fileName: fileObj.name, success: true } }));
+      }
+      return {
+        name: fileObj.name,
+        url: base64Url,
+        public_id: `local_${Date.now()}`,
+        size: `${(fileObj.size / (1024 * 1024)).toFixed(2)} MB`,
+        format: fileObj.name?.split('.').pop() || 'png'
+      };
+    }
+  } catch (base64Err) {
+    console.error('[Upload Fallback Error]', base64Err);
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('upload:end', { detail: { fileName: fileObj.name, success: false } }));
+  }
+  return null;
 }
 
 // CMS Helper

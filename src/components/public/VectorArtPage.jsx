@@ -268,20 +268,37 @@ export const VectorArtPage = ({ hideHero = false }) => {
       const firstItemName = vectorItems[0]?.name || 'Vector Art Order';
       const orderTitle = title.trim() || `${firstItemName}${vectorItems.length > 1 ? ` (+${vectorItems.length - 1} more)` : ''}`;
 
-      // Upload to Cloudinary
-      const uploadedCloudinaryFiles = [];
-      for (const fileItem of allFiles) {
-        if (fileItem.rawFile) {
-          const uploaded = await uploadFileToCloudinaryFull(fileItem.rawFile, 'client-uploads', 'orders');
-          if (uploaded) {
-            uploadedCloudinaryFiles.push(uploaded);
-          } else {
-            uploadedCloudinaryFiles.push({ name: fileItem.name, error: 'Upload failed' });
+      // 1. Process and upload files per vector item
+      const updatedVectorItems = [];
+      const allUploadedFiles = [];
+
+      for (const item of vectorItems) {
+        const itemFiles = [];
+        for (const fileItem of (item.files || [])) {
+          if (fileItem.rawFile) {
+            const uploaded = await uploadFileToCloudinaryFull(fileItem.rawFile, 'client-uploads', 'orders');
+            if (uploaded && uploaded.url) {
+              const fileObj = {
+                id: fileItem.id,
+                name: fileItem.name,
+                url: uploaded.url,
+                public_url: uploaded.url,
+                size: uploaded.size || fileItem.size,
+                type: fileItem.type || 'image/png',
+                format: uploaded.format || fileItem.name?.split('.').pop()
+              };
+              itemFiles.push(fileObj);
+              allUploadedFiles.push(fileObj);
+            }
+          } else if (fileItem.url) {
+            itemFiles.push(fileItem);
+            allUploadedFiles.push(fileItem);
           }
-        } else {
-          uploadedCloudinaryFiles.push({ name: fileItem.name }); // Fallback
         }
+        updatedVectorItems.push({ ...item, files: itemFiles });
       }
+
+      const primaryArtworkUrl = allUploadedFiles[0]?.url || null;
 
       const newVectorOrder = {
         type: 'vector',
@@ -291,12 +308,14 @@ export const VectorArtPage = ({ hideHero = false }) => {
         colorMode,
         requestedFormats,
         isRush,
-        vectorItems,
+        vectorItems: updatedVectorItems,
         vectorBreakdown,
         totalQuantity: totalVectorQuantity,
         price: parseFloat(totalPrice),
-        uploadedFiles: uploadedCloudinaryFiles, // Replaced array of strings with Cloudinary objects
-        artworkUrl: uploadedCloudinaryFiles[0]?.url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=80',
+        uploadedFiles: allUploadedFiles,
+        artworkUrl: primaryArtworkUrl,
+        image_url: primaryArtworkUrl,
+        logo: primaryArtworkUrl,
         paymentMethod: paymentOption,
         estimatedDelivery: isRush ? '2-4 Hours (Super Rush)' : '8-12 Hours (Standard)'
       };

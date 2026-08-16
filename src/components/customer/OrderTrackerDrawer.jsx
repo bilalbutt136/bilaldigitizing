@@ -64,6 +64,7 @@ export const OrderTrackerDrawer = () => {
   const [chatMessageText, setChatMessageText] = useState('');
   const [activeTab, setActiveTab] = useState('timeline'); // timeline | downloads | messages | revisions
   const [showLightbox, setShowLightbox] = useState(false);
+  const [lightboxArtwork, setLightboxArtwork] = useState(null);
   const [showWorksheetModal, setShowWorksheetModal] = useState(false);
 
   // Admin Multiple File Upload Array State
@@ -74,6 +75,32 @@ export const OrderTrackerDrawer = () => {
 
   // Always resolve live reactive order state from global orders array
   const ord = orders.find(o => o.id === selectedOrderForDrawer.id) || selectedOrderForDrawer;
+
+  // Collect all uploaded artwork / logo files across all placements and attachments
+  const clientArtworkFiles = [
+    ...(ord.uploadedFiles || []),
+    ...(ord.placementItems?.flatMap(p => (p.files || []).map(f => ({ ...f, placementName: p.placement || p.name }))) || []),
+    ...(ord.patchItems?.flatMap(p => (p.files || []).map(f => ({ ...f, placementName: p.tier || p.name }))) || []),
+    ...(ord.vectorItems?.flatMap(v => (v.files || []).map(f => ({ ...f, placementName: v.name }))) || [])
+  ].filter(f => f && (f.url || f.public_url || f.previewUrl));
+
+  const uniqueArtworkFiles = [];
+  const seenArtUrls = new Set();
+  for (const f of clientArtworkFiles) {
+    const key = f.url || f.public_url || f.name;
+    if (key && !seenArtUrls.has(key)) {
+      seenArtUrls.add(key);
+      uniqueArtworkFiles.push(f);
+    }
+  }
+
+  const primaryArtworkSrc = 
+    ord.artworkUrl || 
+    ord.image_url || 
+    ord.logo || 
+    uniqueArtworkFiles[0]?.url || 
+    uniqueArtworkFiles[0]?.public_url || 
+    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
   
   // Show Admin dropzone ONLY if user has admin role AND is currently viewing inside the Admin Portal
   const isCurrentlyOnAdminPortal = currentView === 'admin' || (typeof window !== 'undefined' && window.location.pathname.includes('admin'));
@@ -487,19 +514,25 @@ export const OrderTrackerDrawer = () => {
                 {/* 1. Order Status & Specs */}
                 <div>
                   <h4 style={{ fontSize: '1.1rem', color: 'var(--navy-900)', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontWeight: 700 }}>
-                    Order Details
+                    Order Details & Specifications
                   </h4>
                   <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                     <div 
-                      onClick={() => setShowLightbox(true)}
-                      style={{ cursor: 'pointer', flexShrink: 0, textAlign: 'center', background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}
+                      onClick={() => setLightboxArtwork({ url: primaryArtworkSrc, name: ord.title })}
+                      style={{ cursor: 'pointer', flexShrink: 0, textAlign: 'center', background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)', width: '180px' }}
                     >
                       <img 
-                        src={ord.artworkUrl || ord.image_url || ord.logo || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80'} 
+                        src={primaryArtworkSrc} 
                         alt="Artwork"
-                        style={{ width: '160px', height: '160px', objectFit: 'contain', borderRadius: '8px' }}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
+                        }}
+                        style={{ width: '100%', height: '150px', objectFit: 'contain', borderRadius: '8px', background: '#ffffff' }}
                       />
-                      <div style={{ fontSize: '0.8rem', color: 'var(--orange-600)', marginTop: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}><Sparkles size={14} /> Inspect Source</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--orange-600)', marginTop: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                        <Sparkles size={14} /> Inspect Full Artwork
+                      </div>
                     </div>
                     
                     <div style={{ flex: 1, background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
@@ -514,6 +547,144 @@ export const OrderTrackerDrawer = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Uploaded Client Artwork & Logos Section */}
+                  {uniqueArtworkFiles.length > 0 && (
+                    <div style={{ marginTop: '1.5rem', background: '#ffffff', borderRadius: '12px', border: '1.5px solid var(--border-color)', padding: '1.25rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span>📎</span> Attached Source Artwork & Logos ({uniqueArtworkFiles.length})
+                        </div>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>High-Resolution Client Assets</span>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+                        {uniqueArtworkFiles.map((artFile, aIdx) => {
+                          const fileExt = (artFile.format || artFile.name?.split('.').pop() || 'png').toUpperCase();
+                          const isImg = ['PNG', 'JPG', 'JPEG', 'WEBP', 'GIF', 'SVG'].includes(fileExt);
+
+                          return (
+                            <div 
+                              key={aIdx} 
+                              style={{ 
+                                background: '#f8fafc', 
+                                border: '1px solid var(--border-color)', 
+                                borderRadius: '10px', 
+                                padding: '0.85rem',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.65rem'
+                              }}
+                            >
+                              <div 
+                                onClick={() => setLightboxArtwork(artFile)}
+                                style={{ 
+                                  height: '110px', 
+                                  background: '#ffffff', 
+                                  borderRadius: '8px', 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  justifyContent: 'center', 
+                                  overflow: 'hidden',
+                                  cursor: 'pointer',
+                                  border: '1px solid #e2e8f0',
+                                  position: 'relative'
+                                }}
+                              >
+                                {isImg ? (
+                                  <img 
+                                    src={artFile.url || artFile.public_url || artFile.previewUrl} 
+                                    alt={artFile.name} 
+                                    onError={(e) => {
+                                      e.currentTarget.onerror = null;
+                                      e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200&q=80';
+                                    }}
+                                    style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '4px' }}
+                                  />
+                                ) : (
+                                  <div style={{ textAlign: 'center', color: 'var(--navy-900)' }}>
+                                    <div style={{ fontSize: '1.8rem' }}>📄</div>
+                                    <div style={{ fontSize: '0.75rem', fontWeight: 800, marginTop: '2px' }}>.{fileExt} Asset</div>
+                                  </div>
+                                )}
+                                <span style={{ 
+                                  position: 'absolute', 
+                                  top: '6px', 
+                                  right: '6px', 
+                                  background: 'rgba(15, 23, 42, 0.85)', 
+                                  color: '#fff', 
+                                  fontSize: '0.65rem', 
+                                  fontWeight: 800, 
+                                  padding: '0.15rem 0.4rem', 
+                                  borderRadius: '4px' 
+                                }}>
+                                  .{fileExt}
+                                </span>
+                              </div>
+
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--navy-900)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={artFile.name}>
+                                  {artFile.name || `Artwork_File_${aIdx + 1}.${fileExt.toLowerCase()}`}
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}>
+                                  {artFile.size && <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{artFile.size}</span>}
+                                  {artFile.placementName && (
+                                    <span style={{ fontSize: '0.65rem', fontWeight: 700, background: '#e0f2fe', color: '#0369a1', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                                      {artFile.placementName}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div style={{ display: 'flex', gap: '0.4rem', marginTop: 'auto' }}>
+                                <button 
+                                  type="button"
+                                  onClick={() => setLightboxArtwork(artFile)}
+                                  className="btn btn-outline btn-sm" 
+                                  style={{ flex: 1, padding: '0.4rem', fontSize: '0.75rem', gap: '0.25rem', justifyContent: 'center' }}
+                                >
+                                  <Sparkles size={12} /> Inspect
+                                </button>
+                                <button 
+                                  type="button"
+                                  onClick={() => triggerFileDownload(artFile.url || artFile.public_url, artFile.name || `artwork_${aIdx + 1}.${fileExt.toLowerCase()}`, fileExt.toLowerCase())}
+                                  className="btn btn-outline btn-sm" 
+                                  style={{ padding: '0.4rem 0.6rem', fontSize: '0.75rem', gap: '0.25rem' }}
+                                  title="Download Original File"
+                                >
+                                  <Download size={12} />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Multi-Placement Breakdown List (if available) */}
+                  {ord.placementItems && ord.placementItems.length > 0 && (
+                    <div style={{ marginTop: '1.25rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid var(--border-color)', padding: '1.25rem' }}>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span>📍</span> Placement Breakdown ({ord.placementItems.length} Locations)
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem' }}>
+                        {ord.placementItems.map((pl, pIdx) => (
+                          <div key={pIdx} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.85rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
+                              <strong style={{ color: 'var(--navy-900)', fontSize: '0.85rem' }}>{pl.placement || `Location #${pIdx + 1}`}</strong>
+                              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-600)' }}>${parseFloat(pl.price || 0).toFixed(2)}</span>
+                            </div>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                              {pl.fabric && <div><strong>Fabric:</strong> {pl.fabric}</div>}
+                              {pl.width && pl.height && <div><strong>Size:</strong> {pl.width}" x {pl.height}"</div>}
+                              {pl.notes && <div><strong>Note:</strong> {pl.notes}</div>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 2. Files & Delivery */}
@@ -742,10 +913,19 @@ export const OrderTrackerDrawer = () => {
 
       </div>
 
-      {showLightbox && (
+      {(showLightbox || lightboxArtwork) && (
         <ArtworkLightboxModal 
-          order={ord} 
-          onClose={() => setShowLightbox(false)} 
+          order={lightboxArtwork ? {
+            ...ord,
+            title: lightboxArtwork.name || ord.title,
+            artworkUrl: lightboxArtwork.url || lightboxArtwork.public_url || lightboxArtwork.previewUrl || ord.artworkUrl,
+            image_url: lightboxArtwork.url || lightboxArtwork.public_url || lightboxArtwork.previewUrl || ord.artworkUrl,
+            logo: lightboxArtwork.url || lightboxArtwork.public_url || lightboxArtwork.previewUrl || ord.artworkUrl
+          } : ord} 
+          onClose={() => {
+            setShowLightbox(false);
+            setLightboxArtwork(null);
+          }} 
         />
       )}
 

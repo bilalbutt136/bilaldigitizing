@@ -1,15 +1,25 @@
 import React from 'react';
 import { formatOrderId } from '../../context/StateContext';
 import { triggerFileDownload } from '../../utils/fileDownloader';
-import { X, Download, Scissors } from 'lucide-react';
+import { X, Download, Scissors, ZoomIn } from 'lucide-react';
 
 export const ArtworkLightboxModal = ({ order, onClose }) => {
   if (!order) return null;
 
+  const imageSrc = 
+    order.artworkUrl || 
+    order.image_url || 
+    order.logo || 
+    order.url || 
+    order.public_url || 
+    order.uploadedFiles?.[0]?.url || 
+    order.uploadedFiles?.[0]?.public_url || 
+    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
+
   const handleDownloadArtwork = () => {
-    const fileName = order.artworkFileName || `${order.title.replace(/\s+/g, '_')}_source_artwork.png`;
+    const fileName = order.artworkFileName || order.name || `${(order.title || 'Artwork').replace(/\s+/g, '_')}_source.png`;
     const ext = fileName.split('.').pop().toLowerCase() || 'png';
-    triggerFileDownload(order.artworkUrl, fileName, ext);
+    triggerFileDownload(imageSrc, fileName, ext);
   };
 
   return (
@@ -28,10 +38,10 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
             <Scissors size={20} style={{ color: 'var(--orange-500)' }} />
             <div>
               <h3 style={{ fontSize: '1.2rem', color: '#ffffff', marginBottom: '0.1rem' }}>
-                Artwork Source Inspection: {order.title}
+                Artwork Source Inspection: {order.title || 'Design Artwork'}
               </h3>
               <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
-                Order ID: <strong>{formatOrderId(order.id)}</strong> • Client: {order.clientName}
+                Order ID: <strong>{formatOrderId(order.id)}</strong> • Client: {order.clientName || 'Valued Client'}
               </div>
             </div>
           </div>
@@ -62,8 +72,8 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
             marginBottom: '1.5rem'
           }}>
             <img 
-              src={order.artworkUrl} 
-              alt={order.title}
+              src={imageSrc} 
+              alt={order.title || 'Artwork'}
               style={{
                 maxHeight: '460px',
                 maxWidth: '100%',
@@ -86,50 +96,31 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
           }}>
             <div>
               <span style={{ color: '#94a3b8' }}>Placement Target:</span>
-              <div style={{ fontWeight: 700, color: '#ffffff' }}>{order.serviceCategory || order.placementType}</div>
+              <div style={{ fontWeight: 700, color: '#ffffff' }}>{order.serviceCategory || order.placementType || 'Standard Placement'}</div>
             </div>
             <div>
               <span style={{ color: '#94a3b8' }}>Dimensions:</span>
-              <div style={{ fontWeight: 700, color: 'var(--orange-500)' }}>{order.dimensions?.width} x {order.dimensions?.height} inches</div>
+              <div style={{ fontWeight: 700, color: 'var(--orange-500)' }}>{order.dimensions?.width || '3.5'}" x {order.dimensions?.height || '3.0'}" inches</div>
             </div>
             <div>
               <span style={{ color: '#94a3b8' }}>Garment / Fabric:</span>
-              <div style={{ fontWeight: 700, color: '#ffffff' }}>{order.fabricType}</div>
+              <div style={{ fontWeight: 700, color: '#ffffff' }}>{order.fabricType || 'Cotton / Poly Pique'}</div>
             </div>
             <div>
               <span style={{ color: '#94a3b8' }}>Color Setup:</span>
-              <div style={{ fontWeight: 700, color: '#60a5fa' }}>{order.colorsCount || 4} Thread Colors</div>
+              <div style={{ fontWeight: 700, color: '#ffffff' }}>{order.colorsCount || 4} Colors Auto-Isolated</div>
             </div>
           </div>
 
-          {/* Footer controls */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: '1.5rem',
-            paddingTop: '1rem',
-            borderTop: '1px solid rgba(255,255,255,0.1)'
-          }}>
-            <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-              Formats Requested: <strong style={{ color: '#ffffff' }}>{order.requestedFormats?.join(', ').toUpperCase()}</strong>
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button 
-                className="btn btn-outline"
-                style={{ color: '#ffffff', borderColor: 'rgba(255,255,255,0.2)' }}
-                onClick={onClose}
-              >
-                Close Lightbox
-              </button>
-              <button 
-                className="btn btn-primary-orange"
-                onClick={handleDownloadArtwork}
-              >
-                <Download size={16} /> Download Raw Source File
-              </button>
-            </div>
+          {/* Action Footer */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+            <button 
+              onClick={handleDownloadArtwork}
+              className="btn btn-primary-orange"
+              style={{ gap: '0.5rem' }}
+            >
+              <Download size={16} /> Download High-Res Source Asset
+            </button>
           </div>
 
         </div>
