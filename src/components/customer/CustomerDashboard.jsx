@@ -39,6 +39,7 @@ export const CustomerDashboard = () => {
     orders = [], 
     authUser,
     currentUser, 
+    isAuthInitialized,
     setIsOrderWizardOpen, 
     openOrderWizard,
     setSelectedOrderForDrawer,
@@ -62,10 +63,10 @@ export const CustomerDashboard = () => {
 
   React.useEffect(() => {
     setMounted(true);
-    if (!authUser && !currentUser) {
+    if (isAuthInitialized && !authUser && !currentUser) {
       navigate('/login');
     }
-  }, [authUser, currentUser, navigate]);
+  }, [isAuthInitialized, authUser, currentUser, navigate]);
 
   // Safe User Resolution
   const activeUser = authUser || currentUser || {

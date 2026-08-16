@@ -47,11 +47,36 @@ export const formatOrderId = (rawId) => {
 
 
 export const StateProvider = ({ children }) => {
+  // Synchronous session hydration from localStorage to prevent flash/redirect on refresh
+  const getInitialAuth = () => {
+    if (typeof window === 'undefined') {
+      return { user: null, isAuth: false, view: 'public' };
+    }
+    try {
+      const savedUserStr = localStorage.getItem('bdigi_auth_user');
+      const savedView = localStorage.getItem('bdigi_current_view') || 'public';
+      if (savedUserStr) {
+        const parsed = JSON.parse(savedUserStr);
+        if (parsed && parsed.email) {
+          const isAdmin = parsed.role === 'admin';
+          return {
+            user: parsed,
+            isAuth: true,
+            view: isAdmin ? 'admin' : (savedView === 'admin' ? 'admin' : 'customer')
+          };
+        }
+      }
+    } catch {}
+    return { user: null, isAuth: false, view: 'public' };
+  };
+
+  const initialAuth = getInitialAuth();
+
   // Navigation & Authentication state
-  const [currentView, setCurrentView] = useState('public');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAuthInitialized, setIsAuthInitialized] = useState(false);
-  const [authUser, setAuthUser] = useState(null);
+  const [currentView, setCurrentView] = useState(initialAuth.view);
+  const [isAuthenticated, setIsAuthenticated] = useState(initialAuth.isAuth);
+  const [isAuthInitialized, setIsAuthInitialized] = useState(initialAuth.isAuth);
+  const [authUser, setAuthUser] = useState(initialAuth.user);
 
   // Auth modal & Tab navigation states
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -230,23 +255,74 @@ export const StateProvider = ({ children }) => {
     if (adminUsers.some(a => (a.email || '').toLowerCase().trim() === cleanEmail)) {
       return 'admin';
     }
-    
-    // Do not hit the admin API endpoint if we are in the client portal
-    if (typeof window !== 'undefined' && !window.location.pathname.includes('admin')) {
+    try {
+      const res = await verifyAdminSession(cleanEmail);
+      return res?.isAdmin ? 'admin' : 'customer';
+    } catch {
       return 'customer';
     }
-
-    const res = await verifyAdminSession(cleanEmail);
-    return res?.isAdmin ? 'admin' : 'customer';
   };
 
   // Load catalog + admin whitelist + database clients + wallet on mount
   useEffect(() => {
     let cancelled = false;
 
-    const loadInitialData = async () => {
-      // 1. (Removed local clients loading)
+    // 1. Validate Supabase session IMMEDIATELY in parallel
+    const validateImmediateSession = async () => {
+      if (!isSupabaseConfigured || !supabase) {
+        if (!cancelled) setIsAuthInitialized(true);
+        return;
+      }
 
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const session = sessionData?.session;
+        if (!cancelled && session?.user) {
+          const role = await resolveRole(session.user.email);
+          const uData = buildAuthUser(session.user, role);
+          setAuthUser(uData);
+          setIsAuthenticated(true);
+          if (role === 'admin') {
+            setCurrentView('admin');
+            fetchAdminUsers(session.user.email).then(adminList => {
+              if (!cancelled && adminList?.length) {
+                setAdminUsers(adminList.map(a => ({ email: a.email, name: a.name || a.email })));
+              }
+            });
+          } else {
+            setCurrentView('customer');
+          }
+
+          try {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('bdigi_auth_user', JSON.stringify(uData));
+              localStorage.setItem('bdigi_current_view', role === 'admin' ? 'admin' : 'customer');
+            }
+          } catch {}
+
+          fetchWalletBalanceFromSupabase(session.user.email).then(balance => {
+            if (!cancelled) setWalletBalance(balance);
+          });
+
+          upsertClientInSupabase({ ...uData, role }).catch(() => {});
+        } else {
+          // Check if we had a local storage user that was signed out
+          const localAuth = getInitialAuth();
+          if (!localAuth.user && !cancelled) {
+            setIsAuthenticated(false);
+            setAuthUser(null);
+          }
+        }
+      } catch (sessErr) {
+        console.warn('Session verification notice:', sessErr);
+      } finally {
+        if (!cancelled) setIsAuthInitialized(true);
+      }
+    };
+
+    validateImmediateSession();
+
+    const loadInitialData = async () => {
       // 2. Fetch catalog & DB clients if Supabase is configured
       if (isSupabaseConfigured && supabase) {
         try {
@@ -296,51 +372,9 @@ export const StateProvider = ({ children }) => {
           if (!cancelled && dbOrders) {
             setOrders(dbOrders);
           }
-
-          // Load current Supabase session
-          let resolvedAdminEmail = null;
-          if (isSupabaseConfigured && supabase) {
-            try {
-              const { data: sessionData } = await supabase.auth.getSession();
-              const session = sessionData?.session;
-              if (!cancelled && session?.user) {
-                const role = await resolveRole(session.user.email);
-                if (role === 'admin') resolvedAdminEmail = session.user.email;
-                const uData = buildAuthUser(session.user, role);
-                setAuthUser(uData);
-                setIsAuthenticated(true);
-                setCurrentView(role === 'admin' ? 'admin' : 'customer');
-
-                const balance = await fetchWalletBalanceFromSupabase(session.user.email);
-                if (!cancelled) setWalletBalance(balance);
-
-                try {
-                  await upsertClientInSupabase({ ...uData, role });
-                } catch (err) {
-                  console.warn('Client upsert notice:', err);
-                }
-              }
-            } catch (sessErr) {
-              console.warn('Get session exception:', sessErr);
-            }
-          }
-
-          if (!cancelled && resolvedAdminEmail) {
-            const adminList = await fetchAdminUsers(resolvedAdminEmail);
-            if (adminList?.length) {
-              setAdminUsers(adminList.map(a => ({ email: a.email, name: a.name || a.email })));
-            }
-          }
         } catch (err) {
           console.warn('Initial data load notice:', err);
         }
-      }
-
-      // Note: localStorage session restoration removed — auth state
-      // must always be validated via Supabase auth.getSession()
-
-      if (!cancelled) {
-        setIsAuthInitialized(true);
       }
     };
 
@@ -495,6 +529,8 @@ export const StateProvider = ({ children }) => {
           }
         } catch (authErr) {
           console.warn('onAuthStateChange exception:', authErr);
+        } finally {
+          if (!cancelled) setIsAuthInitialized(true);
         }
       });
       authSubscription = authListener?.subscription;
