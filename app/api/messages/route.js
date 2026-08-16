@@ -10,19 +10,20 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
     const chatId = searchParams.get('chatId');
+    const emailParam = (searchParams.get('clientEmail') || searchParams.get('email') || '').toLowerCase().trim();
     const supabase = createAdminClient();
 
     if (action === 'fetchConversations') {
-      if (!user) {
-        return NextResponse.json({ conversations: [] });
-      }
-
-      const cleanUserEmail = (user.email || '').toLowerCase().trim();
+      const cleanUserEmail = (user?.email || emailParam || '').toLowerCase().trim();
       let convQuery = supabase.from('conversations').select('*').order('updated_at', { ascending: false });
 
-      // If not an admin, only show this customer's conversations, support threads, or generic support
+      // If not an admin, show conversations matching user's email or support threads
       if (!isAdmin) {
-        convQuery = convQuery.or(`client_email.ilike.${cleanUserEmail},id.eq.general-support,id.ilike.support-${cleanUserEmail}%`);
+        if (cleanUserEmail && cleanUserEmail !== 'client@studio.com') {
+          convQuery = convQuery.or(`client_email.ilike.${cleanUserEmail},id.eq.general-support,id.ilike.support-${cleanUserEmail}%,id.ilike.support-guest%`);
+        } else {
+          convQuery = convQuery.or(`id.eq.general-support,id.ilike.support-guest%`);
+        }
       }
 
       const { data: convData, error: convError } = await convQuery;
@@ -188,13 +189,15 @@ export async function POST(request) {
     }
     
     if (action === 'insertMessage') {
-      let convId = payload.conversation_id || 'general-support';
-      const rawOrderId = payload.order_id || (convId.startsWith('order-') ? convId.replace('order-', '') : null);
+      // Use exact conversation_id passed by client, or resolve cleanly
+      let convId = payload.conversation_id;
+      const rawOrderId = payload.order_id || (convId && convId.startsWith('order-') ? convId.replace('order-', '') : null);
       const isOrder = Boolean(rawOrderId);
 
-      // If generic support and client is logged in, ensure conversation ID is unique to client
-      if (!isOrder && (convId === 'general-support' || convId.startsWith('support-'))) {
-        convId = `support-${cleanUserEmail}`;
+      if (!convId) {
+        convId = isOrder 
+          ? `order-${rawOrderId}` 
+          : (cleanUserEmail && cleanUserEmail !== 'client@studio.com' ? `support-${cleanUserEmail}` : 'general-support');
       }
 
       // Upsert conversation to prevent Foreign Key constraint violations
@@ -210,7 +213,7 @@ export async function POST(request) {
 
           const fallbackName = user?.user_metadata?.full_name || (user?.email ? user.email.split('@')[0] : 'Client');
           const finalClientName = isAdmin ? (orderInfo?.client_name || 'Client') : (payload.sender_name || payload.senderName || fallbackName);
-          const finalClientEmail = isAdmin ? (orderInfo?.client_email || 'client@studio.com') : cleanUserEmail;
+          const finalClientEmail = isAdmin ? (orderInfo?.client_email || 'client@studio.com') : (payload.client_email || cleanUserEmail);
           const finalOrderTitle = orderInfo?.title || payload.order_title || payload.orderTitle || (isOrder ? `Order #${rawOrderId}` : 'Live Support');
 
           await supabase.from('conversations').insert([{

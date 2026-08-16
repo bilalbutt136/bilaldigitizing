@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
 import { 
@@ -42,6 +42,11 @@ const formatChatTime = (timestamp) => {
   }
 };
 
+const isSupportId = (id) => {
+  if (!id) return false;
+  return id === 'general-support' || String(id).startsWith('support-');
+};
+
 export const ClientChatInbox = ({ initialOrderId = null }) => {
   const { 
     authUser, 
@@ -53,17 +58,6 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     formatOrderId = (id) => `#${String(id || '').substring(0, 6).toUpperCase()}`
   } = useAppState();
 
-  const [mounted, setMounted] = useState(false);
-  const [conversations, setConversations] = useState([]);
-  const [activeChatId, setActiveChatId] = useState('general-support');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterMode, setFilterMode] = useState('all'); // 'all' | 'orders' | 'support' | 'unread'
-  const [messageInput, setMessageInput] = useState('');
-  const [attachedFile, setAttachedFile] = useState(null);
-  
-  const chatFeedRef = useRef(null);
-  const fileInputRef = useRef(null);
-
   const activeUser = authUser || currentUser || {
     name: 'Client',
     email: 'client@studio.com',
@@ -73,21 +67,39 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   const clientEmail = (activeUser.email || '').toLowerCase().trim();
   const clientName = activeUser.name || 'Client';
 
+  const defaultSupportId = useMemo(() => {
+    return clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')
+      ? `support-${clientEmail}`
+      : 'general-support';
+  }, [clientEmail]);
+
+  const [mounted, setMounted] = useState(false);
+  const [conversations, setConversations] = useState([]);
+  const [activeChatId, setActiveChatId] = useState(initialOrderId ? (initialOrderId.startsWith('order-') ? initialOrderId : `order-${initialOrderId}`) : defaultSupportId);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterMode, setFilterMode] = useState('all'); // 'all' | 'orders' | 'support' | 'unread'
+  const [messageInput, setMessageInput] = useState('');
+  const [attachedFile, setAttachedFile] = useState(null);
+  
+  const chatFeedRef = useRef(null);
+  const fileInputRef = useRef(null);
+
   // Build unified thread list combining general support and active order discussions with chat history
   const buildThreadList = (remoteConvs = []) => {
     const threadMap = new Map();
 
     // 1. General Studio Support Thread
-    const generalId = clientEmail ? `support-${clientEmail}` : 'general-support';
+    const generalId = defaultSupportId;
     const remoteGeneral = remoteConvs.find(c => 
       c.id === generalId || 
       c.id === 'general-support' || 
       (!c.orderId && !c.order_id && !c.id?.startsWith('order-'))
     );
     
-    const generalMessages = remoteGeneral?.messages || [
+    const generalMessages = remoteGeneral?.messages && remoteGeneral.messages.length > 0 ? remoteGeneral.messages : [
       {
         id: 'welcome-msg',
+        conversation_id: generalId,
         sender: 'admin',
         senderName: 'Support',
         text: `Welcome ${clientName}! How can our support team assist you today?`,
@@ -129,6 +141,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       // Collect messages from order object and remote conversation
       const ordMessages = Array.isArray(ord.messages) ? ord.messages.map(m => ({
         id: m.id || `msg-${Math.random()}`,
+        conversation_id: orderThreadId,
         sender: m.senderRole === 'admin' ? 'admin' : (m.sender === 'admin' ? 'admin' : 'client'),
         senderName: m.senderRole === 'admin' || m.sender === 'admin' ? 'Support' : (m.sender || m.senderName || clientName),
         text: m.text || m.message || '',
@@ -186,7 +199,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
     // 3. Include any other remote conversations belonging to this client with messages
     remoteConvs.forEach(conv => {
-      if (!threadMap.has(conv.id)) {
+      if (!threadMap.has(conv.id) && !isSupportId(conv.id)) {
         const msgs = conv.messages || [];
         if (msgs.length === 0 && conv.id !== activeChatId) return;
 
@@ -235,7 +248,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       if (!isMounted) return;
       let remoteConvs = [];
       if (isSupabaseConfigured) {
-        remoteConvs = await fetchConversations();
+        remoteConvs = await fetchConversations(clientEmail);
       }
 
       if (isMounted) {
@@ -248,8 +261,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           if (fullThreads.some(t => t.id === targetId)) {
             setActiveChatId(targetId);
           }
-        } else if (!activeChatId && fullThreads[0]?.id) {
-          setActiveChatId(fullThreads[0].id);
+        } else if (!activeChatId || activeChatId === 'general-support') {
+          setActiveChatId(fullThreads[0]?.id || defaultSupportId);
         }
       }
     };
@@ -281,8 +294,34 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         setConversations(prev => {
           const safePrev = Array.isArray(prev) ? prev : [];
           const msgTime = new Date(newMsg.timestamp).getTime() || Date.now();
+
+          const isMatchThread = (thread) => {
+            if (thread.id === newMsg.conversation_id) return true;
+            if (thread.rawOrderId && newMsg.conversation_id?.includes(thread.rawOrderId)) return true;
+            if (isSupportId(thread.id) && isSupportId(newMsg.conversation_id)) return true;
+            return false;
+          };
+
+          const exists = safePrev.some(isMatchThread);
+          if (!exists) {
+            const isOrder = newMsg.conversation_id?.startsWith('order-');
+            const newThread = {
+              id: newMsg.conversation_id,
+              title: isOrder ? `Order Discussion` : 'Support',
+              orderId: isOrder ? newMsg.conversation_id.replace('order-', '') : 'Support',
+              orderTitle: isOrder ? `Order Discussion` : 'Live Studio Support',
+              serviceType: isOrder ? 'embroidery' : 'general',
+              unreadCount: newMsg.sender === 'admin' ? 1 : 0,
+              clientUnreadCount: newMsg.sender === 'admin' ? 1 : 0,
+              messages: [newMsg],
+              lastMessageTime: msgTime,
+              updatedAt: newMsg.timestamp
+            };
+            return [newThread, ...safePrev];
+          }
+
           const updated = safePrev.map(thread => {
-            if (thread.id === newMsg.conversation_id || (thread.rawOrderId && newMsg.conversation_id?.includes(thread.rawOrderId))) {
+            if (isMatchThread(thread)) {
               const alreadyHas = (thread.messages || []).some(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(new Date(m.timestamp) - new Date(newMsg.timestamp)) < 2000));
               if (alreadyHas) return thread;
               return {
@@ -312,7 +351,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
         setConversations(prev => {
           const safePrev = Array.isArray(prev) ? prev : [];
-          const exists = safePrev.some(c => c.id === conv.id);
+          const exists = safePrev.some(c => c.id === conv.id || (isSupportId(c.id) && isSupportId(conv.id)));
           if (!exists) {
             const newThread = {
               id: conv.id,
@@ -328,12 +367,17 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
             };
             return [newThread, ...safePrev];
           }
-          return safePrev.map(c => c.id === conv.id ? { 
-            ...c, 
-            ...conv,
-            unreadCount: conv.client_unread_count ?? c.unreadCount ?? 0,
-            clientUnreadCount: conv.client_unread_count ?? c.clientUnreadCount ?? 0
-          } : c);
+          return safePrev.map(c => {
+            if (c.id === conv.id || (isSupportId(c.id) && isSupportId(conv.id))) {
+              return {
+                ...c,
+                ...conv,
+                unreadCount: conv.client_unread_count ?? c.unreadCount ?? 0,
+                clientUnreadCount: conv.client_unread_count ?? c.clientUnreadCount ?? 0
+              };
+            }
+            return c;
+          });
         });
       }
     );
@@ -342,7 +386,20 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       isMounted = false;
       if (typeof unsubscribe === 'function') unsubscribe();
     };
-  }, [orders, initialOrderId, clientEmail, clientName]);
+  }, [orders, initialOrderId, clientEmail, clientName, defaultSupportId]);
+
+  // Active chat thread
+  const activeChat = useMemo(() => {
+    return conversations.find(c => 
+      c.id === activeChatId ||
+      (isSupportId(activeChatId) && isSupportId(c.id))
+    ) || conversations[0] || {
+      id: defaultSupportId,
+      title: 'Support',
+      orderId: 'Support',
+      messages: []
+    };
+  }, [conversations, activeChatId, defaultSupportId]);
 
   // Scroll messages to bottom on thread change or message arrival
   useEffect(() => {
@@ -352,20 +409,12 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         behavior: 'smooth'
       });
     }
-  }, [activeChatId, conversations]);
-
-  // Active chat thread
-  const activeChat = conversations.find(c => c.id === activeChatId) || conversations[0] || {
-    id: 'general-support',
-    title: 'Support',
-    orderId: 'Support',
-    messages: []
-  };
+  }, [activeChatId, activeChat?.messages?.length]);
 
   // Helper to compute client unread count strictly for Support messages
   const getThreadUnreadCount = (conv) => {
     if (!conv) return 0;
-    if (activeChatId === conv.id) return 0;
+    if (activeChatId === conv.id || (isSupportId(activeChatId) && isSupportId(conv.id))) return 0;
     if (typeof conv.clientUnreadCount === 'number' && conv.clientUnreadCount > 0) {
       return conv.clientUnreadCount;
     }
@@ -387,7 +436,11 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: threadId } }));
     }
     markConversationAsRead(threadId);
-    setConversations(prev => prev.map(c => c.id === threadId ? { ...c, unreadCount: 0, clientUnreadCount: 0 } : c));
+    setConversations(prev => prev.map(c => 
+      (c.id === threadId || (isSupportId(c.id) && isSupportId(threadId))) 
+        ? { ...c, unreadCount: 0, clientUnreadCount: 0 } 
+        : c
+    ));
   };
 
   // Auto-mark active conversation as read in Client Chat
@@ -399,10 +452,12 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       }
       markConversationAsRead(activeChat.id);
       setConversations(prev => prev.map(c => 
-        c.id === activeChat.id ? { ...c, unreadCount: 0, clientUnreadCount: 0 } : c
+        (c.id === activeChat.id || (isSupportId(c.id) && isSupportId(activeChat.id))) 
+          ? { ...c, unreadCount: 0, clientUnreadCount: 0 } 
+          : c
       ));
     }
-  }, [activeChatId, activeChat?.id]);
+  }, [activeChat?.id]);
 
   // Filter conversations based on search and selected filterMode
   const filteredConversations = conversations.filter(conv => {
@@ -415,7 +470,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
     const unreadNum = getThreadUnreadCount(conv);
     if (filterMode === 'orders') return conv.id.startsWith('order-') || conv.rawOrderId;
-    if (filterMode === 'support') return conv.id === 'general-support' || conv.id.startsWith('support-');
+    if (filterMode === 'support') return isSupportId(conv.id);
     if (filterMode === 'unread') return unreadNum > 0;
     return true;
   });
@@ -424,10 +479,13 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     e?.preventDefault();
     if (!messageInput.trim() && !attachedFile) return;
 
+    const targetConvId = activeChat?.id || defaultSupportId;
     const nowIso = new Date().toISOString();
+    const nowTime = Date.now();
+
     const newMsg = {
-      id: 'msg-' + Date.now(),
-      conversation_id: activeChat.id,
+      id: 'msg-' + nowTime + '-' + Math.random().toString(36).substring(2, 6),
+      conversation_id: targetConvId,
       order_id: activeChat.rawOrderId || null,
       order_title: activeChat.orderTitle || activeChat.title || 'Discussion',
       client_email: clientEmail,
@@ -440,12 +498,30 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       created_at: nowIso
     };
 
-    // Optimistic state update in conversations list + sort by latest message time
-    const nowTime = Date.now();
-
+    // Instant optimistic state update in conversations list
     setConversations(prev => {
-      const updated = prev.map(conv => {
-        if (conv.id === activeChat.id) {
+      const safePrev = Array.isArray(prev) ? prev : [];
+      const isTarget = (c) => c.id === targetConvId || (isSupportId(c.id) && isSupportId(targetConvId));
+      const exists = safePrev.some(isTarget);
+
+      if (!exists) {
+        const newThread = {
+          id: targetConvId,
+          title: activeChat.title || 'Support',
+          orderId: activeChat.orderId || 'Support',
+          orderTitle: activeChat.orderTitle || 'Live Studio Support',
+          serviceType: 'general',
+          unreadCount: 0,
+          clientUnreadCount: 0,
+          messages: [newMsg],
+          lastMessageTime: nowTime,
+          updatedAt: nowIso
+        };
+        return [newThread, ...safePrev];
+      }
+
+      const updated = safePrev.map(conv => {
+        if (isTarget(conv)) {
           return {
             ...conv,
             unreadCount: 0,
@@ -488,7 +564,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     // Persistence to Supabase
     if (isSupabaseConfigured) {
       try {
-        await addChatMessage(activeChat.id, newMsg);
+        await addChatMessage(targetConvId, newMsg);
       } catch (err) {
         console.warn('Persist chat message notice:', err);
       }
@@ -651,7 +727,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               </div>
             ) : (
               filteredConversations.map(thread => {
-                const isActive = thread.id === activeChatId;
+                const isActive = thread.id === activeChat.id || (isSupportId(thread.id) && isSupportId(activeChat.id));
                 const unread = getThreadUnreadCount(thread);
                 const lastMsg = (thread.messages || [])[(thread.messages || []).length - 1];
                 const isOrder = Boolean(thread.rawOrderId || thread.id.startsWith('order-'));
