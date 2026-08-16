@@ -282,9 +282,10 @@ export const DepositModal = () => {
 
       const solana = data.solanaAddress || '';
       const lightning = data.lightningInvoice || data.lightningAddress || '';
+      const paymentUrl = data.paymentUrl || (lightning ? `lightning:${lightning}` : '');
 
       setInvoiceId(data.invoice?.id);
-      setBoltPaymentUrl(data.paymentUrl);
+      setBoltPaymentUrl(paymentUrl);
       setSolanaAddress(solana);
       setLightningInvoice(lightning);
       setHasCopied(false);
@@ -434,7 +435,7 @@ export const DepositModal = () => {
               </button>
             </div>
 
-          ) : activeView === 'card' && boltPaymentUrl ? (
+          ) : activeView === 'card' ? (
             /* 1. CREDIT / DEBIT CARD ONLY: 2-Step Solana Address Instruction Modal */
             <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
               <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
@@ -611,7 +612,7 @@ export const DepositModal = () => {
               </div>
             </div>
 
-          ) : activeView === 'cashapp' && boltPaymentUrl ? (
+          ) : activeView === 'cashapp' ? (
             /* 2. CASH APP ONLY: Lightning Deep-Linking & Instant Invoice */
             <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
               <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
@@ -744,7 +745,7 @@ export const DepositModal = () => {
               </div>
             </div>
 
-          ) : activeView === 'paypal' && boltPaymentUrl ? (
+          ) : activeView === 'paypal' ? (
             /* 3. PAYPAL ONLY: PYUSD / Crypto Instructions Modal */
             <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
               <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
@@ -921,7 +922,7 @@ export const DepositModal = () => {
               </div>
             </div>
 
-          ) : activeView === 'browser_waiting' && boltPaymentUrl ? (
+          ) : activeView === 'browser_waiting' ? (
             /* 4. APPLE PAY & GOOGLE PAY: Direct User-Initiated Launch View */
             <div style={{ padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
               <div style={{

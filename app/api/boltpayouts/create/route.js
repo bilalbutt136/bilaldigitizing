@@ -20,6 +20,8 @@ function extractSolanaAddress(url, boltData = {}) {
   if (boltData?.receivingAddress) return boltData.receivingAddress;
   if (boltData?.solanaAddress) return boltData.solanaAddress;
   if (boltData?.pyusdAddress) return boltData.pyusdAddress;
+  if (boltData?.cryptoAddress) return boltData.cryptoAddress;
+  if (boltData?.depositAddress) return boltData.depositAddress;
   if (boltData?.address && !String(boltData.address).startsWith('lnbc')) return boltData.address;
   if (boltData?.walletAddress) return boltData.walletAddress;
   if (boltData?.recipient) return boltData.recipient;
@@ -61,6 +63,8 @@ function extractLightningInvoice(url, boltData = {}) {
   if (boltData?.invoice && String(boltData.invoice).startsWith('lnbc')) return boltData.invoice;
   if (boltData?.paymentRequest) return boltData.paymentRequest;
   if (boltData?.lightning) return boltData.lightning;
+  if (boltData?.bolt11) return boltData.bolt11;
+  if (boltData?.pr) return boltData.pr;
   if (boltData?.address && (String(boltData.address).startsWith('lnbc') || String(boltData.address).includes('@'))) {
     return boltData.address;
   }
@@ -108,16 +112,22 @@ export async function POST(request) {
     // Format amount into standard .99 format expected by BoltPayouts
     const boltAmount = formatBoltAmount(rawAmount);
 
-    // Map UI methods to correct BoltPayouts backend methods
+    // Map UI methods to correct BoltPayouts backend methods with automatic fallback
     let gatewayMethod = rawMethod;
-    if (rawMethod === 'dollarpay_cashapp' || rawMethod === 'cashapp' || rawMethod === 'lightning') {
+    let fallbackMethod = null;
+
+    if (rawMethod === 'cashapp' || rawMethod === 'dollarpay_cashapp') {
       gatewayMethod = 'lightning';
-    } else if (rawMethod === 'dollarpay_paypal' || rawMethod === 'paypal' || rawMethod === 'pyusd') {
+      fallbackMethod = 'cashapp';
+    } else if (rawMethod === 'paypal' || rawMethod === 'dollarpay_paypal') {
       gatewayMethod = 'pyusd';
-    } else if (rawMethod === 'dollarpay_apple_pay') {
-      gatewayMethod = 'card';
-    } else if (rawMethod === 'dollarpay_google_pay') {
-      gatewayMethod = 'card';
+      fallbackMethod = 'paypal';
+    } else if (rawMethod === 'apple_pay' || rawMethod === 'dollarpay_apple_pay') {
+      gatewayMethod = 'apple_pay';
+      fallbackMethod = 'card';
+    } else if (rawMethod === 'google_pay' || rawMethod === 'dollarpay_google_pay') {
+      gatewayMethod = 'google_pay';
+      fallbackMethod = 'card';
     } else if (rawMethod === 'card') {
       gatewayMethod = 'card';
     }
@@ -136,23 +146,43 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Payment gateway not configured by administrator.' }, { status: 503 });
     }
 
-    const payload = {
-      amount: boltAmount,
-      username: user.email,
-      method: gatewayMethod === 'all' ? 'all' : gatewayMethod
-    };
-
-    // Call BoltPayouts API
-    const boltResponse = await fetch('https://www.boltpayouts.xyz/api/create-payment', {
+    let boltResponse = await fetch('https://www.boltpayouts.xyz/api/create-payment', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        amount: boltAmount,
+        username: user.email,
+        method: gatewayMethod
+      })
     });
 
-    const boltData = await boltResponse.json().catch(() => ({}));
+    let boltData = await boltResponse.json().catch(() => ({}));
+
+    // If primary method failed and fallback exists, try fallback method
+    if ((!boltResponse.ok || !boltData.success) && fallbackMethod) {
+      console.warn(`[BoltPayouts] Primary method ${gatewayMethod} failed, attempting fallback ${fallbackMethod}...`);
+      const retryRes = await fetch('https://www.boltpayouts.xyz/api/create-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey
+        },
+        body: JSON.stringify({
+          amount: boltAmount,
+          username: user.email,
+          method: fallbackMethod
+        })
+      });
+      const retryData = await retryRes.json().catch(() => ({}));
+      if (retryRes.ok && retryData.success) {
+        boltResponse = retryRes;
+        boltData = retryData;
+        gatewayMethod = fallbackMethod;
+      }
+    }
 
     if (!boltResponse.ok || !boltData.success) {
       console.error("BoltPayouts API Error:", boltData);
@@ -164,10 +194,18 @@ export async function POST(request) {
       }, { status: boltResponse.status === 200 ? 400 : boltResponse.status });
     }
 
-    const boltOrderId = boltData.orderId || boltData.id;
-    const paymentUrl = boltData.paymentUrl || boltData.taptapupRedirectUrl || boltData.url;
+    const boltOrderId = boltData.orderId || boltData.id || boltData.order_id || `bolt_${Date.now()}`;
+    let paymentUrl = boltData.paymentUrl || boltData.url || boltData.checkoutUrl || boltData.taptapupRedirectUrl || boltData.redirectUrl || '';
     const solanaAddress = extractSolanaAddress(paymentUrl, boltData);
     const lightningInvoice = extractLightningInvoice(paymentUrl, boltData);
+
+    if (!paymentUrl) {
+      if (lightningInvoice) {
+        paymentUrl = `lightning:${lightningInvoice}`;
+      } else if (solanaAddress) {
+        paymentUrl = `solana:${solanaAddress}`;
+      }
+    }
 
     // Create Invoice with comprehensive column mapping
     const invoicePayload = {
