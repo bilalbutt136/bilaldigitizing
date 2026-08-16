@@ -508,15 +508,15 @@ export const OrderWizardModal = () => {
       const placementBreakdown = safePlacementItems.map((item, idx) => {
         const itemTier = item.packageTier || 'standard';
         const basicRate = (customRateVal && itemTier === 'basic') ? customRateVal : (parseFloat(pricing?.minOrderFee) || 10.00);
-        const standardRate = (customRateVal && itemTier === 'standard') ? customRateVal : (parseFloat(pricing?.vectorSimpleRate) || 15.00);
-        const premiumRate = (customRateVal && itemTier === 'premium') ? customRateVal : (parseFloat(pricing?.vectorComplexRate) || 25.00);
+        const standardRate = (customRateVal && itemTier === 'standard') ? customRateVal : 20.00;
+        const premiumRate = (customRateVal && itemTier === 'premium') ? customRateVal : 35.00;
 
         let itemPriceEach = standardRate;
         if (itemTier === 'basic') itemPriceEach = basicRate;
         if (itemTier === 'premium') itemPriceEach = premiumRate;
 
         const isJacket = item.placementType === 'jacket_back' || item.placementType === 'Jacket Back Crest';
-        if (isJacket) itemPriceEach = 20.00; // Overwrite for jacket back if needed
+        if (isJacket && itemTier !== 'premium') itemPriceEach = 20.00; // Default jacket back standard rate
 
         const subtotal = itemPriceEach * (item.quantity || 1);
         baseSubtotal += subtotal;
@@ -558,7 +558,7 @@ export const OrderWizardModal = () => {
       }
 
       const allowRush = totalPlacementQuantity === 1;
-      const rushSurcharge = (isRush && allowRush) ? (parseFloat(pricing?.rushSurcharge) || 10.00) : 0;
+      const rushSurcharge = (isRush && allowRush) ? 10.00 : 0.00;
       const finalPrice = Math.max(0, parseFloat((discountedSubtotal - promoDiscountAmount + rushSurcharge).toFixed(2)));
 
       return {
@@ -1401,6 +1401,13 @@ export const OrderWizardModal = () => {
                       <span>Subtotal:</span>
                       <span style={{ color: 'var(--orange-600)' }}>${pricingDetails.baseSubtotal.toFixed(2)}</span>
                     </div>
+
+                    {pricingDetails.rushSurcharge > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', fontWeight: 800, color: 'var(--orange-600)' }}>
+                        <span>⚡ Super Rush (2–4 Hrs Turnaround):</span>
+                        <span>+${pricingDetails.rushSurcharge.toFixed(2)}</span>
+                      </div>
+                    )}
 
                     {pricingDetails.discountAmount > 0 && (
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', fontWeight: 800, color: '#16a34a' }}>
