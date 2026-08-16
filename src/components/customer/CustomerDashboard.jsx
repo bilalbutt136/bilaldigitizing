@@ -123,6 +123,13 @@ export const CustomerDashboard = () => {
 
   const totalSpent = myOrders.reduce((acc, curr) => acc + (parseFloat(curr?.price) || 0), 0);
 
+  const [customerPage, setCustomerPage] = useState(1);
+  const [customerPageSize, setCustomerPageSize] = useState(10);
+
+  React.useEffect(() => {
+    setCustomerPage(1);
+  }, [filterStatus, searchTerm]);
+
   const filteredDigitizingOrders = digitizingOrders.filter(o => {
     const titleMatch = (o?.title || '').toLowerCase().includes(searchTerm.toLowerCase());
     const idMatch = (o?.id || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -132,6 +139,13 @@ export const CustomerDashboard = () => {
     if (filterStatus === 'completed') return matchesSearch && o?.status === 'completed';
     return matchesSearch;
   });
+
+  const totalCustOrders = filteredDigitizingOrders.length;
+  const totalCustPages = Math.max(1, Math.ceil(totalCustOrders / customerPageSize));
+  const validCustPage = Math.min(Math.max(1, customerPage), totalCustPages);
+  const custStartIndex = (validCustPage - 1) * customerPageSize;
+  const custEndIndex = Math.min(custStartIndex + customerPageSize, totalCustOrders);
+  const paginatedCustOrders = filteredDigitizingOrders.slice(custStartIndex, custEndIndex);
 
   const getPaymentStatusBadge = (status) => {
     switch (status?.toLowerCase()) {
@@ -658,9 +672,17 @@ export const CustomerDashboard = () => {
                       <p style={{ fontSize: '0.85rem' }}>Click "Upload New Design Brief" to place your first embroidery or vector job.</p>
                     </div>
                   ) : (
-                    <div style={{ overflowX: 'auto' }}>
+                    <div style={{ 
+                      maxHeight: '560px', 
+                      overflowY: 'auto', 
+                      overflowX: 'auto',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '12px',
+                      background: '#ffffff',
+                      boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)'
+                    }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                        <thead>
+                        <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                           <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--navy-700)' }}>
                             <th style={{ padding: '0.75rem 1rem' }}>Uploaded Artwork & Design</th>
                             <th style={{ padding: '0.75rem 1rem' }}>Service Type</th>
@@ -671,7 +693,7 @@ export const CustomerDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredDigitizingOrders.map((ord) => (
+                          {paginatedCustOrders.map((ord) => (
                             <tr 
                               key={ord?.id || Math.random()}
                               style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s' }}
@@ -776,6 +798,71 @@ export const CustomerDashboard = () => {
                           ))}
                         </tbody>
                       </table>
+                    </div>
+                  )}
+
+                  {/* Customer Orders Pagination Footer */}
+                  {filteredDigitizingOrders.length > 0 && (
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '0.85rem 1.25rem',
+                      background: '#ffffff',
+                      border: '1px solid var(--border-color)',
+                      borderTop: 'none',
+                      borderRadius: '0 0 12px 12px',
+                      flexWrap: 'wrap',
+                      gap: '0.75rem',
+                      marginTop: '-1px'
+                    }}>
+                      <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                        Showing <strong style={{ color: 'var(--navy-900)' }}>{custStartIndex + 1}</strong> to <strong style={{ color: 'var(--navy-900)' }}>{custEndIndex}</strong> of <strong style={{ color: 'var(--orange-600)' }}>{totalCustOrders}</strong> orders
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          <span>Per page:</span>
+                          <select
+                            value={customerPageSize}
+                            onChange={(e) => {
+                              setCustomerPageSize(Number(e.target.value));
+                              setCustomerPage(1);
+                            }}
+                            className="form-control"
+                            style={{ width: '65px', padding: '0.2rem 0.35rem', fontSize: '0.8rem', height: '30px' }}
+                          >
+                            <option value={5}>5</option>
+                            <option value={10}>10</option>
+                            <option value={20}>20</option>
+                            <option value={50}>50</option>
+                          </select>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => setCustomerPage(p => Math.max(1, p - 1))}
+                            disabled={validCustPage === 1}
+                            className="btn btn-outline btn-sm"
+                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', opacity: validCustPage === 1 ? 0.4 : 1, cursor: validCustPage === 1 ? 'not-allowed' : 'pointer' }}
+                          >
+                            ‹ Prev
+                          </button>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, padding: '0 0.4rem', color: 'var(--navy-900)' }}>
+                            Page {validCustPage} of {totalCustPages}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setCustomerPage(p => Math.min(totalCustPages, p + 1))}
+                            disabled={validCustPage >= totalCustPages}
+                            className="btn btn-outline btn-sm"
+                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', opacity: validCustPage >= totalCustPages ? 0.4 : 1, cursor: validCustPage >= totalCustPages ? 'not-allowed' : 'pointer' }}
+                          >
+                            Next ›
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )}
 

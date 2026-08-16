@@ -55,6 +55,15 @@ export const OrderManagementTable = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [lightboxOrder, setLightboxOrder] = useState(null);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+
+  // Reset to page 1 whenever filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, filterCategory, filterPayment, searchTerm]);
+
   const getIsOrderPaid = (ord) => {
     const statusLower = (ord?.status || '').toLowerCase();
     const payStatusLower = (ord?.paymentStatus || ord?.payment_status || '').toLowerCase();
@@ -100,6 +109,13 @@ export const OrderManagementTable = () => {
     if (filterStatus === 'cancelled') return matchesSearch && ord?.status === 'cancelled';
     return matchesSearch;
   });
+
+  const totalOrders = filteredOrders.length;
+  const totalPages = Math.max(1, Math.ceil(totalOrders / pageSize));
+  const validCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (validCurrentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalOrders);
+  const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
 
   const getPaymentBadge = (ord) => {
     const isPaid = getIsOrderPaid(ord);
@@ -332,13 +348,20 @@ export const OrderManagementTable = () => {
         </div>
       </div>
 
-      {/* Orders Table */}
-      <div style={{ overflowX: 'auto' }}>
+      {/* Orders Table with Dedicated Scroll Viewport */}
+      <div style={{ 
+        maxHeight: '600px', 
+        overflowY: 'auto', 
+        overflowX: 'auto', 
+        border: '1px solid var(--border-color)',
+        borderRadius: '12px',
+        background: '#ffffff',
+        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)'
+      }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
-          <thead>
+          <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f8fafc', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
             <tr style={{ 
               borderBottom: '2px solid var(--border-color)', 
-              background: '#f8fafc',
               color: 'var(--navy-900)',
               fontSize: '0.725rem',
               fontWeight: 800,
@@ -362,7 +385,7 @@ export const OrderManagementTable = () => {
                 </td>
               </tr>
             ) : (
-              filteredOrders.map((ord) => {
+              paginatedOrders.map((ord) => {
                 const artworkImg = 
                   ord.artworkUrl || 
                   ord.image_url || 
@@ -532,6 +555,94 @@ export const OrderManagementTable = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination & Stats Controls */}
+      {filteredOrders.length > 0 && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '0.9rem 1.25rem',
+          background: '#ffffff',
+          border: '1px solid var(--border-color)',
+          borderTop: 'none',
+          borderRadius: '0 0 12px 12px',
+          flexWrap: 'wrap',
+          gap: '0.75rem'
+        }}>
+          <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+            Showing <strong style={{ color: 'var(--navy-900)' }}>{startIndex + 1}</strong> to <strong style={{ color: 'var(--navy-900)' }}>{endIndex}</strong> of <strong style={{ color: 'var(--orange-600)' }}>{totalOrders}</strong> orders
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              <span>Show:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="form-control"
+                style={{ width: '65px', padding: '0.25rem 0.4rem', fontSize: '0.8rem', height: '32px' }}
+              >
+                <option value={10}>10</option>
+                <option value={15}>15</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <button 
+                type="button"
+                onClick={() => setCurrentPage(1)} 
+                disabled={validCurrentPage === 1}
+                className="btn btn-outline btn-sm"
+                style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', opacity: validCurrentPage === 1 ? 0.4 : 1, cursor: validCurrentPage === 1 ? 'not-allowed' : 'pointer' }}
+                title="First Page"
+              >
+                «
+              </button>
+              <button 
+                type="button"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                disabled={validCurrentPage === 1}
+                className="btn btn-outline btn-sm"
+                style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', opacity: validCurrentPage === 1 ? 0.4 : 1, cursor: validCurrentPage === 1 ? 'not-allowed' : 'pointer' }}
+                title="Previous Page"
+              >
+                ‹ Prev
+              </button>
+
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, padding: '0 0.5rem', color: 'var(--navy-900)' }}>
+                Page {validCurrentPage} of {totalPages}
+              </span>
+
+              <button 
+                type="button"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                disabled={validCurrentPage >= totalPages}
+                className="btn btn-outline btn-sm"
+                style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', opacity: validCurrentPage >= totalPages ? 0.4 : 1, cursor: validCurrentPage >= totalPages ? 'not-allowed' : 'pointer' }}
+                title="Next Page"
+              >
+                Next ›
+              </button>
+              <button 
+                type="button"
+                onClick={() => setCurrentPage(totalPages)} 
+                disabled={validCurrentPage >= totalPages}
+                className="btn btn-outline btn-sm"
+                style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', opacity: validCurrentPage >= totalPages ? 0.4 : 1, cursor: validCurrentPage >= totalPages ? 'not-allowed' : 'pointer' }}
+                title="Last Page"
+              >
+                »
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Artwork Inspection Lightbox Modal */}
       {lightboxOrder && (
