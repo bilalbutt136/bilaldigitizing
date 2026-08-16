@@ -1,14 +1,19 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../src/context/StateContext';
 import { CustomerDashboard } from '../../src/components/customer/CustomerDashboard';
 
 export function ClientPortalClient() {
+  const [isMounted, setIsMounted] = useState(false);
   const { setCurrentView, isAuthenticated, isAuthInitialized, setIsAuthModalOpen, setAuthModalMode } = useAppState();
 
   useEffect(() => {
-    if (!isAuthInitialized) return;
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted || !isAuthInitialized) return;
     
     if (!isAuthenticated) {
       setAuthModalMode('login');
@@ -17,9 +22,9 @@ export function ClientPortalClient() {
     } else {
       setCurrentView('customer');
     }
-  }, [isAuthenticated, isAuthInitialized, setCurrentView, setIsAuthModalOpen, setAuthModalMode]);
+  }, [isMounted, isAuthenticated, isAuthInitialized, setCurrentView, setIsAuthModalOpen, setAuthModalMode]);
 
-  if (!isAuthInitialized && !isAuthenticated) {
+  if (!isMounted || (!isAuthInitialized && !isAuthenticated)) {
     return (
       <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
         <div style={{ textAlign: 'center' }}>

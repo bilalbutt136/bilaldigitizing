@@ -3,15 +3,47 @@
  * Plays ultra-crisp, high-frequency sound alerts without external heavy audio assets.
  * Frequencies tuned between 1200Hz - 2000Hz with fast exponential decay.
  */
+
+let audioContextInstance = null;
+let hasUserInteracted = false;
+
+// Listen for first user interaction on window to initialize or resume Web Audio
+if (typeof window !== 'undefined') {
+  const unlockAudio = () => {
+    hasUserInteracted = true;
+    if (audioContextInstance && audioContextInstance.state === 'suspended') {
+      audioContextInstance.resume().catch(() => {});
+    }
+    window.removeEventListener('pointerdown', unlockAudio);
+    window.removeEventListener('keydown', unlockAudio);
+    window.removeEventListener('click', unlockAudio);
+  };
+
+  window.addEventListener('pointerdown', unlockAudio, { passive: true });
+  window.addEventListener('keydown', unlockAudio, { passive: true });
+  window.addEventListener('click', unlockAudio, { passive: true });
+}
+
 export const playNotificationSound = (type = 'notification') => {
   try {
+    if (typeof window === 'undefined') return;
+
+    // Do not attempt to play if browser autoplay policy has not received a user interaction yet
+    if (!hasUserInteracted) return;
+
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return;
 
-    const ctx = new AudioCtx();
-    if (ctx.state === 'suspended') {
-      ctx.resume();
+    if (!audioContextInstance || audioContextInstance.state === 'closed') {
+      audioContextInstance = new AudioCtx();
     }
+
+    const ctx = audioContextInstance;
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+
+    if (ctx.state !== 'running') return;
 
     const now = ctx.currentTime;
 
@@ -70,6 +102,6 @@ export const playNotificationSound = (type = 'notification') => {
       osc.stop(now + 0.1);
     }
   } catch (err) {
-    console.warn('Web Audio notification alert error:', err);
+    // Fail silently without cluttering console
   }
 };
