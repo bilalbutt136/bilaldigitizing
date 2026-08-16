@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { playNotificationSound } from '../../utils/audioNotification';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase/client';
-import { fetchConversations, addChatMessage, createConversation, subscribeToLiveMessages } from '../../services/supabaseService';
+import { fetchConversations, addChatMessage, createConversation, subscribeToLiveMessages, markConversationAsRead } from '../../services/supabaseService';
 import {
   MessageSquare,
   X,
@@ -219,8 +219,14 @@ export const ClientLiveChatWidget = () => {
   useEffect(() => {
     if (isOpen) {
       scrollToBottom();
+      if (clientThread?.id) {
+        markConversationAsRead(clientThread.id);
+        setChats(prev => (Array.isArray(prev) ? prev : []).map(c => 
+          c.id === clientThread.id ? { ...c, unreadCount: 0 } : c
+        ));
+      }
     }
-  }, [isOpen, chats]);
+  }, [isOpen, clientThread?.id]);
 
   // Mount Guard: Don't render until mounted or if on excluded screen
   if (!mounted || isExcluded) {

@@ -8,7 +8,8 @@ import {
   addChatMessage, 
   createConversation, 
   subscribeToLiveMessages,
-  addOrderMessageInSupabase 
+  addOrderMessageInSupabase,
+  markConversationAsRead
 } from '../../services/supabaseService';
 import { playNotificationSound } from '../../utils/audioNotification';
 import {
@@ -335,10 +336,20 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   // Active chat thread
   const activeChat = conversations.find(c => c.id === activeChatId) || conversations[0] || {
     id: 'general-support',
-    title: 'B Digitizing Studio Live Support',
-    orderId: 'General Inquiries',
+    title: 'Support',
+    orderId: 'Support',
     messages: []
   };
+
+  // Auto-mark active conversation as read in Client Chat
+  useEffect(() => {
+    if (activeChat && activeChat.unreadCount > 0) {
+      markConversationAsRead(activeChat.id);
+      setConversations(prev => prev.map(c => 
+        c.id === activeChat.id ? { ...c, unreadCount: 0 } : c
+      ));
+    }
+  }, [activeChatId, activeChat?.id, activeChat?.unreadCount]);
 
   // Filter conversations based on search and selected filterMode
   const filteredConversations = conversations.filter(conv => {
@@ -642,7 +653,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                       key={conv.id}
                       onClick={() => {
                         setActiveChatId(conv.id);
-                        // Reset unread count locally
+                        markConversationAsRead(conv.id);
                         setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, unreadCount: 0 } : c));
                       }}
                       style={{

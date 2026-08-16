@@ -277,7 +277,7 @@ export const AdminChatInbox = () => {
         c.id === activeChat.id ? { ...c, unreadCount: 0 } : c
       ));
     }
-  }, [activeChat]);
+  }, [activeChatId, activeChat?.id, activeChat?.unreadCount]);
 
   // Filter conversations based on search and selected filterMode
   const filteredConversations = conversations.filter(conv => {
@@ -299,6 +299,10 @@ export const AdminChatInbox = () => {
 
   const handleSelectChat = (chatId) => {
     setActiveChatId(chatId);
+    markConversationAsRead(chatId);
+    setConversations(prev => prev.map(c => 
+      c.id === chatId ? { ...c, unreadCount: 0 } : c
+    ));
   };
 
   const handleSendMessage = async (e) => {
@@ -749,7 +753,7 @@ export const AdminChatInbox = () => {
                         fontWeight: 700,
                         padding: '0 0.25rem'
                       }}>
-                        {msg.senderName} • {msg.timestamp}
+                        {isAdmin ? 'Support' : (activeInfo.customerName || msg.senderName || 'Customer')} • {msg.timestamp}
                       </div>
 
                       <div style={{

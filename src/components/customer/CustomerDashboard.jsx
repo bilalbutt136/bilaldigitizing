@@ -96,8 +96,7 @@ export const CustomerDashboard = () => {
             convs.forEach(c => {
               const isClientConv = (c.clientEmail || c.client_email || '').toLowerCase().trim() === clientEmail || c.id === 'general-support' || !c.orderId;
               if (isClientConv) {
-                const clientUnread = (c.messages || []).filter(m => (m.sender === 'admin' || m.sender === 'support') && !m.is_read).length;
-                count += clientUnread > 0 ? clientUnread : (c.unreadCount || 0);
+                count += (c.unreadCount || c.unread_count || 0);
               }
             });
             setUnreadChatCount(count);
@@ -108,17 +107,32 @@ export const CustomerDashboard = () => {
 
     loadUnreadCount();
 
-    const unsubscribe = subscribeToLiveMessages((msgPayload) => {
-      if (!isMounted) return;
-      const record = msgPayload.new || msgPayload.record;
-      if (record && (record.sender === 'admin' || record.sender === 'support') && activeTab !== 'support') {
-        setUnreadChatCount(prev => prev + 1);
+    const unsubscribe = subscribeToLiveMessages(
+      (msgPayload) => {
+        if (!isMounted) return;
+        const record = msgPayload.new || msgPayload.record;
+        if (record && (record.sender === 'admin' || record.sender === 'support') && activeTab !== 'support') {
+          setUnreadChatCount(prev => prev + 1);
+        }
+      },
+      (convPayload) => {
+        if (!isMounted) return;
+        const conv = convPayload.new || convPayload.record;
+        if (conv && (conv.unread_count === 0 || conv.unreadCount === 0)) {
+          loadUnreadCount();
+        }
       }
-    });
+    );
+
+    const handleReadSync = () => {
+      if (isMounted) loadUnreadCount();
+    };
+    window.addEventListener('bdigi_read_update', handleReadSync);
 
     return () => {
       isMounted = false;
       if (typeof unsubscribe === 'function') unsubscribe();
+      window.removeEventListener('bdigi_read_update', handleReadSync);
     };
   }, [mounted, userEmail, activeTab]);
 

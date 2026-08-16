@@ -1227,12 +1227,27 @@ export async function addChatMessage(chatId, messageObj) {
 
 export async function markConversationAsRead(chatId) {
   try {
+    if (!chatId) return false;
     const headers = await getAuthHeaders();
     await fetch('/api/messages', {
       method: 'POST',
       headers,
       body: JSON.stringify({ action: 'markAsRead', payload: { conversation_id: chatId } })
     });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: chatId } }));
+    }
+
+    const channel = getSharedChatChannel();
+    if (channel) {
+      channel.send({
+        type: 'broadcast',
+        event: 'conversation_update',
+        payload: { id: chatId, unread_count: 0 }
+      });
+    }
+
     return true;
   } catch { return false; }
 }

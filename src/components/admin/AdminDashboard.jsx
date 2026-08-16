@@ -84,10 +84,7 @@ export const AdminDashboard = () => {
         try {
           const convs = await fetchConversations();
           if (convs && isMounted) {
-            const totalUnread = convs.reduce((sum, c) => {
-              const unreadMessages = (c.messages || []).filter(m => m.sender === 'client' && !m.is_read).length;
-              return sum + (unreadMessages > 0 ? unreadMessages : (c.unreadCount || 0));
-            }, 0);
+            const totalUnread = convs.reduce((sum, c) => sum + (c.unreadCount || c.unread_count || 0), 0);
             setAdminUnreadCount(totalUnread);
           }
         } catch { }
@@ -96,17 +93,32 @@ export const AdminDashboard = () => {
 
     loadAdminUnreadCount();
 
-    const unsubscribe = subscribeToLiveMessages((msgPayload) => {
-      if (!isMounted) return;
-      const record = msgPayload.new || msgPayload.record;
-      if (record && record.sender === 'client' && activeTab !== 'chat') {
-        setAdminUnreadCount(prev => prev + 1);
+    const unsubscribe = subscribeToLiveMessages(
+      (msgPayload) => {
+        if (!isMounted) return;
+        const record = msgPayload.new || msgPayload.record;
+        if (record && record.sender === 'client' && activeTab !== 'chat') {
+          setAdminUnreadCount(prev => prev + 1);
+        }
+      },
+      (convPayload) => {
+        if (!isMounted) return;
+        const conv = convPayload.new || convPayload.record;
+        if (conv && (conv.unread_count === 0 || conv.unreadCount === 0)) {
+          loadAdminUnreadCount();
+        }
       }
-    });
+    );
+
+    const handleReadSync = () => {
+      if (isMounted) loadAdminUnreadCount();
+    };
+    window.addEventListener('bdigi_read_update', handleReadSync);
 
     return () => {
       isMounted = false;
       if (typeof unsubscribe === 'function') unsubscribe();
+      window.removeEventListener('bdigi_read_update', handleReadSync);
     };
   }, [mounted, activeTab]);
 
