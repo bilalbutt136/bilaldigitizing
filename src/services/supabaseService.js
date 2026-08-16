@@ -300,9 +300,10 @@ export async function createOrderInSupabase(newOrder) {
         uploaded_by: 'client'
       }));
 
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/orders', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ action: 'createOrder', payload: { primaryDbRow: newOrder, orderFiles } })
     });
     const data = await res.json();
@@ -315,9 +316,10 @@ export async function createOrderInSupabase(newOrder) {
 // Update Order Status & Attach Machine Files in Supabase DB
 export async function updateOrderStatusInSupabase(orderId, newStatus, extraData = {}) {
   try {
+    const headers = await getAuthHeaders();
     await fetch('/api/orders', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ action: 'updateStatus', payload: { orderId, newStatus, extraData } })
     });
     return true;
@@ -327,9 +329,10 @@ export async function updateOrderStatusInSupabase(orderId, newStatus, extraData 
 // Add Revision Request in Supabase DB
 export async function addRevisionInSupabase(orderId, note, requestedBy = 'Client') {
   try {
+    const headers = await getAuthHeaders();
     await fetch('/api/orders', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ action: 'requestRevision', payload: { orderId, instructions: note, requestedBy } })
     });
     return { success: true };
@@ -338,9 +341,10 @@ export async function addRevisionInSupabase(orderId, note, requestedBy = 'Client
 
 export async function cancelOrderInSupabase(orderId) {
   try {
+    const headers = await getAuthHeaders();
     await fetch('/api/orders', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ action: 'cancelOrder', payload: { orderId } })
     });
     return true;
@@ -349,9 +353,10 @@ export async function cancelOrderInSupabase(orderId) {
 
 export async function deleteOrderInSupabase(orderId) {
   try {
+    const headers = await getAuthHeaders();
     await fetch('/api/orders', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ action: 'deleteOrder', payload: { orderId } })
     });
     return true;

@@ -30,6 +30,11 @@ const getMetadataBase = () => {
 
 export const metadata = {
   metadataBase: getMetadataBase(),
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
   title: {
     default: 'B Digitizing & Vector Studio | Custom Embroidery & Vector Art',
     template: '%s | B Digitizing Studio'

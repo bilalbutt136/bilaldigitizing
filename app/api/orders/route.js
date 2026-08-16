@@ -113,11 +113,15 @@ export async function POST(request) {
     const { action, payload } = data;
     const supabase = createAdminClient();
     
-    const { user, isAdmin } = await getAuthenticatedUser();
+    const { user, isAdmin } = await getAuthenticatedUser(request);
 
     if (action === 'createOrder') {
-      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       const { primaryDbRow, orderFiles } = payload;
+      const clientEmail = user?.email || primaryDbRow.clientEmail || primaryDbRow.email;
+      
+      if (!clientEmail) {
+        return NextResponse.json({ error: 'Client email is required to submit an order' }, { status: 400 });
+      }
       
       const primaryArtworkUrl = 
         primaryDbRow.artworkUrl || 
@@ -128,10 +132,10 @@ export async function POST(request) {
         null;
 
       const mappedDbRow = {
-        id: primaryDbRow.id,
+        id: primaryDbRow.id || `ord-${Date.now()}`,
         title: primaryDbRow.title || 'Service Order',
-        client_name: primaryDbRow.clientName || user.user_metadata?.full_name || 'Valued Client',
-        client_email: user.email,
+        client_name: primaryDbRow.clientName || user?.user_metadata?.full_name || 'Valued Client',
+        client_email: clientEmail.toLowerCase().trim(),
         service_category: primaryDbRow.serviceCategory || primaryDbRow.type || 'Embroidery Digitizing',
         service_type: primaryDbRow.type || 'digitizing',
         fabric_type: primaryDbRow.fabricType || null,
@@ -144,7 +148,7 @@ export async function POST(request) {
         artwork_url: primaryArtworkUrl,
         image_url: primaryArtworkUrl,
         logo: primaryArtworkUrl,
-        user_id: user.id,
+        user_id: user?.id || null,
         notes: JSON.stringify({
           notes: primaryDbRow.notes || '',
           patchStyle: primaryDbRow.patchStyle,
