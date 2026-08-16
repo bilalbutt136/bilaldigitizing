@@ -478,54 +478,60 @@ export const AdminDashboard = () => {
       <main className="admin-main-content" style={{
         marginLeft: '280px',
         width: 'calc(100% - 280px)',
-        padding: '2rem 2.5rem 4rem',
+        padding: activeTab === 'chat' ? '1.25rem 1.75rem' : '2rem 2.5rem 4rem',
         boxSizing: 'border-box',
-        minHeight: 'calc(100vh - 73px)'
+        height: activeTab === 'chat' ? 'calc(100vh - 73px)' : 'auto',
+        minHeight: 'calc(100vh - 73px)',
+        overflow: activeTab === 'chat' ? 'hidden' : 'visible',
+        display: activeTab === 'chat' ? 'flex' : 'block',
+        flexDirection: 'column'
       }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '1.75rem',
-          flexWrap: 'wrap',
-          gap: '1rem',
-          background: '#ffffff',
-          padding: '1.25rem 1.75rem',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-sm)',
-          border: '1px solid var(--border-color)'
-        }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
-                Admin Operations Portal
-              </h1>
-              <span className="badge badge-assigned" style={{ fontSize: '0.725rem' }}>MASTER ADMIN</span>
+        {activeTab !== 'chat' && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1.75rem',
+            flexWrap: 'wrap',
+            gap: '1rem',
+            background: '#ffffff',
+            padding: '1.25rem 1.75rem',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: 'var(--shadow-sm)',
+            border: '1px solid var(--border-color)'
+          }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
+                  Admin Operations Portal
+                </h1>
+                <span className="badge badge-assigned" style={{ fontSize: '0.725rem' }}>MASTER ADMIN</span>
+              </div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.2rem 0 0' }}>
+                Centralized digitizing studio pipeline, client balances, and live CMS controls.
+              </p>
             </div>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.2rem 0 0' }}>
-              Centralized digitizing studio pipeline, client balances, and live CMS controls.
-            </p>
-          </div>
 
-          <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
-            <button 
-              type="button"
-              className="btn btn-outline btn-sm"
-              onClick={resetAllData}
-              title="Refresh catalog and admin data from the live database"
-            >
-              <RefreshCw size={14} /> Refresh Catalog
-            </button>
+            <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
+              <button 
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={resetAllData}
+                title="Refresh catalog and admin data from the live database"
+              >
+                <RefreshCw size={14} /> Refresh Catalog
+              </button>
 
-            <button 
-              type="button"
-              className="btn btn-navy btn-sm"
-              onClick={() => setIsPricingSettingsOpen(true)}
-            >
-              <Sliders size={14} /> Quick Rates Editor
-            </button>
+              <button 
+                type="button"
+                className="btn btn-navy btn-sm"
+                onClick={() => setIsPricingSettingsOpen(true)}
+              >
+                <Sliders size={14} /> Quick Rates Editor
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {activeTab === 'dashboard' && (
           <div>

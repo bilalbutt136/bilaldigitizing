@@ -237,14 +237,25 @@ export const AdminChatInbox = () => {
   };
 
   return (
-    <div className="card" style={{ padding: 0, background: '#ffffff', border: '1.5px solid var(--border-color)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+    <div style={{ 
+      padding: 0, 
+      background: '#ffffff', 
+      border: '1.5px solid var(--border-color)', 
+      borderRadius: 'var(--radius-lg)', 
+      overflow: 'hidden',
+      flex: 1,
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      boxShadow: 'var(--shadow-sm)'
+    }}>
 
       {/* Inbox Outer Layout */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: '340px 1fr',
-        height: '640px',
-        maxHeight: 'calc(100vh - 180px)',
+        flex: 1,
+        height: '100%',
         overflow: 'hidden'
       }}>
 
