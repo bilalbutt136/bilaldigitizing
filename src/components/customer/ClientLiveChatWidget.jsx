@@ -146,10 +146,9 @@ export const ClientLiveChatWidget = () => {
     };
   }, [mounted, isExcluded]);
 
-  if (!mounted || isExcluded) return null;
-
   // Real-time Event Listener for incoming admin replies across tabs and windows
   useEffect(() => {
+    if (!mounted || isExcluded) return;
     const syncChats = (e) => {
       if (e.type === 'bdigi_chat_update' && e.detail) {
         setChats(e.detail);
@@ -175,7 +174,7 @@ export const ClientLiveChatWidget = () => {
       window.removeEventListener('bdigi_chat_update', syncChats);
       window.removeEventListener('bdigi_open_chat', handleOpenChat);
     };
-  }, []);
+  }, [mounted, isExcluded]);
 
   const activeUser = authUser || currentUser || {
     name: 'Guest Client',
@@ -212,8 +211,8 @@ export const ClientLiveChatWidget = () => {
     }
   }, [isOpen, chats]);
 
-  // Mount Guard (Available for both authenticated users and home page visitors)
-  if (!mounted) {
+  // Mount Guard: Don't render until mounted or if on excluded screen
+  if (!mounted || isExcluded) {
     return null;
   }
 
