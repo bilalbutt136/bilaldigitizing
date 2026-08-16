@@ -14,6 +14,59 @@ import {
   X
 } from 'lucide-react';
 
+// Helper to resolve real customer name, real email, and exact order type & number
+export const resolveThreadInfo = (conv, orders = []) => {
+  if (!conv) return { customerName: 'Customer', customerEmail: '', serviceCategory: 'Support', orderNum: '', isOrder: false };
+
+  const isOrder = conv.id?.startsWith('order-') || Boolean(conv.orderId && conv.orderId !== 'Support' && conv.orderId !== 'General Inquiries');
+  const rawId = (conv.orderId || conv.id || '').replace('order-', '').replace('#', '');
+  
+  const matchOrd = isOrder && Array.isArray(orders) 
+    ? orders.find(o => String(o.id) === String(rawId) || String(o.id).endsWith(String(rawId))) 
+    : null;
+
+  // Real Customer Name (no hardcoded or fake strings)
+  let customerName = matchOrd?.client_name || matchOrd?.clientName;
+  if (!customerName || customerName === 'Client' || customerName.includes('Admin') || customerName === 'Master Digitizer Support') {
+    const clientMsg = (conv.messages || []).find(m => m.sender === 'client' && m.senderName && m.senderName !== 'Client' && !m.senderName.includes('Admin'));
+    if (clientMsg?.senderName) {
+      customerName = clientMsg.senderName;
+    } else if (conv.clientName && conv.clientName !== 'Client' && !conv.clientName.includes('Admin') && conv.clientName !== 'Master Digitizer Support') {
+      customerName = conv.clientName;
+    } else {
+      customerName = 'Customer';
+    }
+  }
+
+  // Real Customer Email (no hardcoded or fake strings)
+  let customerEmail = matchOrd?.client_email || matchOrd?.clientEmail;
+  if (!customerEmail || customerEmail === 'client@studio.com' || customerEmail.includes('guest@bdigitizing.pro')) {
+    const clientEmailMsg = (conv.messages || []).find(m => m.client_email && m.client_email !== 'client@studio.com' && !m.client_email.includes('guest@bdigitizing.pro'));
+    if (clientEmailMsg?.client_email) {
+      customerEmail = clientEmailMsg.client_email;
+    } else if (conv.clientEmail && conv.clientEmail !== 'client@studio.com' && !conv.clientEmail.includes('guest@bdigitizing.pro')) {
+      customerEmail = conv.clientEmail;
+    } else {
+      customerEmail = '';
+    }
+  }
+
+  const serviceCategory = matchOrd?.serviceCategory || matchOrd?.service_category || (matchOrd?.type === 'vector' ? 'Vector Tracing' : matchOrd?.type === 'patches' ? 'Custom Patches' : 'Embroidery Digitizing') || conv.serviceCategory || (isOrder ? 'Embroidery Digitizing' : 'Support');
+  const orderNum = isOrder ? (rawId.length > 8 ? `#${rawId.substring(0, 6).toUpperCase()}` : `#${rawId.toUpperCase()}`) : '';
+
+  return {
+    isOrder,
+    rawId,
+    matchOrd,
+    customerName,
+    customerEmail,
+    serviceCategory,
+    orderNum,
+    orderSubtitle: isOrder ? `${serviceCategory} — ${orderNum}` : 'Support',
+    orderTitle: matchOrd?.title || conv.orderTitle || conv.title || (isOrder ? `${serviceCategory} ${orderNum}` : 'Live Support')
+  };
+};
+
 // Helper to clean, deduplicate, and sort conversation threads by latest message time
 const deduplicateThreads = (rawList) => {
   if (!Array.isArray(rawList)) return [];
@@ -409,14 +462,7 @@ export const AdminChatInbox = () => {
               filteredConversations.map(conv => {
                 const isActive = conv.id === activeChat.id;
                 const lastMsg = conv.messages[conv.messages.length - 1] || {};
-                const isOrderThread = conv.id?.startsWith('order-') || Boolean(conv.orderId && conv.orderId !== 'Support' && conv.orderId !== 'General Inquiries');
-                const cleanOrderId = (conv.orderId || conv.id || '').replace('order-', '').replace('#', '').substring(0, 8).toUpperCase();
-                const displayTitle = isOrderThread 
-                  ? `Order #${cleanOrderId} — ${conv.orderTitle || 'Discussion'}`
-                  : `💬 ${conv.clientName || 'Client'}`;
-                const displaySubtitle = isOrderThread
-                  ? `👤 ${conv.clientName || 'Client'} (${conv.clientCompany || 'Customer'})`
-                  : `✉️ ${conv.clientEmail || 'Direct Studio Support'}`;
+                const info = resolveThreadInfo(conv, orders);
 
                 return (
                   <div
@@ -438,14 +484,14 @@ export const AdminChatInbox = () => {
                     <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
                       {/* Avatar / Order Thumbnail */}
                       <div style={{ position: 'relative', flexShrink: 0 }}>
-                        {isOrderThread ? (
+                        {info.isOrder ? (
                           <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--navy-900)', color: 'var(--orange-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.75rem', border: '1px solid var(--orange-500)' }}>
-                            #{cleanOrderId.substring(0, 4)}
+                            {info.orderNum ? info.orderNum.substring(0, 5) : 'ORD'}
                           </div>
                         ) : (
                           <img
-                            src={conv.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(conv.clientName || 'Client')}&background=0f172a&color=fff`}
-                            alt={conv.clientName}
+                            src={conv.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(info.customerName)}&background=0f172a&color=fff`}
+                            alt={info.customerName}
                             style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--border-color)' }}
                           />
                         )}
@@ -465,7 +511,7 @@ export const AdminChatInbox = () => {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem' }}>
                           <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {displayTitle}
+                            {info.customerName}
                           </div>
                           <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', flexShrink: 0, marginLeft: '0.35rem' }}>
                             {lastMsg.timestamp ? (new Date(lastMsg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : ''}
@@ -473,16 +519,19 @@ export const AdminChatInbox = () => {
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
-                          <span style={{ fontSize: '0.725rem', color: 'var(--navy-700)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {displaySubtitle}
-                          </span>
-                          {isOrderThread ? (
+                          {info.isOrder ? (
                             <span style={{ fontSize: '0.65rem', background: '#fff7ed', color: '#ea580c', border: '1px solid #fed7aa', padding: '0.05rem 0.35rem', borderRadius: '4px', fontWeight: 800, flexShrink: 0 }}>
-                              🧵 Order
+                              🧵 {info.serviceCategory} — {info.orderNum}
                             </span>
                           ) : (
                             <span style={{ fontSize: '0.65rem', background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', padding: '0.05rem 0.35rem', borderRadius: '4px', fontWeight: 800, flexShrink: 0 }}>
-                              🟢 Direct
+                              🟢 Support
+                            </span>
+                          )}
+
+                          {info.customerEmail && (
+                            <span style={{ fontSize: '0.725rem', color: 'var(--navy-700)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {info.customerEmail}
                             </span>
                           )}
                         </div>
@@ -548,15 +597,7 @@ export const AdminChatInbox = () => {
             <>
               {/* Header Bar */}
               {(() => {
-                const isHeaderOrder = activeChat.id?.startsWith('order-') || Boolean(activeChat.orderId && activeChat.orderId !== 'Support' && activeChat.orderId !== 'General Inquiries');
-                const headerOrderId = (activeChat.orderId || activeChat.id || '').replace('order-', '').replace('#', '').substring(0, 8).toUpperCase();
-                const headerRawId = (activeChat.orderId || activeChat.id || '').replace('order-', '').replace('#', '');
-                const headerTitle = isHeaderOrder
-                  ? `Order #${headerOrderId} — ${activeChat.orderTitle || activeChat.title || 'Discussion'}`
-                  : `💬 ${activeChat.clientName || 'Client'} (Studio Live Support)`;
-                const headerSubtitle = isHeaderOrder
-                  ? `👤 Customer: ${activeChat.clientName || 'Client'} (${activeChat.clientCompany || 'Studio Account'}) • ✉️ ${activeChat.clientEmail}`
-                  : `✉️ ${activeChat.clientEmail || 'Direct Support'} • 🏢 ${activeChat.clientCompany || 'Direct Customer'}`;
+                const activeInfo = resolveThreadInfo(activeChat, orders);
 
                 return (
                   <div style={{
@@ -573,14 +614,14 @@ export const AdminChatInbox = () => {
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                       <div style={{ position: 'relative' }}>
-                        {isHeaderOrder ? (
+                        {activeInfo.isOrder ? (
                           <div style={{ width: '44px', height: '44px', borderRadius: '8px', background: 'var(--navy-900)', color: 'var(--orange-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, border: '2px solid var(--orange-500)' }}>
-                            #{headerOrderId.substring(0, 4)}
+                            {activeInfo.orderNum ? activeInfo.orderNum.substring(0, 5) : 'ORD'}
                           </div>
                         ) : (
                           <img
-                            src={activeChat.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeChat.clientName || 'Client')}&background=0f172a&color=fff`}
-                            alt={activeChat.clientName}
+                            src={activeChat.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeInfo.customerName)}&background=0f172a&color=fff`}
+                            alt={activeInfo.customerName}
                             style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--orange-500)' }}
                           />
                         )}
@@ -599,38 +640,44 @@ export const AdminChatInbox = () => {
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
-                            {headerTitle}
+                            {activeInfo.customerName}
                           </h4>
-                          {isHeaderOrder ? (
+                          {activeInfo.isOrder ? (
                             <span style={{ fontSize: '0.68rem', background: 'rgba(249, 115, 22, 0.25)', color: 'var(--orange-400)', border: '1px solid var(--orange-500)', padding: '0.1rem 0.45rem', borderRadius: '9999px', fontWeight: 800 }}>
-                              🧵 Order Discussion
+                              🧵 {activeInfo.serviceCategory} — {activeInfo.orderNum}
                             </span>
                           ) : (
                             <span style={{ fontSize: '0.68rem', background: 'rgba(16, 185, 129, 0.25)', color: '#34d399', border: '1px solid #10b981', padding: '0.1rem 0.45rem', borderRadius: '9999px', fontWeight: 800 }}>
-                              🟢 Direct Support
+                              🟢 Support
                             </span>
                           )}
                         </div>
 
-                        <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '0.15rem' }}>
-                          {headerSubtitle}
+                        <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          {activeInfo.customerEmail ? <span>✉️ {activeInfo.customerEmail}</span> : <span>✉️ Client Direct Channel</span>}
+                          {activeInfo.isOrder && (
+                            <>
+                              <span>•</span>
+                              <span style={{ color: '#f97316', fontWeight: 700 }}>{activeInfo.serviceCategory} {activeInfo.orderNum}</span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
 
                     {/* Header Quick Actions */}
-                    {isHeaderOrder && (
+                    {activeInfo.isOrder && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <button
                           type="button"
                           className="btn btn-sm btn-outline"
                           style={{ color: '#ffffff', borderColor: 'rgba(255, 255, 255, 0.3)', fontSize: '0.78rem' }}
                           onClick={() => {
-                            const matchOrd = orders.find(o => String(o.id) === String(headerRawId)) || { id: headerRawId, title: activeChat.orderTitle, clientName: activeChat.clientName };
+                            const matchOrd = activeInfo.matchOrd || orders.find(o => String(o.id) === String(activeInfo.rawId)) || { id: activeInfo.rawId, title: activeChat.orderTitle, clientName: activeInfo.customerName };
                             setSelectedOrderForDrawer(matchOrd);
                           }}
                         >
-                          Inspect Order #{headerOrderId} Brief <ChevronRight size={14} />
+                          Inspect {activeInfo.serviceCategory} {activeInfo.orderNum} Details <ChevronRight size={14} />
                         </button>
                       </div>
                     )}

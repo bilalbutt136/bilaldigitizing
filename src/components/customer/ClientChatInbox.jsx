@@ -86,11 +86,11 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
     threadMap.set(generalId, {
       id: generalId,
-      title: 'B Digitizing Studio Live Support',
-      orderId: 'General Inquiries',
-      orderTitle: 'Live Digitizer & Studio Helpdesk',
+      title: 'Support',
+      orderId: 'Support',
+      orderTitle: 'Live Studio Support',
       serviceType: 'general',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
+      serviceCategory: 'Support',
       status: 'online',
       unreadCount: remoteGeneral?.unreadCount || 0,
       messages: generalMessages,
@@ -144,15 +144,18 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         ? new Date(ordLastTimestamp).getTime()
         : 0;
 
+      const svcCategory = ord.serviceCategory || (ord.type === 'vector' ? 'Vector Tracing' : ord.type === 'patches' ? 'Custom Patches' : 'Embroidery Digitizing');
+      const orderNumFormatted = formatOrderId(ord.id);
+
       threadMap.set(orderThreadId, {
         id: orderThreadId,
-        orderId: formatOrderId(ord.id),
+        orderId: orderNumFormatted,
         rawOrderId: ord.id,
-        title: ord.title || `Order ${formatOrderId(ord.id)}`,
-        orderTitle: ord.title,
+        title: `${svcCategory} — #${orderNumFormatted}`,
+        orderTitle: ord.title || `${svcCategory} #${orderNumFormatted}`,
         orderObj: ord,
         serviceType: ord.type || ord.serviceCategory || 'embroidery',
-        serviceCategory: ord.serviceCategory || 'Embroidery Digitizing',
+        serviceCategory: svcCategory,
         orderStatus: ord.status || 'submitted',
         price: parseFloat(ord.price || 0),
         artworkUrl: ord.artworkUrl || ord.image_url || ord.logo,
@@ -691,7 +694,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
                             <div style={{ fontWeight: 800, fontSize: '0.825rem', color: 'var(--navy-900)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {isOrderThread ? `Order #${conv.orderId} — ${conv.orderTitle || 'Discussion'}` : '💬 Studio Live Support'}
+                              {isOrderThread ? `${conv.serviceCategory || 'Embroidery Digitizing'} — #${conv.orderId}` : 'Support'}
                             </div>
                             <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', flexShrink: 0 }}>
                               {lastMessage?.timestamp || 'Live'}
@@ -701,15 +704,15 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '2px' }}>
                             {isOrderThread ? (
                               <span style={{ fontSize: '0.65rem', background: '#fff7ed', color: '#ea580c', border: '1px solid #fed7aa', padding: '0.05rem 0.35rem', borderRadius: '4px', fontWeight: 800, flexShrink: 0 }}>
-                                🧵 Order #{conv.orderId}
+                                🧵 {conv.serviceCategory || 'Order'} #{conv.orderId}
                               </span>
                             ) : (
                               <span style={{ fontSize: '0.65rem', background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', padding: '0.05rem 0.35rem', borderRadius: '4px', fontWeight: 800, flexShrink: 0 }}>
-                                🟢 Studio Helpdesk
+                                🟢 Support
                               </span>
                             )}
                             <span style={{ fontSize: '0.725rem', color: 'var(--navy-700)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {isOrderThread ? (conv.serviceCategory || 'Embroidery Digitizing') : 'General Inquiries'}
+                              {isOrderThread ? (conv.orderTitle || 'Production Discussion') : 'Live Studio Support'}
                             </span>
                           </div>
 
@@ -798,16 +801,16 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
                     {activeChat.id === 'general-support' || !activeChat.rawOrderId 
-                      ? '💬 B Digitizing Studio Live Support' 
-                      : `Order #${activeChat.orderId} — ${activeChat.orderTitle || activeChat.title || 'Discussion'}`}
+                      ? 'Support' 
+                      : `${activeChat.serviceCategory || 'Embroidery Digitizing'} — #${activeChat.orderId}`}
                   </h4>
                   {activeChat.id === 'general-support' || !activeChat.rawOrderId ? (
                     <span style={{ fontSize: '0.68rem', background: 'rgba(16, 185, 129, 0.25)', color: '#34d399', border: '1px solid #10b981', padding: '0.1rem 0.45rem', borderRadius: '9999px', fontWeight: 800 }}>
-                      🟢 Live Helpdesk
+                      🟢 Support
                     </span>
                   ) : (
                     <span style={{ fontSize: '0.68rem', background: 'rgba(249, 115, 22, 0.25)', color: 'var(--orange-400)', border: '1px solid var(--orange-500)', padding: '0.1rem 0.45rem', borderRadius: '9999px', fontWeight: 800 }}>
-                      🧵 Order Discussion
+                      🧵 {activeChat.serviceCategory || 'Order'} #{activeChat.orderId}
                     </span>
                   )}
                   {activeChat.orderStatus && (
@@ -820,12 +823,12 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   {activeChat.rawOrderId ? (
                     <>
-                      <span style={{ color: 'var(--orange-400)', fontWeight: 700 }}>Order #{activeChat.orderId}</span>
+                      <span style={{ color: 'var(--orange-400)', fontWeight: 700 }}>{activeChat.orderTitle || `${activeChat.serviceCategory} #${activeChat.orderId}`}</span>
                       <span>•</span>
                       <span>{activeChat.serviceCategory || 'Embroidery Digitizing'} Production Team</span>
                     </>
                   ) : (
-                    <span>Direct Helpdesk with Master Digitizer & Senior Production Staff</span>
+                    <span>Direct Live Helpdesk with Master Digitizer & Production Staff</span>
                   )}
                 </div>
               </div>
@@ -839,7 +842,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 style={{ color: '#ffffff', borderColor: 'rgba(255, 255, 255, 0.3)', fontSize: '0.78rem', gap: '0.4rem' }}
                 onClick={() => setSelectedOrderForDrawer(activeChat.orderObj)}
               >
-                Inspect Order #{activeChat.orderId} Details <ChevronRight size={14} />
+                Inspect {activeChat.serviceCategory || 'Order'} #{activeChat.orderId} Details <ChevronRight size={14} />
               </button>
             )}
           </div>
