@@ -12,7 +12,9 @@ import {
   Copy, 
   Check, 
   ExternalLink,
-  Lock
+  Lock,
+  Zap,
+  Coins
 } from 'lucide-react';
 
 // Authentic Branded Payment Method SVG Components (matching CheckoutModal)
@@ -119,35 +121,6 @@ const CashAppBrandIcon = () => (
   </div>
 );
 
-// Fallback Solana address extractor
-const extractClientSolanaAddress = (url) => {
-  if (!url || typeof url !== 'string') return null;
-  try {
-    const parsed = new URL(url);
-    const param = parsed.searchParams.get('address') || 
-                  parsed.searchParams.get('solanaAddress') || 
-                  parsed.searchParams.get('wallet') || 
-                  parsed.searchParams.get('to') || 
-                  parsed.searchParams.get('recipient') ||
-                  parsed.searchParams.get('destination');
-    if (param && param.length >= 32 && param.length <= 44) {
-      return param;
-    }
-  } catch {}
-
-  const matches = url.match(/[1-9A-HJ-NP-Za-km-z]{32,44}/g);
-  if (matches && matches.length > 0) {
-    const valid = matches.find(m => 
-      !m.toLowerCase().includes('http') && 
-      !m.toLowerCase().includes('boltpayouts') && 
-      !m.toLowerCase().includes('taptapup') &&
-      !m.toLowerCase().includes('checkout')
-    );
-    if (valid) return valid;
-  }
-  return null;
-};
-
 export const DepositModal = () => {
   const { 
     isDepositModalOpen, 
@@ -161,12 +134,13 @@ export const DepositModal = () => {
   const [depositAmount, setDepositAmount] = useState('100');
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [activeView, setActiveView] = useState('select'); // 'select' | 'card' | 'cashapp' | 'paypal' | 'browser_waiting'
   const [boltPaymentUrl, setBoltPaymentUrl] = useState(null);
   const [invoiceId, setInvoiceId] = useState(null);
   const [isPaid, setIsPaid] = useState(false);
   const [solanaAddress, setSolanaAddress] = useState('');
-  const [hasCopiedAddress, setHasCopiedAddress] = useState(false);
-  const [showInstructions, setShowInstructions] = useState(false);
+  const [lightningInvoice, setLightningInvoice] = useState('');
+  const [hasCopied, setHasCopied] = useState(false);
 
   const presets = [25, 50, 100, 250, 500];
 
@@ -195,16 +169,16 @@ export const DepositModal = () => {
     { 
       id: 'dollarpay_paypal', 
       name: 'PayPal', 
-      subtext: 'PayPal Balance & Buyer Protection',
+      subtext: 'PYUSD / PayPal Crypto',
       icon: <PayPalBrandIcon />,
       badge: 'VERIFIED'
     },
     { 
       id: 'dollarpay_cashapp', 
       name: 'Cash App Pay', 
-      subtext: '$Cashtag & QR Scan',
+      subtext: 'Bitcoin Lightning ⚡ Instant',
       icon: <CashAppBrandIcon />,
-      badge: 'MOBILE'
+      badge: 'LIGHTNING'
     },
   ];
 
@@ -263,10 +237,20 @@ export const DepositModal = () => {
       setIsPaid(false);
       setIsInitializing(false);
       setSelectedMethod(null);
+      setActiveView('select');
       setSolanaAddress('');
-      setHasCopiedAddress(false);
-      setShowInstructions(false);
+      setLightningInvoice('');
+      setHasCopied(false);
     }, 300);
+  };
+
+  const copyToClipboard = (text, label = 'Address') => {
+    if (text) {
+      navigator.clipboard?.writeText(text);
+      setHasCopied(true);
+      showToast(`${label} copied to clipboard!`, 'success');
+      setTimeout(() => setHasCopied(false), 3000);
+    }
   };
 
   const handleSelectMethod = async (methodId) => {
@@ -296,13 +280,31 @@ export const DepositModal = () => {
         throw new Error(data.error || 'Payment gateway initialization failed');
       }
 
-      const resolvedSolana = data.solanaAddress || extractClientSolanaAddress(data.paymentUrl) || '';
+      const solana = data.solanaAddress || '';
+      const lightning = data.lightningInvoice || data.lightningAddress || '';
+
       setInvoiceId(data.invoice?.id);
       setBoltPaymentUrl(data.paymentUrl);
-      setSolanaAddress(resolvedSolana);
-      setHasCopiedAddress(false);
-      setShowInstructions(true);
+      setSolanaAddress(solana);
+      setLightningInvoice(lightning);
+      setHasCopied(false);
       
+      // Route to the appropriate view based on the specific method selected
+      if (methodId === 'card') {
+        setActiveView('card');
+      } else if (methodId === 'dollarpay_cashapp') {
+        setActiveView('cashapp');
+      } else if (methodId === 'dollarpay_paypal') {
+        setActiveView('paypal');
+      } else if (methodId === 'dollarpay_apple_pay' || methodId === 'dollarpay_google_pay') {
+        // Apple Pay / Google Pay directly opens external window
+        window.open(data.paymentUrl, '_blank');
+        setActiveView('browser_waiting');
+      } else {
+        window.open(data.paymentUrl, '_blank');
+        setActiveView('browser_waiting');
+      }
+
     } catch (err) {
       console.error('Deposit setup error:', err);
       showToast('Error setting up deposit: ' + (err.message || 'Unknown error'), 'error');
@@ -381,7 +383,13 @@ export const DepositModal = () => {
             </div>
             <div>
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#ffffff' }}>
-                {isPaid ? 'Deposit Successful' : (showInstructions ? 'Complete Wallet Deposit' : 'Studio Wallet Top-Up')}
+                {isPaid ? 'Deposit Successful' : (
+                  activeView === 'card' ? 'Credit / Debit Card Deposit' :
+                  activeView === 'cashapp' ? 'Cash App Lightning Deposit' :
+                  activeView === 'paypal' ? 'PayPal PYUSD Deposit' :
+                  activeView === 'browser_waiting' ? 'Authorize Deposit' :
+                  'Studio Wallet Top-Up'
+                )}
               </h3>
               <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8' }}>
                 {isPaid ? 'Funds are instantly available in your wallet.' : 'Instant deposit for seamless one-click order dispatch'}
@@ -409,6 +417,7 @@ export const DepositModal = () => {
         <div style={{ position: 'relative', width: '100%', minHeight: '440px', display: 'flex', flexDirection: 'column', background: '#f8fafc', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
           
           {isPaid ? (
+            /* Success View */
             <div style={{ 
               flex: 1, display: 'flex', flexDirection: 'column', 
               alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem', textAlign: 'center' 
@@ -429,10 +438,10 @@ export const DepositModal = () => {
                 Return to Studio
               </button>
             </div>
-          ) : showInstructions && boltPaymentUrl ? (
-            /* 2-Step Payment & Solana Instruction Model */
+
+          ) : activeView === 'card' && boltPaymentUrl ? (
+            /* 1. CREDIT / DEBIT CARD ONLY: 2-Step Solana Address Instruction Modal */
             <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
-              
               <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
                 <div style={{
                   display: 'inline-flex',
@@ -447,7 +456,7 @@ export const DepositModal = () => {
                   border: '1px solid #a7f3d0',
                   marginBottom: '0.5rem'
                 }}>
-                  <ShieldCheck size={14} /> Deposit Portal Initialized
+                  <ShieldCheck size={14} /> Deposit Gateway Initialized
                 </div>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 0.2rem' }}>
                   Complete in 2 Easy Steps
@@ -502,21 +511,13 @@ export const DepositModal = () => {
                     wordBreak: 'break-all',
                     lineHeight: 1.3
                   }}>
-                    {solanaAddress || 'Deposit receiving link ready'}
+                    {solanaAddress || 'Receiving link ready'}
                   </code>
                   <button
                     type="button"
-                    onClick={() => {
-                      const textToCopy = solanaAddress || boltPaymentUrl;
-                      if (textToCopy) {
-                        navigator.clipboard?.writeText(textToCopy);
-                        setHasCopiedAddress(true);
-                        showToast('Address copied to clipboard!', 'success');
-                        setTimeout(() => setHasCopiedAddress(false), 3000);
-                      }
-                    }}
+                    onClick={() => copyToClipboard(solanaAddress || boltPaymentUrl, 'Address')}
                     style={{
-                      background: hasCopiedAddress ? '#16a34a' : 'var(--orange-500)',
+                      background: hasCopied ? '#16a34a' : 'var(--orange-500)',
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '8px',
@@ -531,15 +532,7 @@ export const DepositModal = () => {
                       transition: 'all 0.15s ease'
                     }}
                   >
-                    {hasCopiedAddress ? (
-                      <>
-                        <Check size={13} /> Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Copy size={13} /> Copy Address
-                      </>
-                    )}
+                    {hasCopied ? <><Check size={13} /> Copied!</> : <><Copy size={13} /> Copy Address</>}
                   </button>
                 </div>
               </div>
@@ -576,15 +569,10 @@ export const DepositModal = () => {
                 </ul>
               </div>
 
-              {/* Action Buttons */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (boltPaymentUrl) {
-                      window.open(boltPaymentUrl, '_blank');
-                    }
-                  }}
+                  onClick={() => window.open(boltPaymentUrl, '_blank')}
                   className="btn btn-primary-orange"
                   style={{
                     width: '100%',
@@ -605,10 +593,7 @@ export const DepositModal = () => {
 
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowInstructions(false);
-                    setSelectedMethod(null);
-                  }}
+                  onClick={() => { setActiveView('select'); setSelectedMethod(null); }}
                   style={{
                     background: 'transparent',
                     color: 'var(--text-muted)',
@@ -624,15 +609,369 @@ export const DepositModal = () => {
                 </button>
               </div>
 
-              {/* Polling Live Feedback */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 <span className="spinner-border spinner-border-sm" style={{ width: '12px', height: '12px' }}></span>
                 Listening for deposit confirmation...
               </div>
-
             </div>
+
+          ) : activeView === 'cashapp' && boltPaymentUrl ? (
+            /* 2. CASH APP ONLY: Lightning Deep-Linking & Instant Invoice */
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+              <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  background: '#f0fdf4',
+                  color: '#16a34a',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '999px',
+                  border: '1px solid #bbf7d0',
+                  marginBottom: '0.5rem'
+                }}>
+                  <Zap size={14} /> Bitcoin Lightning Enabled
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 0.2rem' }}>
+                  Top-Up with Cash App
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                  Deposit Amount: <strong style={{ color: '#16a34a' }}>${parseFloat(depositAmount || 0).toFixed(2)}</strong>
+                </p>
+              </div>
+
+              {/* Instructions */}
+              <div style={{
+                background: '#ffffff',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: '14px',
+                padding: '1.15rem',
+                marginBottom: '1rem',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+              }}>
+                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.825rem', color: 'var(--navy-900)', lineHeight: 1.65 }}>
+                  <li>Tap <strong>Launch Cash App ⚡</strong> below to open Cash App via instant Bitcoin Lightning.</li>
+                  <li>Confirm the transfer in Cash App to top up your Studio Wallet immediately.</li>
+                </ul>
+              </div>
+
+              {/* Lightning Invoice (Copy backup) */}
+              {lightningInvoice && (
+                <div style={{
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '10px',
+                  padding: '0.65rem 0.85rem',
+                  marginBottom: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem'
+                }}>
+                  <div style={{ overflow: 'hidden' }}>
+                    <div style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Lightning Invoice</div>
+                    <code style={{ fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 800, color: 'var(--navy-900)', wordBreak: 'break-all', lineHeight: 1.2 }}>
+                      {lightningInvoice.slice(0, 28)}...
+                    </code>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(lightningInvoice, 'Lightning Invoice')}
+                    style={{
+                      background: hasCopied ? '#16a34a' : '#0f172a',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.45rem 0.75rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem'
+                    }}
+                  >
+                    {hasCopied ? <><Check size={13} /> Copied!</> : <><Copy size={13} /> Copy Invoice</>}
+                  </button>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
+                <a
+                  href={lightningInvoice ? `lightning:${lightningInvoice}` : boltPaymentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    setTimeout(() => {
+                      if (boltPaymentUrl) window.open(boltPaymentUrl, '_blank');
+                    }, 500);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.9rem',
+                    fontSize: '1rem',
+                    fontWeight: 900,
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #00D632 0%, #00b027 100%)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 15px rgba(0, 214, 50, 0.35)',
+                    textDecoration: 'none'
+                  }}
+                >
+                  Launch Cash App <Zap size={18} />
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => { setActiveView('select'); setSelectedMethod(null); }}
+                  style={{
+                    background: 'transparent',
+                    color: 'var(--text-muted)',
+                    border: 'none',
+                    padding: '0.4rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textAlign: 'center'
+                  }}
+                >
+                  ← Choose Different Method or Amount
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <span className="spinner-border spinner-border-sm" style={{ width: '12px', height: '12px' }}></span>
+                Listening for Cash App Lightning deposit...
+              </div>
+            </div>
+
+          ) : activeView === 'paypal' && boltPaymentUrl ? (
+            /* 3. PAYPAL ONLY: PYUSD / Crypto Instructions Modal */
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+              <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  background: '#eff6ff',
+                  color: '#1d4ed8',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '999px',
+                  border: '1px solid #bfdbfe',
+                  marginBottom: '0.5rem'
+                }}>
+                  <Coins size={14} /> PayPal PYUSD Gateway
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 0.2rem' }}>
+                  Top-Up with PayPal PYUSD
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                  Deposit Amount: <strong style={{ color: '#003087' }}>${parseFloat(depositAmount || 0).toFixed(2)}</strong>
+                </p>
+              </div>
+
+              {/* Step 1 */}
+              <div style={{
+                background: '#ffffff',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: '14px',
+                padding: '1rem',
+                marginBottom: '0.85rem',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.5rem' }}>
+                  <span style={{
+                    width: '22px',
+                    height: '22px',
+                    borderRadius: '50%',
+                    background: '#003087',
+                    color: '#ffffff',
+                    fontSize: '0.75rem',
+                    fontWeight: 900,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>1</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                    Copy Receiving Address:
+                  </span>
+                </div>
+
+                <div style={{
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '10px',
+                  padding: '0.65rem 0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem'
+                }}>
+                  <code style={{
+                    fontFamily: 'monospace',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    color: 'var(--navy-900)',
+                    wordBreak: 'break-all',
+                    lineHeight: 1.3
+                  }}>
+                    {solanaAddress || 'PYUSD address ready'}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(solanaAddress || boltPaymentUrl, 'PYUSD Address')}
+                    style={{
+                      background: hasCopied ? '#16a34a' : '#003087',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.45rem 0.75rem',
+                      fontSize: '0.78rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem'
+                    }}
+                  >
+                    {hasCopied ? <><Check size={13} /> Copied!</> : <><Copy size={13} /> Copy Address</>}
+                  </button>
+                </div>
+              </div>
+
+              {/* Step 2 */}
+              <div style={{
+                background: '#ffffff',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: '14px',
+                padding: '1rem',
+                marginBottom: '1rem',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.5rem' }}>
+                  <span style={{
+                    width: '22px',
+                    height: '22px',
+                    borderRadius: '50%',
+                    background: 'var(--navy-900)',
+                    color: '#ffffff',
+                    fontSize: '0.75rem',
+                    fontWeight: 900,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>2</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                    Send from PayPal App:
+                  </span>
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                  <li>Open your <strong>PayPal App</strong> and navigate to <strong>Crypto</strong>.</li>
+                  <li>Select <strong>PYUSD</strong> (or Solana), tap <strong>Send</strong>, and paste this address.</li>
+                </ul>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
+                <button
+                  type="button"
+                  onClick={() => window.open(boltPaymentUrl, '_blank')}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem',
+                    fontSize: '0.95rem',
+                    fontWeight: 900,
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #003087 0%, #0079C1 100%)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 15px rgba(0, 48, 135, 0.35)',
+                    cursor: 'pointer',
+                    border: 'none'
+                  }}
+                >
+                  Open PayPal Portal <ExternalLink size={16} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setActiveView('select'); setSelectedMethod(null); }}
+                  style={{
+                    background: 'transparent',
+                    color: 'var(--text-muted)',
+                    border: 'none',
+                    padding: '0.4rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textAlign: 'center'
+                  }}
+                >
+                  ← Choose Different Method or Amount
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <span className="spinner-border spinner-border-sm" style={{ width: '12px', height: '12px' }}></span>
+                Awaiting PayPal PYUSD transfer confirmation...
+              </div>
+            </div>
+
+          ) : activeView === 'browser_waiting' && boltPaymentUrl ? (
+            /* 4. APPLE PAY & GOOGLE PAY: Direct Waiting View */
+            <div style={{ padding: '2.5rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
+              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fff7ed', border: '1.5px solid #fed7aa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--orange-600)', marginBottom: '1.25rem' }}>
+                <Loader2 size={28} style={{ animation: 'spin 2s linear infinite' }} />
+              </div>
+              <h3 style={{ color: 'var(--navy-950)', fontSize: '1.3rem', fontWeight: 900, marginBottom: '0.5rem' }}>
+                Complete Deposit in Opened Tab
+              </h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '1.75rem', maxWidth: '320px', lineHeight: 1.5 }}>
+                We opened the secure 1-click deposit portal in a new window. Your wallet balance will update automatically upon authorization.
+              </p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', width: '100%', maxWidth: '280px' }}>
+                <button 
+                  onClick={() => window.open(boltPaymentUrl, '_blank')} 
+                  className="btn btn-primary-orange"
+                  style={{ padding: '0.75rem 1.5rem', borderRadius: '10px', fontSize: '0.88rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' }}
+                >
+                  Re-open Deposit Tab <ExternalLink size={15} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setActiveView('select'); setSelectedMethod(null); }}
+                  style={{
+                    background: 'transparent',
+                    color: 'var(--text-muted)',
+                    border: 'none',
+                    padding: '0.4rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textAlign: 'center'
+                  }}
+                >
+                  ← Choose Different Method or Amount
+                </button>
+              </div>
+            </div>
+
           ) : (
-            /* Amount Selector & Branded Methods View */
+            /* 5. AMOUNT & METHOD SELECTION VIEW */
             <div style={{ padding: '1.5rem', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
               
               {/* Amount Selection Card */}

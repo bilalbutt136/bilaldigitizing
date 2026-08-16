@@ -2,7 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { X, CheckCircle, Loader2, Copy, Check, ShieldCheck, ExternalLink, ArrowRight, Wallet } from 'lucide-react';
+import { 
+  X, 
+  CheckCircle, 
+  Loader2, 
+  Copy, 
+  Check, 
+  ShieldCheck, 
+  ExternalLink, 
+  Zap, 
+  Coins, 
+  CreditCard 
+} from 'lucide-react';
 import { getAuthHeaders } from '../../services/supabaseService';
 
 // Authentic Branded Payment Method SVG Components
@@ -131,35 +142,6 @@ const CashAppBrandIcon = () => (
   </div>
 );
 
-// Client-side fallback Solana address parser from URL
-const extractClientSolanaAddress = (url) => {
-  if (!url || typeof url !== 'string') return null;
-  try {
-    const parsed = new URL(url);
-    const param = parsed.searchParams.get('address') || 
-                  parsed.searchParams.get('solanaAddress') || 
-                  parsed.searchParams.get('wallet') || 
-                  parsed.searchParams.get('to') || 
-                  parsed.searchParams.get('recipient') ||
-                  parsed.searchParams.get('destination');
-    if (param && param.length >= 32 && param.length <= 44) {
-      return param;
-    }
-  } catch {}
-
-  const matches = url.match(/[1-9A-HJ-NP-Za-km-z]{32,44}/g);
-  if (matches && matches.length > 0) {
-    const valid = matches.find(m => 
-      !m.toLowerCase().includes('http') && 
-      !m.toLowerCase().includes('boltpayouts') && 
-      !m.toLowerCase().includes('taptapup') &&
-      !m.toLowerCase().includes('checkout')
-    );
-    if (valid) return valid;
-  }
-  return null;
-};
-
 export const CheckoutModal = () => {
   const { 
     isCheckoutModalOpen, 
@@ -177,9 +159,10 @@ export const CheckoutModal = () => {
   const [isPaid, setIsPaid] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [isInitializing, setIsInitializing] = useState(false);
-  const [extractedSolanaAddress, setExtractedSolanaAddress] = useState('');
-  const [hasCopiedAddress, setHasCopiedAddress] = useState(false);
-  const [showCardInstructions, setShowCardInstructions] = useState(false);
+  const [activeView, setActiveView] = useState('select'); // 'select' | 'card' | 'cashapp' | 'paypal' | 'browser_waiting'
+  const [extractedSolana, setExtractedSolana] = useState('');
+  const [extractedLightning, setExtractedLightning] = useState('');
+  const [hasCopied, setHasCopied] = useState(false);
 
   const paymentMethods = [
     { 
@@ -213,16 +196,16 @@ export const CheckoutModal = () => {
     { 
       id: 'dollarpay_paypal', 
       name: 'PayPal', 
-      subtext: 'PayPal Balance & Buyer Protection',
+      subtext: 'PYUSD / PayPal Crypto',
       icon: <PayPalBrandIcon />,
       badge: 'VERIFIED'
     },
     { 
       id: 'dollarpay_cashapp', 
       name: 'Cash App Pay', 
-      subtext: '$Cashtag & QR Scan',
+      subtext: 'Bitcoin Lightning ⚡ Instant',
       icon: <CashAppBrandIcon />,
-      badge: 'MOBILE'
+      badge: 'LIGHTNING'
     },
   ];
 
@@ -269,7 +252,7 @@ export const CheckoutModal = () => {
       return;
     }
 
-    // 2. Handle External Payment Gateway methods
+    // 2. Handle External Payment Gateways
     setSelectedMethod(methodId);
     setIsInitializing(true);
     try {
@@ -286,20 +269,38 @@ export const CheckoutModal = () => {
       const data = await res.json();
       
       if (data.success && data.paymentUrl) {
-        const resolvedSolana = data.solanaAddress || extractClientSolanaAddress(data.paymentUrl) || '';
-        setExtractedSolanaAddress(resolvedSolana);
-        setHasCopiedAddress(false);
+        const solana = data.solanaAddress || '';
+        const lightning = data.lightningInvoice || data.lightningAddress || '';
+
+        setExtractedSolana(solana);
+        setExtractedLightning(lightning);
+        setHasCopied(false);
 
         setCheckoutSession({
           ...checkoutSession,
           url: data.paymentUrl,
           invoiceId: data.invoice?.id,
           amount: data.amount || checkoutSession.amount,
-          solanaAddress: resolvedSolana
+          solanaAddress: solana,
+          lightningInvoice: lightning
         });
         
-        // Show 2-step Solana address copy instruction view
-        setShowCardInstructions(true);
+        // Route to the appropriate view based on the specific method selected
+        if (methodId === 'card') {
+          setActiveView('card');
+        } else if (methodId === 'dollarpay_cashapp') {
+          setActiveView('cashapp');
+        } else if (methodId === 'dollarpay_paypal') {
+          setActiveView('paypal');
+        } else if (methodId === 'dollarpay_apple_pay' || methodId === 'dollarpay_google_pay') {
+          // Apple Pay / Google Pay directly opens external window
+          window.open(data.paymentUrl, '_blank');
+          setActiveView('browser_waiting');
+        } else {
+          window.open(data.paymentUrl, '_blank');
+          setActiveView('browser_waiting');
+        }
+
       } else {
         throw new Error(data.error || 'Failed to initialize payment gateway.');
       }
@@ -362,10 +363,20 @@ export const CheckoutModal = () => {
       setIsPaid(false);
       setSelectedMethod(null);
       setIsInitializing(false);
-      setShowCardInstructions(false);
-      setExtractedSolanaAddress('');
-      setHasCopiedAddress(false);
+      setActiveView('select');
+      setExtractedSolana('');
+      setExtractedLightning('');
+      setHasCopied(false);
     }, 300);
+  };
+
+  const copyToClipboard = (text, label = 'Address') => {
+    if (text) {
+      navigator.clipboard?.writeText(text);
+      setHasCopied(true);
+      showToast(`${label} copied to clipboard!`, 'success');
+      setTimeout(() => setHasCopied(false), 3000);
+    }
   };
 
   if (!isCheckoutModalOpen || !checkoutSession) return null;
@@ -437,10 +448,16 @@ export const CheckoutModal = () => {
             </div>
             <div>
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#ffffff' }}>
-                {isPaid ? 'Payment Successful' : (showCardInstructions ? 'Card Payment Setup' : 'Secure Checkout')}
+                {isPaid ? 'Payment Successful' : (
+                  activeView === 'card' ? 'Credit / Debit Card Checkout' :
+                  activeView === 'cashapp' ? 'Cash App Lightning Checkout' :
+                  activeView === 'paypal' ? 'PayPal PYUSD Checkout' :
+                  activeView === 'browser_waiting' ? 'Authorize Payment' :
+                  'Secure Checkout'
+                )}
               </h3>
               <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8' }}>
-                {isPaid ? 'Your order is now in production.' : '256-Bit SSL Encrypted Payment Gateway'}
+                {isPaid ? 'Your order is now in production.' : '256-Bit SSL Encrypted Payment Processing'}
               </p>
             </div>
           </div>
@@ -464,6 +481,7 @@ export const CheckoutModal = () => {
         <div style={{ position: 'relative', width: '100%', minHeight: '440px', display: 'flex', flexDirection: 'column', background: '#f8fafc', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
           
           {isPaid ? (
+            /* Success View */
             <div style={{ 
               flex: 1, display: 'flex', flexDirection: 'column', 
               alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem', textAlign: 'center' 
@@ -484,10 +502,10 @@ export const CheckoutModal = () => {
                 Return to Dashboard
               </button>
             </div>
-          ) : showCardInstructions && checkoutSession?.url ? (
-            /* 2-Step Card / Wallet Payment Instruction Modal */
+
+          ) : activeView === 'card' && checkoutSession?.url ? (
+            /* 1. CREDIT / DEBIT CARD ONLY: 2-Step Solana Address Instruction Modal */
             <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
-              
               <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
                 <div style={{
                   display: 'inline-flex',
@@ -502,7 +520,7 @@ export const CheckoutModal = () => {
                   border: '1px solid #a7f3d0',
                   marginBottom: '0.5rem'
                 }}>
-                  <ShieldCheck size={14} /> Secure Checkout Initialized
+                  <ShieldCheck size={14} /> Card Checkout Initialized
                 </div>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 0.2rem' }}>
                   Complete in 2 Easy Steps
@@ -557,21 +575,13 @@ export const CheckoutModal = () => {
                     wordBreak: 'break-all',
                     lineHeight: 1.3
                   }}>
-                    {extractedSolanaAddress || 'Checkout receiving link ready'}
+                    {extractedSolana || 'Receiving link ready'}
                   </code>
                   <button
                     type="button"
-                    onClick={() => {
-                      const textToCopy = extractedSolanaAddress || checkoutSession?.url;
-                      if (textToCopy) {
-                        navigator.clipboard?.writeText(textToCopy);
-                        setHasCopiedAddress(true);
-                        showToast('Address copied to clipboard!', 'success');
-                        setTimeout(() => setHasCopiedAddress(false), 3000);
-                      }
-                    }}
+                    onClick={() => copyToClipboard(extractedSolana || checkoutSession?.url, 'Address')}
                     style={{
-                      background: hasCopiedAddress ? '#16a34a' : 'var(--orange-500)',
+                      background: hasCopied ? '#16a34a' : 'var(--orange-500)',
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '8px',
@@ -586,15 +596,7 @@ export const CheckoutModal = () => {
                       transition: 'all 0.15s ease'
                     }}
                   >
-                    {hasCopiedAddress ? (
-                      <>
-                        <Check size={13} /> Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Copy size={13} /> Copy Address
-                      </>
-                    )}
+                    {hasCopied ? <><Check size={13} /> Copied!</> : <><Copy size={13} /> Copy Address</>}
                   </button>
                 </div>
               </div>
@@ -626,20 +628,15 @@ export const CheckoutModal = () => {
                   </span>
                 </div>
                 <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                  <li>Tap <strong>Proceed to Payment</strong> below to open the checkout portal.</li>
+                  <li>Tap <strong>Proceed to Payment</strong> below to open the card portal.</li>
                   <li>Paste this address when the system asks for the address to complete your payment.</li>
                 </ul>
               </div>
 
-              {/* Action Buttons */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (checkoutSession?.url) {
-                      window.open(checkoutSession.url, '_blank');
-                    }
-                  }}
+                  onClick={() => window.open(checkoutSession.url, '_blank')}
                   className="btn btn-primary-orange"
                   style={{
                     width: '100%',
@@ -660,10 +657,7 @@ export const CheckoutModal = () => {
 
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowCardInstructions(false);
-                    setSelectedMethod(null);
-                  }}
+                  onClick={() => { setActiveView('select'); setSelectedMethod(null); }}
                   style={{
                     background: 'transparent',
                     color: 'var(--text-muted)',
@@ -679,15 +673,370 @@ export const CheckoutModal = () => {
                 </button>
               </div>
 
-              {/* Live Polling Status */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 <span className="spinner-border spinner-border-sm" style={{ width: '12px', height: '12px' }}></span>
                 Awaiting payment confirmation...
               </div>
-
             </div>
+
+          ) : activeView === 'cashapp' && checkoutSession?.url ? (
+            /* 2. CASH APP ONLY: Lightning Deep-Linking & Instant Invoice */
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+              <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  background: '#f0fdf4',
+                  color: '#16a34a',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '999px',
+                  border: '1px solid #bbf7d0',
+                  marginBottom: '0.5rem'
+                }}>
+                  <Zap size={14} /> Bitcoin Lightning Enabled
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 0.2rem' }}>
+                  Pay with Cash App
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                  Amount: <strong style={{ color: '#16a34a' }}>${parseFloat(checkoutSession.amount || 0).toFixed(2)}</strong>
+                </p>
+              </div>
+
+              {/* Instructions */}
+              <div style={{
+                background: '#ffffff',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: '14px',
+                padding: '1.15rem',
+                marginBottom: '1rem',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+              }}>
+                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.825rem', color: 'var(--navy-900)', lineHeight: 1.65 }}>
+                  <li>Tap <strong>Launch Cash App ⚡</strong> below to open Cash App via instant Bitcoin Lightning.</li>
+                  <li>Confirm the transaction in Cash App to finalize your order immediately.</li>
+                </ul>
+              </div>
+
+              {/* Lightning Invoice (Copy backup) */}
+              {extractedLightning && (
+                <div style={{
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '10px',
+                  padding: '0.65rem 0.85rem',
+                  marginBottom: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem'
+                }}>
+                  <div style={{ overflow: 'hidden' }}>
+                    <div style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Lightning Invoice</div>
+                    <code style={{ fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 800, color: 'var(--navy-900)', wordBreak: 'break-all', lineHeight: 1.2 }}>
+                      {extractedLightning.slice(0, 28)}...
+                    </code>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(extractedLightning, 'Lightning Invoice')}
+                    style={{
+                      background: hasCopied ? '#16a34a' : '#0f172a',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.45rem 0.75rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem'
+                    }}
+                  >
+                    {hasCopied ? <><Check size={13} /> Copied!</> : <><Copy size={13} /> Copy Invoice</>}
+                  </button>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
+                <a
+                  href={extractedLightning ? `lightning:${extractedLightning}` : checkoutSession.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    // Also fallback open payment URL if on desktop
+                    setTimeout(() => {
+                      if (checkoutSession.url) window.open(checkoutSession.url, '_blank');
+                    }, 500);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.9rem',
+                    fontSize: '1rem',
+                    fontWeight: 900,
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #00D632 0%, #00b027 100%)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 15px rgba(0, 214, 50, 0.35)',
+                    textDecoration: 'none'
+                  }}
+                >
+                  Launch Cash App <Zap size={18} />
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => { setActiveView('select'); setSelectedMethod(null); }}
+                  style={{
+                    background: 'transparent',
+                    color: 'var(--text-muted)',
+                    border: 'none',
+                    padding: '0.4rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textAlign: 'center'
+                  }}
+                >
+                  ← Choose Different Payment Method
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <span className="spinner-border spinner-border-sm" style={{ width: '12px', height: '12px' }}></span>
+                Listening for Cash App Lightning confirmation...
+              </div>
+            </div>
+
+          ) : activeView === 'paypal' && checkoutSession?.url ? (
+            /* 3. PAYPAL ONLY: PYUSD / Solana Instructions Modal */
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+              <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  background: '#eff6ff',
+                  color: '#1d4ed8',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '999px',
+                  border: '1px solid #bfdbfe',
+                  marginBottom: '0.5rem'
+                }}>
+                  <Coins size={14} /> PayPal PYUSD Gateway
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 0.2rem' }}>
+                  Pay with PayPal PYUSD
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                  Amount: <strong style={{ color: '#003087' }}>${parseFloat(checkoutSession.amount || 0).toFixed(2)}</strong>
+                </p>
+              </div>
+
+              {/* Step 1 */}
+              <div style={{
+                background: '#ffffff',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: '14px',
+                padding: '1rem',
+                marginBottom: '0.85rem',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.5rem' }}>
+                  <span style={{
+                    width: '22px',
+                    height: '22px',
+                    borderRadius: '50%',
+                    background: '#003087',
+                    color: '#ffffff',
+                    fontSize: '0.75rem',
+                    fontWeight: 900,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>1</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                    Copy Receiving Address:
+                  </span>
+                </div>
+
+                <div style={{
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '10px',
+                  padding: '0.65rem 0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem'
+                }}>
+                  <code style={{
+                    fontFamily: 'monospace',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    color: 'var(--navy-900)',
+                    wordBreak: 'break-all',
+                    lineHeight: 1.3
+                  }}>
+                    {extractedSolana || 'PYUSD address ready'}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(extractedSolana || checkoutSession?.url, 'PYUSD Address')}
+                    style={{
+                      background: hasCopied ? '#16a34a' : '#003087',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.45rem 0.75rem',
+                      fontSize: '0.78rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem'
+                    }}
+                  >
+                    {hasCopied ? <><Check size={13} /> Copied!</> : <><Copy size={13} /> Copy Address</>}
+                  </button>
+                </div>
+              </div>
+
+              {/* Step 2 */}
+              <div style={{
+                background: '#ffffff',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: '14px',
+                padding: '1rem',
+                marginBottom: '1rem',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.5rem' }}>
+                  <span style={{
+                    width: '22px',
+                    height: '22px',
+                    borderRadius: '50%',
+                    background: 'var(--navy-900)',
+                    color: '#ffffff',
+                    fontSize: '0.75rem',
+                    fontWeight: 900,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>2</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                    Send from PayPal App:
+                  </span>
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                  <li>Open your <strong>PayPal App</strong> and navigate to <strong>Crypto</strong>.</li>
+                  <li>Select <strong>PYUSD</strong> (or Solana), tap <strong>Send</strong>, and paste this address.</li>
+                </ul>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
+                <button
+                  type="button"
+                  onClick={() => window.open(checkoutSession.url, '_blank')}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem',
+                    fontSize: '0.95rem',
+                    fontWeight: 900,
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #003087 0%, #0079C1 100%)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 15px rgba(0, 48, 135, 0.35)',
+                    cursor: 'pointer',
+                    border: 'none'
+                  }}
+                >
+                  Open PayPal Portal <ExternalLink size={16} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setActiveView('select'); setSelectedMethod(null); }}
+                  style={{
+                    background: 'transparent',
+                    color: 'var(--text-muted)',
+                    border: 'none',
+                    padding: '0.4rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textAlign: 'center'
+                  }}
+                >
+                  ← Choose Different Payment Method
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <span className="spinner-border spinner-border-sm" style={{ width: '12px', height: '12px' }}></span>
+                Awaiting PayPal PYUSD transfer confirmation...
+              </div>
+            </div>
+
+          ) : activeView === 'browser_waiting' && checkoutSession?.url ? (
+            /* 4. APPLE PAY & GOOGLE PAY: Clean Direct Browser Waiting View */
+            <div style={{ padding: '2.5rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
+              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fff7ed', border: '1.5px solid #fed7aa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--orange-600)', marginBottom: '1.25rem' }}>
+                <Loader2 size={28} style={{ animation: 'spin 2s linear infinite' }} />
+              </div>
+              <h3 style={{ color: 'var(--navy-950)', fontSize: '1.3rem', fontWeight: 900, marginBottom: '0.5rem' }}>
+                Complete Checkout in Opened Tab
+              </h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '1.75rem', maxWidth: '320px', lineHeight: 1.5 }}>
+                We opened the 1-click payment portal in a secure window. Your order will confirm automatically once authorized.
+              </p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', width: '100%', maxWidth: '280px' }}>
+                <button 
+                  onClick={() => window.open(checkoutSession.url, '_blank')} 
+                  className="btn btn-primary-orange"
+                  style={{ padding: '0.75rem 1.5rem', borderRadius: '10px', fontSize: '0.88rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' }}
+                >
+                  Re-open Payment Tab <ExternalLink size={15} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setActiveView('select'); setSelectedMethod(null); }}
+                  style={{
+                    background: 'transparent',
+                    color: 'var(--text-muted)',
+                    border: 'none',
+                    padding: '0.4rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textAlign: 'center'
+                  }}
+                >
+                  ← Choose Different Payment Method
+                </button>
+              </div>
+            </div>
+
           ) : (
-            /* Method Selection View */
+            /* 5. METHOD SELECTION VIEW */
             <div style={{ padding: '1.5rem', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
               <div style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '1.25rem', textAlign: 'center', marginBottom: '1.25rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
                 <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>TOTAL AMOUNT DUE</div>

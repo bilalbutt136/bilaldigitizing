@@ -19,10 +19,11 @@ function formatBoltAmount(amt) {
 function extractSolanaAddress(url, boltData = {}) {
   if (boltData?.receivingAddress) return boltData.receivingAddress;
   if (boltData?.solanaAddress) return boltData.solanaAddress;
-  if (boltData?.address) return boltData.address;
+  if (boltData?.pyusdAddress) return boltData.pyusdAddress;
+  if (boltData?.address && !String(boltData.address).startsWith('lnbc')) return boltData.address;
   if (boltData?.walletAddress) return boltData.walletAddress;
   if (boltData?.recipient) return boltData.recipient;
-  if (boltData?.depositAddress) return boltData.depositAddress;
+  if (boltData?.destinationAddress) return boltData.destinationAddress;
 
   if (!url || typeof url !== 'string') return null;
 
@@ -30,6 +31,7 @@ function extractSolanaAddress(url, boltData = {}) {
     const parsed = new URL(url);
     const paramAddr = parsed.searchParams.get('address') || 
                       parsed.searchParams.get('solanaAddress') || 
+                      parsed.searchParams.get('pyusdAddress') || 
                       parsed.searchParams.get('wallet') || 
                       parsed.searchParams.get('to') || 
                       parsed.searchParams.get('recipient') ||
@@ -54,6 +56,34 @@ function extractSolanaAddress(url, boltData = {}) {
   return null;
 }
 
+function extractLightningInvoice(url, boltData = {}) {
+  if (boltData?.lightningInvoice) return boltData.lightningInvoice;
+  if (boltData?.invoice && String(boltData.invoice).startsWith('lnbc')) return boltData.invoice;
+  if (boltData?.paymentRequest) return boltData.paymentRequest;
+  if (boltData?.lightning) return boltData.lightning;
+  if (boltData?.address && (String(boltData.address).startsWith('lnbc') || String(boltData.address).includes('@'))) {
+    return boltData.address;
+  }
+
+  if (!url || typeof url !== 'string') return null;
+
+  if (url.startsWith('lightning:')) return url.replace('lightning:', '');
+
+  try {
+    const parsed = new URL(url);
+    const param = parsed.searchParams.get('lightning') || 
+                  parsed.searchParams.get('invoice') || 
+                  parsed.searchParams.get('req') || 
+                  parsed.searchParams.get('ln');
+    if (param) return param;
+  } catch (e) {}
+
+  const match = url.match(/lnbc[0-9a-zA-Z]+/);
+  if (match) return match[0];
+
+  return null;
+}
+
 export async function POST(request) {
   try {
     const { user } = await getServerAuthUser(request);
@@ -68,7 +98,7 @@ export async function POST(request) {
 
     const body = await request.json().catch(() => ({}));
     const rawAmount = parseFloat(body.amount);
-    const method = body.method || 'all';
+    const rawMethod = body.method || 'card';
     const orderId = body.orderId || null;
     
     if (isNaN(rawAmount) || rawAmount <= 0) {
@@ -77,6 +107,20 @@ export async function POST(request) {
 
     // Format amount into standard .99 format expected by BoltPayouts
     const boltAmount = formatBoltAmount(rawAmount);
+
+    // Map UI methods to correct BoltPayouts backend methods
+    let gatewayMethod = rawMethod;
+    if (rawMethod === 'dollarpay_cashapp' || rawMethod === 'cashapp' || rawMethod === 'lightning') {
+      gatewayMethod = 'lightning';
+    } else if (rawMethod === 'dollarpay_paypal' || rawMethod === 'paypal' || rawMethod === 'pyusd') {
+      gatewayMethod = 'pyusd';
+    } else if (rawMethod === 'dollarpay_apple_pay') {
+      gatewayMethod = 'card';
+    } else if (rawMethod === 'dollarpay_google_pay') {
+      gatewayMethod = 'card';
+    } else if (rawMethod === 'card') {
+      gatewayMethod = 'card';
+    }
 
     // Fetch Bolt config from site_config
     const { data: configRow } = await supabaseAdmin
@@ -95,7 +139,7 @@ export async function POST(request) {
     const payload = {
       amount: boltAmount,
       username: user.email,
-      method: method === 'all' ? 'all' : method
+      method: gatewayMethod === 'all' ? 'all' : gatewayMethod
     };
 
     // Call BoltPayouts API
@@ -123,14 +167,15 @@ export async function POST(request) {
     const boltOrderId = boltData.orderId || boltData.id;
     const paymentUrl = boltData.paymentUrl || boltData.taptapupRedirectUrl || boltData.url;
     const solanaAddress = extractSolanaAddress(paymentUrl, boltData);
+    const lightningInvoice = extractLightningInvoice(paymentUrl, boltData);
 
     // Create Invoice with comprehensive column mapping
     const invoicePayload = {
       user_id: user.id || null,
       client_email: user.email.toLowerCase().trim(),
       amount: boltAmount,
-      method: method,
-      payment_method: method,
+      method: rawMethod,
+      payment_method: rawMethod,
       status: 'pending',
       bolt_order_id: boltOrderId,
       payment_url: paymentUrl,
@@ -157,7 +202,7 @@ export async function POST(request) {
         user_id: user.id || null,
         client_email: user.email.toLowerCase().trim(),
         amount: boltAmount,
-        method: method,
+        method: rawMethod,
         status: 'pending',
         bolt_order_id: boltOrderId,
         order_id: orderId
@@ -185,7 +230,12 @@ export async function POST(request) {
       success: true,
       invoice: invoice,
       paymentUrl: paymentUrl,
+      method: rawMethod,
+      gatewayMethod: gatewayMethod,
       solanaAddress: solanaAddress,
+      lightningInvoice: lightningInvoice,
+      lightningAddress: lightningInvoice,
+      pyusdAddress: solanaAddress,
       amount: boltAmount
     });
 
