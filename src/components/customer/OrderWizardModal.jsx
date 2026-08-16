@@ -129,6 +129,7 @@ export const OrderWizardModal = () => {
   const [patchItems, setPatchItems] = useState([
     {
       id: 1,
+      packageTier: 'standard',
       patchStyle: 'Embroidered',
       patchBacking: 'Iron-On',
       patchWidth: 3.0,
@@ -224,8 +225,13 @@ export const OrderWizardModal = () => {
 
       if (orderWizardInitialData) {
         if (orderWizardInitialData.tierKey || orderWizardInitialData.tier) {
+          const tier = orderWizardInitialData.tierKey || orderWizardInitialData.tier;
           setPlacementItems(prev => prev.map((item, idx) => {
-            if (idx === 0) return { ...item, packageTier: orderWizardInitialData.tierKey || orderWizardInitialData.tier };
+            if (idx === 0) return { ...item, packageTier: tier };
+            return item;
+          }));
+          setPatchItems(prev => prev.map((item, idx) => {
+            if (idx === 0) return { ...item, packageTier: tier };
             return item;
           }));
         }
@@ -250,6 +256,7 @@ export const OrderWizardModal = () => {
       ...prev,
       {
         id: Date.now(),
+        packageTier: 'standard',
         patchStyle: patchStyle || 'Embroidered',
         patchBacking: patchBacking || 'Iron-On',
         patchWidth: 3.0,
@@ -490,41 +497,54 @@ export const OrderWizardModal = () => {
         placementBreakdown
       };
     } else if (type === 'patch') {
+      const patchTiers = (dynamicPricingTiers || [])
+        .filter(t => matchCategory(t.service_type, 'patch'))
+        .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+      const basicTierRate = (patchTiers[0] && !isNaN(parseFloat(patchTiers[0].price))) ? parseFloat(patchTiers[0].price) : 4.50;
+      const standardTierRate = (patchTiers[1] && !isNaN(parseFloat(patchTiers[1].price))) ? parseFloat(patchTiers[1].price) : 2.50;
+      const premiumTierRate = (patchTiers[2] && !isNaN(parseFloat(patchTiers[2].price))) ? parseFloat(patchTiers[2].price) : 1.50;
+
       let baseSubtotal = 0;
       let totalQty = 0;
       
       const safePatchItems = Array.isArray(patchItems) && patchItems.length > 0 
         ? patchItems 
-        : [{ id: 1, patchStyle: 'Embroidered', patchBacking: 'Iron-On', patchWidth: 3.0, patchHeight: 3.0, quantity: 50, specificNotes: '', files: [] }];
+        : [{ id: 1, packageTier: 'standard', patchStyle: 'Embroidered', patchBacking: 'Iron-On', patchWidth: 3.0, patchHeight: 3.0, quantity: 50, specificNotes: '', files: [] }];
 
       const placementBreakdown = safePatchItems.map((item, idx) => {
-        const safeQty = Math.max(0, parseInt(item.quantity, 10) || 50);
+        const itemTier = item.packageTier || 'standard';
+        const safeQty = Math.max(1, parseInt(item.quantity, 10) || 50);
         const w = parseFloat(item.patchWidth) || 3.0;
         const h = parseFloat(item.patchHeight) || 3.0;
         const sizeInches = (w + h) / 2;
         const sizeMultiplier = sizeInches > 3.0 ? (1 + (sizeInches - 3.0) * 0.18) : 1.0;
 
-        let materialBase = getPatchStyleBaseRate(item.patchStyle);
+        let baseTierRate = standardTierRate;
+        if (itemTier === 'basic') baseTierRate = basicTierRate;
+        if (itemTier === 'premium') baseTierRate = premiumTierRate;
 
-        let qtyDiscount = 1.0;
-        if (safeQty >= 500) qtyDiscount = 0.80;
-        else if (safeQty >= 250) qtyDiscount = 0.88;
-        else if (safeQty >= 100) qtyDiscount = 0.95;
+        if (customRateVal && itemTier === (orderWizardInitialData?.tierKey || 'standard')) {
+          baseTierRate = customRateVal;
+        }
 
         let backingAddon = 0;
         if (item.patchBacking === 'Velcro') backingAddon = 0.40;
         if (item.patchBacking === 'Adhesive') backingAddon = 0.25;
 
-        const rateEach = parseFloat(((materialBase * sizeMultiplier * qtyDiscount) + backingAddon).toFixed(2));
+        const rateEach = parseFloat(((baseTierRate * sizeMultiplier) + backingAddon).toFixed(2));
         const subtotal = parseFloat((rateEach * safeQty).toFixed(2));
 
         baseSubtotal += subtotal;
         totalQty += safeQty;
 
+        const foundTierObj = patchTiers.find((t, tIdx) => (tIdx === 0 && itemTier === 'basic') || (tIdx === 1 && itemTier === 'standard') || (tIdx === 2 && itemTier === 'premium'));
+        const tierTitle = foundTierObj ? foundTierObj.title : (itemTier === 'basic' ? 'Sample Batch (10–50 Pcs)' : itemTier === 'premium' ? 'Wholesale Bulk Batch (500+ Pcs)' : 'Production Batch (100–500 Pcs)');
+
         return {
           index: idx + 1,
           id: item.id || idx + 1,
-          label: `${item.patchStyle || 'Embroidered'} Patch (${w}"×${h}", ${item.patchBacking || 'Iron-On'} Backing)`,
+          label: `${tierTitle} - ${item.patchStyle || 'Embroidered'} (${w}"×${h}", ${item.patchBacking || 'Iron-On'})`,
           quantity: safeQty,
           priceEach: rateEach,
           subtotal: subtotal,
@@ -552,7 +572,6 @@ export const OrderWizardModal = () => {
         rateEach: placementBreakdown[0]?.priceEach || 0,
         baseSubtotal,
         promoDiscountAmount,
-        appliedPromo,
         totalPlacementQuantity: totalQty,
         rushSurcharge: 0,
         finalPrice,
@@ -1223,7 +1242,45 @@ export const OrderWizardModal = () => {
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem', alignItems: 'end' }}>
                               <div>
                                 <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
-                                  Patch Craft / Material *
+                                  Package Tier *
+                                </label>
+                                <select
+                                  value={item.packageTier || 'standard'}
+                                  onChange={(e) => updatePatchItem(item.id, 'packageTier', e.target.value)}
+                                  className="form-control"
+                                  style={{ background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px' }}
+                                >
+                                  {(() => {
+                                    const matchingTiers = (dynamicPricingTiers || [])
+                                      .filter(t => matchCategory(t.service_type, 'patch'))
+                                      .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+                                    if (matchingTiers.length > 0) {
+                                      return matchingTiers.map((t, tIdx) => {
+                                        const keyVal = tIdx === 0 ? 'basic' : tIdx === 1 ? 'standard' : 'premium';
+                                        const pVal = typeof t.price === 'number' ? t.price.toFixed(2) : parseFloat(t.price).toFixed(2);
+                                        return (
+                                          <option key={t.id || tIdx} value={keyVal}>
+                                            {t.title} (${pVal}/ea)
+                                          </option>
+                                        );
+                                      });
+                                    }
+
+                                    return (
+                                      <>
+                                        <option value="basic">🧪 Sample Batch (10–50 Pcs) ($4.50/ea)</option>
+                                        <option value="standard">⭐ Production Batch (100–500 Pcs) ($2.50/ea)</option>
+                                        <option value="premium">🏭 Wholesale Bulk Batch (500+ Pcs) ($1.50/ea)</option>
+                                      </>
+                                    );
+                                  })()}
+                                </select>
+                              </div>
+
+                              <div>
+                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                  Patch Craft / Style *
                                 </label>
                                 <select
                                   value={item.patchStyle || 'Embroidered'}
@@ -1231,11 +1288,13 @@ export const OrderWizardModal = () => {
                                   className="form-control"
                                   style={{ background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px' }}
                                 >
-                                  {dynamicPatchStyles.map(st => (
-                                    <option key={st.id} value={st.id}>
-                                      {st.displayLabel}
-                                    </option>
-                                  ))}
+                                  <option value="Embroidered">🧵 Classic Embroidered</option>
+                                  <option value="Woven">🌐 Micro Woven Thread</option>
+                                  <option value="PVC">⚡ 3D Molded PVC Rubber</option>
+                                  <option value="Leather">🪵 Laser Engraved Leather</option>
+                                  <option value="Chenille">🏆 Varsity Chenille Patch</option>
+                                  <option value="Printed">🎨 Sublimated Full Color Print</option>
+                                  <option value="Bullion">👑 Handmade Bullion Wire Crest</option>
                                 </select>
                               </div>
 
@@ -1258,7 +1317,7 @@ export const OrderWizardModal = () => {
 
                               <div>
                                 <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
-                                  Quantity (min. 50 Pcs) *
+                                  Quantity (Pcs) *
                                 </label>
                                 <input
                                   type="text"
@@ -1268,23 +1327,23 @@ export const OrderWizardModal = () => {
                                   onFocus={(e) => e.target.select()}
                                   onChange={(e) => updatePatchItem(item.id, 'quantityInput', e.target.value)}
                                   onBlur={() => {
-                                    if (!item.quantityInput || parseInt(item.quantityInput, 10) < 50) {
+                                    if (!item.quantityInput || parseInt(item.quantityInput, 10) < 1) {
                                       updatePatchItem(item.id, 'quantityInput', '50');
                                     }
                                   }}
                                   className="form-control"
-                                  placeholder="min. 50"
+                                  placeholder="e.g. 50"
                                   style={{
                                     background: '#ffffff',
                                     color: 'var(--navy-950)',
-                                    border: (item.quantityInput === '' || parseInt(item.quantityInput, 10) < 50) ? '1.5px solid #fb923c' : '1.5px solid #cbd5e1',
+                                    border: '1.5px solid #cbd5e1',
                                     fontWeight: 800,
                                     borderRadius: '8px'
                                   }}
                                 />
                               </div>
 
-                              <div style={{ gridColumn: 'span 2', background: '#ffffff', padding: '0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0', marginTop: '0.35rem' }}>
+                              <div style={{ gridColumn: '1 / -1', background: '#ffffff', padding: '0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0', marginTop: '0.35rem' }}>
                                 <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.4rem' }}>
                                   <span>📎 Upload Logo / Artwork for Patch Item #{index + 1} *</span>
                                   {item.files && item.files.length > 0 && (
