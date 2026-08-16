@@ -3,24 +3,42 @@ import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-async function getAuthenticatedUser() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll(); },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            try { cookieStore.set(name, value, options); } catch {}
-          });
-        },
-      },
+async function getAuthenticatedUser(request) {
+  let user = null;
+  const authHeader = request?.headers?.get('Authorization') || request?.headers?.get('authorization');
+  
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    const adminClient = createAdminClient();
+    const { data: userData } = await adminClient.auth.getUser(token);
+    if (userData?.user) {
+      user = userData.user;
     }
-  );
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) return { user: null, isAdmin: false };
+  }
+
+  if (!user) {
+    try {
+      const cookieStore = await cookies();
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        {
+          cookies: {
+            getAll() { return cookieStore.getAll(); },
+            setAll(cookiesToSet) {
+              cookiesToSet.forEach(({ name, value, options }) => {
+                try { cookieStore.set(name, value, options); } catch {}
+              });
+            },
+          },
+        }
+      );
+      const { data: { user: cookieUser } } = await supabase.auth.getUser();
+      user = cookieUser;
+    } catch {}
+  }
+
+  if (!user) return { user: null, isAdmin: false };
   
   // Check admin status using the service role client
   const adminClient = createAdminClient();
@@ -35,10 +53,12 @@ export async function GET(request) {
     const orderId = searchParams.get('orderId');
     const supabase = createAdminClient();
     
-    const { user, isAdmin } = await getAuthenticatedUser();
+    const { user, isAdmin } = await getAuthenticatedUser(request);
 
     if (action === 'fetchAll') {
-      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      if (!user) {
+        return NextResponse.json({ orders: [] });
+      }
       
       let query = supabase.from('orders').select('*, order_files(*)').order('created_at', { ascending: false });
       
@@ -48,7 +68,7 @@ export async function GET(request) {
       
       const { data, error } = await query;
       if (error) throw error;
-      return NextResponse.json({ orders: data });
+      return NextResponse.json({ orders: data || [] });
     }
     
     if (action === 'fetchPending') {

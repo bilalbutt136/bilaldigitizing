@@ -7,6 +7,19 @@ export { isSupabaseConfigured };
  * Service layer for Supabase Database, Auth & Storage Operations.
  */
 
+export async function getAuthHeaders() {
+  const headers = { 'Content-Type': 'application/json' };
+  try {
+    if (supabase) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+    }
+  } catch {}
+  return headers;
+}
+
 // ============================================================
 // ORDER LIFECYCLE STATE MACHINE
 // ============================================================
@@ -194,7 +207,8 @@ export async function updateUserPassword(newPassword) {
 // Fetch all orders from Supabase DB
 export async function fetchOrdersFromSupabase() {
   try {
-    const res = await fetch('/api/orders?action=fetchAll');
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/orders?action=fetchAll', { headers });
     const data = await res.json();
     const orders = data.orders || [];
     
@@ -361,7 +375,8 @@ export async function upsertClientInSupabase(userData) {
 // Fetch all registered clients from Supabase DB
 export async function fetchClientsFromSupabase() {
   try {
-    const res = await fetch('/api/clients?action=fetchAll');
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/clients?action=fetchAll', { headers });
     const data = await res.json();
     return data.clients || [];
   } catch { return []; }
@@ -1146,7 +1161,9 @@ export async function createConversation(dbConv) {
 
 export async function fetchConversations() {
   try {
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/messages?action=fetchConversations', {
+      headers,
       cache: 'no-store'
     });
     const data = await res.json();

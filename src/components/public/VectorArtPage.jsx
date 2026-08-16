@@ -158,6 +158,10 @@ export const VectorArtPage = ({ hideHero = false }) => {
     ? parseFloat(pricing.vectorComplexRate)
     : 25.00;
 
+  const superRushRate = (pricing?.vectorSuperRushRate && !isNaN(parseFloat(pricing.vectorSuperRushRate)) && parseFloat(pricing.vectorSuperRushRate) > 0)
+    ? parseFloat(pricing.vectorSuperRushRate)
+    : 35.00;
+
   const rushFeeAmount = 10.00;
 
   const safeVectorItems = Array.isArray(vectorItems) && vectorItems.length > 0 
@@ -168,7 +172,9 @@ export const VectorArtPage = ({ hideHero = false }) => {
   const vectorBreakdown = safeVectorItems.map((item, idx) => {
     const compStr = (item.complexity || '').toLowerCase();
     let itemRate = simpleRate;
-    if (compStr.includes('complex') || compStr.includes('super rush') || compStr.includes('express')) {
+    if (compStr.includes('super rush') || compStr.includes('express')) {
+      itemRate = superRushRate;
+    } else if (compStr.includes('complex')) {
       itemRate = complexRate;
     } else {
       itemRate = simpleRate;
