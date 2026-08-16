@@ -31,9 +31,64 @@ export const OrderWizardModal = () => {
     walletBalance,
     setIsDepositModalOpen,
     dynamicPricingTiers = [],
+    patchCards = [],
+    pricingCards = [],
+    servicesList = [],
     serviceCmsContent = {},
     siteSettings = {}
   } = useAppState();
+
+  // Dynamic patch craft / material rate resolver connected to database & CMS
+  const getPatchStyleBaseRate = (styleName) => {
+    const clean = (styleName || '').toLowerCase().trim();
+    
+    // 1. Check dynamicPricingTiers
+    const foundDynamic = (dynamicPricingTiers || []).find(t => 
+      matchCategory(t.service_type, 'patch') && 
+      (t.title?.toLowerCase().includes(clean) || clean.includes(t.title?.toLowerCase()))
+    );
+    if (foundDynamic && !isNaN(parseFloat(foundDynamic.price))) {
+      return parseFloat(foundDynamic.price);
+    }
+
+    // 2. Check patchCards from CMS
+    const foundCard = (patchCards || []).find(p => 
+      p.title?.toLowerCase().includes(clean) || clean.includes(p.title?.toLowerCase()) ||
+      (clean.includes('woven') && (p.tierKey === 'basic' || p.id?.includes('basic'))) ||
+      (clean.includes('embroidered') && (p.tierKey === 'standard' || p.id?.includes('standard'))) ||
+      ((clean.includes('pvc') || clean.includes('leather')) && (p.tierKey === 'premium' || p.id?.includes('premium')))
+    );
+    if (foundCard) {
+      const parsed = parseFloat(String(foundCard.price || foundCard.rate || '').replace(/[^0-9.]/g, ''));
+      if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+
+    // 3. Fallback standard craft rates
+    if (clean.includes('woven')) return 1.50;
+    if (clean.includes('printed') || clean.includes('sublimat')) return 2.00;
+    if (clean.includes('pvc') || clean.includes('rubber')) return 3.50;
+    if (clean.includes('leather')) return 3.50;
+    if (clean.includes('chenille')) return 4.00;
+    if (clean.includes('bullion')) return 8.00;
+    return parseFloat(pricing?.patchBaseRate) || 2.50;
+  };
+
+  const dynamicPatchStyles = [
+    { id: 'Embroidered', label: 'Embroidered Patch', icon: '🧵', defaultRate: 2.50 },
+    { id: 'Woven', label: 'Micro Woven Patch', icon: '🌐', defaultRate: 1.50 },
+    { id: 'PVC', label: '3D Rubber PVC Patch', icon: '⚡', defaultRate: 3.50 },
+    { id: 'Leather', label: 'Debossed Leather Patch', icon: '🪵', defaultRate: 3.50 },
+    { id: 'Chenille', label: 'Varsity Chenille Patch', icon: '🏆', defaultRate: 4.00 },
+    { id: 'Printed', label: 'Sublimated Printed Patch', icon: '🎨', defaultRate: 2.00 },
+    { id: 'Bullion', label: 'Handmade Bullion Wire Crest', icon: '👑', defaultRate: 8.00 },
+  ].map(style => {
+    const rate = getPatchStyleBaseRate(style.id);
+    return {
+      ...style,
+      rate,
+      displayLabel: `${style.icon} ${style.label} ($${rate.toFixed(2)}/ea)`
+    };
+  });
 
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
@@ -371,6 +426,14 @@ export const OrderWizardModal = () => {
     }
 
     if (type === 'vector') {
+      const vecTiers = (dynamicPricingTiers || [])
+        .filter(t => matchCategory(t.service_type, 'vector'))
+        .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+      const basicDyn = (vecTiers[0] && !isNaN(parseFloat(vecTiers[0].price))) ? parseFloat(vecTiers[0].price) : (parseFloat(pricing?.vectorSimpleRate) || 15.00);
+      const standardDyn = (vecTiers[1] && !isNaN(parseFloat(vecTiers[1].price))) ? parseFloat(vecTiers[1].price) : (parseFloat(pricing?.vectorComplexRate) || 25.00);
+      const premiumDyn = (vecTiers[2] && !isNaN(parseFloat(vecTiers[2].price))) ? parseFloat(vecTiers[2].price) : 45.00;
+
       const safePlacementItems = Array.isArray(placementItems) && placementItems.length > 0 
         ? placementItems 
         : [{ id: 1, packageTier: 'standard', placementType: 'vector_redraw', quantity: 1, quantityInput: '1', specificNotes: '', files: [] }];
@@ -378,9 +441,9 @@ export const OrderWizardModal = () => {
       let baseSubtotal = 0;
       const placementBreakdown = safePlacementItems.map((item, idx) => {
         const itemTier = item.packageTier || 'standard';
-        const basicRate = (customRateVal && itemTier === 'basic') ? customRateVal : 15.00;
-        const standardRate = (customRateVal && itemTier === 'standard') ? customRateVal : 25.00;
-        const premiumRate = (customRateVal && itemTier === 'premium') ? customRateVal : 40.00;
+        const basicRate = (customRateVal && itemTier === 'basic') ? customRateVal : basicDyn;
+        const standardRate = (customRateVal && itemTier === 'standard') ? customRateVal : standardDyn;
+        const premiumRate = (customRateVal && itemTier === 'premium') ? customRateVal : premiumDyn;
         
         let rateEach = standardRate;
         if (itemTier === 'basic') rateEach = basicRate;
@@ -441,10 +504,7 @@ export const OrderWizardModal = () => {
         const sizeInches = (w + h) / 2;
         const sizeMultiplier = sizeInches > 3.0 ? (1 + (sizeInches - 3.0) * 0.18) : 1.0;
 
-        let materialBase = 2.50;
-        if (item.patchStyle === 'Woven') materialBase = 1.50;
-        if (item.patchStyle === 'Embroidered') materialBase = 2.50;
-        if (item.patchStyle === 'PVC' || item.patchStyle === 'Leather') materialBase = 3.50;
+        let materialBase = getPatchStyleBaseRate(item.patchStyle);
 
         let qtyDiscount = 1.0;
         if (safeQty >= 500) qtyDiscount = 0.80;
@@ -500,6 +560,14 @@ export const OrderWizardModal = () => {
       };
     } else {
       // Embroidery Digitizing
+      const embTiers = (dynamicPricingTiers || [])
+        .filter(t => matchCategory(t.service_type, 'embroidery'))
+        .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+      const basicDyn = (embTiers[0] && !isNaN(parseFloat(embTiers[0].price))) ? parseFloat(embTiers[0].price) : (parseFloat(pricing?.minOrderFee) || 10.00);
+      const standardDyn = (embTiers[1] && !isNaN(parseFloat(embTiers[1].price))) ? parseFloat(embTiers[1].price) : 20.00;
+      const premiumDyn = (embTiers[2] && !isNaN(parseFloat(embTiers[2].price))) ? parseFloat(embTiers[2].price) : 35.00;
+
       const safePlacementItems = Array.isArray(placementItems) && placementItems.length > 0 
         ? placementItems 
         : [{ id: 1, packageTier: 'standard', placementType: 'left_chest', quantity: 1, quantityInput: '1', specificNotes: '', files: [] }];
@@ -507,16 +575,16 @@ export const OrderWizardModal = () => {
       let baseSubtotal = 0;
       const placementBreakdown = safePlacementItems.map((item, idx) => {
         const itemTier = item.packageTier || 'standard';
-        const basicRate = (customRateVal && itemTier === 'basic') ? customRateVal : (parseFloat(pricing?.minOrderFee) || 10.00);
-        const standardRate = (customRateVal && itemTier === 'standard') ? customRateVal : 20.00;
-        const premiumRate = (customRateVal && itemTier === 'premium') ? customRateVal : 35.00;
+        const basicRate = (customRateVal && itemTier === 'basic') ? customRateVal : basicDyn;
+        const standardRate = (customRateVal && itemTier === 'standard') ? customRateVal : standardDyn;
+        const premiumRate = (customRateVal && itemTier === 'premium') ? customRateVal : premiumDyn;
 
         let itemPriceEach = standardRate;
         if (itemTier === 'basic') itemPriceEach = basicRate;
         if (itemTier === 'premium') itemPriceEach = premiumRate;
 
         const isJacket = item.placementType === 'jacket_back' || item.placementType === 'Jacket Back Crest';
-        if (isJacket && itemTier !== 'premium') itemPriceEach = 20.00; // Default jacket back standard rate
+        if (isJacket && itemTier !== 'premium') itemPriceEach = standardRate;
 
         const subtotal = itemPriceEach * (item.quantity || 1);
         baseSubtotal += subtotal;
@@ -1152,7 +1220,6 @@ export const OrderWizardModal = () => {
                                 )}
                               </div>
                             </div>
-
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem', alignItems: 'end' }}>
                               <div>
                                 <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
@@ -1164,10 +1231,11 @@ export const OrderWizardModal = () => {
                                   className="form-control"
                                   style={{ background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px' }}
                                 >
-                                  <option value="Embroidered">🧵 Embroidered Patch ($2.50/ea)</option>
-                                  <option value="Woven">🌐 Micro Woven Patch ($1.50/ea)</option>
-                                  <option value="PVC">⚡ 3D Rubber PVC Patch ($3.50/ea)</option>
-                                  <option value="Leather">🪵 Debossed Leather Patch ($3.50/ea)</option>
+                                  {dynamicPatchStyles.map(st => (
+                                    <option key={st.id} value={st.id}>
+                                      {st.displayLabel}
+                                    </option>
+                                  ))}
                                 </select>
                               </div>
 
