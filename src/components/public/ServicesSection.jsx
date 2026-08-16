@@ -93,15 +93,7 @@ export const ServicesSection = () => {
     ? patchTiers.map(t => `${t.title.split(' ')[0]} ($${Number(t.price).toFixed(t.price % 1 === 0 ? 0 : 2)})`).join(', ')
     : 'Sample Run ($4.50), Production Batch ($2.50), Wholesale Bulk ($1.50)';
 
-  // --------------------------------------------------------------------------
-  // Tab Metadata
-  // --------------------------------------------------------------------------
-  const tabs = [
-    { id: 'all', label: 'All Services', icon: LayoutGrid },
-    { id: 'embroidery', label: `Embroidery (${embroideryTiers.length || 3})`, icon: Layers },
-    { id: 'vector-art', label: `Vector Art (${vectorTiers.length || 3})`, icon: PenTool },
-    { id: 'patches', label: `Patches (${patchTiers.length || 3})`, icon: Tag }
-  ];
+
 
   // --------------------------------------------------------------------------
   // Tailored FAQs per service
@@ -230,65 +222,6 @@ export const ServicesSection = () => {
             {activeTab === 'vector-art' && 'Clean, infinitely scalable vector graphics (.AI, .EPS, .SVG, .PDF) with hand-drawn Bézier curves and Pantone color separations ready for press.'}
             {activeTab === 'patches' && 'Custom embroidered, high-density woven, 3D molded PVC, and laser-engraved leather emblems delivered straight to your door.'}
           </p>
-        </div>
-
-        {/* 4 Navigation Tabs: All Services | Embroidery | Vector Art | Patches */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3.5rem' }}>
-          <div style={{
-            display: 'inline-flex',
-            background: 'var(--navy-950)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            padding: '0.35rem',
-            borderRadius: '9999px',
-            boxShadow: 'var(--shadow-lg)',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            gap: '0.25rem'
-          }}>
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isSelected = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => handleSelectTab(tab.id)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.55rem',
-                    padding: '0.65rem 1.65rem',
-                    borderRadius: '9999px',
-                    border: 'none',
-                    background: isSelected 
-                      ? 'linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%)' 
-                      : 'transparent',
-                    color: isSelected ? '#ffffff' : '#94a3b8',
-                    fontWeight: isSelected ? 800 : 600,
-                    fontSize: '0.925rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                    boxShadow: isSelected ? '0 4px 14px rgba(249, 115, 22, 0.45)' : 'none'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.color = '#ffffff';
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.color = '#94a3b8';
-                      e.currentTarget.style.background = 'transparent';
-                    }
-                  }}
-                >
-                  <Icon size={16} />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
         </div>
 
         {/* ====================================================================
