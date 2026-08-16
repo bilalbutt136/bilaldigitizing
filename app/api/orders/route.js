@@ -60,7 +60,7 @@ export async function GET(request) {
         return NextResponse.json({ orders: [] });
       }
       
-      let query = supabase.from('orders').select('*, order_files(*)').order('created_at', { ascending: false });
+      let query = supabase.from('orders').select('*, order_files(*), order_messages(*)').order('created_at', { ascending: false });
       
       if (!isAdmin) {
         query = query.eq('client_email', user.email);

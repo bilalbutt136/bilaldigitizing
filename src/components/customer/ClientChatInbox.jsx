@@ -33,6 +33,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     authUser, 
     currentUser, 
     orders = [], 
+    setOrders,
     setSelectedOrderForDrawer, 
     showToast,
     formatOrderId = (id) => `#${String(id || '').substring(0, 6).toUpperCase()}`
@@ -306,14 +307,18 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     const newMsg = {
       id: 'msg-' + Date.now(),
       conversation_id: activeChat.id,
+      order_id: activeChat.rawOrderId || null,
+      order_title: activeChat.orderTitle || activeChat.title || 'Discussion',
+      client_email: clientEmail,
       sender: 'client',
       senderName: clientName,
+      sender_name: clientName,
       text: messageInput.trim() || (attachedFile ? `Attached file: ${attachedFile.name}` : ''),
       attachment: attachedFile ? attachedFile.name : null,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: new Date().toISOString()
     };
 
-    // Optimistic state update
+    // Optimistic state update in conversations list
     setConversations(prev => prev.map(conv => {
       if (conv.id === activeChat.id) {
         return {
@@ -326,6 +331,21 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       return conv;
     }));
 
+    // Optimistic state update in orders context if order thread
+    if (activeChat.rawOrderId && typeof setOrders === 'function') {
+      try {
+        setOrders(prev => (prev || []).map(o => {
+          if (o.id === activeChat.rawOrderId) {
+            return {
+              ...o,
+              messages: [...(o.messages || []), newMsg]
+            };
+          }
+          return o;
+        }));
+      } catch {}
+    }
+
     setMessageInput('');
     setAttachedFile(null);
     playNotificationSound('send');
@@ -333,16 +353,11 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
     // Persistence to Supabase
     if (isSupabaseConfigured) {
-      if (activeChat.rawOrderId) {
-        // If order thread, save to both order_messages and conversations
-        try {
-          await addOrderMessageInSupabase(activeChat.rawOrderId, newMsg.text, clientName, 'client', attachedFile ? [attachedFile] : []);
-        } catch {}
-      }
-
       try {
         await addChatMessage(activeChat.id, newMsg);
-      } catch {}
+      } catch (err) {
+        console.warn('Persist chat message notice:', err);
+      }
     }
   };
 

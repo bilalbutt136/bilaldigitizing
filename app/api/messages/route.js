@@ -17,16 +17,17 @@ export async function GET(request) {
       const { data: messagesData, error: msgError } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
       if (msgError) throw msgError;
 
-      const conversations = convData.map(conv => {
-        const mappedMessages = messagesData
+      const conversations = (convData || []).map(conv => {
+        const mappedMessages = (messagesData || [])
           .filter(m => m.conversation_id === conv.id)
           .map(m => ({
             id: m.id,
             sender: m.sender,
             senderName: m.sender_name,
+            sender_name: m.sender_name,
             text: m.text,
             attachment: m.attachment,
-            timestamp: m.timestamp
+            timestamp: m.timestamp || m.created_at
           }));
 
         return {
@@ -35,6 +36,7 @@ export async function GET(request) {
           clientEmail: conv.client_email,
           company: conv.client_company,
           orderId: conv.order_id,
+          orderTitle: conv.order_title,
           avatar: conv.avatar,
           status: conv.status,
           unreadCount: conv.unread_count,
@@ -51,13 +53,14 @@ export async function GET(request) {
       const { data, error } = await supabase.from('messages').select('*').eq('conversation_id', chatId).order('created_at', { ascending: true });
       if (error) throw error;
       
-      const mappedMessages = data.map(m => ({
+      const mappedMessages = (data || []).map(m => ({
         id: m.id,
         sender: m.sender,
         senderName: m.sender_name,
+        sender_name: m.sender_name,
         text: m.text,
         attachment: m.attachment,
-        timestamp: m.timestamp
+        timestamp: m.timestamp || m.created_at
       }));
       
       return NextResponse.json({ messages: mappedMessages });
@@ -79,13 +82,14 @@ export async function POST(request) {
     if (action === 'upsertConversation') {
       const dbPayload = {
         id: payload.id,
-        client_name: payload.clientName,
-        client_email: payload.clientEmail,
-        client_company: payload.company,
-        order_id: payload.orderId,
+        client_name: payload.clientName || payload.client_name,
+        client_email: payload.clientEmail || payload.client_email,
+        client_company: payload.company || payload.client_company,
+        order_id: payload.orderId || payload.order_id,
+        order_title: payload.orderTitle || payload.order_title,
         avatar: payload.avatar,
         status: payload.status,
-        unread_count: payload.unreadCount
+        unread_count: payload.unreadCount || payload.unread_count || 0
       };
 
       const { data: convData, error } = await supabase.from('conversations').upsert([dbPayload]).select();
@@ -98,6 +102,7 @@ export async function POST(request) {
         clientEmail: conv.client_email,
         company: conv.client_company,
         orderId: conv.order_id,
+        orderTitle: conv.order_title,
         avatar: conv.avatar,
         status: conv.status,
         unreadCount: conv.unread_count,
@@ -110,30 +115,67 @@ export async function POST(request) {
     }
     
     if (action === 'insertMessage') {
+      const convId = payload.conversation_id || 'general-support';
+      const isOrder = convId.startsWith('order-') || Boolean(payload.order_id);
+      const rawOrderId = payload.order_id || (convId.startsWith('order-') ? convId.replace('order-', '') : null);
+
+      // Upsert conversation to prevent Foreign Key constraint violations
+      try {
+        await supabase.from('conversations').upsert({
+          id: convId,
+          order_id: rawOrderId,
+          order_title: payload.order_title || payload.orderTitle || (isOrder ? `Order #${rawOrderId}` : 'General Inquiries'),
+          client_name: payload.sender_name || payload.senderName || 'Client',
+          client_email: payload.client_email || payload.clientEmail || 'client@studio.com',
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+      } catch (convUpsertErr) {
+        console.warn('Conversation upsert notice:', convUpsertErr);
+      }
+
       const dbPayload = {
-        id: payload.id,
-        conversation_id: payload.conversation_id,
-        sender: payload.sender,
-        sender_name: payload.senderName,
-        text: payload.text,
-        attachment: payload.attachment,
-        timestamp: payload.timestamp
+        id: payload.id || `msg-${Date.now()}`,
+        conversation_id: convId,
+        sender: payload.sender || 'client',
+        sender_name: payload.sender_name || payload.senderName || 'Client',
+        text: payload.text || '',
+        attachment: payload.attachment || null,
+        timestamp: payload.timestamp || new Date().toISOString()
       };
       
       const { error } = await supabase.from('messages').insert([dbPayload]);
-      if (error) throw error;
+      if (error) {
+        console.error('[Messages API insert error]:', error);
+        throw error;
+      }
       
-      // Update the conversation's updated_at so it bumps to the top
+      // Mirror to order_messages if an order ID is present
+      if (rawOrderId) {
+        try {
+          await supabase.from('order_messages').insert([{
+            order_id: rawOrderId,
+            sender_name: dbPayload.sender_name,
+            sender_role: dbPayload.sender === 'client' ? 'client' : 'admin',
+            is_staff: dbPayload.sender !== 'client',
+            message: dbPayload.text,
+            attachment: dbPayload.attachment
+          }]);
+        } catch (omErr) {
+          console.warn('order_messages mirror notice:', omErr);
+        }
+      }
+
+      // Update the conversation's updated_at and unread count
       if (payload.sender === 'client') {
-        const { data: convData } = await supabase.from('conversations').select('unread_count').eq('id', payload.conversation_id).single();
+        const { data: convData } = await supabase.from('conversations').select('unread_count').eq('id', convId).single();
         const newCount = convData ? (convData.unread_count || 0) + 1 : 1;
         await supabase.from('conversations')
           .update({ updated_at: new Date().toISOString(), unread_count: newCount })
-          .eq('id', payload.conversation_id);
+          .eq('id', convId);
       } else {
         await supabase.from('conversations')
           .update({ updated_at: new Date().toISOString() })
-          .eq('id', payload.conversation_id);
+          .eq('id', convId);
       }
 
       return NextResponse.json({ success: true });

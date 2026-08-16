@@ -244,6 +244,18 @@ export async function fetchOrdersFromSupabase() {
         uploadedAt: f.created_at
       }));
 
+      const rawOrderMessages = order.order_messages || [];
+      const mappedOrderMessages = rawOrderMessages.map(m => ({
+        id: m.id,
+        sender: m.is_staff ? 'admin' : (m.sender_role === 'admin' ? 'admin' : 'client'),
+        senderName: m.sender_name || (m.is_staff ? 'Master Digitizer' : (order.client_name || 'Client')),
+        senderRole: m.is_staff ? 'admin' : (m.sender_role || 'client'),
+        text: m.message || m.text || '',
+        attachment: m.attachment || m.attachments?.[0]?.name || null,
+        attachmentUrl: m.attachment_url || m.attachments?.[0]?.url || null,
+        timestamp: m.created_at || m.timestamp || new Date().toISOString()
+      }));
+
       // Extract primary artwork URL with comprehensive fallback chain
       const primaryArtworkUrl = 
         (order.artwork_url && typeof order.artwork_url === 'string' && order.artwork_url.trim()) || 
@@ -264,6 +276,7 @@ export async function fetchOrdersFromSupabase() {
         logo: primaryArtworkUrl,
         uploadedFiles: clientFiles.length > 0 ? clientFiles : (notesData.uploadedFiles || []),
         uploadedMachineFiles: machineFiles,
+        messages: mappedOrderMessages,
         type: order.service_type || order.service_category,
         fabricType: order.fabric_type,
         requestedFormats: order.requested_formats,
