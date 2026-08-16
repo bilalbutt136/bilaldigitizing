@@ -7,31 +7,206 @@ import {
   X, 
   Wallet, 
   ShieldCheck, 
-  Zap, 
-  ExternalLink, 
-  CheckCircle2, 
-  Lock, 
-  CreditCard, 
-  Bitcoin,
-  Building2,
-  Copy,
-  Check
+  CheckCircle, 
+  Loader2, 
+  Copy, 
+  Check, 
+  ExternalLink,
+  Lock
 } from 'lucide-react';
+
+// Authentic Branded Payment Method SVG Components (matching CheckoutModal)
+const CardBrandIcon = () => (
+  <div style={{
+    width: '42px',
+    height: '42px',
+    borderRadius: '12px',
+    background: '#ffffff',
+    border: '1.5px solid #e2e8f0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+    flexShrink: 0
+  }}>
+    <svg width="30" height="20" viewBox="0 0 32 22" fill="none">
+      <rect width="32" height="22" rx="4" fill="#0f172a" />
+      <rect y="4" width="32" height="4" fill="#f97316" />
+      <rect x="4" y="14" width="6" height="3" rx="1.5" fill="#e2e8f0" />
+      <circle cx="24" cy="15.5" r="2.5" fill="#ef4444" fillOpacity="0.9" />
+      <circle cx="27" cy="15.5" r="2.5" fill="#f59e0b" fillOpacity="0.9" />
+    </svg>
+  </div>
+);
+
+const ApplePayBrandIcon = () => (
+  <div style={{
+    width: '42px',
+    height: '42px',
+    borderRadius: '12px',
+    background: '#000000',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+    color: '#ffffff',
+    flexShrink: 0
+  }}>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.87-.9.04-2 .6-2.65 1.36-.58.68-.99 1.74-.86 2.78 1.01.08 2.05-.52 2.59-1.27z" />
+    </svg>
+  </div>
+);
+
+const GooglePayBrandIcon = () => (
+  <div style={{
+    width: '42px',
+    height: '42px',
+    borderRadius: '12px',
+    background: '#ffffff',
+    border: '1.5px solid #e2e8f0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+    flexShrink: 0
+  }}>
+    <svg width="34" height="18" viewBox="0 0 54 22" fill="none">
+      <path d="M10.8 10.7v-2.3h6.5c.1.4.1.8.1 1.3 0 1.6-.4 3.5-1.8 4.9-1.3 1.4-3 2.1-5.3 2.1-4.2 0-7.7-3.4-7.7-7.7s3.4-7.7 7.7-7.7c2.3 0 4 1 5.3 2.2l-1.6 1.6c-.9-.9-2.1-1.5-3.7-1.5-3 0-5.4 2.5-5.4 5.5s2.4 5.5 5.4 5.5c2 0 3.1-.8 3.8-1.5.6-.6 1-1.5 1.2-2.7h-4.5z" fill="#4285F4" />
+      <path d="M26.2 6.8h3.9c1.2 0 2.2.4 2.9 1.1.7.7 1.1 1.6 1.1 2.7s-.4 2-1.1 2.7c-.7.7-1.7 1.1-2.9 1.1h-2v4.8h-1.9V6.8zm3.9 6c.7 0 1.3-.2 1.7-.7.4-.5.7-1.1.7-1.8s-.2-1.3-.7-1.8c-.4-.5-1-.7-1.7-.7h-2v5h2z" fill="#5F6368" />
+      <path d="M37.8 14.6c0-1.4 1.1-2.1 3-2.2l2.1-.1v-.5c0-.7-.5-1.2-1.5-1.2-.8 0-1.4.4-1.6 1h-1.8c.2-1.5 1.5-2.4 3.4-2.4 2 0 3.3 1.1 3.3 2.8v7.2h-1.8v-1.6c-.6 1.1-1.8 1.8-3.1 1.8-1.7 0-2.8-1.1-2.8-2.6zm5.1-1v-.8l-1.9.1c-1 .1-1.5.5-1.5 1.2 0 .7.6 1.2 1.4 1.2 1.1 0 2-.8 2-1.7z" fill="#5F6368" />
+      <path d="M48.1 21.5l2-5.4-3.5-7.8h2l2.4 5.8 2.3-5.8h1.9l-5.3 12.1h-1.8z" fill="#5F6368" />
+    </svg>
+  </div>
+);
+
+const PayPalBrandIcon = () => (
+  <div style={{
+    width: '42px',
+    height: '42px',
+    borderRadius: '12px',
+    background: '#ffffff',
+    border: '1.5px solid #e2e8f0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+    flexShrink: 0
+  }}>
+    <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+      <path d="M10.5 4.5h7.2c3.4 0 5.6 1.7 5.1 5.1-.6 4-3.2 6.4-6.8 6.4h-2.5l-1.4 8.5H7.5l3-20z" fill="#003087" />
+      <path d="M14.5 10h6.2c3 0 4.8 1.5 4.4 4.5-.6 3.5-2.8 5.6-6 5.6h-2.2l-1.2 7.4H11l3.5-17.5z" fill="#0079C1" fillOpacity="0.85" />
+      <path d="M13.8 16h2.8c2.8 0 4.4-1.3 4.8-3.8.4-2.5-1-3.7-3.8-3.7h-4.8l-1.8 11.5h2.8l.8-4z" fill="#00457C" />
+    </svg>
+  </div>
+);
+
+const CashAppBrandIcon = () => (
+  <div style={{
+    width: '42px',
+    height: '42px',
+    borderRadius: '12px',
+    background: '#00D632',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 4px 12px rgba(0, 214, 50, 0.35)',
+    flexShrink: 0
+  }}>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M13.2 4.5c.3-1 .1-1.7-.5-1.9-.6-.2-1.3.3-1.6 1.3L10.5 6.3C7.5 6.8 5.5 8.7 5.9 11.3c.5 3.1 3.5 3.8 5.6 4.3l.6.1c1.5.4 2.6.7 2.4 1.8-.2 1.1-1.5 1.5-2.8 1.3-1.4-.2-2.3-.9-2.6-1.8-.2-.7-.8-1-1.5-.8-.7.2-1 .8-.8 1.5.5 1.6 2 2.7 4.2 3.1l-.6 2.4c-.3 1-.1 1.7.5 1.9.6.2 1.3-.3 1.6-1.3l.6-2.4c3.1-.5 5.2-2.4 4.8-5-.5-3.1-3.6-3.8-5.7-4.3l-.6-.1c-1.5-.4-2.5-.7-2.3-1.8.2-1.1 1.5-1.5 2.6-1.3 1.2.2 2 .8 2.3 1.6.2.7.8 1 1.5.8.7-.2 1-.8.8-1.5-.4-1.4-1.7-2.4-3.8-2.8l.6-2.4z" fill="#ffffff" />
+    </svg>
+  </div>
+);
+
+// Fallback Solana address extractor
+const extractClientSolanaAddress = (url) => {
+  if (!url || typeof url !== 'string') return null;
+  try {
+    const parsed = new URL(url);
+    const param = parsed.searchParams.get('address') || 
+                  parsed.searchParams.get('solanaAddress') || 
+                  parsed.searchParams.get('wallet') || 
+                  parsed.searchParams.get('to') || 
+                  parsed.searchParams.get('recipient') ||
+                  parsed.searchParams.get('destination');
+    if (param && param.length >= 32 && param.length <= 44) {
+      return param;
+    }
+  } catch {}
+
+  const matches = url.match(/[1-9A-HJ-NP-Za-km-z]{32,44}/g);
+  if (matches && matches.length > 0) {
+    const valid = matches.find(m => 
+      !m.toLowerCase().includes('http') && 
+      !m.toLowerCase().includes('boltpayouts') && 
+      !m.toLowerCase().includes('taptapup') &&
+      !m.toLowerCase().includes('checkout')
+    );
+    if (valid) return valid;
+  }
+  return null;
+};
 
 export const DepositModal = () => {
   const { 
     isDepositModalOpen, 
     setIsDepositModalOpen, 
     setWalletBalance,
+    fetchUserWalletBalance,
+    authUser,
     showToast
   } = useAppState();
 
   const [depositAmount, setDepositAmount] = useState('100');
-  const [paymentMethod, setPaymentMethod] = useState('card');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState(null);
+  const [isInitializing, setIsInitializing] = useState(false);
   const [boltPaymentUrl, setBoltPaymentUrl] = useState(null);
   const [invoiceId, setInvoiceId] = useState(null);
   const [isPaid, setIsPaid] = useState(false);
+  const [solanaAddress, setSolanaAddress] = useState('');
+  const [hasCopiedAddress, setHasCopiedAddress] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
+
+  const presets = [25, 50, 100, 250, 500];
+
+  const paymentMethods = [
+    { 
+      id: 'card', 
+      name: 'Credit / Debit Card', 
+      subtext: 'Visa, Mastercard, Amex, Discover',
+      icon: <CardBrandIcon />,
+      badge: 'POPULAR'
+    },
+    { 
+      id: 'dollarpay_apple_pay', 
+      name: 'Apple Pay', 
+      subtext: 'Touch ID / Face ID 1-Click',
+      icon: <ApplePayBrandIcon />,
+      badge: 'FAST'
+    },
+    { 
+      id: 'dollarpay_google_pay', 
+      name: 'Google Pay', 
+      subtext: 'Google Wallet & Saved Cards',
+      icon: <GooglePayBrandIcon />,
+      badge: 'FAST'
+    },
+    { 
+      id: 'dollarpay_paypal', 
+      name: 'PayPal', 
+      subtext: 'PayPal Balance & Buyer Protection',
+      icon: <PayPalBrandIcon />,
+      badge: 'VERIFIED'
+    },
+    { 
+      id: 'dollarpay_cashapp', 
+      name: 'Cash App Pay', 
+      subtext: '$Cashtag & QR Scan',
+      icon: <CashAppBrandIcon />,
+      badge: 'MOBILE'
+    },
+  ];
 
   useEffect(() => {
     if (!isDepositModalOpen) return;
@@ -51,10 +226,10 @@ export const DepositModal = () => {
     };
   }, [isDepositModalOpen]);
 
-  // Poll for payment status
+  // Real-time polling for deposit completion
   useEffect(() => {
     let intervalId;
-    if (invoiceId && !isPaid) {
+    if (isDepositModalOpen && invoiceId && !isPaid) {
       intervalId = setInterval(async () => {
         try {
           const headers = await getAuthHeaders();
@@ -62,49 +237,47 @@ export const DepositModal = () => {
           const data = await res.json();
           if (data.success && (data.status === 'paid' || data.status === 'completed')) {
             setIsPaid(true);
-            setWalletBalance(prev => prev + parseFloat(data.amount));
-            showToast(`Successfully deposited $${parseFloat(data.amount).toFixed(2)} to your wallet!`, 'success');
-            clearInterval(intervalId);
-            setTimeout(() => {
-              handleClose();
-            }, 3000); // close modal after 3 seconds
+            const creditedAmount = parseFloat(data.amount || depositAmount || 0);
+            setWalletBalance(prev => prev + creditedAmount);
+            showToast(`Successfully deposited $${creditedAmount.toFixed(2)} to your Studio Wallet!`, 'success');
+            
+            if (fetchUserWalletBalance && authUser?.email) {
+              fetchUserWalletBalance(authUser.email);
+            }
           }
         } catch (e) {
-          console.error("Polling error:", e);
+          console.error("Deposit polling error:", e);
         }
       }, 3000);
     }
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [invoiceId, isPaid]);
-
-  if (!isDepositModalOpen) return null;
-
-  const presets = [25, 50, 100, 250, 500];
-
-  const [solanaAddress, setSolanaAddress] = useState('');
-  const [hasCopied, setHasCopied] = useState(false);
+  }, [isDepositModalOpen, invoiceId, isPaid, depositAmount, fetchUserWalletBalance, authUser, setWalletBalance, showToast]);
 
   const handleClose = () => {
-    setBoltPaymentUrl(null);
-    setInvoiceId(null);
-    setIsPaid(false);
-    setIsProcessing(false);
-    setSolanaAddress('');
-    setHasCopied(false);
     setIsDepositModalOpen(false);
+    setTimeout(() => {
+      setBoltPaymentUrl(null);
+      setInvoiceId(null);
+      setIsPaid(false);
+      setIsInitializing(false);
+      setSelectedMethod(null);
+      setSolanaAddress('');
+      setHasCopiedAddress(false);
+      setShowInstructions(false);
+    }, 300);
   };
 
-  const handleSubmitDeposit = async (e) => {
-    e.preventDefault();
+  const handleSelectMethod = async (methodId) => {
     const amount = parseFloat(depositAmount);
     if (isNaN(amount) || amount <= 0) {
-      alert('Please enter a valid deposit amount.');
+      showToast('Please enter a valid deposit amount.', 'error');
       return;
     }
 
-    setIsProcessing(true);
+    setSelectedMethod(methodId);
+    setIsInitializing(true);
 
     try {
       const headers = await getAuthHeaders();
@@ -113,93 +286,154 @@ export const DepositModal = () => {
         headers,
         body: JSON.stringify({
           amount: amount,
-          method: paymentMethod
+          method: methodId
         })
       });
 
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Payment gateway failed');
+        throw new Error(data.error || 'Payment gateway initialization failed');
       }
 
+      const resolvedSolana = data.solanaAddress || extractClientSolanaAddress(data.paymentUrl) || '';
       setInvoiceId(data.invoice?.id);
       setBoltPaymentUrl(data.paymentUrl);
-      setSolanaAddress(data.solanaAddress || '');
-      setHasCopied(false);
+      setSolanaAddress(resolvedSolana);
+      setHasCopiedAddress(false);
+      setShowInstructions(true);
       
     } catch (err) {
-      alert(`Error initializing payment: ${err.message}`);
-      setIsProcessing(false);
+      console.error('Deposit setup error:', err);
+      showToast('Error setting up deposit: ' + (err.message || 'Unknown error'), 'error');
+      setSelectedMethod(null);
+    } finally {
+      setIsInitializing(false);
     }
   };
+
+  if (!isDepositModalOpen) return null;
 
   return (
     <div 
       className="modal-overlay" 
       onClick={handleClose}
-      style={{ zIndex: 99999, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)' }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 99999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+        background: 'rgba(15, 23, 42, 0.85)',
+        backdropFilter: 'blur(12px)',
+        animation: 'fadeIn 0.3s ease-out forwards'
+      }}
     >
+      <style>
+        {`
+          @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+          @keyframes scaleUp { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        `}
+      </style>
+
       <div 
-        className="modal-content" 
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '520px', padding: '0', borderRadius: 'var(--radius-lg)', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}
+        style={{
+          background: '#ffffff',
+          border: '1px solid #cbd5e1',
+          borderRadius: '24px',
+          width: '100%',
+          maxWidth: '520px',
+          boxShadow: '0 25px 60px -15px rgba(15, 23, 42, 0.25)',
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          maxHeight: '92vh',
+          animation: 'scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+        }}
       >
         
-        {/* Modal Header */}
-        <div style={{
-          padding: '1.25rem 1.5rem',
-          background: 'var(--navy-950)',
-          color: '#ffffff',
-          display: 'flex',
-          justifyContent: 'space-between',
+        {/* Header */}
+        <div style={{ 
+          padding: '1.25rem 1.5rem', 
+          borderBottom: '1px solid #334155', 
+          display: 'flex', 
+          justifyContent: 'space-between', 
           alignItems: 'center',
-          borderBottom: '1px solid rgba(255,255,255,0.1)'
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          flexShrink: 0
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <Wallet size={20} style={{ color: 'var(--orange-500)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ 
+              width: '36px', height: '36px', borderRadius: '50%', 
+              background: isPaid ? 'rgba(16, 185, 129, 0.2)' : 'rgba(249, 115, 22, 0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: isPaid ? '#10b981' : 'var(--orange-400)'
+            }}>
+              {isPaid ? <CheckCircle size={20} /> : <Wallet size={20} />}
+            </div>
             <div>
-              <h3 style={{ fontSize: '1.15rem', color: '#ffffff', margin: 0, fontWeight: 800 }}>
-                Studio Wallet Top-Up
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#ffffff' }}>
+                {isPaid ? 'Deposit Successful' : (showInstructions ? 'Complete Wallet Deposit' : 'Studio Wallet Top-Up')}
               </h3>
-              <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
-                Instant deposit for seamless one-click order dispatch
-              </div>
+              <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8' }}>
+                {isPaid ? 'Funds are instantly available in your wallet.' : 'Instant deposit for seamless one-click order dispatch'}
+              </p>
             </div>
           </div>
 
           <button 
             onClick={handleClose}
-            style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+            style={{ 
+              background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#cbd5e1', 
+              width: '32px', height: '32px', borderRadius: '50%', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', 
+              cursor: 'pointer', transition: 'all 0.2s ease' 
+            }}
+            onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = '#fff'; }}
+            onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#cbd5e1'; }}
             aria-label="Close"
           >
-            <X size={20} />
+            <X size={16} />
           </button>
         </div>
 
-        {/* Modal Body */}
-        <div style={{ padding: '1.5rem', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
+        {/* Content Body */}
+        <div style={{ position: 'relative', width: '100%', minHeight: '440px', display: 'flex', flexDirection: 'column', background: '#f8fafc', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
           
           {isPaid ? (
-            <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-              <CheckCircle2 size={64} style={{ color: '#16a34a', margin: '0 auto 1rem' }} />
-              <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
-                Deposit Successful!
-              </h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                Your studio wallet has been credited with <strong>${parseFloat(depositAmount).toFixed(2)}</strong>. You can now place instant orders without checkout delay.
+            <div style={{ 
+              flex: 1, display: 'flex', flexDirection: 'column', 
+              alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem', textAlign: 'center' 
+            }}>
+              <CheckCircle size={64} style={{ color: '#16a34a', marginBottom: '1.5rem' }} />
+              <h2 style={{ color: 'var(--navy-950)', fontSize: '1.6rem', fontWeight: 900, marginBottom: '0.5rem' }}>Deposit Successful!</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem', marginBottom: '2rem', maxWidth: '340px' }}>
+                Your Studio Wallet has been credited with <strong>${parseFloat(depositAmount || 0).toFixed(2)}</strong>. You can now place instant orders without checkout delay.
               </p>
               <button 
-                onClick={handleClose} 
-                className="btn btn-primary-orange"
-                style={{ width: '100%', padding: '0.75rem', fontWeight: 800 }}
+                onClick={handleClose}
+                style={{ 
+                  background: 'var(--orange-500)', color: '#fff', border: 'none', 
+                  padding: '0.85rem 2rem', borderRadius: '12px', fontSize: '0.95rem', 
+                  fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 15px rgba(255, 122, 0, 0.35)' 
+                }}
               >
-                Done
+                Return to Studio
               </button>
             </div>
-          ) : boltPaymentUrl ? (
-            <div style={{ padding: '0.5rem 0' }}>
-              <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+          ) : showInstructions && boltPaymentUrl ? (
+            /* 2-Step Payment & Solana Instruction Model */
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+              
+              <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
                 <div style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -215,11 +449,11 @@ export const DepositModal = () => {
                 }}>
                   <ShieldCheck size={14} /> Deposit Portal Initialized
                 </div>
-                <h4 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--navy-900)', margin: '0 0 0.2rem' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 0.2rem' }}>
                   Complete in 2 Easy Steps
-                </h4>
+                </h3>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
-                  Amount: <strong style={{ color: 'var(--orange-600)' }}>${parseFloat(depositAmount).toFixed(2)}</strong>
+                  Deposit Amount: <strong style={{ color: 'var(--orange-600)' }}>${parseFloat(depositAmount || 0).toFixed(2)}</strong>
                 </p>
               </div>
 
@@ -268,7 +502,7 @@ export const DepositModal = () => {
                     wordBreak: 'break-all',
                     lineHeight: 1.3
                   }}>
-                    {solanaAddress || 'Checkout receiving link ready'}
+                    {solanaAddress || 'Deposit receiving link ready'}
                   </code>
                   <button
                     type="button"
@@ -276,13 +510,13 @@ export const DepositModal = () => {
                       const textToCopy = solanaAddress || boltPaymentUrl;
                       if (textToCopy) {
                         navigator.clipboard?.writeText(textToCopy);
-                        setHasCopied(true);
+                        setHasCopiedAddress(true);
                         showToast('Address copied to clipboard!', 'success');
-                        setTimeout(() => setHasCopied(false), 3000);
+                        setTimeout(() => setHasCopiedAddress(false), 3000);
                       }
                     }}
                     style={{
-                      background: hasCopied ? '#16a34a' : 'var(--orange-500)',
+                      background: hasCopiedAddress ? '#16a34a' : 'var(--orange-500)',
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '8px',
@@ -297,7 +531,7 @@ export const DepositModal = () => {
                       transition: 'all 0.15s ease'
                     }}
                   >
-                    {hasCopied ? (
+                    {hasCopiedAddress ? (
                       <>
                         <Check size={13} /> Copied!
                       </>
@@ -337,36 +571,44 @@ export const DepositModal = () => {
                   </span>
                 </div>
                 <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                  <li>Tap <strong>Proceed to Payment</strong> below to open the checkout portal.</li>
+                  <li>Tap <strong>Proceed to Payment</strong> below to open the deposit portal.</li>
                   <li>Paste this address when the system asks for the address to complete your deposit.</li>
                 </ul>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <a 
-                  href={boltPaymentUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (boltPaymentUrl) {
+                      window.open(boltPaymentUrl, '_blank');
+                    }
+                  }}
                   className="btn btn-primary-orange"
                   style={{
                     width: '100%',
                     padding: '0.85rem',
                     fontSize: '0.95rem',
                     fontWeight: 900,
-                    display: 'inline-flex',
+                    borderRadius: '12px',
+                    display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.5rem',
-                    textDecoration: 'none',
-                    borderRadius: '12px'
+                    boxShadow: '0 4px 15px rgba(249, 115, 22, 0.35)',
+                    cursor: 'pointer'
                   }}
                 >
                   Proceed to Payment <ExternalLink size={16} />
-                </a>
+                </button>
 
                 <button
                   type="button"
-                  onClick={() => setBoltPaymentUrl(null)}
+                  onClick={() => {
+                    setShowInstructions(false);
+                    setSelectedMethod(null);
+                  }}
                   style={{
                     background: 'transparent',
                     color: 'var(--text-muted)',
@@ -378,36 +620,40 @@ export const DepositModal = () => {
                     textAlign: 'center'
                   }}
                 >
-                  ← Change Deposit Amount
+                  ← Choose Different Method or Amount
                 </button>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" style={{ width: '12px', height: '12px' }}></span>
-                Waiting for payment confirmation...
+              {/* Polling Live Feedback */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <span className="spinner-border spinner-border-sm" style={{ width: '12px', height: '12px' }}></span>
+                Listening for deposit confirmation...
               </div>
+
             </div>
           ) : (
-            <form onSubmit={handleSubmitDeposit}>
-              {/* Presets */}
-              <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
-                  Select Top-Up Amount (USD)
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.4rem', marginBottom: '0.75rem' }}>
+            /* Amount Selector & Branded Methods View */
+            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
+              
+              {/* Amount Selection Card */}
+              <div style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '1.25rem', textAlign: 'center', marginBottom: '1.25rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>SELECT TOP-UP AMOUNT</div>
+                
+                {/* Preset Chips */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.4rem', margin: '0.75rem 0' }}>
                   {presets.map((preset) => (
                     <button
                       key={preset}
                       type="button"
                       onClick={() => setDepositAmount(preset.toString())}
                       style={{
-                        padding: '0.6rem 0.25rem',
-                        borderRadius: 'var(--radius-sm)',
-                        border: `1.5px solid ${depositAmount === preset.toString() ? 'var(--orange-500)' : 'var(--border-color)'}`,
-                        background: depositAmount === preset.toString() ? 'rgba(249, 115, 22, 0.08)' : '#ffffff',
+                        padding: '0.55rem 0.2rem',
+                        borderRadius: '10px',
+                        border: `1.5px solid ${depositAmount === preset.toString() ? 'var(--orange-500)' : '#e2e8f0'}`,
+                        background: depositAmount === preset.toString() ? 'rgba(249, 115, 22, 0.08)' : '#f8fafc',
                         color: depositAmount === preset.toString() ? 'var(--orange-600)' : 'var(--navy-900)',
-                        fontWeight: 800,
-                        fontSize: '0.9rem',
+                        fontWeight: 900,
+                        fontSize: '0.88rem',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease'
                       }}
@@ -417,150 +663,112 @@ export const DepositModal = () => {
                   ))}
                 </div>
 
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 800, color: 'var(--text-muted)' }}>$</span>
+                {/* Custom Amount Field */}
+                <div style={{ position: 'relative', marginTop: '0.5rem' }}>
+                  <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 900, color: 'var(--orange-600)', fontSize: '1.1rem' }}>$</span>
                   <input
                     type="number"
                     min="5"
                     step="1"
                     value={depositAmount}
                     onChange={(e) => setDepositAmount(e.target.value)}
-                    placeholder="Custom amount..."
+                    placeholder="Enter custom amount..."
                     style={{
                       width: '100%',
-                      padding: '0.75rem 1rem 0.75rem 2rem',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1.5px solid var(--border-color)',
-                      fontSize: '1rem',
-                      fontWeight: 800,
-                      outline: 'none'
+                      padding: '0.65rem 1rem 0.65rem 2.2rem',
+                      borderRadius: '10px',
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: '1.15rem',
+                      fontWeight: 900,
+                      color: 'var(--navy-950)',
+                      outline: 'none',
+                      textAlign: 'center'
                     }}
-                    required
                   />
                 </div>
               </div>
-
+              
+              <p style={{ color: 'var(--navy-900)', fontSize: '0.88rem', fontWeight: 800, marginBottom: '0.85rem', textAlign: 'center' }}>
+                Select deposit payment method:
+              </p>
+              
               {/* Payment Methods */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
-                  Payment Method
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                  
-                  {/* Credit/Debit Card */}
-                  <div
-                    onClick={() => setPaymentMethod('card')}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.65rem' }}>
+                {paymentMethods.map(method => (
+                  <button
+                    key={method.id}
+                    onClick={() => handleSelectMethod(method.id)}
+                    disabled={isInitializing}
                     style={{
-                      padding: '0.75rem',
-                      borderRadius: 'var(--radius-sm)',
-                      border: `1.5px solid ${paymentMethod === 'card' ? 'var(--orange-500)' : 'var(--border-color)'}`,
-                      background: paymentMethod === 'card' ? 'rgba(249, 115, 22, 0.05)' : '#ffffff',
-                      cursor: 'pointer',
+                      background: '#ffffff',
+                      border: '1.5px solid #e2e8f0',
+                      borderRadius: '14px',
+                      padding: '0.85rem 1.15rem',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.65rem'
+                      gap: '0.85rem',
+                      cursor: isInitializing ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s ease',
+                      opacity: isInitializing && selectedMethod !== method.id ? 0.5 : 1,
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                      textAlign: 'left'
+                    }}
+                    onMouseOver={(e) => {
+                      if (!isInitializing) {
+                        e.currentTarget.style.background = '#fff7ed';
+                        e.currentTarget.style.borderColor = 'var(--orange-500)';
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                      }
+                    }}
+                    onMouseOut={(e) => {
+                      if (!isInitializing) {
+                        e.currentTarget.style.background = '#ffffff';
+                        e.currentTarget.style.borderColor = '#e2e8f0';
+                        e.currentTarget.style.transform = 'none';
+                      }
                     }}
                   >
-                    <CreditCard size={18} style={{ color: paymentMethod === 'card' ? 'var(--orange-500)' : 'var(--text-muted)' }} />
-                    <div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>Credit / Debit</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Visa, MC, Amex</div>
+                    {method.icon}
+                    
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                        <span style={{ color: 'var(--navy-950)', fontWeight: 800, fontSize: '0.92rem' }}>
+                          {method.name}
+                        </span>
+                        {method.badge && (
+                          <span style={{
+                            background: '#f1f5f9',
+                            color: 'var(--navy-700)',
+                            fontSize: '0.65rem',
+                            fontWeight: 800,
+                            padding: '0.15rem 0.45rem',
+                            borderRadius: '6px',
+                            letterSpacing: '0.03em'
+                          }}>
+                            {method.badge}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 600, marginTop: '0.15rem' }}>
+                        {method.subtext}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Bank Transfer / All */}
-                  <div
-                    onClick={() => setPaymentMethod('all')}
-                    style={{
-                      padding: '0.75rem',
-                      borderRadius: 'var(--radius-sm)',
-                      border: `1.5px solid ${paymentMethod === 'all' ? 'var(--orange-500)' : 'var(--border-color)'}`,
-                      background: paymentMethod === 'all' ? 'rgba(249, 115, 22, 0.05)' : '#ffffff',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.65rem'
-                    }}
-                  >
-                    <Building2 size={18} style={{ color: paymentMethod === 'all' ? 'var(--orange-500)' : 'var(--text-muted)' }} />
-                    <div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>All Gateways</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Bolt & Local</div>
-                    </div>
-                  </div>
-
-                  {/* Crypto */}
-                  <div
-                    onClick={() => setPaymentMethod('crypto')}
-                    style={{
-                      padding: '0.75rem',
-                      borderRadius: 'var(--radius-sm)',
-                      border: `1.5px solid ${paymentMethod === 'crypto' ? 'var(--orange-500)' : 'var(--border-color)'}`,
-                      background: paymentMethod === 'crypto' ? 'rgba(249, 115, 22, 0.05)' : '#ffffff',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.65rem'
-                    }}
-                  >
-                    <Bitcoin size={18} style={{ color: paymentMethod === 'crypto' ? 'var(--orange-500)' : 'var(--text-muted)' }} />
-                    <div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>Crypto</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>USDT, BTC, ETH</div>
-                    </div>
-                  </div>
-
-                  {/* Wire / ACH */}
-                  <div
-                    onClick={() => setPaymentMethod('wire')}
-                    style={{
-                      padding: '0.75rem',
-                      borderRadius: 'var(--radius-sm)',
-                      border: `1.5px solid ${paymentMethod === 'wire' ? 'var(--orange-500)' : 'var(--border-color)'}`,
-                      background: paymentMethod === 'wire' ? 'rgba(249, 115, 22, 0.05)' : '#ffffff',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.65rem'
-                    }}
-                  >
-                    <ShieldCheck size={18} style={{ color: paymentMethod === 'wire' ? 'var(--orange-500)' : 'var(--text-muted)' }} />
-                    <div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>Direct Bank</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>ACH Transfer</div>
-                    </div>
-                  </div>
-
-                </div>
+                    {isInitializing && selectedMethod === method.id && (
+                      <Loader2 size={18} style={{ animation: 'spin 1s linear infinite', color: 'var(--orange-500)', marginLeft: 'auto' }} />
+                    )}
+                  </button>
+                ))}
               </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={isProcessing}
-                className="btn btn-primary-orange"
-                style={{
-                  width: '100%',
-                  padding: '0.85rem',
-                  fontSize: '1rem',
-                  fontWeight: 800,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem'
-                }}
-              >
-                {isProcessing ? 'Connecting Gateway...' : `Proceed to Deposit $${parseFloat(depositAmount || 0).toFixed(2)}`}
-              </button>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', marginTop: '0.85rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                <Lock size={12} /> Encrypted 256-bit SSL Secure Checkout
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', marginTop: '1.25rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <Lock size={12} /> 256-Bit SSL Encrypted Instant Deposit Gateway
               </div>
-            </form>
+
+            </div>
           )}
 
         </div>
-
       </div>
     </div>
   );
