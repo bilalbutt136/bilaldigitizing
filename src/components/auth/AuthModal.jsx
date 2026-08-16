@@ -69,6 +69,31 @@ export const AuthModal = () => {
     setIsLoading(false);
   }, [authModalMode, isAuthModalOpen]);
 
+  React.useEffect(() => {
+    if (!isAuthModalOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (legalModalType) {
+          setLegalModalType(null);
+        } else if (errorModalText) {
+          setErrorModalText(null);
+        } else {
+          setIsAuthModalOpen(false);
+          setAuthError('');
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow || 'unset';
+    };
+  }, [isAuthModalOpen, legalModalType, errorModalText, setIsAuthModalOpen]);
+
   if (!isAuthModalOpen) return null;
 
   const handleLoginSubmit = async (e) => {
@@ -199,9 +224,14 @@ export const AuthModal = () => {
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <div className="modal-overlay" style={{ backdropFilter: 'blur(8px)', background: 'rgba(15, 23, 42, 0.7)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+      <div 
+        className="modal-overlay" 
+        onClick={() => { setIsAuthModalOpen(false); setAuthError(''); }}
+        style={{ backdropFilter: 'blur(8px)', background: 'rgba(15, 23, 42, 0.75)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+      >
       <div 
         className="modal-content" 
+        onClick={(e) => e.stopPropagation()}
         style={{ 
           maxWidth: '920px', 
           width: '100%',

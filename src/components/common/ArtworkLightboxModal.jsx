@@ -1,9 +1,27 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect } from 'react';
 import { formatOrderId } from '../../context/StateContext';
 import { triggerFileDownload } from '../../utils/fileDownloader';
-import { X, Download, Scissors, ZoomIn } from 'lucide-react';
+import { X, Download, Scissors } from 'lucide-react';
 
 export const ArtworkLightboxModal = ({ order, onClose }) => {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose?.();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow || 'unset';
+    };
+  }, [onClose]);
+
   if (!order) return null;
 
   const imageSrc = 
@@ -23,8 +41,16 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
   };
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 99999 }}>
-      <div className="modal-content" style={{ maxWidth: '900px', background: 'var(--navy-950)', color: '#ffffff' }}>
+    <div 
+      className="modal-overlay" 
+      onClick={onClose}
+      style={{ zIndex: 99999, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)' }}
+    >
+      <div 
+        className="modal-content" 
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: '900px', background: 'var(--navy-950)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)' }}
+      >
         
         {/* Header */}
         <div style={{
@@ -48,9 +74,12 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
 
           <button 
             onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+            style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', cursor: 'pointer' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff'; e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+            aria-label="Close"
           >
-            <X size={24} />
+            <X size={20} />
           </button>
         </div>
 

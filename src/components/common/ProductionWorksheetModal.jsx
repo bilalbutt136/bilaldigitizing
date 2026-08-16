@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect } from 'react';
 import { formatOrderId } from '../../context/StateContext';
 import { triggerFileDownload } from '../../utils/fileDownloader';
 import { 
@@ -9,6 +11,22 @@ import {
 } from 'lucide-react';
 
 export const ProductionWorksheetModal = ({ order, onClose }) => {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose?.();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow || 'unset';
+    };
+  }, [onClose]);
+
   if (!order) return null;
 
   const handlePrint = () => {
@@ -16,7 +34,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
   };
 
   const handleDownloadPDF = () => {
-    const fileName = `${order.title.replace(/\s+/g, '_')}_${formatOrderId(order.id)}_Production_Worksheet.pdf`;
+    const fileName = `${(order.title || 'Order').replace(/\s+/g, '_')}_${formatOrderId(order.id)}_Production_Worksheet.pdf`;
     triggerFileDownload(null, fileName, 'pdf');
   };
 
@@ -28,9 +46,14 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
   ];
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 99999 }}>
+    <div 
+      className="modal-overlay" 
+      onClick={onClose}
+      style={{ zIndex: 99999, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)' }}
+    >
       <div 
         className="modal-content printable-worksheet-modal" 
+        onClick={(e) => e.stopPropagation()}
         style={{ 
           maxWidth: '920px', 
           background: '#ffffff', 
@@ -104,6 +127,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
             <button 
               onClick={onClose}
               style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', marginLeft: '0.5rem' }}
+              aria-label="Close"
             >
               <X size={22} />
             </button>
@@ -177,7 +201,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
 
             <div>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>DIMENSIONS</span>
-              <strong style={{ color: 'var(--orange-600)' }}>{order.dimensions?.width}" W x {order.dimensions?.height}" H</strong>
+              <strong style={{ color: 'var(--orange-600)' }}>{order.dimensions?.width || '3.5'}" W x {order.dimensions?.height || '3.0'}" H</strong>
             </div>
 
             <div>

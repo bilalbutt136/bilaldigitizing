@@ -6,7 +6,7 @@ import { useAppState } from '../../context/StateContext';
 import { usePathname } from 'next/navigation';
 
 export const VisitorPromotionBanner = () => {
-  const { siteSettings, openOrderWizard, protectedNavigate, isAuthenticated, currentView, authUser } = useAppState();
+  const { siteSettings, openOrderWizard, protectedNavigate, currentView, authUser } = useAppState();
   const pathname = usePathname() || '';
   
   const [isVisible, setIsVisible] = useState(false);
@@ -78,13 +78,17 @@ export const VisitorPromotionBanner = () => {
     } catch {}
   };
 
+  const bannerDescription = banner.message || banner.description || '';
+  const buttonLabel = banner.buttonText || banner.ctaText || 'Claim Offer';
+
   return (
     <div
+      className="visitor-promo-banner-container"
       style={{
         position: 'fixed',
         bottom: '24px',
         right: '24px',
-        zIndex: 1000,
+        zIndex: 9000,
         maxWidth: '360px',
         width: 'calc(100% - 48px)',
         background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)',
@@ -101,6 +105,16 @@ export const VisitorPromotionBanner = () => {
         @keyframes slideUpBounce {
           0% { opacity: 0; transform: translateY(30px) scale(0.95); }
           100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @media (max-width: 640px) {
+          .visitor-promo-banner-container {
+            bottom: 84px !important;
+            right: 16px !important;
+            left: 16px !important;
+            width: auto !important;
+            max-width: none !important;
+            padding: 1rem !important;
+          }
         }
       `}} />
 
@@ -146,6 +160,7 @@ export const VisitorPromotionBanner = () => {
             e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
             e.currentTarget.style.color = '#94a3b8';
           }}
+          aria-label="Dismiss offer"
         >
           <X size={14} />
         </button>
@@ -165,14 +180,14 @@ export const VisitorPromotionBanner = () => {
         {banner.title} <Sparkles size={16} style={{ color: 'var(--orange-400)' }} />
       </h4>
       
-      {banner.message && (
+      {bannerDescription && (
         <p style={{
           margin: '0 0 0.85rem 0',
           fontSize: '0.82rem',
           color: '#cbd5e1',
           lineHeight: 1.45
         }}>
-          {banner.message}
+          {bannerDescription}
         </p>
       )}
 
@@ -240,7 +255,7 @@ export const VisitorPromotionBanner = () => {
           onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
         >
-          {banner.buttonText || 'Claim Offer'} <ArrowRight size={14} />
+          {buttonLabel} <ArrowRight size={14} />
         </button>
       </div>
     </div>

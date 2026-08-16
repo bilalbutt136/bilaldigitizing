@@ -554,9 +554,26 @@ button, input, select, textarea, a {
   .dashboard-main-container { padding-bottom: 7.5rem !important; }
 }
 
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 0.75rem !important;
+  }
+  .modal-content {
+    grid-template-columns: 1fr !important;
+    max-height: 94dvh !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .auth-split-left-panel {
+    display: none !important;
+  }
+}
+
 @media (max-width: 640px) {
   .modal-dialog, .modal-content {
-    width: 96% !important; max-width: 96% !important; margin: 1rem auto !important; padding: 1.25rem !important;
+    width: 100% !important; 
+    max-width: 100% !important; 
+    margin: 0 auto !important;
   }
   table { display: block; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
 }

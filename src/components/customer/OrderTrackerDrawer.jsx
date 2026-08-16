@@ -107,6 +107,24 @@ export const OrderTrackerDrawer = () => {
   const isCurrentlyOnAdminPortal = currentView === 'admin' || (typeof window !== 'undefined' && window.location.pathname.includes('admin'));
   const isAdmin = authUser?.role === 'admin' && isCurrentlyOnAdminPortal;
 
+  React.useEffect(() => {
+    if (!selectedOrderForDrawer) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSelectedOrderForDrawer(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow || 'unset';
+    };
+  }, [selectedOrderForDrawer, setSelectedOrderForDrawer]);
+
   // Check if physical store or custom patch order
   const isPhysicalPatchOrder = ord.type === 'patch' || ord.type === 'patches' || ord.serviceCategory?.toLowerCase().includes('patch');
   const isPhysicalStoreOrder = isPhysicalPatchOrder || ord.type === 'store' || ord.type === 'merchandise' || ord.type === 'digital_product' || Boolean(ord.isStoreItem) || ord.serviceCategory?.toLowerCase().includes('store') || ord.serviceCategory?.toLowerCase().includes('merchandise');
@@ -277,8 +295,16 @@ export const OrderTrackerDrawer = () => {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '850px', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
+    <div 
+      className="modal-overlay"
+      onClick={() => setSelectedOrderForDrawer(null)}
+      style={{ zIndex: 99990, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)' }}
+    >
+      <div 
+        className="modal-content" 
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: '850px', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}
+      >
         
         {/* Drawer Header */}
         <div style={{

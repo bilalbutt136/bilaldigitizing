@@ -2,25 +2,25 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
+import { getAuthHeaders } from '../../services/supabaseService';
 import { 
   X, 
   Wallet, 
   ShieldCheck, 
   Zap, 
-  ExternalLink,
-  CheckCircle2,
-  Lock,
-  CreditCard,
-  Bitcoin
+  ExternalLink, 
+  CheckCircle2, 
+  Lock, 
+  CreditCard, 
+  Bitcoin,
+  Building2
 } from 'lucide-react';
 
 export const DepositModal = () => {
   const { 
     isDepositModalOpen, 
     setIsDepositModalOpen, 
-    walletBalance, 
     setWalletBalance,
-    authUser,
     showToast
   } = useAppState();
 
@@ -31,13 +31,32 @@ export const DepositModal = () => {
   const [invoiceId, setInvoiceId] = useState(null);
   const [isPaid, setIsPaid] = useState(false);
 
+  useEffect(() => {
+    if (!isDepositModalOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow || 'unset';
+    };
+  }, [isDepositModalOpen]);
+
   // Poll for payment status
   useEffect(() => {
     let intervalId;
     if (invoiceId && !isPaid) {
       intervalId = setInterval(async () => {
         try {
-          const res = await fetch(`/api/boltpayouts/status?invoiceId=${invoiceId}`);
+          const headers = await getAuthHeaders();
+          const res = await fetch(`/api/boltpayouts/status?invoiceId=${invoiceId}`, { headers });
           const data = await res.json();
           if (data.success && (data.status === 'paid' || data.status === 'completed')) {
             setIsPaid(true);
@@ -81,9 +100,10 @@ export const DepositModal = () => {
     setIsProcessing(true);
 
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch('/api/boltpayouts/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           amount: amount,
           method: paymentMethod
@@ -106,261 +126,286 @@ export const DepositModal = () => {
   };
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
+    <div 
+      className="modal-overlay" 
+      onClick={handleClose}
+      style={{ zIndex: 99999, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)' }}
+    >
       <div 
         className="modal-content" 
         onClick={(e) => e.stopPropagation()}
         style={{ maxWidth: '520px', padding: '0', borderRadius: 'var(--radius-lg)', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}
       >
         
-        {/* Header */}
+        {/* Modal Header */}
         <div style={{
-          background: 'linear-gradient(135deg, var(--navy-950), var(--navy-900))',
+          padding: '1.25rem 1.5rem',
+          background: 'var(--navy-950)',
           color: '#ffffff',
-          padding: '1.5rem 1.75rem',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          borderBottom: '1px solid rgba(255,255,255,0.1)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{
-              background: 'var(--orange-500)',
-              color: '#ffffff',
-              padding: '0.5rem',
-              borderRadius: 'var(--radius-sm)',
-              display: 'flex'
-            }}>
-              <Wallet size={22} />
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <Wallet size={20} style={{ color: 'var(--orange-500)' }} />
             <div>
-              <h3 style={{ fontSize: '1.25rem', color: '#ffffff', fontWeight: 800, margin: 0 }}>
-                Direct Studio Wallet Top-Up
+              <h3 style={{ fontSize: '1.15rem', color: '#ffffff', margin: 0, fontWeight: 800 }}>
+                Studio Wallet Top-Up
               </h3>
-              <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.1rem' }}>
-                Powered by BoltPayouts Payment Gateway
+              <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                Instant deposit for seamless one-click order dispatch
               </div>
             </div>
           </div>
 
           <button 
             onClick={handleClose}
-            style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+            style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+            aria-label="Close"
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* Dynamic Body */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-        {isPaid ? (
-          <div style={{ padding: '3rem 2rem', textAlign: 'center' }}>
-            <CheckCircle2 size={64} style={{ color: 'var(--green-500)', margin: '0 auto 1rem' }} />
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-900)' }}>Payment Successful!</h3>
-            <p style={{ color: 'var(--text-muted)' }}>Your wallet has been credited securely.</p>
-          </div>
-        ) : boltPaymentUrl ? (
-          <div style={{ padding: '0' }}>
-            {/* Seamless Iframe Flow */}
-            <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--navy-700)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Lock size={14} style={{ color: 'var(--green-600)' }}/> Secure Checkout via BoltPayouts
-              </span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Awaiting Payment...</span>
+        {/* Modal Body */}
+        <div style={{ padding: '1.5rem', overflowY: 'auto' }}>
+          
+          {isPaid ? (
+            <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+              <CheckCircle2 size={64} style={{ color: '#16a34a', margin: '0 auto 1rem' }} />
+              <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
+                Deposit Successful!
+              </h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                Your studio wallet has been credited with <strong>${parseFloat(depositAmount).toFixed(2)}</strong>. You can now place instant orders without checkout delay.
+              </p>
+              <button 
+                onClick={handleClose} 
+                className="btn btn-primary-orange"
+                style={{ width: '100%', padding: '0.75rem', fontWeight: 800 }}
+              >
+                Done
+              </button>
             </div>
-            <iframe 
-              src={boltPaymentUrl} 
-              style={{ width: '100%', height: '500px', border: 'none' }}
-              title="BoltPayouts Checkout"
-              allow="payment"
-            />
-          </div>
-        ) : (
-          <form onSubmit={handleSubmitDeposit} style={{ padding: '1.75rem' }}>
-            
-            {/* Current Available Balance Display */}
-            <div style={{
-              background: '#fff7ed',
-              border: '1.5px solid #fed7aa',
-              borderRadius: 'var(--radius-md)',
-              padding: '1rem 1.25rem',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1.5rem'
-            }}>
-              <div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--orange-700)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                  Current Wallet Credit
+          ) : boltPaymentUrl ? (
+            <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+              <div style={{
+                background: 'rgba(249, 115, 22, 0.1)',
+                border: '1px solid rgba(249, 115, 22, 0.3)',
+                borderRadius: 'var(--radius-md)',
+                padding: '1rem',
+                marginBottom: '1.5rem'
+              }}>
+                <Zap size={28} style={{ color: 'var(--orange-500)', margin: '0 auto 0.5rem' }} />
+                <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.25rem' }}>
+                  Complete Your Payment
+                </h4>
+                <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', margin: 0 }}>
+                  Please complete the payment in the secure window. Your balance will update automatically upon confirmation.
+                </p>
+              </div>
+
+              <a 
+                href={boltPaymentUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="btn btn-primary-orange"
+                style={{
+                  width: '100%',
+                  padding: '0.85rem',
+                  fontSize: '1rem',
+                  fontWeight: 800,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '1rem',
+                  textDecoration: 'none'
+                }}
+              >
+                Open Secure Payment Portal <ExternalLink size={16} />
+              </a>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" style={{ width: '14px', height: '14px' }}></span>
+                Waiting for payment confirmation...
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmitDeposit}>
+              {/* Presets */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
+                  Select Top-Up Amount (USD)
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.4rem', marginBottom: '0.75rem' }}>
+                  {presets.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setDepositAmount(preset.toString())}
+                      style={{
+                        padding: '0.6rem 0.25rem',
+                        borderRadius: 'var(--radius-sm)',
+                        border: `1.5px solid ${depositAmount === preset.toString() ? 'var(--orange-500)' : 'var(--border-color)'}`,
+                        background: depositAmount === preset.toString() ? 'rgba(249, 115, 22, 0.08)' : '#ffffff',
+                        color: depositAmount === preset.toString() ? 'var(--orange-600)' : 'var(--navy-900)',
+                        fontWeight: 800,
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      ${preset}
+                    </button>
+                  ))}
                 </div>
-                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--navy-950)' }}>
-                  ${walletBalance.toFixed(2)}
+
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 800, color: 'var(--text-muted)' }}>$</span>
+                  <input
+                    type="number"
+                    min="5"
+                    step="1"
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(e.target.value)}
+                    placeholder="Custom amount..."
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1rem 0.75rem 2rem',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1.5px solid var(--border-color)',
+                      fontSize: '1rem',
+                      fontWeight: 800,
+                      outline: 'none'
+                    }}
+                    required
+                  />
                 </div>
               </div>
-              <span style={{
-                background: '#ecfdf5',
-                color: 'var(--green-700)',
-                fontSize: '0.75rem',
-                fontWeight: 800,
-                padding: '0.35rem 0.75rem',
-                borderRadius: '9999px',
-                border: '1px solid #a7f3d0',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem'
-              }}>
-                <CheckCircle2 size={13} /> Active Account
-              </span>
-            </div>
 
-            {/* Preset Selection */}
-            <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-              <label style={{ fontWeight: 700, color: 'var(--navy-900)' }}>Select Deposit Amount ($USD)</label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.5rem', marginTop: '0.35rem' }}>
-                {presets.map(val => (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => setDepositAmount(val.toString())}
+              {/* Payment Methods */}
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
+                  Payment Method
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  
+                  {/* Credit/Debit Card */}
+                  <div
+                    onClick={() => setPaymentMethod('card')}
                     style={{
-                      padding: '0.65rem 0.3rem',
+                      padding: '0.75rem',
                       borderRadius: 'var(--radius-sm)',
-                      border: `2px solid ${depositAmount === val.toString() ? 'var(--orange-500)' : 'var(--border-color)'}`,
-                      background: depositAmount === val.toString() ? '#fff7ed' : '#ffffff',
-                      color: depositAmount === val.toString() ? 'var(--orange-600)' : 'var(--navy-800)',
-                      fontWeight: 800,
-                      fontSize: '0.9rem',
+                      border: `1.5px solid ${paymentMethod === 'card' ? 'var(--orange-500)' : 'var(--border-color)'}`,
+                      background: paymentMethod === 'card' ? 'rgba(249, 115, 22, 0.05)' : '#ffffff',
                       cursor: 'pointer',
-                      transition: 'all 0.15s ease'
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.65rem'
                     }}
                   >
-                    +${val}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Custom Amount Input */}
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label style={{ fontWeight: 700, color: 'var(--navy-900)' }}>Or Enter Custom Deposit Amount</label>
-              <div style={{ position: 'relative', marginTop: '0.35rem' }}>
-                <span style={{
-                  position: 'absolute',
-                  left: '1rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--navy-700)',
-                  fontWeight: 800,
-                  fontSize: '1.1rem'
-                }}>
-                  $
-                </span>
-                <input 
-                  type="number"
-                  step="5"
-                  min="10"
-                  max="5000"
-                  className="form-control"
-                  style={{ paddingLeft: '2.25rem', fontWeight: 800, fontSize: '1.15rem', color: 'var(--navy-950)' }}
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Payment Method Selector */}
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label style={{ fontWeight: 700, color: 'var(--navy-900)' }}>Select Payment Method</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.35rem' }}>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('card')}
-                  style={{
-                    padding: '0.75rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: `2px solid ${paymentMethod === 'card' ? 'var(--navy-900)' : 'var(--border-color)'}`,
-                    background: paymentMethod === 'card' ? 'var(--navy-50)' : '#ffffff',
-                    fontWeight: 700,
-                    fontSize: '0.9rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    color: 'var(--navy-900)'
-                  }}
-                >
-                  <CreditCard size={18} /> Card / Apple Pay
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('crypto')}
-                  style={{
-                    padding: '0.75rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: `2px solid ${paymentMethod === 'crypto' ? 'var(--navy-900)' : 'var(--border-color)'}`,
-                    background: paymentMethod === 'crypto' ? 'var(--navy-50)' : '#ffffff',
-                    fontWeight: 700,
-                    fontSize: '0.9rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    color: 'var(--navy-900)'
-                  }}
-                >
-                  <Bitcoin size={18} /> Crypto (Lightning/Solana)
-                </button>
-              </div>
-            </div>
-
-            {/* Streamlined Payment Gateway Banner - Featuring BoltPayouts Directly */}
-            <div style={{
-              background: 'var(--navy-950)',
-              color: '#ffffff',
-              borderRadius: 'var(--radius-md)',
-              padding: '1.15rem 1.25rem',
-              marginBottom: '1.5rem',
-              border: '1px solid var(--navy-800)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  <div style={{ background: 'var(--orange-500)', color: '#ffffff', padding: '0.4rem', borderRadius: '6px', display: 'flex' }}>
-                    <Zap size={18} />
+                    <CreditCard size={18} style={{ color: paymentMethod === 'card' ? 'var(--orange-500)' : 'var(--text-muted)' }} />
+                    <div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>Credit / Debit</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Visa, MC, Amex</div>
+                    </div>
                   </div>
-                  <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#ffffff' }}>
-                    BoltPayouts Payment Gateway
+
+                  {/* Bank Transfer / All */}
+                  <div
+                    onClick={() => setPaymentMethod('all')}
+                    style={{
+                      padding: '0.75rem',
+                      borderRadius: 'var(--radius-sm)',
+                      border: `1.5px solid ${paymentMethod === 'all' ? 'var(--orange-500)' : 'var(--border-color)'}`,
+                      background: paymentMethod === 'all' ? 'rgba(249, 115, 22, 0.05)' : '#ffffff',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.65rem'
+                    }}
+                  >
+                    <Building2 size={18} style={{ color: paymentMethod === 'all' ? 'var(--orange-500)' : 'var(--text-muted)' }} />
+                    <div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>All Gateways</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Bolt & Local</div>
+                    </div>
                   </div>
+
+                  {/* Crypto */}
+                  <div
+                    onClick={() => setPaymentMethod('crypto')}
+                    style={{
+                      padding: '0.75rem',
+                      borderRadius: 'var(--radius-sm)',
+                      border: `1.5px solid ${paymentMethod === 'crypto' ? 'var(--orange-500)' : 'var(--border-color)'}`,
+                      background: paymentMethod === 'crypto' ? 'rgba(249, 115, 22, 0.05)' : '#ffffff',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.65rem'
+                    }}
+                  >
+                    <Bitcoin size={18} style={{ color: paymentMethod === 'crypto' ? 'var(--orange-500)' : 'var(--text-muted)' }} />
+                    <div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>Crypto</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>USDT, BTC, ETH</div>
+                    </div>
+                  </div>
+
+                  {/* Wire / ACH */}
+                  <div
+                    onClick={() => setPaymentMethod('wire')}
+                    style={{
+                      padding: '0.75rem',
+                      borderRadius: 'var(--radius-sm)',
+                      border: `1.5px solid ${paymentMethod === 'wire' ? 'var(--orange-500)' : 'var(--border-color)'}`,
+                      background: paymentMethod === 'wire' ? 'rgba(249, 115, 22, 0.05)' : '#ffffff',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.65rem'
+                    }}
+                  >
+                    <ShieldCheck size={18} style={{ color: paymentMethod === 'wire' ? 'var(--orange-500)' : 'var(--text-muted)' }} />
+                    <div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>Direct Bank</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>ACH Transfer</div>
+                    </div>
+                  </div>
+
                 </div>
-                <span style={{ fontSize: '0.7rem', background: '#10b981', color: '#ffffff', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 800 }}>
-                  Direct Checkout
-                </span>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.75rem', fontSize: '0.75rem', color: '#cbd5e1' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Lock size={12} style={{ color: 'var(--orange-400)' }} /> 256-Bit SSL</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><ShieldCheck size={12} style={{ color: 'var(--green-400)' }} /> Instant Credit via Webhook</span>
-              </div>
-            </div>
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isProcessing}
+                className="btn btn-primary-orange"
+                style={{
+                  width: '100%',
+                  padding: '0.85rem',
+                  fontSize: '1rem',
+                  fontWeight: 800,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                {isProcessing ? 'Connecting Gateway...' : `Proceed to Deposit $${parseFloat(depositAmount || 0).toFixed(2)}`}
+              </button>
 
-            {/* Direct Action Submit */}
-            <button 
-              type="submit" 
-              className="btn btn-primary-orange btn-lg"
-              disabled={isProcessing}
-              style={{ width: '100%', justifyContent: 'center', padding: '0.9rem 1.5rem', fontSize: '1rem', fontWeight: 800 }}
-            >
-              {isProcessing ? (
-                'Connecting securely to BoltPayouts...'
-              ) : (
-                <>
-                  Proceed to Checkout (${parseFloat(depositAmount || 0).toFixed(2)}) <ExternalLink size={18} />
-                </>
-              )}
-            </button>
-          </form>
-        )}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', marginTop: '0.85rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <Lock size={12} /> Encrypted 256-bit SSL Secure Checkout
+              </div>
+            </form>
+          )}
+
         </div>
+
       </div>
     </div>
   );

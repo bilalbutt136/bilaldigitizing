@@ -216,7 +216,7 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            onSelect && onSelect(cat);
+            if (onSelect) onSelect(cat);
           }}
           style={{ 
             width: '100%', 

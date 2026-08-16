@@ -251,6 +251,24 @@ export const OrderWizardModal = () => {
     }
   }, [isOrderWizardOpen, orderWizardInitialData]);
 
+  React.useEffect(() => {
+    if (!isOrderWizardOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsOrderWizardOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow || 'unset';
+    };
+  }, [isOrderWizardOpen, setIsOrderWizardOpen]);
+
   const addPatchItem = () => {
     setPatchItems(prev => [
       ...prev,
@@ -816,31 +834,43 @@ export const OrderWizardModal = () => {
   if (!isOrderWizardOpen) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(15, 23, 42, 0.85)',
-      backdropFilter: 'blur(8px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 99999,
-      padding: '1.5rem',
-      overflowY: 'auto'
-    }}>
-      <div style={{
-        background: '#ffffff',
-        border: '1px solid #cbd5e1',
-        borderRadius: '24px',
-        width: '100%',
-        maxWidth: '1140px',
-        boxShadow: '0 25px 60px -15px rgba(15, 23, 42, 0.25)',
-        overflow: 'hidden',
-        margin: 'auto'
-      }}>
+    <div 
+      className="modal-overlay"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) setIsOrderWizardOpen(false);
+      }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(15, 23, 42, 0.85)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 99999,
+        padding: '1.25rem',
+        overflowY: 'auto'
+      }}
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: '#ffffff',
+          border: '1px solid #cbd5e1',
+          borderRadius: '24px',
+          width: '100%',
+          maxWidth: '1140px',
+          maxHeight: '94dvh',
+          boxShadow: '0 25px 60px -15px rgba(15, 23, 42, 0.25)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          margin: 'auto'
+        }}
+      >
         {/* Header */}
         <div style={{
           display: 'flex',

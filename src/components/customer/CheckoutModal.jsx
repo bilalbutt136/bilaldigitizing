@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { X, CheckCircle, Loader2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase/client';
+import { getAuthHeaders } from '../../services/supabaseService';
 
 // Authentic Branded Payment Method SVG Components
 const WalletBrandIcon = () => (
@@ -245,9 +245,10 @@ export const CheckoutModal = () => {
     setSelectedMethod(methodId);
     setIsInitializing(true);
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch('/api/boltpayouts/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           amount: checkoutSession.amount,
           method: methodId,
@@ -279,12 +280,31 @@ export const CheckoutModal = () => {
   };
 
   useEffect(() => {
+    if (!isCheckoutModalOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow || 'unset';
+    };
+  }, [isCheckoutModalOpen]);
+
+  useEffect(() => {
     let intervalId;
     
     if (isCheckoutModalOpen && checkoutSession?.invoiceId && !isPaid) {
       intervalId = setInterval(async () => {
         try {
-          const res = await fetch(`/api/boltpayouts/status?invoiceId=${checkoutSession.invoiceId}`);
+          const headers = await getAuthHeaders();
+          const res = await fetch(`/api/boltpayouts/status?invoiceId=${checkoutSession.invoiceId}`, { headers });
           const data = await res.json();
           if (data.success && (data.status === 'paid' || data.status === 'completed')) {
             setIsPaid(true);
@@ -316,21 +336,25 @@ export const CheckoutModal = () => {
   if (!isCheckoutModalOpen || !checkoutSession) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      zIndex: 99999,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1rem',
-      background: 'rgba(15, 23, 42, 0.85)',
-      backdropFilter: 'blur(12px)',
-      animation: 'fadeIn 0.3s ease-out forwards'
-    }}>
+    <div 
+      className="modal-overlay"
+      onClick={handleClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 99999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+        background: 'rgba(15, 23, 42, 0.85)',
+        backdropFilter: 'blur(12px)',
+        animation: 'fadeIn 0.3s ease-out forwards'
+      }}
+    >
       <style>
         {`
           @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -339,19 +363,23 @@ export const CheckoutModal = () => {
         `}
       </style>
 
-      <div style={{
-        background: '#ffffff',
-        border: '1px solid #cbd5e1',
-        borderRadius: '24px',
-        width: '100%',
-        maxWidth: '520px',
-        boxShadow: '0 25px 60px -15px rgba(15, 23, 42, 0.25)',
-        position: 'relative',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        animation: 'scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards'
-      }}>
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: '#ffffff',
+          border: '1px solid #cbd5e1',
+          borderRadius: '24px',
+          width: '100%',
+          maxWidth: '520px',
+          boxShadow: '0 25px 60px -15px rgba(15, 23, 42, 0.25)',
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          maxHeight: '92vh',
+          animation: 'scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+        }}
+      >
         
         {/* Header */}
         <div style={{ 

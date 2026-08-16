@@ -27,6 +27,8 @@ export const StoreOrderModal = () => {
     authUser,
     setIsAuthModalOpen,
     setAuthModalMode,
+    setIsCheckoutModalOpen,
+    setCheckoutSession,
     showToast 
   } = useAppState();
 
@@ -37,6 +39,24 @@ export const StoreOrderModal = () => {
   const [placementNotes, setPlacementNotes] = useState('');
   const [uploadedArtwork, setUploadedArtwork] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!isStoreOrderModalOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsStoreOrderModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow || 'unset';
+    };
+  }, [isStoreOrderModalOpen, setIsStoreOrderModalOpen]);
 
   // Initialize modal fields whenever selectedStoreItem changes
   useEffect(() => {
@@ -107,9 +127,6 @@ export const StoreOrderModal = () => {
         return;
       }
       deductWalletBalance(totalPriceNum);
-    } else if (paymentMethod === 'bolt') {
-      // Direct payment gateway link popup/redirect
-      window.open('https://www.boltpayouts.xyz/pay/boltpayouts', '_blank');
     }
 
     let clientArtwork = uploadedArtwork?.url || null;
@@ -143,7 +160,8 @@ export const StoreOrderModal = () => {
       image_url: productImage,
       logo: productImage,
       file_url: productImage,
-      status: 'submitted',
+      status: paymentMethod === 'wallet' ? 'in_progress' : 'submitted',
+      payment_status: paymentMethod === 'wallet' ? 'paid' : 'pending',
       date: new Date().toISOString().split('T')[0],
       notes: `Item: ${selectedStoreItem.title} | Qty: ${quantity} | Size: ${selectedSize} | Color: ${selectedColor} | Artwork: ${uploadedArtwork?.name || 'Default Artwork'} | Notes: ${placementNotes || 'Standard placement'}`,
       details: {
@@ -162,42 +180,59 @@ export const StoreOrderModal = () => {
     };
 
     try {
-      createOrder(newStoreOrder);
+      const created = await createOrder(newStoreOrder);
 
       // Save directly to localStorage store_orders array
       const existing = JSON.parse(localStorage.getItem('store_orders') || '[]');
       const updated = [newStoreOrder, ...existing.filter(item => item.id !== newStoreOrder.id)];
       localStorage.setItem('store_orders', JSON.stringify(updated));
       window.dispatchEvent(new Event('store_orders_updated'));
+
+      if (paymentMethod === 'bolt') {
+        if (setCheckoutSession && setIsCheckoutModalOpen) {
+          setCheckoutSession({
+            orderId: created?.id || newStoreOrder.id,
+            amount: totalPriceNum,
+            serviceTitle: `Store: ${selectedStoreItem.title} (${quantity} pcs)`
+          });
+          setIsCheckoutModalOpen(true);
+        }
+      }
     } catch (err) {
       console.warn('Error saving store_orders to localStorage:', err);
     }
 
     setIsSubmitting(false);
     setIsStoreOrderModalOpen(false);
-    showToast(`Store Order #${Date.now().toString().slice(-6)} placed successfully!`, 'success');
+    showToast(`Store Order placed successfully!`, 'success');
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(15, 23, 42, 0.75)',
-      backdropFilter: 'blur(6px)',
-      zIndex: 2000,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1rem'
-    }}>
-      <div style={{
-        background: '#ffffff',
-        width: '100%',
-        maxWidth: '680px',
-        maxHeight: '90vh',
+    <div 
+      className="modal-overlay"
+      onClick={() => setIsStoreOrderModalOpen(false)}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(15, 23, 42, 0.75)',
+        backdropFilter: 'blur(6px)',
+        zIndex: 99999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem'
+      }}
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: '#ffffff',
+          width: '100%',
+          maxWidth: '680px',
+          maxHeight: '90vh',
         borderRadius: 'var(--radius-lg)',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
         display: 'flex',

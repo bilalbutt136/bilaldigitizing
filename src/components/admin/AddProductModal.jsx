@@ -29,6 +29,24 @@ export const AddProductModal = ({ isOpen, onClose }) => {
   const [featuresText, setFeaturesText] = useState('100% Heavyweight Cotton\nHigh stitch count embroidery\nFree digital sew-out proof\nFast 5-7 day production');
   const [isUploading, setIsUploading] = useState(false);
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose?.();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow || 'unset';
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const toggleSize = (sz) => {
@@ -92,32 +110,39 @@ export const AddProductModal = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(15, 23, 42, 0.75)',
-      backdropFilter: 'blur(6px)',
-      zIndex: 2100,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1rem'
-    }}>
-      <div style={{
-        background: '#ffffff',
-        width: '100%',
-        maxWidth: '680px',
-        maxHeight: '92vh',
-        borderRadius: 'var(--radius-lg)',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+    <div 
+      className="modal-overlay"
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(15, 23, 42, 0.75)',
+        backdropFilter: 'blur(6px)',
+        zIndex: 99999,
         display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        animation: 'fadeIn 0.2s ease-out'
-      }}>
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem'
+      }}
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: '#ffffff',
+          width: '100%',
+          maxWidth: '680px',
+          maxHeight: '92vh',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          animation: 'fadeIn 0.2s ease-out'
+        }}
+      >
 
         {/* Modal Header */}
         <div style={{
