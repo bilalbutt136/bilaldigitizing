@@ -31,8 +31,11 @@ const getMetadataBase = () => {
 export const metadata = {
   metadataBase: getMetadataBase(),
   icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon.svg', type: 'image/svg+xml' }
+    ],
+    shortcut: '/favicon.ico',
     apple: '/favicon.svg',
   },
   title: {
