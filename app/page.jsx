@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import { useAppState } from '../src/context/StateContext';
 import { HeroSection } from '../src/components/public/HeroSection';
+import { ServicesSection } from '../src/components/public/ServicesSection';
 import { TrustStatsBar } from '../src/components/public/TrustStatsBar';
 import { WhyChooseUs } from '../src/components/public/WhyChooseUs';
 import { PortfolioPreview } from '../src/components/public/PortfolioPreview';
@@ -19,6 +20,7 @@ export default function HomePage() {
   return (
     <>
       <HeroSection />
+      <ServicesSection />
       <TrustStatsBar />
       <WhyChooseUs />
       <PortfolioPreview />

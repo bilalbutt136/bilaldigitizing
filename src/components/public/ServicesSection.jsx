@@ -17,6 +17,7 @@ import {
   PackageCheck
 } from 'lucide-react';
 import { normalizeCategory, matchCategory } from '../../utils/categoryUtils';
+import { PackageCard } from './PackageCard';
 
 export const ServicesSection = () => {
   const { 
@@ -596,64 +597,21 @@ export const ServicesSection = () => {
               <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '1.5rem', textAlign: 'center' }}>
                 Embroidery Digitizing Packages ({embroideryTiers.length})
               </h3>
-              <div className="grid-responsive-3" style={{ alignItems: 'stretch' }}>
-                {embroideryTiers.map((pkg, idx) => {
-                  const isPopular = Boolean(pkg.is_popular);
-                  const priceStr = `$${Number(pkg.price).toFixed(2)}`;
-                  const tierKey = idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium';
-
-                  return (
-                    <div key={pkg.id || idx} className="card" style={{
-                      background: isPopular ? 'linear-gradient(180deg, #ffffff 0%, #fff7ed 100%)' : '#ffffff',
-                      borderRadius: '20px',
-                      padding: '2.25rem 2rem',
-                      border: isPopular ? '2px solid var(--orange-400)' : '1px solid var(--border-color)',
-                      boxShadow: isPopular ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      transform: isPopular ? 'translateY(-6px)' : 'none'
-                    }}>
-                      <div>
-                        {pkg.badge_text && (
-                          <div style={{ display: 'inline-block', background: isPopular ? 'var(--orange-600)' : 'var(--navy-800)', color: '#ffffff', fontSize: '0.75rem', fontWeight: 800, padding: '0.2rem 0.75rem', borderRadius: '9999px', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
-                            {pkg.badge_text}
-                          </div>
-                        )}
-                        <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-950)', margin: '0 0 0.5rem 0' }}>{pkg.title}</h4>
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', margin: '0.25rem 0' }}>
-                          <span style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--orange-600)', fontFamily: 'var(--font-heading)' }}>
-                            {priceStr}
-                          </span>
-                          {pkg.original_price && (
-                            <span style={{ fontSize: '1.1rem', color: '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
-                              ${Number(pkg.original_price).toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
-                          {pkg.subtitle || pkg.price_unit || '/ DESIGN'}
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
-                          {(pkg.features || []).map((f, fIdx) => (
-                            <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.875rem', color: 'var(--navy-800)', fontWeight: 600 }}>
-                              <CheckCircle size={15} style={{ color: '#10b981', flexShrink: 0 }} />
-                              <span>{f}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        className={isPopular ? 'btn btn-primary-orange' : 'btn btn-outline'}
-                        onClick={() => handleLaunchOrder('embroidery', tierKey, pkg)}
-                        style={{ width: '100%', padding: '0.85rem', fontWeight: 800 }}
-                      >
-                        {pkg.button_text || `Order ${pkg.title.split(' ')[0]}`} <ArrowRight size={16} />
-                      </button>
-                    </div>
-                  );
-                })}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '1.5rem',
+                alignItems: 'stretch'
+              }}>
+                {embroideryTiers.map((pkg, idx) => (
+                  <PackageCard
+                    key={pkg.id || idx}
+                    cat={pkg}
+                    idx={idx}
+                    onSelect={(selectedPkg) => handleLaunchOrder('embroidery', idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium', selectedPkg)}
+                    forceCategory="embroidery"
+                  />
+                ))}
               </div>
             </div>
 
@@ -793,64 +751,21 @@ export const ServicesSection = () => {
               <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '1.5rem', textAlign: 'center' }}>
                 Vector Art Conversion Packages ({vectorTiers.length})
               </h3>
-              <div className="grid-responsive-3" style={{ alignItems: 'stretch' }}>
-                {vectorTiers.map((pkg, idx) => {
-                  const isPopular = Boolean(pkg.is_popular);
-                  const priceStr = `$${Number(pkg.price).toFixed(2)}`;
-                  const tierKey = idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium';
-
-                  return (
-                    <div key={pkg.id || idx} className="card" style={{
-                      background: isPopular ? 'linear-gradient(180deg, #ffffff 0%, #fff7ed 100%)' : '#ffffff',
-                      borderRadius: '20px',
-                      padding: '2.25rem 2rem',
-                      border: isPopular ? '2px solid var(--orange-400)' : '1px solid var(--border-color)',
-                      boxShadow: isPopular ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      transform: isPopular ? 'translateY(-6px)' : 'none'
-                    }}>
-                      <div>
-                        {pkg.badge_text && (
-                          <div style={{ display: 'inline-block', background: isPopular ? 'var(--orange-600)' : 'var(--navy-800)', color: '#ffffff', fontSize: '0.75rem', fontWeight: 800, padding: '0.2rem 0.75rem', borderRadius: '9999px', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
-                            {pkg.badge_text}
-                          </div>
-                        )}
-                        <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-950)', margin: '0 0 0.5rem 0' }}>{pkg.title}</h4>
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', margin: '0.25rem 0' }}>
-                          <span style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--orange-600)', fontFamily: 'var(--font-heading)' }}>
-                            {priceStr}
-                          </span>
-                          {pkg.original_price && (
-                            <span style={{ fontSize: '1.1rem', color: '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
-                              ${Number(pkg.original_price).toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
-                          {pkg.subtitle || pkg.price_unit || '/ DESIGN'}
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
-                          {(pkg.features || []).map((f, fIdx) => (
-                            <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.875rem', color: 'var(--navy-800)', fontWeight: 600 }}>
-                              <CheckCircle size={15} style={{ color: '#10b981', flexShrink: 0 }} />
-                              <span>{f}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        className={isPopular ? 'btn btn-primary-orange' : 'btn btn-outline'}
-                        onClick={() => handleLaunchOrder('vector', tierKey, pkg)}
-                        style={{ width: '100%', padding: '0.85rem', fontWeight: 800 }}
-                      >
-                        {pkg.button_text || `Order ${pkg.title.split(' ')[0]}`} <ArrowRight size={16} />
-                      </button>
-                    </div>
-                  );
-                })}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '1.5rem',
+                alignItems: 'stretch'
+              }}>
+                {vectorTiers.map((pkg, idx) => (
+                  <PackageCard
+                    key={pkg.id || idx}
+                    cat={pkg}
+                    idx={idx}
+                    onSelect={(selectedPkg) => handleLaunchOrder('vector', idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium', selectedPkg)}
+                    forceCategory="vector"
+                  />
+                ))}
               </div>
             </div>
 
@@ -990,64 +905,21 @@ export const ServicesSection = () => {
               <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '1.5rem', textAlign: 'center' }}>
                 Patches Quantity & Pricing Packages ({patchTiers.length})
               </h3>
-              <div className="grid-responsive-3" style={{ alignItems: 'stretch' }}>
-                {patchTiers.map((pkg, idx) => {
-                  const isPopular = Boolean(pkg.is_popular);
-                  const priceStr = `$${Number(pkg.price).toFixed(2)}`;
-                  const tierKey = idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium';
-
-                  return (
-                    <div key={pkg.id || idx} className="card" style={{
-                      background: isPopular ? 'linear-gradient(180deg, #ffffff 0%, #fff7ed 100%)' : '#ffffff',
-                      borderRadius: '20px',
-                      padding: '2.25rem 2rem',
-                      border: isPopular ? '2px solid var(--orange-400)' : '1px solid var(--border-color)',
-                      boxShadow: isPopular ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      transform: isPopular ? 'translateY(-6px)' : 'none'
-                    }}>
-                      <div>
-                        {pkg.badge_text && (
-                          <div style={{ display: 'inline-block', background: isPopular ? 'var(--orange-600)' : 'var(--navy-800)', color: '#ffffff', fontSize: '0.75rem', fontWeight: 800, padding: '0.2rem 0.75rem', borderRadius: '9999px', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
-                            {pkg.badge_text}
-                          </div>
-                        )}
-                        <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-950)', margin: '0 0 0.5rem 0' }}>{pkg.title}</h4>
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', margin: '0.25rem 0' }}>
-                          <span style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--orange-600)', fontFamily: 'var(--font-heading)' }}>
-                            {priceStr}
-                          </span>
-                          {pkg.original_price && (
-                            <span style={{ fontSize: '1.1rem', color: '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
-                              ${Number(pkg.original_price).toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
-                          {pkg.subtitle || pkg.price_unit || '/ PIECE'}
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
-                          {(pkg.features || []).map((f, fIdx) => (
-                            <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.875rem', color: 'var(--navy-800)', fontWeight: 600 }}>
-                              <CheckCircle size={15} style={{ color: '#10b981', flexShrink: 0 }} />
-                              <span>{f}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        className={isPopular ? 'btn btn-primary-orange' : 'btn btn-outline'}
-                        onClick={() => handleLaunchOrder('patch', tierKey, pkg)}
-                        style={{ width: '100%', padding: '0.85rem', fontWeight: 800 }}
-                      >
-                        {pkg.button_text || `Order ${pkg.title.split(' ')[0]}`} <ArrowRight size={16} />
-                      </button>
-                    </div>
-                  );
-                })}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '1.5rem',
+                alignItems: 'stretch'
+              }}>
+                {patchTiers.map((pkg, idx) => (
+                  <PackageCard
+                    key={pkg.id || idx}
+                    cat={pkg}
+                    idx={idx}
+                    onSelect={(selectedPkg) => handleLaunchOrder('patch', idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium', selectedPkg)}
+                    forceCategory="patch"
+                  />
+                ))}
               </div>
             </div>
 
