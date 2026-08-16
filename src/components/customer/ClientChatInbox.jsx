@@ -72,8 +72,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       {
         id: 'welcome-msg',
         sender: 'admin',
-        senderName: 'Master Digitizer Support',
-        text: `Welcome ${clientName}! How can our senior embroidery and vector production team assist you today?`,
+        senderName: 'Support',
+        text: `Welcome ${clientName}! How can our support team assist you today?`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
     ];
@@ -112,7 +112,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       const ordMessages = Array.isArray(ord.messages) ? ord.messages.map(m => ({
         id: m.id || `msg-${Math.random()}`,
         sender: m.senderRole === 'admin' ? 'admin' : (m.sender === 'admin' ? 'admin' : 'client'),
-        senderName: m.sender || m.senderName || (m.senderRole === 'admin' ? 'Master Digitizer' : clientName),
+        senderName: m.senderRole === 'admin' || m.sender === 'admin' ? 'Support' : (m.sender || m.senderName || clientName),
         text: m.text || m.message || '',
         attachment: m.attachment || m.attachments?.[0]?.name || null,
         attachmentUrl: m.attachmentUrl || m.attachments?.[0]?.url || null,
@@ -901,10 +901,10 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                     alignItems: 'center',
                     gap: '0.35rem'
                   }}>
-                    <span>{isClient ? 'You (Client)' : (msg.senderName || 'Senior Digitizer / Studio Admin')}</span>
+                    <span>{isClient ? 'You' : 'Support'}</span>
                     {!isClient && (
-                      <span style={{ background: '#ecfdf5', color: '#059669', fontSize: '0.65rem', padding: '0.05rem 0.35rem', borderRadius: '4px', border: '1px solid #a7f3d0' }}>
-                        Verified Studio Staff
+                      <span style={{ background: '#ecfdf5', color: '#059669', fontSize: '0.65rem', padding: '0.05rem 0.35rem', borderRadius: '4px', border: '1px solid #a7f3d0', fontWeight: 800 }}>
+                        Support
                       </span>
                     )}
                   </div>

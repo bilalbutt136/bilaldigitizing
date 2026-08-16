@@ -69,7 +69,7 @@ export const ClientLiveChatWidget = () => {
           id: record.id,
           conversation_id: record.conversation_id,
           sender: record.sender,
-          senderName: record.sender_name || (record.sender === 'admin' ? 'Master Digitizer' : cleanName),
+          senderName: record.sender === 'admin' ? 'Support' : (record.sender_name || cleanName),
           text: record.text,
           attachment: record.attachment,
           timestamp: record.timestamp || record.created_at || new Date().toISOString()
@@ -292,7 +292,7 @@ export const ClientLiveChatWidget = () => {
     playNotificationSound('send');
     setMessageInput('');
     setAttachedFile(null);
-    showToast('Message sent to Master Digitizer Support!', 'success');
+    showToast('Message sent to Support!', 'success');
   };
 
   const handleFileAttach = (e) => {
@@ -557,7 +557,7 @@ export const ClientLiveChatWidget = () => {
                         fontWeight: 700,
                         padding: '0 0.2rem'
                       }}>
-                        {msg.senderName} • {msg.timestamp}
+                        {isClient ? 'You' : 'Support'} • {msg.timestamp}
                       </div>
 
                       <div style={{

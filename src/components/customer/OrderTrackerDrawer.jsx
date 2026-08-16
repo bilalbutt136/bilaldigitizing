@@ -842,7 +842,7 @@ export const OrderTrackerDrawer = () => {
                            const displayTime = msg.timestamp && !isNaN(new Date(msg.timestamp).getTime()) 
                              ? new Date(msg.timestamp).toLocaleString() 
                              : (msg.timestamp || 'Recent');
-                           const displayName = msg.senderName || msg.sender || (isMsgAdmin ? 'Master Digitizer' : 'Client');
+                           const displayName = isMsgAdmin ? 'Support' : (msg.senderName || msg.sender || (ord.clientName || 'Client'));
                            return (
                             <div key={`msg-${msg.id}`} style={{ 
                                background: isMsgAdmin ? 'var(--navy-900)' : '#ffffff', 

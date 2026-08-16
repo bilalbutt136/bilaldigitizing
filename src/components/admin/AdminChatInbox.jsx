@@ -310,8 +310,8 @@ export const AdminChatInbox = () => {
       id: 'msg-' + Date.now(),
       conversation_id: currentActiveChatId,
       sender: 'admin',
-      senderName: 'Master Digitizer Support',
-      sender_name: 'Master Digitizer Support',
+      senderName: 'Support',
+      sender_name: 'Support',
       text: replyInput.trim() || (attachedFile ? `Attached file: ${attachedFile.name}` : ''),
       attachment: attachedFile ? attachedFile.name : null,
       timestamp: new Date().toISOString()
