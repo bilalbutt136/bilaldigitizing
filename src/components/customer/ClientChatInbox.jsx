@@ -341,15 +341,45 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     messages: []
   };
 
+  // Helper to compute client unread count strictly for Support messages
+  const getThreadUnreadCount = (conv) => {
+    if (!conv) return 0;
+    if (activeChatId === conv.id) return 0;
+    const lastRead = typeof window !== 'undefined'
+      ? parseInt(localStorage.getItem('bdigi_read_client_' + conv.id) || '0', 10)
+      : 0;
+    const msgs = conv.messages || [];
+    return msgs.filter(m => {
+      const isAdmin = m.sender === 'admin' || m.sender === 'support' || m.senderRole === 'admin';
+      if (!isAdmin) return false;
+      const msgTime = m.timestamp && !isNaN(new Date(m.timestamp).getTime()) ? new Date(m.timestamp).getTime() : 0;
+      return msgTime > lastRead;
+    }).length;
+  };
+
+  const handleSelectThread = (threadId) => {
+    setActiveChatId(threadId);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bdigi_read_client_' + threadId, String(Date.now()));
+      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: threadId } }));
+    }
+    markConversationAsRead(threadId);
+    setConversations(prev => prev.map(c => c.id === threadId ? { ...c, unreadCount: 0 } : c));
+  };
+
   // Auto-mark active conversation as read in Client Chat
   useEffect(() => {
-    if (activeChat && activeChat.unreadCount > 0) {
+    if (activeChat?.id) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('bdigi_read_client_' + activeChat.id, String(Date.now()));
+        window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: activeChat.id } }));
+      }
       markConversationAsRead(activeChat.id);
       setConversations(prev => prev.map(c => 
         c.id === activeChat.id ? { ...c, unreadCount: 0 } : c
       ));
     }
-  }, [activeChatId, activeChat?.id, activeChat?.unreadCount]);
+  }, [activeChatId, activeChat?.id]);
 
   // Filter conversations based on search and selected filterMode
   const filteredConversations = conversations.filter(conv => {
@@ -360,9 +390,10 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
     if (!matchesSearch) return false;
 
+    const unreadNum = getThreadUnreadCount(conv);
     if (filterMode === 'orders') return conv.id.startsWith('order-') || conv.rawOrderId;
     if (filterMode === 'support') return conv.id === 'general-support';
-    if (filterMode === 'unread') return conv.unreadCount > 0;
+    if (filterMode === 'unread') return unreadNum > 0;
     return true;
   });
 
@@ -647,15 +678,12 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                   const isActive = activeChat.id === conv.id;
                   const lastMessage = conv.messages?.[conv.messages.length - 1];
                   const isOrderThread = conv.id.startsWith('order-') || conv.rawOrderId;
+                  const threadUnread = getThreadUnreadCount(conv);
 
                   return (
                     <div
                       key={conv.id}
-                      onClick={() => {
-                        setActiveChatId(conv.id);
-                        markConversationAsRead(conv.id);
-                        setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, unreadCount: 0 } : c));
-                      }}
+                      onClick={() => handleSelectThread(conv.id)}
                       style={{
                         padding: '0.75rem 0.85rem',
                         borderRadius: '10px',
@@ -740,17 +768,17 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                         </div>
 
                         {/* Unread Counter Badge */}
-                        {conv.unreadCount > 0 && (
+                        {threadUnread > 0 && (
                           <span style={{
                             fontSize: '0.68rem',
                             fontWeight: 900,
-                            background: 'var(--orange-500)',
+                            background: '#ef4444',
                             color: '#ffffff',
                             padding: '0.15rem 0.45rem',
                             borderRadius: '9999px',
                             flexShrink: 0
                           }}>
-                            {conv.unreadCount}
+                            {threadUnread}
                           </span>
                         )}
                       </div>

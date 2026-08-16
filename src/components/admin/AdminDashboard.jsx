@@ -84,7 +84,18 @@ export const AdminDashboard = () => {
         try {
           const convs = await fetchConversations();
           if (convs && isMounted) {
-            const totalUnread = convs.reduce((sum, c) => sum + (c.unreadCount || c.unread_count || 0), 0);
+            let totalUnread = 0;
+            convs.forEach(c => {
+              const msgs = c.messages || [];
+              const lastRead = typeof window !== 'undefined' ? parseInt(localStorage.getItem('bdigi_read_admin_' + c.id) || '0', 10) : 0;
+              const unreadFromClient = msgs.filter(m => {
+                const isClient = m.sender === 'client';
+                if (!isClient) return false;
+                const msgTime = m.timestamp && !isNaN(new Date(m.timestamp).getTime()) ? new Date(m.timestamp).getTime() : 0;
+                return msgTime > lastRead;
+              });
+              totalUnread += unreadFromClient.length;
+            });
             setAdminUnreadCount(totalUnread);
           }
         } catch { }
@@ -103,10 +114,7 @@ export const AdminDashboard = () => {
       },
       (convPayload) => {
         if (!isMounted) return;
-        const conv = convPayload.new || convPayload.record;
-        if (conv && (conv.unread_count === 0 || conv.unreadCount === 0)) {
-          loadAdminUnreadCount();
-        }
+        loadAdminUnreadCount();
       }
     );
 

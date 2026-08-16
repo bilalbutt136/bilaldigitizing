@@ -270,15 +270,45 @@ export const AdminChatInbox = () => {
   const currentActiveChatId = activeChat ? activeChat.id : activeChatId;
   const activeInfo = resolveThreadInfo(activeChat, orders);
 
+  // Helper to compute admin unread count strictly for client messages
+  const getThreadUnreadCount = (conv) => {
+    if (!conv) return 0;
+    if (activeChatId === conv.id) return 0;
+    const lastRead = typeof window !== 'undefined' ? parseInt(localStorage.getItem('bdigi_read_admin_' + conv.id) || '0', 10) : 0;
+    const msgs = conv.messages || [];
+    return msgs.filter(m => {
+      const isClient = m.sender === 'client';
+      if (!isClient) return false;
+      const msgTime = m.timestamp && !isNaN(new Date(m.timestamp).getTime()) ? new Date(m.timestamp).getTime() : 0;
+      return msgTime > lastRead;
+    }).length;
+  };
+
+  const handleSelectChat = (chatId) => {
+    setActiveChatId(chatId);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bdigi_read_admin_' + chatId, String(Date.now()));
+      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: chatId } }));
+    }
+    markConversationAsRead(chatId);
+    setConversations(prev => prev.map(c => 
+      c.id === chatId ? { ...c, unreadCount: 0 } : c
+    ));
+  };
+
   // Auto-mark active chat as read
   useEffect(() => {
-    if (activeChat && activeChat.unreadCount > 0) {
+    if (activeChat?.id) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('bdigi_read_admin_' + activeChat.id, String(Date.now()));
+        window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: activeChat.id } }));
+      }
       markConversationAsRead(activeChat.id);
       setConversations(prev => prev.map(c => 
         c.id === activeChat.id ? { ...c, unreadCount: 0 } : c
       ));
     }
-  }, [activeChatId, activeChat?.id, activeChat?.unreadCount]);
+  }, [activeChatId, activeChat?.id]);
 
   // Filter conversations based on search and selected filterMode
   const filteredConversations = conversations.filter(conv => {
@@ -292,19 +322,12 @@ export const AdminChatInbox = () => {
       (conv.title || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     if (!matchesSearch) return false;
+    const unreadNum = getThreadUnreadCount(conv);
     if (filterMode === 'direct') return !isOrder;
     if (filterMode === 'orders') return isOrder;
-    if (filterMode === 'unread') return conv.unreadCount > 0;
+    if (filterMode === 'unread') return unreadNum > 0;
     return true;
   });
-
-  const handleSelectChat = (chatId) => {
-    setActiveChatId(chatId);
-    markConversationAsRead(chatId);
-    setConversations(prev => prev.map(c => 
-      c.id === chatId ? { ...c, unreadCount: 0 } : c
-    ));
-  };
 
   const handleSendMessage = async (e) => {
     e?.preventDefault();
@@ -452,7 +475,7 @@ export const AdminChatInbox = () => {
                 onClick={() => setFilterMode('unread')}
                 style={{ fontSize: '0.725rem', padding: '0.2rem 0.45rem', whiteSpace: 'nowrap' }}
               >
-                Unread ({conversations.filter(c => c.unreadCount > 0).length})
+                Unread ({conversations.filter(c => getThreadUnreadCount(c) > 0).length})
               </button>
             </div>
           </div>
@@ -468,6 +491,7 @@ export const AdminChatInbox = () => {
                 const isActive = conv.id === activeChat.id;
                 const lastMsg = conv.messages[conv.messages.length - 1] || {};
                 const info = resolveThreadInfo(conv, orders);
+                const threadUnread = getThreadUnreadCount(conv);
 
                 return (
                   <div
@@ -544,8 +568,8 @@ export const AdminChatInbox = () => {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <p style={{
                             fontSize: '0.78rem',
-                            color: conv.unreadCount > 0 ? 'var(--navy-900)' : 'var(--text-muted)',
-                            fontWeight: conv.unreadCount > 0 ? 700 : 400,
+                            color: threadUnread > 0 ? 'var(--navy-900)' : 'var(--text-muted)',
+                            fontWeight: threadUnread > 0 ? 700 : 400,
                             margin: 0,
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
@@ -555,21 +579,22 @@ export const AdminChatInbox = () => {
                             {lastMsg.sender === 'admin' ? 'You: ' : ''}{lastMsg.text || 'No messages yet'}
                           </p>
 
-                          {conv.unreadCount > 0 && (
+                          {threadUnread > 0 && (
                             <span style={{
-                              background: 'var(--orange-500)',
+                              background: '#ef4444',
                               color: '#ffffff',
                               fontSize: '0.68rem',
                               fontWeight: 800,
-                              width: '18px',
+                              minWidth: '18px',
                               height: '18px',
-                              borderRadius: '50%',
+                              borderRadius: '9999px',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
+                              padding: '0 4px',
                               flexShrink: 0
                             }}>
-                              {conv.unreadCount}
+                              {threadUnread}
                             </span>
                           )}
                         </div>

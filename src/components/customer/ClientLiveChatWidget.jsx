@@ -201,7 +201,13 @@ export const ClientLiveChatWidget = () => {
   };
 
   const unreadCount = !isOpen
-    ? (clientThread.messages || []).filter(m => (m.sender === 'admin' || m.sender === 'support') && !m.is_read).length || (clientThread.unreadCount || 0)
+    ? (clientThread.messages || []).filter(m => {
+        const isAdmin = m.sender === 'admin' || m.sender === 'support';
+        if (!isAdmin) return false;
+        const lastRead = typeof window !== 'undefined' ? parseInt(localStorage.getItem('bdigi_read_client_' + clientThread.id) || '0', 10) : 0;
+        const msgTime = m.timestamp && !isNaN(new Date(m.timestamp).getTime()) ? new Date(m.timestamp).getTime() : 0;
+        return msgTime > lastRead;
+      }).length
     : 0;
 
   const chatFeedRef = useRef(null);
@@ -220,6 +226,10 @@ export const ClientLiveChatWidget = () => {
     if (isOpen) {
       scrollToBottom();
       if (clientThread?.id) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('bdigi_read_client_' + clientThread.id, String(Date.now()));
+          window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: clientThread.id } }));
+        }
         markConversationAsRead(clientThread.id);
         setChats(prev => (Array.isArray(prev) ? prev : []).map(c => 
           c.id === clientThread.id ? { ...c, unreadCount: 0 } : c

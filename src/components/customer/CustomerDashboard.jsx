@@ -93,12 +93,29 @@ export const CustomerDashboard = () => {
           if (convs && isMounted) {
             const clientEmail = (userEmail || '').toLowerCase().trim();
             let count = 0;
+
             convs.forEach(c => {
-              const isClientConv = (c.clientEmail || c.client_email || '').toLowerCase().trim() === clientEmail || c.id === 'general-support' || !c.orderId;
-              if (isClientConv) {
-                count += (c.unreadCount || c.unread_count || 0);
-              }
+              const cEmail = (c.clientEmail || c.client_email || '').toLowerCase().trim();
+              const isMatch = !clientEmail || cEmail === clientEmail || c.id === 'general-support' || !c.orderId;
+              if (!isMatch) return;
+
+              const msgs = c.messages || [];
+              if (msgs.length === 0) return;
+
+              const lastRead = typeof window !== 'undefined'
+                ? parseInt(localStorage.getItem('bdigi_read_client_' + c.id) || '0', 10)
+                : 0;
+
+              const unreadFromAdmin = msgs.filter(m => {
+                const isAdmin = m.sender === 'admin' || m.sender === 'support' || m.senderRole === 'admin';
+                if (!isAdmin) return false;
+                const msgTime = m.timestamp && !isNaN(new Date(m.timestamp).getTime()) ? new Date(m.timestamp).getTime() : 0;
+                return msgTime > lastRead;
+              });
+
+              count += unreadFromAdmin.length;
             });
+
             setUnreadChatCount(count);
           }
         } catch { }
@@ -117,10 +134,7 @@ export const CustomerDashboard = () => {
       },
       (convPayload) => {
         if (!isMounted) return;
-        const conv = convPayload.new || convPayload.record;
-        if (conv && (conv.unread_count === 0 || conv.unreadCount === 0)) {
-          loadUnreadCount();
-        }
+        loadUnreadCount();
       }
     );
 
