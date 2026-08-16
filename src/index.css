@@ -585,3 +585,58 @@ button, input, select, textarea, a {
 
 .overflow-x-auto, .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .table-responsive table { min-width: 600px; }
+
+/* Order Wizard & Modal Responsiveness & Smooth Touch Scrolling */
+.order-wizard-dialog {
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: 92dvh !important;
+  width: 100% !important;
+  max-width: 1140px !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+  margin: auto !important;
+}
+
+.order-wizard-dialog form {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.configurator-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.wizard-summary-column {
+  position: sticky;
+  top: 0;
+}
+
+@media (max-width: 960px) {
+  .configurator-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+  }
+  .wizard-summary-column {
+    position: static !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .order-wizard-dialog {
+    max-height: 98dvh !important;
+    border-radius: 16px !important;
+  }
+  .order-wizard-dialog form {
+    padding: 1rem !important;
+  }
+  .order-wizard-header {
+    padding: 0.85rem 1rem !important;
+  }
+}
+

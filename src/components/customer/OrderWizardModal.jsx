@@ -851,11 +851,13 @@ export const OrderWizardModal = () => {
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 99999,
-        padding: '1.25rem',
-        overflowY: 'auto'
+        padding: '1rem',
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch'
       }}
     >
       <div 
+        className="modal-dialog order-wizard-dialog"
         onClick={(e) => e.stopPropagation()}
         style={{
           background: '#ffffff',
@@ -863,7 +865,8 @@ export const OrderWizardModal = () => {
           borderRadius: '24px',
           width: '100%',
           maxWidth: '1140px',
-          maxHeight: '94dvh',
+          maxHeight: '92dvh',
+          height: 'auto',
           boxShadow: '0 25px 60px -15px rgba(15, 23, 42, 0.25)',
           overflow: 'hidden',
           display: 'flex',
@@ -872,16 +875,20 @@ export const OrderWizardModal = () => {
         }}
       >
         {/* Header */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '1.25rem 1.75rem',
-          borderBottom: '1px solid #334155',
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-          color: '#ffffff',
-          borderRadius: '24px 24px 0 0'
-        }}>
+        <div 
+          className="order-wizard-header"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '1.25rem 1.75rem',
+            borderBottom: '1px solid #334155',
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+            color: '#ffffff',
+            borderRadius: '24px 24px 0 0',
+            flexShrink: 0
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{
               width: '38px',
@@ -918,8 +925,8 @@ export const OrderWizardModal = () => {
         </div>
 
         {type === 'all' ? (
-          <div style={{ padding: '3.5rem 2rem', textAlign: 'center', background: '#f8fafc' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
+          <div style={{ padding: '2.5rem 1.5rem', textAlign: 'center', background: '#f8fafc', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem', maxWidth: '1000px', margin: '0 auto' }}>
               
               {/* Embroidery */}
               <div onClick={() => setType('embroidery')} style={{ background: '#ffffff', border: '2px solid #e2e8f0', borderRadius: '20px', padding: '2.5rem 1.5rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.04)' }} onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--orange-500)'; e.currentTarget.style.transform = 'translateY(-4px)'; }} onMouseOut={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.transform = 'none'; }}>
@@ -951,9 +958,21 @@ export const OrderWizardModal = () => {
             </div>
           </div>
         ) : (
-        <form onSubmit={handleSubmit} style={{ padding: '1.75rem', background: '#f8fafc' }}>
+        <form 
+          onSubmit={handleSubmit} 
+          style={{ 
+            padding: '1.5rem', 
+            background: '#f8fafc',
+            overflowY: 'auto',
+            flex: '1 1 auto',
+            minHeight: 0,
+            WebkitOverflowScrolling: 'touch',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
 
-          <div className="configurator-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.75rem', alignItems: 'start' }}>
+          <div className="configurator-grid" style={{ display: 'grid', gridTemplateColumns: '1.35fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               
@@ -1559,7 +1578,7 @@ export const OrderWizardModal = () => {
             </div>
 
             {/* Sticky Live Order Summary Panel */}
-            <div style={{ position: 'sticky', top: '10px' }}>
+            <div className="wizard-summary-column" style={{ position: 'sticky', top: '10px' }}>
               <div style={{ padding: '1.75rem', background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '18px', boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)' }}>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '1.15rem', borderBottom: '2px solid #f1f5f9', paddingBottom: '0.75rem', letterSpacing: '-0.01em' }}>
                   Order Summary

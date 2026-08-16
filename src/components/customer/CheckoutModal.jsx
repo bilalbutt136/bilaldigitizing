@@ -449,7 +449,7 @@ export const CheckoutModal = () => {
               </button>
             </div>
           ) : !checkoutSession.url ? (
-            <div style={{ padding: '1.75rem' }}>
+            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
               <div style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '1.25rem', textAlign: 'center', marginBottom: '1.25rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
                 <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>TOTAL AMOUNT DUE</div>
                 <div style={{ color: 'var(--orange-600)', fontSize: '2.2rem', fontWeight: 900, fontFamily: 'var(--font-heading)' }}>
