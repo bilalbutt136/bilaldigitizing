@@ -1,39 +1,17 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-const ALLOWED_TABLES = ['services', 'pricing_cards', 'patch_cards', 'store_products', 'pricing_tiers', 'portfolio', 'sew_outs', 'hero_slides', 'digitizers', 'site_config', 'faqs', 'testimonials'];
-
-async function getAuthenticatedUser() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll(); },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            try { cookieStore.set(name, value, options); } catch {}
-          });
-        },
-      },
-    }
-  );
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) return { user: null, isAdmin: false };
-  
-  // Check admin status using the service role client
-  const adminClient = createAdminClient();
-  const { data: adminData } = await adminClient.from('admins').select('email').eq('email', user.email.toLowerCase()).maybeSingle();
-  return { user, isAdmin: !!adminData };
-}
+const ALLOWED_TABLES = [
+  'services', 'pricing_cards', 'patch_cards', 'store_products',
+  'pricing_tiers', 'portfolio', 'sew_outs', 'hero_slides',
+  'digitizers', 'site_config', 'faqs', 'testimonials'
+];
 
 function revalidateAllSitePages() {
   try {
@@ -105,9 +83,9 @@ export async function POST(request) {
     const { action, payload, tableName } = data;
     const supabase = createAdminClient();
     
-    const { isAdmin } = await getAuthenticatedUser();
-    if (!isAdmin) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    const { user, isAdmin } = await getServerAuthUser(request);
+    if (!user || !isAdmin) {
+      return NextResponse.json({ error: 'Unauthorized: Admin privileges required.' }, { status: 403 });
     }
     
     if (!ALLOWED_TABLES.includes(tableName)) {
@@ -167,7 +145,7 @@ export async function POST(request) {
     }
 
     if (action === 'upsertMany') {
-      await supabase.from(tableName).delete().neq('id', 0);
+      await supabase.from(tableName).delete().neq('id', '00000000-0000-0000-0000-000000000000');
       if (payload && payload.length > 0) {
         const cleanData = payload.map(item => {
           const { id, ...rest } = item;

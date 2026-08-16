@@ -1,10 +1,25 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 
 export async function POST(req) {
   try {
-    const body = await req.json();
-    const { type, orderId, clientEmail, adminEmail, ...data } = body;
+    const { user, isAdmin } = await getServerAuthUser(req);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Authentication required.' }, { status: 401 });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const { type, orderId, clientEmail, adminEmail } = body;
+
+    const ALLOWED_TYPES = ['NEW_ORDER', 'ORDER_DELIVERED', 'ORDER_COMPLETED'];
+    if (!type || !ALLOWED_TYPES.includes(type)) {
+      return NextResponse.json({ success: false, error: 'Invalid email notification type.' }, { status: 400 });
+    }
+
+    if (type === 'ORDER_DELIVERED' && !isAdmin) {
+      return NextResponse.json({ success: false, error: 'Forbidden: Admin access required.' }, { status: 403 });
+    }
 
     const resendApiKey = process.env.RESEND_API_KEY;
     if (!resendApiKey) {
@@ -14,41 +29,29 @@ export async function POST(req) {
 
     const resend = new Resend(resendApiKey);
     
-    // Default fallback from environment variables
-    let fallbackFromAddress = process.env.RESEND_FROM_ADDRESS || 'orders@bdigitizing.pro';
-    let fallbackAdmin = process.env.MASTER_ADMIN_EMAIL || 'admin@bdigitizing.pro';
+    const fromAddress = process.env.RESEND_FROM_ADDRESS || 'orders@bdigitizing.pro';
+    const fallbackAdmin = process.env.MASTER_ADMIN_EMAIL || 'admin@bdigitizing.pro';
     
-    // Optional: You could fetch from site_config here if needed, but for simplicity
-    // we will rely on ENV variables for core email domain settings in production.
-    const fromAddress = fallbackFromAddress;
-    
-    // Determine the recipient dynamically
-    let targetAdminEmail = adminEmail || fallbackAdmin;
-    let targetClientEmail = clientEmail;
-
-    // Remove the hardcoded onboarding@resend.dev testing intercept
-    // Production should use the verified domain set in RESEND_FROM_ADDRESS
-    // Ensure you have verified your domain in Resend (e.g., bdigitizing.pro)
+    const targetAdminEmail = adminEmail || fallbackAdmin;
+    const targetClientEmail = clientEmail || user.email;
     
     if (type === 'NEW_ORDER') {
-      console.log(`[Email Service] Sending New Order Email to Admin (${targetAdminEmail}) for Order ${orderId}`);
       await resend.emails.send({
         from: fromAddress,
         to: targetAdminEmail,
-        subject: `🚨 New Order Received: ${orderId}`,
+        subject: `🚨 New Order Received: ${orderId || 'Direct'}`,
         html: `
           <h2>New Order Placed</h2>
           <p><strong>Order ID:</strong> ${orderId}</p>
-          <p><strong>Client:</strong> ${clientEmail}</p>
+          <p><strong>Client:</strong> ${targetClientEmail}</p>
           <p>Log in to the admin dashboard to review the order details and assign it for digitizing.</p>
         `
       });
     } else if (type === 'ORDER_DELIVERED') {
-      console.log(`[Email Service] Sending Order Delivered Email to Client (${targetClientEmail}) for Order ${orderId}`);
       await resend.emails.send({
         from: fromAddress,
         to: targetClientEmail,
-        subject: `📦 Your Order ${orderId} is Ready!`,
+        subject: `📦 Your Order ${orderId || ''} is Ready!`,
         html: `
           <h2>Good news! Your digitized files are ready.</h2>
           <p>Order <strong>${orderId}</strong> has been completed by our digitizers.</p>
@@ -58,14 +61,13 @@ export async function POST(req) {
         `
       });
     } else if (type === 'ORDER_COMPLETED') {
-      console.log(`[Email Service] Sending Order Completed Email to Admin (${targetAdminEmail}) for Order ${orderId}`);
       await resend.emails.send({
         from: fromAddress,
         to: targetAdminEmail,
-        subject: `✅ Order ${orderId} Accepted by Client`,
+        subject: `✅ Order ${orderId || ''} Accepted by Client`,
         html: `
           <h2>Order Accepted</h2>
-          <p>The client (${clientEmail}) has reviewed and accepted the files for order <strong>${orderId}</strong>.</p>
+          <p>The client (${targetClientEmail}) has reviewed and accepted the files for order <strong>${orderId}</strong>.</p>
           <p>The order is now marked as Completed.</p>
         `
       });

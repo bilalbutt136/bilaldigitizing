@@ -379,9 +379,10 @@ export async function deleteOrderInSupabase(orderId) {
 // Upsert Client Profile in Supabase DB (Automatic Save on Login & Order Submission)
 export async function upsertClientInSupabase(userData) {
   try {
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/clients', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ action: 'upsert', payload: userData })
     });
     const data = await res.json();
@@ -494,60 +495,18 @@ export async function saveCmsConfigToSupabase(key, value) {
 }
 
 
-// Upsert array of catalog items to a dedicated table
+// Upsert array of catalog items to a dedicated table via /api/catalog
 export async function upsertCatalogDataToSupabase(tableName, dataArray) {
-  if (!isSupabaseConfigured || !tableName || !Array.isArray(dataArray)) return false;
+  if (!tableName || !Array.isArray(dataArray)) return false;
 
   try {
-    // 1. Identify valid existing IDs to KEEP
-    const validExistingIds = dataArray
-      .filter(item => item.id && !(typeof item.id === 'string' && item.id.includes('-')))
-      .map(item => item.id);
-
-    // 2. Delete rows that are no longer in our list
-    if (validExistingIds.length > 0) {
-      const { error: delError } = await supabase
-        .from(tableName)
-        .delete()
-        .not('id', 'in', `(${validExistingIds.join(',')})`);
-      if (delError) console.warn(`Supabase delete ${tableName} warning:`, delError.message);
-    } else {
-      // If we have no existing IDs to keep, delete all rows
-      const { error: delError } = await supabase
-        .from(tableName)
-        .delete()
-        .not('id', 'is', null);
-      if (delError) console.warn(`Supabase delete all ${tableName} warning:`, delError.message);
-    }
-
-    // If there's nothing to insert/update, we're done
-    if (dataArray.length === 0) {
-      return true;
-    }
-
-    // 3. Prepare payload for upsert
-    const payload = dataArray.map(item => {
-      const newItem = {
-        ...item,
-        updated_at: new Date().toISOString()
-      };
-      // Remove temporary frontend IDs so Supabase can auto-generate the real ID
-      if (typeof newItem.id === 'string' && newItem.id.includes('-')) {
-        delete newItem.id;
-      }
-      return newItem;
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/catalog', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ action: 'upsertMany', tableName, payload: dataArray })
     });
-    
-    // 4. Upsert the data
-    const { error } = await supabase
-      .from(tableName)
-      .upsert(payload, { onConflict: 'id' });
-
-    if (error) {
-      console.warn(`Supabase upsert ${tableName} warning:`, error.message);
-      return false;
-    }
-    return true;
+    return res.ok;
   } catch (err) {
     console.warn(`Supabase sync ${tableName} exception:`, err);
     return false;
@@ -556,9 +515,10 @@ export async function upsertCatalogDataToSupabase(tableName, dataArray) {
 
 export const saveHeroServiceViaApi = async (serviceData, allSlides = null) => {
   try {
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/admin/services', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ serviceData, allSlides })
     });
     const result = await res.json();
@@ -586,10 +546,11 @@ export const upsertHeroContent = async (data) => {
       sort_order: h.sort_order || 0,
       is_active: h.is_active !== undefined ? h.is_active : true
     }));
-    const res = await fetch('/api/admin/cms/hero', {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/catalog', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dbPayload)
+      headers,
+      body: JSON.stringify({ action: 'upsertMany', tableName: 'hero_slides', payload: dbPayload })
     });
     return res.ok;
   } catch { return false; }
@@ -597,9 +558,10 @@ export const upsertHeroContent = async (data) => {
 export const upsertPricingTiers = (data) => upsertCatalogDataToSupabase('pricing_cards', data);
 export const savePortfolioItemViaApi = async (item) => {
   try {
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/catalog', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         action: 'upsert',
         tableName: 'portfolio',
@@ -629,9 +591,10 @@ export const savePortfolioItemViaApi = async (item) => {
 
 export const deletePortfolioItemViaApi = async (id) => {
   try {
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/catalog', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         action: 'delete',
         tableName: 'portfolio',
@@ -661,9 +624,10 @@ export const upsertPortfolioItems = async (data) => {
       formats: item.formats || 'DST, EMB',
       client_type: item.clientType || item.client_type || 'regular'
     }));
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/catalog', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ action: 'upsertMany', tableName: 'portfolio', payload: dbPayload })
     });
     return res.ok;
@@ -672,10 +636,11 @@ export const upsertPortfolioItems = async (data) => {
 export const upsertPatchCards = (data) => upsertCatalogDataToSupabase('patch_cards', data);
 export const upsertFaqs = async (data) => {
   try {
-    const res = await fetch('/api/admin/cms/faqs', {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/catalog', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      headers,
+      body: JSON.stringify({ action: 'upsertMany', tableName: 'faqs', payload: data })
     });
     return res.ok;
   } catch { return false; }
@@ -694,10 +659,11 @@ export const upsertSewOuts = async (data) => {
       sort_order: item.sortOrder !== undefined ? Number(item.sortOrder) : (item.sort_order || 0),
       is_active: item.is_active !== undefined ? item.is_active : true
     }));
-    const res = await fetch('/api/admin/cms/sewouts', {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/catalog', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dbPayload)
+      headers,
+      body: JSON.stringify({ action: 'upsertMany', tableName: 'sew_outs', payload: dbPayload })
     });
     return res.ok;
   } catch { return false; }
@@ -705,10 +671,11 @@ export const upsertSewOuts = async (data) => {
 
 export const upsertTestimonials = async (data) => {
   try {
-    const res = await fetch('/api/admin/cms/testimonials', {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/catalog', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      headers,
+      body: JSON.stringify({ action: 'upsertMany', tableName: 'testimonials', payload: data })
     });
     return res.ok;
   } catch { return false; }
@@ -716,10 +683,11 @@ export const upsertTestimonials = async (data) => {
 
 export const upsertDigitizers = async (data) => {
   try {
-    const res = await fetch('/api/admin/cms/team', {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/catalog', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      headers,
+      body: JSON.stringify({ action: 'upsertMany', tableName: 'digitizers', payload: data })
     });
     return res.ok;
   } catch { return false; }
@@ -750,9 +718,10 @@ export async function upsertPricingTier(tierData) {
       delete payload.id;
     }
 
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/catalog', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ action: 'upsert', tableName: 'pricing_tiers', payload })
     });
 
@@ -771,9 +740,10 @@ export async function upsertPricingTier(tierData) {
 
 export async function deletePricingTier(tierId) {
   try {
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/catalog', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ action: 'delete', tableName: 'pricing_tiers', payload: { id: tierId } })
     });
     return res.ok;
@@ -808,9 +778,10 @@ export async function fetchHomePageContentFromSupabase() {
 
 export async function updateHomePageSettingsInSupabase(payloadArray) {
   try {
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/admin/homepage', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ settings: payloadArray })
     });
     const data = await res.json();
@@ -1021,9 +992,10 @@ export async function verifyAdminSession(email) {
   if (!email) return { success: false, isAdmin: false };
 
   try {
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/admin/session', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ email })
     });
     const json = await res.json();
@@ -1036,9 +1008,10 @@ export async function verifyAdminSession(email) {
 
 export async function fetchAdminUsers(email) {
   try {
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/admin/users', {
       method: 'GET',
-      headers: { 'x-admin-email': email || '' }
+      headers
     });
     const json = await res.json();
     return json?.admins || [];
@@ -1050,9 +1023,10 @@ export async function fetchAdminUsers(email) {
 
 export async function addAdminUserInSupabase(name, email, callerEmail) {
   try {
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/admin/users', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ name, email, callerEmail })
     });
     const json = await res.json();
@@ -1067,9 +1041,10 @@ export async function addAdminUserInSupabase(name, email, callerEmail) {
 
 export async function removeAdminUserInSupabase(email, callerEmail) {
   try {
+    const headers = await getAuthHeaders();
     const res = await fetch(`/api/admin/users?email=${encodeURIComponent(email)}`, {
       method: 'DELETE',
-      headers: { 'x-admin-email': callerEmail || '' }
+      headers
     });
     const json = await res.json();
     if (!json?.success) {
@@ -1087,16 +1062,10 @@ export async function removeAdminUserInSupabase(email, callerEmail) {
 
 export async function depositWalletViaApi(amount, paymentMethod = 'Card / Manual') {
   try {
-    const sessionRes = await supabase.auth.getSession().catch(() => null);
-    const token = sessionRes?.data?.session?.access_token;
-    if (!token) return { success: false, error: 'Not authenticated.' };
-
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/wallet', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers,
       body: JSON.stringify({ action: 'deposit', amount, paymentMethod })
     });
     const json = await res.json();
@@ -1109,22 +1078,10 @@ export async function depositWalletViaApi(amount, paymentMethod = 'Card / Manual
 
 export async function deductWalletViaApi(amount, paymentMethod = 'Studio Wallet Credit', orderId = null) {
   try {
-    let sessionRes = await supabase.auth.getSession().catch(() => null);
-    let token = sessionRes?.data?.session?.access_token;
-    
-    if (!token) {
-      const refreshRes = await supabase.auth.refreshSession().catch(() => null);
-      token = refreshRes?.data?.session?.access_token;
-    }
-
-    if (!token) return { success: false, error: 'Authentication session expired. Please sign in again.' };
-
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/wallet', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers,
       body: JSON.stringify({ action: 'deduct', amount, paymentMethod, orderId })
     });
     const json = await res.json();
@@ -1171,9 +1128,10 @@ export async function fetchWalletBalanceFromSupabase(email) {
 
 export async function addStoreProduct(product) {
   try {
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/catalog', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ action: 'upsert', tableName: 'store_products', payload: product })
     });
     return res.ok ? product : null;
@@ -1182,9 +1140,10 @@ export async function addStoreProduct(product) {
 
 export async function createConversation(dbConv) {
   try {
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ action: 'upsertConversation', payload: dbConv })
     });
     const data = await res.json();
