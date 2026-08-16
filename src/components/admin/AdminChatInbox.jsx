@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase/client';
-import { fetchConversations, addChatMessage, markConversationAsRead } from '../../services/supabaseService';
+import { fetchConversations, addChatMessage, markConversationAsRead, subscribeToLiveMessages } from '../../services/supabaseService';
 import { playNotificationSound } from '../../utils/audioNotification';
 import {
   MessageSquare,
@@ -63,31 +63,88 @@ export const AdminChatInbox = () => {
     const loadChats = async () => {
       if (!isMounted) return;
       const data = await fetchConversations();
-      if (data && data.length > 0) {
-        setConversations(prev => {
-          const newThreads = deduplicateThreads(data);
-          // Only play sound if new message count increased
-          const prevCount = prev.reduce((acc, c) => acc + (c.messages?.length || 0), 0);
-          const newCount = newThreads.reduce((acc, c) => acc + (c.messages?.length || 0), 0);
-          if (newCount > prevCount) {
-             playNotificationSound('receive');
-          }
-          return newThreads;
-        });
+      if (data && data.length > 0 && isMounted) {
+        setConversations(deduplicateThreads(data));
       }
     };
     
-    // Initial load
+    // Initial fetch once
     loadChats();
     
-    // Fallback polling loop to guarantee updates even if Supabase Realtime isn't configured
-    const interval = setInterval(loadChats, 3000);
+    // Realtime PostgreSQL subscription for instant message delivery
+    const unsubscribe = subscribeToLiveMessages(
+      (msgPayload) => {
+        if (!isMounted) return;
+        const record = msgPayload.new || msgPayload.record;
+        if (!record) return;
+
+        const newMsg = {
+          id: record.id,
+          conversation_id: record.conversation_id,
+          sender: record.sender,
+          senderName: record.sender_name,
+          text: record.text,
+          attachment: record.attachment,
+          timestamp: record.timestamp || record.created_at || new Date().toISOString()
+        };
+
+        if (newMsg.sender === 'client') {
+          playNotificationSound('receive');
+        }
+
+        setConversations(prev => {
+          const exists = prev.some(c => c.id === newMsg.conversation_id);
+          if (!exists) {
+            // New conversation thread initiated, fetch latest
+            loadChats();
+            return prev;
+          }
+
+          return prev.map(c => {
+            if (c.id === newMsg.conversation_id) {
+              const alreadyHas = (c.messages || []).some(m => m.id === newMsg.id || (m.text === newMsg.text && m.timestamp === newMsg.timestamp));
+              if (alreadyHas) return c;
+              return {
+                ...c,
+                messages: [...(c.messages || []), newMsg],
+                unreadCount: activeChatId === c.id ? 0 : (c.unreadCount || 0) + (newMsg.sender === 'client' ? 1 : 0),
+                updatedAt: newMsg.timestamp
+              };
+            }
+            return c;
+          });
+        });
+      },
+      (convPayload) => {
+        if (!isMounted) return;
+        const conv = convPayload.new || convPayload.record;
+        if (!conv) return;
+
+        setConversations(prev => {
+          const exists = prev.some(c => c.id === conv.id);
+          if (!exists) {
+            loadChats();
+            return prev;
+          }
+          return prev.map(c => c.id === conv.id ? { ...c, ...conv } : c);
+        });
+      }
+    );
+
+    // Cross-tab and window event listener for instant local sync
+    const handleLocalSync = (e) => {
+      if (e.detail && Array.isArray(e.detail)) {
+        setConversations(deduplicateThreads(e.detail));
+      }
+    };
+    window.addEventListener('bdigi_chat_update', handleLocalSync);
 
     return () => {
       isMounted = false;
-      clearInterval(interval);
+      if (typeof unsubscribe === 'function') unsubscribe();
+      window.removeEventListener('bdigi_chat_update', handleLocalSync);
     };
-  }, []);
+  }, [activeChatId]);
 
   // Internal auto-scroll chat feed to bottom without scrolling parent window
   const scrollToBottom = () => {

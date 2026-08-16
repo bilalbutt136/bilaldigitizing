@@ -1176,6 +1176,49 @@ export async function markConversationAsRead(chatId) {
   } catch { return false; }
 }
 
+/**
+ * Supabase Realtime Subscription for Live Messages & Conversations
+ * Listens directly to PostgreSQL mutations without HTTP polling.
+ */
+export function subscribeToLiveMessages(onMessageChange, onConversationChange) {
+  if (!isSupabaseConfigured || !supabase) return () => {};
+
+  const channelId = `chat-rt-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+  const channel = supabase.channel(channelId);
+
+  if (onMessageChange) {
+    channel.on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'messages' },
+      (payload) => {
+        onMessageChange(payload);
+      }
+    );
+  }
+
+  if (onConversationChange) {
+    channel.on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'conversations' },
+      (payload) => {
+        onConversationChange(payload);
+      }
+    );
+  }
+
+  channel.subscribe((status) => {
+    if (status === 'SUBSCRIBED') {
+      // Realtime connection active
+    }
+  });
+
+  return () => {
+    try {
+      supabase.removeChannel(channel);
+    } catch {}
+  };
+}
+
 // ============================================================
 // META PIXEL / TRACKING LOGS
 // ============================================================

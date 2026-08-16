@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { playNotificationSound } from '../../utils/audioNotification';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase/client';
-import { fetchConversations, addChatMessage, createConversation } from '../../services/supabaseService';
+import { fetchConversations, addChatMessage, createConversation, subscribeToLiveMessages } from '../../services/supabaseService';
 import {
   MessageSquare,
   X,
@@ -35,33 +35,83 @@ export const ClientLiveChatWidget = () => {
       if (!isMounted) return;
       if (isSupabaseConfigured) {
         const data = await fetchConversations();
-        if (data && data.length > 0) {
-          setChats(prev => {
-             const prevCount = Array.isArray(prev) ? prev.reduce((acc, c) => acc + (c.messages?.length || 0), 0) : 0;
-             const newCount = Array.isArray(data) ? data.reduce((acc, c) => acc + (c.messages?.length || 0), 0) : 0;
-             if (newCount > prevCount) {
-                 playNotificationSound('receive');
-             }
-             return data;
-          });
+        if (data && data.length > 0 && isMounted) {
+          setChats(data);
         }
       } else {
         try {
           const saved = typeof window !== 'undefined' && localStorage.getItem('bdigi_admin_chats');
-          if (saved) setChats(JSON.parse(saved));
+          if (saved && isMounted) setChats(JSON.parse(saved));
         } catch {}
       }
     };
 
-    // Initial load
+    // Initial load once
     loadChats();
 
-    // Fallback polling loop
-    const interval = setInterval(loadChats, 3000);
+    // Supabase Realtime Live Message Subscription
+    const unsubscribe = subscribeToLiveMessages(
+      (msgPayload) => {
+        if (!isMounted) return;
+        const record = msgPayload.new || msgPayload.record;
+        if (!record) return;
+
+        const newMsg = {
+          id: record.id,
+          conversation_id: record.conversation_id,
+          sender: record.sender,
+          senderName: record.sender_name,
+          text: record.text,
+          attachment: record.attachment,
+          timestamp: record.timestamp || record.created_at || new Date().toISOString()
+        };
+
+        if (newMsg.sender === 'admin' || newMsg.sender === 'support') {
+          playNotificationSound('receive');
+        }
+
+        setChats(prev => {
+          const safePrev = Array.isArray(prev) ? prev : [];
+          const exists = safePrev.some(c => c.id === newMsg.conversation_id);
+          if (!exists) {
+            loadChats();
+            return safePrev;
+          }
+
+          return safePrev.map(c => {
+            if (c.id === newMsg.conversation_id) {
+              const alreadyHas = (c.messages || []).some(m => m.id === newMsg.id || (m.text === newMsg.text && m.timestamp === newMsg.timestamp));
+              if (alreadyHas) return c;
+              return {
+                ...c,
+                messages: [...(c.messages || []), newMsg],
+                updatedAt: newMsg.timestamp
+              };
+            }
+            return c;
+          });
+        });
+      },
+      (convPayload) => {
+        if (!isMounted) return;
+        const conv = convPayload.new || convPayload.record;
+        if (!conv) return;
+
+        setChats(prev => {
+          const safePrev = Array.isArray(prev) ? prev : [];
+          const exists = safePrev.some(c => c.id === conv.id);
+          if (!exists) {
+            loadChats();
+            return safePrev;
+          }
+          return safePrev.map(c => c.id === conv.id ? { ...c, ...conv } : c);
+        });
+      }
+    );
     
     return () => {
       isMounted = false;
-      clearInterval(interval);
+      if (typeof unsubscribe === 'function') unsubscribe();
     };
   }, []);
 
