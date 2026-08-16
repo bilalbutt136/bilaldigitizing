@@ -180,28 +180,28 @@ export const CheckoutModal = () => {
       badge: 'POPULAR'
     },
     { 
-      id: 'dollarpay_apple_pay', 
+      id: 'apple_pay', 
       name: 'Apple Pay', 
       subtext: 'Touch ID / Face ID 1-Click',
       icon: <ApplePayBrandIcon />,
       badge: 'FAST'
     },
     { 
-      id: 'dollarpay_google_pay', 
+      id: 'google_pay', 
       name: 'Google Pay', 
       subtext: 'Google Wallet & Saved Cards',
       icon: <GooglePayBrandIcon />,
       badge: 'FAST'
     },
     { 
-      id: 'dollarpay_paypal', 
+      id: 'paypal', 
       name: 'PayPal', 
       subtext: 'PYUSD / PayPal Crypto',
       icon: <PayPalBrandIcon />,
-      badge: 'VERIFIED'
+      badge: 'PYUSD'
     },
     { 
-      id: 'dollarpay_cashapp', 
+      id: 'cashapp', 
       name: 'Cash App Pay', 
       subtext: 'Bitcoin Lightning ⚡ Instant',
       icon: <CashAppBrandIcon />,
@@ -288,11 +288,11 @@ export const CheckoutModal = () => {
         // Route to the appropriate view based on the specific method selected
         if (methodId === 'card') {
           setActiveView('card');
-        } else if (methodId === 'dollarpay_cashapp') {
+        } else if (methodId === 'cashapp' || methodId === 'lightning' || methodId === 'dollarpay_cashapp') {
           setActiveView('cashapp');
-        } else if (methodId === 'dollarpay_paypal') {
+        } else if (methodId === 'paypal' || methodId === 'pyusd' || methodId === 'dollarpay_paypal') {
           setActiveView('paypal');
-        } else if (methodId === 'dollarpay_apple_pay' || methodId === 'dollarpay_google_pay') {
+        } else if (methodId === 'apple_pay' || methodId === 'google_pay' || methodId === 'dollarpay_apple_pay' || methodId === 'dollarpay_google_pay') {
           // Apple Pay / Google Pay directly opens external window
           window.open(data.paymentUrl, '_blank');
           setActiveView('browser_waiting');

@@ -38,13 +38,81 @@ export async function GET(request) {
       return NextResponse.json({ success: false, error: 'Invoice not found' }, { status: 404 });
     }
 
+    let currentStatus = invoice.status;
+
+    // If still pending, actively check BoltPayouts live status API for instant settlement
+    if ((currentStatus === 'pending' || currentStatus === 'unpaid') && invoice.bolt_order_id) {
+      try {
+        const { data: configRow } = await supabaseAdmin
+          .from('site_config')
+          .select('value')
+          .eq('key', 'boltpayouts_config')
+          .maybeSingle();
+
+        const apiKey = configRow?.value?.apiKey;
+        if (apiKey) {
+          const boltCheckRes = await fetch(`https://www.boltpayouts.xyz/api/check-status?orderId=${invoice.bolt_order_id}`, {
+            headers: { 'x-api-key': apiKey }
+          });
+          const boltCheckData = await boltCheckRes.json().catch(() => ({}));
+          
+          if (boltCheckData && (boltCheckData.status === 'paid' || boltCheckData.status === 'completed' || boltCheckData.paid === true)) {
+            currentStatus = 'paid';
+            
+            // Mark invoice paid
+            await supabaseAdmin
+              .from('invoices')
+              .update({ 
+                status: 'paid', 
+                paid_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', invoice.id);
+
+            const amount = parseFloat(invoice.amount || 0);
+
+            // Deposit to wallet
+            await supabaseAdmin.rpc('deposit_funds', {
+              p_client_email: cleanUserEmail,
+              p_amount: amount,
+              p_payment_method: `BoltPayouts (${invoice.payment_method || invoice.method || 'online'})`
+            });
+
+            // If attached to an order, deduct and update order status
+            if (invoice.order_id) {
+              await supabaseAdmin.rpc('deduct_wallet_balance', {
+                p_client_email: cleanUserEmail,
+                p_amount: amount,
+                p_order_id: String(invoice.order_id)
+              });
+
+              await supabaseAdmin
+                .from('orders')
+                .update({ 
+                  status: 'in_progress', 
+                  payment_status: 'paid',
+                  paid_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', invoice.order_id);
+            }
+          }
+        }
+      } catch (checkErr) {
+        console.warn('[Bolt Status] Active status check notice:', checkErr.message);
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      status: invoice.status,
+      status: currentStatus,
       amount: invoice.amount,
       payment_method: invoice.payment_method || invoice.method,
       method: invoice.method || invoice.payment_method,
-      invoice: invoice
+      invoice: {
+        ...invoice,
+        status: currentStatus
+      }
     });
 
   } catch (err) {
