@@ -119,16 +119,33 @@ export async function POST(request) {
       const isOrder = convId.startsWith('order-') || Boolean(payload.order_id);
       const rawOrderId = payload.order_id || (convId.startsWith('order-') ? convId.replace('order-', '') : null);
 
-      // Upsert conversation to prevent Foreign Key constraint violations
+      // Upsert conversation to prevent Foreign Key constraint violations without corrupting customer name or titles
       try {
-        await supabase.from('conversations').upsert({
-          id: convId,
-          order_id: rawOrderId,
-          order_title: payload.order_title || payload.orderTitle || (isOrder ? `Order #${rawOrderId}` : 'General Inquiries'),
-          client_name: payload.sender_name || payload.senderName || 'Client',
-          client_email: payload.client_email || payload.clientEmail || 'client@studio.com',
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'id' });
+        const { data: existingConv } = await supabase.from('conversations').select('*').eq('id', convId).maybeSingle();
+
+        if (!existingConv) {
+          let orderInfo = null;
+          if (rawOrderId) {
+            const { data: o } = await supabase.from('orders').select('title, client_name, client_email, notes').eq('id', rawOrderId).maybeSingle();
+            orderInfo = o;
+          }
+
+          const finalClientName = (payload.sender === 'client' ? (payload.sender_name || payload.senderName) : null) || orderInfo?.client_name || 'Client';
+          const finalClientEmail = payload.client_email || payload.clientEmail || orderInfo?.client_email || 'client@studio.com';
+          const finalOrderTitle = orderInfo?.title || payload.order_title || payload.orderTitle || (isOrder ? `Order #${rawOrderId}` : 'Direct Support');
+
+          await supabase.from('conversations').insert([{
+            id: convId,
+            order_id: rawOrderId,
+            order_title: finalOrderTitle,
+            client_name: finalClientName,
+            client_email: finalClientEmail,
+            client_company: payload.company || 'Studio Client',
+            status: 'online',
+            unread_count: 0,
+            updated_at: new Date().toISOString()
+          }]);
+        }
       } catch (convUpsertErr) {
         console.warn('Conversation upsert notice:', convUpsertErr);
       }
