@@ -306,11 +306,18 @@ export const StateProvider = ({ children }) => {
 
           upsertClientInSupabase({ ...uData, role }).catch(() => {});
         } else {
-          // Check if we had a local storage user that was signed out
-          const localAuth = getInitialAuth();
-          if (!localAuth.user && !cancelled) {
+          // If Supabase has no authenticated session, clear any stale local user state immediately (Rule 3)
+          if (!cancelled) {
             setIsAuthenticated(false);
             setAuthUser(null);
+            setCurrentView('public');
+            setWalletBalance(0);
+            try {
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('bdigi_auth_user');
+                localStorage.removeItem('bdigi_current_view');
+              }
+            } catch {}
           }
         }
       } catch (sessErr) {

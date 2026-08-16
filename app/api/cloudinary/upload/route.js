@@ -1,16 +1,48 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
+import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 import { v4 as uuidv4 } from 'uuid';
+
+const ALLOWED_EXTENSIONS = new Set([
+  'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf',
+  'dst', 'pes', 'emb', 'exp', 'jef', 'ai', 'eps', 'zip'
+]);
+
+const ALLOWED_BUCKETS = new Set([
+  'portfolio-images', 'order-files', 'chat-attachments', 'media-library', 'customer-assets'
+]);
+
+const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB
 
 export async function POST(request) {
   try {
+    const { user, isAdmin } = await getServerAuthUser(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Authentication required to upload files.' }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file');
-    const folder = formData.get('folder') || 'hero-showcase';
-    const bucket = formData.get('bucket') || 'portfolio-images';
+    let folder = (formData.get('folder') || 'uploads').toString().replace(/[^a-zA-Z0-9_-]/g, '');
+    let bucket = (formData.get('bucket') || 'portfolio-images').toString().trim();
 
-    if (!file) {
-      return NextResponse.json({ success: false, error: 'No file provided' }, { status: 400 });
+    if (!file || typeof file === 'string') {
+      return NextResponse.json({ success: false, error: 'No valid file provided' }, { status: 400 });
+    }
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      return NextResponse.json({ success: false, error: 'File size exceeds maximum limit of 25MB.' }, { status: 400 });
+    }
+
+    if (!ALLOWED_BUCKETS.has(bucket)) {
+      bucket = 'portfolio-images';
+    }
+
+    const originalName = file.name || 'file.png';
+    const fileExt = (originalName.split('.').pop() || '').toLowerCase();
+
+    if (!ALLOWED_EXTENSIONS.has(fileExt)) {
+      return NextResponse.json({ success: false, error: `Unsupported file format (.${fileExt}).` }, { status: 400 });
     }
 
     const supabase = createAdminClient();
@@ -18,16 +50,14 @@ export async function POST(request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Generate unique filename to prevent overwriting
-    const originalName = file.name || 'image.png';
-    const fileExt = originalName.split('.').pop() || 'png';
+    // Generate safe unique filename
     const uniqueFilename = `${folder}/${uuidv4()}.${fileExt}`;
 
     // Try upload to Supabase Storage
     let { error } = await supabase.storage
       .from(bucket)
       .upload(uniqueFilename, buffer, {
-        contentType: file.type || 'image/png',
+        contentType: file.type || 'application/octet-stream',
         cacheControl: '3600',
         upsert: true
       });
@@ -39,7 +69,7 @@ export async function POST(request) {
         const retry = await supabase.storage
           .from(bucket)
           .upload(uniqueFilename, buffer, {
-            contentType: file.type || 'image/png',
+            contentType: file.type || 'application/octet-stream',
             cacheControl: '3600',
             upsert: true
           });
@@ -63,6 +93,8 @@ export async function POST(request) {
       success: true,
       url: publicUrlData.publicUrl,
       public_id: uniqueFilename,
+      filename: originalName,
+      size: file.size
     });
   } catch (error) {
     console.error('[Upload API Error]', error);

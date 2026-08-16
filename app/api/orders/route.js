@@ -1,50 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-
-async function getAuthenticatedUser(request) {
-  let user = null;
-  const authHeader = request?.headers?.get('Authorization') || request?.headers?.get('authorization');
-  
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    const adminClient = createAdminClient();
-    const { data: userData } = await adminClient.auth.getUser(token);
-    if (userData?.user) {
-      user = userData.user;
-    }
-  }
-
-  if (!user) {
-    try {
-      const cookieStore = await cookies();
-      const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-        {
-          cookies: {
-            getAll() { return cookieStore.getAll(); },
-            setAll(cookiesToSet) {
-              cookiesToSet.forEach(({ name, value, options }) => {
-                try { cookieStore.set(name, value, options); } catch {}
-              });
-            },
-          },
-        }
-      );
-      const { data: { user: cookieUser } } = await supabase.auth.getUser();
-      user = cookieUser;
-    } catch {}
-  }
-
-  if (!user) return { user: null, isAdmin: false };
-  
-  // Check admin status using the service role client
-  const adminClient = createAdminClient();
-  const { data: adminData } = await adminClient.from('admins').select('email').eq('email', user.email.toLowerCase()).maybeSingle();
-  return { user, isAdmin: !!adminData };
-}
+import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 
 export async function GET(request) {
   try {
@@ -53,7 +9,7 @@ export async function GET(request) {
     const orderId = searchParams.get('orderId');
     const supabase = createAdminClient();
     
-    const { user, isAdmin } = await getAuthenticatedUser(request);
+    const { user, isAdmin } = await getServerAuthUser(request);
 
     if (action === 'fetchAll') {
       if (!user) {
@@ -63,7 +19,7 @@ export async function GET(request) {
       let query = supabase.from('orders').select('*, order_files(*), order_messages(*)').order('created_at', { ascending: false });
       
       if (!isAdmin) {
-        query = query.eq('client_email', user.email);
+        query = query.ilike('client_email', user.email.toLowerCase().trim());
       }
       
       const { data, error } = await query;
@@ -83,7 +39,7 @@ export async function GET(request) {
       
       if (!isAdmin) {
         const { data: orderData, error: orderError } = await supabase.from('orders').select('client_email').eq('id', orderId).single();
-        if (orderError || orderData?.client_email !== user.email) {
+        if (orderError || orderData?.client_email?.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
       }
@@ -113,11 +69,11 @@ export async function POST(request) {
     const { action, payload } = data;
     const supabase = createAdminClient();
     
-    const { user, isAdmin } = await getAuthenticatedUser(request);
+    const { user, isAdmin } = await getServerAuthUser(request);
 
     if (action === 'createOrder') {
       const { primaryDbRow, orderFiles } = payload;
-      const clientEmail = user?.email || primaryDbRow.clientEmail || primaryDbRow.email;
+      const clientEmail = (user?.email || primaryDbRow.clientEmail || primaryDbRow.email || '').toLowerCase().trim();
       
       if (!clientEmail) {
         return NextResponse.json({ error: 'Client email is required to submit an order' }, { status: 400 });
@@ -131,11 +87,15 @@ export async function POST(request) {
         (orderFiles && orderFiles[0]?.file_url) || 
         null;
 
+      // Enforce safe status and pricing validation
+      const safePaymentStatus = isAdmin ? (primaryDbRow.paymentStatus || 'pending') : 'pending';
+      const safeStatus = isAdmin ? (primaryDbRow.status || 'submitted') : 'submitted';
+
       const mappedDbRow = {
         id: primaryDbRow.id || `ord-${Date.now()}`,
         title: primaryDbRow.title || 'Service Order',
         client_name: primaryDbRow.clientName || user?.user_metadata?.full_name || 'Valued Client',
-        client_email: clientEmail.toLowerCase().trim(),
+        client_email: clientEmail,
         service_category: primaryDbRow.serviceCategory || primaryDbRow.type || 'Embroidery Digitizing',
         service_type: primaryDbRow.type || 'digitizing',
         fabric_type: primaryDbRow.fabricType || null,
@@ -143,8 +103,8 @@ export async function POST(request) {
         is_rush: Boolean(primaryDbRow.isRush),
         price: parseFloat(primaryDbRow.price || 15.00),
         cost: parseFloat(primaryDbRow.price || 15.00),
-        status: primaryDbRow.status || 'submitted',
-        payment_status: primaryDbRow.paymentStatus || 'pending',
+        status: safeStatus,
+        payment_status: safePaymentStatus,
         artwork_url: primaryArtworkUrl,
         image_url: primaryArtworkUrl,
         logo: primaryArtworkUrl,
@@ -193,10 +153,10 @@ export async function POST(request) {
     }
 
     if (action === 'updateStatus') {
-      if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      if (!isAdmin) return NextResponse.json({ error: 'Unauthorized: Admin privileges required.' }, { status: 403 });
       const { orderId, newStatus, extraData } = payload;
       
-      const updatePayload = { status: newStatus };
+      const updatePayload = { status: newStatus, updated_at: new Date().toISOString() };
       if (extraData?.outputFileUrl) {
         updatePayload.output_file_url = extraData.outputFileUrl;
       }
@@ -209,12 +169,11 @@ export async function POST(request) {
         for (const file of extraData.uploadedMachineFiles) {
           if (!file.url || file.error) continue;
           
-          // Check if file already exists in DB to prevent duplicates
           const { data: existing } = await supabase
             .from('order_files')
             .select('id')
             .eq('file_url', file.url)
-            .single();
+            .maybeSingle();
             
           if (!existing) {
             await supabase.from('order_files').insert([{
@@ -222,7 +181,7 @@ export async function POST(request) {
               file_name: file.name || 'machine_file',
               file_format: file.format || file.name?.split('.').pop() || 'unknown',
               file_type: 'machine_file',
-              bucket_name: 'cloudinary',
+              bucket_name: 'portfolio-images',
               file_path: file.public_id || file.url,
               public_url: file.url,
               file_url: file.url,
@@ -239,11 +198,22 @@ export async function POST(request) {
       if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       if (!isAdmin) {
         const { data: orderData, error: orderError } = await supabase.from('orders').select('client_email, title').eq('id', payload.order_id).single();
-        if (orderError || orderData?.client_email !== user.email) {
+        if (orderError || orderData?.client_email?.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
       }
-      const { error } = await supabase.from('order_messages').insert([payload]);
+
+      const safeMessagePayload = {
+        order_id: payload.order_id,
+        sender_name: isAdmin ? (payload.sender_name || 'Master Digitizer') : (user.user_metadata?.full_name || payload.sender_name || 'Client'),
+        sender_role: isAdmin ? 'admin' : 'client',
+        is_staff: isAdmin,
+        message: payload.message || '',
+        attachment: payload.attachment || null,
+        created_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase.from('order_messages').insert([safeMessagePayload]);
       if (error) throw error;
 
       // Mirror to messages & conversations for unified real-time chat sync
@@ -254,15 +224,15 @@ export async function POST(request) {
           order_id: payload.order_id,
           order_title: payload.order_title || 'Order Discussion',
           client_email: user.email,
-          client_name: payload.sender_name || user.user_metadata?.full_name || 'Client',
+          client_name: safeMessagePayload.sender_name,
           updated_at: new Date().toISOString()
         }, { onConflict: 'id' });
 
         await supabase.from('messages').insert({
           conversation_id: convId,
-          sender: payload.is_staff ? 'admin' : 'client',
-          sender_name: payload.sender_name || (payload.is_staff ? 'Master Digitizer' : 'Client'),
-          text: payload.message,
+          sender: isAdmin ? 'admin' : 'client',
+          sender_name: safeMessagePayload.sender_name,
+          text: safeMessagePayload.message,
           created_at: new Date().toISOString()
         });
       } catch (convErr) {
@@ -277,12 +247,12 @@ export async function POST(request) {
       const { orderId, instructions } = payload;
       if (!isAdmin) {
         const { data: orderData, error: orderError } = await supabase.from('orders').select('client_email').eq('id', orderId).single();
-        if (orderError || orderData?.client_email !== user.email) {
+        if (orderError || orderData?.client_email?.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
       }
       await supabase.from('revisions').insert([{ order_id: orderId, details: instructions, status: 'pending' }]);
-      await supabase.from('orders').update({ status: 'revision_requested' }).eq('id', orderId);
+      await supabase.from('orders').update({ status: 'revision_requested', updated_at: new Date().toISOString() }).eq('id', orderId);
       return NextResponse.json({ success: true });
     }
 
@@ -291,17 +261,17 @@ export async function POST(request) {
       const { orderId } = payload;
       if (!isAdmin) {
         const { data: orderData, error: orderError } = await supabase.from('orders').select('client_email').eq('id', orderId).single();
-        if (orderError || orderData?.client_email !== user.email) {
+        if (orderError || orderData?.client_email?.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
       }
-      const { error } = await supabase.from('orders').update({ status: 'cancelled' }).eq('id', orderId);
+      const { error } = await supabase.from('orders').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', orderId);
       if (error) throw error;
       return NextResponse.json({ success: true });
     }
 
     if (action === 'deleteOrder') {
-      if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      if (!isAdmin) return NextResponse.json({ error: 'Unauthorized: Admin privileges required.' }, { status: 403 });
       const { orderId } = payload;
       const { error } = await supabase.from('orders').delete().eq('id', orderId);
       if (error) throw error;

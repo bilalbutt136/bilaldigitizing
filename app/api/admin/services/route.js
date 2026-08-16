@@ -1,45 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 import { revalidatePath } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
-async function checkIsAdmin() {
-  try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      {
-        cookies: {
-          getAll() { return cookieStore.getAll(); },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              try { cookieStore.set(name, value, options); } catch {}
-            });
-          },
-        },
-      }
-    );
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error || !user) return { user: null, isAdmin: false };
-
-    const adminClient = createAdminClient();
-    const { data: adminData } = await adminClient
-      .from('admins')
-      .select('email')
-      .eq('email', user.email.toLowerCase().trim())
-      .maybeSingle();
-
-    return { user, isAdmin: !!adminData };
-  } catch (err) {
-    console.error('[Admin Auth Check Exception]', err);
-    return { user: null, isAdmin: false };
-  }
-}
 
 export async function GET() {
   try {
@@ -79,8 +44,8 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const { isAdmin, user } = await checkIsAdmin();
-    if (!isAdmin && process.env.NODE_ENV === 'production' && !user) {
+    const { isAdmin, user } = await getServerAuthUser(request);
+    if (!user || !isAdmin) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Admin privileges required.' }, { status: 403 });
     }
 

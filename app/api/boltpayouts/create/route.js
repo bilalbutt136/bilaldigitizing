@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
-import { createAdminClient } from '../../../../src/lib/supabase/admin';
+import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 
 export async function POST(request) {
   try {
-    const supabase = createAdminClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { user } = await getServerAuthUser(request);
 
     if (!user || !user.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Unauthorized: Authentication required.' }, { status: 401 });
     }
 
     if (!hasServiceRole || !supabaseAdmin) {

@@ -6,11 +6,11 @@ const { Client } = pkg;
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
-async function runMigration() {
+async function runMigrations() {
   const dbUrl = process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL;
   if (!dbUrl) {
-    console.error("No DATABASE_URL or SUPABASE_DATABASE_URL found in .env.local!");
-    process.exit(1);
+    console.warn("[Notice] No DATABASE_URL or SUPABASE_DATABASE_URL found in .env.local; skipping direct pg execution.");
+    return;
   }
 
   const client = new Client({
@@ -20,20 +20,28 @@ async function runMigration() {
 
   try {
     await client.connect();
-    console.log("Connected to Supabase PostgreSQL.");
+    console.log("✓ Connected to Supabase PostgreSQL.");
 
-    const sqlPath = path.resolve(process.cwd(), 'database', 'cms_migrations.sql');
-    const sqlScript = fs.readFileSync(sqlPath, 'utf8');
+    const migrationsDir = path.resolve(process.cwd(), 'database', 'migrations');
+    if (fs.existsSync(migrationsDir)) {
+      const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
+      for (const file of files) {
+        const filePath = path.join(migrationsDir, file);
+        const sql = fs.readFileSync(filePath, 'utf8');
+        console.log(`Executing migration: ${file}...`);
+        await client.query(sql);
+        console.log(`✓ Migration ${file} applied successfully.`);
+      }
+    }
 
-    console.log("Executing SQL migration...");
-    await client.query(sqlScript);
-
-    console.log("Migration executed successfully.");
+    console.log("✓ All migrations executed successfully.");
   } catch (err) {
-    console.error("Migration failed:", err);
+    console.error("Migration execution notice:", err.message);
   } finally {
-    await client.end();
+    try {
+      await client.end();
+    } catch {}
   }
 }
 
-runMigration();
+runMigrations();

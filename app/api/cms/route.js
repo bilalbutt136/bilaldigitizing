@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
+import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 
 // Default built-in fallback content for standard CMS keys
 const DEFAULT_CMS_CONTENT = {
@@ -46,7 +47,6 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const key = searchParams.get('key');
-    const action = searchParams.get('action') || 'fetchContent';
 
     if (!key) {
       // Return all default fallback keys or list
@@ -91,6 +91,11 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    const { user, isAdmin } = await getServerAuthUser(request);
+    if (!user || !isAdmin) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Admin privileges required.' }, { status: 403 });
+    }
+
     const body = await request.json().catch(() => ({}));
     const { key, content } = body;
 

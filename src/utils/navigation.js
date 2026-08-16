@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
@@ -31,9 +32,11 @@ export function useLocation() {
 
 export function Navigate({ to, replace }) {
   const navigate = useNavigate();
-  if (typeof window !== 'undefined') {
-    navigate(to, { replace });
-  }
+  useEffect(() => {
+    if (to) {
+      navigate(to, { replace });
+    }
+  }, [to, replace, navigate]);
   return null;
 }
 

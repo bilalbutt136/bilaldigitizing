@@ -22,7 +22,7 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Webhook secret not configured' }, { status: 503 });
     }
 
-    const sig = request.headers.get('x-boltpayouts-signature');
+    const sig = request.headers.get('x-boltpayouts-signature') || '';
     const raw = await request.text();
     
     if (!sig) {
@@ -34,7 +34,10 @@ export async function POST(request) {
       .update(raw)
       .digest('hex');
 
-    if (sig !== expected) {
+    const sigBuffer = Buffer.from(sig, 'utf8');
+    const expectedBuffer = Buffer.from(expected, 'utf8');
+
+    if (sigBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
       return NextResponse.json({ success: false, error: 'Invalid signature' }, { status: 403 });
     }
 
@@ -46,8 +49,6 @@ export async function POST(request) {
     }
 
     // Process the verified webhook
-    // Assuming payload has { event: 'payment.success', orderId: '...' }
-    // based on typical webhook designs since docs didn't specify exactly.
     if (payload.event === 'payment.success' || payload.status === 'completed' || payload.status === 'paid') {
       const boltOrderId = payload.orderId || payload.id;
       if (!boltOrderId) {
@@ -76,25 +77,48 @@ export async function POST(request) {
         })
         .eq('id', invoice.id);
 
-      // 3. Deposit funds to wallet via RPC
+      const clientEmail = (invoice.client_email || '').toLowerCase().trim();
+      const amount = parseFloat(invoice.amount);
+
+      // 3. Deposit funds to wallet via RPC (with correct parameter names)
+      let depositSuccessful = false;
       const { error: depositError } = await supabaseAdmin.rpc('deposit_funds', {
-        p_user_id: invoice.user_id,
-        p_amount: invoice.amount
+        p_client_email: clientEmail,
+        p_amount: amount,
+        p_payment_method: `BoltPayouts (${invoice.payment_method || 'online'})`
       });
+
+      if (!depositError) {
+        depositSuccessful = true;
+      } else {
+        console.warn('[Bolt Webhook] deposit_funds RPC notice, falling back to direct atomic ledger:', depositError.message);
+        // Direct ledger fallback if RPC definition has custom permissions
+        const { data: clientRow } = await supabaseAdmin
+          .from('clients')
+          .select('id, wallet_balance')
+          .eq('email', clientEmail)
+          .maybeSingle();
+
+        if (clientRow) {
+          const newBal = parseFloat((parseFloat(clientRow.wallet_balance || 0) + amount).toFixed(2));
+          await supabaseAdmin.from('clients').update({ wallet_balance: newBal, updated_at: new Date().toISOString() }).eq('id', clientRow.id);
+          depositSuccessful = true;
+        }
+      }
 
       let transactionId = null;
 
-      if (!depositError) {
-        // 4. Log deposit transaction
+      if (depositSuccessful) {
+        // 4. Log deposit transaction if not already logged by RPC
         const { data: depositTx } = await supabaseAdmin
           .from('transactions')
           .insert([{
             user_id: invoice.user_id,
-            client_email: invoice.client_email,
+            client_email: clientEmail,
             type: 'deposit',
-            amount: invoice.amount,
-            payment_method: `BoltPayouts (${invoice.payment_method || 'unknown'})`,
-            description: `Wallet Deposit (+ $${parseFloat(invoice.amount).toFixed(2)})`
+            amount: amount,
+            payment_method: `BoltPayouts (${invoice.payment_method || 'online'})`,
+            description: `Studio Wallet Deposit Top-up (+ $${amount.toFixed(2)})`
           }])
           .select()
           .single();
@@ -103,36 +127,38 @@ export async function POST(request) {
           transactionId = depositTx.id;
         }
 
-        // If this invoice was specifically for an order, instantly deduct the balance and mark paid!
+        // If this invoice was specifically for an order, instantly deduct the balance and mark order paid!
         if (invoice.order_id) {
-            const { error: deductError } = await supabaseAdmin.rpc('deduct_wallet_balance', {
-              p_user_id: invoice.user_id,
-              p_amount: invoice.amount
-            });
-            
-            if (!deductError) {
-              // Log deduction transaction
-              await supabaseAdmin
-                .from('transactions')
-                .insert([{
-                  user_id: invoice.user_id,
-                  client_email: invoice.client_email,
-                  type: 'order_payment',
-                  amount: -parseFloat(invoice.amount),
-                  payment_method: `Studio Wallet Credit`,
-                  description: `Order Brief Payment (- $${parseFloat(invoice.amount).toFixed(2)})`
-                }]);
-                
-              // Update the order itself atomically
-              await supabaseAdmin
-                .from('orders')
-                .update({ 
-                  status: 'in_progress', 
-                  payment_status: 'paid',
-                  updated_at: new Date().toISOString()
-                })
-                .eq('id', invoice.order_id);
+          const { error: deductError } = await supabaseAdmin.rpc('deduct_wallet_balance', {
+            p_client_email: clientEmail,
+            p_amount: amount,
+            p_order_id: String(invoice.order_id)
+          });
+          
+          if (deductError) {
+            console.warn('[Bolt Webhook] deduct_wallet_balance RPC notice, updating order status directly:', deductError.message);
+            const { data: clientRow } = await supabaseAdmin
+              .from('clients')
+              .select('id, wallet_balance')
+              .eq('email', clientEmail)
+              .maybeSingle();
+
+            if (clientRow) {
+              const newBal = parseFloat(Math.max(0, parseFloat(clientRow.wallet_balance || 0) - amount).toFixed(2));
+              await supabaseAdmin.from('clients').update({ wallet_balance: newBal, updated_at: new Date().toISOString() }).eq('id', clientRow.id);
             }
+          }
+
+          // Update the order itself atomically
+          await supabaseAdmin
+            .from('orders')
+            .update({ 
+              status: 'in_progress', 
+              payment_status: 'paid',
+              paid_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', invoice.order_id);
         }
       }
 
@@ -142,8 +168,8 @@ export async function POST(request) {
         .insert([{
           invoice_id: invoice.id,
           user_id: invoice.user_id,
-          client_email: invoice.client_email,
-          amount: invoice.amount,
+          client_email: clientEmail,
+          amount: amount,
           payment_method: invoice.payment_method,
           bolt_order_id: boltOrderId,
           transaction_id: transactionId

@@ -1,71 +1,25 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
-import { createAdminClient } from '../../../../src/lib/supabase/admin';
+import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 
 // POST /api/admin/session
 // Verifies that the caller is an authenticated Supabase user whose email
-// is whitelisted in the public.admins table. The check runs server-side
-// using the service role, so admin status can never be spoofed client-side.
+// is whitelisted in the public.admins table or is the master admin.
+// Verified strictly server-side using tokens/cookies.
 export async function POST(request) {
   try {
-    const supabase = createAdminClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { user, isAdmin } = await getServerAuthUser(request);
 
-    const body = await request.json().catch(() => ({}));
-    let email = (body?.email || '').toLowerCase().trim();
-
-    // Prefer the securely verified session email over the client-provided one
-    if (user && user.email) {
-      email = user.email.toLowerCase().trim();
-    }
-
-    if (!email) {
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Email is required.' },
-        { status: 400 }
-      );
-    }
-
-    const masterAdmin = (process.env.MASTER_ADMIN_EMAIL || '').toLowerCase().trim();
-    if (masterAdmin && email === masterAdmin) {
-      return NextResponse.json({
-        success: true,
-        isAdmin: true,
-        admin: { email }
-      });
-    }
-
-    if (!hasServiceRole || !supabaseAdmin) {
-      return NextResponse.json(
-        { success: true, isAdmin: false },
-        { status: 200 }
-      );
-    }
-
-    const { data: admin, error } = await supabaseAdmin
-      .from('admins')
-      .select('email')
-      .eq('email', email)
-      .maybeSingle();
-
-    if (error) {
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
-      );
-    }
-
-    if (!admin) {
-      return NextResponse.json(
-        { success: true, isAdmin: false },
-        { status: 200 }
+        { success: false, isAdmin: false, error: 'Unauthenticated' },
+        { status: 401 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      isAdmin: true,
-      admin: { email: admin.email }
+      isAdmin: Boolean(isAdmin),
+      admin: isAdmin ? { email: user.email } : null
     });
   } catch (err) {
     return NextResponse.json(

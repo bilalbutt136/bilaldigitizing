@@ -1,50 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-
-async function getAuthenticatedUser(request) {
-  let user = null;
-  const authHeader = request?.headers?.get('Authorization') || request?.headers?.get('authorization');
-  
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    const adminClient = createAdminClient();
-    const { data: userData } = await adminClient.auth.getUser(token);
-    if (userData?.user) {
-      user = userData.user;
-    }
-  }
-
-  if (!user) {
-    try {
-      const cookieStore = await cookies();
-      const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-        {
-          cookies: {
-            getAll() { return cookieStore.getAll(); },
-            setAll(cookiesToSet) {
-              cookiesToSet.forEach(({ name, value, options }) => {
-                try { cookieStore.set(name, value, options); } catch {}
-              });
-            },
-          },
-        }
-      );
-      const { data: { user: cookieUser } } = await supabase.auth.getUser();
-      user = cookieUser;
-    } catch {}
-  }
-
-  if (!user) return { user: null, isAdmin: false };
-  
-  // Check admin status using the service role client
-  const adminClient = createAdminClient();
-  const { data: adminData } = await adminClient.from('admins').select('email').eq('email', user.email.toLowerCase()).maybeSingle();
-  return { user, isAdmin: !!adminData };
-}
+import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 
 export async function GET(request) {
   try {
@@ -53,8 +9,8 @@ export async function GET(request) {
     const supabase = createAdminClient();
 
     if (action === 'fetchAll') {
-      const { isAdmin } = await getAuthenticatedUser(request);
-      if (!isAdmin) {
+      const { user, isAdmin } = await getServerAuthUser(request);
+      if (!user || !isAdmin) {
         return NextResponse.json({ clients: [] });
       }
       
@@ -77,20 +33,37 @@ export async function POST(request) {
     const supabase = createAdminClient();
 
     if (action === 'upsert') {
-      const { user, isAdmin } = await getAuthenticatedUser();
+      const { user, isAdmin } = await getServerAuthUser(request);
       if (!user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        return NextResponse.json({ error: 'Unauthorized: Authentication required.' }, { status: 401 });
       }
       
-      const { email, provider, ...rest } = payload;
+      const targetEmail = (payload?.email || user.email).toLowerCase().trim();
       
-      if (!isAdmin && email !== user.email) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      if (!isAdmin && targetEmail !== user.email.toLowerCase().trim()) {
+        return NextResponse.json({ error: 'Forbidden: Cannot modify another client profile.' }, { status: 403 });
+      }
+
+      // Sanitize fields: regular customers cannot overwrite wallet_balance or role
+      let updatePayload = {
+        email: targetEmail,
+        name: payload.name || payload.full_name || user.user_metadata?.full_name || 'Client',
+        full_name: payload.full_name || payload.name || user.user_metadata?.full_name || 'Client',
+        phone: payload.phone || null,
+        company: payload.company || null,
+        avatar_url: payload.avatar_url || payload.avatar || null,
+        updated_at: new Date().toISOString()
+      };
+
+      if (isAdmin) {
+        if (payload.wallet_balance !== undefined) updatePayload.wallet_balance = parseFloat(payload.wallet_balance || 0);
+        if (payload.role !== undefined) updatePayload.role = payload.role;
+        if (payload.orders_count !== undefined) updatePayload.orders_count = parseInt(payload.orders_count || 0);
       }
 
       const { error } = await supabase
         .from('clients')
-        .upsert({ email, ...rest, updated_at: new Date().toISOString() }, { onConflict: 'email' });
+        .upsert(updatePayload, { onConflict: 'email' });
       if (error) throw error;
       return NextResponse.json({ success: true });
     }

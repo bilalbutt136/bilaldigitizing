@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
+import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -79,6 +80,11 @@ export async function GET() {
 
 export async function POST(req) {
   try {
+    const { user, isAdmin } = await getServerAuthUser(req);
+    if (!user || !isAdmin) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Admin privileges required.' }, { status: 403 });
+    }
+
     const supabase = createAdminClient();
     const body = await req.json();
     const { settings = [] } = body;
@@ -111,5 +117,3 @@ export async function POST(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
-

@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
-import { createAdminClient } from '../../../../src/lib/supabase/admin';
+import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 
 export async function GET(request) {
   try {
-    const supabase = createAdminClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { user, isAdmin } = await getServerAuthUser(request);
 
     if (!user || !user.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Unauthorized: Authentication required.' }, { status: 401 });
     }
 
     if (!hasServiceRole || !supabaseAdmin) {
@@ -22,12 +21,16 @@ export async function GET(request) {
       return NextResponse.json({ success: false, error: 'Missing invoiceId' }, { status: 400 });
     }
 
-    const { data: invoice } = await supabaseAdmin
+    let query = supabaseAdmin
       .from('invoices')
-      .select('status, amount, payment_method')
-      .eq('id', invoiceId)
-      .eq('user_id', user.id)
-      .maybeSingle();
+      .select('status, amount, payment_method, client_email')
+      .eq('id', invoiceId);
+
+    if (!isAdmin) {
+      query = query.eq('client_email', user.email);
+    }
+
+    const { data: invoice } = await query.maybeSingle();
 
     if (!invoice) {
       return NextResponse.json({ success: false, error: 'Invoice not found' }, { status: 404 });
