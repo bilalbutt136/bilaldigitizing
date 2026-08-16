@@ -268,6 +268,7 @@ export const AdminChatInbox = () => {
 
   const activeChat = conversations.find(c => c.id === activeChatId) || conversations[0] || null;
   const currentActiveChatId = activeChat ? activeChat.id : activeChatId;
+  const activeInfo = resolveThreadInfo(activeChat, orders);
 
   // Auto-mark active chat as read
   useEffect(() => {
