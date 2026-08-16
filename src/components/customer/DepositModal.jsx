@@ -289,19 +289,14 @@ export const DepositModal = () => {
       setLightningInvoice(lightning);
       setHasCopied(false);
       
-      // Route to the appropriate view based on the specific method selected
+      // Transition directly to the target view - links are opened on explicit user click to prevent popup blocking
       if (methodId === 'card') {
         setActiveView('card');
       } else if (methodId === 'cashapp' || methodId === 'lightning' || methodId === 'dollarpay_cashapp') {
         setActiveView('cashapp');
       } else if (methodId === 'paypal' || methodId === 'pyusd' || methodId === 'dollarpay_paypal') {
         setActiveView('paypal');
-      } else if (methodId === 'apple_pay' || methodId === 'google_pay' || methodId === 'dollarpay_apple_pay' || methodId === 'dollarpay_google_pay') {
-        // Apple Pay / Google Pay directly opens external window
-        window.open(data.paymentUrl, '_blank');
-        setActiveView('browser_waiting');
       } else {
-        window.open(data.paymentUrl, '_blank');
         setActiveView('browser_waiting');
       }
 
@@ -387,7 +382,7 @@ export const DepositModal = () => {
                   activeView === 'card' ? 'Credit / Debit Card Deposit' :
                   activeView === 'cashapp' ? 'Cash App Lightning Deposit' :
                   activeView === 'paypal' ? 'PayPal PYUSD Deposit' :
-                  activeView === 'browser_waiting' ? 'Authorize Deposit' :
+                  activeView === 'browser_waiting' ? (selectedMethod === 'apple_pay' ? 'Apple Pay Deposit' : 'Google Pay Deposit') :
                   'Studio Wallet Top-Up'
                 )}
               </h3>
@@ -570,9 +565,10 @@ export const DepositModal = () => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
-                <button
-                  type="button"
-                  onClick={() => window.open(boltPaymentUrl, '_blank')}
+                <a
+                  href={boltPaymentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="btn btn-primary-orange"
                   style={{
                     width: '100%',
@@ -580,16 +576,16 @@ export const DepositModal = () => {
                     fontSize: '0.95rem',
                     fontWeight: 900,
                     borderRadius: '12px',
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.5rem',
                     boxShadow: '0 4px 15px rgba(249, 115, 22, 0.35)',
-                    cursor: 'pointer'
+                    textDecoration: 'none'
                   }}
                 >
                   Proceed to Payment <ExternalLink size={16} />
-                </button>
+                </a>
 
                 <button
                   type="button"
@@ -705,11 +701,6 @@ export const DepositModal = () => {
                   href={lightningInvoice ? `lightning:${lightningInvoice}` : boltPaymentUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => {
-                    setTimeout(() => {
-                      if (boltPaymentUrl) window.open(boltPaymentUrl, '_blank');
-                    }, 500);
-                  }}
                   style={{
                     width: '100%',
                     padding: '0.9rem',
@@ -883,9 +874,10 @@ export const DepositModal = () => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
-                <button
-                  type="button"
-                  onClick={() => window.open(boltPaymentUrl, '_blank')}
+                <a
+                  href={boltPaymentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   style={{
                     width: '100%',
                     padding: '0.85rem',
@@ -894,17 +886,16 @@ export const DepositModal = () => {
                     borderRadius: '12px',
                     background: 'linear-gradient(135deg, #003087 0%, #0079C1 100%)',
                     color: '#ffffff',
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.5rem',
                     boxShadow: '0 4px 15px rgba(0, 48, 135, 0.35)',
-                    cursor: 'pointer',
-                    border: 'none'
+                    textDecoration: 'none'
                   }}
                 >
                   Open PayPal Portal <ExternalLink size={16} />
-                </button>
+                </a>
 
                 <button
                   type="button"
@@ -931,26 +922,61 @@ export const DepositModal = () => {
             </div>
 
           ) : activeView === 'browser_waiting' && boltPaymentUrl ? (
-            /* 4. APPLE PAY & GOOGLE PAY: Direct Waiting View */
-            <div style={{ padding: '2.5rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
-              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fff7ed', border: '1.5px solid #fed7aa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--orange-600)', marginBottom: '1.25rem' }}>
-                <Loader2 size={28} style={{ animation: 'spin 2s linear infinite' }} />
+            /* 4. APPLE PAY & GOOGLE PAY: Direct User-Initiated Launch View */
+            <div style={{ padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                background: selectedMethod === 'apple_pay' ? '#f1f5f9' : '#eff6ff',
+                color: selectedMethod === 'apple_pay' ? '#0f172a' : '#2563eb',
+                fontSize: '0.75rem',
+                fontWeight: 800,
+                padding: '0.25rem 0.75rem',
+                borderRadius: '999px',
+                border: '1px solid #cbd5e1',
+                marginBottom: '0.85rem'
+              }}>
+                {selectedMethod === 'apple_pay' ? '🍎 Apple Pay Ready' : '🌐 Google Pay Ready'}
               </div>
-              <h3 style={{ color: 'var(--navy-950)', fontSize: '1.3rem', fontWeight: 900, marginBottom: '0.5rem' }}>
-                Complete Deposit in Opened Tab
+
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 0.35rem' }}>
+                {selectedMethod === 'apple_pay' ? 'Deposit with Apple Pay' : 'Deposit with Google Pay'}
               </h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '1.75rem', maxWidth: '320px', lineHeight: 1.5 }}>
-                We opened the secure 1-click deposit portal in a new window. Your wallet balance will update automatically upon authorization.
-              </p>
               
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', width: '100%', maxWidth: '280px' }}>
-                <button 
-                  onClick={() => window.open(boltPaymentUrl, '_blank')} 
-                  className="btn btn-primary-orange"
-                  style={{ padding: '0.75rem 1.5rem', borderRadius: '10px', fontSize: '0.88rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' }}
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 1.5rem', maxWidth: '320px' }}>
+                Total: <strong style={{ color: 'var(--orange-600)' }}>${parseFloat(depositAmount || 0).toFixed(2)}</strong>. Tap the button below to authorize deposit.
+              </p>
+
+              <div style={{ width: '100%', maxWidth: '320px', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                <a
+                  href={boltPaymentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    width: '100%',
+                    padding: '0.9rem',
+                    fontSize: '1rem',
+                    fontWeight: 900,
+                    borderRadius: '12px',
+                    background: selectedMethod === 'apple_pay' ? '#000000' : '#ffffff',
+                    color: selectedMethod === 'apple_pay' ? '#ffffff' : '#0f172a',
+                    border: selectedMethod === 'apple_pay' ? 'none' : '2px solid #cbd5e1',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    boxShadow: selectedMethod === 'apple_pay' ? '0 4px 15px rgba(0, 0, 0, 0.3)' : '0 4px 15px rgba(0, 0, 0, 0.05)',
+                    textDecoration: 'none'
+                  }}
                 >
-                  Re-open Deposit Tab <ExternalLink size={15} />
-                </button>
+                  {selectedMethod === 'apple_pay' ? (
+                    <>Open Apple Pay Deposit <ExternalLink size={16} /></>
+                  ) : (
+                    <>Open Google Pay Deposit <ExternalLink size={16} /></>
+                  )}
+                </a>
+
                 <button
                   type="button"
                   onClick={() => { setActiveView('select'); setSelectedMethod(null); }}
@@ -967,6 +993,11 @@ export const DepositModal = () => {
                 >
                   ← Choose Different Method or Amount
                 </button>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '1.25rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <span className="spinner-border spinner-border-sm" style={{ width: '12px', height: '12px' }}></span>
+                Listening for deposit confirmation...
               </div>
             </div>
 

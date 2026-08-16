@@ -11,8 +11,7 @@ import {
   ShieldCheck, 
   ExternalLink, 
   Zap, 
-  Coins, 
-  CreditCard 
+  Coins 
 } from 'lucide-react';
 import { getAuthHeaders } from '../../services/supabaseService';
 
@@ -285,19 +284,14 @@ export const CheckoutModal = () => {
           lightningInvoice: lightning
         });
         
-        // Route to the appropriate view based on the specific method selected
+        // Transition to the target view - modern browsers require direct user tap to open links without blocking
         if (methodId === 'card') {
           setActiveView('card');
         } else if (methodId === 'cashapp' || methodId === 'lightning' || methodId === 'dollarpay_cashapp') {
           setActiveView('cashapp');
         } else if (methodId === 'paypal' || methodId === 'pyusd' || methodId === 'dollarpay_paypal') {
           setActiveView('paypal');
-        } else if (methodId === 'apple_pay' || methodId === 'google_pay' || methodId === 'dollarpay_apple_pay' || methodId === 'dollarpay_google_pay') {
-          // Apple Pay / Google Pay directly opens external window
-          window.open(data.paymentUrl, '_blank');
-          setActiveView('browser_waiting');
         } else {
-          window.open(data.paymentUrl, '_blank');
           setActiveView('browser_waiting');
         }
 
@@ -452,7 +446,7 @@ export const CheckoutModal = () => {
                   activeView === 'card' ? 'Credit / Debit Card Checkout' :
                   activeView === 'cashapp' ? 'Cash App Lightning Checkout' :
                   activeView === 'paypal' ? 'PayPal PYUSD Checkout' :
-                  activeView === 'browser_waiting' ? 'Authorize Payment' :
+                  activeView === 'browser_waiting' ? (selectedMethod === 'apple_pay' ? 'Apple Pay Checkout' : 'Google Pay Checkout') :
                   'Secure Checkout'
                 )}
               </h3>
@@ -634,9 +628,10 @@ export const CheckoutModal = () => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
-                <button
-                  type="button"
-                  onClick={() => window.open(checkoutSession.url, '_blank')}
+                <a
+                  href={checkoutSession.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="btn btn-primary-orange"
                   style={{
                     width: '100%',
@@ -644,16 +639,16 @@ export const CheckoutModal = () => {
                     fontSize: '0.95rem',
                     fontWeight: 900,
                     borderRadius: '12px',
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.5rem',
                     boxShadow: '0 4px 15px rgba(249, 115, 22, 0.35)',
-                    cursor: 'pointer'
+                    textDecoration: 'none'
                   }}
                 >
                   Proceed to Payment <ExternalLink size={16} />
-                </button>
+                </a>
 
                 <button
                   type="button"
@@ -769,12 +764,6 @@ export const CheckoutModal = () => {
                   href={extractedLightning ? `lightning:${extractedLightning}` : checkoutSession.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => {
-                    // Also fallback open payment URL if on desktop
-                    setTimeout(() => {
-                      if (checkoutSession.url) window.open(checkoutSession.url, '_blank');
-                    }, 500);
-                  }}
                   style={{
                     width: '100%',
                     padding: '0.9rem',
@@ -948,9 +937,10 @@ export const CheckoutModal = () => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
-                <button
-                  type="button"
-                  onClick={() => window.open(checkoutSession.url, '_blank')}
+                <a
+                  href={checkoutSession.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   style={{
                     width: '100%',
                     padding: '0.85rem',
@@ -959,17 +949,16 @@ export const CheckoutModal = () => {
                     borderRadius: '12px',
                     background: 'linear-gradient(135deg, #003087 0%, #0079C1 100%)',
                     color: '#ffffff',
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.5rem',
                     boxShadow: '0 4px 15px rgba(0, 48, 135, 0.35)',
-                    cursor: 'pointer',
-                    border: 'none'
+                    textDecoration: 'none'
                   }}
                 >
                   Open PayPal Portal <ExternalLink size={16} />
-                </button>
+                </a>
 
                 <button
                   type="button"
@@ -996,26 +985,61 @@ export const CheckoutModal = () => {
             </div>
 
           ) : activeView === 'browser_waiting' && checkoutSession?.url ? (
-            /* 4. APPLE PAY & GOOGLE PAY: Clean Direct Browser Waiting View */
-            <div style={{ padding: '2.5rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
-              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fff7ed', border: '1.5px solid #fed7aa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--orange-600)', marginBottom: '1.25rem' }}>
-                <Loader2 size={28} style={{ animation: 'spin 2s linear infinite' }} />
+            /* 4. APPLE PAY & GOOGLE PAY: Direct User-Initiated Launch View */
+            <div style={{ padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                background: selectedMethod === 'apple_pay' ? '#f1f5f9' : '#eff6ff',
+                color: selectedMethod === 'apple_pay' ? '#0f172a' : '#2563eb',
+                fontSize: '0.75rem',
+                fontWeight: 800,
+                padding: '0.25rem 0.75rem',
+                borderRadius: '999px',
+                border: '1px solid #cbd5e1',
+                marginBottom: '0.85rem'
+              }}>
+                {selectedMethod === 'apple_pay' ? '🍎 Apple Pay Ready' : '🌐 Google Pay Ready'}
               </div>
-              <h3 style={{ color: 'var(--navy-950)', fontSize: '1.3rem', fontWeight: 900, marginBottom: '0.5rem' }}>
-                Complete Checkout in Opened Tab
+
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 0.35rem' }}>
+                {selectedMethod === 'apple_pay' ? 'Pay with Apple Pay' : 'Pay with Google Pay'}
               </h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '1.75rem', maxWidth: '320px', lineHeight: 1.5 }}>
-                We opened the 1-click payment portal in a secure window. Your order will confirm automatically once authorized.
-              </p>
               
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', width: '100%', maxWidth: '280px' }}>
-                <button 
-                  onClick={() => window.open(checkoutSession.url, '_blank')} 
-                  className="btn btn-primary-orange"
-                  style={{ padding: '0.75rem 1.5rem', borderRadius: '10px', fontSize: '0.88rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' }}
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 1.5rem', maxWidth: '320px' }}>
+                Total: <strong style={{ color: 'var(--orange-600)' }}>${parseFloat(checkoutSession.amount || 0).toFixed(2)}</strong>. Tap the button below to authorize payment.
+              </p>
+
+              <div style={{ width: '100%', maxWidth: '320px', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                <a
+                  href={checkoutSession.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    width: '100%',
+                    padding: '0.9rem',
+                    fontSize: '1rem',
+                    fontWeight: 900,
+                    borderRadius: '12px',
+                    background: selectedMethod === 'apple_pay' ? '#000000' : '#ffffff',
+                    color: selectedMethod === 'apple_pay' ? '#ffffff' : '#0f172a',
+                    border: selectedMethod === 'apple_pay' ? 'none' : '2px solid #cbd5e1',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    boxShadow: selectedMethod === 'apple_pay' ? '0 4px 15px rgba(0, 0, 0, 0.3)' : '0 4px 15px rgba(0, 0, 0, 0.05)',
+                    textDecoration: 'none'
+                  }}
                 >
-                  Re-open Payment Tab <ExternalLink size={15} />
-                </button>
+                  {selectedMethod === 'apple_pay' ? (
+                    <>Open Apple Pay Checkout <ExternalLink size={16} /></>
+                  ) : (
+                    <>Open Google Pay Checkout <ExternalLink size={16} /></>
+                  )}
+                </a>
+
                 <button
                   type="button"
                   onClick={() => { setActiveView('select'); setSelectedMethod(null); }}
@@ -1032,6 +1056,11 @@ export const CheckoutModal = () => {
                 >
                   ← Choose Different Payment Method
                 </button>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '1.25rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <span className="spinner-border spinner-border-sm" style={{ width: '12px', height: '12px' }}></span>
+                Listening for payment confirmation...
               </div>
             </div>
 
