@@ -200,6 +200,10 @@ export const ClientLiveChatWidget = () => {
     messages: []
   };
 
+  const unreadCount = !isOpen
+    ? (clientThread.messages || []).filter(m => (m.sender === 'admin' || m.sender === 'support') && !m.is_read).length || (clientThread.unreadCount || 0)
+    : 0;
+
   const chatFeedRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -350,16 +354,39 @@ export const ClientLiveChatWidget = () => {
           ) : (
             <>
               <MessageSquare size={24} style={{ color: '#ffffff' }} />
-              <span style={{
-                position: 'absolute',
-                top: '-2px',
-                right: '-2px',
-                width: '10px',
-                height: '10px',
-                borderRadius: '50%',
-                background: '#22c55e',
-                border: '2px solid #1d4ed8'
-              }} />
+              {unreadCount > 0 ? (
+                <span style={{
+                  position: 'absolute',
+                  top: '-6px',
+                  right: '-6px',
+                  minWidth: '20px',
+                  height: '20px',
+                  borderRadius: '9999px',
+                  background: '#ef4444',
+                  color: '#ffffff',
+                  fontSize: '0.7rem',
+                  fontWeight: 900,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 4px',
+                  border: '2px solid #ffffff',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+                }}>
+                  {unreadCount}
+                </span>
+              ) : (
+                <span style={{
+                  position: 'absolute',
+                  top: '-2px',
+                  right: '-2px',
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  background: '#22c55e',
+                  border: '2px solid #1d4ed8'
+                }} />
+              )}
             </>
           )}
         </div>

@@ -11,6 +11,8 @@ import { AdminChatInbox } from './AdminChatInbox';
 import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
 import { PortfolioManager } from './PortfolioManager';
+import { fetchConversations, subscribeToLiveMessages } from '../../services/supabaseService';
+import { isSupabaseConfigured } from '../../lib/supabase/client';
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -50,6 +52,7 @@ export const AdminDashboard = () => {
   } = useAppState();
 
   const [activeTabState, setActiveTabState] = useState(activeAdminTab || 'dashboard');
+  const [adminUnreadCount, setAdminUnreadCount] = useState(0);
 
   React.useEffect(() => {
     if (activeAdminTab) {
@@ -61,6 +64,7 @@ export const AdminDashboard = () => {
   const setActiveTab = (tab) => {
     setActiveTabState(tab);
     if (setActiveAdminTab) setActiveAdminTab(tab);
+    if (tab === 'chat') setAdminUnreadCount(0);
   };
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -69,6 +73,42 @@ export const AdminDashboard = () => {
   React.useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Real-time unread messages calculator for Admin Desk
+  React.useEffect(() => {
+    if (!mounted) return;
+    let isMounted = true;
+
+    const loadAdminUnreadCount = async () => {
+      if (isSupabaseConfigured) {
+        try {
+          const convs = await fetchConversations();
+          if (convs && isMounted) {
+            const totalUnread = convs.reduce((sum, c) => {
+              const unreadMessages = (c.messages || []).filter(m => m.sender === 'client' && !m.is_read).length;
+              return sum + (unreadMessages > 0 ? unreadMessages : (c.unreadCount || 0));
+            }, 0);
+            setAdminUnreadCount(totalUnread);
+          }
+        } catch { }
+      }
+    };
+
+    loadAdminUnreadCount();
+
+    const unsubscribe = subscribeToLiveMessages((msgPayload) => {
+      if (!isMounted) return;
+      const record = msgPayload.new || msgPayload.record;
+      if (record && record.sender === 'client' && activeTab !== 'chat') {
+        setAdminUnreadCount(prev => prev + 1);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, [mounted, activeTab]);
 
   const configuredAdminEmail = (siteSettings?.adminEmail || authUser?.email || '').toLowerCase().trim();
   const isMasterAdmin = mounted && isAuthenticated && authUser?.role === 'admin';
@@ -137,7 +177,13 @@ export const AdminDashboard = () => {
         { id: 'dashboard', label: 'Executive Dashboard', icon: LayoutDashboard },
         { id: 'orders', label: 'Orders & Production', icon: ClipboardList, badge: activeJobsCount },
         { id: 'clients', label: 'Accounts & Wallets', icon: Users, badge: safeClients.length },
-        { id: 'chat', label: 'Live Chat', icon: MessageSquare }
+        { 
+          id: 'chat', 
+          label: 'Live Chat', 
+          icon: MessageSquare, 
+          badge: adminUnreadCount > 0 ? adminUnreadCount : null,
+          isUnread: adminUnreadCount > 0
+        }
       ]
     },
     {
@@ -304,8 +350,8 @@ export const AdminDashboard = () => {
                               <IconComp size={16} style={{ color: isActive ? '#ff7a00' : 'var(--navy-600)' }} />
                               <span>{item.label}</span>
                             </div>
-                            {item.badge !== undefined && (
-                              <span style={{ fontSize: '0.725rem', fontWeight: 800, background: isActive ? '#ff7a00' : '#e2e8f0', color: isActive ? '#ffffff' : 'var(--navy-800)', padding: '0.1rem 0.5rem', borderRadius: '12px' }}>
+                            {item.badge !== undefined && item.badge !== null && item.badge > 0 && (
+                              <span style={{ fontSize: '0.725rem', fontWeight: 800, background: item.isUnread ? '#ef4444' : (isActive ? '#ff7a00' : '#e2e8f0'), color: item.isUnread ? '#ffffff' : (isActive ? '#ffffff' : 'var(--navy-800)'), padding: '0.1rem 0.5rem', borderRadius: '12px' }}>
                                 {item.badge}
                               </span>
                             )}
@@ -425,12 +471,12 @@ export const AdminDashboard = () => {
                         <span>{item.label}</span>
                       </div>
 
-                      {item.badge !== undefined && (
+                      {item.badge !== undefined && item.badge !== null && item.badge > 0 && (
                         <span style={{
                           fontSize: '0.7rem',
                           fontWeight: 800,
-                          background: isActive ? '#ff7a00' : '#e2e8f0',
-                          color: isActive ? '#ffffff' : '#334155',
+                          background: item.isUnread ? '#ef4444' : (isActive ? '#ff7a00' : '#e2e8f0'),
+                          color: item.isUnread ? '#ffffff' : (isActive ? '#ffffff' : '#334155'),
                           padding: '0.1rem 0.45rem',
                           borderRadius: '9999px'
                         }}>

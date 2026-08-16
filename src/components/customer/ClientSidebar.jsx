@@ -23,6 +23,7 @@ export const ClientSidebar = ({
   vectorCount = 0,
   patchCount = 0,
   _storeCount = 0,
+  unreadChatCount = 0,
   onOpenDepositModal,
   onOpenLiveSupport,
   onLogout
@@ -47,6 +48,13 @@ export const ClientSidebar = ({
           id: 'dashboard',
           label: 'Dashboard',
           icon: LayoutDashboard
+        },
+        { 
+          id: 'support', 
+          label: 'Messages & Support', 
+          icon: MessageSquare, 
+          badge: unreadChatCount > 0 ? unreadChatCount : null,
+          liveDot: true 
         }
       ]
     },
@@ -78,17 +86,6 @@ export const ClientSidebar = ({
       items: [
         { id: 'profile', label: 'Account & Profile', icon: User },
         { id: 'settings', label: 'Preferences & Settings', icon: Settings }
-      ]
-    },
-    {
-      title: 'SUPPORT & ASSISTANCE',
-      items: [
-        { 
-          id: 'support', 
-          label: 'Live Support Chat', 
-          icon: MessageSquare, 
-          liveDot: true 
-        }
       ]
     }
   ];
@@ -265,8 +262,8 @@ export const ClientSidebar = ({
                       <span style={{ 
                         fontSize: '0.7rem', 
                         fontWeight: 800, 
-                        background: isActive ? '#ff7a00' : 'var(--navy-100)', 
-                        color: isActive ? '#ffffff' : 'var(--navy-700)', 
+                        background: item.id === 'support' ? '#ef4444' : (isActive ? '#ff7a00' : 'var(--navy-100)'), 
+                        color: item.id === 'support' ? '#ffffff' : (isActive ? '#ffffff' : 'var(--navy-700)'), 
                         padding: '0.1rem 0.45rem', 
                         borderRadius: '9999px',
                         flexShrink: 0
@@ -275,7 +272,7 @@ export const ClientSidebar = ({
                       </span>
                     )}
 
-                    {item.liveDot && (
+                    {item.liveDot && (!item.badge || item.badge <= 0) && (
                       <span style={{ 
                         width: '8px', 
                         height: '8px', 

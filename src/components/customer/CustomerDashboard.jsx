@@ -32,6 +32,8 @@ import { ClientChatInbox } from './ClientChatInbox';
 import { EmbroideryDigitizingPage } from '../public/EmbroideryDigitizingPage';
 import { VectorArtPage } from '../public/VectorArtPage';
 import { CustomPatchesSection } from '../public/CustomPatchesSection';
+import { fetchConversations, subscribeToLiveMessages } from '../../services/supabaseService';
+import { isSupabaseConfigured } from '../../lib/supabase/client';
 
 export const CustomerDashboard = () => {
   const navigate = useNavigate();
@@ -49,12 +51,13 @@ export const CustomerDashboard = () => {
     logout
   } = useAppState();
 
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'digitizing' | 'vector' | 'patches' | 'profile' | 'support' | 'settings'
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'support' | 'digitizing' | 'vector' | 'patches' | 'profile' | 'settings'
   const [selectedOrderChatId, setSelectedOrderChatId] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [lightboxOrder, setLightboxOrder] = useState(null);
   const [isServiceSelectorOpen, setIsServiceSelectorOpen] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
 
   // Mobile App UI State
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -77,6 +80,53 @@ export const CustomerDashboard = () => {
     role: 'customer'
   };
   const userEmail = activeUser?.email || '';
+
+  // Real-time unread messages calculator for Customer
+  React.useEffect(() => {
+    if (!mounted) return;
+    let isMounted = true;
+
+    const loadUnreadCount = async () => {
+      if (isSupabaseConfigured) {
+        try {
+          const convs = await fetchConversations();
+          if (convs && isMounted) {
+            const clientEmail = (userEmail || '').toLowerCase().trim();
+            let count = 0;
+            convs.forEach(c => {
+              const isClientConv = (c.clientEmail || c.client_email || '').toLowerCase().trim() === clientEmail || c.id === 'general-support' || !c.orderId;
+              if (isClientConv) {
+                const clientUnread = (c.messages || []).filter(m => (m.sender === 'admin' || m.sender === 'support') && !m.is_read).length;
+                count += clientUnread > 0 ? clientUnread : (c.unreadCount || 0);
+              }
+            });
+            setUnreadChatCount(count);
+          }
+        } catch { }
+      }
+    };
+
+    loadUnreadCount();
+
+    const unsubscribe = subscribeToLiveMessages((msgPayload) => {
+      if (!isMounted) return;
+      const record = msgPayload.new || msgPayload.record;
+      if (record && (record.sender === 'admin' || record.sender === 'support') && activeTab !== 'support') {
+        setUnreadChatCount(prev => prev + 1);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, [mounted, userEmail, activeTab]);
+
+  React.useEffect(() => {
+    if (activeTab === 'support') {
+      setUnreadChatCount(0);
+    }
+  }, [activeTab]);
 
   // Strict Category Helper Functions
   const isStoreOrder = (o) => {
@@ -340,11 +390,17 @@ export const CustomerDashboard = () => {
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                   {[
                     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+                    { 
+                      id: 'support', 
+                      label: 'Messages & Support', 
+                      icon: MessageSquare, 
+                      badge: unreadChatCount > 0 ? unreadChatCount : null,
+                      isUnread: unreadChatCount > 0
+                    },
                     { id: 'digitizing', label: 'Embroidery Digitizing', icon: Layers, badge: digitizingOrders.length },
                     { id: 'vector', label: 'Vector Art Conversion', icon: PenTool, badge: vectorOrders.length },
                     { id: 'patches', label: 'Custom Patches & Goods', icon: Package, badge: patchOrders.length },
                     { id: 'profile', label: 'Account Profile', icon: User },
-                    { id: 'support', label: 'Support & 24/7 Live Chat', icon: MessageSquare },
                     { id: 'settings', label: 'Preferences & Settings', icon: Settings }
                   ].map(item => {
                     const IconComp = item.icon;
@@ -376,8 +432,8 @@ export const CustomerDashboard = () => {
                           <IconComp size={18} style={{ color: isActive ? 'var(--orange-600)' : 'var(--navy-600)' }} />
                           <span>{item.label}</span>
                         </div>
-                        {item.badge !== undefined && item.badge > 0 && (
-                          <span style={{ fontSize: '0.72rem', fontWeight: 800, background: isActive ? 'var(--orange-500)' : 'var(--navy-100)', color: isActive ? '#ffffff' : 'var(--navy-700)', padding: '0.15rem 0.45rem', borderRadius: '9999px' }}>
+                        {item.badge !== undefined && item.badge !== null && item.badge > 0 && (
+                          <span style={{ fontSize: '0.72rem', fontWeight: 800, background: item.isUnread ? '#ef4444' : (isActive ? 'var(--orange-500)' : 'var(--navy-100)'), color: item.isUnread ? '#ffffff' : (isActive ? '#ffffff' : 'var(--navy-700)'), padding: '0.15rem 0.45rem', borderRadius: '9999px' }}>
                             {item.badge}
                           </span>
                         )}
@@ -427,8 +483,10 @@ export const CustomerDashboard = () => {
             activeUser={activeUser}
             walletBalance={walletBalance}
             digitizingCount={digitizingOrders.length}
+            vectorCount={vectorOrders.length}
             patchCount={patchOrders.length}
             storeCount={storeOrders.length}
+            unreadChatCount={unreadChatCount}
             onOpenDepositModal={() => setIsDepositModalOpen(true)}
             onOpenLiveSupport={handleOpenLiveSupport}
             onLogout={() => {
