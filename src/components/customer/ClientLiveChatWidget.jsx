@@ -69,7 +69,7 @@ export const ClientLiveChatWidget = () => {
           id: record.id,
           conversation_id: record.conversation_id,
           sender: record.sender,
-          senderName: record.sender_name,
+          senderName: record.sender_name || (record.sender === 'admin' ? 'Master Digitizer' : cleanName),
           text: record.text,
           attachment: record.attachment,
           timestamp: record.timestamp || record.created_at || new Date().toISOString()
@@ -81,14 +81,16 @@ export const ClientLiveChatWidget = () => {
 
         setChats(prev => {
           const safePrev = Array.isArray(prev) ? prev : [];
-          const exists = safePrev.some(c => c.id === newMsg.conversation_id);
+          const isTargetConv = (c) => c.id === newMsg.conversation_id || (newMsg.conversation_id === 'general-support' && (c.id === 'general-support' || !c.orderId));
+          const exists = safePrev.some(isTargetConv);
+
           if (!exists) {
             const newThread = {
               id: newMsg.conversation_id,
               clientName: newMsg.senderName || 'Client',
-              clientEmail: '',
-              clientCompany: 'Customer',
-              orderId: 'Support',
+              clientEmail: clientEmail,
+              clientCompany: clientCompany,
+              orderId: 'General Inquiries',
               orderTitle: 'Live Support',
               status: 'online',
               unreadCount: 0,
@@ -99,7 +101,7 @@ export const ClientLiveChatWidget = () => {
           }
 
           return safePrev.map(c => {
-            if (c.id === newMsg.conversation_id) {
+            if (isTargetConv(c)) {
               const alreadyHas = (c.messages || []).some(m => m.id === newMsg.id || (m.text === newMsg.text && m.timestamp === newMsg.timestamp));
               if (alreadyHas) return c;
               return {
@@ -187,9 +189,14 @@ export const ClientLiveChatWidget = () => {
   const clientCompany = activeUser?.company || `${cleanName}'s Account`;
   const avatarUrl = activeUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0f172a&color=fff`;
 
-  // Safely resolve the active chat thread for the current user/guest
+  // Safely resolve the active chat thread for regular support chat
   const safeChats = Array.isArray(chats) ? chats : [];
-  const clientThread = safeChats.find(c => (c.clientEmail || '').toLowerCase().trim() === clientEmail) || {
+  const clientThread = safeChats.find(c => 
+    c.id === 'general-support' || 
+    (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail) ||
+    (!c.orderId && !c.order_id && !c.id?.startsWith('order-'))
+  ) || {
+    id: 'general-support',
     messages: []
   };
 
@@ -216,65 +223,73 @@ export const ClientLiveChatWidget = () => {
     return null;
   }
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e?.preventDefault();
     if (!messageInput.trim() && !attachedFile) return;
 
+    const targetConvId = clientThread.id || 'general-support';
+    const nowIso = new Date().toISOString();
+
     const newMsg = {
       id: 'msg-client-' + Date.now(),
+      conversation_id: targetConvId,
       sender: 'client',
-      senderName: activeUser.name,
+      senderName: cleanName,
+      sender_name: cleanName,
+      client_email: clientEmail,
       text: messageInput.trim() || (attachedFile ? `Attached file: ${attachedFile.name}` : ''),
       attachment: attachedFile ? attachedFile.name : null,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: nowIso
     };
 
-    let updatedChats = [...chats];
-    const threadIdx = updatedChats.findIndex(c => (c.clientEmail || '').toLowerCase().trim() === clientEmail);
+    setChats(prev => {
+      const safePrev = Array.isArray(prev) ? prev : [];
+      const exists = safePrev.some(c => c.id === targetConvId || (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail));
 
-    if (threadIdx >= 0) {
-      const existingThread = updatedChats[threadIdx];
-      updatedChats[threadIdx] = {
-        ...existingThread,
-        clientName: cleanName,
-        company: clientCompany,
-        unreadCount: (existingThread.unreadCount || 0) + 1,
-        messages: [...(existingThread.messages || []), newMsg]
-      };
-    } else {
+      if (exists) {
+        return safePrev.map(c => {
+          if (c.id === targetConvId || (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail)) {
+            return {
+              ...c,
+              unreadCount: 0,
+              messages: [...(c.messages || []), newMsg],
+              updatedAt: nowIso
+            };
+          }
+          return c;
+        });
+      }
+
       const newThread = {
-        id: `chat-${Date.now()}`,
+        id: targetConvId,
         clientName: cleanName,
         clientEmail: clientEmail,
         company: clientCompany,
         avatar: avatarUrl,
-        orderId: '#3842',
-        status: 'active',
-        unreadCount: 1,
-        messages: [newMsg]
+        orderId: 'General Inquiries',
+        orderTitle: 'Live Digitizer & Studio Helpdesk',
+        status: 'online',
+        unreadCount: 0,
+        messages: [newMsg],
+        updatedAt: nowIso
       };
-      updatedChats = [newThread, ...updatedChats];
-    }
+      return [newThread, ...safePrev];
+    });
 
-    setChats(updatedChats);
     try {
-      localStorage.setItem('bdigi_admin_chats', JSON.stringify(updatedChats));
-      window.dispatchEvent(new CustomEvent('bdigi_chat_update', { detail: updatedChats }));
+      localStorage.setItem('bdigi_admin_chats', JSON.stringify(chats));
+      window.dispatchEvent(new CustomEvent('bdigi_chat_update', { detail: chats }));
     } catch { }
 
     if (isSupabaseConfigured) {
-      const persistMsg = async () => {
-        let convId = threadIdx >= 0 ? updatedChats[threadIdx].id : updatedChats[0].id;
-        if (threadIdx < 0) {
-           const newDbConv = await createConversation(updatedChats[0]);
-           if (newDbConv) convId = newDbConv.id;
-        }
-        await addChatMessage(convId, newMsg);
-      };
-      persistMsg();
+      try {
+        await addChatMessage(targetConvId, newMsg);
+      } catch (err) {
+        console.warn('Persist widget message notice:', err);
+      }
     }
 
-    playNotificationSound('message');
+    playNotificationSound('send');
     setMessageInput('');
     setAttachedFile(null);
     showToast('Message sent to Master Digitizer Support!', 'success');
