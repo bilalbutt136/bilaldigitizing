@@ -456,7 +456,7 @@ export const OrderTrackerDrawer = () => {
               )}
 
               {/* Shipping Address & Package Tracking Box */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
                 {/* Shipping Address Card */}
                 <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                   <div style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.75rem' }}>
@@ -563,7 +563,7 @@ export const OrderTrackerDrawer = () => {
                     </div>
                     
                     <div style={{ flex: 1, background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border-color)' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '1px', background: 'var(--border-color)' }}>
                         <div style={{ background: '#fff', padding: '1rem' }}><div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.25rem' }}>Current Status</div><div style={{ textTransform: 'capitalize', fontWeight: 800, color: 'var(--orange-600)', fontSize: '1rem' }}>{ord.status || 'Pending'}</div></div>
                         <div style={{ background: '#fff', padding: '1rem' }}><div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.25rem' }}>Client Profile</div><div style={{ fontWeight: 700, color: 'var(--navy-900)', fontSize: '1rem' }}>{ord.clientName}</div></div>
                         <div style={{ background: '#fff', padding: '1rem' }}><div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.25rem' }}>Service Category</div><div style={{ fontWeight: 600, color: 'var(--navy-900)' }}>{ord.serviceCategory}</div></div>

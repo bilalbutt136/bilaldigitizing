@@ -151,6 +151,7 @@ export const AdminChatInbox = () => {
   const [filterMode, setFilterMode] = useState('all'); // 'all' | 'unread'
   const [replyInput, setReplyInput] = useState('');
   const [attachedFile, setAttachedFile] = useState(null);
+  const [mobileView, setMobileView] = useState('list');
   const chatFeedRef = useRef(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -315,6 +316,7 @@ export const AdminChatInbox = () => {
 
   const handleSelectChat = (chatId) => {
     setActiveChatId(chatId);
+    setMobileView('chat');
     if (typeof window !== 'undefined') {
       localStorage.setItem('bdigi_read_admin_' + chatId, String(Date.now()));
       window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: chatId } }));
@@ -427,24 +429,30 @@ export const AdminChatInbox = () => {
     }}>
 
       {/* Inbox Outer Layout */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '340px 1fr', 
-        height: '100%', 
-        minHeight: 0, 
-        overflow: 'hidden' 
-      }}>
+      <div 
+        className="chat-inbox-grid"
+        style={{ 
+          display: 'grid', 
+          gridTemplateColumns: '340px 1fr', 
+          height: '100%', 
+          minHeight: 0, 
+          overflow: 'hidden' 
+        }}
+      >
 
         {/* Sidebar / Left Column: Conversations Directory */}
-        <div style={{
-          borderRight: '1.5px solid var(--border-color)',
-          background: 'var(--card-bg)',
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          minHeight: 0,
-          overflow: 'hidden'
-        }}>
+        <div 
+          className={`chat-threads-column ${mobileView === 'chat' ? 'hide-on-mobile-thread' : ''}`}
+          style={{
+            borderRight: '1.5px solid var(--border-color)',
+            background: 'var(--card-bg)',
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            minHeight: 0,
+            overflow: 'hidden'
+          }}
+        >
           {/* Header */}
           <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', background: '#ffffff' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
@@ -655,17 +663,20 @@ export const AdminChatInbox = () => {
 
         {/* Chat Feed / Right Canvas */}
         {activeChat ? (
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            height: '100%', 
-            minHeight: 0, 
-            background: '#ffffff', 
-            overflow: 'hidden' 
-          }}>
+          <div 
+            className={`chat-messages-column ${mobileView === 'list' ? 'hide-on-mobile-chat' : ''}`}
+            style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              height: '100%', 
+              minHeight: 0, 
+              background: '#ffffff', 
+              overflow: 'hidden' 
+            }}
+          >
             {/* Header Canvas */}
             <div style={{
-              padding: '0.85rem 1.5rem',
+              padding: '0.85rem 1.25rem',
               borderBottom: '1.5px solid var(--border-color)',
               background: '#ffffff',
               display: 'flex',
@@ -673,8 +684,30 @@ export const AdminChatInbox = () => {
               alignItems: 'center',
               flexShrink: 0
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                <div style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <button
+                  type="button"
+                  className="mobile-only"
+                  onClick={() => setMobileView('list')}
+                  style={{
+                    background: '#f1f5f9',
+                    border: '1px solid #cbd5e1',
+                    color: 'var(--navy-900)',
+                    borderRadius: '8px',
+                    padding: '0.35rem 0.65rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    flexShrink: 0
+                  }}
+                  aria-label="Back to conversations list"
+                >
+                  ← Inbox
+                </button>
+
+                <div style={{ position: 'relative', flexShrink: 0 }}>
                   {activeInfo.isOrder ? (
                     <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'var(--navy-900)', color: 'var(--orange-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.85rem', border: '1.5px solid var(--orange-500)' }}>
                       {activeInfo.orderNum ? activeInfo.orderNum.substring(0, 5) : 'ORD'}

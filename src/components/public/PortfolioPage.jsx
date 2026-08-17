@@ -248,16 +248,15 @@ export const PortfolioPage = () => {
                 type="button"
                 className="btn btn-primary-orange btn-md"
                 onClick={() => navigate('/order')}
-                style={{ fontWeight: 800 }}
               >
-                Submit Custom Artwork
+                Request Custom Sample
               </button>
             </div>
           ) : (
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-              gap: '2rem'
+              gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 290px), 1fr))',
+              gap: '1.5rem'
             }}>
               {filteredItems.map((item) => {
                 const isVector = item.categoryKey === 'vector';
@@ -421,34 +420,41 @@ export const PortfolioPage = () => {
 
       {/* 3. LIGHTBOX / INSPECTION MODAL */}
       {activeItemModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(15, 23, 42, 0.85)',
-          backdropFilter: 'blur(8px)',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '1.5rem',
-          overflowY: 'auto'
-        }}
-        onClick={() => setActiveItemModal(null)}
-        >
-          <div style={{
-            background: '#ffffff',
-            borderRadius: '24px',
-            maxWidth: '900px',
-            width: '100%',
-            maxHeight: '92vh',
-            overflowY: 'auto',
-            boxShadow: '0 30px 80px rgba(0,0,0,0.4)',
-            border: '1px solid var(--border-color)',
-            display: 'grid',
-            gridTemplateColumns: '1.15fr 0.85fr',
-            overflow: 'hidden'
+        <div 
+          className="modal-overlay"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(10px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            overflowY: 'auto'
           }}
-          onClick={(e) => e.stopPropagation()}
+          onClick={() => setActiveItemModal(null)}
+        >
+          <div 
+            className="modal-content"
+            style={{
+              background: '#ffffff',
+              borderRadius: '24px',
+              maxWidth: '900px',
+              width: '100%',
+              maxHeight: '92vh',
+              overflowY: 'auto',
+              boxShadow: '0 30px 80px rgba(0,0,0,0.4)',
+              border: '1px solid var(--border-color)',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
+              overflow: 'hidden'
+            }}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Left Side: High-Res Image Display */}
             <div style={{

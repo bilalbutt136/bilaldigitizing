@@ -448,20 +448,23 @@ export const HeaderNav = () => {
             className="mobile-only"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             style={{
-              background: 'transparent',
-              border: '1px solid var(--border-color)',
-              color: 'var(--navy-900)',
-              width: '38px',
-              height: '38px',
-              borderRadius: '8px',
+              background: isMobileMenuOpen ? 'var(--orange-50)' : 'transparent',
+              border: isMobileMenuOpen ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
+              color: isMobileMenuOpen ? 'var(--orange-600)' : 'var(--navy-900)',
+              width: '42px',
+              height: '42px',
+              minWidth: '42px',
+              minHeight: '42px',
+              borderRadius: '10px',
               cursor: 'pointer',
               alignItems: 'center',
               justifyContent: 'center',
-              flexShrink: 0
+              flexShrink: 0,
+              transition: 'all 0.2s ease'
             }}
             aria-label="Toggle Navigation Menu"
           >
-            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
 
           {/* Dynamic Authentication Controls */}
@@ -604,7 +607,7 @@ export const HeaderNav = () => {
                         position: 'absolute',
                         top: 'calc(100% + 8px)',
                         right: 0,
-                        width: '310px',
+                        width: 'min(320px, calc(100vw - 20px))',
                         background: '#ffffff',
                         border: '1.5px solid var(--border-color)',
                         borderRadius: '14px',
@@ -651,7 +654,7 @@ export const HeaderNav = () => {
                                 style={{ 
                                   padding: '0.55rem 0.65rem', 
                                   background: item.read ? '#f8fafc' : '#fff7ed', 
-                                  borderRadius: '99px', 
+                                  borderRadius: '8px', 
                                   borderLeft: item.read ? '3px solid #cbd5e1' : '3px solid #ff7a00',
                                   cursor: 'pointer',
                                   transition: 'background 0.15s ease'
@@ -706,7 +709,7 @@ export const HeaderNav = () => {
                         position: 'absolute',
                         top: 'calc(100% + 8px)',
                         right: 0,
-                        width: '240px',
+                        width: 'min(240px, calc(100vw - 20px))',
                         background: '#ffffff',
                         border: '1.5px solid var(--border-color)',
                         borderRadius: '12px',
@@ -769,7 +772,7 @@ export const HeaderNav = () => {
         </div>
       </div>
 
-            {/* Mobile Slide-Down / Overlay Navigation Drawer */}
+      {/* Mobile Slide-Down / Overlay Navigation Drawer */}
       {isMobileMenuOpen && (
         <div 
           className="mobile-only"
@@ -778,16 +781,17 @@ export const HeaderNav = () => {
             top: '0',
             left: '0',
             width: '100vw',
-            height: '100vh',
+            height: '100dvh',
             background: 'rgba(255, 255, 255, 0.98)',
-            backdropFilter: 'blur(16px)',
-            zIndex: 999,
+            backdropFilter: 'blur(20px)',
+            zIndex: 9999,
             display: 'flex',
             flexDirection: 'column',
-            padding: '5rem 1.5rem 2rem 1.5rem',
-            gap: '1rem',
-            animation: 'fadeIn 0.25s ease-out',
-            overflowY: 'auto'
+            padding: '4.5rem 1.25rem 2rem 1.25rem',
+            gap: '0.75rem',
+            animation: 'fadeIn 0.2s ease-out',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch'
           }}
         >
           {/* Close button inside mobile menu */}
@@ -795,15 +799,22 @@ export const HeaderNav = () => {
             onClick={() => setIsMobileMenuOpen(false)}
             style={{
               position: 'absolute',
-              top: '1.2rem',
-              right: '1.5rem',
-              background: 'transparent',
-              border: 'none',
+              top: '1rem',
+              right: '1.25rem',
+              background: '#f1f5f9',
+              border: '1px solid var(--border-color)',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               cursor: 'pointer',
               color: 'var(--navy-900)'
             }}
+            aria-label="Close menu"
           >
-            <X size={28} />
+            <X size={22} />
           </button>
 
           <button
@@ -812,12 +823,12 @@ export const HeaderNav = () => {
               handleGoHome();
               setIsMobileMenuOpen(false);
             }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.25rem', color: 'var(--navy-900)', padding: '0.5rem 0', borderBottom: '1px solid var(--border-color)' }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.2rem', color: 'var(--navy-900)', padding: '0.65rem 0', borderBottom: '1px solid var(--border-color)' }}
           >
             Home
           </button>
 
-          <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '1rem' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.5rem' }}>
             Services
           </div>
 
@@ -827,9 +838,9 @@ export const HeaderNav = () => {
               navigate('/services/embroidery-digitizing');
               setIsMobileMenuOpen(false);
             }}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.1rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.05rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
           >
-            <PenTool size={18} /> Embroidery Digitizing
+            <PenTool size={18} style={{ color: 'var(--orange-500)' }} /> Embroidery Digitizing
           </button>
 
           <button
@@ -838,9 +849,9 @@ export const HeaderNav = () => {
               navigate('/services/vector-tracing');
               setIsMobileMenuOpen(false);
             }}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.1rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.05rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
           >
-            <ImageIcon size={18} /> Vector Art
+            <ImageIcon size={18} style={{ color: '#2563eb' }} /> Vector Art
           </button>
 
           <button
@@ -849,12 +860,12 @@ export const HeaderNav = () => {
               navigate('/custom-patches');
               setIsMobileMenuOpen(false);
             }}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.1rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.05rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
           >
-            <Award size={18} /> Custom Patches
+            <Award size={18} style={{ color: '#10b981' }} /> Custom Patches
           </button>
           
-          <div style={{ height: '1px', background: 'var(--border-color)', margin: '0.5rem 0' }}></div>
+          <div style={{ height: '1px', background: 'var(--border-color)', margin: '0.35rem 0' }}></div>
 
           <button
             type="button"
@@ -862,7 +873,7 @@ export const HeaderNav = () => {
               navigate('/portfolio');
               setIsMobileMenuOpen(false);
             }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.25rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.15rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
           >
             Portfolio
           </button>
@@ -873,7 +884,7 @@ export const HeaderNav = () => {
               navigate('/pricing');
               setIsMobileMenuOpen(false);
             }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.25rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.15rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
           >
             Pricing
           </button>
@@ -884,14 +895,23 @@ export const HeaderNav = () => {
               navigate('/faqs');
               setIsMobileMenuOpen(false);
             }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.25rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.15rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
           >
             FAQs
           </button>
           
+          <button
+            type="button"
+            onClick={() => {
+              navigate('/blogs');
+              setIsMobileMenuOpen(false);
+            }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.15rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+          >
+            Blogs & Guides
+          </button>
 
-
-          <div style={{ marginTop: 'auto', paddingTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ marginTop: 'auto', paddingTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {!safeIsAuthenticated ? (
               <>
                 <button
@@ -940,3 +960,4 @@ export const HeaderNav = () => {
     </header>
   );
 };
+

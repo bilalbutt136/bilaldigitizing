@@ -179,17 +179,17 @@ export default function FAQsPage() {
   } : null;
 
   return (
-    <div style={{ background: '#f8fafc', minHeight: '100vh', paddingTop: '4rem', paddingBottom: '6rem' }}>
+    <div style={{ background: '#f8fafc', minHeight: '100vh', paddingTop: 'clamp(3rem, 6vw, 4.5rem)', paddingBottom: '6rem' }}>
       {schemaData && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
         />
       )}
-      <div className="container" style={{ maxWidth: '980px', margin: '0 auto', padding: '0 1.5rem' }}>
+      <div className="container" style={{ maxWidth: '980px', margin: '0 auto', padding: '0 1rem' }}>
         
         {/* Hero Section Header */}
-        <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',

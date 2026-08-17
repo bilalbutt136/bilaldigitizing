@@ -431,7 +431,7 @@ export const AuthModal = () => {
           </div>
         </div>
         {/* RIGHT PANEL: AUTHENTICATION FORMS (COMPACT ZERO-SCROLL FITTING) */}
-        <div style={{ padding: '1.5rem 1.75rem', overflowY: 'auto', maxHeight: 'calc(100vh - 40px)', boxSizing: 'border-box' }}>
+        <div style={{ padding: 'clamp(1rem, 3vw, 1.75rem)', overflowY: 'auto', maxHeight: 'calc(100vh - 40px)', boxSizing: 'border-box' }}>
           
           {/* Header section with title and quick toggle */}
           <div style={{ marginBottom: '0.9rem' }}>

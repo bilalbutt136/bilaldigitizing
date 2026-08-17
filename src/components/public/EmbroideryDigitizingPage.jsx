@@ -254,8 +254,8 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
           {/* Streamlined Pricing Tiers Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '2.5rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 290px), 1fr))',
+            gap: '2rem',
             maxWidth: '1240px',
             margin: '0 auto',
             alignItems: 'stretch',

@@ -403,11 +403,12 @@ export const CheckoutModal = () => {
       </style>
 
       <div 
+        className="modal-dialog"
         onClick={(e) => e.stopPropagation()}
         style={{
           background: '#ffffff',
           border: '1px solid #cbd5e1',
-          borderRadius: '24px',
+          borderRadius: 'clamp(14px, 3vw, 24px)',
           width: '100%',
           maxWidth: '520px',
           boxShadow: '0 25px 60px -15px rgba(15, 23, 42, 0.25)',
@@ -415,14 +416,14 @@ export const CheckoutModal = () => {
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          maxHeight: '92vh',
+          maxHeight: '94dvh',
           animation: 'scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'
         }}
       >
         
         {/* Header */}
         <div style={{ 
-          padding: '1.25rem 1.5rem', 
+          padding: 'clamp(0.85rem, 2vw, 1.25rem) clamp(1rem, 2vw, 1.5rem)', 
           borderBottom: '1px solid #334155', 
           display: 'flex', 
           justifyContent: 'space-between', 

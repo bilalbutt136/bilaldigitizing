@@ -364,7 +364,7 @@ export default function PricingPage() {
 
 
   return (
-    <main style={{ padding: '8rem 2rem 6rem', background: 'var(--navy-100)', minHeight: '100vh', color: 'var(--text-main)', fontFamily: 'var(--font-body, "Inter", sans-serif)' }}>
+    <main style={{ padding: 'clamp(5rem, 8vw, 8rem) clamp(1rem, 3vw, 2rem) 5rem', background: 'var(--navy-100)', minHeight: '100vh', color: 'var(--text-main)', fontFamily: 'var(--font-body, "Inter", sans-serif)' }}>
       <div className="container" style={{ maxWidth: '1240px', margin: '0 auto', overflow: 'visible' }}>
         
         {/* Header Hero */}
@@ -389,10 +389,10 @@ export default function PricingPage() {
             Three Master Studio Services · Simple Flat Rates
           </div>
 
-          <h1 style={{ fontSize: 'clamp(2.5rem, 5vw, 3.75rem)', fontFamily: 'var(--font-heading)', fontWeight: 900, color: 'var(--navy-900)', marginBottom: '1.25rem', lineHeight: 1.12, letterSpacing: '-0.025em' }}>
+          <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontFamily: 'var(--font-heading)', fontWeight: 900, color: 'var(--navy-900)', marginBottom: '1.25rem', lineHeight: 1.12, letterSpacing: '-0.025em' }}>
             Choose Your <span style={{ color: 'var(--orange-500)' }}>Service & Package</span>
           </h1>
-          <p style={{ fontSize: '1.15rem', color: 'var(--text-muted)', maxWidth: '680px', margin: '0 auto', lineHeight: 1.65 }}>
+          <p style={{ fontSize: '1.05rem', color: 'var(--text-muted)', maxWidth: '680px', margin: '0 auto', lineHeight: 1.65 }}>
             Factory direct rates for our three master capabilities. 100% free unlimited edits, machine sew-out guarantees, and express delivery.
           </p>
 
@@ -419,14 +419,14 @@ export default function PricingPage() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.65rem 1.35rem',
+                    gap: '0.45rem',
+                    padding: '0.55rem 1.25rem',
                     borderRadius: '9999px',
                     border: 'none',
-                    background: isActive ? 'var(--orange-500)' : 'transparent',
-                    color: isActive ? '#ffffff' : 'var(--navy-700)',
-                    fontWeight: isActive ? 900 : 700,
-                    fontSize: '0.875rem',
+                    background: isActive ? 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)' : 'transparent',
+                    color: isActive ? '#ffffff' : 'var(--navy-800)',
+                    fontWeight: isActive ? 800 : 700,
+                    fontSize: '0.85rem',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                     boxShadow: isActive ? '0 4px 14px rgba(234, 88, 12, 0.35)' : 'none'
@@ -442,7 +442,7 @@ export default function PricingPage() {
         {/* 3 Packages Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
           gap: '1.5rem',
           alignItems: 'stretch',
           paddingTop: '1.25rem',

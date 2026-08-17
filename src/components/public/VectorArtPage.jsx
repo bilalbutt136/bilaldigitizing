@@ -450,7 +450,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
       {!isOrderViewOpen ? (
         <section style={{ padding: '5rem 0 6rem', background: '#f1f5f9', color: '#0f172a' }}>
           <div id="pricing-tiers" className="container" style={{ maxWidth: '1240px', overflow: 'visible' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2.5rem', marginBottom: '1.5rem', paddingTop: '1rem', overflow: 'visible' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 290px), 1fr))', gap: '2rem', marginBottom: '1.5rem', paddingTop: '1rem', overflow: 'visible' }}>
             
             {(() => {
               const handleSelectVectorTier = (cat) => {
@@ -700,7 +700,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
                         </div>
 
                         {/* Streamlined Row: Package Tier, Name, and Quantity */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr', gap: '0.75rem', alignItems: 'center' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '0.75rem', alignItems: 'center' }}>
                           
                           <div>
                             <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Package Tier *</label>

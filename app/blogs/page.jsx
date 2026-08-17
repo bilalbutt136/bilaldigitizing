@@ -147,17 +147,17 @@ export default function BlogsPage() {
     <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: '6rem' }}>
       
       {/* Blog Header Hero */}
-      <div style={{ background: 'var(--navy-950)', padding: '6rem 1.5rem', textAlign: 'center', color: '#ffffff' }}>
-        <h1 style={{ fontSize: '3rem', fontWeight: 900, marginBottom: '1.25rem', letterSpacing: '-0.02em' }}>
+      <div style={{ background: 'var(--navy-950)', padding: 'clamp(4rem, 6vw, 6rem) 1.25rem', textAlign: 'center', color: '#ffffff' }}>
+        <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 900, marginBottom: '1.25rem', letterSpacing: '-0.02em' }}>
           Industry <span style={{ color: 'var(--orange-500)' }}>Insights</span>
         </h1>
-        <p style={{ fontSize: '1.15rem', color: 'var(--navy-200)', maxWidth: '650px', margin: '0 auto', lineHeight: 1.6 }}>
+        <p style={{ fontSize: '1.05rem', color: 'var(--navy-200)', maxWidth: '650px', margin: '0 auto', lineHeight: 1.6 }}>
           Expert guides, technical deep-dives, and creative inspiration covering everything from commercial embroidery digitizing to scalable vector art and custom patch manufacturing.
         </p>
       </div>
 
-      <div className="container" style={{ maxWidth: '1000px', margin: '-3rem auto 0 auto', padding: '0 1.5rem' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+      <div className="container" style={{ maxWidth: '1000px', margin: '-2.5rem auto 0 auto', padding: '0 1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
           {blogPosts.map((post) => (
             <article 
               key={post.id} 
@@ -171,17 +171,17 @@ export default function BlogsPage() {
               }}
             >
               {/* Decorative Image/Color Banner */}
-              <div style={{ height: '180px', width: '100%', background: post.imageGradient, position: 'relative' }}>
+              <div style={{ height: '160px', width: '100%', background: post.imageGradient, position: 'relative' }}>
                 <div style={{ 
                   position: 'absolute', 
-                  bottom: '-20px', 
-                  left: '2rem', 
+                  bottom: '-16px', 
+                  left: '1.25rem', 
                   background: 'var(--orange-500)', 
                   color: '#ffffff',
-                  padding: '0.4rem 1.2rem',
+                  padding: '0.35rem 1rem',
                   borderRadius: '999px',
                   fontWeight: 800,
-                  fontSize: '0.85rem',
+                  fontSize: '0.8rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
                   boxShadow: '0 4px 12px rgba(255, 122, 0, 0.3)'
@@ -190,21 +190,21 @@ export default function BlogsPage() {
                 </div>
               </div>
 
-              <div style={{ padding: '3rem 2.5rem 2.5rem 2.5rem' }}>
-                <h2 style={{ fontSize: '2.2rem', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '1rem', lineHeight: 1.2, letterSpacing: '-0.01em' }}>
+              <div style={{ padding: 'clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 3vw, 2rem)' }}>
+                <h2 style={{ fontSize: 'clamp(1.35rem, 3.5vw, 2.1rem)', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '0.85rem', lineHeight: 1.2, letterSpacing: '-0.01em' }}>
                   {post.title}
                 </h2>
                 
                 {/* Meta Information */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 600, marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.65rem 1.25rem', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '1.5rem' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <User size={16} /> {post.author}
+                    <User size={15} /> {post.author}
                   </span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Clock size={16} /> {post.date}
+                    <Clock size={15} /> {post.date}
                   </span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--orange-600)' }}>
-                    <Tag size={16} /> {post.readTime}
+                    <Tag size={15} /> {post.readTime}
                   </span>
                 </div>
 
@@ -212,11 +212,11 @@ export default function BlogsPage() {
                 <div 
                   style={{ 
                     color: 'var(--navy-800)', 
-                    fontSize: '1.1rem', 
-                    lineHeight: 1.8,
+                    fontSize: 'clamp(0.95rem, 2vw, 1.05rem)', 
+                    lineHeight: 1.75,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '1.25rem'
+                    gap: '1.15rem'
                   }}
                 >
                   {post.content.split('\n\n').map((paragraph, index) => {

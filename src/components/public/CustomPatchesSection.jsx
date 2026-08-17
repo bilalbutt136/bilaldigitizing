@@ -307,8 +307,8 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
           {/* Streamlined Pricing Tiers Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '2.5rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 290px), 1fr))',
+            gap: '2rem',
             maxWidth: '1240px',
             margin: '0 auto',
             alignItems: 'stretch',
@@ -357,7 +357,7 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
               <ImageIcon size={16} /> Production Portfolio & Sample Showcase
             </div>
 
-            <h2 style={{ fontSize: '2.4rem', color: '#ffffff', marginBottom: '0.85rem', fontWeight: 800 }}>
+            <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.4rem)', color: '#ffffff', marginBottom: '0.85rem', fontWeight: 800 }}>
               Physical Custom Patch Showcase
             </h2>
 
@@ -369,8 +369,8 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
           {/* Sample Cards Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '1.75rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
+            gap: '1.5rem',
             maxWidth: '1200px',
             margin: '0 auto'
           }}>

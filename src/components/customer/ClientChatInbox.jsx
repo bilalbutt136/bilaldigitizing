@@ -80,6 +80,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   const [filterMode, setFilterMode] = useState('all'); // 'all' | 'orders' | 'support' | 'unread'
   const [messageInput, setMessageInput] = useState('');
   const [attachedFile, setAttachedFile] = useState(null);
+  const [mobileView, setMobileView] = useState(initialOrderId ? 'chat' : 'list');
   
   const chatFeedRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -431,6 +432,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
   const handleSelectThread = (threadId) => {
     setActiveChatId(threadId);
+    setMobileView('chat');
     if (typeof window !== 'undefined') {
       localStorage.setItem('bdigi_read_client_' + threadId, String(Date.now()));
       window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: threadId } }));
@@ -599,23 +601,29 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     }}>
 
       {/* Main Grid: Left Conversation Sidebar + Right Chat Canvas */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '320px 1fr',
-        flex: 1,
-        minHeight: 0,
-        height: '100%',
-        overflow: 'hidden'
-      }}>
+      <div 
+        className="chat-inbox-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '320px 1fr',
+          flex: 1,
+          minHeight: 0,
+          height: '100%',
+          overflow: 'hidden'
+        }}
+      >
 
         {/* LEFT PANEL: THREAD LIST */}
-        <div style={{
-          borderRight: '1px solid var(--border-color)',
-          display: 'flex',
-          flexDirection: 'column',
-          background: '#f8fafc',
-          overflow: 'hidden'
-        }}>
+        <div 
+          className={`chat-threads-column ${mobileView === 'chat' ? 'hide-on-mobile-thread' : ''}`}
+          style={{
+            borderRight: '1px solid var(--border-color)',
+            display: 'flex',
+            flexDirection: 'column',
+            background: '#f8fafc',
+            overflow: 'hidden'
+          }}
+        >
           {/* Thread List Header & Search */}
           <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', background: '#ffffff' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
@@ -841,7 +849,10 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         </div>
 
         {/* RIGHT PANEL: CHAT FEED & INPUT */}
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, background: '#ffffff', overflow: 'hidden' }}>
+        <div 
+          className={`chat-messages-column ${mobileView === 'list' ? 'hide-on-mobile-chat' : ''}`}
+          style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, background: '#ffffff', overflow: 'hidden' }}
+        >
           
           {/* Active Thread Header */}
           <div style={{
@@ -854,6 +865,28 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
             flexShrink: 0
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <button
+                type="button"
+                className="mobile-only"
+                onClick={() => setMobileView('list')}
+                style={{
+                  background: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  color: 'var(--navy-900)',
+                  borderRadius: '8px',
+                  padding: '0.35rem 0.65rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  flexShrink: 0
+                }}
+                aria-label="Back to conversations"
+              >
+                ← All Chats
+              </button>
+
               <div style={{
                 width: '38px',
                 height: '38px',
@@ -863,7 +896,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontWeight: 900
+                fontWeight: 900,
+                flexShrink: 0
               }}>
                 {activeChat.rawOrderId ? (
                   activeChat.serviceCategory?.includes('Vector') ? <PenTool size={18} /> :
