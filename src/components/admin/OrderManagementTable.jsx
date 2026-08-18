@@ -9,7 +9,9 @@ import {
   ChevronRight,
   ZoomIn,
   Clock,
-  MessageSquare
+  MessageSquare,
+  UploadCloud,
+  PackageCheck
 } from 'lucide-react';
 
 const getNextStatuses = (currentStatus) => {
@@ -523,34 +525,38 @@ export const OrderManagementTable = () => {
 
                     {/* 8. ACTIONS */}
                     <td style={{ padding: '1rem', textAlign: 'right' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.35rem' }}>
+                        {ord.status !== 'completed' && ord.status !== 'cancelled' && (
+                          <button 
+                            type="button"
+                            onClick={() => setSelectedOrderForDrawer(ord)}
+                            style={{ 
+                              fontWeight: 800, 
+                              fontSize: '0.78rem', 
+                              whiteSpace: 'nowrap', 
+                              gap: '0.3rem', 
+                              padding: '0.35rem 0.75rem',
+                              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: '8px',
+                              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.28)',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center'
+                            }}
+                            title="Open desk to deliver machine files"
+                          >
+                            <UploadCloud size={13} /> {ord.status === 'delivered' ? 'Re-Deliver' : 'Deliver Files'}
+                          </button>
+                        )}
+
                         <button 
                           className="btn btn-primary-orange btn-sm"
                           onClick={() => setSelectedOrderForDrawer(ord)}
                           style={{ fontWeight: 800, fontSize: '0.78rem', whiteSpace: 'nowrap', gap: '0.3rem', padding: '0.35rem 0.75rem' }}
                         >
                           Manage <ChevronRight size={14} />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setSelectedOrderForDrawer(ord)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--text-muted)',
-                            fontSize: '0.725rem',
-                            fontWeight: 700,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.25rem',
-                            cursor: 'pointer',
-                            padding: 0
-                          }}
-                          title="Open chat & order activity log"
-                        >
-                          <MessageSquare size={13} style={{ color: 'var(--orange-500)' }} />
-                          {msgCount > 0 ? `${msgCount} Messages` : 'Activity Log'}
                         </button>
                       </div>
                     </td>

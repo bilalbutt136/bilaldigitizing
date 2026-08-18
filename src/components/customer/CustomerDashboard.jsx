@@ -271,9 +271,19 @@ export const CustomerDashboard = () => {
   // 4. Strictly Store & Digital Product Purchases
   const storeOrders = myOrders.filter(isStoreOrder);
 
-  const activeOrders = digitizingOrders.filter(o => o?.status !== 'completed');
-  const completedOrders = digitizingOrders.filter(o => o?.status === 'completed');
-  const revisionOrders = digitizingOrders.filter(o => o?.revisions && o.revisions.length > 0);
+  // Orders to display on the current tab (on Studio Dashboard, show ALL client orders)
+  const currentTabOrders = activeTab === 'digitizing' 
+    ? digitizingOrders 
+    : activeTab === 'vector' 
+      ? vectorOrders 
+      : activeTab === 'patches' 
+        ? patchOrders 
+        : myOrders;
+
+  const activeOrders = currentTabOrders.filter(o => o?.status !== 'completed' && o?.status !== 'cancelled');
+  const deliveredOrders = currentTabOrders.filter(o => o?.status === 'delivered' || (Array.isArray(o?.uploadedMachineFiles) && o.uploadedMachineFiles.length > 0 && o?.status !== 'completed'));
+  const revisionOrders = currentTabOrders.filter(o => o?.status === 'revision' || o?.status === 'revision_requested');
+  const completedOrders = currentTabOrders.filter(o => o?.status === 'completed');
 
   const totalSpent = myOrders.reduce((acc, curr) => acc + (parseFloat(curr?.price) || 0), 0);
 
@@ -282,14 +292,16 @@ export const CustomerDashboard = () => {
 
   React.useEffect(() => {
     setCustomerPage(1);
-  }, [filterStatus, searchTerm]);
+  }, [filterStatus, searchTerm, activeTab]);
 
-  const filteredDigitizingOrders = digitizingOrders.filter(o => {
+  const filteredDigitizingOrders = currentTabOrders.filter(o => {
     const titleMatch = (o?.title || '').toLowerCase().includes(searchTerm.toLowerCase());
     const idMatch = (o?.id || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSearch = titleMatch || idMatch;
     
-    if (filterStatus === 'active') return matchesSearch && o?.status !== 'completed';
+    if (filterStatus === 'active') return matchesSearch && o?.status !== 'completed' && o?.status !== 'cancelled';
+    if (filterStatus === 'delivered') return matchesSearch && (o?.status === 'delivered' || (Array.isArray(o?.uploadedMachineFiles) && o.uploadedMachineFiles.length > 0 && o?.status !== 'completed'));
+    if (filterStatus === 'revision') return matchesSearch && (o?.status === 'revision' || o?.status === 'revision_requested');
     if (filterStatus === 'completed') return matchesSearch && o?.status === 'completed';
     return matchesSearch;
   });
@@ -307,26 +319,181 @@ export const CustomerDashboard = () => {
       : isOrderPaid({ payment_status: statusOrOrder });
 
     if (isPaidComputed) {
-      return <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', fontWeight: 800 }}>PAID</span>;
+      return (
+        <span 
+          className="badge" 
+          style={{ 
+            background: '#dcfce7', 
+            color: '#15803d', 
+            border: '1px solid #bbf7d0', 
+            fontWeight: 800,
+            fontSize: '0.725rem',
+            padding: '0.2rem 0.55rem',
+            borderRadius: '9999px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.25rem',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <CheckCircle2 size={11} style={{ color: '#16a34a' }} /> PAID
+        </span>
+      );
     }
-    return <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', fontWeight: 800 }}>PENDING</span>;
+    return (
+      <span 
+        className="badge" 
+        style={{ 
+          background: '#fff7ed', 
+          color: '#c2410c', 
+          border: '1px solid #ffedd5', 
+          fontWeight: 800,
+          fontSize: '0.725rem',
+          padding: '0.2rem 0.55rem',
+          borderRadius: '9999px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.25rem',
+          whiteSpace: 'nowrap'
+        }}
+      >
+        <Clock size={11} style={{ color: '#ea580c' }} /> PENDING
+      </span>
+    );
   };
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'awaiting_payment':
-        return <span className="badge badge-submitted">Brief Submitted</span>;
-      case 'assigned':
-        return <span className="badge badge-assigned">Digitizer Assigned</span>;
-      case 'digitizing':
-        return <span className="badge badge-digitizing">Digitizing In Progress</span>;
-      case 'qc':
-        return <span className="badge badge-qc">Quality Control Simulation</span>;
-      case 'completed':
-        return <span className="badge badge-completed">Ready For Download</span>;
-      default:
-        return <span className="badge">{status}</span>;
+  const getOrderDeliveryStatusBadge = (ord) => {
+    if (!ord) return null;
+    const s = String(ord?.status || 'submitted').toLowerCase().trim();
+    const hasFiles = Array.isArray(ord?.uploadedMachineFiles) && ord.uploadedMachineFiles.length > 0;
+    const isDelivered = s === 'delivered' || (hasFiles && s !== 'completed');
+    const isCompleted = s === 'completed';
+    const isRevision = s === 'revision' || s === 'revision_requested';
+    const isQC = s === 'qc' || s === 'quality_check';
+    const isInProgress = s === 'in_progress' || s === 'digitizing' || s === 'assigned';
+
+    if (isCompleted) {
+      return (
+        <span style={{
+          background: '#dcfce7',
+          color: '#15803d',
+          border: '1px solid #86efac',
+          padding: '0.25rem 0.65rem',
+          borderRadius: '9999px',
+          fontSize: '0.74rem',
+          fontWeight: 800,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.3rem',
+          whiteSpace: 'nowrap'
+        }}>
+          ✅ Completed
+        </span>
+      );
     }
+
+    if (isDelivered) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', alignItems: 'flex-start' }}>
+          <span style={{
+            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            color: '#ffffff',
+            padding: '0.25rem 0.65rem',
+            borderRadius: '9999px',
+            fontSize: '0.74rem',
+            fontWeight: 800,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.3rem',
+            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
+            whiteSpace: 'nowrap'
+          }}>
+            📦 Delivered (Files Ready)
+          </span>
+          <span style={{ fontSize: '0.7rem', color: '#047857', fontWeight: 700 }}>
+            Click to Download & Review
+          </span>
+        </div>
+      );
+    }
+
+    if (isRevision) {
+      return (
+        <span style={{
+          background: '#fff1f2',
+          color: '#e11d48',
+          border: '1px solid #fecdd3',
+          padding: '0.25rem 0.65rem',
+          borderRadius: '9999px',
+          fontSize: '0.74rem',
+          fontWeight: 800,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.3rem',
+          whiteSpace: 'nowrap'
+        }}>
+          🔄 Modification in Progress
+        </span>
+      );
+    }
+
+    if (isQC) {
+      return (
+        <span style={{
+          background: '#e0e7ff',
+          color: '#4338ca',
+          border: '1px solid #c7d2fe',
+          padding: '0.25rem 0.65rem',
+          borderRadius: '9999px',
+          fontSize: '0.74rem',
+          fontWeight: 800,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.3rem',
+          whiteSpace: 'nowrap'
+        }}>
+          🔍 Quality Check
+        </span>
+      );
+    }
+
+    if (isInProgress) {
+      return (
+        <span style={{
+          background: '#e0f2fe',
+          color: '#0369a1',
+          border: '1px solid #bae6fd',
+          padding: '0.25rem 0.65rem',
+          borderRadius: '9999px',
+          fontSize: '0.74rem',
+          fontWeight: 800,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.3rem',
+          whiteSpace: 'nowrap'
+        }}>
+          ⚡ In Production
+        </span>
+      );
+    }
+
+    return (
+      <span style={{
+        background: '#fef3c7',
+        color: '#b45309',
+        border: '1px solid #fde68a',
+        padding: '0.25rem 0.65rem',
+        borderRadius: '9999px',
+        fontSize: '0.74rem',
+        fontWeight: 800,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.3rem',
+        whiteSpace: 'nowrap'
+      }}>
+        📋 Placed & Reviewing
+      </span>
+    );
   };
 
   const handleOpenLiveSupport = (orderId = null) => {
@@ -942,7 +1109,7 @@ export const CustomerDashboard = () => {
                     flexWrap: 'wrap',
                     gap: '0.85rem'
                   }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                       <button 
                         type="button"
                         onClick={() => setFilterStatus('all')}
@@ -953,14 +1120,14 @@ export const CustomerDashboard = () => {
                           border: filterStatus === 'all' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
                           fontWeight: 800,
                           fontSize: '0.825rem',
-                          padding: '0.45rem 0.95rem',
+                          padding: '0.45rem 0.85rem',
                           borderRadius: '8px',
                           cursor: 'pointer',
                           boxShadow: filterStatus === 'all' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
                           transition: 'all 0.18s ease'
                         }}
                       >
-                        All Orders ({myOrders.length})
+                        All Orders ({currentTabOrders.length})
                       </button>
 
                       <button 
@@ -973,7 +1140,7 @@ export const CustomerDashboard = () => {
                           border: filterStatus === 'active' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
                           fontWeight: 800,
                           fontSize: '0.825rem',
-                          padding: '0.45rem 0.95rem',
+                          padding: '0.45rem 0.85rem',
                           borderRadius: '8px',
                           cursor: 'pointer',
                           boxShadow: filterStatus === 'active' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
@@ -981,6 +1148,46 @@ export const CustomerDashboard = () => {
                         }}
                       >
                         Active ({activeOrders.length})
+                      </button>
+
+                      <button 
+                        type="button"
+                        onClick={() => setFilterStatus('delivered')}
+                        style={{
+                          background: filterStatus === 'delivered' ? '#10b981' : '#f8fafc',
+                          backgroundColor: filterStatus === 'delivered' ? '#10b981' : '#f8fafc',
+                          color: filterStatus === 'delivered' ? '#ffffff' : '#047857',
+                          border: filterStatus === 'delivered' ? '1.5px solid #10b981' : '1.5px solid #a7f3d0',
+                          fontWeight: 800,
+                          fontSize: '0.825rem',
+                          padding: '0.45rem 0.85rem',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          boxShadow: filterStatus === 'delivered' ? '0 4px 14px rgba(16, 185, 129, 0.35)' : 'none',
+                          transition: 'all 0.18s ease'
+                        }}
+                      >
+                        📦 Delivered ({deliveredOrders.length})
+                      </button>
+
+                      <button 
+                        type="button"
+                        onClick={() => setFilterStatus('revision')}
+                        style={{
+                          background: filterStatus === 'revision' ? '#ff7a00' : '#f8fafc',
+                          backgroundColor: filterStatus === 'revision' ? '#ff7a00' : '#f8fafc',
+                          color: filterStatus === 'revision' ? '#ffffff' : 'var(--navy-800)',
+                          border: filterStatus === 'revision' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
+                          fontWeight: 800,
+                          fontSize: '0.825rem',
+                          padding: '0.45rem 0.85rem',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          boxShadow: filterStatus === 'revision' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
+                          transition: 'all 0.18s ease'
+                        }}
+                      >
+                        🔄 In Revision ({revisionOrders.length})
                       </button>
 
                       <button 
@@ -993,7 +1200,7 @@ export const CustomerDashboard = () => {
                           border: filterStatus === 'completed' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
                           fontWeight: 800,
                           fontSize: '0.825rem',
-                          padding: '0.45rem 0.95rem',
+                          padding: '0.45rem 0.85rem',
                           borderRadius: '8px',
                           cursor: 'pointer',
                           boxShadow: filterStatus === 'completed' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
@@ -1021,8 +1228,8 @@ export const CustomerDashboard = () => {
                   {filteredDigitizingOrders.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
                       <FileText size={42} style={{ color: 'var(--text-light)', marginBottom: '0.75rem' }} />
-                      <p style={{ fontWeight: 600, fontSize: '1.05rem' }}>No embroidery digitizing orders found matching your search.</p>
-                      <p style={{ fontSize: '0.85rem' }}>Click "Upload New Design Brief" to place your first embroidery or vector job.</p>
+                      <p style={{ fontWeight: 600, fontSize: '1.05rem' }}>No orders found matching your search filter.</p>
+                      <p style={{ fontSize: '0.85rem' }}>Click "Upload New Design Brief" to place your embroidery or vector job.</p>
                     </div>
                   ) : (
                     <>
@@ -1030,7 +1237,7 @@ export const CustomerDashboard = () => {
                       <div className="desktop-table-view" style={{ 
                         maxHeight: '560px', 
                         overflowY: 'auto', 
-                        overflowX: 'auto',
+                        overflowX: 'auto', 
                         border: '1px solid var(--border-color)',
                         borderRadius: '12px',
                         background: '#ffffff',
@@ -1042,6 +1249,7 @@ export const CustomerDashboard = () => {
                               <th style={{ padding: '0.75rem 1rem' }}>Uploaded Artwork & Design</th>
                               <th style={{ padding: '0.75rem 1rem' }}>Service Type</th>
                               <th style={{ padding: '0.75rem 1rem' }}>Date Submitted</th>
+                              <th style={{ padding: '0.75rem 1rem' }}>Delivery & Order Status</th>
                               <th style={{ padding: '0.75rem 1rem' }}>Payment Status</th>
                               <th style={{ padding: '0.75rem 1rem' }}>Cost</th>
                               <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Actions</th>
@@ -1050,16 +1258,17 @@ export const CustomerDashboard = () => {
                           <tbody>
                             {paginatedCustOrders.map((ord) => {
                               const isPaid = isOrderPaid(ord);
+                              const isDelivered = ord?.status === 'delivered' || (Array.isArray(ord?.uploadedMachineFiles) && ord.uploadedMachineFiles.length > 0 && ord?.status !== 'completed');
                               return (
                                 <tr 
                                   key={ord?.id || Math.random()}
                                   style={{ 
                                     borderBottom: isPaid ? '1px solid var(--border-color)' : '1px solid #fed7aa', 
-                                    background: isPaid ? '#ffffff' : '#fffcf6',
+                                    background: isDelivered ? '#f0fdf4' : (isPaid ? '#ffffff' : '#fffcf6'),
                                     transition: 'background 0.15s' 
                                   }}
-                                  onMouseEnter={(e) => e.currentTarget.style.background = isPaid ? 'var(--orange-50)' : '#fff7ed'}
-                                  onMouseLeave={(e) => e.currentTarget.style.background = isPaid ? '#ffffff' : '#fffcf6'}
+                                  onMouseEnter={(e) => e.currentTarget.style.background = isDelivered ? '#dcfce7' : (isPaid ? 'var(--orange-50)' : '#fff7ed')}
+                                  onMouseLeave={(e) => e.currentTarget.style.background = isDelivered ? '#f0fdf4' : (isPaid ? '#ffffff' : '#fffcf6')}
                                 >
                                   {/* Title & Interactive Lightbox Artwork Thumbnail */}
                                   <td style={{ padding: '1rem' }}>
@@ -1088,7 +1297,7 @@ export const CustomerDashboard = () => {
                                             e.currentTarget.onerror = null;
                                             e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
                                           }}
-                                          style={{ width: '52px', height: '52px', borderRadius: '8px', objectFit: 'cover', border: '1.5px solid var(--orange-600)' }}
+                                          style={{ width: '52px', height: '52px', borderRadius: '8px', objectFit: 'cover', border: isDelivered ? '2px solid #10b981' : '1.5px solid var(--orange-600)' }}
                                         />
                                         <div style={{
                                           position: 'absolute',
@@ -1136,6 +1345,11 @@ export const CustomerDashboard = () => {
                                     {ord?.createdAt || ord?.created_at ? new Date(ord.createdAt || ord.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
                                   </td>
 
+                                  {/* Delivery & Order Status (NEW) */}
+                                  <td style={{ padding: '1rem' }}>
+                                    {getOrderDeliveryStatusBadge(ord)}
+                                  </td>
+
                                   {/* Payment Status */}
                                   <td style={{ padding: '1rem' }}>
                                     {getPaymentStatusBadge(ord)}
@@ -1148,7 +1362,31 @@ export const CustomerDashboard = () => {
 
                                   {/* Actions */}
                                   <td style={{ padding: '1rem', textAlign: 'right' }}>
-                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                                      {isDelivered && (
+                                        <button
+                                          type="button"
+                                          onClick={() => setSelectedOrderForDrawer(ord)}
+                                          style={{
+                                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                            color: '#ffffff',
+                                            border: 'none',
+                                            padding: '0.45rem 0.85rem',
+                                            borderRadius: '8px',
+                                            fontWeight: 800,
+                                            fontSize: '0.78rem',
+                                            cursor: 'pointer',
+                                            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.3rem',
+                                            whiteSpace: 'nowrap'
+                                          }}
+                                        >
+                                          <PackageCheck size={14} /> Download / Review
+                                        </button>
+                                      )}
+
                                       {!isPaid && (
                                         <button
                                           type="button"
@@ -1157,15 +1395,15 @@ export const CustomerDashboard = () => {
                                             background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
                                             color: '#ffffff',
                                             border: 'none',
-                                            padding: '0.45rem 0.95rem',
+                                            padding: '0.45rem 0.85rem',
                                             borderRadius: '8px',
                                             fontWeight: 800,
-                                            fontSize: '0.8rem',
+                                            fontSize: '0.78rem',
                                             cursor: 'pointer',
                                             boxShadow: '0 2px 8px rgba(249, 115, 22, 0.28)',
                                             display: 'inline-flex',
                                             alignItems: 'center',
-                                            gap: '0.35rem',
+                                            gap: '0.3rem',
                                             lineHeight: 1.2,
                                             whiteSpace: 'nowrap',
                                             transition: 'all 0.15s ease'
@@ -1173,9 +1411,10 @@ export const CustomerDashboard = () => {
                                           onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
                                           onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
                                         >
-                                          <Zap size={13} /> Pay Now
+                                          <Zap size={12} /> Pay Now
                                         </button>
                                       )}
+
                                       <button
                                         className="btn btn-outline btn-sm"
                                         onClick={() => setSelectedOrderForDrawer(ord)}
@@ -1186,13 +1425,13 @@ export const CustomerDashboard = () => {
                                           padding: '0.45rem 0.85rem',
                                           borderRadius: '8px',
                                           fontWeight: 700,
-                                          fontSize: '0.8rem',
-                                          color: '#ff7a00',
-                                          borderColor: '#ff7a00',
+                                          fontSize: '0.78rem',
+                                          color: 'var(--navy-800)',
+                                          borderColor: 'var(--border-color)',
                                           whiteSpace: 'nowrap'
                                         }}
                                       >
-                                        View Order <ChevronRight size={15} />
+                                        View Order <ChevronRight size={14} />
                                       </button>
                                     </div>
                                   </td>
@@ -1207,6 +1446,7 @@ export const CustomerDashboard = () => {
                       <div className="mobile-cards-view">
                         {paginatedCustOrders.map((ord) => {
                           const isPaid = isOrderPaid(ord);
+                          const isDelivered = ord?.status === 'delivered' || (Array.isArray(ord?.uploadedMachineFiles) && ord.uploadedMachineFiles.length > 0 && ord?.status !== 'completed');
                           const primaryImg = 
                             ord?.artworkUrl || 
                             ord?.image_url || 
@@ -1221,10 +1461,38 @@ export const CustomerDashboard = () => {
                               key={ord?.id || Math.random()}
                               className="mobile-order-card"
                               style={{
-                                border: isPaid ? '1px solid var(--border-color)' : '1.5px solid #fed7aa',
-                                background: isPaid ? '#ffffff' : '#fffcf6'
+                                border: isDelivered ? '1.5px solid #86efac' : (isPaid ? '1px solid var(--border-color)' : '1.5px solid #fed7aa'),
+                                background: isDelivered ? '#f0fdf4' : (isPaid ? '#ffffff' : '#fffcf6'),
+                                borderRadius: '12px',
+                                padding: '0.85rem',
+                                marginBottom: '0.75rem',
+                                boxShadow: isDelivered ? '0 4px 14px rgba(16, 185, 129, 0.12)' : '0 1px 4px rgba(0,0,0,0.04)'
                               }}
                             >
+                              {/* Delivered Banner Alert on Mobile */}
+                              {isDelivered && (
+                                <div style={{
+                                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                  color: '#ffffff',
+                                  padding: '0.35rem 0.65rem',
+                                  borderRadius: '8px',
+                                  fontSize: '0.725rem',
+                                  fontWeight: 800,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  marginBottom: '0.65rem',
+                                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
+                                }}>
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                                    <PackageCheck size={14} /> Production Files Ready!
+                                  </span>
+                                  <span style={{ fontSize: '0.68rem', textDecoration: 'underline', opacity: 0.95 }}>
+                                    Download & Review
+                                  </span>
+                                </div>
+                              )}
+
                               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                                 {/* Thumbnail */}
                                 <div 
@@ -1232,13 +1500,13 @@ export const CustomerDashboard = () => {
                                   onClick={() => setLightboxOrder(ord)}
                                 >
                                   <img 
-                                    src={primaryImg}
+                                    src={primaryImg} 
                                     alt={ord?.title || 'Design'}
                                     onError={(e) => {
                                       e.currentTarget.onerror = null;
                                       e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
                                     }}
-                                    style={{ width: '58px', height: '58px', borderRadius: '10px', objectFit: 'cover', border: '1.5px solid var(--orange-500)' }}
+                                    style={{ width: '58px', height: '58px', borderRadius: '10px', objectFit: 'cover', border: isDelivered ? '2px solid #10b981' : '1.5px solid var(--orange-500)' }}
                                   />
                                   <div style={{ position: 'absolute', bottom: '2px', right: '2px', background: 'rgba(0,0,0,0.65)', borderRadius: '4px', padding: '1px 3px', color: '#fff', fontSize: '0.55rem', display: 'flex', alignItems: 'center' }}>
                                     <ZoomIn size={10} />
@@ -1249,7 +1517,7 @@ export const CustomerDashboard = () => {
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.35rem' }}>
                                     <div>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
                                         <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--orange-600)', background: '#fff7ed', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
                                           {formatOrderId(ord?.id)}
                                         </span>
@@ -1271,15 +1539,42 @@ export const CustomerDashboard = () => {
                                     <span>•</span>
                                     <span>{ord?.createdAt || ord?.created_at ? new Date(ord.createdAt || ord.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'}</span>
                                   </div>
+
+                                  <div style={{ marginTop: '0.4rem' }}>
+                                    {getOrderDeliveryStatusBadge(ord)}
+                                  </div>
                                 </div>
                               </div>
 
                               {/* Card Footer Actions */}
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid #f1f5f9' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid #f1f5f9', flexWrap: 'wrap', gap: '0.4rem' }}>
                                 <div>
                                   {getPaymentStatusBadge(ord)}
                                 </div>
-                                <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                                  {isDelivered && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedOrderForDrawer(ord)}
+                                      style={{
+                                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                        color: '#ffffff',
+                                        border: 'none',
+                                        padding: '0.35rem 0.7rem',
+                                        borderRadius: '6px',
+                                        fontWeight: 800,
+                                        fontSize: '0.75rem',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.25rem',
+                                        boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)'
+                                      }}
+                                    >
+                                      <PackageCheck size={13} /> Download
+                                    </button>
+                                  )}
+
                                   {!isPaid && (
                                     <button
                                       type="button"
@@ -1319,7 +1614,7 @@ export const CustomerDashboard = () => {
                                       gap: '0.25rem'
                                     }}
                                   >
-                                    Track Order <ChevronRight size={13} />
+                                    View <ChevronRight size={13} />
                                   </button>
                                 </div>
                               </div>
