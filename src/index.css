@@ -597,16 +597,43 @@ button, input, select, textarea, a {
 
   /* Floating Chat Responsive Adaptation */
   .floating-chat-trigger {
-    bottom: 75px !important; right: 14px !important; padding: 0 !important;
-    width: 52px !important; height: 52px !important; border-radius: 50% !important;
-    justify-content: center !important; align-items: center !important;
-    box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4) !important; z-index: 8500 !important;
+    bottom: 78px !important; 
+    right: 16px !important; 
+    padding: 0 !important;
+    width: 52px !important; 
+    height: 52px !important; 
+    border-radius: 50% !important;
+    justify-content: center !important; 
+    align-items: center !important;
+    box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4) !important; 
+    z-index: 8500 !important;
   }
   .floating-chat-trigger > div:first-child { width: auto !important; height: auto !important; background: transparent !important; }
-  .floating-chat-window { bottom: 75px !important; right: 10px !important; left: 10px !important; width: auto !important; max-height: calc(100vh - 150px) !important; z-index: 8800 !important; }
-  .mobile-bottom-nav { z-index: 9999 !important; }
-  .mobile-bottom-nav button { min-width: 0 !important; overflow: hidden !important; white-space: nowrap !important; text-overflow: ellipsis !important; }
-  .dashboard-main-container { padding-bottom: 6rem !important; }
+  .floating-chat-window { bottom: 70px !important; right: 10px !important; left: 10px !important; width: auto !important; max-height: calc(100vh - 140px) !important; z-index: 9995 !important; }
+  
+  /* Native Mobile Bottom Navigation Toolbar */
+  .mobile-bottom-nav { 
+    z-index: 9990 !important; 
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-top: 1px solid rgba(226, 232, 240, 0.9) !important;
+    box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08) !important;
+  }
+  .mobile-bottom-nav button { 
+    min-width: 0 !important; 
+    overflow: hidden !important; 
+    white-space: nowrap !important; 
+    text-overflow: ellipsis !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+  
+  /* On client dashboard screens with mobile bottom navigation, hide redundant floating bubble so it never overlaps cards */
+  body:has(.mobile-bottom-nav) .floating-chat-trigger {
+    display: none !important;
+  }
+
+  .dashboard-main-container { padding-bottom: 5.5rem !important; }
 
   /* Modal Mobile Optimization */
   .modal-overlay {

@@ -29,7 +29,9 @@ import {
   CreditCard,
   Zap,
   AlertCircle,
-  LayoutDashboard
+  LayoutDashboard,
+  PackageCheck,
+  Plus
 } from 'lucide-react';
 import { ClientSidebar } from './ClientSidebar';
 import { ClientChatInbox } from './ClientChatInbox';
@@ -1253,68 +1255,104 @@ export const CustomerDashboard = () => {
         />
       )}
 
-      {/* 3. FIXED BOTTOM NAVIGATION BAR FOR MOBILE VIEWPORTS */}
-      <div 
+      {/* 3. FIXED NATIVE APP BOTTOM NAVIGATION BAR FOR MOBILE */}
+      <nav 
         className="mobile-only mobile-bottom-nav"
         style={{
           position: 'fixed',
           bottom: 0,
           left: 0,
           right: 0,
-          zIndex: 9999,
-          background: '#ffffff',
-          borderTop: '1px solid var(--border-color)',
+          zIndex: 9990,
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderTop: '1px solid rgba(226, 232, 240, 0.9)',
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-          padding: '0.45rem 0.2rem max(0.65rem, env(safe-area-inset-bottom, 0.65rem))',
-          boxShadow: '0 -6px 24px rgba(0,0,0,0.15)'
+          gridTemplateColumns: 'repeat(5, 1fr)',
+          alignItems: 'center',
+          height: '62px',
+          padding: '0.2rem 0.25rem max(0.5rem, env(safe-area-inset-bottom, 0.5rem))',
+          boxShadow: '0 -4px 20px rgba(15, 23, 42, 0.08)'
         }}
+        aria-label="Mobile Bottom Navigation"
       >
-        {/* Item 1: Dashboard */}
+        {/* Tab 1: Dashboard */}
         <button
           type="button"
-          onClick={() => setActiveTab('digitizing')}
+          onClick={() => {
+            setActiveTab('dashboard');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
           style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '0.2rem',
+            justifyContent: 'center',
+            gap: '0.15rem',
             background: 'none',
             border: 'none',
-            color: activeTab === 'digitizing' ? 'var(--orange-600)' : 'var(--navy-700)',
-            fontWeight: activeTab === 'digitizing' ? 800 : 600,
-            fontSize: '0.68rem',
+            color: activeTab === 'dashboard' ? 'var(--orange-600)' : '#64748b',
+            fontWeight: activeTab === 'dashboard' ? 800 : 600,
+            fontSize: '0.65rem',
             cursor: 'pointer',
-            padding: '0.35rem 0'
+            padding: '0.2rem 0',
+            transition: 'all 0.2s ease'
           }}
         >
-          <Layers size={20} style={{ color: activeTab === 'digitizing' ? 'var(--orange-600)' : 'var(--navy-600)' }} />
+          <div style={{
+            padding: '0.2rem 0.6rem',
+            borderRadius: '10px',
+            background: activeTab === 'dashboard' ? '#fff7ed' : 'transparent',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <LayoutDashboard size={19} style={{ color: activeTab === 'dashboard' ? 'var(--orange-600)' : '#64748b' }} />
+          </div>
           <span>Dashboard</span>
         </button>
 
-        {/* Item 2: History */}
+        {/* Tab 2: Orders / Tracking */}
         <button
           type="button"
-          onClick={() => setActiveTab('patches')}
+          onClick={() => {
+            setActiveTab('dashboard');
+            const tableEl = document.getElementById('orders-table-wrapper') || document.querySelector('.orders-table-container');
+            if (tableEl) {
+              tableEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }}
           style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '0.2rem',
+            justifyContent: 'center',
+            gap: '0.15rem',
             background: 'none',
             border: 'none',
-            color: activeTab === 'patches' ? 'var(--orange-600)' : 'var(--navy-700)',
-            fontWeight: activeTab === 'patches' ? 800 : 600,
-            fontSize: '0.68rem',
+            color: '#64748b',
+            fontWeight: 600,
+            fontSize: '0.65rem',
             cursor: 'pointer',
-            padding: '0.35rem 0'
+            padding: '0.2rem 0',
+            transition: 'all 0.2s ease'
           }}
         >
-          <Clock size={20} style={{ color: activeTab === 'patches' ? 'var(--orange-600)' : 'var(--navy-600)' }} />
-          <span>History</span>
+          <div style={{
+            padding: '0.2rem 0.6rem',
+            borderRadius: '10px',
+            background: 'transparent',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <PackageCheck size={19} style={{ color: '#64748b' }} />
+          </div>
+          <span>Orders</span>
         </button>
 
-        {/* Item 3: New Order */}
+        {/* Tab 3: Center Elevated + Order Button */}
         <button
           type="button"
           onClick={() => setIsServiceSelectorOpen(true)}
@@ -1322,33 +1360,88 @@ export const CustomerDashboard = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '0.2rem',
+            justifyContent: 'center',
             background: 'none',
             border: 'none',
-            color: 'var(--orange-600)',
-            fontWeight: 800,
-            fontSize: '0.68rem',
             cursor: 'pointer',
-            padding: '0.35rem 0'
+            padding: 0,
+            marginTop: '-14px',
+            position: 'relative'
           }}
+          aria-label="Create New Order"
         >
           <div style={{
-            background: 'linear-gradient(135deg, var(--orange-500) 0%, #ea580c 100%)',
+            background: 'linear-gradient(135deg, #ff7a00 0%, #ff5500 100%)',
             color: '#ffffff',
-            width: '28px',
-            height: '28px',
+            width: '42px',
+            height: '42px',
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 3px 8px rgba(249, 115, 22, 0.4)'
+            boxShadow: '0 6px 16px rgba(255, 122, 0, 0.45)',
+            border: '3px solid #ffffff'
           }}>
-            <PlusCircle size={18} />
+            <Plus size={22} style={{ color: '#ffffff', strokeWidth: 3 }} />
           </div>
-          <span>New Order</span>
+          <span style={{ 
+            fontSize: '0.62rem', 
+            fontWeight: 800, 
+            color: 'var(--orange-600)', 
+            marginTop: '0.1rem' 
+          }}>
+            + Order
+          </span>
         </button>
 
-        {/* Item 4: Wallet */}
+        {/* Tab 4: Live Support / Inbox */}
+        <button
+          type="button"
+          onClick={() => {
+            window.dispatchEvent(new Event('bdigi_open_chat'));
+          }}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.15rem',
+            background: 'none',
+            border: 'none',
+            color: activeTab === 'support' ? 'var(--orange-600)' : '#64748b',
+            fontWeight: activeTab === 'support' ? 800 : 600,
+            fontSize: '0.65rem',
+            cursor: 'pointer',
+            padding: '0.2rem 0',
+            position: 'relative',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <div style={{
+            padding: '0.2rem 0.6rem',
+            borderRadius: '10px',
+            background: activeTab === 'support' ? '#fff7ed' : 'transparent',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative'
+          }}>
+            <MessageSquare size={19} style={{ color: activeTab === 'support' ? 'var(--orange-600)' : '#64748b' }} />
+            <span style={{
+              position: 'absolute',
+              top: '3px',
+              right: '6px',
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: '#10b981',
+              border: '1.5px solid #ffffff'
+            }} />
+          </div>
+          <span>Inbox</span>
+        </button>
+
+        {/* Tab 5: Studio Wallet */}
         <button
           type="button"
           onClick={() => setIsDepositModalOpen(true)}
@@ -1356,20 +1449,31 @@ export const CustomerDashboard = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '0.2rem',
+            justifyContent: 'center',
+            gap: '0.15rem',
             background: 'none',
             border: 'none',
-            color: 'var(--navy-700)',
+            color: '#64748b',
             fontWeight: 600,
-            fontSize: '0.68rem',
+            fontSize: '0.65rem',
             cursor: 'pointer',
-            padding: '0.35rem 0'
+            padding: '0.2rem 0',
+            transition: 'all 0.2s ease'
           }}
         >
-          <Wallet size={20} style={{ color: 'var(--navy-600)' }} />
-          <span>Wallet (${walletBalance.toFixed(0)})</span>
+          <div style={{
+            padding: '0.2rem 0.6rem',
+            borderRadius: '10px',
+            background: 'transparent',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Wallet size={19} style={{ color: '#64748b' }} />
+          </div>
+          <span>${walletBalance.toFixed(0)}</span>
         </button>
-      </div>
+      </nav>
 
       {/* SERVICE SELECTOR MODAL (3 Core Services Choice Dialog) */}
       {isServiceSelectorOpen && (
