@@ -25,9 +25,26 @@ import {
   PackageCheck,
   ExternalLink,
   Zap,
-  MessageSquare
+  MessageSquare,
+  CreditCard,
+  AlertCircle
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
+
+// Supported machine formats mapping
+const MACHINE_FORMAT_EXTENSIONS = {
+  dst: { name: 'Tajima (.DST)', desc: 'Universal Commercial Machine Format', icon: '🧵', type: 'Embroidery' },
+  pes: { name: 'Brother / Deco (.PES)', desc: 'Home & Commercial Brother Embroidery', icon: '🧵', type: 'Embroidery' },
+  emb: { name: 'Wilcom Source File (.EMB)', desc: 'Full Object Density & Stitch Native Data', icon: '💎', type: 'Source File' },
+  exp: { name: 'Melco / Bernina (.EXP)', desc: 'Melco & Bernina Machine Stitch File', icon: '🧵', type: 'Embroidery' },
+  jef: { name: 'Janome (.JEF)', desc: 'Janome & Elna Memory Craft File', icon: '🧵', type: 'Embroidery' },
+  xxx: { name: 'Singer (.XXX)', desc: 'Singer & Compucon Embroidery Format', icon: '🧵', type: 'Embroidery' },
+  vp3: { name: 'Husqvarna Viking (.VP3)', desc: 'Pfaff & Viking Multi-format', icon: '🧵', type: 'Embroidery' },
+  pdf: { name: 'Production Worksheet (.PDF)', desc: 'Color Stop Sequence & Thread Specs', icon: '📄', type: 'Spec Sheet' },
+  ai: { name: 'Adobe Illustrator (.AI)', desc: 'Vector Graphic Source File', icon: '✒️', type: 'Vector' },
+  svg: { name: 'Scalable Vector (.SVG)', desc: 'Clean Vector Artwork', icon: '📐', type: 'Vector' },
+  eps: { name: 'Encapsulated Postscript (.EPS)', desc: 'Screen Print Vector Asset', icon: '🖼️', type: 'Vector' }
+};
 
 const FORMAT_METADATA = {
   dst: { name: 'Tajima (.DST)', desc: 'Tajima Commercial Machine Pathing', icon: '🧵', type: 'Commercial' },
@@ -57,7 +74,9 @@ export const OrderTrackerDrawer = () => {
     completeOrder,
     ORDER_STATUSES,
     assignDigitizer,
-    digitizers
+    digitizers,
+    setIsCheckoutModalOpen,
+    setCheckoutSession
   } = useAppState();
 
   const [revisionNote, setRevisionNote] = useState('');
@@ -546,7 +565,67 @@ export const OrderTrackerDrawer = () => {
               {/* Simplified Digital Order View */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
                 
-                {/* 1. Order Status & Specs */}
+                {/* 1. Payment Pending Callout Banner */}
+                {String(ord.payment_status || ord.paymentStatus || '').toLowerCase() === 'pending' && (
+                  <div style={{
+                    background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                    border: '1.5px solid #fde68a',
+                    borderRadius: '14px',
+                    padding: '1.15rem 1.35rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '1rem',
+                    boxShadow: '0 4px 14px rgba(217, 119, 6, 0.1)'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#f59e0b', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <CreditCard size={20} />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 900, color: '#92400e', fontSize: '0.95rem' }}>
+                          Payment Required (${parseFloat(ord.price || 0).toFixed(2)})
+                        </div>
+                        <div style={{ color: '#b45309', fontSize: '0.8rem', marginTop: '0.1rem' }}>
+                          Complete payment to start digitization with our master digitizers.
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (setCheckoutSession && setIsCheckoutModalOpen) {
+                          setCheckoutSession({
+                            amount: parseFloat(ord.price || 0),
+                            orderId: ord.id,
+                            orderTitle: ord.title
+                          });
+                          setIsCheckoutModalOpen(true);
+                        }
+                      }}
+                      style={{
+                        background: 'linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%)',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '0.65rem 1.35rem',
+                        borderRadius: '10px',
+                        fontWeight: 900,
+                        fontSize: '0.88rem',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 12px rgba(249, 115, 22, 0.35)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.4rem'
+                      }}
+                    >
+                      <Zap size={16} /> Pay Now (${parseFloat(ord.price || 0).toFixed(2)})
+                    </button>
+                  </div>
+                )}
+
+                {/* 2. Order Status & Specs */}
                 <div>
                   <h4 style={{ fontSize: '1.1rem', color: 'var(--navy-900)', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontWeight: 700 }}>
                     Order Details & Specifications

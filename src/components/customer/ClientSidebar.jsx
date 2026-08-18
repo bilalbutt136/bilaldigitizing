@@ -24,6 +24,7 @@ export const ClientSidebar = ({
   patchCount = 0,
   _storeCount = 0,
   unreadChatCount = 0,
+  unpaidCount = 0,
   onOpenDepositModal,
   onOpenLiveSupport,
   onLogout
@@ -47,7 +48,9 @@ export const ClientSidebar = ({
         {
           id: 'dashboard',
           label: 'Dashboard',
-          icon: LayoutDashboard
+          icon: LayoutDashboard,
+          badge: unpaidCount > 0 ? `${unpaidCount} Due` : null,
+          badgeColor: '#ef4444'
         },
         { 
           id: 'support', 
@@ -258,12 +261,12 @@ export const ClientSidebar = ({
                       <span style={{ lineHeight: 1.2 }}>{item.label}</span>
                     </div>
 
-                    {item.badge !== undefined && item.badge > 0 && (
+                    {item.badge !== undefined && item.badge !== null && item.badge !== 0 && item.badge !== '0' && (
                       <span style={{ 
                         fontSize: '0.7rem', 
                         fontWeight: 800, 
-                        background: item.id === 'support' ? '#ef4444' : (isActive ? '#ff7a00' : 'var(--navy-100)'), 
-                        color: item.id === 'support' ? '#ffffff' : (isActive ? '#ffffff' : 'var(--navy-700)'), 
+                        background: item.badgeColor || (item.id === 'support' ? '#ef4444' : (isActive ? '#ff7a00' : 'var(--navy-100)')), 
+                        color: (item.badgeColor || item.id === 'support' || isActive) ? '#ffffff' : 'var(--navy-700)', 
                         padding: '0.1rem 0.45rem', 
                         borderRadius: '9999px',
                         flexShrink: 0

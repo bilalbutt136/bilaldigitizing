@@ -25,7 +25,11 @@ import {
   Sun,
   Moon,
   PenTool,
-  X
+  X,
+  CreditCard,
+  Zap,
+  AlertCircle,
+  LayoutDashboard
 } from 'lucide-react';
 import { ClientSidebar } from './ClientSidebar';
 import { ClientChatInbox } from './ClientChatInbox';
@@ -47,6 +51,8 @@ export const CustomerDashboard = () => {
     setSelectedOrderForDrawer,
     walletBalance = 0,
     setIsDepositModalOpen,
+    setIsCheckoutModalOpen,
+    setCheckoutSession,
     showToast,
     logout
   } = useAppState();
@@ -210,7 +216,29 @@ export const CustomerDashboard = () => {
   };
 
   // Filter client's orders by exact service category
-  const myOrders = (orders || []).filter(o => o?.clientEmail === userEmail);
+  const myOrders = (orders || []).filter(o => {
+    const cEmail = (o?.clientEmail || o?.client_email || '').toLowerCase().trim();
+    const uEmail = (userEmail || '').toLowerCase().trim();
+    return cEmail && uEmail && cEmail === uEmail;
+  });
+
+  // All pending payment orders across all categories
+  const unpaidOrders = myOrders.filter(o => {
+    const pStatus = String(o?.payment_status || o?.paymentStatus || '').toLowerCase().trim();
+    const oStatus = String(o?.status || '').toLowerCase().trim();
+    return (pStatus === 'pending' || pStatus === 'unpaid' || pStatus === 'failed' || pStatus === '') && oStatus !== 'cancelled';
+  });
+
+  const handlePayOrder = (order) => {
+    if (!order) return;
+    const finalAmount = parseFloat(order.price || order.totalPrice || 15.00);
+    setCheckoutSession({
+      amount: finalAmount,
+      orderId: order.id,
+      orderTitle: order.title || 'Studio Design Order'
+    });
+    setIsCheckoutModalOpen(true);
+  };
 
   // 1. Strictly Embroidery Digitizing Orders ONLY
   const digitizingOrders = myOrders.filter(isEmbroideryOrder);
@@ -442,7 +470,13 @@ export const CustomerDashboard = () => {
                 {/* Navigation Items */}
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                   {[
-                    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+                    { 
+                      id: 'dashboard', 
+                      label: 'Dashboard', 
+                      icon: LayoutDashboard,
+                      badge: unpaidOrders.length > 0 ? `${unpaidOrders.length} Due` : null,
+                      badgeColor: '#ef4444'
+                    },
                     { 
                       id: 'support', 
                       label: 'Messages & Support', 
@@ -485,8 +519,8 @@ export const CustomerDashboard = () => {
                           <IconComp size={18} style={{ color: isActive ? 'var(--orange-600)' : 'var(--navy-600)' }} />
                           <span>{item.label}</span>
                         </div>
-                        {item.badge !== undefined && item.badge !== null && item.badge > 0 && (
-                          <span style={{ fontSize: '0.72rem', fontWeight: 800, background: item.isUnread ? '#ef4444' : (isActive ? 'var(--orange-500)' : 'var(--navy-100)'), color: item.isUnread ? '#ffffff' : (isActive ? '#ffffff' : 'var(--navy-700)'), padding: '0.15rem 0.45rem', borderRadius: '9999px' }}>
+                        {item.badge !== undefined && item.badge !== null && item.badge !== 0 && item.badge !== '0' && (
+                          <span style={{ fontSize: '0.72rem', fontWeight: 800, background: item.badgeColor || (item.isUnread ? '#ef4444' : (isActive ? 'var(--orange-500)' : 'var(--navy-100)')), color: (item.badgeColor || item.isUnread || isActive) ? '#ffffff' : 'var(--navy-700)', padding: '0.15rem 0.45rem', borderRadius: '9999px' }}>
                             {item.badge}
                           </span>
                         )}
@@ -540,6 +574,7 @@ export const CustomerDashboard = () => {
             patchCount={patchOrders.length}
             storeCount={storeOrders.length}
             unreadChatCount={unreadChatCount}
+            unpaidCount={unpaidOrders.length}
             onOpenDepositModal={() => setIsDepositModalOpen(true)}
             onOpenLiveSupport={handleOpenLiveSupport}
             onLogout={() => {
@@ -628,6 +663,134 @@ export const CustomerDashboard = () => {
                     </button>
                   </div>
                 </div>
+
+                {/* ACTION REQUIRED: PENDING PAYMENT ORDERS BANNER */}
+                {unpaidOrders.length > 0 && (
+                  <div style={{
+                    background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                    border: '1.5px solid #fcd34d',
+                    borderRadius: '16px',
+                    padding: '1.35rem 1.5rem',
+                    marginBottom: '1.75rem',
+                    boxShadow: '0 6px 20px rgba(217, 119, 6, 0.1)',
+                    position: 'relative'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{
+                          width: '44px',
+                          height: '44px',
+                          borderRadius: '12px',
+                          background: '#f59e0b',
+                          color: '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 4px 10px rgba(245, 158, 11, 0.35)',
+                          flexShrink: 0
+                        }}>
+                          <CreditCard size={22} />
+                        </div>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 900, color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.06em', background: '#fef3c7', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #fde68a' }}>
+                              Action Required
+                            </span>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#92400e' }}>
+                              {unpaidOrders.length} {unpaidOrders.length === 1 ? 'Order Awaiting Payment' : 'Orders Awaiting Payment'}
+                            </span>
+                          </div>
+                          <h3 style={{ margin: '0.25rem 0 0', fontSize: '1.2rem', fontWeight: 900, color: '#78350f' }}>
+                            Finalize Payment to Begin Production
+                          </h3>
+                          <p style={{ margin: '0.2rem 0 0', fontSize: '0.83rem', color: '#92400e' }}>
+                            Your design order and high-resolution files are securely saved. Complete payment to dispatch this order to our master digitizing desk.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* List of Pending Orders */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {unpaidOrders.map((ord, idx) => (
+                        <div
+                          key={ord.id || idx}
+                          style={{
+                            background: '#ffffff',
+                            borderRadius: '12px',
+                            border: '1px solid #fde68a',
+                            padding: '0.85rem 1.15rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '0.75rem',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                            {ord.artworkUrl ? (
+                              <img
+                                src={ord.artworkUrl}
+                                alt={ord.title}
+                                style={{ width: '40px', height: '40px', objectFit: 'contain', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0' }}
+                              />
+                            ) : (
+                              <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#fffbeb', border: '1px solid #fde68a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d97706' }}>
+                                <FileText size={20} />
+                              </div>
+                            )}
+                            <div>
+                              <div style={{ fontWeight: 800, color: 'var(--navy-950)', fontSize: '0.92rem' }}>
+                                {ord.title || 'Custom Design Order'}
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.15rem' }}>
+                                <span>ID: <strong>{formatOrderId(ord.id)}</strong></span>
+                                <span>•</span>
+                                <span>{ord.serviceCategory || (ord.type === 'vector' ? 'Vector Art' : ord.type === 'patch' ? 'Custom Patches' : 'Embroidery Digitizing')}</span>
+                                <span>•</span>
+                                <span style={{ color: '#d97706', fontWeight: 700 }}>⏳ Payment Pending</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Amount Due</div>
+                              <div style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                                ${parseFloat(ord.price || 0).toFixed(2)}
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handlePayOrder(ord)}
+                              style={{
+                                background: 'linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%)',
+                                color: '#ffffff',
+                                border: 'none',
+                                padding: '0.65rem 1.25rem',
+                                borderRadius: '10px',
+                                fontWeight: 900,
+                                fontSize: '0.85rem',
+                                cursor: 'pointer',
+                                boxShadow: '0 4px 12px rgba(249, 115, 22, 0.35)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.4rem',
+                                transition: 'all 0.15s ease'
+                              }}
+                              onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+                              onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                            >
+                              <Zap size={15} /> Pay Now & Start Production
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Summary Stat Cards - Styled with Admin Operations Desk Border-Left Accents */}
                 <div style={{
@@ -930,12 +1093,36 @@ export const CustomerDashboard = () => {
 
                               {/* Actions */}
                               <td style={{ padding: '1rem', textAlign: 'right' }}>
-                                <button
-                                  className="btn btn-outline btn-sm"
-                                  onClick={() => setSelectedOrderForDrawer(ord)}
-                                >
-                                  View Order <ChevronRight size={16} />
-                                </button>
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'flex-end' }}>
+                                  {String(ord?.payment_status || ord?.paymentStatus || '').toLowerCase() === 'pending' && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handlePayOrder(ord)}
+                                      style={{
+                                        background: 'linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%)',
+                                        color: '#ffffff',
+                                        border: 'none',
+                                        padding: '0.35rem 0.75rem',
+                                        borderRadius: '8px',
+                                        fontWeight: 800,
+                                        fontSize: '0.78rem',
+                                        cursor: 'pointer',
+                                        boxShadow: '0 2px 6px rgba(249, 115, 22, 0.25)',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.3rem'
+                                      }}
+                                    >
+                                      <Zap size={13} /> Pay Now
+                                    </button>
+                                  )}
+                                  <button
+                                    className="btn btn-outline btn-sm"
+                                    onClick={() => setSelectedOrderForDrawer(ord)}
+                                  >
+                                    View Order <ChevronRight size={16} />
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))}
