@@ -112,14 +112,20 @@ export const OrderTrackerDrawer = () => {
 
   const isOrderPaid = (o) => {
     const pStatus = String(o?.payment_status || o?.paymentStatus || '').toLowerCase().trim();
-    const oStatus = String(o?.status || '').toLowerCase().trim();
     const isPaidFlag = o?.isPaid === true || o?.paid === true || Boolean(o?.paid_at);
-    return isPaidFlag ||
-           pStatus === 'paid' || pStatus === 'completed' || pStatus === 'settled' || pStatus === 'verified' || pStatus === 'wallet' ||
-           ['in_progress', 'digitizing', 'assigned', 'qc', 'delivered', 'completed'].includes(oStatus);
+    return isPaidFlag || pStatus === 'paid' || pStatus === 'completed' || pStatus === 'settled' || pStatus === 'verified' || pStatus === 'wallet';
   };
 
   const isPaid = isOrderPaid(ord);
+
+  // Files are only ready if the order is PAID and either status is 'delivered'/'completed' or admin has uploaded machine files
+  const isDeliveredOrReady = isPaid && (
+    ord.status === 'delivered' || 
+    ord.status === 'completed' || 
+    (Array.isArray(ord.uploadedMachineFiles) && ord.uploadedMachineFiles.length > 0)
+  );
+  const isCompleted = isPaid && ord.status === 'completed';
+  const isCompletedOrUnlocked = isDeliveredOrReady;
 
   const getPaymentStatusBadge = (statusOrOrder) => {
     const isPaidComputed = typeof statusOrOrder === 'object' && statusOrOrder !== null 
@@ -199,8 +205,6 @@ export const OrderTrackerDrawer = () => {
 
   const isPhysicalPatchOrder = ord.type === 'patch' || ord.type === 'patches' || ord.serviceCategory?.toLowerCase().includes('patch');
   const isPhysicalStoreOrder = isPhysicalPatchOrder || ord.type === 'store' || ord.type === 'merchandise' || ord.type === 'digital_product' || Boolean(ord.isStoreItem) || ord.serviceCategory?.toLowerCase().includes('store') || ord.serviceCategory?.toLowerCase().includes('merchandise');
-
-  const isCompletedOrUnlocked = ord.status === 'completed' || (ord.uploadedMachineFiles && ord.uploadedMachineFiles.length > 0);
 
   const formattedSubmissionDate = ord.createdAt || ord.created_at ? (() => {
     try {
@@ -346,12 +350,11 @@ export const OrderTrackerDrawer = () => {
 
   const getOrderProgressStep = () => {
     const status = String(ord?.status || '').toLowerCase();
+    if (!isPaid) return 1; // Unpaid orders are strictly Step 1 (Pending Payment)
     if (status === 'completed') return 4;
-    if (status === 'delivered' || (ord?.uploadedMachineFiles && ord.uploadedMachineFiles.length > 0)) return 4;
+    if (status === 'delivered' || (Array.isArray(ord?.uploadedMachineFiles) && ord.uploadedMachineFiles.length > 0)) return 4;
     if (status === 'qc' || status === 'quality_check') return 3;
-    if (['in_progress', 'digitizing', 'assigned', 'working'].includes(status)) return 2;
-    if (isPaid) return 2;
-    return 1;
+    return 2; // Paid orders in progress are Step 2
   };
 
   return (
@@ -534,14 +537,37 @@ export const OrderTrackerDrawer = () => {
             {/* Stepper Steps Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', position: 'relative' }}>
               {[
-                { step: 1, title: isPaid ? 'Placed & Paid' : 'Pending Payment', desc: isPaid ? 'Verified brief' : 'Requires payment' },
-                { step: 2, title: 'In Production', desc: 'Master digitizing' },
-                { step: 3, title: 'Quality Check', desc: 'Stitch & test QC' },
-                { step: 4, title: 'Ready / Delivered', desc: 'Downloadable' }
+                { 
+                  step: 1, 
+                  title: isPaid ? 'Placed & Paid' : 'Pending Payment', 
+                  desc: isPaid ? 'Verified brief' : 'Requires payment',
+                  passed: isPaid,
+                  current: !isPaid
+                },
+                { 
+                  step: 2, 
+                  title: 'In Production', 
+                  desc: 'Master digitizing',
+                  passed: isPaid && (currentProgStep > 2 || isCompleted),
+                  current: isPaid && currentProgStep === 2 && !isDeliveredOrReady
+                },
+                { 
+                  step: 3, 
+                  title: 'Quality Check', 
+                  desc: 'Stitch & test QC',
+                  passed: isPaid && (currentProgStep > 3 || isCompleted),
+                  current: isPaid && currentProgStep === 3
+                },
+                { 
+                  step: 4, 
+                  title: isCompleted ? 'Order Completed' : 'Ready / Delivered', 
+                  desc: isCompleted ? 'Verified & approved' : (isDeliveredOrReady ? 'Ready for download' : 'Awaiting delivery'),
+                  passed: isCompleted,
+                  current: isDeliveredOrReady && !isCompleted
+                }
               ].map(st => {
-                const currentProgStep = getOrderProgressStep();
-                const isPassed = currentProgStep > st.step;
-                const isCurrent = currentProgStep === st.step;
+                const isPassed = st.passed;
+                const isCurrent = st.current;
 
                 return (
                   <div key={st.step} style={{ textAlign: 'center', position: 'relative' }}>
@@ -558,16 +584,16 @@ export const OrderTrackerDrawer = () => {
                       background: isPassed 
                         ? '#10b981' 
                         : isCurrent 
-                        ? 'var(--orange-500)' 
+                        ? (st.step === 1 && !isPaid ? '#f59e0b' : 'var(--orange-500)') 
                         : '#f1f5f9',
                       color: (isPassed || isCurrent) ? '#ffffff' : '#94a3b8',
-                      border: isCurrent ? '2px solid var(--orange-300)' : 'none',
-                      boxShadow: isCurrent ? '0 0 0 3px rgba(249, 115, 22, 0.2)' : 'none',
+                      border: isCurrent ? (st.step === 1 && !isPaid ? '2px solid #fcd34d' : '2px solid var(--orange-300)') : 'none',
+                      boxShadow: isCurrent ? (st.step === 1 && !isPaid ? '0 0 0 3px rgba(245, 158, 11, 0.2)' : '0 0 0 3px rgba(249, 115, 22, 0.2)') : 'none',
                       transition: 'all 0.2s'
                     }}>
-                      {isPassed ? <Check size={16} /> : st.step}
+                      {isPassed ? <Check size={16} /> : (isCurrent && st.step === 1 && !isPaid ? <Clock size={16} /> : st.step)}
                     </div>
-                    <div style={{ fontSize: '0.75rem', fontWeight: isCurrent ? 800 : 700, color: isCurrent ? 'var(--orange-600)' : isPassed ? '#10b981' : 'var(--navy-900)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: isCurrent ? 800 : 700, color: isCurrent ? (st.step === 1 && !isPaid ? '#d97706' : 'var(--orange-600)') : isPassed ? '#10b981' : 'var(--navy-900)' }}>
                       {st.title}
                     </div>
                     <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
@@ -580,7 +606,71 @@ export const OrderTrackerDrawer = () => {
           </div>
 
           {/* FAST ACTION COMMAND CENTER */}
-          {isCompletedOrUnlocked ? (
+          {!isPaid ? (
+            /* UNPAID BANNER */
+            <div style={{
+              background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+              border: '1.5px solid #fcd34d',
+              borderRadius: '14px',
+              padding: '1.15rem 1.4rem',
+              marginBottom: '1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem',
+              boxShadow: '0 4px 14px rgba(217, 119, 6, 0.1)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div style={{ 
+                  width: '42px', 
+                  height: '42px', 
+                  borderRadius: '12px', 
+                  background: '#f59e0b', 
+                  color: '#ffffff', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  flexShrink: 0,
+                  boxShadow: '0 2px 8px rgba(245, 158, 11, 0.4)'
+                }}>
+                  <CreditCard size={22} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 900, color: '#78350f', fontSize: '0.98rem' }}>
+                    Payment Required to Dispatch Production (${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)})
+                  </div>
+                  <div style={{ color: '#92400e', fontSize: '0.78rem', marginTop: '0.15rem' }}>
+                    Your high-res design brief is saved. Finalize payment to begin master digitizing.
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={handleLaunchPayment}
+                  style={{
+                    background: 'linear-gradient(135deg, #ff7a00 0%, #ff5500 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '0.65rem 1.35rem',
+                    borderRadius: '10px',
+                    fontWeight: 900,
+                    fontSize: '0.88rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(255, 122, 0, 0.35)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Zap size={16} /> Pay Now (${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)})
+                </button>
+              </div>
+            </div>
+          ) : isDeliveredOrReady ? (
             /* FILES READY FOR APPROVAL / DOWNLOAD */
             <div style={{
               background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
@@ -605,7 +695,7 @@ export const OrderTrackerDrawer = () => {
                   </div>
                   <div style={{ color: '#047857', fontSize: '0.78rem', marginTop: '0.15rem' }}>
                     {ord.status === 'completed' 
-                      ? 'You have accepted this delivery. Download your files anytime below.'
+                      ? 'You have approved and accepted this delivery. Download your files anytime below.'
                       : 'Inspect your finished machine files. You can approve the order or request a free modification.'}
                   </div>
                 </div>
@@ -673,70 +763,6 @@ export const OrderTrackerDrawer = () => {
                   }}
                 >
                   <RotateCcw size={14} /> Request Revision
-                </button>
-              </div>
-            </div>
-          ) : !isPaid ? (
-            /* UNPAID BANNER */
-            <div style={{
-              background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-              border: '1.5px solid #fcd34d',
-              borderRadius: '14px',
-              padding: '1.15rem 1.4rem',
-              marginBottom: '1.25rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '1rem',
-              boxShadow: '0 4px 14px rgba(217, 119, 6, 0.1)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                <div style={{ 
-                  width: '42px', 
-                  height: '42px', 
-                  borderRadius: '12px', 
-                  background: '#f59e0b', 
-                  color: '#ffffff', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  flexShrink: 0,
-                  boxShadow: '0 2px 8px rgba(245, 158, 11, 0.4)'
-                }}>
-                  <CreditCard size={22} />
-                </div>
-                <div>
-                  <div style={{ fontWeight: 900, color: '#78350f', fontSize: '0.98rem' }}>
-                    Payment Required to Dispatch Production (${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)})
-                  </div>
-                  <div style={{ color: '#92400e', fontSize: '0.78rem', marginTop: '0.15rem' }}>
-                    Your high-res design brief is saved. Finalize payment to begin master digitizing.
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <button
-                  type="button"
-                  onClick={handleLaunchPayment}
-                  style={{
-                    background: 'linear-gradient(135deg, #ff7a00 0%, #ff5500 100%)',
-                    color: '#ffffff',
-                    border: 'none',
-                    padding: '0.65rem 1.35rem',
-                    borderRadius: '10px',
-                    fontWeight: 900,
-                    fontSize: '0.88rem',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(255, 122, 0, 0.35)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.45rem',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <Zap size={16} /> Pay Now (${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)})
                 </button>
               </div>
             </div>
@@ -1466,7 +1492,7 @@ export const OrderTrackerDrawer = () => {
 
           {/* Right: Direct Fast Action Buttons */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-            {!isPaid && (
+            {!isPaid ? (
               <button
                 type="button"
                 onClick={handleLaunchPayment}
@@ -1487,50 +1513,84 @@ export const OrderTrackerDrawer = () => {
               >
                 <Zap size={15} /> Pay Now (${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)})
               </button>
+            ) : isDeliveredOrReady && ord.status !== 'completed' ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleApproveOrder}
+                  style={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '0.6rem 1.35rem',
+                    borderRadius: '10px',
+                    fontWeight: 800,
+                    fontSize: '0.86rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.35)'
+                  }}
+                >
+                  <CheckCircle2 size={16} /> Approve & Complete Order
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadAll}
+                  className="btn btn-outline"
+                  style={{ gap: '0.4rem', padding: '0.6rem 1.15rem', fontSize: '0.86rem', fontWeight: 800, borderColor: '#059669', color: '#059669' }}
+                >
+                  <Download size={15} /> Download Files
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab(activeTab === 'revisions' ? 'overview' : 'revisions')}
+                  className="btn btn-outline"
+                  style={{ gap: '0.4rem', padding: '0.6rem 1.15rem', fontSize: '0.86rem', fontWeight: 700 }}
+                >
+                  <RotateCcw size={15} /> Request Revision
+                </button>
+              </>
+            ) : isCompleted ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleDownloadAll}
+                  className="btn btn-outline"
+                  style={{ gap: '0.4rem', padding: '0.6rem 1.15rem', fontSize: '0.86rem', fontWeight: 800, borderColor: '#059669', color: '#059669' }}
+                >
+                  <Download size={15} /> Download Files
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab(activeTab === 'revisions' ? 'overview' : 'revisions')}
+                  className="btn btn-outline"
+                  style={{ gap: '0.4rem', padding: '0.6rem 1.15rem', fontSize: '0.86rem', fontWeight: 700 }}
+                >
+                  <RotateCcw size={15} /> Request Revision
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('messages')}
+                  className="btn btn-outline"
+                  style={{ gap: '0.4rem', padding: '0.6rem 1.15rem', fontSize: '0.86rem', fontWeight: 700 }}
+                >
+                  <MessageSquare size={15} /> Chat with Team
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab(activeTab === 'revisions' ? 'overview' : 'revisions')}
+                  className="btn btn-outline"
+                  style={{ gap: '0.4rem', padding: '0.6rem 1.15rem', fontSize: '0.86rem', fontWeight: 700 }}
+                >
+                  <RotateCcw size={15} /> Request Modification
+                </button>
+              </>
             )}
-
-            {isCompletedOrUnlocked && ord.status !== 'completed' && (
-              <button
-                type="button"
-                onClick={handleApproveOrder}
-                style={{
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  color: '#ffffff',
-                  border: 'none',
-                  padding: '0.6rem 1.35rem',
-                  borderRadius: '10px',
-                  fontWeight: 800,
-                  fontSize: '0.86rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.35)'
-                }}
-              >
-                <CheckCircle2 size={16} /> Approve & Complete Order
-              </button>
-            )}
-
-            {isCompletedOrUnlocked && (
-              <button
-                type="button"
-                onClick={handleDownloadAll}
-                className="btn btn-outline"
-                style={{ gap: '0.4rem', padding: '0.6rem 1.15rem', fontSize: '0.86rem', fontWeight: 800, borderColor: '#059669', color: '#059669' }}
-              >
-                <Download size={15} /> Download Files
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => setActiveTab(activeTab === 'revisions' ? 'overview' : 'revisions')}
-              className="btn btn-outline"
-              style={{ gap: '0.4rem', padding: '0.6rem 1.15rem', fontSize: '0.86rem', fontWeight: 700 }}
-            >
-              <RotateCcw size={15} /> {activeTab === 'revisions' ? 'View Brief' : 'Request Revision'}
-            </button>
 
             <button
               type="button"
