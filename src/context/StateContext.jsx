@@ -920,12 +920,15 @@ export const StateProvider = ({ children }) => {
       const isMatch = ordClean === cleanTargetId || ord.id === orderId || ord.id === targetWithHash;
       if (isMatch) {
         const resolvedPayStatus = safeExtraData.paymentStatus || safeExtraData.payment_status || (newStatus === 'in_progress' ? 'paid' : ord.payment_status || ord.paymentStatus);
+        const isPaidComputed = resolvedPayStatus === 'paid' || resolvedPayStatus === 'completed' || resolvedPayStatus === 'wallet' || newStatus === 'in_progress';
         return {
           ...ord,
           status: newStatus,
           ...safeExtraData,
-          payment_status: resolvedPayStatus,
-          paymentStatus: resolvedPayStatus,
+          payment_status: isPaidComputed ? 'paid' : resolvedPayStatus,
+          paymentStatus: isPaidComputed ? 'paid' : resolvedPayStatus,
+          isPaid: isPaidComputed,
+          paid_at: isPaidComputed ? (ord.paid_at || new Date().toISOString()) : ord.paid_at,
           history: [...(ord.history || []), { timestamp: new Date().toISOString(), label: `Status updated to ${newStatus}` }]
         };
       }
@@ -1058,6 +1061,9 @@ export const StateProvider = ({ children }) => {
       if (orderId) {
         await updateOrderStatus(orderId, 'in_progress', { paymentStatus: 'paid', payment_status: 'paid' });
       }
+      fetchOrdersFromSupabase().then(freshOrders => {
+        if (freshOrders && Array.isArray(freshOrders)) setOrders(freshOrders);
+      });
       return true;
     }
     showToast(res.error || 'Wallet payment failed.', 'error');

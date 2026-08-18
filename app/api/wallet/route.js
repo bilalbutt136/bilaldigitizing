@@ -146,6 +146,7 @@ export async function POST(request) {
         const cleanId = rawId.replace(/^#+/, '');
         const withHash = `#${cleanId}`;
 
+        // 1. Direct update with all ID variations and partial pattern match
         await supabaseAdmin
           .from('orders')
           .update({ 
@@ -154,7 +155,28 @@ export async function POST(request) {
             paid_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
-          .or(`id.eq."${rawId}",id.eq."${cleanId}",id.eq."${withHash}"`);
+          .or(`id.eq."${rawId}",id.eq."${cleanId}",id.eq."${withHash}",id.ilike."%${cleanId}%"`);
+
+        // 2. Also search if stored with client_email to ensure zero missed updates
+        const { data: matchedRows } = await supabaseAdmin
+          .from('orders')
+          .select('id')
+          .ilike('client_email', email)
+          .or(`id.eq."${rawId}",id.eq."${cleanId}",id.eq."${withHash}",id.ilike."%${cleanId}%"`);
+
+        if (matchedRows && matchedRows.length > 0) {
+          for (const row of matchedRows) {
+            await supabaseAdmin
+              .from('orders')
+              .update({ 
+                status: 'in_progress', 
+                payment_status: 'paid',
+                paid_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', row.id);
+          }
+        }
       }
     } else if (action === 'deposit') {
       // Manual Admin deposit

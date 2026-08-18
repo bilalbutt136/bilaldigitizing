@@ -356,7 +356,6 @@ export const CheckoutModal = () => {
   }, [isCheckoutModalOpen, checkoutSession, isPaid, showToast, updateOrderStatus]);
 
   const handleClose = () => {
-    const orderId = checkoutSession?.orderId;
     setIsCheckoutModalOpen(false);
     setTimeout(() => {
       setCheckoutSession(null);
@@ -367,12 +366,7 @@ export const CheckoutModal = () => {
       setExtractedSolana('');
       setExtractedLightning('');
       setHasCopied(false);
-      if (typeof window !== 'undefined') {
-        const dest = orderId 
-          ? `/client-portal?trackOrder=${encodeURIComponent(orderId)}` 
-          : '/client-portal';
-        window.location.href = dest;
-      } else if (protectedNavigate) {
+      if (protectedNavigate) {
         protectedNavigate('customer', false);
       }
     }, 300);

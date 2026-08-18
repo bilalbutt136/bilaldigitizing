@@ -197,14 +197,10 @@ export async function POST(request) {
         }
       }
 
-      if (extraData?.outputFileUrl) {
-        updatePayload.output_file_url = extraData.outputFileUrl;
-      }
-
       const { error } = await supabase
         .from('orders')
         .update(updatePayload)
-        .or(`id.eq."${rawId}",id.eq."${cleanId}",id.eq."${withHash}"`);
+        .or(`id.eq."${rawId}",id.eq."${cleanId}",id.eq."${withHash}",id.ilike."%${cleanId}%"`);
 
       if (error) throw error;
       
