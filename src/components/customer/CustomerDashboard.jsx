@@ -224,11 +224,20 @@ export const CustomerDashboard = () => {
     return cEmail && uEmail && cEmail === uEmail;
   });
 
-  // All pending payment orders across all categories
-  const unpaidOrders = myOrders.filter(o => {
+  const isOrderPaid = (o) => {
     const pStatus = String(o?.payment_status || o?.paymentStatus || '').toLowerCase().trim();
     const oStatus = String(o?.status || '').toLowerCase().trim();
-    return (pStatus === 'pending' || pStatus === 'unpaid' || pStatus === 'failed' || pStatus === '') && oStatus !== 'cancelled';
+    const isPaidFlag = o?.isPaid === true || o?.paid === true || Boolean(o?.paid_at);
+    return isPaidFlag ||
+           pStatus === 'paid' || pStatus === 'completed' || pStatus === 'settled' || pStatus === 'verified' || pStatus === 'wallet' ||
+           ['in_progress', 'digitizing', 'assigned', 'qc', 'delivered', 'completed'].includes(oStatus);
+  };
+
+  // All pending payment orders across all categories
+  const unpaidOrders = myOrders.filter(o => {
+    const isPaid = isOrderPaid(o);
+    const oStatus = String(o?.status || '').toLowerCase().trim();
+    return !isPaid && oStatus !== 'cancelled';
   });
 
   const handlePayOrder = (order) => {
@@ -284,14 +293,12 @@ export const CustomerDashboard = () => {
   const custEndIndex = Math.min(custStartIndex + customerPageSize, totalCustOrders);
   const paginatedCustOrders = filteredDigitizingOrders.slice(custStartIndex, custEndIndex);
 
-  const isOrderPaid = (o) => {
-    const pStatus = String(o?.payment_status || o?.paymentStatus || '').toLowerCase().trim();
-    return pStatus === 'paid' || pStatus === 'completed' || pStatus === 'settled' || pStatus === 'verified' || pStatus === 'wallet';
-  };
+  const getPaymentStatusBadge = (statusOrOrder) => {
+    const isPaidComputed = typeof statusOrOrder === 'object' && statusOrOrder !== null 
+      ? isOrderPaid(statusOrOrder) 
+      : isOrderPaid({ payment_status: statusOrOrder });
 
-  const getPaymentStatusBadge = (status) => {
-    const s = String(status || '').toLowerCase().trim();
-    if (s === 'paid' || s === 'completed' || s === 'settled' || s === 'verified' || s === 'wallet') {
+    if (isPaidComputed) {
       return <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', fontWeight: 800 }}>PAID</span>;
     }
     return <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', fontWeight: 800 }}>PENDING</span>;

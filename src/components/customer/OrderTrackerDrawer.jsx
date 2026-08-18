@@ -102,19 +102,31 @@ export const OrderTrackerDrawer = () => {
 
   if (!selectedOrderForDrawer) return null;
 
-  // Always resolve live reactive order state from global orders array
-  const ord = orders.find(o => o.id === selectedOrderForDrawer.id) || selectedOrderForDrawer;
+  // Always resolve live reactive order state from global orders array with flexible ID matching
+  const cleanSelId = String(selectedOrderForDrawer?.id || '').trim().replace(/^#+/, '');
+  const selWithHash = `#${cleanSelId}`;
+  const ord = orders.find(o => {
+    const oClean = String(o?.id || '').trim().replace(/^#+/, '');
+    return oClean === cleanSelId || o?.id === selectedOrderForDrawer?.id || o?.id === selWithHash;
+  }) || selectedOrderForDrawer;
 
   const isOrderPaid = (o) => {
     const pStatus = String(o?.payment_status || o?.paymentStatus || '').toLowerCase().trim();
-    return pStatus === 'paid' || pStatus === 'completed' || pStatus === 'settled' || pStatus === 'verified' || pStatus === 'wallet';
+    const oStatus = String(o?.status || '').toLowerCase().trim();
+    const isPaidFlag = o?.isPaid === true || o?.paid === true || Boolean(o?.paid_at);
+    return isPaidFlag ||
+           pStatus === 'paid' || pStatus === 'completed' || pStatus === 'settled' || pStatus === 'verified' || pStatus === 'wallet' ||
+           ['in_progress', 'digitizing', 'assigned', 'qc', 'delivered', 'completed'].includes(oStatus);
   };
 
   const isPaid = isOrderPaid(ord);
 
-  const getPaymentStatusBadge = (status) => {
-    const s = String(status || '').toLowerCase().trim();
-    if (s === 'paid' || s === 'completed' || s === 'settled' || s === 'verified' || s === 'wallet') {
+  const getPaymentStatusBadge = (statusOrOrder) => {
+    const isPaidComputed = typeof statusOrOrder === 'object' && statusOrOrder !== null 
+      ? isOrderPaid(statusOrOrder)
+      : isOrderPaid({ payment_status: statusOrOrder });
+
+    if (isPaidComputed) {
       return (
         <span 
           style={{ 

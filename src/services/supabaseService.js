@@ -289,11 +289,24 @@ export async function fetchOrdersFromSupabase() {
         notesData.patchItems?.[0]?.files?.[0]?.url || 
         null;
 
+      const pStatusLower = String(order.payment_status || order.paymentStatus || '').toLowerCase().trim();
+      const oStatusLower = String(order.status || '').toLowerCase().trim();
+      const isPaidComputed = pStatusLower === 'paid' || 
+                             pStatusLower === 'completed' || 
+                             pStatusLower === 'settled' || 
+                             pStatusLower === 'verified' || 
+                             pStatusLower === 'wallet' ||
+                             Boolean(order.paid_at) ||
+                             ['in_progress', 'digitizing', 'assigned', 'qc', 'delivered', 'completed'].includes(oStatusLower);
+
       return {
         ...order,
         clientName: order.client_name,
         clientEmail: order.client_email,
         serviceCategory: order.service_category,
+        paymentStatus: isPaidComputed ? 'paid' : (order.payment_status || order.paymentStatus || 'pending'),
+        payment_status: isPaidComputed ? 'paid' : (order.payment_status || order.paymentStatus || 'pending'),
+        isPaid: isPaidComputed,
         artworkUrl: primaryArtworkUrl,
         image_url: primaryArtworkUrl,
         logo: primaryArtworkUrl,
