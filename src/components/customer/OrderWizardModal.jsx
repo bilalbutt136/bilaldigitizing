@@ -945,8 +945,23 @@ export const OrderWizardModal = () => {
 
       const primaryArtworkUrl = allUploadedFiles[0]?.url || null;
 
+      let derivedTitle = (orderTitle || '').trim();
+      if (!derivedTitle) {
+        if (type === 'vector') {
+          const tier = vectorItems[0]?.packageTier || 'standard';
+          derivedTitle = `Vector Art Redraw (${tier.toUpperCase()})`;
+        } else if (type === 'patch') {
+          const style = patchItems[0]?.patchStyle || 'Embroidered';
+          const qty = patchItems.reduce((acc, p) => acc + (p.quantity || 50), 0);
+          derivedTitle = `${style} Patches (${qty} Pcs)`;
+        } else {
+          const firstPlc = PLACEMENT_OPTIONS.find(p => p.id === placementItems[0]?.placementType)?.label?.split(' (')[0] || 'Embroidery Digitizing';
+          derivedTitle = `${firstPlc}${placementItems.length > 1 ? ` (+${placementItems.length - 1} items)` : ''}`;
+        }
+      }
+
       const orderData = {
-        title: orderTitle.trim() || `${pricingDetails?.serviceTitle || 'Custom'} Order`,
+        title: derivedTitle,
         type,
         serviceCategory: pricingDetails?.serviceTitle || (type === 'patch' ? 'Custom Patches' : type === 'vector' ? 'Vector Tracing' : 'Embroidery Digitizing'),
         price: parseFloat(finalPrice),
@@ -1274,29 +1289,6 @@ export const OrderWizardModal = () => {
               {currentStep === 1 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   
-                  {/* Order Title (Optional) */}
-                  <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.35rem' }}>
-                      Project Reference / Design Name (Optional)
-                    </label>
-                    <input 
-                      type="text" 
-                      value={orderTitle} 
-                      onChange={(e) => setOrderTitle(e.target.value)} 
-                      placeholder={type === 'vector' ? "e.g. Apex Falcons Vector Redraw" : type === 'patch' ? "e.g. Falcon Squad PVC Patches" : "e.g. Apex Falcons Left Chest Logo"}
-                      style={{ 
-                        width: '100%', 
-                        padding: '0.65rem 0.85rem', 
-                        borderRadius: '10px', 
-                        border: '1.5px solid #cbd5e1', 
-                        fontSize: '0.9rem', 
-                        color: 'var(--navy-950)', 
-                        fontWeight: 700,
-                        background: '#ffffff'
-                      }} 
-                    />
-                  </div>
-
                   {/* ==================== 1. VECTOR ART CONFIGURATION ==================== */}
                   {type === 'vector' && (
                     <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
