@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useAppState, formatOrderId } from '../../context/StateContext';
+import { useAppState, formatOrderId, formatDimensions, formatFabric } from '../../context/StateContext';
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
 import { 
   CheckCircle, 
@@ -477,7 +477,7 @@ export const OrderManagementTable = () => {
                         {ord.serviceCategory || ord.type || 'Embroidery Digitizing'}
                       </div>
                       <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                        {ord.dimensions || '3.5"'} • {ord.fabric || 'Cotton Twill'}
+                        {formatDimensions(ord.dimensions || ord.size)} • {formatFabric(ord.fabric || ord.fabricType)}
                       </div>
                     </td>
 

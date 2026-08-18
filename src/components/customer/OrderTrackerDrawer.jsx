@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useAppState, formatOrderId } from '../../context/StateContext';
+import { useAppState, formatOrderId, formatDimensions, formatFabric } from '../../context/StateContext';
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
 import { ProductionWorksheetModal } from '../common/ProductionWorksheetModal';
 import { triggerFileDownload } from '../../utils/fileDownloader';
@@ -1294,14 +1294,14 @@ export const OrderTrackerDrawer = () => {
                       <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                         <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700 }}>DIMENSIONS</div>
                         <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--navy-900)', marginTop: '0.15rem' }}>
-                          {ord.dimensions || ord.size || '3.5" (Standard Width)'}
+                          {formatDimensions(ord.dimensions || ord.size)}
                         </div>
                       </div>
 
                       <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                         <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700 }}>FABRIC / SUBSTRATE</div>
                         <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--navy-900)', marginTop: '0.15rem' }}>
-                          {ord.fabric || ord.fabricType || 'Cotton / Poly Twill'}
+                          {formatFabric(ord.fabric || ord.fabricType)}
                         </div>
                       </div>
 
@@ -1969,7 +1969,7 @@ export const OrderTrackerDrawer = () => {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Dimensions & Fabric:</span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--navy-900)' }}>{ord.dimensions || '3.5"'} / {ord.fabric || 'Cotton Twill'}</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--navy-900)' }}>{formatDimensions(ord.dimensions || ord.size)} / {formatFabric(ord.fabric || ord.fabricType)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total Cost:</span>
