@@ -91,6 +91,24 @@ export const OrderTrackerDrawer = () => {
   const [adminFilesList, setAdminFilesList] = useState([]);
   const [adminDragOver, setAdminDragOver] = useState(false);
 
+  React.useEffect(() => {
+    if (!selectedOrderForDrawer) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSelectedOrderForDrawer(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow || 'unset';
+    };
+  }, [selectedOrderForDrawer, setSelectedOrderForDrawer]);
+
   if (!selectedOrderForDrawer) return null;
 
   // Always resolve live reactive order state from global orders array
@@ -133,24 +151,6 @@ export const OrderTrackerDrawer = () => {
   // Show Admin dropzone ONLY if user has admin role AND is currently viewing inside the Admin Portal
   const isCurrentlyOnAdminPortal = currentView === 'admin' || (typeof window !== 'undefined' && window.location.pathname.includes('admin'));
   const isAdmin = authUser?.role === 'admin' && isCurrentlyOnAdminPortal;
-
-  React.useEffect(() => {
-    if (!selectedOrderForDrawer) return;
-
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        setSelectedOrderForDrawer(null);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = originalOverflow || 'unset';
-    };
-  }, [selectedOrderForDrawer, setSelectedOrderForDrawer]);
 
   // Check if physical store or custom patch order
   const isPhysicalPatchOrder = ord.type === 'patch' || ord.type === 'patches' || ord.serviceCategory?.toLowerCase().includes('patch');
