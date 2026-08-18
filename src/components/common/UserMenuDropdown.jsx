@@ -31,11 +31,12 @@ export const UserMenuDropdown = () => {
     setIsDepositModalOpen,
     setIsOrderWizardOpen,
     showToast,
-    protectedNavigate
+    protectedNavigate,
+    theme = 'light',
+    toggleTheme
   } = useAppState();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [themeMode, setThemeMode] = useState('light');
 
   const dropdownRef = useRef(null);
 
@@ -49,17 +50,6 @@ export const UserMenuDropdown = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const savedTheme = (typeof window !== 'undefined' && localStorage.getItem('bdigi_theme')) || 'light';
-    setThemeMode(savedTheme);
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    if (savedTheme === 'dark') {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
-    }
-  }, []);
-
   if (!mounted || !isAuthenticated) return null;
 
   const activeUser = authUser || currentUser || {
@@ -67,20 +57,6 @@ export const UserMenuDropdown = () => {
     email: '',
     company: '',
     role: 'customer'
-  };
-
-  const toggleTheme = () => {
-    const nextTheme = themeMode === 'light' ? 'dark' : 'light';
-    setThemeMode(nextTheme);
-    localStorage.setItem('bdigi_theme', nextTheme);
-    document.documentElement.setAttribute('data-theme', nextTheme);
-    if (nextTheme === 'dark') {
-      document.body.classList.add('dark-mode');
-      showToast('Switched to Dark Mode 🌙', 'info');
-    } else {
-      document.body.classList.remove('dark-mode');
-      showToast('Switched to Light Mode ☀️', 'info');
-    }
   };
 
   const handleLogout = () => {
@@ -307,22 +283,22 @@ export const UserMenuDropdown = () => {
               onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                {themeMode === 'dark' ? (
+                {theme === 'dark' ? (
                   <Moon size={16} style={{ color: '#818cf8' }} />
                 ) : (
                   <Sun size={16} style={{ color: '#f59e0b' }} />
                 )}
-                <span>Theme Mode</span>
+                <span>Theme Mood</span>
               </div>
               <span style={{
                 fontSize: '0.725rem',
                 fontWeight: 800,
-                background: themeMode === 'dark' ? '#312e81' : '#fef3c7',
-                color: themeMode === 'dark' ? '#c7d2fe' : '#b45309',
+                background: theme === 'dark' ? '#312e81' : '#fef3c7',
+                color: theme === 'dark' ? '#c7d2fe' : '#b45309',
                 padding: '0.15rem 0.55rem',
                 borderRadius: '9999px'
               }}>
-                {themeMode === 'dark' ? 'Dark 🌙' : 'Light ☀️'}
+                {theme === 'dark' ? 'Darker 🌙' : 'White ☀️'}
               </span>
             </button>
 

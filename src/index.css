@@ -455,39 +455,158 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--orange-500);
 }
 
-/* Dark Theme Mode Styles (Deep Premium) */
+/* ==========================================================================
+   DARK THEME MODE STYLES (PREMIUM OBSIDIAN & HIGH-CONTRAST TEXT)
+   ========================================================================== */
 [data-theme="dark"], body.dark-mode {
-  --bg-main: #020617; /* Deep space navy */
-  --bg-card: #0f172a;
+  --bg-main: #0b0f19; /* Deep sleek obsidian */
+  --bg-card: #111827; /* Rich slate card */
+  --bg-surface: #1e293b;
+  --bg-elevated: #1e293b;
+  
   --navy-950: #f8fafc;
   --navy-900: #f1f5f9;
   --navy-800: #e2e8f0;
   --navy-700: #cbd5e1;
   --navy-600: #94a3b8;
+  --navy-300: #475569;
+  --navy-200: #334155;
   --navy-100: #1e293b;
+  --navy-50: #0f172a;
+
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
-  --border-color: rgba(255, 255, 255, 0.08);
+  --text-light: #64748b;
+
+  --border-color: rgba(255, 255, 255, 0.1);
+  --card-border: rgba(255, 255, 255, 0.08);
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.7);
+
   background-color: var(--bg-main) !important;
   color: var(--text-main) !important;
 }
 
+/* Header & Navigation in Dark Mode */
 [data-theme="dark"] header, body.dark-mode header {
-  background-color: rgba(2, 6, 23, 0.8) !important;
-  backdrop-filter: blur(12px) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  background-color: rgba(11, 15, 25, 0.9) !important;
+  backdrop-filter: blur(14px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
-[data-theme="dark"] .card, body.dark-mode .card {
-  background-color: rgba(15, 23, 42, 0.5) !important;
-  backdrop-filter: blur(8px);
-  border-color: rgba(255, 255, 255, 0.05) !important;
+[data-theme="dark"] header nav button, body.dark-mode header nav button {
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] header nav button:hover, body.dark-mode header nav button:hover {
+  color: var(--orange-400) !important;
 }
 
-[data-theme="dark"] .form-control, body.dark-mode .form-control {
-  background: rgba(255, 255, 255, 0.03);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.1);
+/* Modals & Overlays */
+[data-theme="dark"] .modal-overlay, body.dark-mode .modal-overlay {
+  background: rgba(3, 7, 18, 0.85) !important;
+}
+[data-theme="dark"] .modal-content, body.dark-mode .modal-content {
+  background: #111827 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #f8fafc !important;
+}
+
+/* Cards, Panels & Drawers */
+[data-theme="dark"] .card,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .glass-panel,
+[data-theme="dark"] .dashboard-card,
+body.dark-mode .card,
+body.dark-mode .stat-card,
+body.dark-mode .glass-panel,
+body.dark-mode .dashboard-card {
+  background-color: #111827 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #f8fafc !important;
+}
+
+/* Dropdown Menus */
+[data-theme="dark"] .dropdown-menu,
+[data-theme="dark"] [role="menu"],
+body.dark-mode .dropdown-menu,
+body.dark-mode [role="menu"] {
+  background-color: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Form Controls & Inputs */
+[data-theme="dark"] .form-control,
+[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+[data-theme="dark"] textarea,
+[data-theme="dark"] select,
+body.dark-mode .form-control,
+body.dark-mode input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+body.dark-mode textarea,
+body.dark-mode select {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus,
+body.dark-mode input:focus,
+body.dark-mode textarea:focus,
+body.dark-mode select:focus {
+  border-color: var(--orange-500) !important;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.25) !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder,
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* Tables & Grid rows */
+[data-theme="dark"] table, body.dark-mode table {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] th, body.dark-mode th {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+[data-theme="dark"] td, body.dark-mode td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] tr:hover td, body.dark-mode tr:hover td {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Buttons outline */
+[data-theme="dark"] .btn-outline, body.dark-mode .btn-outline {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .btn-outline:hover, body.dark-mode .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+/* Sidebars */
+[data-theme="dark"] .admin-sidebar-fixed,
+[data-theme="dark"] .customer-sidebar,
+[data-theme="dark"] .client-sidebar,
+[data-theme="dark"] aside,
+body.dark-mode .admin-sidebar-fixed,
+body.dark-mode .customer-sidebar,
+body.dark-mode .client-sidebar,
+body.dark-mode aside {
+  background: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 @keyframes fadeIn {

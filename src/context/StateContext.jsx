@@ -139,6 +139,44 @@ export const StateProvider = ({ children }) => {
       localStorage.setItem('bdigi_customer_tab', tab);
     }
   };
+
+  // Global Theme Mode State ('light' | 'dark')
+  const [theme, setThemeState] = useState('light');
+
+  const applyThemeToDOM = (t) => {
+    if (typeof window === 'undefined') return;
+    document.documentElement.setAttribute('data-theme', t);
+    if (t === 'dark') {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  };
+
+  useEffect(() => {
+    const saved = (typeof window !== 'undefined' && localStorage.getItem('bdigi_theme')) || 'light';
+    setThemeState(saved);
+    applyThemeToDOM(saved);
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'light' ? 'dark' : 'light';
+    setThemeState(nextTheme);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bdigi_theme', nextTheme);
+    }
+    applyThemeToDOM(nextTheme);
+    showToast(nextTheme === 'dark' ? 'Dark theme enabled 🌙' : 'Light theme enabled ☀️', 'info');
+  };
+
+  const setTheme = (newTheme) => {
+    const validTheme = newTheme === 'dark' ? 'dark' : 'light';
+    setThemeState(validTheme);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bdigi_theme', validTheme);
+    }
+    applyThemeToDOM(validTheme);
+  };
   
   // Checkout & Payment states
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
@@ -1379,6 +1417,7 @@ export const StateProvider = ({ children }) => {
       isDepositModalOpen, setIsDepositModalOpen,
       depositFunds, deductWalletBalance,
       toast, showToast,
+      theme, toggleTheme, setTheme,
       notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead, unreadNotificationsCount,
       unreadChatCount, refreshUnreadChatCount,
       createOrder, updateOrderStatus, addRevisionRequest, addOrderMessage, cancelOrder,

@@ -19,6 +19,7 @@ import {
   ArrowRight 
 } from 'lucide-react';
 import { UserMenuDropdown } from './common/UserMenuDropdown';
+import { ThemeToggle } from './common/ThemeToggle';
 
 export const HeaderNav = () => {
   const navigate = useNavigate();
@@ -442,6 +443,11 @@ export const HeaderNav = () => {
             </button>
           )}
 
+          {/* Mobile Theme Toggle Quick Icon */}
+          <div className="mobile-only" style={{ display: 'flex', alignItems: 'center' }}>
+            <ThemeToggle />
+          </div>
+
           {/* Mobile Hamburger Toggle Button */}
           <button
             type="button"
@@ -466,6 +472,11 @@ export const HeaderNav = () => {
           >
             {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
+
+          {/* Theme Toggle Button (Desktop) */}
+          <div className="desktop-only" style={{ display: 'flex', alignItems: 'center' }}>
+            <ThemeToggle />
+          </div>
 
           {/* Dynamic Authentication Controls (Desktop) */}
           {!safeIsAuthenticated ? (
@@ -816,6 +827,21 @@ export const HeaderNav = () => {
           >
             <X size={22} />
           </button>
+
+          {/* Theme Mood Selector (Mobile) */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0.65rem 0',
+            borderBottom: '1px solid var(--border-color)',
+            marginTop: '0.5rem'
+          }}>
+            <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--navy-900)' }}>
+              Theme Mood
+            </span>
+            <ThemeToggle variant="pill" />
+          </div>
 
           <button
             type="button"
