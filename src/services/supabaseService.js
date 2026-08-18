@@ -325,7 +325,11 @@ export async function fetchOrdersFromSupabase() {
         patchQuantity: notesData.patchQuantity,
         patchItems: notesData.patchItems || [],
         placementItems: notesData.placementItems || [],
-        notes: notesData.notes || ''
+        deliveryNotes: notesData.deliveryNotes || notesData.deliveryMessage || order.delivery_notes || '',
+        deliveryMessage: notesData.deliveryNotes || notesData.deliveryMessage || order.delivery_notes || '',
+        deliveryDate: notesData.deliveryDate || order.delivery_date || null,
+        revisions: notesData.revisions || order.revisions || [],
+        notes: notesData.notes || (typeof order.notes === 'string' && !order.notes.startsWith('{') ? order.notes : '')
       };
     });
   } catch { return []; }

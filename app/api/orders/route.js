@@ -174,7 +174,7 @@ export async function POST(request) {
 
       const { data: targetOrder } = await supabase
         .from('orders')
-        .select('id, client_email, status, payment_status')
+        .select('id, client_email, status, payment_status, notes')
         .or(`id.eq."${rawId}",id.eq."${cleanId}",id.eq."${withHash}"`)
         .maybeSingle();
 
@@ -189,6 +189,20 @@ export async function POST(request) {
 
       const updatePayload = { status: newStatus || 'in_progress', updated_at: new Date().toISOString() };
       
+      if (extraData?.deliveryNotes || extraData?.deliveryMessage) {
+        let existingNotes = {};
+        try {
+          if (targetOrder?.notes) {
+            existingNotes = typeof targetOrder.notes === 'string' ? JSON.parse(targetOrder.notes) : targetOrder.notes;
+          }
+        } catch {
+          existingNotes = { notes: targetOrder?.notes || '' };
+        }
+        existingNotes.deliveryNotes = extraData.deliveryNotes || extraData.deliveryMessage;
+        existingNotes.deliveryDate = new Date().toISOString();
+        updatePayload.notes = JSON.stringify(existingNotes);
+      }
+
       const payStatus = extraData?.paymentStatus || extraData?.payment_status || (newStatus === 'in_progress' ? 'paid' : null);
       if (payStatus) {
         updatePayload.payment_status = payStatus;
