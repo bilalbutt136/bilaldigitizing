@@ -1060,7 +1060,7 @@ export const CustomerDashboard = () => {
                                       {ord?.isRush && <span className="badge badge-rush" style={{ fontSize: '0.65rem' }}>RUSH</span>}
                                     </div>
                                     <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                                      ID: <strong>{formatOrderId(ord?.id)}</strong> • {ord?.dimensions?.width}x{ord?.dimensions?.height}"
+                                      ID: <strong>{formatOrderId(ord?.id)}</strong>{ord?.dimensions?.width && ord?.dimensions?.height ? ` • ${ord.dimensions.width}"x${ord.dimensions.height}"` : ''}
                                     </div>
                                   </div>
                                 </div>

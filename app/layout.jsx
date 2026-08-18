@@ -16,6 +16,7 @@ import ToastContainer from './ToastContainer';
 import GlobalUploadModal from '../src/components/common/GlobalUploadModal';
 import { MetaPixelTracker } from '../src/components/common/MetaPixelTracker';
 import { VisitorPromotionBanner } from '../src/components/public/VisitorPromotionBanner';
+import { ErrorBoundary } from '../src/components/ErrorBoundary';
 
 const getMetadataBase = () => {
   const envUrl = (process.env.NEXT_PUBLIC_SITE_URL || '').trim();
@@ -121,31 +122,33 @@ export default function RootLayout({ children }) {
       </head>
       <body suppressHydrationWarning style={{ fontFamily: "'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
         <StateProvider>
-          <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <AnnouncementBar />
-            <Suspense fallback={<header style={{ minHeight: '60px', background: '#ffffff' }} />}>
-              <HeaderNav />
-            </Suspense>
-            <main style={{ flex: 1 }}>
-              <Suspense fallback={<div style={{ padding: '4rem', textAlign: 'center', color: '#94a3b8' }}>Loading Studio Content...</div>}>
-                {children}
+          <ErrorBoundary>
+            <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+              <AnnouncementBar />
+              <Suspense fallback={<header style={{ minHeight: '60px', background: '#ffffff' }} />}>
+                <HeaderNav />
               </Suspense>
-            </main>
-            <Footer />
+              <main style={{ flex: 1 }}>
+                <Suspense fallback={<div style={{ padding: '4rem', textAlign: 'center', color: '#94a3b8' }}>Loading Studio Content...</div>}>
+                  {children}
+                </Suspense>
+              </main>
+              <Footer />
 
-            {/* Global Interactive Modals & Drawers */}
-            <AuthModal />
-            <OrderWizardModal />
-            <StoreOrderModal />
-            <CheckoutModal />
-            <OrderTrackerDrawer />
-            <DepositModal />
-            <ClientLiveChatWidget />
-            <ToastContainer />
-            <GlobalUploadModal />
-            <MetaPixelTracker />
-            <VisitorPromotionBanner />
-          </div>
+              {/* Global Interactive Modals & Drawers */}
+              <AuthModal />
+              <OrderWizardModal />
+              <StoreOrderModal />
+              <CheckoutModal />
+              <OrderTrackerDrawer />
+              <DepositModal />
+              <ClientLiveChatWidget />
+              <ToastContainer />
+              <GlobalUploadModal />
+              <MetaPixelTracker />
+              <VisitorPromotionBanner />
+            </div>
+          </ErrorBoundary>
         </StateProvider>
       </body>
     </html>

@@ -106,10 +106,10 @@ export const OrderTrackerDrawer = () => {
 
   // Collect all uploaded artwork / logo files across all placements and attachments
   const clientArtworkFiles = [
-    ...(ord.uploadedFiles || []),
-    ...(ord.placementItems?.flatMap(p => (p.files || []).map(f => ({ ...f, placementName: p.placement || p.name }))) || []),
-    ...(ord.patchItems?.flatMap(p => (p.files || []).map(f => ({ ...f, placementName: p.tier || p.name }))) || []),
-    ...(ord.vectorItems?.flatMap(v => (v.files || []).map(f => ({ ...f, placementName: v.name }))) || [])
+    ...(Array.isArray(ord.uploadedFiles) ? ord.uploadedFiles : []),
+    ...(Array.isArray(ord.placementItems) ? ord.placementItems.flatMap(p => (Array.isArray(p?.files) ? p.files : []).map(f => ({ ...f, placementName: p?.placement || p?.name }))) : []),
+    ...(Array.isArray(ord.patchItems) ? ord.patchItems.flatMap(p => (Array.isArray(p?.files) ? p.files : []).map(f => ({ ...f, placementName: p?.tier || p?.name }))) : []),
+    ...(Array.isArray(ord.vectorItems) ? ord.vectorItems.flatMap(v => (Array.isArray(v?.files) ? v.files : []).map(f => ({ ...f, placementName: v?.name }))) : [])
   ].filter(f => f && (f.url || f.public_url || f.previewUrl));
 
   const uniqueArtworkFiles = [];
@@ -778,7 +778,7 @@ export const OrderTrackerDrawer = () => {
                   )}
 
                   {/* Multi-Placement Breakdown List (if available) */}
-                  {ord.placementItems && ord.placementItems.length > 0 && (
+                  {Array.isArray(ord.placementItems) && ord.placementItems.length > 0 && (
                     <div style={{ marginTop: '1.25rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid var(--border-color)', padding: '1.25rem' }}>
                       <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <span>📍</span> Placement Breakdown ({ord.placementItems.length} Locations)
@@ -937,21 +937,21 @@ export const OrderTrackerDrawer = () => {
                   </div>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem', maxHeight: '400px', overflowY: 'auto' }}>
-                    {(!ord.messages || ord.messages.length === 0) && (!ord.revisions || ord.revisions.length === 0) ? (
+                    {(!Array.isArray(ord.messages) || ord.messages.length === 0) && (!Array.isArray(ord.revisions) || ord.revisions.length === 0) ? (
                       <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', padding: '1rem', textAlign: 'center', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                         No messages or revisions yet. Use the form below to communicate.
                       </div>
                     ) : (
                       <>
-                        {ord.revisions?.map(rev => (
+                        {(Array.isArray(ord.revisions) ? ord.revisions : []).map(rev => (
                           <div key={`rev-${rev.id}`} style={{ background: '#fffbeb', padding: '1rem', borderRadius: '8px', border: '1px solid #fde68a' }}>
                             <div style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 700, marginBottom: '0.4rem', textTransform: 'uppercase' }}>
-                              🔄 Revision Request • {new Date(rev.createdAt).toLocaleString()}
+                              🔄 Revision Request • {new Date(rev.createdAt || rev.created_at || Date.now()).toLocaleString()}
                             </div>
                             <div style={{ fontSize: '0.9rem', color: '#78350f', whiteSpace: 'pre-wrap' }}>{rev.note}</div>
                           </div>
                         ))}
-                        {ord.messages?.map(msg => {
+                        {(Array.isArray(ord.messages) ? ord.messages : []).map(msg => {
                            const isMsgAdmin = msg.senderRole === 'admin' || msg.sender === 'admin';
                            const displayTime = msg.timestamp && !isNaN(new Date(msg.timestamp).getTime()) 
                              ? new Date(msg.timestamp).toLocaleString() 
