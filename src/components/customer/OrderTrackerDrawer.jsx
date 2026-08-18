@@ -114,12 +114,49 @@ export const OrderTrackerDrawer = () => {
   // Always resolve live reactive order state from global orders array
   const ord = orders.find(o => o.id === selectedOrderForDrawer.id) || selectedOrderForDrawer;
 
+  const isOrderPaid = (o) => {
+    const pStatus = String(o?.payment_status || o?.paymentStatus || '').toLowerCase().trim();
+    return pStatus === 'paid' || pStatus === 'completed' || pStatus === 'settled' || pStatus === 'verified' || pStatus === 'wallet';
+  };
+
   const getPaymentStatusBadge = (status) => {
     const s = String(status || '').toLowerCase().trim();
     if (s === 'paid' || s === 'completed' || s === 'settled' || s === 'verified' || s === 'wallet') {
-      return <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', fontWeight: 800 }}>PAID</span>;
+      return (
+        <span 
+          className="badge" 
+          style={{ 
+            background: 'rgba(16, 185, 129, 0.15)', 
+            color: '#10b981', 
+            border: '1px solid rgba(16, 185, 129, 0.35)', 
+            fontWeight: 800,
+            padding: '0.25rem 0.65rem',
+            borderRadius: '9999px',
+            fontSize: '0.76rem',
+            letterSpacing: '0.04em'
+          }}
+        >
+          PAID
+        </span>
+      );
     }
-    return <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', fontWeight: 800 }}>PENDING</span>;
+    return (
+      <span 
+        className="badge" 
+        style={{ 
+          background: '#fef3c7', 
+          color: '#d97706', 
+          border: '1px solid #fde68a', 
+          fontWeight: 800,
+          padding: '0.25rem 0.65rem',
+          borderRadius: '9999px',
+          fontSize: '0.76rem',
+          letterSpacing: '0.04em'
+        }}
+      >
+        PENDING
+      </span>
+    );
   };
 
   // Collect all uploaded artwork / logo files across all placements and attachments
@@ -566,7 +603,7 @@ export const OrderTrackerDrawer = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
                 
                 {/* 1. Payment Pending Callout Banner */}
-                {String(ord.payment_status || ord.paymentStatus || '').toLowerCase() === 'pending' && (
+                {!isOrderPaid(ord) && (
                   <div style={{
                     background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
                     border: '1.5px solid #fde68a',

@@ -282,6 +282,11 @@ export const CustomerDashboard = () => {
   const custEndIndex = Math.min(custStartIndex + customerPageSize, totalCustOrders);
   const paginatedCustOrders = filteredDigitizingOrders.slice(custStartIndex, custEndIndex);
 
+  const isOrderPaid = (o) => {
+    const pStatus = String(o?.payment_status || o?.paymentStatus || '').toLowerCase().trim();
+    return pStatus === 'paid' || pStatus === 'completed' || pStatus === 'settled' || pStatus === 'verified' || pStatus === 'wallet';
+  };
+
   const getPaymentStatusBadge = (status) => {
     const s = String(status || '').toLowerCase().trim();
     if (s === 'paid' || s === 'completed' || s === 'settled' || s === 'verified' || s === 'wallet') {
@@ -999,133 +1004,191 @@ export const CustomerDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {paginatedCustOrders.map((ord) => (
-                            <tr 
-                              key={ord?.id || Math.random()}
-                              style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s' }}
-                              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--orange-50)'}
-                              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                            >
-                              {/* Title & Interactive Lightbox Artwork Thumbnail */}
-                              <td style={{ padding: '1rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                                  <div 
-                                    style={{ position: 'relative', cursor: 'pointer' }}
-                                    onClick={() => setLightboxOrder(ord)}
-                                    title="Click to inspect full high-res artwork"
-                                  >
-                                    <img 
-                                      src={
-                                        ord?.artworkUrl || 
-                                        ord?.image_url || 
-                                        ord?.logo || 
-                                        ord?.uploadedFiles?.[0]?.url || 
-                                        ord?.uploadedFiles?.[0]?.public_url || 
-                                        ord?.placementItems?.[0]?.files?.[0]?.url || 
-                                        ord?.patchItems?.[0]?.files?.[0]?.url || 
-                                        ord?.order_files?.[0]?.public_url || 
-                                        ord?.file_url || 
-                                        ord?.file_path || 
-                                        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80'
-                                      } 
-                                      alt={ord?.title || 'Design'} 
-                                      onError={(e) => {
-                                        e.currentTarget.onerror = null;
-                                        e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
-                                      }}
-                                      style={{ width: '54px', height: '54px', borderRadius: 'var(--radius-sm)', objectFit: 'cover', border: '1.5px solid var(--orange-600)' }}
-                                    />
-                                    <div style={{
-                                      position: 'absolute',
-                                      inset: 0,
-                                      background: 'rgba(15, 23, 42, 0.4)',
-                                      borderRadius: 'var(--radius-sm)',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      color: '#ffffff',
-                                      opacity: 0,
-                                      transition: 'opacity 0.2s'
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
-                                    onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
+                          {paginatedCustOrders.map((ord) => {
+                            const isPaid = isOrderPaid(ord);
+                            return (
+                              <tr 
+                                key={ord?.id || Math.random()}
+                                style={{ 
+                                  borderBottom: isPaid ? '1px solid var(--border-color)' : '1px solid #fed7aa', 
+                                  background: isPaid ? '#ffffff' : '#fffcf6',
+                                  transition: 'background 0.15s' 
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.background = isPaid ? 'var(--orange-50)' : '#fff7ed'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = isPaid ? '#ffffff' : '#fffcf6'}
+                              >
+                                {/* Title & Interactive Lightbox Artwork Thumbnail */}
+                                <td style={{ padding: '1rem' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                                    <div 
+                                      style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}
+                                      onClick={() => setLightboxOrder(ord)}
+                                      title="Click to inspect full high-res artwork"
                                     >
-                                      <ZoomIn size={16} />
-                                    </div>
-                                  </div>
-
-                                  <div>
-                                    <div style={{ fontWeight: 700, color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                      {ord?.title}
-                                      {ord?.isRush && <span className="badge badge-rush" style={{ fontSize: '0.65rem' }}>RUSH</span>}
-                                    </div>
-                                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                                      ID: <strong>{formatOrderId(ord?.id)}</strong>{ord?.dimensions?.width && ord?.dimensions?.height ? ` • ${ord.dimensions.width}"x${ord.dimensions.height}"` : ''}
-                                    </div>
-                                  </div>
-                                </div>
-                              </td>
-
-                              {/* Service Category */}
-                              <td style={{ padding: '1rem' }}>
-                                <span style={{ fontWeight: 600, color: 'var(--navy-800)' }}>
-                                  {ord?.type === 'embroidery' ? '🧵 Embroidery Digitizing' : '✒️ Vector Art'}
-                                </span>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                  {ord?.serviceCategory}
-                                </div>
-                              </td>
-
-                              {/* Date */}
-                              <td style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                                {ord?.createdAt ? new Date(ord.createdAt).toLocaleDateString() : 'Recent'}
-                              </td>
-
-                              {/* Status */}
-                              <td style={{ padding: '1rem' }}>
-                                {getPaymentStatusBadge(ord?.payment_status || ord?.paymentStatus)}
-                              </td>
-
-                              {/* Price */}
-                              <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--navy-900)' }}>
-                                ${parseFloat(ord?.price || 0).toFixed(2)}
-                              </td>
-
-                              {/* Actions */}
-                              <td style={{ padding: '1rem', textAlign: 'right' }}>
-                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'flex-end' }}>
-                                  {String(ord?.payment_status || ord?.paymentStatus || '').toLowerCase() === 'pending' && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handlePayOrder(ord)}
-                                      style={{
-                                        background: 'linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%)',
-                                        color: '#ffffff',
-                                        border: 'none',
-                                        padding: '0.35rem 0.75rem',
+                                      <img 
+                                        src={
+                                          ord?.artworkUrl || 
+                                          ord?.image_url || 
+                                          ord?.logo || 
+                                          ord?.uploadedFiles?.[0]?.url || 
+                                          ord?.uploadedFiles?.[0]?.public_url || 
+                                          ord?.placementItems?.[0]?.files?.[0]?.url || 
+                                          ord?.patchItems?.[0]?.files?.[0]?.url || 
+                                          ord?.order_files?.[0]?.public_url || 
+                                          ord?.file_url || 
+                                          ord?.file_path || 
+                                          'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80'
+                                        } 
+                                        alt={ord?.title || 'Design'} 
+                                        onError={(e) => {
+                                          e.currentTarget.onerror = null;
+                                          e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
+                                        }}
+                                        style={{ width: '52px', height: '52px', borderRadius: '8px', objectFit: 'cover', border: '1.5px solid var(--orange-600)' }}
+                                      />
+                                      <div style={{
+                                        position: 'absolute',
+                                        inset: 0,
+                                        background: 'rgba(15, 23, 42, 0.4)',
                                         borderRadius: '8px',
-                                        fontWeight: 800,
-                                        fontSize: '0.78rem',
-                                        cursor: 'pointer',
-                                        boxShadow: '0 2px 6px rgba(249, 115, 22, 0.25)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: '#ffffff',
+                                        opacity: 0,
+                                        transition: 'opacity 0.2s'
+                                      }}
+                                      onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+                                      onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
+                                      >
+                                        <ZoomIn size={16} />
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <div style={{ fontWeight: 700, color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.92rem' }}>
+                                        {ord?.title || 'Embroidery Digitizing Order'}
+                                        {ord?.isRush && <span className="badge badge-rush" style={{ fontSize: '0.65rem' }}>RUSH</span>}
+                                      </div>
+                                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                                        ID: <strong>{formatOrderId(ord?.id)}</strong>{ord?.dimensions?.width && ord?.dimensions?.height ? ` • ${ord.dimensions.width}"x${ord.dimensions.height}"` : ''}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+
+                                {/* Service Type */}
+                                <td style={{ padding: '1rem' }}>
+                                  <div style={{ fontWeight: 700, color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.88rem' }}>
+                                    {ord?.type === 'vector' ? '✒️ Vector Art' : (ord?.type === 'patch' || ord?.type === 'patches' ? '🏷️ Custom Patches' : '🧵 Embroidery Digitizing')}
+                                  </div>
+                                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                                    {ord?.serviceCategory || (ord?.type === 'vector' ? 'Vector Art Conversion' : (ord?.type === 'patch' || ord?.type === 'patches' ? 'Custom Physical Patches' : 'Embroidery Digitizing'))}
+                                  </div>
+                                </td>
+
+                                {/* Date Submitted */}
+                                <td style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                                  {ord?.createdAt || ord?.created_at ? new Date(ord.createdAt || ord.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
+                                </td>
+
+                                {/* Payment Status */}
+                                <td style={{ padding: '1rem' }}>
+                                  {isPaid ? (
+                                    <span 
+                                      className="badge" 
+                                      style={{ 
+                                        background: 'rgba(16, 185, 129, 0.14)', 
+                                        color: '#10b981', 
+                                        border: '1px solid rgba(16, 185, 129, 0.35)', 
+                                        fontWeight: 800, 
+                                        padding: '0.3rem 0.75rem', 
+                                        borderRadius: '9999px', 
+                                        fontSize: '0.76rem',
+                                        letterSpacing: '0.04em',
+                                        display: 'inline-block'
+                                      }}
+                                    >
+                                      PAID
+                                    </span>
+                                  ) : (
+                                    <span 
+                                      className="badge" 
+                                      style={{ 
+                                        background: '#fef3c7', 
+                                        color: '#d97706', 
+                                        border: '1px solid #fde68a', 
+                                        fontWeight: 800, 
+                                        padding: '0.3rem 0.75rem', 
+                                        borderRadius: '9999px', 
+                                        fontSize: '0.76rem',
+                                        letterSpacing: '0.04em',
+                                        display: 'inline-block'
+                                      }}
+                                    >
+                                      PENDING
+                                    </span>
+                                  )}
+                                </td>
+
+                                {/* Cost */}
+                                <td style={{ padding: '1rem', fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.92rem' }}>
+                                  ${parseFloat(ord?.price || ord?.totalPrice || 0).toFixed(2)}
+                                </td>
+
+                                {/* Actions */}
+                                <td style={{ padding: '1rem', textAlign: 'right' }}>
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                    {!isPaid && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handlePayOrder(ord)}
+                                        style={{
+                                          background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                                          color: '#ffffff',
+                                          border: 'none',
+                                          padding: '0.45rem 0.95rem',
+                                          borderRadius: '8px',
+                                          fontWeight: 800,
+                                          fontSize: '0.8rem',
+                                          cursor: 'pointer',
+                                          boxShadow: '0 2px 8px rgba(249, 115, 22, 0.28)',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '0.35rem',
+                                          lineHeight: 1.2,
+                                          whiteSpace: 'nowrap',
+                                          transition: 'all 0.15s ease'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+                                      >
+                                        <Zap size={13} /> Pay Now
+                                      </button>
+                                    )}
+                                    <button
+                                      className="btn btn-outline btn-sm"
+                                      onClick={() => setSelectedOrderForDrawer(ord)}
+                                      style={{
                                         display: 'inline-flex',
                                         alignItems: 'center',
-                                        gap: '0.3rem'
+                                        gap: '0.35rem',
+                                        padding: '0.45rem 0.85rem',
+                                        borderRadius: '8px',
+                                        fontWeight: 700,
+                                        fontSize: '0.8rem',
+                                        color: '#ff7a00',
+                                        borderColor: '#ff7a00',
+                                        whiteSpace: 'nowrap'
                                       }}
                                     >
-                                      <Zap size={13} /> Pay Now
+                                      View Order <ChevronRight size={15} />
                                     </button>
-                                  )}
-                                  <button
-                                    className="btn btn-outline btn-sm"
-                                    onClick={() => setSelectedOrderForDrawer(ord)}
-                                  >
-                                    View Order <ChevronRight size={16} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
