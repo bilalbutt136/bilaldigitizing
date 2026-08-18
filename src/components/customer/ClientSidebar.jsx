@@ -48,9 +48,7 @@ export const ClientSidebar = ({
         {
           id: 'dashboard',
           label: 'Dashboard',
-          icon: LayoutDashboard,
-          badge: unpaidCount > 0 ? `${unpaidCount} Due` : null,
-          badgeColor: '#ef4444'
+          icon: LayoutDashboard
         },
         { 
           id: 'support', 

@@ -80,16 +80,24 @@ export const CustomerDashboard = () => {
     }
   }, [isAuthInitialized, authUser, currentUser, navigate]);
 
-  // Auto-open order tracker drawer if trackOrder or orderId query param exists
+  // Auto-open order tracker drawer only ONCE if explicitly navigated via URL param, then clean URL
+  const initialTrackHandledRef = React.useRef(false);
   React.useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || initialTrackHandledRef.current) return;
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       const trackId = urlParams.get('trackOrder') || urlParams.get('orderId');
       if (trackId && orders && orders.length > 0) {
-        const found = orders.find(o => String(o.id) === String(trackId) || formatOrderId(o.id) === trackId);
+        const cleanTrackId = String(trackId).trim().replace(/^#+/, '');
+        const found = orders.find(o => {
+          const oClean = String(o?.id || '').trim().replace(/^#+/, '');
+          return oClean === cleanTrackId || String(o.id) === String(trackId) || formatOrderId(o.id) === trackId;
+        });
         if (found && setSelectedOrderForDrawer) {
+          initialTrackHandledRef.current = true;
           setSelectedOrderForDrawer(found);
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, newUrl);
         }
       }
     }
@@ -487,9 +495,7 @@ export const CustomerDashboard = () => {
                     { 
                       id: 'dashboard', 
                       label: 'Dashboard', 
-                      icon: LayoutDashboard,
-                      badge: unpaidOrders.length > 0 ? `${unpaidOrders.length} Due` : null,
-                      badgeColor: '#ef4444'
+                      icon: LayoutDashboard
                     },
                     { 
                       id: 'support', 
