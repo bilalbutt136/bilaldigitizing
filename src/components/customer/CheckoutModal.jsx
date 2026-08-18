@@ -12,7 +12,8 @@ import {
   ExternalLink, 
   Zap, 
   Coins,
-  ArrowLeft
+  ArrowLeft,
+  ArrowRight
 } from 'lucide-react';
 import { getAuthHeaders } from '../../services/supabaseService';
 
@@ -153,7 +154,8 @@ export const CheckoutModal = () => {
     walletBalance,
     deductWalletBalance,
     fetchUserWalletBalance,
-    authUser
+    authUser,
+    protectedNavigate
   } = useAppState();
 
   const [isPaid, setIsPaid] = useState(false);
@@ -354,6 +356,7 @@ export const CheckoutModal = () => {
   }, [isCheckoutModalOpen, checkoutSession, isPaid, showToast, updateOrderStatus]);
 
   const handleClose = () => {
+    const wasPaid = isPaid;
     setIsCheckoutModalOpen(false);
     setTimeout(() => {
       setCheckoutSession(null);
@@ -364,6 +367,9 @@ export const CheckoutModal = () => {
       setExtractedSolana('');
       setExtractedLightning('');
       setHasCopied(false);
+      if (wasPaid && protectedNavigate) {
+        protectedNavigate('customer', true);
+      }
     }, 300);
   };
 
@@ -547,12 +553,13 @@ export const CheckoutModal = () => {
               <button 
                 onClick={handleClose}
                 style={{ 
-                  background: 'var(--orange-500)', color: '#fff', border: 'none', 
-                  padding: '0.85rem 2rem', borderRadius: '12px', fontSize: '0.95rem', 
-                  fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 15px rgba(255, 122, 0, 0.35)' 
+                  background: 'linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%)', color: '#fff', border: 'none', 
+                  padding: '0.95rem 2.25rem', borderRadius: '12px', fontSize: '1rem', 
+                  fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 24px rgba(249, 115, 22, 0.35)',
+                  display: 'inline-flex', alignItems: 'center', gap: '0.5rem'
                 }}
               >
-                Return to Dashboard
+                Go to Customer Portal & Track Order <ArrowRight size={18} />
               </button>
             </div>
 

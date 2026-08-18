@@ -8,6 +8,7 @@ import {
   addRevisionInSupabase,
   upsertClientInSupabase,
   signInWithGoogleIdToken,
+  signInWithGoogleOAuth,
   signInWithAppleIdToken,
   signInWithSupabaseAuth,
   signUpWithSupabaseAuth,
@@ -653,14 +654,22 @@ export const StateProvider = ({ children }) => {
   };
 
   const loginWithGoogle = async (idToken) => {
-    showToast('Authenticating with Google...', 'info');
-    const res = await signInWithGoogleIdToken(idToken);
-    if (!res.success) {
-      showToast(res.error || 'Google Sign-In failed.', 'error');
+    showToast('Connecting to Google...', 'info');
+    if (idToken && typeof idToken === 'string' && idToken.length > 20) {
+      const res = await signInWithGoogleIdToken(idToken);
+      if (!res.success) {
+        showToast(res.error || 'Google Sign-In failed.', 'error');
+      } else {
+        await finishAuth(res.data.user);
+      }
+      return res;
     } else {
-      await finishAuth(res.data.user);
+      const res = await signInWithGoogleOAuth('/client-portal');
+      if (!res.success) {
+        showToast(res.error || 'Google Sign-In failed.', 'error');
+      }
+      return res;
     }
-    return res;
   };
 
   const loginWithApple = async (idToken) => {

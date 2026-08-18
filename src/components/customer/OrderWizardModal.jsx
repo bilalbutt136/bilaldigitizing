@@ -26,6 +26,9 @@ import {
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 import { matchCategory } from '../../utils/categoryUtils';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
 export const OrderWizardModal = () => {
   const { 
@@ -41,6 +44,7 @@ export const OrderWizardModal = () => {
     isAuthenticated,
     register,
     login,
+    loginWithGoogle,
     dynamicPricingTiers = [],
     siteSettings = {}
   } = useAppState();
@@ -2036,22 +2040,116 @@ export const OrderWizardModal = () => {
                     ) : (
                       /* Guest Quick Account Setup Card */
                       <div style={{ background: '#ffffff', padding: '1.35rem', borderRadius: '18px', border: '1.5px solid var(--orange-300)', boxShadow: '0 4px 15px rgba(249, 115, 22, 0.08)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
-                          <div>
-                            <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--orange-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                              {guestAuthMode === 'signup' ? '⚡ Instant Client Account' : '🔑 Client Sign In'}
-                            </span>
-                            <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: 'var(--navy-950)' }}>
-                              {guestAuthMode === 'signup' ? 'Where should we send your files?' : 'Sign in to your account'}
-                            </h4>
-                          </div>
+                        <div style={{ marginBottom: '0.85rem' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--orange-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            ⚡ Instant Account & File Delivery
+                          </span>
+                          <h4 style={{ margin: '0.15rem 0 0 0', fontSize: '1.15rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                            Where should we send your files?
+                          </h4>
+                          <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                            Sign in with 1-click Google or enter your email to receive and track your finished files
+                          </p>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {/* 1. Google 1-Click Sign-In */}
+                        <div style={{ marginBottom: '0.85rem' }}>
+                          {GOOGLE_CLIENT_ID ? (
+                            <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+                              <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                                <GoogleLogin
+                                  onSuccess={async (credentialResponse) => {
+                                    setIsSubmittingAuth(true);
+                                    try {
+                                      const res = await loginWithGoogle(credentialResponse.credential);
+                                      if (res?.success) {
+                                        showToast('Signed in with Google! Ready for payment.', 'success');
+                                      } else {
+                                        showToast(res?.error || 'Google sign-in error', 'error');
+                                      }
+                                    } catch (err) {
+                                      showToast(err?.message || 'Google sign-in failed', 'error');
+                                    } finally {
+                                      setIsSubmittingAuth(false);
+                                    }
+                                  }}
+                                  onError={() => {
+                                    showToast('Google Sign-In failed', 'error');
+                                  }}
+                                  shape="rectangular"
+                                  theme="outline"
+                                  text="continue_with"
+                                  size="large"
+                                  width="100%"
+                                />
+                              </div>
+                            </GoogleOAuthProvider>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                setIsSubmittingAuth(true);
+                                try {
+                                  await loginWithGoogle();
+                                } catch (err) {
+                                  showToast(err?.message || 'Google Sign-In failed', 'error');
+                                } finally {
+                                  setIsSubmittingAuth(false);
+                                }
+                              }}
+                              style={{
+                                width: '100%',
+                                padding: '0.65rem 1rem',
+                                borderRadius: '10px',
+                                border: '1.5px solid #cbd5e1',
+                                background: '#ffffff',
+                                color: 'var(--navy-950)',
+                                fontSize: '0.88rem',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.5rem',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                                transition: 'all 0.15s ease'
+                              }}
+                              onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--orange-400)'; e.currentTarget.style.background = '#f8fafc'; }}
+                              onMouseOut={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.background = '#ffffff'; }}
+                            >
+                              <svg width="18" height="18" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                              </svg>
+                              Continue with Google
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Divider */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          margin: '0.75rem 0',
+                          color: '#94a3b8',
+                          fontSize: '0.75rem',
+                          fontWeight: 800,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em'
+                        }}>
+                          <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+                          <span style={{ padding: '0 0.6rem' }}>Or with Email</span>
+                          <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+                        </div>
+
+                        {/* 2. Fast Minimal Email Form */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                           {guestAuthMode === 'signup' && (
                             <div>
                               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.25rem' }}>
-                                Full Name / Contact Person *
+                                Full Name *
                               </label>
                               <div style={{ position: 'relative' }}>
                                 <User size={15} style={{ position: 'absolute', left: '10px', top: '11px', color: '#94a3b8' }} />
@@ -2098,25 +2196,7 @@ export const OrderWizardModal = () => {
                             </div>
                           </div>
 
-                          {guestAuthMode === 'signup' && (
-                            <div>
-                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.25rem' }}>
-                                Business / Company Name (Optional)
-                              </label>
-                              <div style={{ position: 'relative' }}>
-                                <Building size={15} style={{ position: 'absolute', left: '10px', top: '11px', color: '#94a3b8' }} />
-                                <input 
-                                  type="text" 
-                                  value={guestCompany} 
-                                  onChange={(e) => setGuestCompany(e.target.value)} 
-                                  placeholder="Apex Studio" 
-                                  style={{ width: '100%', padding: '0.55rem 0.75rem 0.55rem 2.2rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, background: '#ffffff' }} 
-                                />
-                              </div>
-                            </div>
-                          )}
-
-                          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.35rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.25rem' }}>
                             <button
                               type="button"
                               onClick={() => setGuestAuthMode(guestAuthMode === 'signup' ? 'login' : 'signup')}

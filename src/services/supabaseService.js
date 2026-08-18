@@ -84,6 +84,29 @@ export async function signInWithGoogleIdToken(idToken) {
   }
 }
 
+export async function signInWithGoogleOAuth(redirectTo = '/client-portal') {
+  if (!isSupabaseConfigured) return { success: false, error: 'Database not configured.' };
+  try {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const targetUrl = `${origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`;
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: targetUrl,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent'
+        }
+      }
+    });
+    if (error) return { success: false, error: error.message };
+    return { success: true, data };
+  } catch (err) {
+    console.error('Google OAuth error:', err);
+    return { success: false, error: err?.message || 'Google OAuth error.' };
+  }
+}
+
 export async function signInWithAppleIdToken(idToken) {
   if (!isSupabaseConfigured) return { success: false, error: 'Database not configured.' };
   try {
