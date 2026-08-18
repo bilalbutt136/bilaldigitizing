@@ -145,36 +145,47 @@ export async function POST(request) {
         const rawId = String(orderId).trim();
         const cleanId = rawId.replace(/^#+/, '');
         const withHash = `#${cleanId}`;
+        const candidateIds = Array.from(new Set([rawId, cleanId, withHash])).filter(Boolean);
 
-        // 1. Direct update with all ID variations and partial pattern match
-        await supabaseAdmin
-          .from('orders')
-          .update({ 
-            status: 'in_progress', 
-            payment_status: 'paid',
-            paid_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .or(`id.eq."${rawId}",id.eq."${cleanId}",id.eq."${withHash}",id.ilike."%${cleanId}%"`);
+        const updatePayload = {
+          status: 'in_progress',
+          payment_status: 'paid',
+          paid_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
 
-        // 2. Also search if stored with client_email to ensure zero missed updates
+        // 1. Direct match by candidate IDs
         const { data: matchedRows } = await supabaseAdmin
           .from('orders')
           .select('id')
-          .ilike('client_email', email)
-          .or(`id.eq."${rawId}",id.eq."${cleanId}",id.eq."${withHash}",id.ilike."%${cleanId}%"`);
+          .in('id', candidateIds);
 
         if (matchedRows && matchedRows.length > 0) {
           for (const row of matchedRows) {
             await supabaseAdmin
               .from('orders')
-              .update({ 
-                status: 'in_progress', 
-                payment_status: 'paid',
-                paid_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              })
+              .update(updatePayload)
               .eq('id', row.id);
+          }
+        } else {
+          // 2. Search by partial ID or client email
+          let query = supabaseAdmin
+            .from('orders')
+            .select('id')
+            .ilike('client_email', email);
+
+          if (cleanId.length >= 3) {
+            query = query.ilike('id', `%${cleanId}%`);
+          }
+
+          const { data: fallbackRows } = await query;
+          if (fallbackRows && fallbackRows.length > 0) {
+            for (const row of fallbackRows) {
+              await supabaseAdmin
+                .from('orders')
+                .update(updatePayload)
+                .eq('id', row.id);
+            }
           }
         }
       }

@@ -1114,6 +1114,28 @@ export const StateProvider = ({ children }) => {
     return false;
   };
 
+  const fetchUserWalletBalance = async (email = authUser?.email) => {
+    if (!email) return 0;
+    try {
+      const balance = await fetchWalletBalanceFromSupabase(email);
+      setWalletBalance(balance);
+      return balance;
+    } catch {
+      return 0;
+    }
+  };
+
+  const refreshOrders = async () => {
+    try {
+      const freshOrders = await fetchOrdersFromSupabase();
+      if (freshOrders && Array.isArray(freshOrders)) {
+        setOrders(freshOrders);
+        return freshOrders;
+      }
+    } catch {}
+    return [];
+  };
+
   const deductWalletBalance = async (amount, orderId = null) => {
     const num = parseFloat(amount);
     if (isNaN(num) || num <= 0 || walletBalance < num) return false;
@@ -1124,9 +1146,10 @@ export const StateProvider = ({ children }) => {
       if (orderId) {
         await updateOrderStatus(orderId, 'in_progress', { paymentStatus: 'paid', payment_status: 'paid' });
       }
-      fetchOrdersFromSupabase().then(freshOrders => {
-        if (freshOrders && Array.isArray(freshOrders)) setOrders(freshOrders);
-      });
+      await refreshOrders();
+      if (authUser?.email) {
+        await fetchUserWalletBalance(authUser.email);
+      }
       return true;
     }
     showToast(res.error || 'Wallet payment failed.', 'error');
@@ -1421,7 +1444,8 @@ export const StateProvider = ({ children }) => {
       notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead, unreadNotificationsCount,
       unreadChatCount, refreshUnreadChatCount,
       createOrder, updateOrderStatus, addRevisionRequest, addOrderMessage, cancelOrder,
-      completeOrder, deleteOrder, ORDER_STATUSES, assignDigitizer
+      completeOrder, deleteOrder, ORDER_STATUSES, assignDigitizer,
+      fetchUserWalletBalance, refreshOrders
     }}>
       {children}
     </StateContext.Provider>

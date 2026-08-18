@@ -27,7 +27,7 @@ export async function GET(request) {
     let query = supabaseAdmin
       .from('invoices')
       .select('*')
-      .or(`id.eq."${cleanInvoiceId}",bolt_order_id.eq."${cleanInvoiceId}"`);
+      .or(`id.eq.${cleanInvoiceId},bolt_order_id.eq.${cleanInvoiceId}`);
 
     if (!isAdmin) {
       query = query.ilike('client_email', cleanUserEmail);
@@ -91,6 +91,7 @@ export async function GET(request) {
                 p_order_id: rawOrdId
               }).catch(() => null);
 
+              const candidateOrdIds = Array.from(new Set([rawOrdId, cleanOrdId, withHash])).filter(Boolean);
               await supabaseAdmin
                 .from('orders')
                 .update({ 
@@ -99,7 +100,7 @@ export async function GET(request) {
                   paid_at: new Date().toISOString(),
                   updated_at: new Date().toISOString()
                 })
-                .or(`id.eq."${rawOrdId}",id.eq."${cleanOrdId}",id.eq."${withHash}"`);
+                .in('id', candidateOrdIds);
             }
           }
         }

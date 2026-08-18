@@ -153,6 +153,7 @@ export async function POST(request) {
           const rawOrdId = String(invoice.order_id).trim();
           const cleanOrdId = rawOrdId.replace('#', '');
           const withHash = `#${cleanOrdId}`;
+          const candidateOrdIds = Array.from(new Set([rawOrdId, cleanOrdId, withHash])).filter(Boolean);
 
           await supabaseAdmin
             .from('orders')
@@ -162,7 +163,7 @@ export async function POST(request) {
               paid_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             })
-            .or(`id.eq."${rawOrdId}",id.eq."${cleanOrdId}",id.eq."${withHash}"`);
+            .in('id', candidateOrdIds);
         }
       }
 

@@ -171,12 +171,25 @@ export async function POST(request) {
       const rawId = String(orderId || '').trim();
       const cleanId = rawId.replace(/^#+/, '');
       const withHash = `#${cleanId}`;
+      const candidateIds = Array.from(new Set([rawId, cleanId, withHash])).filter(Boolean);
 
-      const { data: targetOrder } = await supabase
+      let targetOrder = null;
+      const { data: byIn } = await supabase
         .from('orders')
         .select('id, client_email, status, payment_status, notes')
-        .or(`id.eq."${rawId}",id.eq."${cleanId}",id.eq."${withHash}"`)
+        .in('id', candidateIds)
         .maybeSingle();
+
+      if (byIn) {
+        targetOrder = byIn;
+      } else if (cleanId.length >= 3) {
+        const { data: byIlike } = await supabase
+          .from('orders')
+          .select('id, client_email, status, payment_status, notes')
+          .ilike('id', `%${cleanId}%`)
+          .maybeSingle();
+        if (byIlike) targetOrder = byIlike;
+      }
 
       if (!isAdmin) {
         if (!user) {
@@ -211,10 +224,11 @@ export async function POST(request) {
         }
       }
 
+      const resolvedId = targetOrder?.id || rawId;
       const { error } = await supabase
         .from('orders')
         .update(updatePayload)
-        .or(`id.eq."${rawId}",id.eq."${cleanId}",id.eq."${withHash}",id.ilike."%${cleanId}%"`);
+        .in('id', Array.from(new Set([resolvedId, ...candidateIds])));
 
       if (error) throw error;
       
