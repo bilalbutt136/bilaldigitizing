@@ -807,8 +807,9 @@ export const StateProvider = ({ children }) => {
     const fullOrderPayload = {
       id: localId,
       ...newOrderData,
-      clientName: authUser?.company || authUser?.name || 'Valued Client',
-      clientEmail: authUser?.email || '',
+      clientName: newOrderData.clientName || authUser?.company || authUser?.name || 'Valued Client',
+      clientEmail: (newOrderData.clientEmail || authUser?.email || '').toLowerCase().trim(),
+      clientId: newOrderData.clientId || authUser?.id || authUser?.email || '',
       createdAt: new Date().toISOString(),
       status: 'awaiting_payment',
       history: [{ timestamp: new Date().toISOString(), label: 'Order Submitted — Awaiting Payment' }],
@@ -995,16 +996,9 @@ export const StateProvider = ({ children }) => {
   };
 
   const openOrderWizard = (initialData = null) => {
-    if (!isAuthenticated && !authUser) {
-      if (initialData !== undefined) setOrderWizardInitialData(initialData);
-      setAuthModalTarget('customer');
-      setAuthModalMode('login');
-      setIsAuthModalOpen(true);
-      showToast('Please sign in or create an account to place an order.', 'info');
-      return;
+    if (initialData !== undefined && initialData !== null) {
+      setOrderWizardInitialData(initialData);
     }
-
-    if (initialData !== undefined) setOrderWizardInitialData(initialData);
     setIsOrderWizardOpen(true);
   };
 
