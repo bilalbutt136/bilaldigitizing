@@ -48,31 +48,6 @@ export const formatOrderId = (rawId) => {
   return `#${cleanId}`;
 };
 
-export const formatDimensions = (dim) => {
-  if (!dim) return '3.5" (Standard Width)';
-  if (typeof dim === 'string') return dim;
-  if (typeof dim === 'number') return `${dim}"`;
-  if (typeof dim === 'object') {
-    const w = dim.width || dim.w || '';
-    const h = dim.height || dim.h || '';
-    const u = dim.unit || 'in';
-    if (w && h) return `${w}" x ${h}" ${u}`;
-    if (w) return `${w}" ${u}`;
-    if (h) return `${h}" ${u}`;
-    return '3.5" (Standard Width)';
-  }
-  return String(dim);
-};
-
-export const formatFabric = (fab) => {
-  if (!fab) return 'Cotton / Poly Twill';
-  if (typeof fab === 'string') return fab;
-  if (typeof fab === 'object') {
-    return fab.name || fab.type || fab.label || 'Cotton / Poly Twill';
-  }
-  return String(fab);
-};
-
 
 export const StateProvider = ({ children }) => {
   // Synchronous session hydration from localStorage to prevent flash/redirect on refresh
@@ -931,29 +906,10 @@ export const StateProvider = ({ children }) => {
       const oClean = String(o.id || '').trim().replace(/^#+/, '');
       return oClean === cleanTargetId || o.id === orderId || o.id === targetWithHash;
     });
-
-    const actorName = authUser?.name || authUser?.user_metadata?.full_name || (authUser?.role === 'admin' ? 'Admin' : 'Client');
-    const actorRole = authUser?.role === 'admin' ? 'admin' : 'client';
-    
-    const activityEntry = {
-      id: `act-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-      action: safeExtraData.activityAction || `Status updated to ${String(newStatus).replace(/_/g, ' ').toUpperCase()}`,
-      user: safeExtraData.activityUser || actorName,
-      role: safeExtraData.activityRole || actorRole,
-      timestamp: new Date().toISOString(),
-      version: targetOrder?.currentVersion || targetOrder?.versions?.length || 1,
-      details: safeExtraData.activityDetails || `Order status updated to ${newStatus}`
-    };
-
-    const updatedActivityLog = [activityEntry, ...(targetOrder?.activityLog || [])];
-    const enrichedExtraData = {
-      ...safeExtraData,
-      activityLog: safeExtraData.activityLog || updatedActivityLog
-    };
     
     if (isSupabaseConfigured) {
       try {
-        await updateOrderStatusInSupabase(orderId, newStatus, enrichedExtraData);
+        await updateOrderStatusInSupabase(orderId, newStatus, safeExtraData);
       } catch (sbErr) {
         console.warn('Supabase update order status notice:', sbErr);
       }
@@ -963,24 +919,23 @@ export const StateProvider = ({ children }) => {
       const ordClean = String(ord.id || '').trim().replace(/^#+/, '');
       const isMatch = ordClean === cleanTargetId || ord.id === orderId || ord.id === targetWithHash;
       if (isMatch) {
-        const resolvedPayStatus = safeExtraData.paymentStatus || safeExtraData.payment_status || (['in_progress', 'processing', 'approved', 'ready_for_delivery', 'in_delivery', 'delivered', 'completed'].includes(newStatus) ? 'paid' : ord.payment_status || ord.paymentStatus);
-        const isPaidComputed = resolvedPayStatus === 'paid' || resolvedPayStatus === 'completed' || resolvedPayStatus === 'wallet' || ['in_progress', 'processing', 'approved', 'ready_for_delivery', 'in_delivery', 'delivered', 'completed'].includes(newStatus);
+        const resolvedPayStatus = safeExtraData.paymentStatus || safeExtraData.payment_status || (newStatus === 'in_progress' ? 'paid' : ord.payment_status || ord.paymentStatus);
+        const isPaidComputed = resolvedPayStatus === 'paid' || resolvedPayStatus === 'completed' || resolvedPayStatus === 'wallet' || newStatus === 'in_progress';
         return {
           ...ord,
           status: newStatus,
-          ...enrichedExtraData,
+          ...safeExtraData,
           payment_status: isPaidComputed ? 'paid' : resolvedPayStatus,
           paymentStatus: isPaidComputed ? 'paid' : resolvedPayStatus,
           isPaid: isPaidComputed,
           paid_at: isPaidComputed ? (ord.paid_at || new Date().toISOString()) : ord.paid_at,
-          activityLog: enrichedExtraData.activityLog,
           history: [...(ord.history || []), { timestamp: new Date().toISOString(), label: `Status updated to ${newStatus}` }]
         };
       }
       return ord;
     }));
 
-    showToast(`Order ${formatOrderId(orderId)} status updated to ${newStatus.replace(/_/g, ' ').toUpperCase()}`, 'success');
+    showToast(`Order ${formatOrderId(orderId)} status updated to ${newStatus.toUpperCase()}`, 'success');
 
     // Trigger email based on new status
     if (targetOrder) {
@@ -992,145 +947,17 @@ export const StateProvider = ({ children }) => {
     }
   };
 
-  const addInternalNote = async (orderId, noteText) => {
-    if (!noteText?.trim()) return;
-    const author = authUser?.name || 'Staff Member';
-    const newNote = {
-      id: `inote-${Date.now()}`,
-      author,
-      text: noteText.trim(),
-      createdAt: new Date().toISOString()
-    };
-    
-    const target = orders.find(o => o.id === orderId);
-    const updatedNotes = [newNote, ...(target?.internalNotes || [])];
-    
-    await updateOrderStatus(orderId, target?.status || 'under_review', {
-      internalNotes: updatedNotes,
-      activityAction: 'Internal Note Added',
-      activityDetails: `Internal note added by ${author}`
-    });
-    showToast('Internal note saved', 'success');
-  };
-
-  const requestOrderModification = async (orderId, { reason, requestedChanges, comments }) => {
-    const modReq = {
-      id: `mod-${Date.now()}`,
-      reason: reason || 'Adjustment Required',
-      requestedChanges: requestedChanges || '',
-      comments: comments || '',
-      requestedDate: new Date().toISOString(),
-      requestedBy: authUser?.name || 'Admin',
-      resolved: false
-    };
-
-    await updateOrderStatus(orderId, ORDER_STATUSES.MODIFICATION_REQUIRED, {
-      modificationRequest: modReq,
-      approvedVersion: null, // Reset approval on modification
-      activityAction: 'Modification Requested by Admin',
-      activityDetails: `Reason: ${reason || 'Specifications Adjustment'}. ${comments || ''}`
-    });
-    showToast('Modification request sent to customer', 'warning');
-  };
-
-  const submitOrderModification = async (orderId, { notes, newFiles = [], customerComment = '' }) => {
-    const target = orders.find(o => o.id === orderId);
-    const prevVersions = target?.versions || [];
-    const nextVerNum = (target?.currentVersion || prevVersions.length || 1) + 1;
-    
-    const newVersionObj = {
-      version: nextVerNum,
-      submittedAt: new Date().toISOString(),
-      submittedBy: authUser?.name || target?.clientName || 'Customer',
-      files: newFiles.length > 0 ? newFiles : (target?.uploadedFiles || []),
-      notes: notes || target?.notes || '',
-      customerComment: customerComment || '',
-      status: 'resubmitted'
-    };
-
-    const updatedVersions = [newVersionObj, ...prevVersions];
-    const updatedFiles = newFiles.length > 0 ? newFiles : target?.uploadedFiles;
-
-    await updateOrderStatus(orderId, ORDER_STATUSES.RESUBMITTED, {
-      versions: updatedVersions,
-      currentVersion: nextVerNum,
-      approvedVersion: null, // Never inherit previous approval
-      uploadedFiles: updatedFiles,
-      modificationRequest: target?.modificationRequest ? { ...target.modificationRequest, resolved: true, customerResponse: customerComment } : null,
-      activityAction: `Revision v${nextVerNum} Resubmitted by Customer`,
-      activityDetails: customerComment ? `Customer note: "${customerComment}"` : `Version ${nextVerNum} submitted for review.`
-    });
-    showToast(`Version ${nextVerNum} submitted for review!`, 'success');
-  };
-
-  const approveOrderSpecification = async (orderId, { approvedBy, version } = {}) => {
-    const target = orders.find(o => o.id === orderId);
-    const ver = version || target?.currentVersion || 1;
-    const approvalInfo = {
-      approvedBy: approvedBy || authUser?.name || 'Client',
-      approvedAt: new Date().toISOString(),
-      approvedVersion: ver,
-      confirmed: true
-    };
-
-    await updateOrderStatus(orderId, ORDER_STATUSES.APPROVED, {
-      approvalInfo,
-      approvedVersion: ver,
-      activityAction: `Order Specs & v${ver} Approved`,
-      activityDetails: `Approved by ${approvalInfo.approvedBy}. Order confirmed for production.`
-    });
-    showToast(`Order specifications approved for Version ${ver}!`, 'success');
-  };
-
-  const approveDeliveryPackage = async (orderId, { approvedBy } = {}) => {
-    await updateOrderStatus(orderId, ORDER_STATUSES.IN_DELIVERY, {
-      deliveryApproved: true,
-      deliveryApprovedBy: approvedBy || authUser?.name || 'Client',
-      deliveryApprovedAt: new Date().toISOString(),
-      activityAction: 'Delivery Package Approved by Customer',
-      activityDetails: 'Customer confirmed delivery address & specifications. Package dispatched.'
-    });
-    showToast('Delivery approved and dispatched!', 'success');
-  };
-
-  const dispatchOrderDelivery = async (orderId, deliveryDetails = {}) => {
-    const deliveryInfo = {
-      carrier: deliveryDetails.carrier || 'DHL Express',
-      trackingNumber: deliveryDetails.trackingNumber || '',
-      dispatchDate: new Date().toISOString(),
-      expectedDeliveryDate: deliveryDetails.expectedDeliveryDate || '',
-      deliveryMethod: deliveryDetails.deliveryMethod || 'Standard Delivery',
-      proofOfDeliveryUrl: deliveryDetails.proofOfDeliveryUrl || null,
-      status: 'in_transit'
-    };
-
-    await updateOrderStatus(orderId, ORDER_STATUSES.IN_DELIVERY, {
-      deliveryInfo,
-      activityAction: `Order Dispatched via ${deliveryInfo.carrier}`,
-      activityDetails: `Tracking #: ${deliveryInfo.trackingNumber || 'N/A'}. Expected delivery: ${deliveryInfo.expectedDeliveryDate || 'Standard'}`
-    });
-    showToast('Order marked as IN DELIVERY with tracking details', 'success');
-  };
-
-  const updateProcessingProgress = async (orderId, progressPercent, progressNote = '') => {
-    await updateOrderStatus(orderId, ORDER_STATUSES.PROCESSING, {
-      processingProgress: progressPercent,
-      activityAction: `Production Progress: ${progressPercent}%`,
-      activityDetails: progressNote || `Order processing is ${progressPercent}% complete.`
-    });
-    showToast(`Production progress updated to ${progressPercent}%`, 'info');
-  };
-
   const assignDigitizer = async (orderId, digitizerId) => {
     await updateOrderStatus(orderId, 'assigned', { digitizerId });
   };
 
   const completeOrder = async (orderId) => {
     const order = orders.find(o => o.id === orderId);
-    await updateOrderStatus(orderId, ORDER_STATUSES.COMPLETED, {
-      activityAction: 'Order Completed & Archived',
-      activityDetails: 'Final deliverables accepted and verified.'
-    });
+    if (order && !validateStatusTransition(order.status, ORDER_STATUSES.COMPLETED)) {
+      showToast(`Cannot complete order — current status is '${order.status}'. Order must be in 'delivered' status first.`, 'error');
+      return;
+    }
+    await updateOrderStatus(orderId, ORDER_STATUSES.COMPLETED);
     addNotification({
       title: 'Order Completed',
       message: `Order ${formatOrderId(orderId)} has been marked as complete.`,
@@ -1530,9 +1357,7 @@ export const StateProvider = ({ children }) => {
       notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead, unreadNotificationsCount,
       unreadChatCount, refreshUnreadChatCount,
       createOrder, updateOrderStatus, addRevisionRequest, addOrderMessage, cancelOrder,
-      completeOrder, deleteOrder, ORDER_STATUSES, assignDigitizer,
-      addInternalNote, requestOrderModification, submitOrderModification,
-      approveOrderSpecification, approveDeliveryPackage, dispatchOrderDelivery, updateProcessingProgress
+      completeOrder, deleteOrder, ORDER_STATUSES, assignDigitizer
     }}>
       {children}
     </StateContext.Provider>

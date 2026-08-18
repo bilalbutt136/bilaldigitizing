@@ -174,7 +174,7 @@ export async function POST(request) {
 
       const { data: targetOrder } = await supabase
         .from('orders')
-        .select('id, client_email, status, payment_status, notes')
+        .select('id, client_email, status, payment_status')
         .or(`id.eq."${rawId}",id.eq."${cleanId}",id.eq."${withHash}"`)
         .maybeSingle();
 
@@ -189,33 +189,6 @@ export async function POST(request) {
 
       const updatePayload = { status: newStatus || 'in_progress', updated_at: new Date().toISOString() };
       
-      // Merge extended B2B fields safely into notes JSON
-      let existingNotesData = {};
-      try {
-        if (targetOrder?.notes) {
-          existingNotesData = typeof targetOrder.notes === 'string' ? JSON.parse(targetOrder.notes) : targetOrder.notes;
-        }
-      } catch {}
-
-      const b2bFields = [
-        'versions', 'currentVersion', 'approvedVersion', 'activityLog',
-        'internalNotes', 'deliveryInfo', 'modificationRequest', 'approvalInfo',
-        'assignedTeamMember', 'processingProgress', 'documents', 'notes'
-      ];
-      let hasB2BUpdate = false;
-      const mergedNotesData = { ...existingNotesData };
-      if (extraData && typeof extraData === 'object') {
-        b2bFields.forEach(field => {
-          if (extraData[field] !== undefined) {
-            mergedNotesData[field] = extraData[field];
-            hasB2BUpdate = true;
-          }
-        });
-      }
-      if (hasB2BUpdate) {
-        updatePayload.notes = JSON.stringify(mergedNotesData);
-      }
-
       const payStatus = extraData?.paymentStatus || extraData?.payment_status || (newStatus === 'in_progress' ? 'paid' : null);
       if (payStatus) {
         updatePayload.payment_status = payStatus;
