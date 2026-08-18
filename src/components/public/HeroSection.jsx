@@ -52,7 +52,7 @@ const DEFAULT_SERVICE_DATA = {
       { value: '100%', label: 'Guaranteed', icon: 'ShieldCheck' }
     ],
     primary_cta: 'Get Started Now',
-    primary_btn_action: '#pricing',
+    primary_btn_action: '/order',
     secondary_cta: 'Explore Packages',
     secondary_btn_action: '/pricing',
     previewTitle: 'All Studio Production Results',
@@ -369,14 +369,18 @@ export const HeroSection = () => {
   };
 
   const handlePrimaryAction = () => {
-    resolveAction(primaryBtnAction, () => {
-      const serviceType = activeTab === 'patches' ? 'patch' : (activeTab === 'vector-art' ? 'vector' : (activeTab === 'embroidery' ? 'embroidery' : 'all'));
-      if (openOrderWizard) {
-        openOrderWizard({ type: serviceType });
-      } else {
-        protectedNavigate('customer', true, { type: serviceType });
-      }
-    });
+    const serviceType = activeTab === 'patches' ? 'patch' : (activeTab === 'vector-art' ? 'vector' : (activeTab === 'embroidery' ? 'embroidery' : 'all'));
+    if (primaryBtnAction && primaryBtnAction.startsWith('/') && primaryBtnAction !== '/order' && !primaryBtnAction.includes('orderWizard') && !primaryBtnAction.includes('pricing')) {
+      navigate(primaryBtnAction);
+      return;
+    }
+    if (openOrderWizard) {
+      openOrderWizard({ type: serviceType });
+    } else if (protectedNavigate) {
+      protectedNavigate('customer', true, { type: serviceType });
+    } else {
+      navigate('/pricing');
+    }
   };
 
   const handleSecondaryAction = () => {
