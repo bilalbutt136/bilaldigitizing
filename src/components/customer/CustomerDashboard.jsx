@@ -72,6 +72,21 @@ export const CustomerDashboard = () => {
     }
   }, [isAuthInitialized, authUser, currentUser, navigate]);
 
+  // Auto-open order tracker drawer if trackOrder or orderId query param exists
+  React.useEffect(() => {
+    if (!mounted) return;
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const trackId = urlParams.get('trackOrder') || urlParams.get('orderId');
+      if (trackId && orders && orders.length > 0) {
+        const found = orders.find(o => String(o.id) === String(trackId) || formatOrderId(o.id) === trackId);
+        if (found && setSelectedOrderForDrawer) {
+          setSelectedOrderForDrawer(found);
+        }
+      }
+    }
+  }, [mounted, orders, setSelectedOrderForDrawer]);
+
   // Safe User Resolution
   const activeUser = authUser || currentUser || {
     name: 'Client',

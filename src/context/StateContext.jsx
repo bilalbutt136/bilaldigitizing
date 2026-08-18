@@ -766,12 +766,19 @@ export const StateProvider = ({ children }) => {
   const protectedNavigate = (targetView, triggerOrderWizard = false, initialData = null) => {
     if (targetView === 'public') {
       setCurrentView('public');
+      if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+        window.location.href = '/';
+      }
       return;
     }
     if (targetView === 'customer') {
       if (isAuthenticated) {
         setCurrentView('customer');
-        if (triggerOrderWizard) openOrderWizard(initialData);
+        if (triggerOrderWizard) {
+          openOrderWizard(initialData);
+        } else if (typeof window !== 'undefined' && !window.location.pathname.includes('client')) {
+          window.location.href = '/client-portal';
+        }
       } else {
         setAuthModalTarget('customer');
         setAuthModalMode('login');
@@ -783,6 +790,9 @@ export const StateProvider = ({ children }) => {
     if (targetView === 'admin') {
       if (isAuthenticated && authUser?.role === 'admin') {
         setCurrentView('admin');
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('admin')) {
+          window.location.href = '/admin-portal';
+        }
       } else {
         showToast('Access Restricted to Studio Admin.', 'warning');
         setAuthModalTarget('admin');
