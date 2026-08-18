@@ -347,6 +347,10 @@ export const StateProvider = ({ children }) => {
             if (!cancelled) setWalletBalance(balance);
           });
 
+          fetchOrdersFromSupabase().then(dbOrders => {
+            if (!cancelled && dbOrders) setOrders(dbOrders);
+          });
+
           upsertClientInSupabase({ ...uData, role }).catch(() => {});
         } else {
           // If Supabase has no authenticated session, clear any stale local user state immediately (Rule 3)
@@ -571,6 +575,10 @@ export const StateProvider = ({ children }) => {
             const balance = await fetchWalletBalanceFromSupabase(session.user.email);
             if (!cancelled) setWalletBalance(balance);
 
+            fetchOrdersFromSupabase().then(freshOrders => {
+              if (!cancelled && freshOrders) setOrders(freshOrders);
+            });
+
             try {
               await upsertClientInSupabase({ ...uData, role });
             } catch (err) {
@@ -586,6 +594,33 @@ export const StateProvider = ({ children }) => {
       authSubscription = authListener?.subscription;
     }
 
+    // Supabase Realtime: Instant Bi-Directional Order Synchronization
+    let ordersLiveChannel = null;
+    if (isSupabaseConfigured && supabase) {
+      ordersLiveChannel = supabase.channel(`orders-live-sync-${Date.now()}`);
+      
+      const orderTables = ['orders', 'order_files', 'order_messages', 'revisions', 'transactions', 'clients'];
+      orderTables.forEach(tbl => {
+        ordersLiveChannel.on('postgres_changes', { event: '*', schema: 'public', table: tbl }, async () => {
+          try {
+            const freshOrders = await fetchOrdersFromSupabase();
+            if (freshOrders && Array.isArray(freshOrders)) {
+              setOrders(freshOrders);
+            }
+            if (tbl === 'clients') {
+              const freshClients = await fetchClientsFromSupabase();
+              if (freshClients && freshClients.length > 0) {
+                setClients(freshClients);
+              }
+            }
+          } catch (syncErr) {
+            console.warn('Realtime order sync error:', syncErr);
+          }
+        });
+      });
+      ordersLiveChannel.subscribe();
+    }
+
     return () => {
       cancelled = true;
       authSubscription?.unsubscribe();
@@ -594,6 +629,9 @@ export const StateProvider = ({ children }) => {
       }
       if (messageChannel && supabase) {
         supabase.removeChannel(messageChannel);
+      }
+      if (ordersLiveChannel && supabase) {
+        supabase.removeChannel(ordersLiveChannel);
       }
     };
   }, []);

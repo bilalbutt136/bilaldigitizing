@@ -102,7 +102,9 @@ export const OrderManagementTable = () => {
     if (filterPayment === 'pending' && getIsOrderPaid(ord)) return false;
 
     if (filterStatus === 'submitted') return matchesSearch && (ord?.status === 'submitted' || !ord?.status);
-    if (filterStatus === 'digitizing') return matchesSearch && (ord?.status === 'digitizing' || ord?.status === 'assigned');
+    if (filterStatus === 'in_progress') return matchesSearch && (ord?.status === 'in_progress' || ord?.status === 'digitizing' || ord?.status === 'assigned');
+    if (filterStatus === 'awaiting_payment') return matchesSearch && (ord?.status === 'awaiting_payment');
+    if (filterStatus === 'digitizing') return matchesSearch && (ord?.status === 'digitizing' || ord?.status === 'assigned' || ord?.status === 'in_progress');
     if (filterStatus === 'revision') return matchesSearch && ord?.status === 'revision';
     if (filterStatus === 'delivered') return matchesSearch && (ord?.status === 'delivered' || ord?.status === 'qc');
     if (filterStatus === 'completed') return matchesSearch && ord?.status === 'completed';

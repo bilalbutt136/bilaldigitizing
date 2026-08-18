@@ -64,21 +64,37 @@ export async function getServerAuthUser(request) {
 
     const email = user.email.toLowerCase().trim();
 
-    // 3. Master Admin Check
-    const masterAdmin = (process.env.MASTER_ADMIN_EMAIL || '').toLowerCase().trim();
-    if (masterAdmin && email === masterAdmin) {
+    // 3. Master Admin & Configured Admin Email Check
+    const masterAdmin = (process.env.MASTER_ADMIN_EMAIL || process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'bilalbutt136@gmail.com').toLowerCase().trim();
+    if (masterAdmin && (email === masterAdmin || email === 'bilaldigitizing@gmail.com' || email === 'bilalbutt136@gmail.com')) {
       return { user, isAdmin: true, error: null };
     }
 
-    // 4. Database Admins Whitelist Check using service role
+    // 4. Metadata Role Check (Supabase auth user_metadata or app_metadata)
+    if (user.user_metadata?.role === 'admin' || user.app_metadata?.role === 'admin' || user.user_metadata?.is_admin === true) {
+      return { user, isAdmin: true, error: null };
+    }
+
+    // 5. Database Admins Whitelist Check using service role
     if (hasServiceRole && supabaseAdmin) {
       const { data: adminRecord } = await supabaseAdmin
         .from('admins')
         .select('email')
-        .eq('email', email)
+        .ilike('email', email)
         .maybeSingle();
 
       if (adminRecord) {
+        return { user, isAdmin: true, error: null };
+      }
+
+      // Also check clients table if role === 'admin' or 'staff'
+      const { data: clientRecord } = await supabaseAdmin
+        .from('clients')
+        .select('role')
+        .ilike('email', email)
+        .maybeSingle();
+
+      if (clientRecord && (clientRecord.role === 'admin' || clientRecord.role === 'staff')) {
         return { user, isAdmin: true, error: null };
       }
     }

@@ -16,14 +16,26 @@ export async function GET(request) {
         return NextResponse.json({ orders: [] });
       }
       
-      let query = supabase.from('orders').select('*, order_files(*), order_messages(*)').order('created_at', { ascending: false });
-      
-      if (!isAdmin) {
-        query = query.ilike('client_email', user.email.toLowerCase().trim());
+      let data = null;
+      try {
+        let query = supabase.from('orders').select('*, order_files(*), order_messages(*)').order('created_at', { ascending: false });
+        if (!isAdmin) {
+          query = query.ilike('client_email', user.email.toLowerCase().trim());
+        }
+        const res = await query;
+        if (res.error) throw res.error;
+        data = res.data;
+      } catch (nestedErr) {
+        console.warn('Nested orders query fallback notice:', nestedErr);
+        let fallbackQuery = supabase.from('orders').select('*').order('created_at', { ascending: false });
+        if (!isAdmin) {
+          fallbackQuery = fallbackQuery.ilike('client_email', user.email.toLowerCase().trim());
+        }
+        const fallbackRes = await fallbackQuery;
+        if (fallbackRes.error) throw fallbackRes.error;
+        data = fallbackRes.data;
       }
-      
-      const { data, error } = await query;
-      if (error) throw error;
+
       return NextResponse.json({ orders: data || [] });
     }
     
