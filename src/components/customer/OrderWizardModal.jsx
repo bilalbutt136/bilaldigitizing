@@ -22,8 +22,7 @@ import {
   Lock,
   Building,
   Clock,
-  Layers,
-  Palette
+  Layers
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 import { matchCategory } from '../../utils/categoryUtils';
@@ -43,8 +42,6 @@ export const OrderWizardModal = () => {
     register,
     login,
     dynamicPricingTiers = [],
-    patchCards = [],
-    serviceCmsContent = {},
     siteSettings = {}
   } = useAppState();
 
@@ -93,20 +90,28 @@ export const OrderWizardModal = () => {
   ]);
 
   // --- PATCH SPECIFIC STATE ---
+  const PATCH_STYLES = [
+    { id: 'Embroidered', label: '🧵 Embroidered Patch' },
+    { id: 'Woven', label: '🌐 Micro Woven Patch' },
+    { id: 'PVC', label: '⚡ 3D Rubber PVC Patch' },
+    { id: 'Leather', label: '🪵 Debossed Leather Patch' }
+  ];
+
+  const PATCH_BACKINGS = [
+    { id: 'Iron-On', label: 'Heat Press / Iron-On (Standard)' },
+    { id: 'Velcro', label: 'Hook & Loop (Velcro)' },
+    { id: 'Sew-On', label: 'Sew-On (Plastic Backing)' },
+    { id: 'Adhesive', label: 'Peel & Stick (Adhesive)' }
+  ];
+
   const [patchStyle, setPatchStyle] = useState('Embroidered');
   const [patchBacking, setPatchBacking] = useState('Iron-On');
-  const [patchBorderStyle, setPatchBorderStyle] = useState('Merrowed');
-  const [patchWidth, setPatchWidth] = useState(3.0);
-  const [patchHeight, setPatchHeight] = useState(3.0);
-  const [patchQuantity, setPatchQuantity] = useState(50);
   const [patchItems, setPatchItems] = useState([
     {
       id: 1,
       packageTier: 'standard',
       patchStyle: 'Embroidered',
       patchBacking: 'Iron-On',
-      patchWidth: 3.0,
-      patchHeight: 3.0,
       quantity: 50,
       quantityInput: '50',
       specificNotes: '',
@@ -147,58 +152,6 @@ export const OrderWizardModal = () => {
       setRequestedFormats([]);
     }
   }, [type]);
-
-  // Dynamic patch craft / material rate resolver connected to database & CMS
-  const getPatchStyleBaseRate = (styleName) => {
-    const clean = (styleName || '').toLowerCase().trim();
-    
-    // 1. Check dynamicPricingTiers
-    const foundDynamic = (dynamicPricingTiers || []).find(t => 
-      matchCategory(t.service_type, 'patch') && 
-      (t.title?.toLowerCase().includes(clean) || clean.includes(t.title?.toLowerCase()))
-    );
-    if (foundDynamic && !isNaN(parseFloat(foundDynamic.price))) {
-      return parseFloat(foundDynamic.price);
-    }
-
-    // 2. Check patchCards from CMS
-    const foundCard = (patchCards || []).find(p => 
-      p.title?.toLowerCase().includes(clean) || clean.includes(p.title?.toLowerCase()) ||
-      (clean.includes('woven') && (p.tierKey === 'basic' || p.id?.includes('basic'))) ||
-      (clean.includes('embroidered') && (p.tierKey === 'standard' || p.id?.includes('standard'))) ||
-      ((clean.includes('pvc') || clean.includes('leather')) && (p.tierKey === 'premium' || p.id?.includes('premium')))
-    );
-    if (foundCard) {
-      const parsed = parseFloat(String(foundCard.price || foundCard.rate || '').replace(/[^0-9.]/g, ''));
-      if (!isNaN(parsed) && parsed > 0) return parsed;
-    }
-
-    // 3. Fallback standard craft rates
-    if (clean.includes('woven')) return 1.50;
-    if (clean.includes('printed') || clean.includes('sublimat')) return 2.00;
-    if (clean.includes('pvc') || clean.includes('rubber')) return 3.50;
-    if (clean.includes('leather')) return 3.50;
-    if (clean.includes('chenille')) return 4.00;
-    if (clean.includes('bullion')) return 8.00;
-    return parseFloat(pricing?.patchBaseRate) || 2.50;
-  };
-
-  const dynamicPatchStyles = [
-    { id: 'Embroidered', label: 'Embroidered Patch', icon: '🧵', defaultRate: 2.50 },
-    { id: 'Woven', label: 'Micro Woven Patch', icon: '🌐', defaultRate: 1.50 },
-    { id: 'PVC', label: '3D Rubber PVC Patch', icon: '⚡', defaultRate: 3.50 },
-    { id: 'Leather', label: 'Debossed Leather Patch', icon: '🪵', defaultRate: 3.50 },
-    { id: 'Chenille', label: 'Varsity Chenille Patch', icon: '🏆', defaultRate: 4.00 },
-    { id: 'Printed', label: 'Sublimated Printed Patch', icon: '🎨', defaultRate: 2.00 },
-    { id: 'Bullion', label: 'Handmade Bullion Wire Crest', icon: '👑', defaultRate: 8.00 },
-  ].map(style => {
-    const rate = getPatchStyleBaseRate(style.id);
-    return {
-      ...style,
-      rate,
-      displayLabel: `${style.icon} ${style.label} ($${rate.toFixed(2)}/ea)`
-    };
-  });
 
   useEffect(() => {
     import('../../services/supabaseService').then(({ getCmsContent }) => {
@@ -314,7 +267,10 @@ export const OrderWizardModal = () => {
 
         if (orderWizardInitialData.patchStyle) setPatchStyle(orderWizardInitialData.patchStyle);
         if (orderWizardInitialData.patchBacking) setPatchBacking(orderWizardInitialData.patchBacking);
-        if (orderWizardInitialData.patchQuantity) setPatchQuantity(orderWizardInitialData.patchQuantity);
+        if (orderWizardInitialData.patchQuantity) {
+          const q = parseInt(orderWizardInitialData.patchQuantity, 10) || 50;
+          setPatchItems(prev => prev.map((item, idx) => idx === 0 ? { ...item, quantity: q, quantityInput: String(q) } : item));
+        }
         if (orderWizardInitialData.title) setOrderTitle(orderWizardInitialData.title);
       }
     }
@@ -483,8 +439,6 @@ export const OrderWizardModal = () => {
         packageTier: 'standard',
         patchStyle: patchStyle || 'Embroidered',
         patchBacking: patchBacking || 'Iron-On',
-        patchWidth: 3.0,
-        patchHeight: 3.0,
         quantity: 50,
         quantityInput: '50',
         specificNotes: '',
@@ -507,9 +461,9 @@ export const OrderWizardModal = () => {
         }
         if (field === 'quantityInput') {
           const raw = String(value);
-          if (raw === '') return { ...item, quantityInput: '', quantity: 0 };
+          if (raw === '') return { ...item, quantityInput: '' };
           const clean = raw.replace(/\D/g, '');
-          if (clean === '') return { ...item, quantityInput: '', quantity: 0 };
+          if (clean === '') return { ...item, quantityInput: '' };
           const parsed = parseInt(clean, 10);
           return { ...item, quantityInput: String(parsed), quantity: parsed };
         }
@@ -648,41 +602,34 @@ export const OrderWizardModal = () => {
       
       const safePatchItems = Array.isArray(patchItems) && patchItems.length > 0 
         ? patchItems 
-        : [{ id: 1, packageTier: 'standard', patchStyle: 'Embroidered', patchBacking: 'Iron-On', patchWidth: 3.0, patchHeight: 3.0, quantity: 50, specificNotes: '', files: [] }];
+        : [{ id: 1, packageTier: 'standard', patchStyle: 'Embroidered', patchBacking: 'Iron-On', quantity: 50, specificNotes: '', files: [] }];
 
       const placementBreakdown = safePatchItems.map((item, idx) => {
         const itemTier = item.packageTier || 'standard';
         const safeQty = Math.max(1, parseInt(item.quantity, 10) || 50);
-        const w = parseFloat(item.patchWidth) || 3.0;
-        const h = parseFloat(item.patchHeight) || 3.0;
-        const sizeInches = (w + h) / 2;
-        const sizeMultiplier = sizeInches > 3.0 ? (1 + (sizeInches - 3.0) * 0.18) : 1.0;
 
-        let baseTierRate = standardTierRate;
-        if (itemTier === 'basic') baseTierRate = basicTierRate;
-        if (itemTier === 'premium') baseTierRate = premiumTierRate;
+        let rateEach = standardTierRate;
+        if (itemTier === 'basic') rateEach = basicTierRate;
+        if (itemTier === 'premium') rateEach = premiumTierRate;
 
         if (customRateVal && itemTier === (orderWizardInitialData?.tierKey || 'standard')) {
-          baseTierRate = customRateVal;
+          rateEach = customRateVal;
         }
 
-        let backingAddon = 0;
-        if (item.patchBacking === 'Velcro') backingAddon = 0.40;
-        if (item.patchBacking === 'Adhesive') backingAddon = 0.25;
-
-        const rateEach = parseFloat(((baseTierRate * sizeMultiplier) + backingAddon).toFixed(2));
         const subtotal = parseFloat((rateEach * safeQty).toFixed(2));
-
         baseSubtotal += subtotal;
         totalQty += safeQty;
 
-        const foundTierObj = patchTiers.find((t, tIdx) => (tIdx === 0 && itemTier === 'basic') || (tIdx === 1 && itemTier === 'standard') || (tIdx === 2 && itemTier === 'premium'));
-        const tierTitle = foundTierObj ? foundTierObj.title : (itemTier === 'basic' ? 'Sample Batch (10–50 Pcs)' : itemTier === 'premium' ? 'Wholesale Bulk Batch (500+ Pcs)' : 'Production Batch (100–500 Pcs)');
+        const tierTitle = itemTier === 'basic' 
+          ? 'Sample Batch (10–50 Pcs)' 
+          : itemTier === 'premium' 
+          ? 'Wholesale Bulk Batch (500+ Pcs)' 
+          : 'Production Batch (100–500 Pcs)';
 
         return {
           index: idx + 1,
           id: item.id || idx + 1,
-          label: `${tierTitle} - ${item.patchStyle || 'Embroidered'} (${w}"×${h}", ${item.patchBacking || 'Iron-On'})`,
+          label: `${tierTitle} - ${item.patchStyle || 'Embroidered'} (${item.patchBacking || 'Iron-On'})`,
           quantity: safeQty,
           priceEach: rateEach,
           subtotal: subtotal,
@@ -705,8 +652,6 @@ export const OrderWizardModal = () => {
         serviceTitle: 'Physical Custom Patches & Emblems',
         patchStyle: safePatchItems[0]?.patchStyle || 'Embroidered',
         patchBacking: safePatchItems[0]?.patchBacking || 'Iron-On',
-        patchWidth: parseFloat(safePatchItems[0]?.patchWidth) || 3.0,
-        patchHeight: parseFloat(safePatchItems[0]?.patchHeight) || 3.0,
         rateEach: placementBreakdown[0]?.priceEach || 0,
         baseSubtotal,
         promoDiscountAmount,
@@ -1018,10 +963,6 @@ export const OrderWizardModal = () => {
         isRush,
         patchStyle: type === 'patch' ? patchStyle : null,
         patchBacking: type === 'patch' ? patchBacking : null,
-        patchBorderStyle: type === 'patch' ? patchBorderStyle : null,
-        patchWidth: type === 'patch' ? patchWidth : null,
-        patchHeight: type === 'patch' ? patchHeight : null,
-        patchQuantity: type === 'patch' ? patchQuantity : null,
         notes: notes.trim(),
         totalPrice: finalPrice,
         original_price: pricingDetails?.baseSubtotal || finalPrice,
@@ -1139,7 +1080,7 @@ export const OrderWizardModal = () => {
                   {type === 'vector'
                     ? 'Clean vector paths (.AI, .EPS, .SVG, .PDF) • Color separated • Print ready'
                     : type === 'patch'
-                    ? 'Custom physical patches & emblems • Free digital proofing • Global shipping'
+                    ? 'Custom physical patches & emblems • 3 Standard batch tiers • Free proofing'
                     : 'Machine-ready files (.DST, .PES, .EMB) • Zero thread breaks • 24/7 Production'}
                 </div>
               </div>
@@ -1224,8 +1165,12 @@ export const OrderWizardModal = () => {
                       }
                     }}
                     style={{
-                      background: isActive ? 'var(--orange-500)' : isPassed ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-                      border: isActive ? '1px solid var(--orange-400)' : isPassed ? '1px solid rgba(16, 185, 129, 0.3)' : 'none',
+                      background: isActive 
+                        ? (type === 'vector' ? '#2563eb' : type === 'patch' ? '#059669' : 'var(--orange-500)') 
+                        : isPassed ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                      border: isActive 
+                        ? (type === 'vector' ? '1px solid #1d4ed8' : type === 'patch' ? '1px solid #047857' : '1px solid var(--orange-400)') 
+                        : isPassed ? '1px solid rgba(16, 185, 129, 0.3)' : 'none',
                       color: isActive ? '#ffffff' : isPassed ? '#34d399' : '#94a3b8',
                       padding: '0.45rem 0.5rem',
                       borderRadius: '8px',
@@ -1760,107 +1705,167 @@ export const OrderWizardModal = () => {
                   {/* ==================== 3. CUSTOM PATCHES CONFIGURATION ==================== */}
                   {type === 'patch' && (
                     <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                         <div>
                           <h4 style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0 }}>
-                            🧵 Patch Specifications & Artwork
+                            🧵 Patch Specifications & Artwork ({patchItems.length})
                           </h4>
                           <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
-                            Select patch style, dimensions, backing, and quantity
+                            Select package batch tier, patch craft style, backing, and quantity
                           </p>
                         </div>
+
+                        <button 
+                          type="button" 
+                          onClick={addPatchItem} 
+                          style={{ 
+                            background: '#ecfdf5', 
+                            border: '1px solid #a7f3d0', 
+                            color: '#059669', 
+                            padding: '0.45rem 0.85rem', 
+                            borderRadius: '8px', 
+                            fontSize: '0.8rem', 
+                            fontWeight: 800, 
+                            cursor: 'pointer', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '0.3rem' 
+                          }}
+                        >
+                          <Plus size={14} /> Add Another Patch Item
+                        </button>
                       </div>
 
-                      {patchItems.map((item, index) => (
-                        <div key={item.id} style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '1.15rem', marginBottom: '1rem' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '0.85rem' }}>
-                            <div>
-                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
-                                Patch Style *
-                              </label>
-                              <select 
-                                value={item.patchStyle || 'Embroidered'} 
-                                onChange={(e) => updatePatchItem(item.id, 'patchStyle', e.target.value)} 
-                                style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
-                              >
-                                {dynamicPatchStyles.map(st => (
-                                  <option key={st.id} value={st.id}>{st.displayLabel}</option>
-                                ))}
-                              </select>
-                            </div>
+                      {patchItems.map((item, index) => {
+                        const patchTiers = (dynamicPricingTiers || []).filter(t => matchCategory(t.service_type, 'patch')).sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+                        const basicRate = (patchTiers[0] && !isNaN(parseFloat(patchTiers[0].price))) ? parseFloat(patchTiers[0].price) : 4.50;
+                        const standardRate = (patchTiers[1] && !isNaN(parseFloat(patchTiers[1].price))) ? parseFloat(patchTiers[1].price) : 2.50;
+                        const premiumRate = (patchTiers[2] && !isNaN(parseFloat(patchTiers[2].price))) ? parseFloat(patchTiers[2].price) : 1.50;
 
-                            <div>
-                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
-                                Backing Type *
-                              </label>
-                              <select 
-                                value={item.patchBacking || 'Iron-On'} 
-                                onChange={(e) => updatePatchItem(item.id, 'patchBacking', e.target.value)} 
-                                style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
-                              >
-                                <option value="Iron-On">Heat Press / Iron-On (Standard)</option>
-                                <option value="Velcro">Hook & Loop (Velcro) (+$0.40/ea)</option>
-                                <option value="Sew-On">Sew-On (Plastic Backing)</option>
-                                <option value="Adhesive">Peel & Stick (Adhesive) (+$0.25/ea)</option>
-                              </select>
-                            </div>
-
-                            <div>
-                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
-                                Batch Quantity (Pcs) *
-                              </label>
-                              <input 
-                                type="text" 
-                                value={item.quantityInput} 
-                                onChange={(e) => updatePatchItem(item.id, 'quantityInput', e.target.value)} 
-                                placeholder="50" 
-                                style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }} 
-                              />
-                            </div>
-                          </div>
-
-                          {/* Patch File Dropzone */}
-                          <div style={{ background: '#ffffff', padding: '0.9rem', borderRadius: '12px', border: '1.5px dashed #cbd5e1', marginTop: '0.85rem' }}>
-                            <div 
-                              onClick={() => document.getElementById(`patch-file-${item.id}`).click()}
-                              style={{
-                                background: '#f8fafc',
-                                border: '1px dashed #cbd5e1',
-                                borderRadius: '10px',
-                                padding: '1rem',
-                                textAlign: 'center',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              <Upload size={20} style={{ color: 'var(--orange-500)', margin: '0 auto 0.35rem auto' }} />
-                              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>
-                                Click or drag artwork file (.PNG, .JPG, .AI, .PDF)
+                        return (
+                          <div key={item.id} style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '1.15rem', marginBottom: '1rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span style={{ background: '#059669', color: '#ffffff', fontSize: '0.75rem', fontWeight: 900, padding: '0.2rem 0.6rem', borderRadius: '999px' }}>
+                                  #{index + 1}
+                                </span>
+                                <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--navy-950)' }}>
+                                  Custom Patch Item #{index + 1}
+                                </span>
                               </div>
-                              <input 
-                                type="file" 
-                                id={`patch-file-${item.id}`} 
-                                multiple 
-                                style={{ display: 'none' }} 
-                                onChange={(e) => handlePatchFileUpload(item.id, e.target.files)} 
-                              />
+
+                              {patchItems.length > 1 && (
+                                <button 
+                                  type="button" 
+                                  onClick={() => removePatchItem(item.id)} 
+                                  style={{ background: '#fee2e2', border: '1px solid #fca5a5', color: '#dc2626', borderRadius: '6px', padding: '0.25rem 0.55rem', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                                >
+                                  <Trash2 size={12} /> Remove
+                                </button>
+                              )}
                             </div>
 
-                            {item.files && item.files.length > 0 && (
-                              <div style={{ marginTop: '0.65rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                {item.files.map(f => (
-                                  <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.45rem 0.65rem', background: '#f1f5f9', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.8rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                      {f.previewUrl ? <img src={f.previewUrl} alt="preview" style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'cover' }} /> : <FileCheck size={16} style={{ color: 'var(--orange-500)' }} />}
-                                      <span style={{ color: 'var(--navy-950)', fontWeight: 800 }}>{f.name}</span>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '0.85rem' }}>
+                              <div>
+                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                  Package / Batch Tier *
+                                </label>
+                                <select 
+                                  value={item.packageTier || 'standard'} 
+                                  onChange={(e) => updatePatchItem(item.id, 'packageTier', e.target.value)} 
+                                  style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
+                                >
+                                  <option value="basic">⚡ Sample Batch (10–50 Pcs) — ${basicRate.toFixed(2)}/pc</option>
+                                  <option value="standard">⭐ Production Batch (100–500 Pcs) — ${standardRate.toFixed(2)}/pc</option>
+                                  <option value="premium">✨ Wholesale Bulk Batch (500+ Pcs) — ${premiumRate.toFixed(2)}/pc</option>
+                                </select>
+                              </div>
+
+                              <div>
+                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                  Patch Style *
+                                </label>
+                                <select 
+                                  value={item.patchStyle || 'Embroidered'} 
+                                  onChange={(e) => updatePatchItem(item.id, 'patchStyle', e.target.value)} 
+                                  style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
+                                >
+                                  {PATCH_STYLES.map(st => (
+                                    <option key={st.id} value={st.id}>{st.label}</option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div>
+                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                  Backing Type *
+                                </label>
+                                <select 
+                                  value={item.patchBacking || 'Iron-On'} 
+                                  onChange={(e) => updatePatchItem(item.id, 'patchBacking', e.target.value)} 
+                                  style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
+                                >
+                                  {PATCH_BACKINGS.map(bk => (
+                                    <option key={bk.id} value={bk.id}>{bk.label}</option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div>
+                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                  Quantity (Pcs) *
+                                </label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                  <button type="button" onClick={() => updatePatchItem(item.id, 'quantity', Math.max(10, (item.quantity || 50) - 10))} style={{ width: '34px', height: '36px', background: '#ffffff', border: '1.5px solid #cbd5e1', color: 'var(--navy-900)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>-</button>
+                                  <input type="text" value={item.quantityInput} onChange={(e) => updatePatchItem(item.id, 'quantityInput', e.target.value)} style={{ textAlign: 'center', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontWeight: 800, padding: '0.35rem', borderRadius: '8px', width: '65px' }} />
+                                  <button type="button" onClick={() => updatePatchItem(item.id, 'quantity', (item.quantity || 50) + 10)} style={{ width: '34px', height: '36px', background: '#ffffff', border: '1.5px solid #cbd5e1', color: 'var(--navy-900)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>+</button>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Patch File Dropzone */}
+                            <div style={{ background: '#ffffff', padding: '0.9rem', borderRadius: '12px', border: '1.5px dashed #cbd5e1', marginTop: '0.85rem' }}>
+                              <div 
+                                onClick={() => document.getElementById(`patch-file-${item.id}`).click()}
+                                style={{
+                                  background: '#f8fafc',
+                                  border: '1px dashed #cbd5e1',
+                                  borderRadius: '10px',
+                                  padding: '1rem',
+                                  textAlign: 'center',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                <Upload size={20} style={{ color: '#059669', margin: '0 auto 0.35rem auto' }} />
+                                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+                                  Click or drag artwork file (.PNG, .JPG, .AI, .PDF)
+                                </div>
+                                <input 
+                                  type="file" 
+                                  id={`patch-file-${item.id}`} 
+                                  multiple 
+                                  style={{ display: 'none' }} 
+                                  onChange={(e) => handlePatchFileUpload(item.id, e.target.files)} 
+                                />
+                              </div>
+
+                              {item.files && item.files.length > 0 && (
+                                <div style={{ marginTop: '0.65rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                  {item.files.map(f => (
+                                    <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.45rem 0.65rem', background: '#f1f5f9', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.8rem' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        {f.previewUrl ? <img src={f.previewUrl} alt="preview" style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'cover' }} /> : <FileCheck size={16} style={{ color: '#059669' }} />}
+                                        <span style={{ color: 'var(--navy-950)', fontWeight: 800 }}>{f.name}</span>
+                                      </div>
+                                      <button type="button" onClick={() => removePatchItemFile(item.id, f.id)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 900 }}>✕</button>
                                     </div>
-                                    <button type="button" onClick={() => removePatchItemFile(item.id, f.id)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 900 }}>✕</button>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
@@ -2142,7 +2147,8 @@ export const OrderWizardModal = () => {
                         {type === 'vector' && <div><strong>Application:</strong> {vectorApplication}</div>}
                         {type === 'vector' && <div><strong>Color Mode:</strong> {vectorColorMode}</div>}
                         {type === 'embroidery' && <div><strong>Garment:</strong> {fabricType}</div>}
-                        {type === 'patch' && <div><strong>Patch Style:</strong> {patchStyle} ({patchBacking})</div>}
+                        {type === 'patch' && <div><strong>Patch Style:</strong> {patchStyle}</div>}
+                        {type === 'patch' && <div><strong>Backing Type:</strong> {patchBacking}</div>}
                         {type !== 'patch' && <div><strong>Output Formats:</strong> {requestedFormats.join(', ').toUpperCase()}</div>}
                         <div><strong>Turnaround:</strong> {type === 'patch' ? '7–10 Days Physical Dispatch' : isRush ? '⚡ 2–4 Hours Super Rush' : '8–12 Hours Standard'}</div>
                       </div>
@@ -2166,7 +2172,7 @@ export const OrderWizardModal = () => {
 
                         <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-950)' }}>
                           <span>Subtotal:</span>
-                          <span style={{ color: type === 'vector' ? '#2563eb' : 'var(--orange-600)' }}>${pricingDetails.baseSubtotal.toFixed(2)}</span>
+                          <span style={{ color: type === 'vector' ? '#2563eb' : type === 'patch' ? '#059669' : 'var(--orange-600)' }}>${pricingDetails.baseSubtotal.toFixed(2)}</span>
                         </div>
 
                         {pricingDetails.rushSurcharge > 0 && (
@@ -2219,7 +2225,7 @@ export const OrderWizardModal = () => {
                       <div style={{ borderTop: '2px solid #f1f5f9', paddingTop: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
                           <span style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--navy-950)' }}>Total Price:</span>
-                          <span style={{ fontSize: '2.2rem', fontWeight: 900, color: type === 'vector' ? '#2563eb' : 'var(--orange-600)', fontFamily: 'var(--font-heading)' }}>
+                          <span style={{ fontSize: '2.2rem', fontWeight: 900, color: type === 'vector' ? '#2563eb' : type === 'patch' ? '#059669' : 'var(--orange-600)', fontFamily: 'var(--font-heading)' }}>
                             ${pricingDetails.finalPrice.toFixed(2)}
                           </span>
                         </div>
@@ -2235,8 +2241,8 @@ export const OrderWizardModal = () => {
                             fontSize: '1.05rem',
                             fontWeight: 900,
                             borderRadius: '12px',
-                            background: type === 'vector' ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)',
-                            boxShadow: type === 'vector' ? '0 8px 24px rgba(37, 99, 235, 0.35)' : '0 8px 24px rgba(249, 115, 22, 0.35)',
+                            background: type === 'vector' ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : type === 'patch' ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)',
+                            boxShadow: type === 'vector' ? '0 8px 24px rgba(37, 99, 235, 0.35)' : type === 'patch' ? '0 8px 24px rgba(5, 150, 105, 0.35)' : '0 8px 24px rgba(249, 115, 22, 0.35)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -2318,7 +2324,7 @@ export const OrderWizardModal = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700 }}>Total Price</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: type === 'vector' ? '#2563eb' : 'var(--orange-600)', lineHeight: 1 }}>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: type === 'vector' ? '#2563eb' : type === 'patch' ? '#059669' : 'var(--orange-600)', lineHeight: 1 }}>
                     ${pricingDetails.finalPrice.toFixed(2)}
                   </div>
                 </div>
@@ -2333,7 +2339,7 @@ export const OrderWizardModal = () => {
                       fontSize: '0.9rem',
                       fontWeight: 900,
                       borderRadius: '10px',
-                      background: type === 'vector' ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)',
+                      background: type === 'vector' ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : type === 'patch' ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.4rem',
@@ -2353,7 +2359,7 @@ export const OrderWizardModal = () => {
                       fontSize: '0.9rem',
                       fontWeight: 900,
                       borderRadius: '10px',
-                      background: type === 'vector' ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)',
+                      background: type === 'vector' ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : type === 'patch' ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.4rem',
