@@ -22,7 +22,8 @@ import {
   Lock,
   Building,
   Clock,
-  Layers
+  Layers,
+  Palette
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 import { matchCategory } from '../../utils/categoryUtils';
@@ -47,7 +48,7 @@ export const OrderWizardModal = () => {
     siteSettings = {}
   } = useAppState();
 
-  // Wizard Step State: 1 = Service & Specs + Files, 2 = Formats & Turnaround, 3 = Review, Account & Payment
+  // Wizard Step State: 1 = Service Specs & Artwork, 2 = Speed & Formats, 3 = Review, Account & Payment
   const [currentStep, setCurrentStep] = useState(1);
 
   // Guest Account Setup State
@@ -57,6 +58,95 @@ export const OrderWizardModal = () => {
   const [guestCompany, setGuestCompany] = useState('');
   const [guestAuthMode, setGuestAuthMode] = useState('signup'); // 'signup' | 'login'
   const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
+
+  // Service Type: 'embroidery' | 'vector' | 'patch' | 'all'
+  const [type, setType] = useState('embroidery');
+  const [orderTitle, setOrderTitle] = useState('');
+
+  // Promo code & discount coupon state
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Speed & Common Instructions
+  const [isRush, setIsRush] = useState(false);
+  const [notes, setNotes] = useState('');
+
+  // --- EMBROIDERY SPECIFIC STATE ---
+  const [fabricType, setFabricType] = useState('Pique Cotton Polo');
+  const [placementItems, setPlacementItems] = useState([
+    { id: 1, packageTier: 'standard', placementType: 'left_chest', quantity: 1, quantityInput: '1', specificNotes: '', files: [] }
+  ]);
+  const [PLACEMENT_OPTIONS, setPlacementOptions] = useState([
+    { id: 'left_chest', label: 'Left Chest / Polo', desc: 'Standard logo up to 4.0"', isJacketBack: false },
+    { id: 'cap_front', label: 'Cap / Hat Front', desc: 'Center-out pathing', isJacketBack: false },
+    { id: 'sleeve_cuff', label: 'Sleeve / Cuff / Visor', desc: 'Small side emblem', isJacketBack: false },
+    { id: 'full_front', label: 'Full Front / Chest', desc: 'Chest crest logo up to 8.0"', isJacketBack: false },
+    { id: 'jacket_back', label: 'Jacket Back / Full Back', desc: 'Large crest (9"-12"+ high stitch count)', isJacketBack: true }
+  ]);
+
+  // --- VECTOR SPECIFIC STATE ---
+  const [vectorApplication, setVectorApplication] = useState('Screen Printing (Color Separated)');
+  const [vectorColorMode, setVectorColorMode] = useState('Full Color (CMYK / RGB)');
+  const [vectorItems, setVectorItems] = useState([
+    { id: 1, packageTier: 'standard', designName: 'Vector Artwork #1', quantity: 1, quantityInput: '1', specificNotes: '', files: [] }
+  ]);
+
+  // --- PATCH SPECIFIC STATE ---
+  const [patchStyle, setPatchStyle] = useState('Embroidered');
+  const [patchBacking, setPatchBacking] = useState('Iron-On');
+  const [patchBorderStyle, setPatchBorderStyle] = useState('Merrowed');
+  const [patchWidth, setPatchWidth] = useState(3.0);
+  const [patchHeight, setPatchHeight] = useState(3.0);
+  const [patchQuantity, setPatchQuantity] = useState(50);
+  const [patchItems, setPatchItems] = useState([
+    {
+      id: 1,
+      packageTier: 'standard',
+      patchStyle: 'Embroidered',
+      patchBacking: 'Iron-On',
+      patchWidth: 3.0,
+      patchHeight: 3.0,
+      quantity: 50,
+      quantityInput: '50',
+      specificNotes: '',
+      files: []
+    }
+  ]);
+
+  // --- FORMATS SELECTION (SERVICE ISOLATED) ---
+  const [requestedFormats, setRequestedFormats] = useState(['dst', 'pes', 'emb', 'pdf']);
+
+  const EMBROIDERY_FORMATS = [
+    { id: 'dst', label: '.DST (Tajima / Universal Stitch)' },
+    { id: 'pes', label: '.PES (Brother / Babylock)' },
+    { id: 'emb', label: '.EMB (Wilcom Master File)' },
+    { id: 'jef', label: '.JEF (Janome / Elna)' },
+    { id: 'exp', label: '.EXP (Melco / Bernina)' },
+    { id: 'hus_vp3', label: '.HUS / .VP3 (Husqvarna / Pfaff)' },
+    { id: 'pdf', label: '.PDF (Worksheet & Run Sheet)' }
+  ];
+
+  const VECTOR_FORMATS = [
+    { id: 'ai', label: '.AI (Adobe Illustrator Vector Source)' },
+    { id: 'eps', label: '.EPS (Universal Print Vector)' },
+    { id: 'svg', label: '.SVG (Scalable Vector Graphics - Web & Laser)' },
+    { id: 'pdf', label: '.PDF (Print-Ready High-Res Vector)' },
+    { id: 'cdr', label: '.CDR (CorelDraw Vector File)' },
+    { id: 'png', label: '.PNG (Transparent High-Res 300 DPI)' },
+    { id: 'psd', label: '.PSD (Layered Photoshop Document)' }
+  ];
+
+  // Keep requested formats synchronized when service type changes
+  useEffect(() => {
+    if (type === 'vector') {
+      setRequestedFormats(['ai', 'eps', 'svg', 'pdf']);
+    } else if (type === 'embroidery') {
+      setRequestedFormats(['dst', 'pes', 'emb', 'pdf']);
+    } else if (type === 'patch') {
+      setRequestedFormats([]);
+    }
+  }, [type]);
 
   // Dynamic patch craft / material rate resolver connected to database & CMS
   const getPatchStyleBaseRate = (styleName) => {
@@ -110,59 +200,6 @@ export const OrderWizardModal = () => {
     };
   });
 
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  
-  // Promo code & discount coupon state
-  const [promoCodeInput, setPromoCodeInput] = useState('');
-  const [appliedPromo, setAppliedPromo] = useState(null);
-
-  // Itemized Placements Cart State with default initial placement item
-  const [placementItems, setPlacementItems] = useState([
-    { id: 1, packageTier: 'standard', placementType: 'left_chest', quantity: 1, quantityInput: '1', specificNotes: '', files: [] }
-  ]);
-
-  const [type, setType] = useState('embroidery'); // 'embroidery' | 'vector' | 'patch' | 'all'
-  const [orderTitle, setOrderTitle] = useState('');
-  
-  const [fabricType, setFabricType] = useState('Pique Cotton Polo');
-  const defaultReqFormats = serviceCmsContent?.['order_wizard_formats'] || ['dst', 'pes', 'emb', 'svg'];
-  const [requestedFormats, setRequestedFormats] = useState(defaultReqFormats);
-  const [isRush, setIsRush] = useState(false);
-  const [notes, setNotes] = useState('');
-
-  // Custom Patches State Variables with safe defaults
-  const [patchStyle, setPatchStyle] = useState('Embroidered');
-  const [patchBacking, setPatchBacking] = useState('Iron-On');
-  const [patchBorderStyle, setPatchBorderStyle] = useState('Merrowed');
-  const [patchWidth, setPatchWidth] = useState(3.0);
-  const [patchHeight, setPatchHeight] = useState(3.0);
-  const [patchQuantity, setPatchQuantity] = useState(50);
-  const [, setPatchQuantityInput] = useState('50');
-
-  // Multi-Item Custom Patch List State
-  const [patchItems, setPatchItems] = useState([
-    {
-      id: 1,
-      packageTier: 'standard',
-      patchStyle: 'Embroidered',
-      patchBacking: 'Iron-On',
-      patchWidth: 3.0,
-      patchHeight: 3.0,
-      quantity: 50,
-      quantityInput: '50',
-      specificNotes: '',
-      files: []
-    }
-  ]);
-
-  const [PLACEMENT_OPTIONS, setPlacementOptions] = useState([
-    { id: 'left_chest', label: 'Left Chest / Polo', desc: 'Standard logo up to 4.0"', isJacketBack: false },
-    { id: 'cap_front', label: 'Cap / Hat Front', desc: 'Center-out pathing', isJacketBack: false },
-    { id: 'sleeve_cuff', label: 'Sleeve / Cuff / Visor', desc: 'Small side emblem', isJacketBack: false },
-    { id: 'full_front', label: 'Full Front / Chest', desc: 'Chest crest logo up to 8.0"', isJacketBack: false },
-    { id: 'jacket_back', label: 'Jacket Back / Full Back', desc: 'Large crest (9"-12"+ high stitch count)', isJacketBack: true }
-  ]);
-
   useEffect(() => {
     import('../../services/supabaseService').then(({ getCmsContent }) => {
       getCmsContent('placement_options').then(data => {
@@ -180,15 +217,12 @@ export const OrderWizardModal = () => {
     if (!codeToApply || !codeToApply.trim()) return;
     const clean = codeToApply.trim().toUpperCase();
     
-    // 1. Check promoCodes list from siteSettings
     const activeCoupons = Array.isArray(siteSettings?.promoCodes) ? siteSettings.promoCodes : [];
     const found = activeCoupons.find(c => c.code?.toUpperCase() === clean && c.isActive !== false);
 
-    // 2. Check Top Announcement Bar configuration
     const announcement = siteSettings?.announcement;
     const isAnnouncementCode = announcement?.promoCode && announcement.promoCode.toUpperCase() === clean;
 
-    // 3. Check Visitor Promotion Banner configuration
     const banner = siteSettings?.promotionalBanner;
     const isBannerCode = banner?.promoCode && banner.promoCode.toUpperCase() === clean;
 
@@ -247,10 +281,6 @@ export const OrderWizardModal = () => {
   };
 
   useEffect(() => {
-    setPatchQuantityInput(String(patchQuantity));
-  }, [patchQuantity]);
-
-  useEffect(() => {
     if (isOrderWizardOpen) {
       setCurrentStep(1);
       const code = orderWizardInitialData?.promoCode || siteSettings?.announcement?.promoCode || 'SAVE20';
@@ -260,20 +290,28 @@ export const OrderWizardModal = () => {
       }
 
       if (orderWizardInitialData) {
+        let detectedType = 'embroidery';
+        if (orderWizardInitialData.type) {
+          detectedType = orderWizardInitialData.type;
+        } else if (orderWizardInitialData.serviceCategory) {
+          const sc = orderWizardInitialData.serviceCategory.toLowerCase();
+          if (sc.includes('vector') || sc.includes('redraw')) detectedType = 'vector';
+          else if (sc.includes('patch')) detectedType = 'patch';
+        } else if (orderWizardInitialData.title) {
+          const t = orderWizardInitialData.title.toLowerCase();
+          if (t.includes('vector') || t.includes('redraw')) detectedType = 'vector';
+          else if (t.includes('patch')) detectedType = 'patch';
+        }
+
+        setType(detectedType);
+
         if (orderWizardInitialData.tierKey || orderWizardInitialData.tier) {
           const tier = orderWizardInitialData.tierKey || orderWizardInitialData.tier;
-          setPlacementItems(prev => prev.map((item, idx) => {
-            if (idx === 0) return { ...item, packageTier: tier };
-            return item;
-          }));
-          setPatchItems(prev => prev.map((item, idx) => {
-            if (idx === 0) return { ...item, packageTier: tier };
-            return item;
-          }));
+          setPlacementItems(prev => prev.map((item, idx) => idx === 0 ? { ...item, packageTier: tier } : item));
+          setVectorItems(prev => prev.map((item, idx) => idx === 0 ? { ...item, packageTier: tier } : item));
+          setPatchItems(prev => prev.map((item, idx) => idx === 0 ? { ...item, packageTier: tier } : item));
         }
-        if (orderWizardInitialData.type) {
-          setType(orderWizardInitialData.type);
-        }
+
         if (orderWizardInitialData.patchStyle) setPatchStyle(orderWizardInitialData.patchStyle);
         if (orderWizardInitialData.patchBacking) setPatchBacking(orderWizardInitialData.patchBacking);
         if (orderWizardInitialData.patchQuantity) setPatchQuantity(orderWizardInitialData.patchQuantity);
@@ -300,83 +338,7 @@ export const OrderWizardModal = () => {
     };
   }, [isOrderWizardOpen, setIsOrderWizardOpen]);
 
-  const addPatchItem = () => {
-    setPatchItems(prev => [
-      ...prev,
-      {
-        id: Date.now(),
-        packageTier: 'standard',
-        patchStyle: patchStyle || 'Embroidered',
-        patchBacking: patchBacking || 'Iron-On',
-        patchWidth: 3.0,
-        patchHeight: 3.0,
-        quantity: 50,
-        quantityInput: '50',
-        specificNotes: '',
-        files: []
-      }
-    ]);
-  };
-
-  const removePatchItem = (id) => {
-    if (patchItems.length === 1) return;
-    setPatchItems(prev => prev.filter(item => item.id !== id));
-  };
-
-  const updatePatchItem = (id, field, value) => {
-    setPatchItems(prev => prev.map(item => {
-      if (item.id === id) {
-        if (field === 'quantity') {
-          const num = Math.max(1, parseInt(value, 10) || 1);
-          return { ...item, quantity: num, quantityInput: String(num) };
-        }
-        if (field === 'quantityInput') {
-          const raw = String(value);
-          if (raw === '') return { ...item, quantityInput: '', quantity: 0 };
-          const clean = raw.replace(/\D/g, '');
-          if (clean === '') return { ...item, quantityInput: '', quantity: 0 };
-          const parsed = parseInt(clean, 10);
-          return { ...item, quantityInput: String(parsed), quantity: parsed };
-        }
-        return { ...item, [field]: value };
-      }
-      return item;
-    }));
-  };
-
-  const handlePatchFileUpload = (itemId, files) => {
-    if (!files || files.length === 0) return;
-    const fileArray = Array.from(files);
-    const newFiles = fileArray.map(file => {
-      const fileName = file.name || 'artwork_file';
-      const fileExt = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';
-      const previewUrl = (file.type && file.type.startsWith('image/')) ? URL.createObjectURL(file) : null;
-      return {
-        id: `file_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-        name: fileName,
-        ext: fileExt,
-        previewUrl,
-        rawFile: file,
-        size: (file.size / 1024).toFixed(1) + ' KB'
-      };
-    });
-    setPatchItems(prev => prev.map(item => {
-      if (item.id === itemId) {
-        return { ...item, files: [...(item.files || []), ...newFiles] };
-      }
-      return item;
-    }));
-  };
-
-  const removePatchItemFile = (itemId, fileId) => {
-    setPatchItems(prev => prev.map(item => {
-      if (item.id === itemId) {
-        return { ...item, files: (item.files || []).filter(f => f.id !== fileId) };
-      }
-      return item;
-    }));
-  };
-
+  // Placement handlers (Embroidery)
   const addPlacementItem = () => {
     setPlacementItems(prev => [
       ...prev,
@@ -444,12 +406,159 @@ export const OrderWizardModal = () => {
     }));
   };
 
+  // Vector Item Handlers
+  const addVectorItem = () => {
+    setVectorItems(prev => [
+      ...prev,
+      { id: Date.now(), packageTier: 'standard', designName: `Vector Artwork #${prev.length + 1}`, quantity: 1, quantityInput: '1', specificNotes: '', files: [] }
+    ]);
+  };
+
+  const removeVectorItem = (id) => {
+    if (vectorItems.length === 1) return;
+    setVectorItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  const updateVectorItem = (id, field, value) => {
+    setVectorItems(prev => prev.map(item => {
+      if (item.id === id) {
+        if (field === 'quantity') {
+          const num = Math.max(1, parseInt(value, 10) || 1);
+          return { ...item, quantity: num, quantityInput: String(num) };
+        }
+        if (field === 'quantityInput') {
+          const raw = String(value);
+          if (raw === '') return { ...item, quantityInput: '' };
+          const clean = raw.replace(/\D/g, '');
+          if (clean === '') return { ...item, quantityInput: '' };
+          const parsed = parseInt(clean, 10);
+          return { ...item, quantityInput: String(parsed), quantity: parsed > 0 ? parsed : item.quantity };
+        }
+        return { ...item, [field]: value };
+      }
+      return item;
+    }));
+  };
+
+  const handleVectorFileUpload = (itemId, files) => {
+    if (!files || files.length === 0) return;
+    const fileArray = Array.from(files);
+    const newFiles = fileArray.map(file => {
+      const fileName = file.name || 'vector_reference';
+      const fileExt = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';
+      const previewUrl = (file.type && file.type.startsWith('image/')) ? URL.createObjectURL(file) : null;
+      return {
+        id: `vec_file_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        name: fileName,
+        size: (file.size / 1024).toFixed(1) + ' KB',
+        type: fileExt.toUpperCase() || 'FILE',
+        previewUrl,
+        rawFile: file
+      };
+    });
+
+    setVectorItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return { ...item, files: [...(item.files || []), ...newFiles] };
+      }
+      return item;
+    }));
+  };
+
+  const removeFileFromVector = (itemId, fileId) => {
+    setVectorItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return { ...item, files: (item.files || []).filter(f => f.id !== fileId) };
+      }
+      return item;
+    }));
+  };
+
+  // Patch Item Handlers
+  const addPatchItem = () => {
+    setPatchItems(prev => [
+      ...prev,
+      {
+        id: Date.now(),
+        packageTier: 'standard',
+        patchStyle: patchStyle || 'Embroidered',
+        patchBacking: patchBacking || 'Iron-On',
+        patchWidth: 3.0,
+        patchHeight: 3.0,
+        quantity: 50,
+        quantityInput: '50',
+        specificNotes: '',
+        files: []
+      }
+    ]);
+  };
+
+  const removePatchItem = (id) => {
+    if (patchItems.length === 1) return;
+    setPatchItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  const updatePatchItem = (id, field, value) => {
+    setPatchItems(prev => prev.map(item => {
+      if (item.id === id) {
+        if (field === 'quantity') {
+          const num = Math.max(1, parseInt(value, 10) || 1);
+          return { ...item, quantity: num, quantityInput: String(num) };
+        }
+        if (field === 'quantityInput') {
+          const raw = String(value);
+          if (raw === '') return { ...item, quantityInput: '', quantity: 0 };
+          const clean = raw.replace(/\D/g, '');
+          if (clean === '') return { ...item, quantityInput: '', quantity: 0 };
+          const parsed = parseInt(clean, 10);
+          return { ...item, quantityInput: String(parsed), quantity: parsed };
+        }
+        return { ...item, [field]: value };
+      }
+      return item;
+    }));
+  };
+
+  const handlePatchFileUpload = (itemId, files) => {
+    if (!files || files.length === 0) return;
+    const fileArray = Array.from(files);
+    const newFiles = fileArray.map(file => {
+      const fileName = file.name || 'artwork_file';
+      const fileExt = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';
+      const previewUrl = (file.type && file.type.startsWith('image/')) ? URL.createObjectURL(file) : null;
+      return {
+        id: `patch_file_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        name: fileName,
+        ext: fileExt,
+        previewUrl,
+        rawFile: file,
+        size: (file.size / 1024).toFixed(1) + ' KB'
+      };
+    });
+    setPatchItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return { ...item, files: [...(item.files || []), ...newFiles] };
+      }
+      return item;
+    }));
+  };
+
+  const removePatchItemFile = (itemId, fileId) => {
+    setPatchItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return { ...item, files: (item.files || []).filter(f => f.id !== fileId) };
+      }
+      return item;
+    }));
+  };
+
   const toggleFormat = (fmtId) => {
     setRequestedFormats(prev => 
       prev.includes(fmtId) ? prev.filter(f => f !== fmtId) : [...prev, fmtId]
     );
   };
 
+  // Pricing engine isolated per service
   const getServicePricingDetails = () => {
     let customRateVal = null;
     if (orderWizardInitialData?.rate) {
@@ -470,12 +579,12 @@ export const OrderWizardModal = () => {
       const standardDyn = (vecTiers[1] && !isNaN(parseFloat(vecTiers[1].price))) ? parseFloat(vecTiers[1].price) : (parseFloat(pricing?.vectorComplexRate) || 25.00);
       const premiumDyn = (vecTiers[2] && !isNaN(parseFloat(vecTiers[2].price))) ? parseFloat(vecTiers[2].price) : 45.00;
 
-      const safePlacementItems = Array.isArray(placementItems) && placementItems.length > 0 
-        ? placementItems 
-        : [{ id: 1, packageTier: 'standard', placementType: 'vector_redraw', quantity: 1, quantityInput: '1', specificNotes: '', files: [] }];
+      const safeVectorItems = Array.isArray(vectorItems) && vectorItems.length > 0 
+        ? vectorItems 
+        : [{ id: 1, packageTier: 'standard', designName: 'Vector Artwork #1', quantity: 1, quantityInput: '1', specificNotes: '', files: [] }];
 
       let baseSubtotal = 0;
-      const placementBreakdown = safePlacementItems.map((item, idx) => {
+      const placementBreakdown = safeVectorItems.map((item, idx) => {
         const itemTier = item.packageTier || 'standard';
         const basicRate = (customRateVal && itemTier === 'basic') ? customRateVal : basicDyn;
         const standardRate = (customRateVal && itemTier === 'standard') ? customRateVal : standardDyn;
@@ -490,7 +599,7 @@ export const OrderWizardModal = () => {
         return {
           index: idx + 1,
           id: item.id || idx + 1,
-          label: `Vector Artwork #${idx + 1} (${itemTier.toUpperCase()})`,
+          label: `${item.designName || `Vector Design #${idx + 1}`} (${itemTier.toUpperCase()})`,
           quantity: item.quantity || 1,
           priceEach: rateEach,
           subtotal,
@@ -498,7 +607,7 @@ export const OrderWizardModal = () => {
         };
       });
 
-      const totalQty = safePlacementItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
+      const totalQty = safeVectorItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
       const allowRush = totalQty === 1;
       const rushSurcharge = (isRush && allowRush) ? 10.00 : 0;
       
@@ -707,6 +816,13 @@ export const OrderWizardModal = () => {
           break;
         }
       }
+    } else if (type === 'vector') {
+      for (const item of vectorItems) {
+        if (!item.files || item.files.length === 0) {
+          hasMissingFiles = true;
+          break;
+        }
+      }
     } else {
       for (const item of placementItems) {
         if (!item.files || item.files.length === 0) {
@@ -717,7 +833,7 @@ export const OrderWizardModal = () => {
     }
 
     if (hasMissingFiles) {
-      showToast('Please attach at least one artwork file for all placement items to proceed.', 'warning');
+      showToast('Please attach at least one artwork file for all items to proceed.', 'warning');
       return false;
     }
     return true;
@@ -730,7 +846,7 @@ export const OrderWizardModal = () => {
       }
     } else if (currentStep === 2) {
       if (requestedFormats.length === 0 && type !== 'patch') {
-        showToast('Please select at least one required machine format.', 'warning');
+        showToast('Please select at least one required output format.', 'warning');
         return;
       }
       setCurrentStep(3);
@@ -747,7 +863,7 @@ export const OrderWizardModal = () => {
     if (e) e.preventDefault();
     if (isProcessingPayment) return;
 
-    // 1. If user is guest, handle automatic signup or login first!
+    // 1. Guest Signup or Login
     let activeClientName = authUser?.company || authUser?.name || 'Valued Client';
     let activeClientEmail = (authUser?.email || '').toLowerCase().trim();
     let activeClientId = authUser?.id || authUser?.email || '';
@@ -779,7 +895,6 @@ export const OrderWizardModal = () => {
         activeClientEmail = cleanEmail;
         activeClientId = regRes.user?.id || cleanEmail;
       } else {
-        // Login mode
         const loginRes = await login(cleanEmail, cleanPass);
         if (!loginRes || !loginRes.success) {
           showToast(loginRes?.error || 'Invalid credentials. Please verify your email and password.', 'error');
@@ -797,8 +912,9 @@ export const OrderWizardModal = () => {
     setIsProcessingPayment(true);
 
     try {
-      // 2. Process and upload files per placement / patch item
+      // 2. Process and upload files per item
       const updatedPlacementItems = [];
+      const updatedVectorItems = [];
       const updatedPatchItems = [];
       const allUploadedFiles = [];
 
@@ -827,6 +943,32 @@ export const OrderWizardModal = () => {
             }
           }
           updatedPatchItems.push({ ...item, files: itemFiles });
+        }
+      } else if (type === 'vector') {
+        for (const item of vectorItems) {
+          const itemFiles = [];
+          for (const fileItem of (item.files || [])) {
+            if (fileItem.rawFile) {
+              const uploaded = await uploadFileToCloudinaryFull(fileItem.rawFile, 'client-uploads', 'orders');
+              if (uploaded && uploaded.url) {
+                const fileObj = {
+                  id: fileItem.id,
+                  name: fileItem.name,
+                  url: uploaded.url,
+                  public_url: uploaded.url,
+                  size: uploaded.size || fileItem.size,
+                  type: fileItem.type || 'image/png',
+                  format: uploaded.format || fileItem.name?.split('.').pop()
+                };
+                itemFiles.push(fileObj);
+                allUploadedFiles.push(fileObj);
+              }
+            } else if (fileItem.url) {
+              itemFiles.push(fileItem);
+              allUploadedFiles.push(fileItem);
+            }
+          }
+          updatedVectorItems.push({ ...item, files: itemFiles });
         }
       } else {
         for (const item of placementItems) {
@@ -866,17 +1008,20 @@ export const OrderWizardModal = () => {
         clientName: activeClientName,
         clientEmail: activeClientEmail,
         clientId: activeClientId,
-        placementItems: updatedPlacementItems,
-        patchItems: updatedPatchItems,
-        fabricType,
-        requestedFormats,
+        placementItems: type === 'embroidery' ? updatedPlacementItems : [],
+        vectorItems: type === 'vector' ? updatedVectorItems : [],
+        patchItems: type === 'patch' ? updatedPatchItems : [],
+        fabricType: type === 'embroidery' ? fabricType : null,
+        vectorApplication: type === 'vector' ? vectorApplication : null,
+        vectorColorMode: type === 'vector' ? vectorColorMode : null,
+        requestedFormats: type !== 'patch' ? requestedFormats : [],
         isRush,
-        patchStyle,
-        patchBacking,
-        patchBorderStyle,
-        patchWidth,
-        patchHeight,
-        patchQuantity,
+        patchStyle: type === 'patch' ? patchStyle : null,
+        patchBacking: type === 'patch' ? patchBacking : null,
+        patchBorderStyle: type === 'patch' ? patchBorderStyle : null,
+        patchWidth: type === 'patch' ? patchWidth : null,
+        patchHeight: type === 'patch' ? patchHeight : null,
+        patchQuantity: type === 'patch' ? patchQuantity : null,
         notes: notes.trim(),
         totalPrice: finalPrice,
         original_price: pricingDetails?.baseSubtotal || finalPrice,
@@ -886,7 +1031,7 @@ export const OrderWizardModal = () => {
         image_url: primaryArtworkUrl,
         logo: primaryArtworkUrl,
         uploadedFiles: allUploadedFiles,
-        paymentStatus: 'pending' // Enforce pending status until checkout settlement
+        paymentStatus: 'pending'
       };
 
       let createdOrder = null;
@@ -896,13 +1041,12 @@ export const OrderWizardModal = () => {
       
       const orderId = createdOrder?.id || `ORDER_${Date.now()}`;
 
-      // Open CheckoutModal for instant payment
       setCheckoutSession({
         amount: finalPrice,
         orderId: orderId,
       });
       setIsCheckoutModalOpen(true);
-      setIsOrderWizardOpen(false); // Close wizard
+      setIsOrderWizardOpen(false);
     } catch (err) {
       console.error("Order creation error:", err);
       showToast('Error creating order: ' + (err.message || 'Unknown error'), 'error');
@@ -971,22 +1115,32 @@ export const OrderWizardModal = () => {
                 width: '38px',
                 height: '38px',
                 borderRadius: '10px',
-                background: 'rgba(249, 115, 22, 0.15)',
-                border: '1px solid rgba(249, 115, 22, 0.3)',
+                background: type === 'vector' ? 'rgba(59, 130, 246, 0.2)' : type === 'patch' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(249, 115, 22, 0.2)',
+                border: type === 'vector' ? '1px solid rgba(59, 130, 246, 0.4)' : type === 'patch' ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(249, 115, 22, 0.4)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--orange-400)',
+                color: type === 'vector' ? '#60a5fa' : type === 'patch' ? '#34d399' : 'var(--orange-400)',
                 flexShrink: 0
               }}>
-                <Sparkles size={20} />
+                {type === 'vector' ? <FileCode size={20} /> : type === 'patch' ? <FileCheck size={20} /> : <Sparkles size={20} />}
               </div>
               <div>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#ffffff', margin: 0, letterSpacing: '-0.01em' }}>
-                  {type === 'all' ? 'Choose Your Desired Service' : `Configure ${pricingDetails?.serviceTitle || 'Order'}`}
+                  {type === 'all' 
+                    ? 'Choose Your Desired Service' 
+                    : type === 'vector'
+                    ? 'Configure Vector Art Redraw'
+                    : type === 'patch'
+                    ? 'Configure Custom Physical Patches'
+                    : 'Configure Embroidery Digitizing'}
                 </h3>
                 <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '0.1rem' }}>
-                  {type === 'all' ? 'Select a craft category to launch order configurator' : 'Instant quote • Free setup review • 24/7 Production'}
+                  {type === 'vector'
+                    ? 'Clean vector paths (.AI, .EPS, .SVG, .PDF) • Color separated • Print ready'
+                    : type === 'patch'
+                    ? 'Custom physical patches & emblems • Free digital proofing • Global shipping'
+                    : 'Machine-ready files (.DST, .PES, .EMB) • Zero thread breaks • 24/7 Production'}
                 </div>
               </div>
             </div>
@@ -1184,7 +1338,7 @@ export const OrderWizardModal = () => {
                       type="text" 
                       value={orderTitle} 
                       onChange={(e) => setOrderTitle(e.target.value)} 
-                      placeholder="e.g. Apex Falcons Left Chest Logo"
+                      placeholder={type === 'vector' ? "e.g. Apex Falcons Vector Redraw" : type === 'patch' ? "e.g. Falcon Squad PVC Patches" : "e.g. Apex Falcons Left Chest Logo"}
                       style={{ 
                         width: '100%', 
                         padding: '0.65rem 0.85rem', 
@@ -1198,8 +1352,218 @@ export const OrderWizardModal = () => {
                     />
                   </div>
 
-                  {/* EMBROIDERY & VECTOR: Itemized Placements Cart */}
-                  {['embroidery', 'vector'].includes(type) && (
+                  {/* ==================== 1. VECTOR ART CONFIGURATION ==================== */}
+                  {type === 'vector' && (
+                    <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <div>
+                          <h4 style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0 }}>
+                            🎨 Vector Design Items ({vectorItems.length})
+                          </h4>
+                          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                            Configure complexity tiers and attach reference artwork for each vector redraw
+                          </p>
+                        </div>
+
+                        <button 
+                          type="button" 
+                          onClick={addVectorItem} 
+                          style={{ 
+                            background: '#eff6ff', 
+                            border: '1px solid #bfdbfe', 
+                            color: '#1d4ed8', 
+                            padding: '0.45rem 0.85rem', 
+                            borderRadius: '8px', 
+                            fontSize: '0.8rem', 
+                            fontWeight: 800, 
+                            cursor: 'pointer', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '0.3rem' 
+                          }}
+                        >
+                          <Plus size={14} /> Add Another Vector Artwork
+                        </button>
+                      </div>
+
+                      {vectorItems.map((item, index) => (
+                        <div key={item.id} style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '1.15rem', marginBottom: '1rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ background: '#2563eb', color: '#ffffff', fontSize: '0.75rem', fontWeight: 900, padding: '0.2rem 0.6rem', borderRadius: '999px' }}>
+                                #{index + 1}
+                              </span>
+                              <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--navy-950)' }}>
+                                Vector Design #{index + 1}
+                              </span>
+                            </div>
+
+                            {vectorItems.length > 1 && (
+                              <button 
+                                type="button" 
+                                onClick={() => removeVectorItem(item.id)} 
+                                style={{ background: '#fee2e2', border: '1px solid #fca5a5', color: '#dc2626', borderRadius: '6px', padding: '0.25rem 0.55rem', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                              >
+                                <Trash2 size={12} /> Remove
+                              </button>
+                            )}
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '0.85rem' }}>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                Vector Complexity Tier *
+                              </label>
+                              <select 
+                                value={item.packageTier || 'standard'} 
+                                onChange={(e) => updateVectorItem(item.id, 'packageTier', e.target.value)} 
+                                style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
+                              >
+                                <option value="basic">⚡ Simple Vector ($15.00) — Typography & basic outlines</option>
+                                <option value="standard">⭐ Medium Detail ($25.00) — Multi-color logos & graphics</option>
+                                <option value="premium">✨ Complex Illustration ($45.00) — Mascots, crests & gradients</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                Design Label / Name
+                              </label>
+                              <input 
+                                type="text" 
+                                value={item.designName || ''} 
+                                onChange={(e) => updateVectorItem(item.id, 'designName', e.target.value)} 
+                                placeholder="e.g. Front Chest Vector Logo" 
+                                style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }} 
+                              />
+                            </div>
+
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                Quantity of Variations
+                              </label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <button type="button" onClick={() => updateVectorItem(item.id, 'quantity', Math.max(1, item.quantity - 1))} style={{ width: '34px', height: '36px', background: '#ffffff', border: '1.5px solid #cbd5e1', color: 'var(--navy-900)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>-</button>
+                                <input type="text" value={item.quantityInput} onChange={(e) => updateVectorItem(item.id, 'quantityInput', e.target.value)} style={{ textAlign: 'center', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontWeight: 800, padding: '0.35rem', borderRadius: '8px', width: '60px' }} />
+                                <button type="button" onClick={() => updateVectorItem(item.id, 'quantity', item.quantity + 1)} style={{ width: '34px', height: '36px', background: '#ffffff', border: '1.5px solid #cbd5e1', color: 'var(--navy-900)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>+</button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Drag and Drop Artwork Upload Zone */}
+                          <div style={{ background: '#ffffff', padding: '0.9rem', borderRadius: '12px', border: '1.5px dashed #cbd5e1', marginTop: '0.85rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                              <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-950)', margin: 0 }}>
+                                📎 Reference Image / Logo to Convert (Required) *
+                              </label>
+                              {item.files && item.files.length > 0 && (
+                                <span style={{ color: '#16a34a', fontWeight: 800, fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                  <CheckCircle2 size={13} /> {item.files.length} File Attached
+                                </span>
+                              )}
+                            </div>
+
+                            <div 
+                              onClick={() => document.getElementById(`vector-file-${item.id}`).click()}
+                              style={{
+                                background: '#f8fafc',
+                                border: '1px dashed #cbd5e1',
+                                borderRadius: '10px',
+                                padding: '1rem',
+                                textAlign: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s'
+                              }}
+                              onMouseOver={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.background = '#eff6ff'; }}
+                              onMouseOut={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.background = '#f8fafc'; }}
+                            >
+                              <Upload size={20} style={{ color: '#2563eb', margin: '0 auto 0.35rem auto' }} />
+                              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+                                Click to browse or drag & drop reference image
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                                Supports .PNG, .JPG, .PDF, .PSD, .BMP, .TIFF
+                              </div>
+                              <input 
+                                type="file" 
+                                id={`vector-file-${item.id}`} 
+                                multiple 
+                                style={{ display: 'none' }} 
+                                onChange={(e) => handleVectorFileUpload(item.id, e.target.files)} 
+                              />
+                            </div>
+
+                            {/* Attached Files List with Instant Preview */}
+                            {item.files && item.files.length > 0 && (
+                              <div style={{ marginTop: '0.65rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                {item.files.map(f => (
+                                  <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.45rem 0.65rem', background: '#f1f5f9', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.8rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                      {f.previewUrl ? (
+                                        <img src={f.previewUrl} alt="preview" style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'cover' }} />
+                                      ) : (
+                                        <FileCode size={16} style={{ color: '#2563eb' }} />
+                                      )}
+                                      <span style={{ color: 'var(--navy-950)', fontWeight: 800 }}>{f.name}</span>
+                                      {f.size && <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>({f.size})</span>}
+                                    </div>
+                                    <button 
+                                      type="button" 
+                                      onClick={() => removeFileFromVector(item.id, f.id)} 
+                                      style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 900, fontSize: '0.9rem' }}
+                                      title="Remove file"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Vector Application & Color Mode Specs */}
+                      <div style={{ marginTop: '1rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: '1rem' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.4rem' }}>
+                            Intended Output / Printing Process *
+                          </label>
+                          <select 
+                            value={vectorApplication} 
+                            onChange={(e) => setVectorApplication(e.target.value)} 
+                            style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.55rem' }}
+                          >
+                            <option value="Screen Printing (Color Separated)">Screen Printing (Spot Color Separated Layers)</option>
+                            <option value="Vinyl Cutting / Plotter (Clean Paths)">Vinyl Cutting / Plotter (Single Clean Vector Contours)</option>
+                            <option value="Direct-to-Film (DTF) / Sublimation">Direct-to-Film (DTF) / Direct-to-Garment (DTG)</option>
+                            <option value="Laser Engraving / CNC Cutting">Laser Engraving / CNC / Wood Cutting</option>
+                            <option value="Large Format Signage & Banners">Large Format Signage & Banners</option>
+                            <option value="General High-Res Digital & Web Branding">General High-Res Digital & Web Branding</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.4rem' }}>
+                            Color Separation Preference *
+                          </label>
+                          <select 
+                            value={vectorColorMode} 
+                            onChange={(e) => setVectorColorMode(e.target.value)} 
+                            style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.55rem' }}
+                          >
+                            <option value="Full Color (CMYK / RGB)">Full Color (CMYK / RGB Vector Graphic)</option>
+                            <option value="Pantone (PMS) Color Matched">Pantone (PMS) Solid Color Matched</option>
+                            <option value="Spot Color Layer Separation">Spot Color Layered (Ready for Screen Print)</option>
+                            <option value="Black & White (1-Color Silhouette)">Black & White (1-Color Silhouette Outlines)</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ==================== 2. EMBROIDERY DIGITIZING CONFIGURATION ==================== */}
+                  {type === 'embroidery' && (
                     <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                         <div>
@@ -1207,7 +1571,7 @@ export const OrderWizardModal = () => {
                             📍 Placement Items & Artwork Files ({placementItems.length})
                           </h4>
                           <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
-                            Configure sizes and upload your logo for each placement
+                            Configure sizes and upload your logo for each embroidery placement
                           </p>
                         </div>
 
@@ -1265,51 +1629,26 @@ export const OrderWizardModal = () => {
                                 onChange={(e) => updatePlacementItem(item.id, 'packageTier', e.target.value)} 
                                 style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
                               >
-                                {type === 'vector' ? (
-                                  <>
-                                    <option value="basic">⚡ Simple Logo ($15.00)</option>
-                                    <option value="standard">⭐ Medium Detail ($25.00)</option>
-                                    <option value="premium">✨ Complex Illustration ($45.00)</option>
-                                  </>
-                                ) : (
-                                  <>
-                                    <option value="basic">⚡ Left Chest & Cap ($10.00 Flat)</option>
-                                    <option value="standard">⭐ Mid-Size Jacket ($20.00 Flat)</option>
-                                    <option value="premium">✨ Full Back & 3D ($35.00 Flat)</option>
-                                  </>
-                                )}
+                                <option value="basic">⚡ Left Chest & Cap ($10.00 Flat)</option>
+                                <option value="standard">⭐ Mid-Size Jacket ($20.00 Flat)</option>
+                                <option value="premium">✨ Full Back & 3D ($35.00 Flat)</option>
                               </select>
                             </div>
 
-                            {type === 'embroidery' ? (
-                              <div>
-                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
-                                  Placement Location
-                                </label>
-                                <select 
-                                  value={item.placementType} 
-                                  onChange={(e) => updatePlacementItem(item.id, 'placementType', e.target.value)} 
-                                  style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
-                                >
-                                  {PLACEMENT_OPTIONS.map(plc => (
-                                    <option key={plc.id} value={plc.id}>{plc.label}</option>
-                                  ))}
-                                </select>
-                              </div>
-                            ) : (
-                              <div>
-                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
-                                  Design Label / Name
-                                </label>
-                                <input 
-                                  type="text" 
-                                  value={item.placementType || ''} 
-                                  onChange={(e) => updatePlacementItem(item.id, 'placementType', e.target.value)} 
-                                  placeholder="e.g. Front Chest Artwork" 
-                                  style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }} 
-                                />
-                              </div>
-                            )}
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                Placement Location
+                              </label>
+                              <select 
+                                value={item.placementType} 
+                                onChange={(e) => updatePlacementItem(item.id, 'placementType', e.target.value)} 
+                                style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
+                              >
+                                {PLACEMENT_OPTIONS.map(plc => (
+                                  <option key={plc.id} value={plc.id}>{plc.label}</option>
+                                ))}
+                              </select>
+                            </div>
 
                             <div>
                               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
@@ -1397,30 +1736,28 @@ export const OrderWizardModal = () => {
                       ))}
 
                       {/* Fabric / Target Garment Selection for Embroidery */}
-                      {type === 'embroidery' && (
-                        <div style={{ marginTop: '1rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem' }}>
-                          <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.4rem' }}>
-                            Target Garment / Fabric Type *
-                          </label>
-                          <select 
-                            value={fabricType} 
-                            onChange={(e) => setFabricType(e.target.value)} 
-                            style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.875rem', fontWeight: 700, borderRadius: '8px', padding: '0.6rem' }}
-                          >
-                            <option value="Pique Cotton Polo">Pique Cotton Polo (Standard Underlay)</option>
-                            <option value="Structured Twill Cap">Structured Twill Cap / Snapback (Center-Out Pathing)</option>
-                            <option value="Fleece Hoodie / Sweatshirt">Fleece Hoodie / Sweatshirt (Knockdown Underlay)</option>
-                            <option value="Beanie / Ribbed Knit Cap">Beanie / Ribbed Knit Cap (Heavy Underlay)</option>
-                            <option value="T-Shirt / Performance Polyester">T-Shirt / Performance Polyester (Light Density)</option>
-                            <option value="Jacket / Leather / Outerwear">Jacket / Leather / Outerwear</option>
-                            <option value="Towel / Terry Cloth">Towel / Terry Cloth (Water Soluble Topping)</option>
-                          </select>
-                        </div>
-                      )}
+                      <div style={{ marginTop: '1rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem' }}>
+                        <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.4rem' }}>
+                          Target Garment / Fabric Type *
+                        </label>
+                        <select 
+                          value={fabricType} 
+                          onChange={(e) => setFabricType(e.target.value)} 
+                          style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.875rem', fontWeight: 700, borderRadius: '8px', padding: '0.6rem' }}
+                        >
+                          <option value="Pique Cotton Polo">Pique Cotton Polo (Standard Underlay)</option>
+                          <option value="Structured Twill Cap">Structured Twill Cap / Snapback (Center-Out Pathing)</option>
+                          <option value="Fleece Hoodie / Sweatshirt">Fleece Hoodie / Sweatshirt (Knockdown Underlay)</option>
+                          <option value="Beanie / Ribbed Knit Cap">Beanie / Ribbed Knit Cap (Heavy Underlay)</option>
+                          <option value="T-Shirt / Performance Polyester">T-Shirt / Performance Polyester (Light Density)</option>
+                          <option value="Jacket / Leather / Outerwear">Jacket / Leather / Outerwear</option>
+                          <option value="Towel / Terry Cloth">Towel / Terry Cloth (Water Soluble Topping)</option>
+                        </select>
+                      </div>
                     </div>
                   )}
 
-                  {/* CUSTOM PATCHES: Style, Backing, Quantity & Artwork */}
+                  {/* ==================== 3. CUSTOM PATCHES CONFIGURATION ==================== */}
                   {type === 'patch' && (
                     <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -1570,7 +1907,7 @@ export const OrderWizardModal = () => {
                             ⚡ Super Rush (2–4 Hrs / Express) Turnaround
                           </span>
                           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                            Need urgent delivery? Get your completed machine file in 2–4 hours (+$10.00)
+                            Need urgent delivery? Get your completed file in 2–4 hours (+$10.00)
                           </span>
                         </div>
                       </div>
@@ -1583,27 +1920,20 @@ export const OrderWizardModal = () => {
                     </div>
                   )}
 
-                  {/* Required Machine Formats Selection */}
+                  {/* Required Output Formats Selection (Isolated for Vector vs Embroidery) */}
                   {type !== 'patch' && (
                     <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
                       <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '0.35rem' }}>
-                        Required Machine & Vector Output Formats *
+                        {type === 'vector' ? 'Required Vector Output Formats *' : 'Required Machine Embroidery Formats *'}
                       </label>
                       <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.85rem' }}>
-                        Select all machine file formats you need delivered in your download bundle:
+                        {type === 'vector' 
+                          ? 'Select all vector and graphic formats you need delivered in your download pack:' 
+                          : 'Select all embroidery machine formats you need delivered in your download bundle:'}
                       </p>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: '0.5rem' }}>
-                        {[
-                          { id: 'dst', label: '.DST (Tajima / Universal)' },
-                          { id: 'pes', label: '.PES (Brother / Babylock)' },
-                          { id: 'emb', label: '.EMB (Wilcom Master File)' },
-                          { id: 'jef', label: '.JEF (Janome)' },
-                          { id: 'exp', label: '.EXP (Melco / Bernina)' },
-                          { id: 'svg', label: '.SVG (Scalable Vector)' },
-                          { id: 'ai', label: '.AI (Adobe Illustrator)' },
-                          { id: 'pdf', label: '.PDF (Worksheet & Spec Sheet)' }
-                        ].map(fmt => {
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '0.5rem' }}>
+                        {(type === 'vector' ? VECTOR_FORMATS : EMBROIDERY_FORMATS).map(fmt => {
                           const isSelected = requestedFormats.includes(fmt.id);
                           return (
                             <button
@@ -1611,8 +1941,12 @@ export const OrderWizardModal = () => {
                               type="button"
                               onClick={() => toggleFormat(fmt.id)}
                               style={{
-                                background: isSelected ? 'var(--orange-500)' : '#f8fafc',
-                                border: isSelected ? '1.5px solid var(--orange-600)' : '1.5px solid #e2e8f0',
+                                background: isSelected 
+                                  ? (type === 'vector' ? '#2563eb' : 'var(--orange-500)') 
+                                  : '#f8fafc',
+                                border: isSelected 
+                                  ? (type === 'vector' ? '1.5px solid #1d4ed8' : '1.5px solid var(--orange-600)') 
+                                  : '1.5px solid #e2e8f0',
                                 color: isSelected ? '#ffffff' : 'var(--navy-900)',
                                 padding: '0.65rem 0.75rem',
                                 borderRadius: '10px',
@@ -1635,16 +1969,26 @@ export const OrderWizardModal = () => {
                     </div>
                   )}
 
-                  {/* Special Digitizing Notes / Instructions */}
+                  {/* Special Instructions / Notes (Customized per service) */}
                   <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
                     <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '0.35rem' }}>
-                      Special Digitizing Instructions / Color Codes (Optional)
+                      {type === 'vector' 
+                        ? 'Special Vectorization & Redraw Instructions (Optional)' 
+                        : type === 'patch'
+                        ? 'Special Custom Patch Instructions (Optional)'
+                        : 'Special Digitizing Instructions / Color Codes (Optional)'}
                     </label>
                     <textarea 
                       rows={4} 
                       value={notes} 
                       onChange={(e) => setNotes(e.target.value)} 
-                      placeholder="e.g. Please match Madeira Classic 1147 for royal blue, trim jump stitches closely, 3D puff on letters..." 
+                      placeholder={
+                        type === 'vector'
+                          ? "e.g. Please convert raster image to clean vector paths, match Pantone 286 C for navy, separate colors into distinct layers for screen printing, remove white background, keep typography sharp..."
+                          : type === 'patch'
+                          ? "e.g. Specific border merrowing color, laser-cut contour details, thread matching, custom packaging instructions..."
+                          : "e.g. Please match Madeira Classic 1147 for royal blue, trim jump stitches closely, 3D puff on letters, center-out pathing for cap front..."
+                      }
                       style={{ 
                         width: '100%', 
                         padding: '0.75rem', 
@@ -1688,7 +2032,7 @@ export const OrderWizardModal = () => {
                             <span><strong>Delivery Email:</strong> {authUser.email}</span>
                           </div>
                           <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            Your order and finished machine files will appear in your Client Portal.
+                            Your order and finished files will appear in your Client Portal.
                           </p>
                         </div>
                       </div>
@@ -1768,7 +2112,7 @@ export const OrderWizardModal = () => {
                                   type="text" 
                                   value={guestCompany} 
                                   onChange={(e) => setGuestCompany(e.target.value)} 
-                                  placeholder="Apex Embroidery Studio" 
+                                  placeholder="Apex Studio" 
                                   style={{ width: '100%', padding: '0.55rem 0.75rem 0.55rem 2.2rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, background: '#ffffff' }} 
                                 />
                               </div>
@@ -1795,8 +2139,11 @@ export const OrderWizardModal = () => {
                       </h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.825rem', color: 'var(--navy-800)' }}>
                         <div><strong>Service:</strong> {pricingDetails.serviceTitle}</div>
+                        {type === 'vector' && <div><strong>Application:</strong> {vectorApplication}</div>}
+                        {type === 'vector' && <div><strong>Color Mode:</strong> {vectorColorMode}</div>}
                         {type === 'embroidery' && <div><strong>Garment:</strong> {fabricType}</div>}
-                        {type !== 'patch' && <div><strong>Formats:</strong> {requestedFormats.join(', ').toUpperCase()}</div>}
+                        {type === 'patch' && <div><strong>Patch Style:</strong> {patchStyle} ({patchBacking})</div>}
+                        {type !== 'patch' && <div><strong>Output Formats:</strong> {requestedFormats.join(', ').toUpperCase()}</div>}
                         <div><strong>Turnaround:</strong> {type === 'patch' ? '7–10 Days Physical Dispatch' : isRush ? '⚡ 2–4 Hours Super Rush' : '8–12 Hours Standard'}</div>
                       </div>
                     </div>
@@ -1819,7 +2166,7 @@ export const OrderWizardModal = () => {
 
                         <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-950)' }}>
                           <span>Subtotal:</span>
-                          <span style={{ color: 'var(--orange-600)' }}>${pricingDetails.baseSubtotal.toFixed(2)}</span>
+                          <span style={{ color: type === 'vector' ? '#2563eb' : 'var(--orange-600)' }}>${pricingDetails.baseSubtotal.toFixed(2)}</span>
                         </div>
 
                         {pricingDetails.rushSurcharge > 0 && (
@@ -1872,7 +2219,7 @@ export const OrderWizardModal = () => {
                       <div style={{ borderTop: '2px solid #f1f5f9', paddingTop: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
                           <span style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--navy-950)' }}>Total Price:</span>
-                          <span style={{ fontSize: '2.2rem', fontWeight: 900, color: 'var(--orange-600)', fontFamily: 'var(--font-heading)' }}>
+                          <span style={{ fontSize: '2.2rem', fontWeight: 900, color: type === 'vector' ? '#2563eb' : 'var(--orange-600)', fontFamily: 'var(--font-heading)' }}>
                             ${pricingDetails.finalPrice.toFixed(2)}
                           </span>
                         </div>
@@ -1888,7 +2235,8 @@ export const OrderWizardModal = () => {
                             fontSize: '1.05rem',
                             fontWeight: 900,
                             borderRadius: '12px',
-                            boxShadow: '0 8px 24px rgba(249, 115, 22, 0.35)',
+                            background: type === 'vector' ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)',
+                            boxShadow: type === 'vector' ? '0 8px 24px rgba(37, 99, 235, 0.35)' : '0 8px 24px rgba(249, 115, 22, 0.35)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1970,7 +2318,7 @@ export const OrderWizardModal = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700 }}>Total Price</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--orange-600)', lineHeight: 1 }}>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: type === 'vector' ? '#2563eb' : 'var(--orange-600)', lineHeight: 1 }}>
                     ${pricingDetails.finalPrice.toFixed(2)}
                   </div>
                 </div>
@@ -1985,6 +2333,7 @@ export const OrderWizardModal = () => {
                       fontSize: '0.9rem',
                       fontWeight: 900,
                       borderRadius: '10px',
+                      background: type === 'vector' ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.4rem',
@@ -2004,6 +2353,7 @@ export const OrderWizardModal = () => {
                       fontSize: '0.9rem',
                       fontWeight: 900,
                       borderRadius: '10px',
+                      background: type === 'vector' ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.4rem',

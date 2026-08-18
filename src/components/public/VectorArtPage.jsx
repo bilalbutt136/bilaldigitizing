@@ -30,7 +30,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
     pricing, 
     dynamicPricingTiers = [],
     walletBalance = 0, 
-
+    openOrderWizard,
     deductWalletBalance, 
     setIsDepositModalOpen,
     isAuthenticated,
@@ -454,6 +454,16 @@ export const VectorArtPage = ({ hideHero = false }) => {
             
             {(() => {
               const handleSelectVectorTier = (cat) => {
+                if (openOrderWizard) {
+                  openOrderWizard({
+                    type: 'vector',
+                    tierKey: cat.tierKey || 'standard',
+                    tier: cat.tierKey || 'standard',
+                    rate: cat.rate,
+                    title: cat.title
+                  });
+                  return;
+                }
                 updateVectorItem(vectorItems[0]?.id || 1, 'complexity', cat.complexityValue);
                 setIsRush(cat.isRushValue);
                 setIsOrderViewOpen(true);
