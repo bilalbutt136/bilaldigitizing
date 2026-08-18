@@ -365,11 +365,11 @@ export const ClientLiveChatWidget = () => {
           style={{
             display: 'flex',
             position: 'fixed',
-            bottom: '24px',
-            right: '24px',
+            bottom: 'clamp(16px, 3vw, 24px)',
+            right: 'clamp(16px, 3vw, 24px)',
             zIndex: 8500,
-            width: '60px',
-            height: '60px',
+            width: 'clamp(50px, 12vw, 60px)',
+            height: 'clamp(50px, 12vw, 60px)',
             borderRadius: '50%',
             background: 'linear-gradient(135deg, var(--orange-500) 0%, #ea580c 100%)',
             color: '#ffffff',
@@ -393,10 +393,10 @@ export const ClientLiveChatWidget = () => {
         >
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {isOpen ? (
-            <X size={24} style={{ color: '#ffffff' }} />
+            <X size={22} style={{ color: '#ffffff' }} />
           ) : (
             <>
-              <MessageSquare size={24} style={{ color: '#ffffff' }} />
+              <MessageSquare size={22} style={{ color: '#ffffff' }} />
               {unreadCount > 0 ? (
                 <span style={{
                   position: 'absolute',
@@ -442,20 +442,22 @@ export const ClientLiveChatWidget = () => {
           className="floating-chat-window"
           style={{
             position: 'fixed',
-            bottom: '90px',
-            right: '24px',
+            bottom: 'clamp(75px, 12vw, 90px)',
+            right: 'clamp(10px, 2vw, 24px)',
             zIndex: 8800,
-            width: '360px',
-          height: isMinimized ? '60px' : '520px',
-          background: '#ffffff',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: '0 16px 45px rgba(0, 0, 0, 0.22)',
-          border: '1.5px solid var(--border-color)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          transition: 'height 0.25s ease'
-        }}>
+            width: 'min(380px, calc(100vw - 20px))',
+            maxWidth: 'calc(100vw - 20px)',
+            height: isMinimized ? '60px' : 'min(520px, calc(100dvh - 100px))',
+            background: '#ffffff',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: '0 16px 45px rgba(0, 0, 0, 0.22)',
+            border: '1.5px solid var(--border-color)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            transition: 'height 0.25s ease'
+          }}
+        >
           {/* Header Bar */}
           <div style={{
             padding: '0.85rem 1.15rem',

@@ -416,10 +416,10 @@ export const HeaderNav = () => {
           gap: '0.4rem',
           flexShrink: 0
         }}>
-          {/* Primary Get Started Button */}
+          {/* Primary Get Started Button (Desktop) */}
           {safeCurrentView !== 'admin' && safeCurrentView !== 'customer' && !currentPath.includes('admin') && (
             <button 
-              className="btn btn-primary-orange"
+              className="desktop-only btn btn-primary-orange"
               onClick={() => {
                 if (openOrderWizard) {
                   openOrderWizard();
@@ -467,9 +467,9 @@ export const HeaderNav = () => {
             {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
 
-          {/* Dynamic Authentication Controls */}
+          {/* Dynamic Authentication Controls (Desktop) */}
           {!safeIsAuthenticated ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <button 
                 className="btn btn-outline btn-sm"
                 style={{
@@ -494,7 +494,7 @@ export const HeaderNav = () => {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               {safeCurrentView === 'public' && (
                 <button
                   className="btn btn-outline btn-sm"

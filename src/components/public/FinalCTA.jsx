@@ -125,12 +125,13 @@ export const FinalCTA = () => {
           {content.desc}
         </p>
         
-        <div style={{
+        <div className="hero-cta-buttons-row" style={{
           display: 'flex',
           flexWrap: 'wrap',
           gap: '1rem',
           justifyContent: 'center',
           marginBottom: '3.5rem',
+          width: '100%'
         }}>
           <button 
             type="button"
@@ -164,29 +165,29 @@ export const FinalCTA = () => {
         </div>
         
         <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-          gap: '2rem',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))',
+          justifyItems: 'center',
+          gap: '1rem',
           borderTop: '1px solid rgba(255, 255, 255, 0.1)',
           paddingTop: '2.25rem',
           width: '100%',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', fontSize: '0.9rem', fontWeight: '600' }}>
-            <Shield size={18} style={{ color: 'var(--orange-400)' }} />
-            {badge1}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', fontSize: '0.85rem', fontWeight: '600' }}>
+            <Shield size={18} style={{ color: 'var(--orange-400)', flexShrink: 0 }} />
+            <span>{badge1}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', fontSize: '0.9rem', fontWeight: '600' }}>
-            <Globe size={18} style={{ color: 'var(--orange-400)' }} />
-            {badge2}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', fontSize: '0.85rem', fontWeight: '600' }}>
+            <Globe size={18} style={{ color: 'var(--orange-400)', flexShrink: 0 }} />
+            <span>{badge2}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', fontSize: '0.9rem', fontWeight: '600' }}>
-            <Zap size={18} style={{ color: 'var(--orange-400)' }} />
-            {badge3}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', fontSize: '0.85rem', fontWeight: '600' }}>
+            <Zap size={18} style={{ color: 'var(--orange-400)', flexShrink: 0 }} />
+            <span>{badge3}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', fontSize: '0.9rem', fontWeight: '600' }}>
-            <CheckCircle2 size={18} style={{ color: '#10b981' }} />
-            {badge4}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', fontSize: '0.85rem', fontWeight: '600' }}>
+            <CheckCircle2 size={18} style={{ color: '#10b981', flexShrink: 0 }} />
+            <span>{badge4}</span>
           </div>
         </div>
       </div>

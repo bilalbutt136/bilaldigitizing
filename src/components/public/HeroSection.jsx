@@ -445,19 +445,22 @@ export const HeroSection = () => {
           50% { opacity: 0.35; transform: scale(0.85); }
         }
         .hero-cta-buttons-row {
-          display: flex !important;
-          flex-direction: row !important;
-          flex-wrap: nowrap !important;
-          align-items: center !important;
-          gap: 0.85rem !important;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 0.85rem;
         }
         @media (max-width: 1024px) {
           .hero-grid-layout {
             grid-template-columns: 1fr !important;
-            gap: 2.5rem !important;
+            gap: 2.25rem !important;
+            width: 100% !important;
+            max-width: 100% !important;
           }
           .hero-left-content {
             text-align: center !important;
+            width: 100% !important;
+            max-width: 100% !important;
           }
           .hero-trust-badges-row {
             justify-content: center !important;
@@ -466,34 +469,77 @@ export const HeroSection = () => {
             justify-content: center !important;
           }
         }
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
+          .hero-nav-tabs-wrapper {
+            border-radius: 14px !important;
+            padding: 0.35rem !important;
+            gap: 0.35rem !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          .hero-nav-tab-btn {
+            padding: 0.45rem 0.75rem !important;
+            font-size: 0.8rem !important;
+            flex: 1 1 calc(50% - 0.4rem) !important;
+            justify-content: center !important;
+          }
           .hero-cta-buttons-row {
             flex-direction: column !important;
             width: 100% !important;
+            gap: 0.75rem !important;
           }
           .hero-cta-buttons-row button {
             width: 100% !important;
             justify-content: center !important;
+            white-space: normal !important;
+            min-height: 48px !important;
+          }
+          .hero-trust-badges-row {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 0.75rem 0.5rem !important;
+            width: 100% !important;
+            justify-items: center !important;
+          }
+          .hero-trust-badges-row > div {
+            justify-content: center !important;
+            font-size: 0.78rem !important;
+          }
+          .hero-showcase-card {
+            padding: 0.85rem !important;
+            border-radius: 18px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          .hero-showcase-image-box {
+            min-height: 180px !important;
+            max-height: 300px !important;
+            aspect-ratio: 16/10 !important;
           }
         }
       `}} />
 
-      <div className="container" style={{ position: 'relative', zIndex: 1, maxWidth: '1360px' }}>
+      <div className="container" style={{ position: 'relative', zIndex: 1, maxWidth: '1360px', width: '100%', boxSizing: 'border-box' }}>
         
         {/* Top 4 Navigation Tabs Switcher */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
-          <div style={{
-            display: 'inline-flex',
-            background: 'rgba(15, 23, 42, 0.75)',
-            border: '1px solid rgba(255, 255, 255, 0.14)',
-            padding: '0.3rem',
-            borderRadius: '9999px',
-            backdropFilter: 'blur(16px)',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35)',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            gap: '0.25rem'
-          }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem', width: '100%' }}>
+          <div 
+            className="hero-nav-tabs-wrapper"
+            style={{
+              display: 'inline-flex',
+              background: 'rgba(15, 23, 42, 0.75)',
+              border: '1px solid rgba(255, 255, 255, 0.14)',
+              padding: '0.3rem',
+              borderRadius: '9999px',
+              backdropFilter: 'blur(16px)',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35)',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              gap: '0.25rem',
+              maxWidth: '100%',
+              boxSizing: 'border-box'
+            }}
+          >
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isSelected = activeTab === tab.id;
@@ -501,12 +547,13 @@ export const HeroSection = () => {
                 <button
                   key={tab.id}
                   type="button"
+                  className="hero-nav-tab-btn"
                   onClick={() => handleTabClick(tab.id)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.5rem',
-                    padding: '0.55rem 1.4rem',
+                    padding: '0.55rem 1.35rem',
                     borderRadius: '9999px',
                     border: 'none',
                     background: isSelected 
@@ -533,7 +580,9 @@ export const HeroSection = () => {
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: '2.5rem',
-          alignItems: 'flex-start'
+          alignItems: 'flex-start',
+          width: '100%',
+          boxSizing: 'border-box'
         }}>
           
           {/* Left Column: Dynamic Service Copy, Benefits, Packages & CTAs */}
@@ -561,35 +610,41 @@ export const HeroSection = () => {
 
             {/* Dynamic Main Title */}
             <h1 style={{
-              fontSize: 'clamp(2rem, 3.2vw, 2.75rem)',
+              fontSize: 'clamp(1.65rem, 5vw, 2.75rem)',
               fontWeight: 900,
               lineHeight: 1.15,
               color: '#ffffff',
               marginBottom: '0.75rem',
               letterSpacing: '-0.025em',
-              fontFamily: 'var(--font-heading)'
+              fontFamily: 'var(--font-heading)',
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word'
             }}>
               {title}
             </h1>
 
             {/* Dynamic Highlight / Subheading */}
             <div style={{
-              fontSize: 'clamp(0.95rem, 1.4vw, 1.1rem)',
+              fontSize: 'clamp(0.88rem, 2.8vw, 1.1rem)',
               fontWeight: 700,
               color: 'var(--orange-400)',
               marginBottom: '0.75rem',
-              lineHeight: 1.35
+              lineHeight: 1.35,
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word'
             }}>
               {highlight}
             </div>
 
             {/* Dynamic Description */}
             <p style={{
-              fontSize: '0.975rem',
+              fontSize: 'clamp(0.85rem, 2.6vw, 0.975rem)',
               lineHeight: 1.55,
               color: '#94a3b8',
               marginBottom: '1.25rem',
-              maxWidth: '580px'
+              maxWidth: '100%',
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word'
             }}>
               {description}
             </p>
@@ -602,11 +657,14 @@ export const HeroSection = () => {
               marginBottom: '1.5rem',
               background: 'rgba(255, 255, 255, 0.03)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
-              padding: '0.9rem 1.15rem',
-              borderRadius: '12px'
+              padding: 'clamp(0.75rem, 2vw, 1rem) clamp(0.85rem, 2vw, 1.15rem)',
+              borderRadius: '12px',
+              textAlign: 'left',
+              width: '100%',
+              boxSizing: 'border-box'
             }}>
               {featuresList.slice(0, 3).map((featText, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.55rem', fontSize: '0.875rem', color: '#e2e8f0', fontWeight: 600 }}>
+                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.55rem', fontSize: '0.85rem', color: '#e2e8f0', fontWeight: 600, wordBreak: 'break-word' }}>
                   <CheckCircle2 size={15} style={{ color: 'var(--orange-400)', flexShrink: 0, marginTop: '2px' }} />
                   <span style={{ lineHeight: 1.4 }}>{featText}</span>
                 </div>
@@ -616,8 +674,6 @@ export const HeroSection = () => {
             {/* CTA Buttons Group (Always Side-by-Side on Desktop/Tablet) */}
             <div className="hero-cta-buttons-row" style={{
               display: 'flex',
-              flexDirection: 'row',
-              flexWrap: 'nowrap',
               alignItems: 'center',
               gap: '0.85rem',
               marginBottom: '1.5rem'
@@ -630,11 +686,9 @@ export const HeroSection = () => {
                   padding: '0.85rem 1.6rem',
                   fontSize: '0.95rem',
                   fontWeight: 800,
-                  whiteSpace: 'nowrap',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.45rem',
-                  flexShrink: 0
+                  gap: '0.45rem'
                 }}
               >
                 <Upload size={16} />
@@ -652,11 +706,9 @@ export const HeroSection = () => {
                   padding: '0.85rem 1.4rem', 
                   fontSize: '0.95rem',
                   fontWeight: 700,
-                  whiteSpace: 'nowrap',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
+                  justifyContent: 'center'
                 }}
               >
                 <span>{secondaryCtaText}</span>
@@ -673,8 +725,8 @@ export const HeroSection = () => {
                 const IconComp = ICON_MAP[stat.icon] || Star;
                 return (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <IconComp size={16} style={{ color: 'var(--orange-500)' }} />
-                    <span style={{ fontSize: '0.825rem', fontWeight: 600, color: '#e2e8f0' }}>
+                    <IconComp size={16} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
+                    <span style={{ fontSize: '0.825rem', fontWeight: 600, color: '#e2e8f0', whiteSpace: 'nowrap' }}>
                       <strong style={{ color: 'var(--orange-400)', marginRight: '3px' }}>{stat.value}</strong>
                       {stat.label}
                     </span>
@@ -691,26 +743,30 @@ export const HeroSection = () => {
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            <div style={{
-              background: 'rgba(15, 23, 42, 0.75)',
-              border: '1.5px solid rgba(255, 255, 255, 0.14)',
-              borderRadius: '24px',
-              padding: '1.35rem',
-              boxShadow: '0 20px 50px -10px rgba(0, 0, 0, 0.7)',
-              width: '100%',
-              maxWidth: '680px',
-              backdropFilter: 'blur(16px)',
-              position: 'relative'
-            }}>
+            <div 
+              className="hero-showcase-card"
+              style={{
+                background: 'rgba(15, 23, 42, 0.75)',
+                border: '1.5px solid rgba(255, 255, 255, 0.14)',
+                borderRadius: '24px',
+                padding: '1.35rem',
+                boxShadow: '0 20px 50px -10px rgba(0, 0, 0, 0.7)',
+                width: '100%',
+                maxWidth: '680px',
+                backdropFilter: 'blur(16px)',
+                position: 'relative',
+                boxSizing: 'border-box'
+              }}
+            >
               
               {/* Header Title & Slide Index Counter */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
-                <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', gap: '0.5rem' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--orange-400)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem', letterSpacing: '0.06em' }}>
                     <span className="blinking-green-dot" /> LIVE SHOWCASE
                   </div>
-                  <div style={{ fontSize: '1rem', fontWeight: 800, color: '#ffffff', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '380px' }}>
-                    {currentImage?.title || previewTitle}
+                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {(currentImage?.title || previewTitle || '').replace(/Emrboidery/gi, 'Embroidery')}
                   </div>
                 </div>
 
@@ -722,7 +778,8 @@ export const HeroSection = () => {
                     border: '1px solid rgba(255, 255, 255, 0.15)',
                     padding: '0.2rem 0.55rem',
                     borderRadius: '9999px',
-                    color: '#cbd5e1'
+                    color: '#cbd5e1',
+                    flexShrink: 0
                   }}>
                     {currentSlideIdx + 1} / {activeShowcaseImages.length}
                   </span>
@@ -731,11 +788,12 @@ export const HeroSection = () => {
 
               {/* Full, Clear Showcase Image Container (Auto-changes every 5s - Auto-Adjusted Full Image) */}
               <div 
+                className="hero-showcase-image-box"
                 style={{
                   position: 'relative',
                   width: '100%',
                   aspectRatio: '16/10',
-                  minHeight: '320px',
+                  minHeight: '220px',
                   maxHeight: '430px',
                   borderRadius: '16px',
                   overflow: 'hidden',
@@ -755,8 +813,8 @@ export const HeroSection = () => {
                   style={{ 
                     maxWidth: '100%', 
                     maxHeight: '100%', 
-                    width: 'auto',
-                    height: 'auto',
+                    width: '100%',
+                    height: '100%',
                     objectFit: 'contain',
                     objectPosition: 'center',
                     display: 'block'
