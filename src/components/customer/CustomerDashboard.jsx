@@ -362,79 +362,104 @@ export const CustomerDashboard = () => {
         }}
       >
 
-        {/* 1. TOP STICKY HEADER BAR FOR MOBILE APP UI */}
+        {/* 1. TOP NATIVE MOBILE APP HEADER (Fiverr / Modern App Standard) */}
         <div 
-          className="mobile-only"
+          className="mobile-only mobile-app-header"
           style={{
             position: 'sticky',
             top: 0,
-            zIndex: 40,
-            background: '#ffffff',
-            border: '1.5px solid var(--border-color)',
-            borderRadius: '14px',
-            padding: '0.75rem 1rem',
+            zIndex: 60,
+            background: 'rgba(255, 255, 255, 0.97)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            borderBottom: '1px solid rgba(226, 232, 240, 0.9)',
+            padding: '0.65rem 0.85rem',
+            display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: '1.25rem',
-            boxShadow: 'var(--shadow-sm)'
+            marginBottom: '1rem',
+            borderRadius: '12px',
+            boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            {/* User Avatar Circle */}
+            <div style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 800,
+              fontSize: '0.85rem',
+              boxShadow: '0 2px 8px rgba(249, 115, 22, 0.35)',
+              flexShrink: 0
+            }}>
+              {(activeUser?.name?.[0] || 'C').toUpperCase()}
+            </div>
+            
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--navy-900)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {activeUser?.name || 'Client'}
+                </span>
+                <span style={{ fontSize: '0.62rem', background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', padding: '0.05rem 0.35rem', borderRadius: '4px', fontWeight: 800 }}>
+                  VIP
+                </span>
+              </div>
+              <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>
+                {activeTab === 'dashboard' ? 'Studio Dashboard' : (activeTab === 'digitizing' ? 'Embroidery Digitizing' : (activeTab === 'vector' ? 'Vector Art' : (activeTab === 'patches' ? 'Custom Patches' : 'Client Portal')))}
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            {/* Wallet Balance Chip */}
+            <button
+              type="button"
+              onClick={() => setIsDepositModalOpen(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                background: '#fff7ed',
+                border: '1px solid #fed7aa',
+                borderRadius: '20px',
+                padding: '0.3rem 0.65rem',
+                color: 'var(--orange-600)',
+                fontWeight: 800,
+                fontSize: '0.75rem',
+                cursor: 'pointer'
+              }}
+              title="Deposit Wallet Funds"
+            >
+              <Wallet size={14} style={{ color: 'var(--orange-500)' }} />
+              <span>${walletBalance.toFixed(0)}</span>
+              <span style={{ background: 'var(--orange-500)', color: '#fff', width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 900, lineHeight: 1 }}>+</span>
+            </button>
+
+            {/* Menu Trigger */}
             <button
               type="button"
               onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
               style={{
-                background: '#f1f5f9',
-                border: '1px solid var(--border-color)',
-                color: 'var(--navy-900)',
-                width: '40px',
-                height: '40px',
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer'
-              }}
-              aria-label="Toggle Navigation Drawer"
-            >
-              {isMobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
-            
-            <div>
-              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>
-                Studio Workspace
-              </span>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0, lineHeight: 1.1 }}>
-                {activeTab === 'digitizing' && 'Embroidery Digitizing'}
-                {activeTab === 'patches' && 'Custom Patches'}
-                {activeTab === 'store' && 'Digital Store'}
-                {activeTab === 'profile' && 'Account Profile'}
-                {activeTab === 'support' && 'Support & Live Chat'}
-                {activeTab === 'settings' && 'Studio Settings'}
-              </h3>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            {/* Theme Toggle Button */}
-            <button
-              type="button"
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              style={{
                 background: '#f8fafc',
                 border: '1px solid var(--border-color)',
-                color: 'var(--navy-800)',
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
+                color: 'var(--navy-900)',
+                width: '34px',
+                height: '34px',
+                borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer'
               }}
-              title="Toggle Theme Mode"
+              aria-label="Menu"
             >
-              {isDarkMode ? <Sun size={18} style={{ color: 'var(--orange-500)' }} /> : <Moon size={18} />}
+              <Menu size={17} />
             </button>
           </div>
         </div>
@@ -774,19 +799,150 @@ export const CustomerDashboard = () => {
                   </div>
                 </div>
 
-                {/* Orders Table Container */}
-                <div className="card" style={{ padding: '1.5rem' }}>
+                {/* MOBILE QUICK ACTION CAPSULES (Fiverr App Style) */}
+                <div className="mobile-only mobile-action-scroll" style={{ marginBottom: '1.25rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsServiceSelectorOpen(true)}
+                    style={{
+                      background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '24px',
+                      padding: '0.45rem 0.95rem',
+                      fontWeight: 800,
+                      fontSize: '0.78rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      whiteSpace: 'nowrap',
+                      boxShadow: '0 3px 10px rgba(255, 122, 0, 0.3)',
+                      flexShrink: 0,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Plus size={14} style={{ strokeWidth: 3 }} /> + New Order
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openOrderWizard({ type: 'embroidery' })}
+                    style={{
+                      background: '#ffffff',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--navy-900)',
+                      borderRadius: '24px',
+                      padding: '0.45rem 0.85rem',
+                      fontWeight: 700,
+                      fontSize: '0.78rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🧵 Digitizing
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openOrderWizard({ type: 'vector' })}
+                    style={{
+                      background: '#ffffff',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--navy-900)',
+                      borderRadius: '24px',
+                      padding: '0.45rem 0.85rem',
+                      fontWeight: 700,
+                      fontSize: '0.78rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ✒️ Vector Art
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openOrderWizard({ type: 'patch' })}
+                    style={{
+                      background: '#ffffff',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--navy-900)',
+                      borderRadius: '24px',
+                      padding: '0.45rem 0.85rem',
+                      fontWeight: 700,
+                      fontSize: '0.78rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🏷️ Patches
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsDepositModalOpen(true)}
+                    style={{
+                      background: '#fff7ed',
+                      border: '1px solid #fed7aa',
+                      color: 'var(--orange-600)',
+                      borderRadius: '24px',
+                      padding: '0.45rem 0.85rem',
+                      fontWeight: 800,
+                      fontSize: '0.78rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    💳 Top-Up (${walletBalance.toFixed(0)})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => window.dispatchEvent(new Event('bdigi_open_chat'))}
+                    style={{
+                      background: '#ffffff',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--navy-900)',
+                      borderRadius: '24px',
+                      padding: '0.45rem 0.85rem',
+                      fontWeight: 700,
+                      fontSize: '0.78rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    💬 Live Help
+                  </button>
+                </div>
+
+                {/* Orders Section Container */}
+                <div id="orders-table-wrapper" className="card orders-table-container" style={{ padding: '1.25rem' }}>
                   
                   {/* Table Header Controls */}
                   <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: '1.5rem',
+                    marginBottom: '1.25rem',
                     flexWrap: 'wrap',
-                    gap: '1rem'
+                    gap: '0.85rem'
                   }}>
-                    <div style={{ display: 'flex', gap: '0.65rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <button 
                         type="button"
                         onClick={() => setFilterStatus('all')}
@@ -796,8 +952,8 @@ export const CustomerDashboard = () => {
                           color: filterStatus === 'all' ? '#ffffff' : 'var(--navy-800)',
                           border: filterStatus === 'all' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
                           fontWeight: 800,
-                          fontSize: '0.85rem',
-                          padding: '0.5rem 1.15rem',
+                          fontSize: '0.825rem',
+                          padding: '0.45rem 0.95rem',
                           borderRadius: '8px',
                           cursor: 'pointer',
                           boxShadow: filterStatus === 'all' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
@@ -816,15 +972,15 @@ export const CustomerDashboard = () => {
                           color: filterStatus === 'active' ? '#ffffff' : 'var(--navy-800)',
                           border: filterStatus === 'active' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
                           fontWeight: 800,
-                          fontSize: '0.85rem',
-                          padding: '0.5rem 1.15rem',
+                          fontSize: '0.825rem',
+                          padding: '0.45rem 0.95rem',
                           borderRadius: '8px',
                           cursor: 'pointer',
                           boxShadow: filterStatus === 'active' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
                           transition: 'all 0.18s ease'
                         }}
                       >
-                        Active Orders ({activeOrders.length})
+                        Active ({activeOrders.length})
                       </button>
 
                       <button 
@@ -836,8 +992,8 @@ export const CustomerDashboard = () => {
                           color: filterStatus === 'completed' ? '#ffffff' : 'var(--navy-800)',
                           border: filterStatus === 'completed' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
                           fontWeight: 800,
-                          fontSize: '0.85rem',
-                          padding: '0.5rem 1.15rem',
+                          fontSize: '0.825rem',
+                          padding: '0.45rem 0.95rem',
                           borderRadius: '8px',
                           cursor: 'pointer',
                           boxShadow: filterStatus === 'completed' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
@@ -849,7 +1005,7 @@ export const CustomerDashboard = () => {
                     </div>
 
                     {/* Search input */}
-                    <div style={{ position: 'relative', width: '280px' }}>
+                    <div style={{ position: 'relative', width: '100%', maxWidth: '280px' }}>
                       <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
                       <input 
                         type="text" 
@@ -857,12 +1013,11 @@ export const CustomerDashboard = () => {
                         placeholder="Search order ID or title..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{ paddingLeft: '2.2rem' }}
+                        style={{ paddingLeft: '2.2rem', fontSize: '0.85rem' }}
                       />
                     </div>
                   </div>
 
-                  {/* Orders Table */}
                   {filteredDigitizingOrders.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
                       <FileText size={42} style={{ color: 'var(--text-light)', marginBottom: '0.75rem' }} />
@@ -870,215 +1025,309 @@ export const CustomerDashboard = () => {
                       <p style={{ fontSize: '0.85rem' }}>Click "Upload New Design Brief" to place your first embroidery or vector job.</p>
                     </div>
                   ) : (
-                    <div style={{ 
-                      maxHeight: '560px', 
-                      overflowY: 'auto', 
-                      overflowX: 'auto',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '12px',
-                      background: '#ffffff',
-                      boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)'
-                    }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                        <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                          <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--navy-700)' }}>
-                            <th style={{ padding: '0.75rem 1rem' }}>Uploaded Artwork & Design</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Service Type</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Date Submitted</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Payment Status</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Cost</th>
-                            <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {paginatedCustOrders.map((ord) => {
-                            const isPaid = isOrderPaid(ord);
-                            return (
-                              <tr 
-                                key={ord?.id || Math.random()}
-                                style={{ 
-                                  borderBottom: isPaid ? '1px solid var(--border-color)' : '1px solid #fed7aa', 
-                                  background: isPaid ? '#ffffff' : '#fffcf6',
-                                  transition: 'background 0.15s' 
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.background = isPaid ? 'var(--orange-50)' : '#fff7ed'}
-                                onMouseLeave={(e) => e.currentTarget.style.background = isPaid ? '#ffffff' : '#fffcf6'}
-                              >
-                                {/* Title & Interactive Lightbox Artwork Thumbnail */}
-                                <td style={{ padding: '1rem' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                                    <div 
-                                      style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}
-                                      onClick={() => setLightboxOrder(ord)}
-                                      title="Click to inspect full high-res artwork"
-                                    >
-                                      <img 
-                                        src={
-                                          ord?.artworkUrl || 
-                                          ord?.image_url || 
-                                          ord?.logo || 
-                                          ord?.uploadedFiles?.[0]?.url || 
-                                          ord?.uploadedFiles?.[0]?.public_url || 
-                                          ord?.placementItems?.[0]?.files?.[0]?.url || 
-                                          ord?.patchItems?.[0]?.files?.[0]?.url || 
-                                          ord?.order_files?.[0]?.public_url || 
-                                          ord?.file_url || 
-                                          ord?.file_path || 
-                                          'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80'
-                                        } 
-                                        alt={ord?.title || 'Design'} 
-                                        onError={(e) => {
-                                          e.currentTarget.onerror = null;
-                                          e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
-                                        }}
-                                        style={{ width: '52px', height: '52px', borderRadius: '8px', objectFit: 'cover', border: '1.5px solid var(--orange-600)' }}
-                                      />
-                                      <div style={{
-                                        position: 'absolute',
-                                        inset: 0,
-                                        background: 'rgba(15, 23, 42, 0.4)',
-                                        borderRadius: '8px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        color: '#ffffff',
-                                        opacity: 0,
-                                        transition: 'opacity 0.2s'
-                                      }}
-                                      onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
-                                      onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
+                    <>
+                      {/* A. DESKTOP DATA TABLE (Screens > 768px) */}
+                      <div className="desktop-table-view" style={{ 
+                        maxHeight: '560px', 
+                        overflowY: 'auto', 
+                        overflowX: 'auto',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '12px',
+                        background: '#ffffff',
+                        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)'
+                      }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                          <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                            <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--navy-700)' }}>
+                              <th style={{ padding: '0.75rem 1rem' }}>Uploaded Artwork & Design</th>
+                              <th style={{ padding: '0.75rem 1rem' }}>Service Type</th>
+                              <th style={{ padding: '0.75rem 1rem' }}>Date Submitted</th>
+                              <th style={{ padding: '0.75rem 1rem' }}>Payment Status</th>
+                              <th style={{ padding: '0.75rem 1rem' }}>Cost</th>
+                              <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {paginatedCustOrders.map((ord) => {
+                              const isPaid = isOrderPaid(ord);
+                              return (
+                                <tr 
+                                  key={ord?.id || Math.random()}
+                                  style={{ 
+                                    borderBottom: isPaid ? '1px solid var(--border-color)' : '1px solid #fed7aa', 
+                                    background: isPaid ? '#ffffff' : '#fffcf6',
+                                    transition: 'background 0.15s' 
+                                  }}
+                                  onMouseEnter={(e) => e.currentTarget.style.background = isPaid ? 'var(--orange-50)' : '#fff7ed'}
+                                  onMouseLeave={(e) => e.currentTarget.style.background = isPaid ? '#ffffff' : '#fffcf6'}
+                                >
+                                  {/* Title & Interactive Lightbox Artwork Thumbnail */}
+                                  <td style={{ padding: '1rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                                      <div 
+                                        style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}
+                                        onClick={() => setLightboxOrder(ord)}
+                                        title="Click to inspect full high-res artwork"
                                       >
-                                        <ZoomIn size={16} />
-                                      </div>
-                                    </div>
-
-                                    <div>
-                                      <div style={{ fontWeight: 700, color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.92rem' }}>
-                                        {ord?.title || 'Embroidery Digitizing Order'}
-                                        {ord?.isRush && <span className="badge badge-rush" style={{ fontSize: '0.65rem' }}>RUSH</span>}
-                                      </div>
-                                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-                                        ID: <strong>{formatOrderId(ord?.id)}</strong>{ord?.dimensions?.width && ord?.dimensions?.height ? ` • ${ord.dimensions.width}"x${ord.dimensions.height}"` : ''}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </td>
-
-                                {/* Service Type */}
-                                <td style={{ padding: '1rem' }}>
-                                  <div style={{ fontWeight: 700, color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.88rem' }}>
-                                    {ord?.type === 'vector' ? '✒️ Vector Art' : (ord?.type === 'patch' || ord?.type === 'patches' ? '🏷️ Custom Patches' : '🧵 Embroidery Digitizing')}
-                                  </div>
-                                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-                                    {ord?.serviceCategory || (ord?.type === 'vector' ? 'Vector Art Conversion' : (ord?.type === 'patch' || ord?.type === 'patches' ? 'Custom Physical Patches' : 'Embroidery Digitizing'))}
-                                  </div>
-                                </td>
-
-                                {/* Date Submitted */}
-                                <td style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                                  {ord?.createdAt || ord?.created_at ? new Date(ord.createdAt || ord.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
-                                </td>
-
-                                {/* Payment Status */}
-                                <td style={{ padding: '1rem' }}>
-                                  {isPaid ? (
-                                    <span 
-                                      className="badge" 
-                                      style={{ 
-                                        background: 'rgba(16, 185, 129, 0.14)', 
-                                        color: '#10b981', 
-                                        border: '1px solid rgba(16, 185, 129, 0.35)', 
-                                        fontWeight: 800, 
-                                        padding: '0.3rem 0.75rem', 
-                                        borderRadius: '9999px', 
-                                        fontSize: '0.76rem',
-                                        letterSpacing: '0.04em',
-                                        display: 'inline-block'
-                                      }}
-                                    >
-                                      PAID
-                                    </span>
-                                  ) : (
-                                    <span 
-                                      className="badge" 
-                                      style={{ 
-                                        background: '#fef3c7', 
-                                        color: '#d97706', 
-                                        border: '1px solid #fde68a', 
-                                        fontWeight: 800, 
-                                        padding: '0.3rem 0.75rem', 
-                                        borderRadius: '9999px', 
-                                        fontSize: '0.76rem',
-                                        letterSpacing: '0.04em',
-                                        display: 'inline-block'
-                                      }}
-                                    >
-                                      PENDING
-                                    </span>
-                                  )}
-                                </td>
-
-                                {/* Cost */}
-                                <td style={{ padding: '1rem', fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.92rem' }}>
-                                  ${parseFloat(ord?.price || ord?.totalPrice || 0).toFixed(2)}
-                                </td>
-
-                                {/* Actions */}
-                                <td style={{ padding: '1rem', textAlign: 'right' }}>
-                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                    {!isPaid && (
-                                      <button
-                                        type="button"
-                                        onClick={() => handlePayOrder(ord)}
-                                        style={{
-                                          background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-                                          color: '#ffffff',
-                                          border: 'none',
-                                          padding: '0.45rem 0.95rem',
+                                        <img 
+                                          src={
+                                            ord?.artworkUrl || 
+                                            ord?.image_url || 
+                                            ord?.logo || 
+                                            ord?.uploadedFiles?.[0]?.url || 
+                                            ord?.uploadedFiles?.[0]?.public_url || 
+                                            ord?.placementItems?.[0]?.files?.[0]?.url || 
+                                            ord?.patchItems?.[0]?.files?.[0]?.url || 
+                                            ord?.order_files?.[0]?.public_url || 
+                                            ord?.file_url || 
+                                            ord?.file_path || 
+                                            'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80'
+                                          } 
+                                          alt={ord?.title || 'Design'} 
+                                          onError={(e) => {
+                                            e.currentTarget.onerror = null;
+                                            e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
+                                          }}
+                                          style={{ width: '52px', height: '52px', borderRadius: '8px', objectFit: 'cover', border: '1.5px solid var(--orange-600)' }}
+                                        />
+                                        <div style={{
+                                          position: 'absolute',
+                                          inset: 0,
+                                          background: 'rgba(15, 23, 42, 0.4)',
                                           borderRadius: '8px',
-                                          fontWeight: 800,
-                                          fontSize: '0.8rem',
-                                          cursor: 'pointer',
-                                          boxShadow: '0 2px 8px rgba(249, 115, 22, 0.28)',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          color: '#ffffff',
+                                          opacity: 0,
+                                          transition: 'opacity 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+                                        onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
+                                        >
+                                          <ZoomIn size={16} />
+                                        </div>
+                                      </div>
+
+                                      <div>
+                                        <div style={{ fontWeight: 700, color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.92rem' }}>
+                                          {ord?.title || 'Embroidery Digitizing Order'}
+                                          {ord?.isRush && <span className="badge badge-rush" style={{ fontSize: '0.65rem' }}>RUSH</span>}
+                                        </div>
+                                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                                          ID: <strong>{formatOrderId(ord?.id)}</strong>{ord?.dimensions?.width && ord?.dimensions?.height ? ` • ${ord.dimensions.width}"x${ord.dimensions.height}"` : ''}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </td>
+
+                                  {/* Service Type */}
+                                  <td style={{ padding: '1rem' }}>
+                                    <div style={{ fontWeight: 700, color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.88rem' }}>
+                                      {ord?.type === 'vector' ? '✒️ Vector Art' : (ord?.type === 'patch' || ord?.type === 'patches' ? '🏷️ Custom Patches' : '🧵 Embroidery Digitizing')}
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                                      {ord?.serviceCategory || (ord?.type === 'vector' ? 'Vector Art Conversion' : (ord?.type === 'patch' || ord?.type === 'patches' ? 'Custom Physical Patches' : 'Embroidery Digitizing'))}
+                                    </div>
+                                  </td>
+
+                                  {/* Date Submitted */}
+                                  <td style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                                    {ord?.createdAt || ord?.created_at ? new Date(ord.createdAt || ord.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
+                                  </td>
+
+                                  {/* Payment Status */}
+                                  <td style={{ padding: '1rem' }}>
+                                    {getPaymentStatusBadge(ord)}
+                                  </td>
+
+                                  {/* Cost */}
+                                  <td style={{ padding: '1rem', fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.92rem' }}>
+                                    ${parseFloat(ord?.price || ord?.totalPrice || 0).toFixed(2)}
+                                  </td>
+
+                                  {/* Actions */}
+                                  <td style={{ padding: '1rem', textAlign: 'right' }}>
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                      {!isPaid && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handlePayOrder(ord)}
+                                          style={{
+                                            background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                                            color: '#ffffff',
+                                            border: 'none',
+                                            padding: '0.45rem 0.95rem',
+                                            borderRadius: '8px',
+                                            fontWeight: 800,
+                                            fontSize: '0.8rem',
+                                            cursor: 'pointer',
+                                            boxShadow: '0 2px 8px rgba(249, 115, 22, 0.28)',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.35rem',
+                                            lineHeight: 1.2,
+                                            whiteSpace: 'nowrap',
+                                            transition: 'all 0.15s ease'
+                                          }}
+                                          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+                                          onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+                                        >
+                                          <Zap size={13} /> Pay Now
+                                        </button>
+                                      )}
+                                      <button
+                                        className="btn btn-outline btn-sm"
+                                        onClick={() => setSelectedOrderForDrawer(ord)}
+                                        style={{
                                           display: 'inline-flex',
                                           alignItems: 'center',
                                           gap: '0.35rem',
-                                          lineHeight: 1.2,
-                                          whiteSpace: 'nowrap',
-                                          transition: 'all 0.15s ease'
+                                          padding: '0.45rem 0.85rem',
+                                          borderRadius: '8px',
+                                          fontWeight: 700,
+                                          fontSize: '0.8rem',
+                                          color: '#ff7a00',
+                                          borderColor: '#ff7a00',
+                                          whiteSpace: 'nowrap'
                                         }}
-                                        onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
-                                        onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
                                       >
-                                        <Zap size={13} /> Pay Now
+                                        View Order <ChevronRight size={15} />
                                       </button>
-                                    )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* B. MOBILE NATIVE APP ORDER CARDS (Screens <= 768px - Fiverr Standard) */}
+                      <div className="mobile-cards-view">
+                        {paginatedCustOrders.map((ord) => {
+                          const isPaid = isOrderPaid(ord);
+                          const primaryImg = 
+                            ord?.artworkUrl || 
+                            ord?.image_url || 
+                            ord?.logo || 
+                            ord?.uploadedFiles?.[0]?.url || 
+                            ord?.uploadedFiles?.[0]?.public_url || 
+                            ord?.placementItems?.[0]?.files?.[0]?.url || 
+                            'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
+
+                          return (
+                            <div 
+                              key={ord?.id || Math.random()}
+                              className="mobile-order-card"
+                              style={{
+                                border: isPaid ? '1px solid var(--border-color)' : '1.5px solid #fed7aa',
+                                background: isPaid ? '#ffffff' : '#fffcf6'
+                              }}
+                            >
+                              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                                {/* Thumbnail */}
+                                <div 
+                                  style={{ position: 'relative', flexShrink: 0, cursor: 'pointer' }}
+                                  onClick={() => setLightboxOrder(ord)}
+                                >
+                                  <img 
+                                    src={primaryImg}
+                                    alt={ord?.title || 'Design'}
+                                    onError={(e) => {
+                                      e.currentTarget.onerror = null;
+                                      e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
+                                    }}
+                                    style={{ width: '58px', height: '58px', borderRadius: '10px', objectFit: 'cover', border: '1.5px solid var(--orange-500)' }}
+                                  />
+                                  <div style={{ position: 'absolute', bottom: '2px', right: '2px', background: 'rgba(0,0,0,0.65)', borderRadius: '4px', padding: '1px 3px', color: '#fff', fontSize: '0.55rem', display: 'flex', alignItems: 'center' }}>
+                                    <ZoomIn size={10} />
+                                  </div>
+                                </div>
+
+                                {/* Main details */}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.35rem' }}>
+                                    <div>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                        <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--orange-600)', background: '#fff7ed', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                                          {formatOrderId(ord?.id)}
+                                        </span>
+                                        {ord?.isRush && (
+                                          <span className="badge badge-rush" style={{ fontSize: '0.6rem', padding: '0.05rem 0.35rem' }}>RUSH</span>
+                                        )}
+                                      </div>
+                                      <h4 style={{ margin: '0.25rem 0 0.1rem', fontSize: '0.92rem', fontWeight: 800, color: 'var(--navy-900)', lineHeight: 1.25 }}>
+                                        {ord?.title || 'Studio Order'}
+                                      </h4>
+                                    </div>
+                                    <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-900)', whiteSpace: 'nowrap' }}>
+                                      ${parseFloat(ord?.price || ord?.totalPrice || 0).toFixed(2)}
+                                    </span>
+                                  </div>
+
+                                  <div style={{ fontSize: '0.73rem', color: '#64748b', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                                    <span>{ord?.type === 'vector' ? '✒️ Vector Art' : (ord?.type === 'patch' ? '🏷️ Custom Patches' : '🧵 Embroidery')}</span>
+                                    <span>•</span>
+                                    <span>{ord?.createdAt || ord?.created_at ? new Date(ord.createdAt || ord.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Card Footer Actions */}
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid #f1f5f9' }}>
+                                <div>
+                                  {getPaymentStatusBadge(ord)}
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center' }}>
+                                  {!isPaid && (
                                     <button
-                                      className="btn btn-outline btn-sm"
-                                      onClick={() => setSelectedOrderForDrawer(ord)}
+                                      type="button"
+                                      onClick={() => handlePayOrder(ord)}
                                       style={{
+                                        background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                                        color: '#ffffff',
+                                        border: 'none',
+                                        padding: '0.35rem 0.75rem',
+                                        borderRadius: '6px',
+                                        fontWeight: 800,
+                                        fontSize: '0.75rem',
+                                        cursor: 'pointer',
                                         display: 'inline-flex',
                                         alignItems: 'center',
-                                        gap: '0.35rem',
-                                        padding: '0.45rem 0.85rem',
-                                        borderRadius: '8px',
-                                        fontWeight: 700,
-                                        fontSize: '0.8rem',
-                                        color: '#ff7a00',
-                                        borderColor: '#ff7a00',
-                                        whiteSpace: 'nowrap'
+                                        gap: '0.25rem',
+                                        boxShadow: '0 2px 6px rgba(249, 115, 22, 0.28)'
                                       }}
                                     >
-                                      View Order <ChevronRight size={15} />
+                                      <Zap size={12} /> Pay Now
                                     </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedOrderForDrawer(ord)}
+                                    style={{
+                                      background: '#f8fafc',
+                                      border: '1px solid #cbd5e1',
+                                      color: 'var(--navy-800)',
+                                      padding: '0.35rem 0.75rem',
+                                      borderRadius: '6px',
+                                      fontWeight: 700,
+                                      fontSize: '0.75rem',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem'
+                                    }}
+                                  >
+                                    Track Order <ChevronRight size={13} />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
                   )}
 
                   {/* Customer Orders Pagination Footer */}
@@ -1268,7 +1517,7 @@ export const CustomerDashboard = () => {
         />
       )}
 
-      {/* 3. FIXED NATIVE APP BOTTOM NAVIGATION BAR FOR MOBILE */}
+      {/* 3. FIXED NATIVE APP BOTTOM NAVIGATION BAR (Fiverr Standard Equal-Divide) */}
       <nav 
         className="mobile-only mobile-bottom-nav"
         style={{
@@ -1276,21 +1525,22 @@ export const CustomerDashboard = () => {
           bottom: 0,
           left: 0,
           right: 0,
+          width: '100%',
           zIndex: 9990,
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          borderTop: '1px solid rgba(226, 232, 240, 0.9)',
+          background: 'rgba(255, 255, 255, 0.98)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          borderTop: '1px solid rgba(226, 232, 240, 0.95)',
           display: 'grid',
           gridTemplateColumns: 'repeat(5, 1fr)',
           alignItems: 'center',
-          height: '62px',
-          padding: '0.2rem 0.25rem max(0.5rem, env(safe-area-inset-bottom, 0.5rem))',
+          height: '64px',
+          padding: '0.2rem 0 max(0.55rem, env(safe-area-inset-bottom, 0.55rem))',
           boxShadow: '0 -4px 20px rgba(15, 23, 42, 0.08)'
         }}
-        aria-label="Mobile Bottom Navigation"
+        aria-label="Mobile Navigation"
       >
-        {/* Tab 1: Dashboard */}
+        {/* Tab 1: Home / Dashboard */}
         <button
           type="button"
           onClick={() => {
@@ -1302,20 +1552,18 @@ export const CustomerDashboard = () => {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.15rem',
+            width: '100%',
+            color: activeTab === 'dashboard' ? 'var(--orange-600)' : '#64748b',
             background: 'none',
             border: 'none',
-            color: activeTab === 'dashboard' ? 'var(--orange-600)' : '#64748b',
-            fontWeight: activeTab === 'dashboard' ? 800 : 600,
-            fontSize: '0.65rem',
             cursor: 'pointer',
             padding: '0.2rem 0',
-            transition: 'all 0.2s ease'
+            transition: 'all 0.18s ease'
           }}
         >
           <div style={{
-            padding: '0.2rem 0.6rem',
-            borderRadius: '10px',
+            padding: '0.15rem 0.55rem',
+            borderRadius: '12px',
             background: activeTab === 'dashboard' ? '#fff7ed' : 'transparent',
             display: 'flex',
             alignItems: 'center',
@@ -1323,7 +1571,9 @@ export const CustomerDashboard = () => {
           }}>
             <LayoutDashboard size={19} style={{ color: activeTab === 'dashboard' ? 'var(--orange-600)' : '#64748b' }} />
           </div>
-          <span>Dashboard</span>
+          <span style={{ fontSize: '0.65rem', fontWeight: activeTab === 'dashboard' ? 800 : 600, marginTop: '0.1rem' }}>
+            Home
+          </span>
         </button>
 
         {/* Tab 2: Orders / Tracking */}
@@ -1341,31 +1591,51 @@ export const CustomerDashboard = () => {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.15rem',
+            width: '100%',
+            color: '#64748b',
             background: 'none',
             border: 'none',
-            color: '#64748b',
-            fontWeight: 600,
-            fontSize: '0.65rem',
             cursor: 'pointer',
             padding: '0.2rem 0',
-            transition: 'all 0.2s ease'
+            position: 'relative',
+            transition: 'all 0.18s ease'
           }}
         >
           <div style={{
-            padding: '0.2rem 0.6rem',
-            borderRadius: '10px',
+            padding: '0.15rem 0.55rem',
+            borderRadius: '12px',
             background: 'transparent',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            position: 'relative'
           }}>
             <PackageCheck size={19} style={{ color: '#64748b' }} />
+            {activeOrders.length > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '-2px',
+                right: '4px',
+                background: 'var(--orange-500)',
+                color: '#ffffff',
+                fontSize: '0.58rem',
+                fontWeight: 900,
+                borderRadius: '9999px',
+                padding: '0.05rem 0.3rem',
+                minWidth: '15px',
+                textAlign: 'center',
+                lineHeight: 1.2
+              }}>
+                {activeOrders.length}
+              </span>
+            )}
           </div>
-          <span>Orders</span>
+          <span style={{ fontSize: '0.65rem', fontWeight: 600, marginTop: '0.1rem' }}>
+            Orders
+          </span>
         </button>
 
-        {/* Tab 3: Center Elevated + Order Button */}
+        {/* Tab 3: Center Elevated + Order Action (Fiverr Standard) */}
         <button
           type="button"
           onClick={() => setIsServiceSelectorOpen(true)}
@@ -1374,11 +1644,12 @@ export const CustomerDashboard = () => {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
+            width: '100%',
             background: 'none',
             border: 'none',
             cursor: 'pointer',
             padding: 0,
-            marginTop: '-14px',
+            marginTop: '-16px',
             position: 'relative'
           }}
           aria-label="Create New Order"
@@ -1386,28 +1657,28 @@ export const CustomerDashboard = () => {
           <div style={{
             background: 'linear-gradient(135deg, #ff7a00 0%, #ff5500 100%)',
             color: '#ffffff',
-            width: '42px',
-            height: '42px',
+            width: '44px',
+            height: '44px',
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 6px 16px rgba(255, 122, 0, 0.45)',
+            boxShadow: '0 6px 18px rgba(255, 122, 0, 0.45)',
             border: '3px solid #ffffff'
           }}>
-            <Plus size={22} style={{ color: '#ffffff', strokeWidth: 3 }} />
+            <Plus size={24} style={{ color: '#ffffff', strokeWidth: 3 }} />
           </div>
           <span style={{ 
             fontSize: '0.62rem', 
             fontWeight: 800, 
             color: 'var(--orange-600)', 
-            marginTop: '0.1rem' 
+            marginTop: '0.15rem' 
           }}>
             + Order
           </span>
         </button>
 
-        {/* Tab 4: Live Support / Inbox */}
+        {/* Tab 4: Live Inbox / Support */}
         <button
           type="button"
           onClick={() => {
@@ -1418,21 +1689,19 @@ export const CustomerDashboard = () => {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.15rem',
+            width: '100%',
+            color: activeTab === 'support' ? 'var(--orange-600)' : '#64748b',
             background: 'none',
             border: 'none',
-            color: activeTab === 'support' ? 'var(--orange-600)' : '#64748b',
-            fontWeight: activeTab === 'support' ? 800 : 600,
-            fontSize: '0.65rem',
             cursor: 'pointer',
             padding: '0.2rem 0',
             position: 'relative',
-            transition: 'all 0.2s ease'
+            transition: 'all 0.18s ease'
           }}
         >
           <div style={{
-            padding: '0.2rem 0.6rem',
-            borderRadius: '10px',
+            padding: '0.15rem 0.55rem',
+            borderRadius: '12px',
             background: activeTab === 'support' ? '#fff7ed' : 'transparent',
             display: 'flex',
             alignItems: 'center',
@@ -1442,8 +1711,8 @@ export const CustomerDashboard = () => {
             <MessageSquare size={19} style={{ color: activeTab === 'support' ? 'var(--orange-600)' : '#64748b' }} />
             <span style={{
               position: 'absolute',
-              top: '3px',
-              right: '6px',
+              top: '2px',
+              right: '5px',
               width: '8px',
               height: '8px',
               borderRadius: '50%',
@@ -1451,7 +1720,9 @@ export const CustomerDashboard = () => {
               border: '1.5px solid #ffffff'
             }} />
           </div>
-          <span>Inbox</span>
+          <span style={{ fontSize: '0.65rem', fontWeight: activeTab === 'support' ? 800 : 600, marginTop: '0.1rem' }}>
+            Inbox
+          </span>
         </button>
 
         {/* Tab 5: Studio Wallet */}
@@ -1463,20 +1734,18 @@ export const CustomerDashboard = () => {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.15rem',
+            width: '100%',
+            color: '#64748b',
             background: 'none',
             border: 'none',
-            color: '#64748b',
-            fontWeight: 600,
-            fontSize: '0.65rem',
             cursor: 'pointer',
             padding: '0.2rem 0',
-            transition: 'all 0.2s ease'
+            transition: 'all 0.18s ease'
           }}
         >
           <div style={{
-            padding: '0.2rem 0.6rem',
-            borderRadius: '10px',
+            padding: '0.15rem 0.55rem',
+            borderRadius: '12px',
             background: 'transparent',
             display: 'flex',
             alignItems: 'center',
@@ -1484,7 +1753,9 @@ export const CustomerDashboard = () => {
           }}>
             <Wallet size={19} style={{ color: '#64748b' }} />
           </div>
-          <span>${walletBalance.toFixed(0)}</span>
+          <span style={{ fontSize: '0.65rem', fontWeight: 600, marginTop: '0.1rem' }}>
+            ${walletBalance.toFixed(0)}
+          </span>
         </button>
       </nav>
 
