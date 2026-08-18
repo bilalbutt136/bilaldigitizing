@@ -14,7 +14,8 @@ import {
   ExternalLink,
   Lock,
   Zap,
-  Coins
+  Coins,
+  ArrowLeft
 } from 'lucide-react';
 
 // Authentic Branded Payment Method SVG Components (matching CheckoutModal)
@@ -370,14 +371,41 @@ export const DepositModal = () => {
           flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ 
-              width: '36px', height: '36px', borderRadius: '50%', 
-              background: isPaid ? 'rgba(16, 185, 129, 0.2)' : 'rgba(249, 115, 22, 0.2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: isPaid ? '#10b981' : 'var(--orange-400)'
-            }}>
-              {isPaid ? <CheckCircle size={20} /> : <Wallet size={20} />}
-            </div>
+            {activeView !== 'select' && !isPaid ? (
+              <button
+                type="button"
+                onClick={() => { setActiveView('select'); setSelectedMethod(null); }}
+                title="Back to Payment Methods"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  color: '#ffffff',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  flexShrink: 0
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.background = 'var(--orange-500)'; e.currentTarget.style.borderColor = 'var(--orange-400)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.25)'; }}
+              >
+                <ArrowLeft size={18} />
+              </button>
+            ) : (
+              <div style={{ 
+                width: '36px', height: '36px', borderRadius: '50%', 
+                background: isPaid ? 'rgba(16, 185, 129, 0.2)' : 'rgba(249, 115, 22, 0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: isPaid ? '#10b981' : 'var(--orange-400)',
+                flexShrink: 0
+              }}>
+                {isPaid ? <CheckCircle size={20} /> : <Wallet size={20} />}
+              </div>
+            )}
             <div>
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#ffffff' }}>
                 {isPaid ? 'Deposit Successful' : (
@@ -394,20 +422,47 @@ export const DepositModal = () => {
             </div>
           </div>
 
-          <button 
-            onClick={handleClose}
-            style={{ 
-              background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#cbd5e1', 
-              width: '32px', height: '32px', borderRadius: '50%', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', 
-              cursor: 'pointer', transition: 'all 0.2s ease' 
-            }}
-            onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = '#fff'; }}
-            onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#cbd5e1'; }}
-            aria-label="Close"
-          >
-            <X size={16} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {activeView !== 'select' && !isPaid && (
+              <button
+                type="button"
+                onClick={() => { setActiveView('select'); setSelectedMethod(null); }}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  border: '1px solid rgba(255, 255, 255, 0.22)',
+                  color: '#ffffff',
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '8px',
+                  fontSize: '0.8rem',
+                  fontWeight: 800,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'; }}
+              >
+                <ArrowLeft size={14} /> Back
+              </button>
+            )}
+
+            <button 
+              onClick={handleClose}
+              style={{ 
+                background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#cbd5e1', 
+                width: '32px', height: '32px', borderRadius: '50%', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                cursor: 'pointer', transition: 'all 0.2s ease' 
+              }}
+              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = '#fff'; }}
+              onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#cbd5e1'; }}
+              aria-label="Close"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Content Body */}
@@ -593,17 +648,27 @@ export const DepositModal = () => {
                   type="button"
                   onClick={() => { setActiveView('select'); setSelectedMethod(null); }}
                   style={{
-                    background: 'transparent',
-                    color: 'var(--text-muted)',
-                    border: 'none',
-                    padding: '0.4rem',
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: '#ffffff',
+                    color: 'var(--navy-800)',
+                    border: '1.5px solid #cbd5e1',
+                    borderRadius: '12px',
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
                     cursor: 'pointer',
-                    textAlign: 'center'
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.45rem',
+                    transition: 'all 0.15s ease',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
                   }}
+                  onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--orange-500)'; e.currentTarget.style.color = 'var(--orange-600)'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.color = 'var(--navy-800)'; }}
                 >
-                  ← Choose Different Method or Amount
+                  <ArrowLeft size={16} />
+                  <span>Choose Different Method or Amount</span>
                 </button>
               </div>
 
@@ -726,17 +791,27 @@ export const DepositModal = () => {
                   type="button"
                   onClick={() => { setActiveView('select'); setSelectedMethod(null); }}
                   style={{
-                    background: 'transparent',
-                    color: 'var(--text-muted)',
-                    border: 'none',
-                    padding: '0.4rem',
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: '#ffffff',
+                    color: 'var(--navy-800)',
+                    border: '1.5px solid #cbd5e1',
+                    borderRadius: '12px',
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
                     cursor: 'pointer',
-                    textAlign: 'center'
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.45rem',
+                    transition: 'all 0.15s ease',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
                   }}
+                  onMouseOver={(e) => { e.currentTarget.style.borderColor = '#16a34a'; e.currentTarget.style.color = '#16a34a'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.color = 'var(--navy-800)'; }}
                 >
-                  ← Choose Different Method or Amount
+                  <ArrowLeft size={16} />
+                  <span>Choose Different Method or Amount</span>
                 </button>
               </div>
 
@@ -903,17 +978,27 @@ export const DepositModal = () => {
                   type="button"
                   onClick={() => { setActiveView('select'); setSelectedMethod(null); }}
                   style={{
-                    background: 'transparent',
-                    color: 'var(--text-muted)',
-                    border: 'none',
-                    padding: '0.4rem',
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: '#ffffff',
+                    color: 'var(--navy-800)',
+                    border: '1.5px solid #cbd5e1',
+                    borderRadius: '12px',
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
                     cursor: 'pointer',
-                    textAlign: 'center'
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.45rem',
+                    transition: 'all 0.15s ease',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
                   }}
+                  onMouseOver={(e) => { e.currentTarget.style.borderColor = '#003087'; e.currentTarget.style.color = '#003087'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.color = 'var(--navy-800)'; }}
                 >
-                  ← Choose Different Method or Amount
+                  <ArrowLeft size={16} />
+                  <span>Choose Different Method or Amount</span>
                 </button>
               </div>
 
@@ -983,17 +1068,27 @@ export const DepositModal = () => {
                   type="button"
                   onClick={() => { setActiveView('select'); setSelectedMethod(null); }}
                   style={{
-                    background: 'transparent',
-                    color: 'var(--text-muted)',
-                    border: 'none',
-                    padding: '0.4rem',
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: '#ffffff',
+                    color: 'var(--navy-800)',
+                    border: '1.5px solid #cbd5e1',
+                    borderRadius: '12px',
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
                     cursor: 'pointer',
-                    textAlign: 'center'
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.45rem',
+                    transition: 'all 0.15s ease',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
                   }}
+                  onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--orange-500)'; e.currentTarget.style.color = 'var(--orange-600)'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.color = 'var(--navy-800)'; }}
                 >
-                  ← Choose Different Method or Amount
+                  <ArrowLeft size={16} />
+                  <span>Choose Different Method or Amount</span>
                 </button>
               </div>
 
