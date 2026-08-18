@@ -354,7 +354,7 @@ export const OrderTrackerDrawer = () => {
           border: '1px solid rgba(255, 255, 255, 0.12)',
           boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.5)',
           overflow: 'hidden',
-          background: '#ffffff'
+          background: 'var(--bg-card)'
         }}
       >
         
@@ -447,8 +447,8 @@ export const OrderTrackerDrawer = () => {
            ================================================================== */}
         <div style={{
           display: 'flex',
-          borderBottom: '1px solid #e2e8f0',
-          background: '#f8fafc',
+          borderBottom: '1px solid var(--border-color)',
+          background: 'var(--bg-surface)',
           padding: '0.6rem 1.5rem',
           gap: '0.5rem',
           overflowX: 'auto'
@@ -500,15 +500,15 @@ export const OrderTrackerDrawer = () => {
         {/* ==================================================================
             3. MAIN SCROLLABLE CONTENT BODY (SINGLE PAGE)
            ================================================================== */}
-        <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1, background: '#f8fafc', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1, background: 'var(--bg-main)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
           {/* STEPPER PROGRESS TRACKER */}
           <div style={{
-            background: '#ffffff',
-            border: '1.5px solid #e2e8f0',
+            background: 'var(--bg-card)',
+            border: '1.5px solid var(--border-color)',
             borderRadius: '16px',
             padding: '1rem 1.4rem',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+            boxShadow: 'var(--shadow-sm)'
           }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
               {[
@@ -623,18 +623,18 @@ export const OrderTrackerDrawer = () => {
           <div 
             ref={deliveryRef}
             style={{
-              background: '#ffffff',
+              background: 'var(--bg-card)',
               borderRadius: '16px',
-              border: '1.5px solid #e2e8f0',
+              border: '1.5px solid var(--border-color)',
               padding: '1.5rem',
-              boxShadow: '0 4px 14px rgba(0,0,0,0.03)'
+              boxShadow: 'var(--shadow-sm)'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontSize: '1.3rem' }}>📦</span>
                 <div>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
+                  <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                     {isAdmin ? 'Deliver Order & Files (Admin Desk)' : 'Delivered Production Files'}
                   </h4>
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
@@ -657,12 +657,12 @@ export const OrderTrackerDrawer = () => {
 
             {/* ADMIN DELIVERY COMPOSER */}
             {isAdmin && (
-              <form onSubmit={handleAdminDeliverOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: '#f8fafc', padding: '1.25rem', borderRadius: '14px', border: '1.5px dashed var(--orange-500)', marginBottom: '1.25rem' }}>
+              <form onSubmit={handleAdminDeliverOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-surface)', padding: '1.25rem', borderRadius: '14px', border: '1.5px dashed var(--orange-500)', marginBottom: '1.25rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.92rem' }}>
+                  <span style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '0.92rem' }}>
                     📤 Upload Deliverables & Write Delivery Note
                   </span>
-                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.45rem 1rem', background: 'var(--navy-900)', color: '#ffffff', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.45rem 1rem', background: 'var(--orange-500)', color: '#ffffff', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>
                     <UploadCloud size={14} /> Browse Machine Files
                     <input type="file" multiple accept="*/*" onChange={(e) => processAdminFilesList(e.target.files)} style={{ display: 'none' }} />
                   </label>
@@ -672,10 +672,10 @@ export const OrderTrackerDrawer = () => {
                 {adminFilesList.length > 0 && (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem' }}>
                     {adminFilesList.map((f, idx) => (
-                      <div key={idx} style={{ background: '#ffffff', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div key={idx} style={{ background: 'var(--bg-card)', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
                           <FileCheck size={14} style={{ color: '#10b981', flexShrink: 0 }} />
-                          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--navy-900)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</span>
+                          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</span>
                         </div>
                         <button type="button" onClick={() => removeAdminFile(idx)} style={{ border: 'none', background: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}><Trash2 size={13}/></button>
                       </div>
@@ -828,18 +828,18 @@ export const OrderTrackerDrawer = () => {
           <div 
             ref={requirementsRef}
             style={{
-              background: '#ffffff',
+              background: 'var(--bg-card)',
               borderRadius: '16px',
-              border: '1.5px solid #e2e8f0',
+              border: '1.5px solid var(--border-color)',
               padding: '1.5rem',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
+              boxShadow: 'var(--shadow-sm)'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontSize: '1.3rem' }}>📋</span>
                 <div>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
+                  <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                     Order Requirements & Specifications
                   </h4>
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
@@ -857,14 +857,14 @@ export const OrderTrackerDrawer = () => {
                   width: '180px', 
                   flexShrink: 0, 
                   cursor: 'pointer', 
-                  background: '#f8fafc', 
-                  border: '1.5px solid #e2e8f0', 
+                  background: 'var(--bg-surface)', 
+                  border: '1.5px solid var(--border-color)', 
                   borderRadius: '12px', 
                   padding: '0.65rem',
                   textAlign: 'center'
                 }}
               >
-                <div style={{ height: '150px', background: '#ffffff', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
+                <div style={{ height: '150px', background: 'var(--bg-card)', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-color)' }}>
                   <img 
                     src={primaryArtworkSrc} 
                     alt="Design"
@@ -875,7 +875,7 @@ export const OrderTrackerDrawer = () => {
                     style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '6px' }}
                   />
                 </div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-600)', marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-500)', marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
                   <ZoomIn size={12} /> Inspect Full Logo
                 </div>
               </div>
@@ -883,41 +883,41 @@ export const OrderTrackerDrawer = () => {
               {/* Specs Grid */}
               <div style={{ flex: 1, minWidth: '280px', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.65rem' }}>
-                  <div style={{ background: '#f8fafc', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ background: 'var(--bg-surface)', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Service Category</div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--navy-900)', marginTop: '0.15rem' }}>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.15rem' }}>
                       {ord.serviceCategory || (ord.type === 'vector' ? 'Vector Art' : 'Embroidery Digitizing')}
                     </div>
                   </div>
 
-                  <div style={{ background: '#f8fafc', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ background: 'var(--bg-surface)', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Target Fabric</div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--navy-900)', marginTop: '0.15rem' }}>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.15rem' }}>
                       {formatFabric(ord.fabric || ord.fabricType)}
                     </div>
                   </div>
 
-                  <div style={{ background: '#f8fafc', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ background: 'var(--bg-surface)', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Dimensions</div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--navy-900)', marginTop: '0.15rem' }}>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.15rem' }}>
                       {formatDimensions(ord.dimensions || ord.size)}
                     </div>
                   </div>
 
-                  <div style={{ background: '#f8fafc', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ background: 'var(--bg-surface)', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Placement</div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--navy-900)', marginTop: '0.15rem' }}>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.15rem' }}>
                       {ord.placement || ord.placementItems?.[0]?.placement || 'Standard Placement'}
                     </div>
                   </div>
                 </div>
 
                 {/* Customer Instructions Text */}
-                <div style={{ background: '#f8fafc', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--navy-800)', marginBottom: '0.25rem' }}>
+                <div style={{ background: 'var(--bg-surface)', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--orange-500)', marginBottom: '0.25rem' }}>
                     📝 Customer Notes & Instructions:
                   </div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--navy-900)', lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>
                     {ord.notes || 'Standard high-density stitch pathing with underlay and pull compensation applied for commercial production.'}
                   </div>
                 </div>
@@ -926,23 +926,23 @@ export const OrderTrackerDrawer = () => {
 
             {/* Attached Original Source Files */}
             {uniqueArtworkFiles.length > 0 && (
-              <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
-                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.65rem' }}>
+              <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.65rem' }}>
                   📎 Source Artwork Files ({uniqueArtworkFiles.length})
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.65rem' }}>
                   {uniqueArtworkFiles.map((artFile, aIdx) => {
                     const fileExt = (artFile.format || artFile.name?.split('.').pop() || 'png').toUpperCase();
                     return (
-                      <div key={aIdx} style={{ background: '#f8fafc', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div key={aIdx} style={{ background: 'var(--bg-surface)', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--navy-900)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{artFile.name || `Artwork_${aIdx + 1}.${fileExt.toLowerCase()}`}</div>
+                          <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{artFile.name || `Artwork_${aIdx + 1}.${fileExt.toLowerCase()}`}</div>
                           <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>.{fileExt} Original</div>
                         </div>
                         <button
                           type="button"
                           onClick={() => triggerFileDownload(artFile.url || artFile.public_url, artFile.name || `artwork_${aIdx + 1}.${fileExt.toLowerCase()}`, fileExt.toLowerCase())}
-                          style={{ border: 'none', background: 'none', color: 'var(--orange-600)', cursor: 'pointer', padding: '0.2rem' }}
+                          style={{ border: 'none', background: 'none', color: 'var(--orange-500)', cursor: 'pointer', padding: '0.2rem' }}
                           title="Download Original"
                         >
                           <Download size={14} />
@@ -961,18 +961,18 @@ export const OrderTrackerDrawer = () => {
           <div 
             ref={modificationRef}
             style={{
-              background: '#ffffff',
+              background: 'var(--bg-card)',
               borderRadius: '16px',
-              border: '1.5px solid #e2e8f0',
+              border: '1.5px solid var(--border-color)',
               padding: '1.5rem',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
+              boxShadow: 'var(--shadow-sm)'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontSize: '1.3rem' }}>🔄</span>
                 <div>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
+                  <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                     Modification & Revision Requests
                   </h4>
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
@@ -986,19 +986,19 @@ export const OrderTrackerDrawer = () => {
             {Array.isArray(ord.revisions) && ord.revisions.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1rem' }}>
                 {ord.revisions.map((rev, idx) => (
-                  <div key={idx} style={{ background: '#fffbeb', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #fde68a' }}>
-                    <div style={{ fontSize: '0.72rem', color: '#b45309', fontWeight: 800, marginBottom: '0.2rem' }}>
+                  <div key={idx} style={{ background: 'rgba(245, 158, 11, 0.12)', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#f59e0b', fontWeight: 800, marginBottom: '0.2rem' }}>
                       🔄 Revision #{ord.revisions.length - idx} • {new Date(rev.createdAt || rev.created_at || Date.now()).toLocaleDateString()}
                     </div>
-                    <div style={{ fontSize: '0.84rem', color: '#78350f', whiteSpace: 'pre-wrap' }}>{rev.note || rev.notes || rev.details}</div>
+                    <div style={{ fontSize: '0.84rem', color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>{rev.note || rev.notes || rev.details}</div>
                   </div>
                 ))}
               </div>
             )}
 
             {/* Submit Revision Form */}
-            <form onSubmit={handleRevisionSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: '#f8fafc', padding: '1.15rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--navy-900)' }}>
+            <form onSubmit={handleRevisionSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--bg-surface)', padding: '1.15rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)' }}>
                 Describe Required Changes:
               </label>
               <textarea 
@@ -1011,7 +1011,7 @@ export const OrderTrackerDrawer = () => {
               />
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.78rem', color: 'var(--navy-700)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#fff', border: '1px solid #cbd5e1', padding: '0.4rem 0.8rem', borderRadius: '8px', fontWeight: 600 }}>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '0.4rem 0.8rem', borderRadius: '8px', fontWeight: 600 }}>
                   📎 {revisionImage ? revisionImage.name : 'Attach Reference Image / Screenshot'}
                   <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => { if(e.target.files && e.target.files[0]) setRevisionImage(e.target.files[0]); }} />
                 </label>
@@ -1034,18 +1034,18 @@ export const OrderTrackerDrawer = () => {
           <div 
             ref={messagesRef}
             style={{
-              background: '#ffffff',
+              background: 'var(--bg-card)',
               borderRadius: '16px',
-              border: '1.5px solid #e2e8f0',
+              border: '1.5px solid var(--border-color)',
               padding: '1.5rem',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
+              boxShadow: 'var(--shadow-sm)'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontSize: '1.3rem' }}>💬</span>
                 <div>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
+                  <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                     Project Discussion & Activity
                   </h4>
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
@@ -1058,7 +1058,7 @@ export const OrderTrackerDrawer = () => {
             {/* Message Feed */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', maxHeight: '280px', overflowY: 'auto', padding: '0.35rem', marginBottom: '0.85rem' }}>
               {(!Array.isArray(ord.messages) || ord.messages.length === 0) ? (
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem', padding: '1.5rem 1rem', textAlign: 'center', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem', padding: '1.5rem 1rem', textAlign: 'center', background: 'var(--bg-surface)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                   No messages on this project yet. Write below to chat with your digitizer.
                 </div>
               ) : (
@@ -1066,9 +1066,9 @@ export const OrderTrackerDrawer = () => {
                   const isMsgAdmin = msg.senderRole === 'admin' || msg.sender === 'admin';
                   return (
                     <div key={mIdx} style={{ 
-                      background: isMsgAdmin ? 'linear-gradient(135deg, #090f1d 0%, #162033 100%)' : '#f8fafc', 
-                      color: isMsgAdmin ? '#ffffff' : 'var(--navy-900)',
-                      border: isMsgAdmin ? 'none' : '1px solid #e2e8f0',
+                      background: isMsgAdmin ? 'linear-gradient(135deg, #090f1d 0%, #162033 100%)' : 'var(--bg-surface)', 
+                      color: isMsgAdmin ? '#ffffff' : 'var(--text-main)',
+                      border: isMsgAdmin ? 'none' : '1px solid var(--border-color)',
                       padding: '0.75rem 1rem', 
                       borderRadius: '10px', 
                       alignSelf: isMsgAdmin ? 'flex-end' : 'flex-start',
@@ -1087,7 +1087,7 @@ export const OrderTrackerDrawer = () => {
             {/* Message Composer */}
             <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '0.5rem' }}>
               <input 
-                type="text"
+                type="text" 
                 className="form-control" 
                 placeholder="Type a message or question..." 
                 value={chatMessageText} 
@@ -1107,20 +1107,20 @@ export const OrderTrackerDrawer = () => {
            ================================================================== */}
         <div style={{
           padding: '0.85rem 1.6rem',
-          background: '#ffffff',
-          borderTop: '1px solid #e2e8f0',
+          background: 'var(--bg-card)',
+          borderTop: '1px solid var(--border-color)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: '0.75rem',
-          boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.03)'
+          boxShadow: 'var(--shadow-sm)'
         }}>
           {/* Left: Total Price and Payment Badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div>
               <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase' }}>Project Total</div>
-              <div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--navy-950)', lineHeight: 1 }}>
+              <div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)', lineHeight: 1 }}>
                 ${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)}
               </div>
             </div>

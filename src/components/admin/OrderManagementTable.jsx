@@ -241,7 +241,7 @@ export const OrderManagementTable = () => {
   };
 
   return (
-    <div className="card" style={{ padding: 'clamp(0.85rem, 2vw, 1.5rem)', background: '#ffffff', borderRadius: '16px', boxShadow: '0 8px 30px rgba(15, 23, 42, 0.05)' }}>
+    <div className="card" style={{ padding: 'clamp(0.85rem, 2vw, 1.5rem)', background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
       
       {/* Controls & Lifecycle Filter Tabs */}
       <div style={{
@@ -317,7 +317,7 @@ export const OrderManagementTable = () => {
             className="form-control"
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            style={{ minWidth: '140px', flex: '1 1 auto', fontWeight: 800, fontSize: '0.825rem', background: '#ffffff', color: 'var(--navy-900)' }}
+            style={{ minWidth: '140px', flex: '1 1 auto', fontWeight: 800, fontSize: '0.825rem', background: 'var(--bg-surface)', color: 'var(--text-main)' }}
           >
             <option value="all">📂 All Categories</option>
             <option value="embroidery">🧵 Embroidery</option>
@@ -330,7 +330,7 @@ export const OrderManagementTable = () => {
             className="form-control"
             value={filterPayment}
             onChange={(e) => setFilterPayment(e.target.value)}
-            style={{ minWidth: '130px', flex: '1 1 auto', fontWeight: 800, fontSize: '0.825rem', background: '#ffffff', color: 'var(--navy-900)' }}
+            style={{ minWidth: '130px', flex: '1 1 auto', fontWeight: 800, fontSize: '0.825rem', background: 'var(--bg-surface)', color: 'var(--text-main)' }}
           >
             <option value="all">💳 All Payments</option>
             <option value="paid">✅ Paid Only</option>
@@ -361,16 +361,16 @@ export const OrderManagementTable = () => {
           overflowX: 'auto', 
           border: '1px solid var(--border-color)',
           borderRadius: '12px',
-          background: '#ffffff',
+          background: 'var(--bg-card)',
           boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)',
           WebkitOverflowScrolling: 'touch'
         }}
       >
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
-          <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f8fafc', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-surface)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
             <tr style={{ 
               borderBottom: '2px solid var(--border-color)', 
-              color: 'var(--navy-900)',
+              color: 'var(--text-main)',
               fontSize: '0.725rem',
               fontWeight: 800,
               letterSpacing: '0.04em'

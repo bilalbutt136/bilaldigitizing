@@ -132,7 +132,7 @@ export const HeaderNav = () => {
   };
 
   return (
-    <header style={{ position: 'sticky', top: 0, zIndex: 1000, background: isScrolled ? 'rgba(255, 255, 255, 0.85)' : '#ffffff', backdropFilter: isScrolled ? 'blur(12px)' : 'none', borderBottom: '1px solid var(--border-color)', transition: 'all 0.3s ease', boxShadow: isScrolled ? 'var(--shadow-sm)' : 'none' }}>
+    <header style={{ position: 'sticky', top: 0, zIndex: 1000, background: 'var(--bg-card)', backdropFilter: isScrolled ? 'blur(12px)' : 'none', borderBottom: '1px solid var(--border-color)', transition: 'all 0.3s ease', boxShadow: isScrolled ? 'var(--shadow-sm)' : 'none' }}>
       {/* Main Brand Navbar */}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1.5rem', width: '100%', maxWidth: '1280px', margin: '0 auto' }}>
@@ -142,7 +142,7 @@ export const HeaderNav = () => {
           onClick={handleGoHome}
         >
           <div style={{
-            background: 'linear-gradient(135deg, var(--navy-900), #ff7a00)',
+            background: 'linear-gradient(135deg, #090d16, #ff7a00)',
             color: '#ffffff',
             padding: '0.45rem',
             borderRadius: 'var(--radius-md)',
@@ -155,7 +155,7 @@ export const HeaderNav = () => {
             <Scissors size={20} style={{ color: 'var(--orange-500)' }} />
           </div>
           <div>
-            <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.15rem', color: 'var(--navy-900)', letterSpacing: '-0.02em', leading: 1, whiteSpace: 'nowrap' }}>
+            <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', letterSpacing: '-0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
               BILAL DIGITIZING<span style={{ color: 'var(--orange-500)' }}>.PRO</span>
             </div>
             <div className="desktop-only" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -166,14 +166,14 @@ export const HeaderNav = () => {
 
         {/* Public Navigation Links (Desktop) */}
         {safeCurrentView === 'public' && (
-                    <nav className="desktop-only" style={{ alignItems: 'center', gap: '1.75rem' }}>
+          <nav className="desktop-only" style={{ alignItems: 'center', gap: '1.75rem' }}>
             {/* Home Link */}
             <button 
               onClick={handleGoHome}
               style={{ 
                 background: 'none', 
                 border: 'none', 
-                color: currentPath === '/' ? 'var(--orange-600)' : 'var(--navy-800)', 
+                color: currentPath === '/' ? 'var(--orange-500)' : 'var(--text-main)', 
                 fontWeight: currentPath === '/' ? 800 : 600, 
                 fontSize: '0.925rem', 
                 cursor: 'pointer', 
@@ -198,7 +198,7 @@ export const HeaderNav = () => {
                 style={{ 
                   background: 'none', 
                   border: 'none', 
-                  color: (currentPath.includes('/services') || currentPath === '/custom-patches') ? 'var(--orange-600)' : 'var(--navy-800)', 
+                  color: (currentPath.includes('/services') || currentPath === '/custom-patches') ? 'var(--orange-500)' : 'var(--text-main)', 
                   fontWeight: (currentPath.includes('/services') || currentPath === '/custom-patches') ? 800 : 600, 
                   fontSize: '0.925rem', 
                   cursor: 'pointer', 
@@ -223,10 +223,10 @@ export const HeaderNav = () => {
                 }}>
                   <div style={{
                     width: '240px',
-                    background: '#ffffff',
+                    background: 'var(--bg-card)',
                     border: '1.5px solid var(--border-color)',
                     borderRadius: '12px',
-                    boxShadow: '0 12px 32px rgba(15, 23, 42, 0.15)',
+                    boxShadow: '0 12px 32px rgba(0, 0, 0, 0.25)',
                     padding: '0.4rem',
                     display: 'flex',
                     flexDirection: 'column',
@@ -250,7 +250,7 @@ export const HeaderNav = () => {
                         border: 'none',
                         borderRadius: '8px',
                         cursor: 'pointer',
-                        color: 'var(--navy-900)',
+                        color: 'var(--text-main)',
                         fontSize: '0.875rem',
                         fontWeight: 700,
                         transition: 'all 0.18s ease',
@@ -259,12 +259,12 @@ export const HeaderNav = () => {
                         gap: '0.5rem'
                       }}
                       onMouseOver={(e) => {
-                        e.currentTarget.style.background = '#fff7ed';
-                        e.currentTarget.style.color = 'var(--orange-600)';
+                        e.currentTarget.style.background = 'rgba(249, 115, 22, 0.12)';
+                        e.currentTarget.style.color = 'var(--orange-500)';
                       }}
                       onMouseOut={(e) => {
                         e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--navy-900)';
+                        e.currentTarget.style.color = 'var(--text-main)';
                       }}
                     >
                       <PenTool size={16} /> Embroidery Digitizing
@@ -287,7 +287,7 @@ export const HeaderNav = () => {
                         border: 'none',
                         borderRadius: '8px',
                         cursor: 'pointer',
-                        color: 'var(--navy-900)',
+                        color: 'var(--text-main)',
                         fontSize: '0.875rem',
                         fontWeight: 700,
                         transition: 'all 0.18s ease',
@@ -296,12 +296,12 @@ export const HeaderNav = () => {
                         gap: '0.5rem'
                       }}
                       onMouseOver={(e) => {
-                        e.currentTarget.style.background = '#fff7ed';
-                        e.currentTarget.style.color = 'var(--orange-600)';
+                        e.currentTarget.style.background = 'rgba(249, 115, 22, 0.12)';
+                        e.currentTarget.style.color = 'var(--orange-500)';
                       }}
                       onMouseOut={(e) => {
                         e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--navy-900)';
+                        e.currentTarget.style.color = 'var(--text-main)';
                       }}
                     >
                       <ImageIcon size={16} /> Vector Art
@@ -324,7 +324,7 @@ export const HeaderNav = () => {
                         border: 'none',
                         borderRadius: '8px',
                         cursor: 'pointer',
-                        color: 'var(--navy-900)',
+                        color: 'var(--text-main)',
                         fontSize: '0.875rem',
                         fontWeight: 700,
                         transition: 'all 0.18s ease',
@@ -333,12 +333,12 @@ export const HeaderNav = () => {
                         gap: '0.5rem'
                       }}
                       onMouseOver={(e) => {
-                        e.currentTarget.style.background = '#fff7ed';
-                        e.currentTarget.style.color = 'var(--orange-600)';
+                        e.currentTarget.style.background = 'rgba(249, 115, 22, 0.12)';
+                        e.currentTarget.style.color = 'var(--orange-500)';
                       }}
                       onMouseOut={(e) => {
                         e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--navy-900)';
+                        e.currentTarget.style.color = 'var(--text-main)';
                       }}
                     >
                       <Award size={16} /> Custom Patches
@@ -357,7 +357,7 @@ export const HeaderNav = () => {
               style={{ 
                 background: 'none', 
                 border: 'none', 
-                color: currentPath === '/portfolio' ? 'var(--orange-600)' : 'var(--navy-800)', 
+                color: currentPath === '/portfolio' ? 'var(--orange-500)' : 'var(--text-main)', 
                 fontWeight: currentPath === '/portfolio' ? 800 : 600, 
                 fontSize: '0.925rem', 
                 cursor: 'pointer', 
@@ -376,7 +376,7 @@ export const HeaderNav = () => {
               style={{ 
                 background: 'none', 
                 border: 'none', 
-                color: currentPath === '/pricing' ? 'var(--orange-600)' : 'var(--navy-800)', 
+                color: currentPath === '/pricing' ? 'var(--orange-500)' : 'var(--text-main)', 
                 fontWeight: currentPath === '/pricing' ? 800 : 600, 
                 fontSize: '0.925rem', 
                 cursor: 'pointer', 
@@ -395,7 +395,7 @@ export const HeaderNav = () => {
               style={{ 
                 background: 'none', 
                 border: 'none', 
-                color: currentPath === '/faqs' ? 'var(--orange-600)' : 'var(--navy-800)', 
+                color: currentPath === '/faqs' ? 'var(--orange-500)' : 'var(--text-main)', 
                 fontWeight: currentPath === '/faqs' ? 800 : 600, 
                 fontSize: '0.925rem', 
                 cursor: 'pointer', 
@@ -454,9 +454,9 @@ export const HeaderNav = () => {
             className="mobile-only"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             style={{
-              background: isMobileMenuOpen ? 'var(--orange-50)' : 'transparent',
+              background: isMobileMenuOpen ? 'rgba(255, 122, 0, 0.12)' : 'transparent',
               border: isMobileMenuOpen ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
-              color: isMobileMenuOpen ? 'var(--orange-600)' : 'var(--navy-900)',
+              color: isMobileMenuOpen ? 'var(--orange-500)' : 'var(--text-main)',
               width: '42px',
               height: '42px',
               minWidth: '42px',
@@ -488,8 +488,8 @@ export const HeaderNav = () => {
                   alignItems: 'center',
                   gap: '0.35rem',
                   fontWeight: 700,
-                  borderColor: 'var(--navy-300)',
-                  color: 'var(--navy-800)',
+                  borderColor: 'var(--border-color)',
+                  color: 'var(--text-main)',
                   background: 'transparent',
                   padding: '0.45rem 0.85rem',
                   fontSize: '0.85rem',
@@ -507,7 +507,7 @@ export const HeaderNav = () => {
           ) : (
             <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               {safeCurrentView === 'public' && (
-                <button
+                <button 
                   className="btn btn-outline btn-sm"
                   style={{
                     display: 'flex',
@@ -515,8 +515,8 @@ export const HeaderNav = () => {
                     gap: '0.35rem',
                     fontWeight: 800,
                     borderColor: 'var(--orange-500)',
-                    color: 'var(--orange-600)',
-                    background: '#ffffff',
+                    color: 'var(--orange-500)',
+                    background: 'var(--bg-card)',
                     borderRadius: '8px',
                     padding: '0.35rem 0.85rem'
                   }}
@@ -793,7 +793,7 @@ export const HeaderNav = () => {
             left: '0',
             width: '100vw',
             height: '100dvh',
-            background: 'rgba(255, 255, 255, 0.98)',
+            background: 'var(--bg-card)',
             backdropFilter: 'blur(20px)',
             zIndex: 9999,
             display: 'flex',
@@ -812,7 +812,7 @@ export const HeaderNav = () => {
               position: 'absolute',
               top: '1rem',
               right: '1.25rem',
-              background: '#f1f5f9',
+              background: 'var(--bg-surface)',
               border: '1px solid var(--border-color)',
               borderRadius: '50%',
               width: '40px',
@@ -821,7 +821,7 @@ export const HeaderNav = () => {
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              color: 'var(--navy-900)'
+              color: 'var(--text-main)'
             }}
             aria-label="Close menu"
           >
@@ -837,7 +837,7 @@ export const HeaderNav = () => {
             borderBottom: '1px solid var(--border-color)',
             marginTop: '0.5rem'
           }}>
-            <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--navy-900)' }}>
+            <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-main)' }}>
               Theme Mood
             </span>
             <ThemeToggle variant="pill" />
@@ -849,12 +849,12 @@ export const HeaderNav = () => {
               handleGoHome();
               setIsMobileMenuOpen(false);
             }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.2rem', color: 'var(--navy-900)', padding: '0.65rem 0', borderBottom: '1px solid var(--border-color)' }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.2rem', color: 'var(--text-main)', padding: '0.65rem 0', borderBottom: '1px solid var(--border-color)' }}
           >
             Home
           </button>
 
-          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-500)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.5rem' }}>
             Services
           </div>
 
@@ -864,7 +864,7 @@ export const HeaderNav = () => {
               navigate('/services/embroidery-digitizing');
               setIsMobileMenuOpen(false);
             }}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.05rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-main)', padding: '0.5rem 0' }}
           >
             <PenTool size={18} style={{ color: 'var(--orange-500)' }} /> Embroidery Digitizing
           </button>
@@ -875,7 +875,7 @@ export const HeaderNav = () => {
               navigate('/services/vector-tracing');
               setIsMobileMenuOpen(false);
             }}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.05rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-main)', padding: '0.5rem 0' }}
           >
             <ImageIcon size={18} style={{ color: '#2563eb' }} /> Vector Art
           </button>
@@ -886,7 +886,7 @@ export const HeaderNav = () => {
               navigate('/custom-patches');
               setIsMobileMenuOpen(false);
             }}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.05rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-main)', padding: '0.5rem 0' }}
           >
             <Award size={18} style={{ color: '#10b981' }} /> Custom Patches
           </button>
@@ -899,7 +899,7 @@ export const HeaderNav = () => {
               navigate('/portfolio');
               setIsMobileMenuOpen(false);
             }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.15rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', padding: '0.5rem 0' }}
           >
             Portfolio
           </button>
@@ -910,7 +910,7 @@ export const HeaderNav = () => {
               navigate('/pricing');
               setIsMobileMenuOpen(false);
             }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.15rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', padding: '0.5rem 0' }}
           >
             Pricing
           </button>
@@ -921,7 +921,7 @@ export const HeaderNav = () => {
               navigate('/faqs');
               setIsMobileMenuOpen(false);
             }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.15rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', padding: '0.5rem 0' }}
           >
             FAQs
           </button>
@@ -932,7 +932,7 @@ export const HeaderNav = () => {
               navigate('/blogs');
               setIsMobileMenuOpen(false);
             }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.15rem', color: 'var(--navy-900)', padding: '0.5rem 0' }}
+            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', padding: '0.5rem 0' }}
           >
             Blogs & Guides
           </button>
@@ -962,7 +962,7 @@ export const HeaderNav = () => {
                     setIsMobileMenuOpen(false);
                     navigate('/login');
                   }}
-                  style={{ fontWeight: 700, justifyContent: 'center', width: '100%', borderColor: 'var(--navy-300)' }}
+                  style={{ fontWeight: 700, justifyContent: 'center', width: '100%', borderColor: 'var(--border-color)', color: 'var(--text-main)' }}
                 >
                   <User size={16} /> Client Login
                 </button>

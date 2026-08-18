@@ -818,15 +818,15 @@ export const CustomerDashboard = () => {
                   marginBottom: '1.75rem',
                   flexWrap: 'wrap',
                   gap: '1rem',
-                  background: '#ffffff',
+                  background: 'var(--bg-card)',
                   padding: '1.25rem 1.75rem',
                   borderRadius: 'var(--radius-lg)',
-                  boxShadow: '0 4px 20px rgba(15, 23, 42, 0.04)',
+                  boxShadow: 'var(--shadow-sm)',
                   border: '1px solid var(--border-color)'
                 }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                      <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
+                      <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                         Dashboard
                       </h1>
                       <span className="badge badge-assigned" style={{ fontSize: '0.725rem', background: 'rgba(255, 122, 0, 0.12)', color: '#ff7a00', border: '1px solid rgba(255, 122, 0, 0.3)' }}>CLIENT ACCOUNT</span>
@@ -884,7 +884,7 @@ export const CustomerDashboard = () => {
                   marginBottom: '1.75rem'
                 }}>
                   {/* Card 1: Wallet Balance */}
-                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #ff7a00', background: '#ffffff' }}>
+                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #ff7a00', background: 'var(--bg-card)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Studio Wallet Credit</span>
                       <div style={{ background: 'rgba(255, 122, 0, 0.12)', color: '#ff7a00', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
@@ -892,7 +892,7 @@ export const CustomerDashboard = () => {
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '0.4rem' }}>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)' }}>
                         ${walletBalance.toFixed(2)}
                       </div>
                       <button
@@ -914,53 +914,53 @@ export const CustomerDashboard = () => {
                   </div>
 
                   {/* Card 2: Active Jobs */}
-                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #3b82f6', background: '#ffffff' }}>
+                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #3b82f6', background: 'var(--bg-card)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Digitizing Jobs</span>
                       <div style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
                         <Clock size={18} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.4rem 0 0.1rem' }}>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.4rem 0 0.1rem' }}>
                       {activeOrders.length}
                     </div>
                   </div>
 
                   {/* Card 3: Completed Downloads */}
-                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #10b981', background: '#ffffff' }}>
+                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #10b981', background: 'var(--bg-card)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Completed Downloads</span>
                       <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
                         <CheckCircle2 size={18} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.4rem 0 0.1rem' }}>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.4rem 0 0.1rem' }}>
                       {completedOrders.length}
                     </div>
                   </div>
 
                   {/* Card 4: Revisions Requested */}
-                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #8b5cf6', background: '#ffffff' }}>
+                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #8b5cf6', background: 'var(--bg-card)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Revisions Requested</span>
                       <div style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
                         <RotateCcw size={18} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.4rem 0 0.1rem' }}>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.4rem 0 0.1rem' }}>
                       {revisionOrders.length}
                     </div>
                   </div>
 
                   {/* Card 5: Total Spend */}
-                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #ec4899', background: '#ffffff' }}>
+                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #ec4899', background: 'var(--bg-card)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Invoiced Spend</span>
                       <div style={{ background: 'rgba(236, 72, 153, 0.12)', color: '#ec4899', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
                         <DollarSign size={18} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.4rem 0 0.1rem' }}>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.4rem 0 0.1rem' }}>
                       ${totalSpent.toFixed(2)}
                     </div>
                   </div>
@@ -1240,12 +1240,12 @@ export const CustomerDashboard = () => {
                         overflowX: 'auto', 
                         border: '1px solid var(--border-color)',
                         borderRadius: '12px',
-                        background: '#ffffff',
+                        background: 'var(--bg-card)',
                         boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)'
                       }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                          <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                            <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--navy-700)' }}>
+                          <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-surface)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                            <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-main)' }}>
                               <th style={{ padding: '0.75rem 1rem' }}>Uploaded Artwork & Design</th>
                               <th style={{ padding: '0.75rem 1rem' }}>Service Type</th>
                               <th style={{ padding: '0.75rem 1rem' }}>Date Submitted</th>
@@ -1264,11 +1264,11 @@ export const CustomerDashboard = () => {
                                   key={ord?.id || Math.random()}
                                   style={{ 
                                     borderBottom: isPaid ? '1px solid var(--border-color)' : '1px solid #fed7aa', 
-                                    background: isDelivered ? '#f0fdf4' : (isPaid ? '#ffffff' : '#fffcf6'),
+                                    background: isDelivered ? 'rgba(16, 185, 129, 0.08)' : (isPaid ? 'var(--bg-card)' : 'rgba(249, 115, 22, 0.04)'),
                                     transition: 'background 0.15s' 
                                   }}
-                                  onMouseEnter={(e) => e.currentTarget.style.background = isDelivered ? '#dcfce7' : (isPaid ? 'var(--orange-50)' : '#fff7ed')}
-                                  onMouseLeave={(e) => e.currentTarget.style.background = isDelivered ? '#f0fdf4' : (isPaid ? '#ffffff' : '#fffcf6')}
+                                  onMouseEnter={(e) => e.currentTarget.style.background = isDelivered ? 'rgba(16, 185, 129, 0.15)' : 'rgba(249, 115, 22, 0.08)'}
+                                  onMouseLeave={(e) => e.currentTarget.style.background = isDelivered ? 'rgba(16, 185, 129, 0.08)' : (isPaid ? 'var(--bg-card)' : 'rgba(249, 115, 22, 0.04)')}
                                 >
                                   {/* Title & Interactive Lightbox Artwork Thumbnail */}
                                   <td style={{ padding: '1rem' }}>
@@ -1319,7 +1319,7 @@ export const CustomerDashboard = () => {
                                       </div>
 
                                       <div>
-                                        <div style={{ fontWeight: 700, color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.92rem' }}>
+                                        <div style={{ fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.92rem' }}>
                                           {ord?.title || 'Embroidery Digitizing Order'}
                                           {ord?.isRush && <span className="badge badge-rush" style={{ fontSize: '0.65rem' }}>RUSH</span>}
                                         </div>
@@ -1332,7 +1332,7 @@ export const CustomerDashboard = () => {
 
                                   {/* Service Type */}
                                   <td style={{ padding: '1rem' }}>
-                                    <div style={{ fontWeight: 700, color: 'var(--navy-900)', display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.88rem' }}>
+                                    <div style={{ fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.88rem' }}>
                                       {ord?.type === 'vector' ? '✒️ Vector Art' : (ord?.type === 'patch' || ord?.type === 'patches' ? '🏷️ Custom Patches' : '🧵 Embroidery Digitizing')}
                                     </div>
                                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
@@ -1356,7 +1356,7 @@ export const CustomerDashboard = () => {
                                   </td>
 
                                   {/* Cost */}
-                                  <td style={{ padding: '1rem', fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.92rem' }}>
+                                  <td style={{ padding: '1rem', fontWeight: 800, color: 'var(--text-main)', fontSize: '0.92rem' }}>
                                     ${parseFloat(ord?.price || ord?.totalPrice || 0).toFixed(2)}
                                   </td>
 

@@ -95,11 +95,11 @@ export const ClientSidebar = ({
     <aside
       className="client-sidebar-saas"
       style={{
-        background: '#ffffff',
+        background: 'var(--bg-card)',
         border: '1px solid var(--border-color)',
         borderRadius: '16px',
         padding: '1.15rem 0.85rem',
-        boxShadow: '0 4px 20px rgba(15, 23, 42, 0.04)',
+        boxShadow: 'var(--shadow-sm)',
         position: 'sticky',
         top: '90px',
         height: 'calc(100vh - 110px)',
@@ -127,11 +127,12 @@ export const ClientSidebar = ({
         <div
           style={{
             padding: '0.95rem 0.85rem',
-            background: 'linear-gradient(135deg, var(--navy-950) 0%, #0f172a 100%)',
+            background: 'linear-gradient(135deg, #090d16 0%, #1e293b 100%)',
             borderRadius: '12px',
             color: '#ffffff',
             marginBottom: '1.15rem',
-            boxShadow: '0 4px 14px rgba(15, 23, 42, 0.18)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
             flexShrink: 0
           }}
         >
@@ -246,7 +247,7 @@ export const ClientSidebar = ({
                       background: isActive 
                         ? 'rgba(255, 122, 0, 0.12)' 
                         : 'transparent',
-                      color: isActive ? '#ff7a00' : '#475569',
+                      color: isActive ? '#ff7a00' : 'var(--text-main)',
                       fontWeight: isActive ? 800 : 600,
                       fontSize: '0.85rem',
                       cursor: 'pointer',
@@ -255,7 +256,7 @@ export const ClientSidebar = ({
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                      <IconComp size={16} style={{ color: isActive ? '#ff7a00' : '#64748b', flexShrink: 0 }} />
+                      <IconComp size={16} style={{ color: isActive ? '#ff7a00' : 'var(--text-muted)', flexShrink: 0 }} />
                       <span style={{ lineHeight: 1.2 }}>{item.label}</span>
                     </div>
 
@@ -263,8 +264,8 @@ export const ClientSidebar = ({
                       <span style={{ 
                         fontSize: '0.7rem', 
                         fontWeight: 800, 
-                        background: item.badgeColor || (item.id === 'support' ? '#ef4444' : (isActive ? '#ff7a00' : 'var(--navy-100)')), 
-                        color: (item.badgeColor || item.id === 'support' || isActive) ? '#ffffff' : 'var(--navy-700)', 
+                        background: item.badgeColor || (item.id === 'support' ? '#ef4444' : (isActive ? '#ff7a00' : 'rgba(255, 122, 0, 0.15)')), 
+                        color: (item.badgeColor || item.id === 'support' || isActive) ? '#ffffff' : 'var(--orange-500)', 
                         padding: '0.1rem 0.45rem', 
                         borderRadius: '9999px',
                         flexShrink: 0

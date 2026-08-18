@@ -244,7 +244,7 @@ export const AdminDashboard = () => {
           position: 'sticky',
           top: 0,
           zIndex: 95,
-          background: '#ffffff',
+          background: 'var(--bg-card)',
           borderBottom: '1.5px solid var(--border-color)',
           padding: '0.75rem 1rem',
           alignItems: 'center',
@@ -257,9 +257,9 @@ export const AdminDashboard = () => {
             type="button"
             onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
             style={{
-              background: '#f1f5f9',
+              background: 'var(--bg-surface)',
               border: '1px solid var(--border-color)',
-              color: 'var(--navy-900)',
+              color: 'var(--text-main)',
               width: '40px',
               height: '40px',
               borderRadius: '10px',
@@ -277,7 +277,7 @@ export const AdminDashboard = () => {
             <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>
               Operations Desk
             </span>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0, lineHeight: 1.1 }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: 0, lineHeight: 1.1 }}>
               {activeTab === 'dashboard' && 'Executive Overview'}
               {activeTab === 'orders' && 'Orders & Production Management'}
               {activeTab === 'services' && 'Service Rates & Tiers'}
@@ -310,7 +310,7 @@ export const AdminDashboard = () => {
             style={{
               width: '285px',
               maxHeight: '100vh',
-              background: '#ffffff',
+              background: 'var(--bg-card)',
               padding: '1.25rem 1rem',
               boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
               overflowY: 'auto',
@@ -322,11 +322,11 @@ export const AdminDashboard = () => {
           >
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)' }}>
-                <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--navy-900)' }}>Admin Navigation</span>
+                <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-main)' }}>Admin Navigation</span>
                 <button 
                   type="button" 
                   onClick={() => setIsMobileSidebarOpen(false)}
-                  style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '0.35rem', cursor: 'pointer' }}
+                  style={{ background: 'var(--bg-surface)', color: 'var(--text-main)', border: 'none', borderRadius: '8px', padding: '0.35rem', cursor: 'pointer' }}
                 >
                   <X size={18} />
                 </button>
@@ -567,7 +567,7 @@ export const AdminDashboard = () => {
             marginBottom: '1.75rem',
             flexWrap: 'wrap',
             gap: '1rem',
-            background: '#ffffff',
+            background: 'var(--bg-card)',
             padding: '1.25rem 1.75rem',
             borderRadius: 'var(--radius-lg)',
             boxShadow: 'var(--shadow-sm)',
@@ -575,7 +575,7 @@ export const AdminDashboard = () => {
           }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
+                <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                   Admin Operations Portal
                 </h1>
                 <span className="badge badge-assigned" style={{ fontSize: '0.725rem' }}>MASTER ADMIN</span>
@@ -615,53 +615,53 @@ export const AdminDashboard = () => {
               gap: '1.25rem',
               marginBottom: '1.75rem'
             }}>
-              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #ff7a00', background: '#ffffff' }}>
+              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #ff7a00', background: 'var(--bg-card)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Revenue</span>
                   <div style={{ background: 'rgba(255, 122, 0, 0.12)', color: '#ff7a00', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
                     <TrendingUp size={18} />
                   </div>
                 </div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.4rem 0 0.1rem' }}>
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.4rem 0 0.1rem' }}>
                   ${totalRevenue.toFixed(2)}
                 </div>
                 <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>Verified Studio Inflows</div>
               </div>
 
-              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #3b82f6', background: '#ffffff' }}>
+              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #3b82f6', background: 'var(--bg-card)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Jobs in Pipeline</span>
                   <div style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
                     <ClipboardList size={18} />
                   </div>
                 </div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.4rem 0 0.1rem' }}>
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.4rem 0 0.1rem' }}>
                   {activeJobsCount}
                 </div>
                 <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>In Digitizing / Vector / Patches</div>
               </div>
 
-              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #10b981', background: '#ffffff' }}>
+              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #10b981', background: 'var(--bg-card)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Completed Files</span>
                   <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
                     <Layers size={18} />
                   </div>
                 </div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.4rem 0 0.1rem' }}>
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.4rem 0 0.1rem' }}>
                   {completedJobsCount}
                 </div>
                 <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>Delivered & Client Accepted</div>
               </div>
 
-              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #8b5cf6', background: '#ffffff' }}>
+              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #8b5cf6', background: 'var(--bg-card)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Registered Clients</span>
                   <div style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
                     <Users size={18} />
                   </div>
                 </div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.4rem 0 0.1rem' }}>
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.4rem 0 0.1rem' }}>
                   {safeClients.length}
                 </div>
                 <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>Active Client Accounts</div>
@@ -670,7 +670,7 @@ export const AdminDashboard = () => {
 
             {/* Quick Orders Banner Action */}
             <div style={{
-              background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)',
+              background: 'linear-gradient(135deg, #090d16 0%, #1e1b4b 100%)',
               borderRadius: '16px',
               padding: '1.75rem 2rem',
               color: '#ffffff',
@@ -717,9 +717,9 @@ export const AdminDashboard = () => {
               gap: '1.25rem',
               marginBottom: '1.75rem'
             }}>
-              <div className="card" style={{ padding: '1.25rem', background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+              <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <strong style={{ color: 'var(--navy-900)', fontSize: '0.95rem' }}>🧵 Embroidery Digitizing</strong>
+                  <strong style={{ color: 'var(--text-main)', fontSize: '0.95rem' }}>🧵 Embroidery Digitizing</strong>
                   <span className="badge badge-assigned" style={{ fontSize: '0.75rem' }}>
                     {safeOrders.filter(o => o?.type === 'embroidery' || o?.type === 'digitizing' || (!o?.type && !o?.serviceCategory?.toLowerCase().includes('vector') && !o?.serviceCategory?.toLowerCase().includes('patch'))).length} Total
                   </span>
@@ -737,9 +737,9 @@ export const AdminDashboard = () => {
                 </button>
               </div>
 
-              <div className="card" style={{ padding: '1.25rem', background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+              <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <strong style={{ color: 'var(--navy-900)', fontSize: '0.95rem' }}>✒️ Vector Art Tracing</strong>
+                  <strong style={{ color: 'var(--text-main)', fontSize: '0.95rem' }}>✒️ Vector Art Tracing</strong>
                   <span className="badge badge-assigned" style={{ fontSize: '0.75rem' }}>
                     {safeOrders.filter(o => o?.type === 'vector' || o?.serviceCategory?.toLowerCase().includes('vector')).length} Total
                   </span>
@@ -757,9 +757,9 @@ export const AdminDashboard = () => {
                 </button>
               </div>
 
-              <div className="card" style={{ padding: '1.25rem', background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+              <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <strong style={{ color: 'var(--navy-900)', fontSize: '0.95rem' }}>🏷️ Custom Physical Patches</strong>
+                  <strong style={{ color: 'var(--text-main)', fontSize: '0.95rem' }}>🏷️ Custom Physical Patches</strong>
                   <span className="badge badge-assigned" style={{ fontSize: '0.75rem' }}>
                     {safeOrders.filter(o => o?.type === 'patch' || o?.type === 'patches' || o?.serviceCategory?.toLowerCase().includes('patch')).length} Total
                   </span>
@@ -779,10 +779,10 @@ export const AdminDashboard = () => {
             </div>
 
             {/* Recent Orders Quick Snapshot */}
-            <div className="card" style={{ padding: '1.5rem', background: '#ffffff', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
+            <div className="card" style={{ padding: '1.5rem', background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                 <div>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
+                  <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                     Recent Orders Snapshot
                   </h4>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Latest submissions across all services</span>

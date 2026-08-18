@@ -406,7 +406,7 @@ export const HeroSection = () => {
 
   return (
     <section style={{
-      background: 'linear-gradient(135deg, var(--navy-950, #0f172a) 0%, var(--navy-900, #0f172a) 60%, #1e1b4b 100%)',
+      background: 'linear-gradient(135deg, #020617 0%, #0f172a 60%, #1e1b4b 100%)',
       color: '#ffffff',
       padding: '2rem 0 3.25rem',
       position: 'relative',
