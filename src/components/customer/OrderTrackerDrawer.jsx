@@ -32,7 +32,9 @@ import {
   Layers,
   ZoomIn,
   Check,
-  HelpCircle
+  HelpCircle,
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 
@@ -1175,6 +1177,114 @@ export const OrderTrackerDrawer = () => {
             </div>
           )}
 
+        </div>
+
+        {/* ==================================================================
+            4. STICKY WORKFLOW FOOTER (NEXT STEP & ACTIONS)
+           ================================================================== */}
+        <div style={{
+          padding: '1rem 1.6rem',
+          background: '#ffffff',
+          borderTop: '1px solid #e2e8f0',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '0.75rem',
+          boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.03)'
+        }}>
+          {/* Left: Previous step or current workflow breadcrumb */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {activeTab !== 'overview' ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (activeTab === 'deliverables') setActiveTab('overview');
+                  else if (activeTab === 'messages') setActiveTab('deliverables');
+                  else if (activeTab === 'revisions') setActiveTab('messages');
+                }}
+                className="btn btn-outline btn-sm"
+                style={{ gap: '0.35rem', fontWeight: 700, padding: '0.45rem 0.85rem' }}
+              >
+                <ChevronLeft size={16} /> Back
+              </button>
+            ) : (
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{ fontWeight: 700, color: 'var(--orange-600)' }}>Step 1 of 4:</span>
+                <span style={{ color: 'var(--navy-900)', fontWeight: 600 }}>Reviewing Specifications</span>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Primary Next Step Action */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+            {!isPaid && (
+              <button
+                type="button"
+                onClick={handleLaunchPayment}
+                style={{
+                  background: 'linear-gradient(135deg, #ff7a00 0%, #ff5500 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '0.55rem 1.2rem',
+                  borderRadius: '10px',
+                  fontWeight: 900,
+                  fontSize: '0.86rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(255, 122, 0, 0.35)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}
+              >
+                <Zap size={15} /> Pay Now (${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)})
+              </button>
+            )}
+
+            {activeTab === 'overview' && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('deliverables')}
+                className="btn btn-primary-orange"
+                style={{ gap: '0.4rem', padding: '0.55rem 1.25rem', fontSize: '0.86rem', fontWeight: 800 }}
+              >
+                Next Step: Production Files <ChevronRight size={16} />
+              </button>
+            )}
+
+            {activeTab === 'deliverables' && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('messages')}
+                className="btn btn-primary-orange"
+                style={{ gap: '0.4rem', padding: '0.55rem 1.25rem', fontSize: '0.86rem', fontWeight: 800 }}
+              >
+                Next Step: Messages & Chat <ChevronRight size={16} />
+              </button>
+            )}
+
+            {activeTab === 'messages' && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('revisions')}
+                className="btn btn-primary-orange"
+                style={{ gap: '0.4rem', padding: '0.55rem 1.25rem', fontSize: '0.86rem', fontWeight: 800 }}
+              >
+                Next Step: Request Revision <ChevronRight size={16} />
+              </button>
+            )}
+
+            {activeTab === 'revisions' && (
+              <button
+                type="button"
+                onClick={() => setSelectedOrderForDrawer(null)}
+                className="btn btn-outline"
+                style={{ gap: '0.4rem', padding: '0.55rem 1.25rem', fontSize: '0.86rem', fontWeight: 800, borderColor: 'var(--green-600)', color: 'var(--green-700)' }}
+              >
+                Done & Close Panel <Check size={16} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
