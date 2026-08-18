@@ -25,30 +25,116 @@ export async function getAuthHeaders() {
 // ============================================================
 
 export const ORDER_STATUSES = {
-  AWAITING_PAYMENT: 'awaiting_payment',
+  DRAFT: 'draft',
   SUBMITTED: 'submitted',
+  UNDER_REVIEW: 'under_review',
+  MODIFICATION_REQUIRED: 'modification_required',
+  RESUBMITTED: 'resubmitted',
+  APPROVED: 'approved',
+  PROCESSING: 'processing',
+  READY_FOR_DELIVERY: 'ready_for_delivery',
+  AWAITING_DELIVERY_APPROVAL: 'awaiting_delivery_approval',
+  IN_DELIVERY: 'in_delivery',
+  DELIVERED: 'delivered',
+  COMPLETED: 'completed',
+  REJECTED: 'rejected',
+  CANCELLED: 'cancelled',
+  
+  // Legacy aliases for backward compatibility
+  AWAITING_PAYMENT: 'awaiting_payment',
   IN_PROGRESS: 'in_progress',
   DIGITIZING: 'digitizing',
   ASSIGNED: 'assigned',
   QC: 'qc',
-  DELIVERED: 'delivered',
-  COMPLETED: 'completed',
-  REVISION: 'revision',
-  CANCELLED: 'cancelled'
+  REVISION: 'revision'
 };
 
 // Valid status transitions: { currentStatus: [allowedNextStatuses] }
 const VALID_TRANSITIONS = {
-  [ORDER_STATUSES.AWAITING_PAYMENT]: [ORDER_STATUSES.SUBMITTED, ORDER_STATUSES.IN_PROGRESS, ORDER_STATUSES.CANCELLED],
-  [ORDER_STATUSES.SUBMITTED]: [ORDER_STATUSES.IN_PROGRESS, ORDER_STATUSES.DIGITIZING, ORDER_STATUSES.ASSIGNED, ORDER_STATUSES.CANCELLED],
-  [ORDER_STATUSES.IN_PROGRESS]: [ORDER_STATUSES.DIGITIZING, ORDER_STATUSES.ASSIGNED, ORDER_STATUSES.QC, ORDER_STATUSES.DELIVERED, ORDER_STATUSES.CANCELLED],
-  [ORDER_STATUSES.DIGITIZING]: [ORDER_STATUSES.QC, ORDER_STATUSES.DELIVERED, ORDER_STATUSES.IN_PROGRESS, ORDER_STATUSES.CANCELLED],
-  [ORDER_STATUSES.ASSIGNED]: [ORDER_STATUSES.DIGITIZING, ORDER_STATUSES.IN_PROGRESS, ORDER_STATUSES.QC, ORDER_STATUSES.DELIVERED, ORDER_STATUSES.CANCELLED],
-  [ORDER_STATUSES.QC]: [ORDER_STATUSES.DELIVERED, ORDER_STATUSES.IN_PROGRESS, ORDER_STATUSES.CANCELLED],
-  [ORDER_STATUSES.DELIVERED]: [ORDER_STATUSES.COMPLETED, ORDER_STATUSES.REVISION],
-  [ORDER_STATUSES.REVISION]: [ORDER_STATUSES.IN_PROGRESS, ORDER_STATUSES.DIGITIZING, ORDER_STATUSES.DELIVERED, ORDER_STATUSES.CANCELLED],
-  [ORDER_STATUSES.COMPLETED]: [], // Terminal state
-  [ORDER_STATUSES.CANCELLED]: []  // Terminal state
+  [ORDER_STATUSES.DRAFT]: [ORDER_STATUSES.SUBMITTED, ORDER_STATUSES.CANCELLED],
+  [ORDER_STATUSES.SUBMITTED]: [
+    ORDER_STATUSES.UNDER_REVIEW, 
+    ORDER_STATUSES.APPROVED, 
+    ORDER_STATUSES.MODIFICATION_REQUIRED, 
+    ORDER_STATUSES.PROCESSING, 
+    ORDER_STATUSES.REJECTED, 
+    ORDER_STATUSES.CANCELLED,
+    ORDER_STATUSES.IN_PROGRESS
+  ],
+  [ORDER_STATUSES.UNDER_REVIEW]: [
+    ORDER_STATUSES.APPROVED, 
+    ORDER_STATUSES.MODIFICATION_REQUIRED, 
+    ORDER_STATUSES.PROCESSING, 
+    ORDER_STATUSES.REJECTED, 
+    ORDER_STATUSES.CANCELLED
+  ],
+  [ORDER_STATUSES.MODIFICATION_REQUIRED]: [
+    ORDER_STATUSES.RESUBMITTED, 
+    ORDER_STATUSES.UNDER_REVIEW, 
+    ORDER_STATUSES.CANCELLED
+  ],
+  [ORDER_STATUSES.RESUBMITTED]: [
+    ORDER_STATUSES.UNDER_REVIEW, 
+    ORDER_STATUSES.APPROVED, 
+    ORDER_STATUSES.MODIFICATION_REQUIRED, 
+    ORDER_STATUSES.PROCESSING, 
+    ORDER_STATUSES.REJECTED, 
+    ORDER_STATUSES.CANCELLED
+  ],
+  [ORDER_STATUSES.APPROVED]: [
+    ORDER_STATUSES.PROCESSING, 
+    ORDER_STATUSES.READY_FOR_DELIVERY, 
+    ORDER_STATUSES.MODIFICATION_REQUIRED, 
+    ORDER_STATUSES.CANCELLED,
+    ORDER_STATUSES.IN_PROGRESS
+  ],
+  [ORDER_STATUSES.PROCESSING]: [
+    ORDER_STATUSES.READY_FOR_DELIVERY, 
+    ORDER_STATUSES.AWAITING_DELIVERY_APPROVAL, 
+    ORDER_STATUSES.IN_DELIVERY, 
+    ORDER_STATUSES.DELIVERED, 
+    ORDER_STATUSES.MODIFICATION_REQUIRED, 
+    ORDER_STATUSES.CANCELLED
+  ],
+  [ORDER_STATUSES.READY_FOR_DELIVERY]: [
+    ORDER_STATUSES.AWAITING_DELIVERY_APPROVAL, 
+    ORDER_STATUSES.IN_DELIVERY, 
+    ORDER_STATUSES.DELIVERED, 
+    ORDER_STATUSES.MODIFICATION_REQUIRED, 
+    ORDER_STATUSES.CANCELLED
+  ],
+  [ORDER_STATUSES.AWAITING_DELIVERY_APPROVAL]: [
+    ORDER_STATUSES.IN_DELIVERY, 
+    ORDER_STATUSES.DELIVERED, 
+    ORDER_STATUSES.READY_FOR_DELIVERY, 
+    ORDER_STATUSES.MODIFICATION_REQUIRED, 
+    ORDER_STATUSES.CANCELLED
+  ],
+  [ORDER_STATUSES.IN_DELIVERY]: [
+    ORDER_STATUSES.DELIVERED, 
+    ORDER_STATUSES.CANCELLED
+  ],
+  [ORDER_STATUSES.DELIVERED]: [
+    ORDER_STATUSES.COMPLETED, 
+    ORDER_STATUSES.MODIFICATION_REQUIRED, 
+    ORDER_STATUSES.REVISION
+  ],
+  [ORDER_STATUSES.COMPLETED]: [
+    ORDER_STATUSES.MODIFICATION_REQUIRED,
+    ORDER_STATUSES.REVISION
+  ],
+  [ORDER_STATUSES.REJECTED]: [
+    ORDER_STATUSES.CANCELLED
+  ],
+  [ORDER_STATUSES.CANCELLED]: [],
+  
+  // Legacy mappings
+  [ORDER_STATUSES.AWAITING_PAYMENT]: [ORDER_STATUSES.SUBMITTED, ORDER_STATUSES.IN_PROGRESS, ORDER_STATUSES.PROCESSING, ORDER_STATUSES.CANCELLED],
+  [ORDER_STATUSES.IN_PROGRESS]: [ORDER_STATUSES.DIGITIZING, ORDER_STATUSES.ASSIGNED, ORDER_STATUSES.QC, ORDER_STATUSES.READY_FOR_DELIVERY, ORDER_STATUSES.DELIVERED, ORDER_STATUSES.MODIFICATION_REQUIRED, ORDER_STATUSES.CANCELLED],
+  [ORDER_STATUSES.DIGITIZING]: [ORDER_STATUSES.QC, ORDER_STATUSES.READY_FOR_DELIVERY, ORDER_STATUSES.DELIVERED, ORDER_STATUSES.CANCELLED],
+  [ORDER_STATUSES.ASSIGNED]: [ORDER_STATUSES.DIGITIZING, ORDER_STATUSES.PROCESSING, ORDER_STATUSES.QC, ORDER_STATUSES.READY_FOR_DELIVERY, ORDER_STATUSES.DELIVERED, ORDER_STATUSES.CANCELLED],
+  [ORDER_STATUSES.QC]: [ORDER_STATUSES.READY_FOR_DELIVERY, ORDER_STATUSES.DELIVERED, ORDER_STATUSES.CANCELLED],
+  [ORDER_STATUSES.REVISION]: [ORDER_STATUSES.RESUBMITTED, ORDER_STATUSES.UNDER_REVIEW, ORDER_STATUSES.PROCESSING, ORDER_STATUSES.DELIVERED, ORDER_STATUSES.CANCELLED]
 };
 
 export function validateStatusTransition(currentStatus, newStatus) {
@@ -299,6 +385,30 @@ export async function fetchOrdersFromSupabase() {
                              Boolean(order.paid_at) ||
                              ['in_progress', 'digitizing', 'assigned', 'qc', 'delivered', 'completed'].includes(oStatusLower);
 
+      const initialFilesList = clientFiles.length > 0 ? clientFiles : (notesData.uploadedFiles || []);
+      const initialVersions = notesData.versions && Array.isArray(notesData.versions) && notesData.versions.length > 0
+        ? notesData.versions
+        : [{
+            version: 1,
+            submittedAt: order.created_at || new Date().toISOString(),
+            submittedBy: order.client_name || 'Client',
+            files: initialFilesList,
+            notes: notesData.notes || '',
+            status: order.status || 'submitted'
+          }];
+
+      const initialActivityLog = notesData.activityLog && Array.isArray(notesData.activityLog) && notesData.activityLog.length > 0
+        ? notesData.activityLog
+        : [{
+            id: `act-${order.id}-init`,
+            action: 'Order Submitted',
+            user: order.client_name || 'Client',
+            role: 'client',
+            timestamp: order.created_at || new Date().toISOString(),
+            version: 1,
+            details: 'Initial order specifications and artwork submitted.'
+          }];
+
       return {
         ...order,
         clientName: order.client_name,
@@ -310,7 +420,7 @@ export async function fetchOrdersFromSupabase() {
         artworkUrl: primaryArtworkUrl,
         image_url: primaryArtworkUrl,
         logo: primaryArtworkUrl,
-        uploadedFiles: clientFiles.length > 0 ? clientFiles : (notesData.uploadedFiles || []),
+        uploadedFiles: initialFilesList,
         uploadedMachineFiles: machineFiles,
         messages: mappedOrderMessages,
         type: order.service_type || order.service_category,
@@ -325,7 +435,20 @@ export async function fetchOrdersFromSupabase() {
         patchQuantity: notesData.patchQuantity,
         patchItems: notesData.patchItems || [],
         placementItems: notesData.placementItems || [],
-        notes: notesData.notes || ''
+        notes: notesData.notes || '',
+        
+        // B2B Order Management fields
+        versions: initialVersions,
+        currentVersion: notesData.currentVersion || initialVersions.length,
+        approvedVersion: notesData.approvedVersion || (['approved', 'processing', 'ready_for_delivery', 'in_delivery', 'delivered', 'completed'].includes(oStatusLower) ? 1 : null),
+        activityLog: initialActivityLog,
+        internalNotes: Array.isArray(notesData.internalNotes) ? notesData.internalNotes : [],
+        deliveryInfo: notesData.deliveryInfo || null,
+        modificationRequest: notesData.modificationRequest || null,
+        approvalInfo: notesData.approvalInfo || null,
+        assignedTeamMember: notesData.assignedTeamMember || order.digitizer_id || null,
+        processingProgress: notesData.processingProgress || (oStatusLower === 'completed' ? 100 : oStatusLower === 'delivered' ? 95 : oStatusLower === 'ready_for_delivery' ? 85 : 0),
+        documents: notesData.documents || []
       };
     });
   } catch { return []; }

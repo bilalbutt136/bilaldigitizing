@@ -271,9 +271,24 @@ export const CustomerDashboard = () => {
   // 4. Strictly Store & Digital Product Purchases
   const storeOrders = myOrders.filter(isStoreOrder);
 
-  const activeOrders = digitizingOrders.filter(o => o?.status !== 'completed');
-  const completedOrders = digitizingOrders.filter(o => o?.status === 'completed');
-  const revisionOrders = digitizingOrders.filter(o => o?.revisions && o.revisions.length > 0);
+  const activeOrders = myOrders.filter(o => o?.status !== 'completed' && o?.status !== 'cancelled');
+  const completedOrders = myOrders.filter(o => o?.status === 'completed');
+  const revisionOrders = myOrders.filter(o => o?.status === 'modification_required' || (o?.revisions && o.revisions.length > 0));
+  
+  const modificationRequiredOrders = myOrders.filter(o => o?.status === 'modification_required');
+  const awaitingApprovalOrders = myOrders.filter(o => 
+    o?.status === 'delivered' || 
+    o?.status === 'ready_for_delivery' || 
+    o?.status === 'awaiting_delivery_approval'
+  );
+  const inDeliveryOrders = myOrders.filter(o => o?.status === 'in_delivery');
+  const actionRequiredOrders = myOrders.filter(o => 
+    o?.status === 'modification_required' || 
+    o?.status === 'delivered' || 
+    o?.status === 'ready_for_delivery' || 
+    o?.status === 'awaiting_delivery_approval' || 
+    (!isOrderPaid(o) && o?.status !== 'cancelled')
+  );
 
   const totalSpent = myOrders.reduce((acc, curr) => acc + (parseFloat(curr?.price) || 0), 0);
 
@@ -284,12 +299,27 @@ export const CustomerDashboard = () => {
     setCustomerPage(1);
   }, [filterStatus, searchTerm]);
 
-  const filteredDigitizingOrders = digitizingOrders.filter(o => {
+  const filteredDigitizingOrders = myOrders.filter(o => {
     const titleMatch = (o?.title || '').toLowerCase().includes(searchTerm.toLowerCase());
     const idMatch = (o?.id || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSearch = titleMatch || idMatch;
     
-    if (filterStatus === 'active') return matchesSearch && o?.status !== 'completed';
+    if (filterStatus === 'action_required') {
+      return matchesSearch && (
+        o?.status === 'modification_required' || 
+        o?.status === 'delivered' || 
+        o?.status === 'ready_for_delivery' || 
+        o?.status === 'awaiting_delivery_approval' || 
+        (!isOrderPaid(o) && o?.status !== 'cancelled')
+      );
+    }
+    if (filterStatus === 'in_progress') {
+      return matchesSearch && ['processing', 'approved', 'in_progress', 'digitizing', 'assigned', 'qc', 'submitted', 'under_review', 'resubmitted'].includes(o?.status);
+    }
+    if (filterStatus === 'in_delivery') {
+      return matchesSearch && o?.status === 'in_delivery';
+    }
+    if (filterStatus === 'active') return matchesSearch && o?.status !== 'completed' && o?.status !== 'cancelled';
     if (filterStatus === 'completed') return matchesSearch && o?.status === 'completed';
     return matchesSearch;
   });
@@ -314,16 +344,38 @@ export const CustomerDashboard = () => {
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'awaiting_payment':
-        return <span className="badge badge-submitted">Brief Submitted</span>;
-      case 'assigned':
-        return <span className="badge badge-assigned">Digitizer Assigned</span>;
+      case 'draft':
+        return <span className="badge" style={{ background: '#f1f5f9', color: '#64748b', border: '1px solid #cbd5e1', fontWeight: 800 }}>Draft</span>;
+      case 'submitted':
+        return <span className="badge" style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontWeight: 800 }}>Submitted</span>;
+      case 'under_review':
+        return <span className="badge" style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', fontWeight: 800 }}>Under Review</span>;
+      case 'modification_required':
+        return <span className="badge" style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', fontWeight: 800 }}>⚠️ Action Needed</span>;
+      case 'resubmitted':
+        return <span className="badge" style={{ background: '#f5f3ff', color: '#6d28d9', border: '1px solid #ddd6fe', fontWeight: 800 }}>Resubmitted</span>;
+      case 'approved':
+        return <span className="badge" style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', fontWeight: 800 }}>Approved</span>;
+      case 'processing':
+      case 'in_progress':
       case 'digitizing':
-        return <span className="badge badge-digitizing">Digitizing In Progress</span>;
+      case 'assigned':
+        return <span className="badge" style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', fontWeight: 800 }}>⚡ Processing</span>;
       case 'qc':
-        return <span className="badge badge-qc">Quality Control Simulation</span>;
+        return <span className="badge" style={{ background: '#e0e7ff', color: '#4338ca', border: '1px solid #c7d2fe', fontWeight: 800 }}>Quality Check</span>;
+      case 'ready_for_delivery':
+      case 'awaiting_delivery_approval':
+        return <span className="badge" style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', fontWeight: 800 }}>✨ Ready for Approval</span>;
+      case 'in_delivery':
+        return <span className="badge" style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', fontWeight: 800 }}>🚚 In Delivery</span>;
+      case 'delivered':
+        return <span className="badge" style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', fontWeight: 800 }}>📦 Delivered</span>;
       case 'completed':
-        return <span className="badge badge-completed">Ready For Download</span>;
+        return <span className="badge" style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #6ee7b7', fontWeight: 800 }}>✅ Completed</span>;
+      case 'rejected':
+        return <span className="badge" style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5', fontWeight: 800 }}>❌ Rejected</span>;
+      case 'cancelled':
+        return <span className="badge" style={{ background: '#f8fafc', color: '#64748b', border: '1px solid #e2e8f0', fontWeight: 800 }}>Cancelled</span>;
       default:
         return <span className="badge">{status}</span>;
     }
@@ -930,6 +982,154 @@ export const CustomerDashboard = () => {
                   </button>
                 </div>
 
+                {/* ACTION REQUIRED ALERTS SECTION */}
+                {actionRequiredOrders.length > 0 && (
+                  <div style={{ marginBottom: '1.75rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.15rem' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--navy-950)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        ⚡ Action Required ({actionRequiredOrders.length})
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '0.85rem' }}>
+                      {/* 1. Modification Required Orders */}
+                      {modificationRequiredOrders.map(ord => (
+                        <div key={`act-mod-${ord.id}`} style={{
+                          background: 'linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)',
+                          border: '1.5px solid #fecdd3',
+                          borderRadius: '14px',
+                          padding: '1rem 1.25rem',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: '0.85rem',
+                          boxShadow: '0 2px 8px rgba(225, 29, 72, 0.08)'
+                        }}>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                              <span className="badge" style={{ background: '#e11d48', color: '#ffffff', fontSize: '0.7rem', fontWeight: 900 }}>MODIFICATION REQUESTED</span>
+                              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#9f1239' }}>{formatOrderId(ord.id)}</span>
+                            </div>
+                            <div style={{ fontWeight: 800, color: '#881337', fontSize: '0.88rem' }}>{ord.title || 'Studio Order'}</div>
+                            <div style={{ fontSize: '0.76rem', color: '#9f1239', marginTop: '0.15rem' }}>
+                              {ord.modificationRequest?.comments || 'Digitizer requested adjustments. Please review and submit revised files.'}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedOrderForDrawer(ord)}
+                            style={{
+                              background: '#e11d48',
+                              color: '#ffffff',
+                              border: 'none',
+                              padding: '0.5rem 1rem',
+                              borderRadius: '8px',
+                              fontWeight: 800,
+                              fontSize: '0.8rem',
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0,
+                              boxShadow: '0 2px 8px rgba(225, 29, 72, 0.3)'
+                            }}
+                          >
+                            Review & Submit
+                          </button>
+                        </div>
+                      ))}
+
+                      {/* 2. Awaiting Approval Orders (Delivered / Ready) */}
+                      {awaitingApprovalOrders.map(ord => (
+                        <div key={`act-app-${ord.id}`} style={{
+                          background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+                          border: '1.5px solid #a7f3d0',
+                          borderRadius: '14px',
+                          padding: '1rem 1.25rem',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: '0.85rem',
+                          boxShadow: '0 2px 8px rgba(16, 185, 129, 0.08)'
+                        }}>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                              <span className="badge" style={{ background: '#059669', color: '#ffffff', fontSize: '0.7rem', fontWeight: 900 }}>READY FOR APPROVAL</span>
+                              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#065f46' }}>{formatOrderId(ord.id)}</span>
+                            </div>
+                            <div style={{ fontWeight: 800, color: '#064e3b', fontSize: '0.88rem' }}>{ord.title || 'Studio Order'}</div>
+                            <div style={{ fontSize: '0.76rem', color: '#047857', marginTop: '0.15rem' }}>
+                              Finished production files are ready. Inspect and approve delivery.
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedOrderForDrawer(ord)}
+                            style={{
+                              background: '#059669',
+                              color: '#ffffff',
+                              border: 'none',
+                              padding: '0.5rem 1rem',
+                              borderRadius: '8px',
+                              fontWeight: 800,
+                              fontSize: '0.8rem',
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0,
+                              boxShadow: '0 2px 8px rgba(5, 150, 105, 0.3)'
+                            }}
+                          >
+                            Inspect & Approve
+                          </button>
+                        </div>
+                      ))}
+
+                      {/* 3. Unpaid Orders */}
+                      {unpaidOrders.slice(0, 3).map(ord => (
+                        <div key={`act-pay-${ord.id}`} style={{
+                          background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                          border: '1.5px solid #fde68a',
+                          borderRadius: '14px',
+                          padding: '1rem 1.25rem',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: '0.85rem',
+                          boxShadow: '0 2px 8px rgba(217, 119, 6, 0.08)'
+                        }}>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                              <span className="badge" style={{ background: '#d97706', color: '#ffffff', fontSize: '0.7rem', fontWeight: 900 }}>PAYMENT REQUIRED</span>
+                              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#92400e' }}>{formatOrderId(ord.id)}</span>
+                            </div>
+                            <div style={{ fontWeight: 800, color: '#78350f', fontSize: '0.88rem' }}>{ord.title || 'Studio Order'}</div>
+                            <div style={{ fontSize: '0.76rem', color: '#92400e', marginTop: '0.15rem' }}>
+                              Order brief saved. Pay ${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)} to dispatch production.
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handlePayOrder(ord)}
+                            style={{
+                              background: '#ff7a00',
+                              color: '#ffffff',
+                              border: 'none',
+                              padding: '0.5rem 1rem',
+                              borderRadius: '8px',
+                              fontWeight: 800,
+                              fontSize: '0.8rem',
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0,
+                              boxShadow: '0 2px 8px rgba(255, 122, 0, 0.3)'
+                            }}
+                          >
+                            Pay Now
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Orders Section Container */}
                 <div id="orders-table-wrapper" className="card orders-table-container" style={{ padding: '1.25rem' }}>
                   
@@ -965,22 +1165,62 @@ export const CustomerDashboard = () => {
 
                       <button 
                         type="button"
-                        onClick={() => setFilterStatus('active')}
+                        onClick={() => setFilterStatus('action_required')}
                         style={{
-                          background: filterStatus === 'active' ? '#ff7a00' : '#f8fafc',
-                          backgroundColor: filterStatus === 'active' ? '#ff7a00' : '#f8fafc',
-                          color: filterStatus === 'active' ? '#ffffff' : 'var(--navy-800)',
-                          border: filterStatus === 'active' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
+                          background: filterStatus === 'action_required' ? '#ff7a00' : '#f8fafc',
+                          backgroundColor: filterStatus === 'action_required' ? '#ff7a00' : '#f8fafc',
+                          color: filterStatus === 'action_required' ? '#ffffff' : (actionRequiredOrders.length > 0 ? '#e11d48' : 'var(--navy-800)'),
+                          border: filterStatus === 'action_required' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
                           fontWeight: 800,
                           fontSize: '0.825rem',
                           padding: '0.45rem 0.95rem',
                           borderRadius: '8px',
                           cursor: 'pointer',
-                          boxShadow: filterStatus === 'active' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
+                          boxShadow: filterStatus === 'action_required' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
                           transition: 'all 0.18s ease'
                         }}
                       >
-                        Active ({activeOrders.length})
+                        ⚡ Action Required ({actionRequiredOrders.length})
+                      </button>
+
+                      <button 
+                        type="button"
+                        onClick={() => setFilterStatus('in_progress')}
+                        style={{
+                          background: filterStatus === 'in_progress' ? '#ff7a00' : '#f8fafc',
+                          backgroundColor: filterStatus === 'in_progress' ? '#ff7a00' : '#f8fafc',
+                          color: filterStatus === 'in_progress' ? '#ffffff' : 'var(--navy-800)',
+                          border: filterStatus === 'in_progress' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
+                          fontWeight: 800,
+                          fontSize: '0.825rem',
+                          padding: '0.45rem 0.95rem',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          boxShadow: filterStatus === 'in_progress' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
+                          transition: 'all 0.18s ease'
+                        }}
+                      >
+                        In Production ({activeOrders.length})
+                      </button>
+
+                      <button 
+                        type="button"
+                        onClick={() => setFilterStatus('in_delivery')}
+                        style={{
+                          background: filterStatus === 'in_delivery' ? '#ff7a00' : '#f8fafc',
+                          backgroundColor: filterStatus === 'in_delivery' ? '#ff7a00' : '#f8fafc',
+                          color: filterStatus === 'in_delivery' ? '#ffffff' : 'var(--navy-800)',
+                          border: filterStatus === 'in_delivery' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
+                          fontWeight: 800,
+                          fontSize: '0.825rem',
+                          padding: '0.45rem 0.95rem',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          boxShadow: filterStatus === 'in_delivery' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
+                          transition: 'all 0.18s ease'
+                        }}
+                      >
+                        In Delivery ({inDeliveryOrders.length})
                       </button>
 
                       <button 

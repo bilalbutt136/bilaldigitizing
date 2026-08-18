@@ -9,36 +9,37 @@ import {
   ChevronRight,
   ZoomIn,
   Clock,
-  MessageSquare
+  MessageSquare,
+  AlertCircle,
+  Truck,
+  CheckCircle2,
+  Package,
+  Layers,
+  Sparkles,
+  FileCode,
+  LockKeyhole
 } from 'lucide-react';
 
-const getNextStatuses = (currentStatus) => {
-  const transitions = {
-    'awaiting_payment': ['in_progress', 'cancelled'],
-    'submitted': ['in_progress', 'digitizing', 'cancelled'],
-    'in_progress': ['digitizing', 'delivered', 'cancelled'],
-    'digitizing': ['delivered', 'in_progress', 'cancelled'],
-    'assigned': ['digitizing', 'delivered', 'cancelled'],
-    'qc': ['delivered', 'in_progress', 'cancelled'],
-    'delivered': ['completed', 'revision'],
-    'revision': ['in_progress', 'delivered', 'cancelled'],
-    'completed': [],
-    'cancelled': []
-  };
-  return transitions[currentStatus] || ['in_progress', 'delivered', 'completed', 'cancelled'];
-};
-
 const statusLabels = {
-  'awaiting_payment': 'Awaiting Payment',
+  'draft': 'Draft',
   'submitted': 'Submitted',
+  'under_review': 'Under Review',
+  'modification_required': 'Modification Required',
+  'resubmitted': 'Resubmitted',
+  'approved': 'Approved',
+  'processing': 'Processing',
   'in_progress': 'In Progress',
   'digitizing': 'Digitizing',
   'assigned': 'Assigned',
   'qc': 'Quality Check',
+  'ready_for_delivery': 'Ready for Delivery',
+  'awaiting_delivery_approval': 'Awaiting Delivery Approval',
+  'in_delivery': 'In Delivery',
   'delivered': 'Delivered',
   'completed': 'Completed',
-  'revision': 'Revision',
-  'cancelled': 'Cancelled'
+  'revision': 'Modification Required',
+  'cancelled': 'Cancelled',
+  'rejected': 'Rejected'
 };
 
 export const OrderManagementTable = () => {
@@ -46,7 +47,10 @@ export const OrderManagementTable = () => {
     orders = [], 
     setSelectedOrderForDrawer,
     ORDER_STATUSES,
-    updateOrderStatus
+    updateOrderStatus,
+    approveOrderSpecification,
+    dispatchOrderDelivery,
+    authUser
   } = useAppState();
 
   const [filterStatus, setFilterStatus] = useState('all');
@@ -73,7 +77,8 @@ export const OrderManagementTable = () => {
            payStatusLower === 'paid' || 
            payStatusLower === 'completed' || 
            payStatusLower === 'verified' ||
-           (statusLower === 'completed' && payStatusLower !== 'pending' && payStatusLower !== 'unpaid' && payStatusLower !== 'failed');
+           payStatusLower === 'wallet' ||
+           ['in_progress', 'processing', 'approved', 'ready_for_delivery', 'in_delivery', 'delivered', 'completed'].includes(statusLower);
   };
 
   const filteredOrders = orders.filter(ord => {
@@ -101,14 +106,17 @@ export const OrderManagementTable = () => {
     if (filterPayment === 'paid' && !getIsOrderPaid(ord)) return false;
     if (filterPayment === 'pending' && getIsOrderPaid(ord)) return false;
 
-    if (filterStatus === 'submitted') return matchesSearch && (ord?.status === 'submitted' || !ord?.status);
-    if (filterStatus === 'in_progress') return matchesSearch && (ord?.status === 'in_progress' || ord?.status === 'digitizing' || ord?.status === 'assigned');
-    if (filterStatus === 'awaiting_payment') return matchesSearch && (ord?.status === 'awaiting_payment');
-    if (filterStatus === 'digitizing') return matchesSearch && (ord?.status === 'digitizing' || ord?.status === 'assigned' || ord?.status === 'in_progress');
-    if (filterStatus === 'revision') return matchesSearch && ord?.status === 'revision';
-    if (filterStatus === 'delivered') return matchesSearch && (ord?.status === 'delivered' || ord?.status === 'qc');
-    if (filterStatus === 'completed') return matchesSearch && ord?.status === 'completed';
-    if (filterStatus === 'cancelled') return matchesSearch && ord?.status === 'cancelled';
+    const s = String(ord?.status || 'submitted').toLowerCase();
+
+    if (filterStatus === 'review') return matchesSearch && (s === 'submitted' || s === 'under_review' || s === 'resubmitted' || !ord?.status);
+    if (filterStatus === 'modifications') return matchesSearch && (s === 'modification_required' || s === 'revision');
+    if (filterStatus === 'approved') return matchesSearch && s === 'approved';
+    if (filterStatus === 'processing') return matchesSearch && (s === 'processing' || s === 'in_progress' || s === 'digitizing' || s === 'assigned' || s === 'qc');
+    if (filterStatus === 'ready_for_delivery') return matchesSearch && (s === 'ready_for_delivery' || s === 'awaiting_delivery_approval');
+    if (filterStatus === 'in_delivery') return matchesSearch && s === 'in_delivery';
+    if (filterStatus === 'delivered') return matchesSearch && s === 'delivered';
+    if (filterStatus === 'completed') return matchesSearch && s === 'completed';
+    if (filterStatus === 'cancelled') return matchesSearch && (s === 'cancelled' || s === 'rejected');
     return matchesSearch;
   });
 
@@ -139,7 +147,7 @@ export const OrderManagementTable = () => {
             gap: '0.3rem',
             whiteSpace: 'nowrap'
           }}
-          title="Payment Verified & Completed"
+          title="Payment Verified & Settled"
         >
           <CheckCircle size={12} style={{ color: '#16a34a' }} /> PAID
         </span>
@@ -170,62 +178,43 @@ export const OrderManagementTable = () => {
   };
 
   const getStatusBadge = (status) => {
-    switch (status) {
+    const s = String(status || 'submitted').toLowerCase();
+    switch (s) {
+      case 'draft':
+        return <span className="badge" style={{ background: '#f1f5f9', color: '#64748b', border: '1px solid #cbd5e1', fontWeight: 800 }}>Draft</span>;
       case 'submitted':
-        return <span className="badge badge-submitted" style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', fontWeight: 700 }}>🔴 New / Pending</span>;
-      case 'assigned':
-      case 'digitizing':
-        return <span className="badge badge-digitizing" style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', fontWeight: 700 }}>⚡ In Progress</span>;
+        return <span className="badge" style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontWeight: 800 }}>🔴 New Submitted</span>;
+      case 'under_review':
+        return <span className="badge" style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', fontWeight: 800 }}>Under Review</span>;
+      case 'modification_required':
       case 'revision':
-        return <span className="badge badge-revision" style={{ background: '#f3e8ff', color: '#6b21a8', border: '1px solid #e9d5ff', fontWeight: 700 }}>🔄 In Revision</span>;
-      case 'delivered':
+        return <span className="badge" style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', fontWeight: 800 }}>⚠️ Mod Requested</span>;
+      case 'resubmitted':
+        return <span className="badge" style={{ background: '#f5f3ff', color: '#6d28d9', border: '1px solid #ddd6fe', fontWeight: 800 }}>Resubmitted</span>;
+      case 'approved':
+        return <span className="badge" style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', fontWeight: 800 }}>✓ Approved</span>;
+      case 'processing':
+      case 'in_progress':
+      case 'digitizing':
+      case 'assigned':
+        return <span className="badge" style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', fontWeight: 800 }}>⚡ In Production</span>;
       case 'qc':
-        return <span className="badge badge-qc" style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', fontWeight: 700 }}>📦 Delivered</span>;
+        return <span className="badge" style={{ background: '#e0e7ff', color: '#4338ca', border: '1px solid #c7d2fe', fontWeight: 800 }}>QC Check</span>;
+      case 'ready_for_delivery':
+      case 'awaiting_delivery_approval':
+        return <span className="badge" style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', fontWeight: 800 }}>✨ Ready for Delivery</span>;
+      case 'in_delivery':
+        return <span className="badge" style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', fontWeight: 800 }}>🚚 In Delivery</span>;
+      case 'delivered':
+        return <span className="badge" style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', fontWeight: 800 }}>📦 Delivered</span>;
       case 'completed':
-        return <span className="badge badge-completed" style={{ background: '#d1fae5', color: '#065f46', border: '1px solid #a7f3d0', fontWeight: 700 }}>✅ Completed</span>;
+        return <span className="badge" style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #6ee7b7', fontWeight: 800 }}>✅ Completed</span>;
+      case 'rejected':
       case 'cancelled':
-        return <span className="badge" style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5', fontWeight: 700 }}>❌ Cancelled</span>;
+        return <span className="badge" style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5', fontWeight: 800 }}>❌ Cancelled</span>;
       default:
         return <span className="badge">{status}</span>;
     }
-  };
-
-  const getDeliveryCountdown = (ord) => {
-    if (ord.status === 'cancelled') {
-      return <span style={{ color: '#dc2626', fontWeight: 700, fontSize: '0.725rem' }}>Order Cancelled</span>;
-    }
-    if (ord.status === 'completed' || ord.status === 'delivered') {
-      return (
-        <span style={{ color: '#10b981', fontWeight: 700, fontSize: '0.725rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-          <CheckCircle size={12} /> Delivered
-        </span>
-      );
-    }
-
-    const createdTime = ord.createdAt ? new Date(ord.createdAt).getTime() : Date.now() - 3600000 * 2;
-    const turnaroundHours = ord.turnaroundHours || (ord.isRush ? 4 : 12);
-    const deadlineTime = createdTime + (turnaroundHours * 3600 * 1000);
-    const diffMs = deadlineTime - Date.now();
-
-    if (diffMs <= 0) {
-      const overdueMins = Math.abs(Math.floor(diffMs / 60000));
-      const hrs = Math.floor(overdueMins / 60);
-      const mins = overdueMins % 60;
-      return (
-        <span style={{ color: '#ef4444', fontWeight: 800, fontSize: '0.725rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-          ⚠️ Overdue by {hrs > 0 ? `${hrs}h ` : ''}{mins}m
-        </span>
-      );
-    }
-
-    const totalMins = Math.floor(diffMs / 60000);
-    const hrs = Math.floor(totalMins / 60);
-    const mins = totalMins % 60;
-    return (
-      <span style={{ color: 'var(--orange-600)', fontWeight: 800, fontSize: '0.725rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-        <Clock size={12} /> {ord.isRush ? '⚡ Rush ' : ''}{hrs}h {mins}m
-      </span>
-    );
   };
 
   const formatPlacementTime = (isoString) => {
@@ -241,7 +230,7 @@ export const OrderManagementTable = () => {
   return (
     <div className="card" style={{ padding: 'clamp(0.85rem, 2vw, 1.5rem)', background: '#ffffff', borderRadius: '16px', boxShadow: '0 8px 30px rgba(15, 23, 42, 0.05)' }}>
       
-      {/* Controls & Lifecycle Filter Tabs */}
+      {/* Controls & B2B Lifecycle Filter Tabs */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -260,27 +249,51 @@ export const OrderManagementTable = () => {
           </button>
 
           <button 
-            className={`btn btn-sm ${filterStatus === 'submitted' ? 'btn-primary-orange' : 'btn-outline'}`}
-            onClick={() => setFilterStatus('submitted')}
+            className={`btn btn-sm ${filterStatus === 'review' ? 'btn-primary-orange' : 'btn-outline'}`}
+            onClick={() => setFilterStatus('review')}
             style={{ fontWeight: 800 }}
           >
-            🔴 New ({orders.filter(o => o.status === 'submitted' || !o.status).length})
+            🔴 Review ({orders.filter(o => o.status === 'submitted' || o.status === 'under_review' || o.status === 'resubmitted' || !o.status).length})
           </button>
 
           <button 
-            className={`btn btn-sm ${filterStatus === 'digitizing' ? 'btn-primary-orange' : 'btn-outline'}`}
-            onClick={() => setFilterStatus('digitizing')}
+            className={`btn btn-sm ${filterStatus === 'modifications' ? 'btn-primary-orange' : 'btn-outline'}`}
+            onClick={() => setFilterStatus('modifications')}
             style={{ fontWeight: 800 }}
           >
-            ⚡ In Progress ({orders.filter(o => o.status === 'digitizing' || o.status === 'assigned').length})
+            ⚠️ Changes ({orders.filter(o => o.status === 'modification_required' || o.status === 'revision').length})
           </button>
 
           <button 
-            className={`btn btn-sm ${filterStatus === 'revision' ? 'btn-primary-orange' : 'btn-outline'}`}
-            onClick={() => setFilterStatus('revision')}
+            className={`btn btn-sm ${filterStatus === 'approved' ? 'btn-primary-orange' : 'btn-outline'}`}
+            onClick={() => setFilterStatus('approved')}
             style={{ fontWeight: 800 }}
           >
-            🔄 In Revision ({orders.filter(o => o.status === 'revision').length})
+            ✓ Approved ({orders.filter(o => o.status === 'approved').length})
+          </button>
+
+          <button 
+            className={`btn btn-sm ${filterStatus === 'processing' ? 'btn-primary-orange' : 'btn-outline'}`}
+            onClick={() => setFilterStatus('processing')}
+            style={{ fontWeight: 800 }}
+          >
+            ⚡ Production ({orders.filter(o => ['processing', 'in_progress', 'digitizing', 'assigned', 'qc'].includes(o.status)).length})
+          </button>
+
+          <button 
+            className={`btn btn-sm ${filterStatus === 'ready_for_delivery' ? 'btn-primary-orange' : 'btn-outline'}`}
+            onClick={() => setFilterStatus('ready_for_delivery')}
+            style={{ fontWeight: 800 }}
+          >
+            ✨ Ready Dispatch ({orders.filter(o => o.status === 'ready_for_delivery' || o.status === 'awaiting_delivery_approval').length})
+          </button>
+
+          <button 
+            className={`btn btn-sm ${filterStatus === 'in_delivery' ? 'btn-primary-orange' : 'btn-outline'}`}
+            onClick={() => setFilterStatus('in_delivery')}
+            style={{ fontWeight: 800 }}
+          >
+            🚚 In Delivery ({orders.filter(o => o.status === 'in_delivery').length})
           </button>
 
           <button 
@@ -288,7 +301,7 @@ export const OrderManagementTable = () => {
             onClick={() => setFilterStatus('delivered')}
             style={{ fontWeight: 800 }}
           >
-            📦 Delivered ({orders.filter(o => o.status === 'delivered' || o.status === 'qc').length})
+            📦 Delivered ({orders.filter(o => o.status === 'delivered').length})
           </button>
 
           <button 
@@ -297,14 +310,6 @@ export const OrderManagementTable = () => {
             style={{ fontWeight: 800 }}
           >
             ✅ Completed ({orders.filter(o => o.status === 'completed').length})
-          </button>
-
-          <button 
-            className={`btn btn-sm ${filterStatus === 'cancelled' ? 'btn-primary-orange' : 'btn-outline'}`}
-            onClick={() => setFilterStatus('cancelled')}
-            style={{ fontWeight: 800 }}
-          >
-            ❌ Cancelled ({orders.filter(o => o.status === 'cancelled').length})
           </button>
         </div>
 
@@ -341,7 +346,7 @@ export const OrderManagementTable = () => {
             <input 
               type="text" 
               className="form-control"
-              placeholder="Search order, account..."
+              placeholder="Search order, client, ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{ paddingLeft: '2.1rem', fontSize: '0.825rem', width: '100%' }}
@@ -354,7 +359,7 @@ export const OrderManagementTable = () => {
       <div 
         className="table-responsive"
         style={{ 
-          maxHeight: '600px', 
+          maxHeight: '620px', 
           overflowY: 'auto', 
           overflowX: 'auto', 
           border: '1px solid var(--border-color)',
@@ -373,20 +378,21 @@ export const OrderManagementTable = () => {
               fontWeight: 800,
               letterSpacing: '0.04em'
             }}>
-              <th style={{ padding: '0.85rem 1rem' }}>ORDER</th>
-              <th style={{ padding: '0.85rem 1rem' }}>ACCOUNT</th>
+              <th style={{ padding: '0.85rem 1rem' }}>ORDER / ID</th>
+              <th style={{ padding: '0.85rem 1rem' }}>CLIENT ACCOUNT</th>
+              <th style={{ padding: '0.85rem 1rem' }}>VERSION & APPROVAL</th>
               <th style={{ padding: '0.85rem 1rem' }}>SERVICE</th>
               <th style={{ padding: '0.85rem 1rem' }}>PRICE</th>
               <th style={{ padding: '0.85rem 1rem' }}>PAYMENT</th>
               <th style={{ padding: '0.85rem 1rem' }}>STATUS</th>
               <th style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>ARTWORK</th>
-              <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>ACTIONS</th>
+              <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>OPERATIONS</th>
             </tr>
           </thead>
           <tbody>
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ padding: '3rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <td colSpan={9} style={{ padding: '3rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                   No orders found matching the current filters.
                 </td>
               </tr>
@@ -407,6 +413,7 @@ export const OrderManagementTable = () => {
                   ord.file_url || 
                   'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
                 const msgCount = ord.messages?.length || 0;
+                const currentVer = ord.currentVersion || (Array.isArray(ord.versions) ? ord.versions.length : 1);
 
                 return (
                   <tr 
@@ -427,9 +434,6 @@ export const OrderManagementTable = () => {
                         <span>•</span>
                         <span>📅 {formatPlacementTime(ord.createdAt)}</span>
                       </div>
-                      <div style={{ marginTop: '0.2rem' }}>
-                        {getDeliveryCountdown(ord)}
-                      </div>
                     </td>
 
                     {/* 2. ACCOUNT */}
@@ -442,41 +446,59 @@ export const OrderManagementTable = () => {
                       </div>
                     </td>
 
-                    {/* 3. SERVICE */}
+                    {/* 3. VERSION & APPROVAL */}
+                    <td style={{ padding: '1rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <span style={{ background: '#fff7ed', color: '#ea580c', border: '1px solid #fed7aa', padding: '0.1rem 0.45rem', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 800 }}>
+                            v{currentVer}
+                          </span>
+                          {ord.approvedVersion ? (
+                            <span style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', padding: '0.1rem 0.4rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 800 }}>
+                              ✓ Appr v{ord.approvedVersion}
+                            </span>
+                          ) : (
+                            <span style={{ background: '#f8fafc', color: '#64748b', fontSize: '0.7rem', fontWeight: 600 }}>
+                              Pending
+                            </span>
+                          )}
+                        </div>
+                        {ord.modificationRequest && !ord.modificationRequest.resolved && (
+                          <span style={{ color: '#e11d48', fontSize: '0.68rem', fontWeight: 800 }}>
+                            ⚠️ Mod Pending
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* 4. SERVICE */}
                     <td style={{ padding: '1rem' }}>
                       <div style={{ fontWeight: 700, color: 'var(--navy-900)', fontSize: '0.825rem' }}>
                         {ord.serviceCategory || ord.type || 'Embroidery Digitizing'}
                       </div>
                       <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                        {ord.fabricType || (ord.requestedFormats ? ord.requestedFormats.slice(0, 3).join(', ').toUpperCase() : 'Standard DST/PES')}
+                        {ord.dimensions || '3.5"'} • {ord.fabric || 'Cotton Twill'}
                       </div>
                     </td>
 
-                    {/* 4. PRICE */}
+                    {/* 5. PRICE */}
                     <td style={{ padding: '1rem' }}>
                       <div style={{ fontWeight: 800, color: 'var(--navy-950)', fontSize: '0.925rem' }}>
                         ${parseFloat(ord.price || 15).toFixed(2)}
                       </div>
                     </td>
 
-                    {/* 5. PAYMENT */}
+                    {/* 6. PAYMENT */}
                     <td style={{ padding: '1rem' }}>
                       {getPaymentBadge(ord)}
                     </td>
 
-                    {/* 6. STATUS */}
+                    {/* 7. STATUS */}
                     <td style={{ padding: '1rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--navy-900)' }}>
-                          {statusLabels[ord.status] || ord.status || 'Submitted'}
-                        </div>
-                        <div>
-                          {getStatusBadge(ord.status)}
-                        </div>
-                      </div>
+                      {getStatusBadge(ord.status)}
                     </td>
 
-                    {/* 7. ARTWORK */}
+                    {/* 8. ARTWORK */}
                     <td style={{ padding: '1rem', textAlign: 'center' }}>
                       <div 
                         style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}
@@ -493,8 +515,8 @@ export const OrderManagementTable = () => {
                             e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
                           }}
                           style={{ 
-                            width: '46px', 
-                            height: '46px', 
+                            width: '44px', 
+                            height: '44px', 
                             borderRadius: '8px', 
                             objectFit: 'cover', 
                             border: '1.5px solid var(--orange-500)', 
@@ -521,15 +543,15 @@ export const OrderManagementTable = () => {
                       </div>
                     </td>
 
-                    {/* 8. ACTIONS */}
+                    {/* 9. OPERATIONS */}
                     <td style={{ padding: '1rem', textAlign: 'right' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.35rem' }}>
                         <button 
                           className="btn btn-primary-orange btn-sm"
                           onClick={() => setSelectedOrderForDrawer(ord)}
                           style={{ fontWeight: 800, fontSize: '0.78rem', whiteSpace: 'nowrap', gap: '0.3rem', padding: '0.35rem 0.75rem' }}
                         >
-                          Manage <ChevronRight size={14} />
+                          Project Desk <ChevronRight size={14} />
                         </button>
 
                         <button
@@ -539,7 +561,7 @@ export const OrderManagementTable = () => {
                             background: 'none',
                             border: 'none',
                             color: 'var(--text-muted)',
-                            fontSize: '0.725rem',
+                            fontSize: '0.72rem',
                             fontWeight: 700,
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -547,10 +569,10 @@ export const OrderManagementTable = () => {
                             cursor: 'pointer',
                             padding: 0
                           }}
-                          title="Open chat & order activity log"
+                          title="Open project activity timeline"
                         >
-                          <MessageSquare size={13} style={{ color: 'var(--orange-500)' }} />
-                          {msgCount > 0 ? `${msgCount} Messages` : 'Activity Log'}
+                          <MessageSquare size={12} style={{ color: 'var(--orange-500)' }} />
+                          {msgCount > 0 ? `${msgCount} Messages` : 'Audit Timeline'}
                         </button>
                       </div>
                     </td>
