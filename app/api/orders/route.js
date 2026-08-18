@@ -153,19 +153,47 @@ export async function POST(request) {
     }
 
     if (action === 'updateStatus') {
-      if (!isAdmin) return NextResponse.json({ error: 'Unauthorized: Admin privileges required.' }, { status: 403 });
       const { orderId, newStatus, extraData } = payload;
-      
+      const rawId = String(orderId || '').trim();
+      const cleanId = rawId.replace('#', '');
+      const withHash = `#${cleanId}`;
+
+      const { data: targetOrder } = await supabase
+        .from('orders')
+        .select('id, client_email, status, payment_status')
+        .or(`id.eq."${rawId}",id.eq."${cleanId}",id.eq."${withHash}"`)
+        .maybeSingle();
+
+      if (!isAdmin) {
+        if (!user || !targetOrder || (targetOrder.client_email || '').toLowerCase().trim() !== (user.email || '').toLowerCase().trim()) {
+          return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        }
+      }
+
       const updatePayload = { status: newStatus, updated_at: new Date().toISOString() };
+      
+      if (extraData?.paymentStatus || extraData?.payment_status) {
+        const payStatus = extraData.paymentStatus || extraData.payment_status;
+        updatePayload.payment_status = payStatus;
+        if (payStatus === 'paid') {
+          updatePayload.paid_at = new Date().toISOString();
+        }
+      }
+
       if (extraData?.outputFileUrl) {
         updatePayload.output_file_url = extraData.outputFileUrl;
       }
 
-      const { error } = await supabase.from('orders').update(updatePayload).eq('id', orderId);
+      const { error } = await supabase
+        .from('orders')
+        .update(updatePayload)
+        .or(`id.eq."${rawId}",id.eq."${cleanId}",id.eq."${withHash}"`);
+
       if (error) throw error;
       
       // Process uploaded machine files for admin delivery
       if (extraData?.uploadedMachineFiles && Array.isArray(extraData.uploadedMachineFiles)) {
+        const resolvedOrderId = targetOrder?.id || orderId;
         for (const file of extraData.uploadedMachineFiles) {
           if (!file.url || file.error) continue;
           
@@ -177,7 +205,7 @@ export async function POST(request) {
             
           if (!existing) {
             await supabase.from('order_files').insert([{
-              order_id: orderId,
+              order_id: resolvedOrderId,
               file_name: file.name || 'machine_file',
               file_format: file.format || file.name?.split('.').pop() || 'unknown',
               file_type: 'machine_file',

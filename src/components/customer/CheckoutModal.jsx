@@ -231,7 +231,7 @@ export const CheckoutModal = () => {
           showToast('Payment successful! Funds deducted from your Studio Wallet.', 'success');
           
           if (orderId && updateOrderStatus) {
-            updateOrderStatus(orderId, 'in_progress', 'paid');
+            await updateOrderStatus(orderId, 'in_progress', { paymentStatus: 'paid', payment_status: 'paid' });
           }
 
           if (fetchUserWalletBalance && authUser?.email) {
@@ -265,38 +265,41 @@ export const CheckoutModal = () => {
           orderId: checkoutSession?.orderId
         })
       });
-      if (data.success) {
-        const solana = data.solanaAddress || '';
-        const lightning = data.lightningInvoice || data.lightningAddress || '';
-        const paymentUrl = data.paymentUrl || (lightning ? `lightning:${lightning}` : '');
 
-        setExtractedSolana(solana);
-        setExtractedLightning(lightning);
-        setHasCopied(false);
+      const data = await res.json();
 
-        setCheckoutSession({
-          ...checkoutSession,
-          url: paymentUrl,
-          invoiceId: data.invoice?.id,
-          amount: data.amount || checkoutSession.amount,
-          solanaAddress: solana,
-          lightningInvoice: lightning
-        });
-        
-        // Transition to the target view - modern browsers require direct user tap to open links without blocking
-        if (methodId === 'card') {
-          setActiveView('card');
-        } else if (methodId === 'cashapp' || methodId === 'lightning' || methodId === 'dollarpay_cashapp') {
-          setActiveView('cashapp');
-        } else if (methodId === 'paypal' || methodId === 'pyusd' || methodId === 'dollarpay_paypal') {
-          setActiveView('paypal');
-        } else {
-          setActiveView('browser_waiting');
-        }
-
-      } else {
+      if (!res.ok || !data.success) {
         throw new Error(data.error || 'Failed to initialize payment gateway.');
       }
+
+      const solana = data.solanaAddress || '';
+      const lightning = data.lightningInvoice || data.lightningAddress || '';
+      const paymentUrl = data.paymentUrl || (lightning ? `lightning:${lightning}` : '');
+
+      setExtractedSolana(solana);
+      setExtractedLightning(lightning);
+      setHasCopied(false);
+
+      setCheckoutSession(prev => ({
+        ...prev,
+        url: paymentUrl,
+        invoiceId: data.invoice?.id || data.invoice?.bolt_order_id,
+        amount: data.amount || checkoutSession.amount,
+        solanaAddress: solana,
+        lightningInvoice: lightning
+      }));
+      
+      // Transition to the target view - modern browsers require direct user tap to open links without blocking
+      if (methodId === 'card') {
+        setActiveView('card');
+      } else if (methodId === 'cashapp' || methodId === 'lightning' || methodId === 'dollarpay_cashapp') {
+        setActiveView('cashapp');
+      } else if (methodId === 'paypal' || methodId === 'pyusd' || methodId === 'dollarpay_paypal') {
+        setActiveView('paypal');
+      } else {
+        setActiveView('browser_waiting');
+      }
+
     } catch (err) {
        console.error('Payment setup error:', err);
        showToast('Error setting up payment: ' + (err.message || 'Unknown error'), 'error');
@@ -337,7 +340,7 @@ export const CheckoutModal = () => {
             setIsPaid(true);
             showToast('Payment confirmed! Order assigned to design desk.', 'success');
             if (checkoutSession?.orderId && updateOrderStatus) {
-              updateOrderStatus(checkoutSession.orderId, 'in_progress', 'paid');
+              updateOrderStatus(checkoutSession.orderId, 'in_progress', { paymentStatus: 'paid', payment_status: 'paid' });
             }
           }
         } catch (err) {

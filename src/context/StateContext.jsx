@@ -834,35 +834,45 @@ export const StateProvider = ({ children }) => {
   };
 
   const updateOrderStatus = async (orderId, newStatus, extraData = {}) => {
-    const targetOrder = orders.find(o => o.id === orderId);
+    const safeExtraData = typeof extraData === 'string' 
+      ? { paymentStatus: extraData, payment_status: extraData } 
+      : (extraData || {});
+
+    const cleanTargetId = String(orderId || '').trim().replace('#', '');
+    const targetOrder = orders.find(o => String(o.id || '').replace('#', '') === cleanTargetId);
     
     if (isSupabaseConfigured) {
       try {
-        await updateOrderStatusInSupabase(orderId, newStatus, extraData);
+        await updateOrderStatusInSupabase(orderId, newStatus, safeExtraData);
       } catch (sbErr) {
         console.warn('Supabase update order status notice:', sbErr);
       }
     }
 
     setOrders(prev => prev.map(ord => {
-      if (ord.id === orderId) {
+      const isMatch = String(ord.id || '').replace('#', '') === cleanTargetId;
+      if (isMatch) {
+        const resolvedPayStatus = safeExtraData.paymentStatus || safeExtraData.payment_status || (newStatus === 'in_progress' ? 'paid' : ord.payment_status || ord.paymentStatus);
         return {
           ...ord,
           status: newStatus,
-          ...extraData,
+          ...safeExtraData,
+          payment_status: resolvedPayStatus,
+          paymentStatus: resolvedPayStatus,
           history: [...(ord.history || []), { timestamp: new Date().toISOString(), label: `Status updated to ${newStatus}` }]
         };
       }
       return ord;
     }));
+
     showToast(`Order ${formatOrderId(orderId)} status updated to ${newStatus.toUpperCase()}`, 'success');
 
     // Trigger email based on new status
     if (targetOrder) {
       if (newStatus === 'delivered') {
-        triggerEmailNotification('ORDER_DELIVERED', { ...targetOrder, ...extraData });
+        triggerEmailNotification('ORDER_DELIVERED', { ...targetOrder, ...safeExtraData });
       } else if (newStatus === 'completed') {
-        triggerEmailNotification('ORDER_COMPLETED', { ...targetOrder, ...extraData });
+        triggerEmailNotification('ORDER_COMPLETED', { ...targetOrder, ...safeExtraData });
       }
     }
   };

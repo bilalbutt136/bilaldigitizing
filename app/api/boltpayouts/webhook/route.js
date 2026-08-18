@@ -150,6 +150,10 @@ export async function POST(request) {
           }
 
           // Update the order itself atomically
+          const rawOrdId = String(invoice.order_id).trim();
+          const cleanOrdId = rawOrdId.replace('#', '');
+          const withHash = `#${cleanOrdId}`;
+
           await supabaseAdmin
             .from('orders')
             .update({ 
@@ -158,7 +162,7 @@ export async function POST(request) {
               paid_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             })
-            .eq('id', invoice.order_id);
+            .or(`id.eq."${rawOrdId}",id.eq."${cleanOrdId}",id.eq."${withHash}"`);
         }
       }
 

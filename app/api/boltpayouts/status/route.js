@@ -21,12 +21,13 @@ export async function GET(request) {
       return NextResponse.json({ success: false, error: 'Missing invoiceId' }, { status: 400 });
     }
 
+    const cleanInvoiceId = String(invoiceId).trim();
     const cleanUserEmail = user.email.toLowerCase().trim();
 
     let query = supabaseAdmin
       .from('invoices')
       .select('*')
-      .or(`id.eq.${invoiceId},bolt_order_id.eq.${invoiceId}`);
+      .or(`id.eq."${cleanInvoiceId}",bolt_order_id.eq."${cleanInvoiceId}"`);
 
     if (!isAdmin) {
       query = query.ilike('client_email', cleanUserEmail);
@@ -76,15 +77,19 @@ export async function GET(request) {
               p_client_email: cleanUserEmail,
               p_amount: amount,
               p_payment_method: `BoltPayouts (${invoice.payment_method || invoice.method || 'online'})`
-            });
+            }).catch(() => null);
 
             // If attached to an order, deduct and update order status
             if (invoice.order_id) {
+              const rawOrdId = String(invoice.order_id).trim();
+              const cleanOrdId = rawOrdId.replace('#', '');
+              const withHash = `#${cleanOrdId}`;
+
               await supabaseAdmin.rpc('deduct_wallet_balance', {
                 p_client_email: cleanUserEmail,
                 p_amount: amount,
-                p_order_id: String(invoice.order_id)
-              });
+                p_order_id: rawOrdId
+              }).catch(() => null);
 
               await supabaseAdmin
                 .from('orders')
@@ -94,7 +99,7 @@ export async function GET(request) {
                   paid_at: new Date().toISOString(),
                   updated_at: new Date().toISOString()
                 })
-                .eq('id', invoice.order_id);
+                .or(`id.eq."${rawOrdId}",id.eq."${cleanOrdId}",id.eq."${withHash}"`);
             }
           }
         }

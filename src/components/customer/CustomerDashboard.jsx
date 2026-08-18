@@ -240,14 +240,11 @@ export const CustomerDashboard = () => {
   const paginatedCustOrders = filteredDigitizingOrders.slice(custStartIndex, custEndIndex);
 
   const getPaymentStatusBadge = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'paid':
-        return <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)' }}>Paid</span>;
-      case 'wallet':
-        return <span className="badge" style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)' }}>Wallet Paid</span>;
-      default:
-        return <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>Pending</span>;
+    const s = String(status || '').toLowerCase().trim();
+    if (s === 'paid' || s === 'completed' || s === 'settled' || s === 'verified' || s === 'wallet') {
+      return <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', fontWeight: 800 }}>PAID</span>;
     }
+    return <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', fontWeight: 800 }}>PENDING</span>;
   };
 
   const getStatusBadge = (status) => {

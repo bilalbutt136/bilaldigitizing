@@ -77,6 +77,14 @@ export const OrderTrackerDrawer = () => {
   // Always resolve live reactive order state from global orders array
   const ord = orders.find(o => o.id === selectedOrderForDrawer.id) || selectedOrderForDrawer;
 
+  const getPaymentStatusBadge = (status) => {
+    const s = String(status || '').toLowerCase().trim();
+    if (s === 'paid' || s === 'completed' || s === 'settled' || s === 'verified' || s === 'wallet') {
+      return <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', fontWeight: 800 }}>PAID</span>;
+    }
+    return <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', fontWeight: 800 }}>PENDING</span>;
+  };
+
   // Collect all uploaded artwork / logo files across all placements and attachments
   const clientArtworkFiles = [
     ...(ord.uploadedFiles || []),
@@ -565,6 +573,7 @@ export const OrderTrackerDrawer = () => {
                     <div style={{ flex: 1, background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '1px', background: 'var(--border-color)' }}>
                         <div style={{ background: '#fff', padding: '1rem' }}><div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.25rem' }}>Current Status</div><div style={{ textTransform: 'capitalize', fontWeight: 800, color: 'var(--orange-600)', fontSize: '1rem' }}>{ord.status || 'Pending'}</div></div>
+                        <div style={{ background: '#fff', padding: '1rem' }}><div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.25rem' }}>Payment Status</div><div>{getPaymentStatusBadge(ord.payment_status || ord.paymentStatus)}</div></div>
                         <div style={{ background: '#fff', padding: '1rem' }}><div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.25rem' }}>Client Profile</div><div style={{ fontWeight: 700, color: 'var(--navy-900)', fontSize: '1rem' }}>{ord.clientName}</div></div>
                         <div style={{ background: '#fff', padding: '1rem' }}><div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.25rem' }}>Service Category</div><div style={{ fontWeight: 600, color: 'var(--navy-900)' }}>{ord.serviceCategory}</div></div>
                         <div style={{ background: '#fff', padding: '1rem' }}><div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.25rem' }}>Project Total</div><div style={{ fontWeight: 800, color: 'var(--green-600)' }}>${parseFloat(ord.price || 0).toFixed(2)}</div></div>

@@ -140,6 +140,10 @@ export async function POST(request) {
         }]);
 
         if (orderId) {
+          const rawId = String(orderId).trim();
+          const cleanId = rawId.replace('#', '');
+          const withHash = `#${cleanId}`;
+
           await supabaseAdmin
             .from('orders')
             .update({ 
@@ -148,7 +152,7 @@ export async function POST(request) {
               paid_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             })
-            .eq('id', orderId);
+            .or(`id.eq."${rawId}",id.eq."${cleanId}",id.eq."${withHash}"`);
         }
       }
     } else if (action === 'deposit') {
