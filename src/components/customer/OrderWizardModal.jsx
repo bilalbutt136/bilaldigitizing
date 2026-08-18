@@ -2348,15 +2348,18 @@ export const OrderWizardModal = () => {
             </div>
 
             {/* Bottom Footer Navigation Bar */}
-            <div style={{
-              padding: '1rem 1.5rem',
-              borderTop: '1px solid #e2e8f0',
-              background: '#ffffff',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexShrink: 0
-            }}>
+            <div 
+              className="wizard-bottom-bar"
+              style={{
+                padding: '1rem 1.5rem',
+                borderTop: '1px solid #e2e8f0',
+                background: '#ffffff',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexShrink: 0
+              }}
+            >
               <div>
                 {currentStep > 1 ? (
                   <button
