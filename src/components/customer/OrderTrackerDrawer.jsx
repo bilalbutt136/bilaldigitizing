@@ -128,8 +128,8 @@ export const OrderTrackerDrawer = () => {
   const isDelivered = ord.status === 'delivered' || ord.status === 'completed' || (Array.isArray(ord.uploadedMachineFiles) && ord.uploadedMachineFiles.length > 0);
   const isCompleted = ord.status === 'completed';
 
-  const isCurrentlyOnAdminPortal = currentView === 'admin' || (typeof window !== 'undefined' && window.location.pathname.includes('admin'));
-  const isAdmin = authUser?.role === 'admin' && isCurrentlyOnAdminPortal;
+  const isCurrentlyOnAdminPortal = currentView === 'admin' || (typeof window !== 'undefined' && (window.location.pathname.includes('admin') || window.location.pathname.includes('admin-portal')));
+  const isAdmin = (authUser?.role === 'admin' && isCurrentlyOnAdminPortal) || currentView === 'admin';
 
   // Collect all uploaded artwork / logo files across all placements and attachments
   const clientArtworkFiles = [
@@ -541,8 +541,8 @@ export const OrderTrackerDrawer = () => {
             </div>
           </div>
 
-          {/* UNPAID PAYMENT BANNER */}
-          {!isPaid && (
+          {/* UNPAID PAYMENT BANNER (CUSTOMER ONLY) */}
+          {!isPaid && !isAdmin && (
             <div style={{
               background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
               border: '1.5px solid #fcd34d',
@@ -576,6 +576,43 @@ export const OrderTrackerDrawer = () => {
                 style={{ fontWeight: 900, gap: '0.4rem', padding: '0.55rem 1.25rem' }}
               >
                 <Zap size={15} /> Pay Now (${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)})
+              </button>
+            </div>
+          )}
+
+          {/* ADMIN UNPAID NOTICE */}
+          {!isPaid && isAdmin && (
+            <div style={{
+              background: '#fffbeb',
+              border: '1.5px solid #fde68a',
+              borderRadius: '14px',
+              padding: '0.9rem 1.3rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '0.75rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f59e0b', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Clock size={18} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 800, color: '#92400e', fontSize: '0.9rem' }}>
+                    Payment Status: Awaiting Client Checkout (${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)})
+                  </div>
+                  <div style={{ color: '#b45309', fontSize: '0.75rem', marginTop: '0.1rem' }}>
+                    Customer has submitted requirements but has not finalized online payment yet.
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => updateOrderStatus(ord.id, ord.status || 'in_progress', { payment_status: 'paid', isPaid: true })}
+                className="btn btn-outline btn-sm"
+                style={{ fontSize: '0.78rem', fontWeight: 800, borderColor: '#10b981', color: '#047857', background: '#ecfdf5' }}
+              >
+                ✓ Mark Paid (Admin)
               </button>
             </div>
           )}
@@ -1100,7 +1137,7 @@ export const OrderTrackerDrawer = () => {
 
           {/* Right: Quick Action Buttons */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-            {!isPaid ? (
+            {!isPaid && !isAdmin ? (
               <button
                 type="button"
                 onClick={handleLaunchPayment}
@@ -1108,6 +1145,15 @@ export const OrderTrackerDrawer = () => {
                 style={{ fontWeight: 900, gap: '0.35rem', padding: '0.5rem 1.25rem' }}
               >
                 <Zap size={15} /> Pay Now (${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)})
+              </button>
+            ) : !isPaid && isAdmin ? (
+              <button
+                type="button"
+                onClick={() => updateOrderStatus(ord.id, ord.status || 'in_progress', { payment_status: 'paid', isPaid: true })}
+                className="btn btn-outline btn-sm"
+                style={{ fontSize: '0.8rem', fontWeight: 800, borderColor: '#10b981', color: '#047857', background: '#ecfdf5' }}
+              >
+                ✓ Mark Paid (Admin)
               </button>
             ) : isDelivered && ord.status !== 'completed' && !isAdmin ? (
               <>
