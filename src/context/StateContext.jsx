@@ -823,6 +823,8 @@ export const StateProvider = ({ children }) => {
   // Order Operations connected to Supabase DB
   const createOrder = async (newOrderData) => {
     const localId = newOrderData.id || `#${Math.floor(1000 + Math.random() * 9000)}`;
+    const isAlreadyPaid = String(newOrderData.payment_status || newOrderData.paymentStatus || '').toLowerCase() === 'paid';
+    
     const fullOrderPayload = {
       id: localId,
       ...newOrderData,
@@ -830,8 +832,10 @@ export const StateProvider = ({ children }) => {
       clientEmail: (newOrderData.clientEmail || authUser?.email || '').toLowerCase().trim(),
       clientId: newOrderData.clientId || authUser?.id || authUser?.email || '',
       createdAt: new Date().toISOString(),
-      status: 'awaiting_payment',
-      history: [{ timestamp: new Date().toISOString(), label: 'Order Submitted — Awaiting Payment' }],
+      status: newOrderData.status || (isAlreadyPaid ? 'in_progress' : 'awaiting_payment'),
+      payment_status: isAlreadyPaid ? 'paid' : (newOrderData.payment_status || newOrderData.paymentStatus || 'pending'),
+      paymentStatus: isAlreadyPaid ? 'paid' : (newOrderData.payment_status || newOrderData.paymentStatus || 'pending'),
+      history: [{ timestamp: new Date().toISOString(), label: isAlreadyPaid ? 'Order Submitted & Paid with Studio Wallet' : 'Order Submitted — Awaiting Payment' }],
       revisions: []
     };
 
@@ -858,8 +862,12 @@ export const StateProvider = ({ children }) => {
       ? { paymentStatus: extraData, payment_status: extraData } 
       : (extraData || {});
 
-    const cleanTargetId = String(orderId || '').trim().replace('#', '');
-    const targetOrder = orders.find(o => String(o.id || '').replace('#', '') === cleanTargetId);
+    const cleanTargetId = String(orderId || '').trim().replace(/^#+/, '');
+    const targetWithHash = `#${cleanTargetId}`;
+    const targetOrder = orders.find(o => {
+      const oClean = String(o.id || '').trim().replace(/^#+/, '');
+      return oClean === cleanTargetId || o.id === orderId || o.id === targetWithHash;
+    });
     
     if (isSupabaseConfigured) {
       try {
@@ -870,7 +878,8 @@ export const StateProvider = ({ children }) => {
     }
 
     setOrders(prev => prev.map(ord => {
-      const isMatch = String(ord.id || '').replace('#', '') === cleanTargetId;
+      const ordClean = String(ord.id || '').trim().replace(/^#+/, '');
+      const isMatch = ordClean === cleanTargetId || ord.id === orderId || ord.id === targetWithHash;
       if (isMatch) {
         const resolvedPayStatus = safeExtraData.paymentStatus || safeExtraData.payment_status || (newStatus === 'in_progress' ? 'paid' : ord.payment_status || ord.paymentStatus);
         return {
@@ -1008,6 +1017,9 @@ export const StateProvider = ({ children }) => {
     const res = await deductWalletViaApi(num, 'Studio Wallet Credit', orderId);
     if (res.success) {
       setWalletBalance(res.balance);
+      if (orderId) {
+        await updateOrderStatus(orderId, 'in_progress', { paymentStatus: 'paid', payment_status: 'paid' });
+      }
       return true;
     }
     showToast(res.error || 'Wallet payment failed.', 'error');

@@ -138,22 +138,23 @@ export async function POST(request) {
           description: txDesc,
           created_at: new Date().toISOString()
         }]);
+      }
 
-        if (orderId) {
-          const rawId = String(orderId).trim();
-          const cleanId = rawId.replace('#', '');
-          const withHash = `#${cleanId}`;
+      // Always ensure the order is marked as paid and in_progress in the live database
+      if (orderId) {
+        const rawId = String(orderId).trim();
+        const cleanId = rawId.replace(/^#+/, '');
+        const withHash = `#${cleanId}`;
 
-          await supabaseAdmin
-            .from('orders')
-            .update({ 
-              status: 'in_progress', 
-              payment_status: 'paid',
-              paid_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            })
-            .or(`id.eq."${rawId}",id.eq."${cleanId}",id.eq."${withHash}"`);
-        }
+        await supabaseAdmin
+          .from('orders')
+          .update({ 
+            status: 'in_progress', 
+            payment_status: 'paid',
+            paid_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .or(`id.eq."${rawId}",id.eq."${cleanId}",id.eq."${withHash}"`);
       }
     } else if (action === 'deposit') {
       // Manual Admin deposit

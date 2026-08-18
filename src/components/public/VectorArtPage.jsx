@@ -323,14 +323,18 @@ export const VectorArtPage = ({ hideHero = false }) => {
         image_url: primaryArtworkUrl,
         logo: primaryArtworkUrl,
         paymentMethod: paymentOption,
+        status: paymentOption === 'wallet' ? 'in_progress' : 'awaiting_payment',
+        payment_status: paymentOption === 'wallet' ? 'paid' : 'pending',
+        paymentStatus: paymentOption === 'wallet' ? 'paid' : 'pending',
         estimatedDelivery: isRush ? '2-4 Hours (Super Rush)' : '8-12 Hours (Standard)'
       };
 
+      const created = await createOrder(newVectorOrder);
+
       if (paymentOption === 'wallet') {
-        deductWalletBalance(parseFloat(totalPrice));
+        await deductWalletBalance(parseFloat(totalPrice), created?.id || newVectorOrder.id);
       }
 
-      await createOrder(newVectorOrder);
       setIsSubmitting(false);
 
       // Navigate client straight to portal

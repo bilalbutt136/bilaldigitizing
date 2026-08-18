@@ -120,13 +120,10 @@ export const StoreOrderModal = () => {
 
     setIsSubmitting(true);
 
-    if (paymentMethod === 'wallet') {
-      if (!hasEnoughWallet) {
-        showToast(`Insufficient studio wallet balance ($${walletBalance.toFixed(2)}). Please top up or pay via BoltPayouts`, 'warning');
-        setIsSubmitting(false);
-        return;
-      }
-      deductWalletBalance(totalPriceNum);
+    if (paymentMethod === 'wallet' && !hasEnoughWallet) {
+      showToast(`Insufficient studio wallet balance ($${walletBalance.toFixed(2)}). Please top up or pay via BoltPayouts`, 'warning');
+      setIsSubmitting(false);
+      return;
     }
 
     let clientArtwork = uploadedArtwork?.url || null;
@@ -162,6 +159,7 @@ export const StoreOrderModal = () => {
       file_url: productImage,
       status: paymentMethod === 'wallet' ? 'in_progress' : 'submitted',
       payment_status: paymentMethod === 'wallet' ? 'paid' : 'pending',
+      paymentStatus: paymentMethod === 'wallet' ? 'paid' : 'pending',
       date: new Date().toISOString().split('T')[0],
       notes: `Item: ${selectedStoreItem.title} | Qty: ${quantity} | Size: ${selectedSize} | Color: ${selectedColor} | Artwork: ${uploadedArtwork?.name || 'Default Artwork'} | Notes: ${placementNotes || 'Standard placement'}`,
       details: {
@@ -181,6 +179,10 @@ export const StoreOrderModal = () => {
 
     try {
       const created = await createOrder(newStoreOrder);
+
+      if (paymentMethod === 'wallet') {
+        await deductWalletBalance(totalPriceNum, created?.id || newStoreOrder.id);
+      }
 
       // Save directly to localStorage store_orders array
       const existing = JSON.parse(localStorage.getItem('store_orders') || '[]');

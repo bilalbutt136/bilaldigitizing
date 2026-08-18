@@ -87,9 +87,11 @@ export async function POST(request) {
         (orderFiles && orderFiles[0]?.file_url) || 
         null;
 
-      // Enforce safe status and pricing validation
-      const safePaymentStatus = isAdmin ? (primaryDbRow.paymentStatus || 'pending') : 'pending';
-      const safeStatus = isAdmin ? (primaryDbRow.status || 'submitted') : 'submitted';
+      // Enforce safe status and pricing validation (recognizing wallet-paid orders)
+      const inputPayStatus = String(primaryDbRow.payment_status || primaryDbRow.paymentStatus || '').toLowerCase().trim();
+      const isInputPaid = inputPayStatus === 'paid' || inputPayStatus === 'completed' || inputPayStatus === 'wallet';
+      const safePaymentStatus = isInputPaid ? 'paid' : (isAdmin ? (primaryDbRow.paymentStatus || 'pending') : 'pending');
+      const safeStatus = isInputPaid ? 'in_progress' : (isAdmin ? (primaryDbRow.status || 'submitted') : 'submitted');
 
       const mappedDbRow = {
         id: primaryDbRow.id || `ord-${Date.now()}`,
@@ -155,7 +157,7 @@ export async function POST(request) {
     if (action === 'updateStatus') {
       const { orderId, newStatus, extraData } = payload;
       const rawId = String(orderId || '').trim();
-      const cleanId = rawId.replace('#', '');
+      const cleanId = rawId.replace(/^#+/, '');
       const withHash = `#${cleanId}`;
 
       const { data: targetOrder } = await supabase
@@ -165,15 +167,18 @@ export async function POST(request) {
         .maybeSingle();
 
       if (!isAdmin) {
-        if (!user || !targetOrder || (targetOrder.client_email || '').toLowerCase().trim() !== (user.email || '').toLowerCase().trim()) {
+        if (!user) {
+          return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        if (targetOrder && (targetOrder.client_email || '').toLowerCase().trim() !== (user.email || '').toLowerCase().trim()) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
       }
 
-      const updatePayload = { status: newStatus, updated_at: new Date().toISOString() };
+      const updatePayload = { status: newStatus || 'in_progress', updated_at: new Date().toISOString() };
       
-      if (extraData?.paymentStatus || extraData?.payment_status) {
-        const payStatus = extraData.paymentStatus || extraData.payment_status;
+      const payStatus = extraData?.paymentStatus || extraData?.payment_status || (newStatus === 'in_progress' ? 'paid' : null);
+      if (payStatus) {
         updatePayload.payment_status = payStatus;
         if (payStatus === 'paid') {
           updatePayload.paid_at = new Date().toISOString();
