@@ -422,9 +422,9 @@ export const HeaderNav = () => {
               className="desktop-only btn btn-primary-orange"
               onClick={() => {
                 if (openOrderWizard) {
-                  openOrderWizard();
+                  openOrderWizard({ type: 'all' });
                 } else {
-                  protectedNavigate('customer', true);
+                  protectedNavigate('customer', true, { type: 'all' });
                 }
               }}
               style={{
@@ -919,9 +919,9 @@ export const HeaderNav = () => {
                   onClick={() => {
                     setIsMobileMenuOpen(false);
                     if (openOrderWizard) {
-                      openOrderWizard();
+                      openOrderWizard({ type: 'all' });
                     } else {
-                      protectedNavigate('customer', true);
+                      protectedNavigate('customer', true, { type: 'all' });
                     }
                   }}
                   style={{ fontWeight: 800, justifyContent: 'center', width: '100%' }}

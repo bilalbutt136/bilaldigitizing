@@ -60,8 +60,8 @@ export const OrderWizardModal = () => {
   const [guestAuthMode, setGuestAuthMode] = useState('signup'); // 'signup' | 'login'
   const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
 
-  // Service Type: 'embroidery' | 'vector' | 'patch' | 'all'
-  const [type, setType] = useState('embroidery');
+  // Service Type: 'all' | 'embroidery' | 'vector' | 'patch'
+  const [type, setType] = useState('all');
   const [orderTitle, setOrderTitle] = useState('');
 
   // Promo code & discount coupon state
@@ -247,17 +247,22 @@ export const OrderWizardModal = () => {
       }
 
       if (orderWizardInitialData) {
-        let detectedType = 'embroidery';
-        if (orderWizardInitialData.type) {
-          detectedType = orderWizardInitialData.type;
+        let detectedType = 'all';
+        if (orderWizardInitialData.type && orderWizardInitialData.type !== 'all') {
+          const t = String(orderWizardInitialData.type).toLowerCase();
+          if (t.includes('vector')) detectedType = 'vector';
+          else if (t.includes('patch')) detectedType = 'patch';
+          else if (t.includes('embroidery') || t.includes('digitizing')) detectedType = 'embroidery';
         } else if (orderWizardInitialData.serviceCategory) {
-          const sc = orderWizardInitialData.serviceCategory.toLowerCase();
+          const sc = String(orderWizardInitialData.serviceCategory).toLowerCase();
           if (sc.includes('vector') || sc.includes('redraw')) detectedType = 'vector';
           else if (sc.includes('patch')) detectedType = 'patch';
+          else if (sc.includes('embroidery') || sc.includes('digitizing')) detectedType = 'embroidery';
         } else if (orderWizardInitialData.title) {
-          const t = orderWizardInitialData.title.toLowerCase();
+          const t = String(orderWizardInitialData.title).toLowerCase();
           if (t.includes('vector') || t.includes('redraw')) detectedType = 'vector';
           else if (t.includes('patch')) detectedType = 'patch';
+          else if (t.includes('embroidery') || t.includes('digitizing') || t.includes('chest') || t.includes('cap') || t.includes('jacket')) detectedType = 'embroidery';
         }
 
         setType(detectedType);

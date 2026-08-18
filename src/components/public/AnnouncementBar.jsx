@@ -60,9 +60,9 @@ export const AnnouncementBar = () => {
       else navigate(target);
     } else if (target === '/order' || target.includes('orderWizard')) {
       if (openOrderWizard) {
-        openOrderWizard({ promoCode });
+        openOrderWizard({ promoCode, type: 'all' });
       } else {
-        protectedNavigate('customer', true, { promoCode });
+        protectedNavigate('customer', true, { promoCode, type: 'all' });
       }
     } else {
       navigate(target);

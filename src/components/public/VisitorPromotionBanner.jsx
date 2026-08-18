@@ -61,9 +61,9 @@ export const VisitorPromotionBanner = () => {
   const handleClaim = () => {
     const promoCode = banner.promoCode || 'WELCOME20';
     if (openOrderWizard) {
-      openOrderWizard({ promoCode });
+      openOrderWizard({ promoCode, type: 'all' });
     } else {
-      protectedNavigate('customer', true, { promoCode });
+      protectedNavigate('customer', true, { promoCode, type: 'all' });
     }
     handleDismiss();
   };
