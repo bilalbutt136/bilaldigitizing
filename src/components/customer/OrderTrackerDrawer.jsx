@@ -339,6 +339,21 @@ export const OrderTrackerDrawer = () => {
     }
   };
 
+  const handleApproveOrder = async () => {
+    updateOrderStatus(ord.id, 'completed');
+    showToast('🎉 Order approved and marked completed! Thank you for choosing Bilal Digitizing.', 'success');
+  };
+
+  const getOrderProgressStep = () => {
+    const status = String(ord?.status || '').toLowerCase();
+    if (status === 'completed') return 4;
+    if (status === 'delivered' || (ord?.uploadedMachineFiles && ord.uploadedMachineFiles.length > 0)) return 4;
+    if (status === 'qc' || status === 'quality_check') return 3;
+    if (['in_progress', 'digitizing', 'assigned', 'working'].includes(status)) return 2;
+    if (isPaid) return 2;
+    return 1;
+  };
+
   return (
     <div 
       className="modal-overlay"
@@ -498,13 +513,177 @@ export const OrderTrackerDrawer = () => {
 
         <div style={{ padding: '1.6rem', overflowY: 'auto', flex: 1, background: '#fbfcfd' }}>
 
-          {!isPaid && (
+          {/* VISUAL ORDER PROGRESS TIMELINE */}
+          <div style={{
+            background: '#ffffff',
+            border: '1.5px solid #e2e8f0',
+            borderRadius: '16px',
+            padding: '1.15rem 1.4rem',
+            marginBottom: '1.25rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                🚀 Order Progress Tracker
+              </span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: ord.isRush ? 'var(--orange-600)' : 'var(--navy-700)', background: ord.isRush ? 'var(--orange-50)' : '#f1f5f9', padding: '0.2rem 0.55rem', borderRadius: '6px' }}>
+                {ord.isRush ? '⚡ 2–4h Super Rush' : '⏱ 12–24h Standard'}
+              </span>
+            </div>
+
+            {/* Stepper Steps Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', position: 'relative' }}>
+              {[
+                { step: 1, title: isPaid ? 'Placed & Paid' : 'Pending Payment', desc: isPaid ? 'Verified brief' : 'Requires payment' },
+                { step: 2, title: 'In Production', desc: 'Master digitizing' },
+                { step: 3, title: 'Quality Check', desc: 'Stitch & test QC' },
+                { step: 4, title: 'Ready / Delivered', desc: 'Downloadable' }
+              ].map(st => {
+                const currentProgStep = getOrderProgressStep();
+                const isPassed = currentProgStep > st.step;
+                const isCurrent = currentProgStep === st.step;
+
+                return (
+                  <div key={st.step} style={{ textAlign: 'center', position: 'relative' }}>
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      margin: '0 auto 0.4rem auto',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 900,
+                      fontSize: '0.78rem',
+                      background: isPassed 
+                        ? '#10b981' 
+                        : isCurrent 
+                        ? 'var(--orange-500)' 
+                        : '#f1f5f9',
+                      color: (isPassed || isCurrent) ? '#ffffff' : '#94a3b8',
+                      border: isCurrent ? '2px solid var(--orange-300)' : 'none',
+                      boxShadow: isCurrent ? '0 0 0 3px rgba(249, 115, 22, 0.2)' : 'none',
+                      transition: 'all 0.2s'
+                    }}>
+                      {isPassed ? <Check size={16} /> : st.step}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', fontWeight: isCurrent ? 800 : 700, color: isCurrent ? 'var(--orange-600)' : isPassed ? '#10b981' : 'var(--navy-900)' }}>
+                      {st.title}
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                      {st.desc}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* FAST ACTION COMMAND CENTER */}
+          {isCompletedOrUnlocked ? (
+            /* FILES READY FOR APPROVAL / DOWNLOAD */
+            <div style={{
+              background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+              border: '1.5px solid #a7f3d0',
+              borderRadius: '14px',
+              padding: '1.15rem 1.4rem',
+              marginBottom: '1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem',
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.1)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#10b981', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <PackageCheck size={24} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 900, color: '#065f46', fontSize: '0.98rem' }}>
+                    {ord.status === 'completed' ? '🎉 Order Completed & Verified!' : '✨ Production Files Ready for Review & Download!'}
+                  </div>
+                  <div style={{ color: '#047857', fontSize: '0.78rem', marginTop: '0.15rem' }}>
+                    {ord.status === 'completed' 
+                      ? 'You have accepted this delivery. Download your files anytime below.'
+                      : 'Inspect your finished machine files. You can approve the order or request a free modification.'}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={handleDownloadAll}
+                  style={{
+                    background: '#059669',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '0.55rem 1.15rem',
+                    borderRadius: '10px',
+                    fontWeight: 800,
+                    fontSize: '0.84rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  <Download size={15} /> Download All Files (.ZIP)
+                </button>
+
+                {ord.status !== 'completed' && (
+                  <button
+                    type="button"
+                    onClick={handleApproveOrder}
+                    style={{
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      padding: '0.55rem 1.15rem',
+                      borderRadius: '10px',
+                      fontWeight: 800,
+                      fontSize: '0.84rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      boxShadow: '0 4px 12px rgba(16, 185, 129, 0.35)'
+                    }}
+                  >
+                    <CheckCircle2 size={15} /> Approve & Complete Order
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('revisions')}
+                  style={{
+                    background: '#ffffff',
+                    color: '#b45309',
+                    border: '1.5px solid #fde68a',
+                    padding: '0.55rem 1rem',
+                    borderRadius: '10px',
+                    fontWeight: 800,
+                    fontSize: '0.84rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  <RotateCcw size={14} /> Request Revision
+                </button>
+              </div>
+            </div>
+          ) : !isPaid ? (
+            /* UNPAID BANNER */
             <div style={{
               background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
               border: '1.5px solid #fcd34d',
               borderRadius: '14px',
-              padding: '1.25rem 1.5rem',
-              marginBottom: '1.5rem',
+              padding: '1.15rem 1.4rem',
+              marginBottom: '1.25rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -512,10 +691,10 @@ export const OrderTrackerDrawer = () => {
               gap: '1rem',
               boxShadow: '0 4px 14px rgba(217, 119, 6, 0.1)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                 <div style={{ 
-                  width: '44px', 
-                  height: '44px', 
+                  width: '42px', 
+                  height: '42px', 
                   borderRadius: '12px', 
                   background: '#f59e0b', 
                   color: '#ffffff', 
@@ -528,38 +707,107 @@ export const OrderTrackerDrawer = () => {
                   <CreditCard size={22} />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 900, color: '#78350f', fontSize: '1rem' }}>
-                    Payment Required to Start Production (${parseFloat(ord.price || 0).toFixed(2)})
+                  <div style={{ fontWeight: 900, color: '#78350f', fontSize: '0.98rem' }}>
+                    Payment Required to Dispatch Production (${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)})
                   </div>
-                  <div style={{ color: '#92400e', fontSize: '0.82rem', marginTop: '0.15rem' }}>
-                    Your high-res design brief is saved. Finalize payment to dispatch to our master digitizing desk.
+                  <div style={{ color: '#92400e', fontSize: '0.78rem', marginTop: '0.15rem' }}>
+                    Your high-res design brief is saved. Finalize payment to begin master digitizing.
                   </div>
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={handleLaunchPayment}
-                style={{
-                  background: 'linear-gradient(135deg, #ff7a00 0%, #ff5500 100%)',
-                  color: '#ffffff',
-                  border: 'none',
-                  padding: '0.7rem 1.45rem',
-                  borderRadius: '10px',
-                  fontWeight: 900,
-                  fontSize: '0.9rem',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(255, 122, 0, 0.35)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
-              >
-                <Zap size={16} /> Pay Now (${parseFloat(ord.price || 0).toFixed(2)})
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={handleLaunchPayment}
+                  style={{
+                    background: 'linear-gradient(135deg, #ff7a00 0%, #ff5500 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '0.65rem 1.35rem',
+                    borderRadius: '10px',
+                    fontWeight: 900,
+                    fontSize: '0.88rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(255, 122, 0, 0.35)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Zap size={16} /> Pay Now (${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)})
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* IN PRODUCTION STATUS BANNER */
+            <div style={{
+              background: '#eff6ff',
+              border: '1.5px solid #bfdbfe',
+              borderRadius: '14px',
+              padding: '1rem 1.35rem',
+              marginBottom: '1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '0.85rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#2563eb', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Clock size={20} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 800, color: '#1e40af', fontSize: '0.92rem' }}>
+                    🎨 Master Digitizer Desk In Production
+                  </div>
+                  <div style={{ color: '#3b82f6', fontSize: '0.76rem', marginTop: '0.1rem' }}>
+                    Files being prepared with underlay & pull compensation. Standard turnaround: 12–24h.
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('revisions')}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #bfdbfe',
+                    color: '#1d4ed8',
+                    padding: '0.45rem 0.85rem',
+                    borderRadius: '8px',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem'
+                  }}
+                >
+                  <RotateCcw size={13} /> Request Modification
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('messages')}
+                  style={{
+                    background: '#2563eb',
+                    border: 'none',
+                    color: '#ffffff',
+                    padding: '0.45rem 0.85rem',
+                    borderRadius: '8px',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem'
+                  }}
+                >
+                  <MessageSquare size={13} /> Chat with Team
+                </button>
+              </div>
             </div>
           )}
 
@@ -1192,7 +1440,7 @@ export const OrderTrackerDrawer = () => {
         </div>
 
         {/* ==================================================================
-            4. STICKY WORKFLOW FOOTER (NEXT STEP & ACTIONS)
+            4. CLEAN ACTION FOOTER (APPROVE, MODIFY, DOWNLOAD, PAY)
            ================================================================== */}
         <div style={{
           padding: '1rem 1.6rem',
@@ -1205,30 +1453,18 @@ export const OrderTrackerDrawer = () => {
           gap: '0.75rem',
           boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.03)'
         }}>
-          {/* Left: Previous step or current workflow breadcrumb */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            {activeTab !== 'overview' ? (
-              <button
-                type="button"
-                onClick={() => {
-                  if (activeTab === 'deliverables') setActiveTab('overview');
-                  else if (activeTab === 'messages') setActiveTab('deliverables');
-                  else if (activeTab === 'revisions') setActiveTab('messages');
-                }}
-                className="btn btn-outline btn-sm"
-                style={{ gap: '0.35rem', fontWeight: 700, padding: '0.45rem 0.85rem' }}
-              >
-                <ChevronLeft size={16} /> Back
-              </button>
-            ) : (
-              <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span style={{ fontWeight: 700, color: 'var(--orange-600)' }}>Step 1 of 4:</span>
-                <span style={{ color: 'var(--navy-900)', fontWeight: 600 }}>Reviewing Specifications</span>
+          {/* Left: Total Price and Payment Status */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+            <div>
+              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Project Total</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--navy-950)', lineHeight: 1 }}>
+                ${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)}
               </div>
-            )}
+            </div>
+            {getPaymentStatusBadge(ord.payment_status || ord.paymentStatus)}
           </div>
 
-          {/* Right: Primary Next Step Action */}
+          {/* Right: Direct Fast Action Buttons */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
             {!isPaid && (
               <button
@@ -1238,7 +1474,7 @@ export const OrderTrackerDrawer = () => {
                   background: 'linear-gradient(135deg, #ff7a00 0%, #ff5500 100%)',
                   color: '#ffffff',
                   border: 'none',
-                  padding: '0.55rem 1.2rem',
+                  padding: '0.6rem 1.35rem',
                   borderRadius: '10px',
                   fontWeight: 900,
                   fontSize: '0.86rem',
@@ -1253,49 +1489,57 @@ export const OrderTrackerDrawer = () => {
               </button>
             )}
 
-            {activeTab === 'overview' && (
+            {isCompletedOrUnlocked && ord.status !== 'completed' && (
               <button
                 type="button"
-                onClick={() => setActiveTab('deliverables')}
-                className="btn btn-primary-orange"
-                style={{ gap: '0.4rem', padding: '0.55rem 1.25rem', fontSize: '0.86rem', fontWeight: 800 }}
+                onClick={handleApproveOrder}
+                style={{
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '0.6rem 1.35rem',
+                  borderRadius: '10px',
+                  fontWeight: 800,
+                  fontSize: '0.86rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.35)'
+                }}
               >
-                Next Step: Production Files <ChevronRight size={16} />
+                <CheckCircle2 size={16} /> Approve & Complete Order
               </button>
             )}
 
-            {activeTab === 'deliverables' && (
+            {isCompletedOrUnlocked && (
               <button
                 type="button"
-                onClick={() => setActiveTab('messages')}
-                className="btn btn-primary-orange"
-                style={{ gap: '0.4rem', padding: '0.55rem 1.25rem', fontSize: '0.86rem', fontWeight: 800 }}
-              >
-                Next Step: Messages & Chat <ChevronRight size={16} />
-              </button>
-            )}
-
-            {activeTab === 'messages' && (
-              <button
-                type="button"
-                onClick={() => setActiveTab('revisions')}
-                className="btn btn-primary-orange"
-                style={{ gap: '0.4rem', padding: '0.55rem 1.25rem', fontSize: '0.86rem', fontWeight: 800 }}
-              >
-                Next Step: Request Revision <ChevronRight size={16} />
-              </button>
-            )}
-
-            {activeTab === 'revisions' && (
-              <button
-                type="button"
-                onClick={() => setSelectedOrderForDrawer(null)}
+                onClick={handleDownloadAll}
                 className="btn btn-outline"
-                style={{ gap: '0.4rem', padding: '0.55rem 1.25rem', fontSize: '0.86rem', fontWeight: 800, borderColor: 'var(--green-600)', color: 'var(--green-700)' }}
+                style={{ gap: '0.4rem', padding: '0.6rem 1.15rem', fontSize: '0.86rem', fontWeight: 800, borderColor: '#059669', color: '#059669' }}
               >
-                Done & Close Panel <Check size={16} />
+                <Download size={15} /> Download Files
               </button>
             )}
+
+            <button
+              type="button"
+              onClick={() => setActiveTab(activeTab === 'revisions' ? 'overview' : 'revisions')}
+              className="btn btn-outline"
+              style={{ gap: '0.4rem', padding: '0.6rem 1.15rem', fontSize: '0.86rem', fontWeight: 700 }}
+            >
+              <RotateCcw size={15} /> {activeTab === 'revisions' ? 'View Brief' : 'Request Revision'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedOrderForDrawer(null)}
+              className="btn btn-outline"
+              style={{ padding: '0.6rem 1.15rem', fontSize: '0.86rem', fontWeight: 700 }}
+            >
+              Close
+            </button>
           </div>
         </div>
       </div>
