@@ -388,11 +388,11 @@ export const PortfolioSlider = ({ isHero = false }) => {
             <Eye size={16} /> Interactive Before & After Visualizer
           </div>
 
-          <h2 style={{ fontSize: '2.25rem', color: '#ffffff', marginBottom: '0.75rem' }}>
+          <h2 style={{ fontSize: '2.25rem', color: 'var(--color-text-primary)', marginBottom: '0.75rem', fontWeight: 900, fontFamily: 'var(--font-heading)' }}>
             Compare Original Artwork vs Digitized Stitches
           </h2>
 
-          <p style={{ color: '#94a3b8', fontSize: '1rem' }}>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '1rem', lineHeight: 1.6 }}>
             Drag the handle left or right to inspect thread density, sharp satin outlines, and vector node cleanliness.
           </p>
         </div>

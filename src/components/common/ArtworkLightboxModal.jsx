@@ -49,13 +49,13 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
       <div 
         className="modal-content" 
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '900px', background: 'var(--color-surface, #111827)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)' }}
+        style={{ maxWidth: '900px', background: 'var(--bg-card)', color: 'var(--color-text-primary)', border: '1px solid var(--border-color)' }}
       >
         
         {/* Header */}
         <div style={{
           padding: '1.25rem 1.75rem',
-          borderBottom: '1px solid rgba(255,255,255,0.1)',
+          borderBottom: '1px solid var(--border-color)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
@@ -63,10 +63,10 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Scissors size={20} style={{ color: 'var(--orange-500)' }} />
             <div>
-              <h3 style={{ fontSize: '1.2rem', color: '#ffffff', marginBottom: '0.1rem' }}>
+              <h3 style={{ fontSize: '1.2rem', color: 'var(--color-text-primary)', marginBottom: '0.1rem', fontWeight: 800 }}>
                 Artwork Source Inspection: {order.title || 'Design Artwork'}
               </h3>
-              <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+              <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
                 Order ID: <strong>{formatOrderId(order.id)}</strong> • Client: {order.clientName || 'Valued Client'}
               </div>
             </div>
@@ -74,9 +74,7 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
 
           <button 
             onClick={onClose}
-            style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', cursor: 'pointer' }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff'; e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+            style={{ background: 'var(--color-subtle)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-primary)', cursor: 'pointer' }}
             aria-label="Close"
           >
             <X size={20} />
@@ -88,8 +86,8 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
           
           {/* Main Enlarged Image View */}
           <div style={{
-            background: 'rgba(0,0,0,0.5)',
-            border: '1px solid rgba(255,255,255,0.1)',
+            background: '#090d16',
+            border: '1px solid var(--border-color)',
             borderRadius: 'var(--radius-lg)',
             padding: '1.5rem',
             textAlign: 'center',
@@ -118,26 +116,27 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
             gap: '1rem',
-            background: 'rgba(255,255,255,0.05)',
+            background: 'var(--color-subtle)',
+            border: '1px solid var(--border-color)',
             padding: '1rem 1.25rem',
             borderRadius: 'var(--radius-md)',
             fontSize: '0.85rem'
           }}>
             <div>
-              <span style={{ color: '#94a3b8' }}>Placement Target:</span>
-              <div style={{ fontWeight: 700, color: '#ffffff' }}>{order.serviceCategory || order.placementType || 'Standard Placement'}</div>
+              <span style={{ color: 'var(--color-text-muted)' }}>Placement Target:</span>
+              <div style={{ fontWeight: 700, color: 'var(--color-text-primary)' }}>{order.serviceCategory || order.placementType || 'Standard Placement'}</div>
             </div>
             <div>
-              <span style={{ color: '#94a3b8' }}>Dimensions:</span>
+              <span style={{ color: 'var(--color-text-muted)' }}>Dimensions:</span>
               <div style={{ fontWeight: 700, color: 'var(--orange-500)' }}>{order.dimensions?.width || '3.5'}" x {order.dimensions?.height || '3.0'}" inches</div>
             </div>
             <div>
-              <span style={{ color: '#94a3b8' }}>Garment / Fabric:</span>
-              <div style={{ fontWeight: 700, color: '#ffffff' }}>{order.fabricType || 'Cotton / Poly Pique'}</div>
+              <span style={{ color: 'var(--color-text-muted)' }}>Garment / Fabric:</span>
+              <div style={{ fontWeight: 700, color: 'var(--color-text-primary)' }}>{order.fabricType || 'Cotton / Poly Pique'}</div>
             </div>
             <div>
-              <span style={{ color: '#94a3b8' }}>Color Setup:</span>
-              <div style={{ fontWeight: 700, color: '#ffffff' }}>{order.colorsCount || 4} Colors Auto-Isolated</div>
+              <span style={{ color: 'var(--color-text-muted)' }}>Color Setup:</span>
+              <div style={{ fontWeight: 700, color: 'var(--color-text-primary)' }}>{order.colorsCount || 4} Colors Auto-Isolated</div>
             </div>
           </div>
 

@@ -319,7 +319,7 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
       </section>
 
       {/* SECTION 2: Step-by-Step Workflow ("How It Works" for Physical Patches) */}
-      <section style={{ padding: '5rem 0', background: 'var(--bg-surface, #0f172a)', borderTop: '1px solid var(--border-color)' }}>
+      <section style={{ padding: '5rem 0', background: 'var(--bg-main)', borderTop: '1px solid var(--border-color)' }}>
         <div className="container">
           
           <div style={{
@@ -331,13 +331,14 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
           }}>
             {/* Workflow Steps Box */}
             <div style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1.5px solid rgba(255, 255, 255, 0.1)',
+              background: 'var(--bg-card)',
+              border: '1.5px solid var(--border-color)',
               borderRadius: '16px',
-              padding: '2rem'
+              padding: '2rem',
+              boxShadow: 'var(--shadow-sm)'
             }}>
-              <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', marginBottom: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <FileCheck size={22} style={{ color: 'var(--orange-400)' }} /> 4-Step Patch Production Process
+              <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <FileCheck size={22} style={{ color: 'var(--orange-500)' }} /> 4-Step Patch Production Process
               </h3>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.35rem' }}>
@@ -359,10 +360,10 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
                       {p.step}
                     </div>
                     <div>
-                      <h4 style={{ fontSize: '0.98rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.25rem' }}>
+                      <h4 style={{ fontSize: '0.98rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: '0 0 0.25rem' }}>
                         {p.title}
                       </h4>
-                      <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0, lineHeight: 1.55 }}>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', margin: 0, lineHeight: 1.55 }}>
                         {p.desc}
                       </p>
                     </div>
@@ -373,24 +374,25 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
 
             {/* Delivery & Timeline Specs Box */}
             <div style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1.5px solid rgba(255, 255, 255, 0.1)',
+              background: 'var(--bg-card)',
+              border: '1.5px solid var(--border-color)',
               borderRadius: '16px',
               padding: '2rem',
               display: 'flex',
               flexDirection: 'column',
-              justifyContent: 'space-between'
+              justifyContent: 'space-between',
+              boxShadow: 'var(--shadow-sm)'
             }}>
               <div>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', marginBottom: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Clock size={22} style={{ color: 'var(--orange-400)' }} /> Delivery & Production Timeline
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Clock size={22} style={{ color: 'var(--orange-500)' }} /> Delivery & Production Timeline
                 </h3>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   {timelineSpecs.map((spec, sIdx) => (
                     <div key={sIdx} style={{
-                      background: 'rgba(255, 255, 255, 0.04)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      background: 'var(--color-subtle)',
+                      border: '1px solid var(--border-color)',
                       borderRadius: '12px',
                       padding: '1.15rem 1.25rem',
                       display: 'flex',
@@ -399,20 +401,20 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
                       flexWrap: 'wrap',
                       gap: '0.5rem'
                     }}>
-                      <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#e2e8f0' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-text-primary)' }}>
                         {spec.label}:
                       </span>
-                      <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--orange-400)' }}>
+                      <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--color-primary, #ea580c)' }}>
                         {spec.time}
-                        {spec.note && <span style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', fontWeight: 500 }}>{spec.note}</span>}
+                        {spec.note && <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>{spec.note}</span>}
                       </span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.825rem', color: '#94a3b8' }}>
-                <Truck size={18} style={{ color: 'var(--orange-400)', flexShrink: 0 }} /> Express worldwide air shipping available for all physical patch orders.
+              <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.825rem', color: 'var(--color-text-muted)' }}>
+                <Truck size={18} style={{ color: 'var(--orange-500)', flexShrink: 0 }} /> Express worldwide air shipping available for all physical patch orders.
               </div>
             </div>
           </div>
@@ -422,20 +424,21 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
             marginTop: '3.5rem',
             textAlign: 'center',
             padding: '1.5rem 2rem',
-            background: 'linear-gradient(135deg, rgba(255, 122, 0, 0.15) 0%, rgba(255, 122, 0, 0.05) 100%)',
-            border: '1px solid rgba(255, 122, 0, 0.35)',
+            background: 'var(--color-primary-light, rgba(255, 122, 0, 0.12))',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             maxWidth: '1000px',
             margin: '3.5rem auto 0',
-            color: '#e2e8f0',
+            color: 'var(--color-text-primary)',
             fontSize: '0.95rem',
             fontWeight: 700,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.75rem'
+            gap: '0.75rem',
+            boxShadow: 'var(--shadow-sm)'
           }}>
-            <Sparkles size={20} style={{ color: 'var(--orange-400)', flexShrink: 0 }} />
+            <Sparkles size={20} style={{ color: 'var(--color-primary, #ea580c)', flexShrink: 0 }} />
             <span>Ready to create your custom patches? Click <strong>Order Custom Patches</strong> to configure quantities, backing options, and artwork files instantly.</span>
           </div>
 
