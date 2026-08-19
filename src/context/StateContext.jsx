@@ -965,10 +965,15 @@ export const StateProvider = ({ children }) => {
     }
   };
 
-  const loginWithGoogle = async (idToken) => {
+  const loginWithGoogle = async (googleUserOrToken) => {
     showToast('Connecting to Google...', 'info');
-    if (idToken && typeof idToken === 'string' && idToken.length > 20) {
-      const res = await signInWithGoogleIdToken(idToken);
+    if (googleUserOrToken && typeof googleUserOrToken === 'object' && googleUserOrToken.email) {
+      const result = await finishAuth(googleUserOrToken);
+      showToast(`Welcome ${result.user.name || result.user.email}!`, 'success');
+      return { success: true, role: result.role, user: result.user };
+    }
+    if (googleUserOrToken && typeof googleUserOrToken === 'string' && googleUserOrToken.length > 20) {
+      const res = await signInWithGoogleIdToken(googleUserOrToken);
       if (!res.success) {
         showToast(res.error || 'Google Sign-In failed.', 'error');
       } else {
