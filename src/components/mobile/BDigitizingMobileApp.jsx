@@ -54,6 +54,9 @@ export const BDigitizingMobileApp = () => {
     orders = [], 
     authUser, 
     currentUser, 
+    isAuthenticated,
+    setIsAuthModalOpen,
+    setAuthModalMode,
     walletBalance = 0,
     setSelectedOrderForDrawer,
     setIsDepositModalOpen,
@@ -988,64 +991,113 @@ export const BDigitizingMobileApp = () => {
               </button>
             </div>
 
-            {/* User Avatar + Name + Balance */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-              <div style={{ position: 'relative' }}>
-                <div style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.35rem',
-                  fontWeight: 900,
-                  border: '2px solid #ffffff',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-                }}>
-                  {userInitial}
+            {/* User Avatar + Name + Balance (Or Guest Sign-In) */}
+            {isAuthenticated ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div style={{ position: 'relative' }}>
+                  <div style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.35rem',
+                    fontWeight: 900,
+                    border: '2px solid #ffffff',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                  }}>
+                    {userInitial}
+                  </div>
+                  <span style={{
+                    position: 'absolute',
+                    bottom: '2px',
+                    right: '2px',
+                    width: '12px',
+                    height: '12px',
+                    borderRadius: '50%',
+                    background: '#10b981',
+                    border: '2px solid #ffffff'
+                  }} />
                 </div>
-                <span style={{
-                  position: 'absolute',
-                  bottom: '2px',
-                  right: '2px',
-                  width: '12px',
-                  height: '12px',
-                  borderRadius: '50%',
-                  background: '#10b981',
-                  border: '2px solid #ffffff'
-                }} />
-              </div>
 
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#ffffff' }}>
-                  {userName}
-                </h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
-                  <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
-                    Personal balance: <strong style={{ color: '#ffffff', fontWeight: 800 }}>${walletBalance.toFixed(2)}</strong>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsDepositModalOpen(true)}
-                    style={{
-                      background: 'rgba(255,255,255,0.2)',
-                      border: '1px solid rgba(255,255,255,0.4)',
-                      borderRadius: '12px',
-                      padding: '0.1rem 0.45rem',
-                      color: '#ffffff',
-                      fontSize: '0.68rem',
-                      fontWeight: 800,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    + Top-Up
-                  </button>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#ffffff' }}>
+                    {userName}
+                  </h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
+                      Personal balance: <strong style={{ color: '#ffffff', fontWeight: 800 }}>${walletBalance.toFixed(2)}</strong>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsDepositModalOpen(true)}
+                      style={{
+                        background: 'rgba(255,255,255,0.2)',
+                        border: '1px solid rgba(255,255,255,0.4)',
+                        borderRadius: '12px',
+                        padding: '0.1rem 0.45rem',
+                        color: '#ffffff',
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      + Top-Up
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.85rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <div style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.2)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '2px solid #ffffff'
+                  }}>
+                    <User size={28} />
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#ffffff' }}>
+                      Guest Visitor
+                    </h3>
+                    <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.85)', display: 'block', marginTop: '0.1rem' }}>
+                      Sign in to track orders & balance
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthModalMode('login');
+                    setIsAuthModalOpen(true);
+                  }}
+                  style={{
+                    background: '#ffffff',
+                    color: '#047857',
+                    border: 'none',
+                    borderRadius: '10px',
+                    padding: '0.45rem 0.85rem',
+                    fontWeight: 900,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  Sign In
+                </button>
+              </div>
+            )}
 
           </div>
 
@@ -1219,28 +1271,53 @@ export const BDigitizingMobileApp = () => {
               4.4.4.1 (BDigitizing App)
             </span>
 
-            <button
-              type="button"
-              onClick={() => {
-                if (logout) logout();
-                navigate('/login');
-              }}
-              style={{
-                background: '#fef2f2',
-                color: '#dc2626',
-                border: '1px solid #fecaca',
-                borderRadius: '10px',
-                padding: '0.65rem 1.5rem',
-                fontSize: '0.85rem',
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem'
-              }}
-            >
-              <LogOut size={16} /> Sign Out
-            </button>
+            {isAuthenticated ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (logout) logout();
+                  navigate('/login');
+                }}
+                style={{
+                  background: '#fef2f2',
+                  color: '#dc2626',
+                  border: '1px solid #fecaca',
+                  borderRadius: '10px',
+                  padding: '0.65rem 1.5rem',
+                  fontSize: '0.85rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}
+              >
+                <LogOut size={16} /> Sign Out
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthModalMode('login');
+                  setIsAuthModalOpen(true);
+                }}
+                style={{
+                  background: '#047857',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '0.65rem 1.5rem',
+                  fontSize: '0.85rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}
+              >
+                <User size={16} /> Sign In to Studio Account
+              </button>
+            )}
           </div>
 
         </div>
