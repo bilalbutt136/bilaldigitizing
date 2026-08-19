@@ -984,4 +984,24 @@ button, input, select, textarea, a {
   .mobile-app-header { display: none !important; }
 }
 
+/* Social Auth Buttons (Google & Apple) Polish */
+.apple-auth-btn,
+#appleid-signin {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 40px !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+}
+
+.apple-auth-btn > div,
+#appleid-signin > div {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 

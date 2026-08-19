@@ -614,31 +614,55 @@ export const AuthModal = () => {
                     itp_support={false}
                     shape="rectangular"
                     theme="outline"
-                    text="continue_with"
+                    text="signin_with"
                     size="large"
                     width="100%"
                   />
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '0.2rem' }}>
-                  <AppleSignin
-                    authOptions={{
-                      clientId: APPLE_CLIENT_ID,
-                      scope: 'email name',
-                      redirectURI: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '',
-                      state: 'state',
-                      nonce: 'nonce',
-                      usePopup: true
-                    }}
-                    uiType="dark"
-                    className="apple-auth-btn"
-                    noDefaultStyle={false}
-                    buttonExtraChildren="Continue with Apple"
-                    onSuccess={async (response) => {
-                      if (response?.authorization?.id_token) {
+                  {APPLE_CLIENT_ID ? (
+                    <AppleSignin
+                      authOptions={{
+                        clientId: APPLE_CLIENT_ID,
+                        scope: 'email name',
+                        redirectURI: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '',
+                        state: 'state',
+                        nonce: 'nonce',
+                        usePopup: true
+                      }}
+                      uiType="dark"
+                      className="apple-auth-btn"
+                      noDefaultStyle={false}
+                      buttonExtraChildren="Continue with Apple"
+                      onSuccess={async (response) => {
+                        if (response?.authorization?.id_token) {
+                          setIsLoading(true);
+                          try {
+                            const res = await loginWithApple(response.authorization.id_token);
+                            setIsLoading(false);
+                            if (res?.success) {
+                              setIsAuthModalOpen(false);
+                              navigate('/client-portal');
+                            } else if (res?.error) {
+                              setErrorModalText(res.error);
+                              showToast(res.error, 'error');
+                            }
+                          } catch (err) {
+                            setIsLoading(false);
+                            showToast(err?.message || 'Apple Sign-In failed.', 'error');
+                          }
+                        }
+                      }}
+                      onError={(error) => showToast('Apple Sign-In failed.', 'error')}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={async () => {
                         setIsLoading(true);
                         try {
-                          const res = await loginWithApple(response.authorization.id_token);
+                          const res = await loginWithApple();
                           setIsLoading(false);
                           if (res?.success) {
                             setIsAuthModalOpen(false);
@@ -651,10 +675,31 @@ export const AuthModal = () => {
                           setIsLoading(false);
                           showToast(err?.message || 'Apple Sign-In failed.', 'error');
                         }
-                      }
-                    }}
-                    onError={(error) => showToast('Apple Sign-In failed.', 'error')}
-                  />
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.6rem',
+                        width: '100%',
+                        padding: '0.65rem 1rem',
+                        borderRadius: '8px',
+                        border: '1.5px solid #000000',
+                        background: '#000000',
+                        color: '#ffffff',
+                        fontWeight: 700,
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <svg width="17" height="17" viewBox="0 0 170 170" fill="#ffffff">
+                        <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.08-7.56-7.85-11.6-14.29-6.3-9.98-11.19-21.72-14.68-35.21-3.48-13.49-5.23-25.59-5.23-36.29 0-14.39 3.52-26.31 10.56-35.76 7.04-9.45 15.82-14.28 26.34-14.49 4.36 0 9.27 1.13 14.73 3.39 5.46 2.26 9.23 3.44 11.32 3.55 1.74-.11 5.63-1.32 11.68-3.64 6.05-2.32 10.9-3.37 14.56-3.15 11.53.64 20.67 4.96 27.42 12.96-10.02 6.09-14.92 14.54-14.71 25.35.22 8.49 3.44 15.65 9.67 21.48 6.23 5.83 13.68 9.17 22.35 10.02-1.96 6.09-4.27 12.08-6.93 17.97zM119.22 33.15c0-6.73 2.45-13.06 7.35-18.99 4.9-5.93 10.9-9.74 18-11.43-.22 1.3-.43 2.5-.64 3.6-1.52 7.07-4.8 13.39-9.84 18.96-5.04 5.57-11.02 9.07-17.94 10.5-.43-.88-.86-1.76-1.28-2.64h-.65z"/>
+                      </svg>
+                      Continue with Apple
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -785,7 +830,7 @@ export const AuthModal = () => {
                 <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
               </div>
 
-              {/* SOCIAL LOGINS FOR SIGN IN */}
+              {/* SOCIAL LOGINS FOR SIGN UP */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
                   <GoogleLogin
@@ -814,31 +859,55 @@ export const AuthModal = () => {
                     itp_support={false}
                     shape="rectangular"
                     theme="outline"
-                    text="continue_with"
+                    text="signup_with"
                     size="large"
                     width="100%"
                   />
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '0.2rem' }}>
-                  <AppleSignin
-                    authOptions={{
-                      clientId: APPLE_CLIENT_ID,
-                      scope: 'email name',
-                      redirectURI: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '',
-                      state: 'state',
-                      nonce: 'nonce',
-                      usePopup: true
-                    }}
-                    uiType="dark"
-                    className="apple-auth-btn"
-                    noDefaultStyle={false}
-                    buttonExtraChildren="Continue with Apple"
-                    onSuccess={async (response) => {
-                      if (response?.authorization?.id_token) {
+                  {APPLE_CLIENT_ID ? (
+                    <AppleSignin
+                      authOptions={{
+                        clientId: APPLE_CLIENT_ID,
+                        scope: 'email name',
+                        redirectURI: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '',
+                        state: 'state',
+                        nonce: 'nonce',
+                        usePopup: true
+                      }}
+                      uiType="dark"
+                      className="apple-auth-btn"
+                      noDefaultStyle={false}
+                      buttonExtraChildren="Continue with Apple"
+                      onSuccess={async (response) => {
+                        if (response?.authorization?.id_token) {
+                          setIsLoading(true);
+                          try {
+                            const res = await loginWithApple(response.authorization.id_token);
+                            setIsLoading(false);
+                            if (res?.success) {
+                              setIsAuthModalOpen(false);
+                              navigate('/client-portal');
+                            } else if (res?.error) {
+                              setErrorModalText(res.error);
+                              showToast(res.error, 'error');
+                            }
+                          } catch (err) {
+                            setIsLoading(false);
+                            showToast(err?.message || 'Apple Sign-In failed.', 'error');
+                          }
+                        }
+                      }}
+                      onError={(error) => showToast('Apple Sign-In failed.', 'error')}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={async () => {
                         setIsLoading(true);
                         try {
-                          const res = await loginWithApple(response.authorization.id_token);
+                          const res = await loginWithApple();
                           setIsLoading(false);
                           if (res?.success) {
                             setIsAuthModalOpen(false);
@@ -851,10 +920,31 @@ export const AuthModal = () => {
                           setIsLoading(false);
                           showToast(err?.message || 'Apple Sign-In failed.', 'error');
                         }
-                      }
-                    }}
-                    onError={(error) => showToast('Apple Sign-In failed.', 'error')}
-                  />
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.6rem',
+                        width: '100%',
+                        padding: '0.65rem 1rem',
+                        borderRadius: '8px',
+                        border: '1.5px solid #000000',
+                        background: '#000000',
+                        color: '#ffffff',
+                        fontWeight: 700,
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <svg width="17" height="17" viewBox="0 0 170 170" fill="#ffffff">
+                        <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.08-7.56-7.85-11.6-14.29-6.3-9.98-11.19-21.72-14.68-35.21-3.48-13.49-5.23-25.59-5.23-36.29 0-14.39 3.52-26.31 10.56-35.76 7.04-9.45 15.82-14.28 26.34-14.49 4.36 0 9.27 1.13 14.73 3.39 5.46 2.26 9.23 3.44 11.32 3.55 1.74-.11 5.63-1.32 11.68-3.64 6.05-2.32 10.9-3.37 14.56-3.15 11.53.64 20.67 4.96 27.42 12.96-10.02 6.09-14.92 14.54-14.71 25.35.22 8.49 3.44 15.65 9.67 21.48 6.23 5.83 13.68 9.17 22.35 10.02-1.96 6.09-4.27 12.08-6.93 17.97zM119.22 33.15c0-6.73 2.45-13.06 7.35-18.99 4.9-5.93 10.9-9.74 18-11.43-.22 1.3-.43 2.5-.64 3.6-1.52 7.07-4.8 13.39-9.84 18.96-5.04 5.57-11.02 9.07-17.94 10.5-.43-.88-.86-1.76-1.28-2.64h-.65z"/>
+                      </svg>
+                      Continue with Apple
+                    </button>
+                  )}
                 </div>
               </div>
             </form>
