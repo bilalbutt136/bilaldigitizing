@@ -29,18 +29,27 @@ import {
   CreditCard,
   Zap,
   AlertCircle,
-  LayoutDashboard,
   PackageCheck,
   Plus,
-  Palette
+  Palette,
+  Bell,
+  ClipboardList,
+  Home,
+  Download,
+  Smartphone,
+  Sparkles,
+  Check,
+  ArrowRight
 } from 'lucide-react';
 import { ClientSidebar } from './ClientSidebar';
 import { ClientChatInbox } from './ClientChatInbox';
+import { MobileSimpleOrderModal } from './MobileSimpleOrderModal';
+import { ClientNotificationsView } from './ClientNotificationsView';
 import { EmbroideryDigitizingPage } from '../public/EmbroideryDigitizingPage';
 import { VectorArtPage } from '../public/VectorArtPage';
 import { CustomPatchesSection } from '../public/CustomPatchesSection';
 import ThemePreviewCard from '../common/ThemePreviewCard';
-import { fetchConversations, subscribeToLiveMessages } from '../../services/supabaseService';
+import { fetchConversations, fetchNotificationsFromSupabase, subscribeToLiveMessages } from '../../services/supabaseService';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
 
 export const CustomerDashboard = () => {
@@ -67,13 +76,17 @@ export const CustomerDashboard = () => {
     availableThemes = []
   } = useAppState();
 
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'support' | 'digitizing' | 'vector' | 'patches' | 'profile' | 'settings'
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'orders' | 'support' | 'notifications' | 'digitizing' | 'vector' | 'patches' | 'profile' | 'settings'
   const [selectedOrderChatId, setSelectedOrderChatId] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
+  const [orderFilterTab, setOrderFilterTab] = useState('active'); // 'active' | 'completed' | 'all'
   const [searchTerm, setSearchTerm] = useState('');
   const [lightboxOrder, setLightboxOrder] = useState(null);
   const [isServiceSelectorOpen, setIsServiceSelectorOpen] = useState(false);
+  const [isMobileOrderOpen, setIsMobileOrderOpen] = useState(false);
+  const [mobileOrderDefaultService, setMobileOrderDefaultService] = useState('embroidery');
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
 
   // Mobile App UI State
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -193,7 +206,39 @@ export const CustomerDashboard = () => {
     if (activeTab === 'support') {
       setUnreadChatCount(0);
     }
+    if (activeTab === 'notifications') {
+      setUnreadNotifCount(0);
+    }
   }, [activeTab]);
+
+  // Live Notifications Count Loader & Real-time Subscription
+  React.useEffect(() => {
+    if (!mounted) return;
+    let isMounted = true;
+
+    const loadNotificationsCount = async () => {
+      try {
+        const notifs = await fetchNotificationsFromSupabase();
+        if (isMounted && Array.isArray(notifs)) {
+          const unread = notifs.filter(n => !n.is_read && !n.read).length;
+          setUnreadNotifCount(unread);
+        }
+      } catch {}
+    };
+
+    loadNotificationsCount();
+
+    const unsubscribe = subscribeToLiveMessages({
+      onNotification: () => {
+        if (isMounted) loadNotificationsCount();
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, [mounted, userEmail]);
 
   React.useEffect(() => {
     const handleOpenOrderChat = (e) => {
@@ -794,6 +839,7 @@ export const CustomerDashboard = () => {
             patchCount={patchOrders.length}
             storeCount={storeOrders.length}
             unreadChatCount={unreadChatCount}
+            unreadNotifCount={unreadNotifCount}
             unpaidCount={unpaidOrders.length}
             onOpenDepositModal={() => setIsDepositModalOpen(true)}
             onOpenLiveSupport={handleOpenLiveSupport}
@@ -974,135 +1020,334 @@ export const CustomerDashboard = () => {
                   </div>
                 </div>
 
-                {/* MOBILE QUICK ACTION CAPSULES (Fiverr App Style) */}
-                <div className="mobile-only mobile-action-scroll" style={{ marginBottom: '1.25rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => setIsServiceSelectorOpen(true)}
+                {/* A. MOBILE-FIRST APP HOME SCREEN (Clean, simple, 1-tap ordering) */}
+                <div className="mobile-only" style={{ marginBottom: '1.5rem' }}>
+                  
+                  {/* Hero Place New Order CTA */}
+                  <div 
+                    onClick={() => {
+                      setMobileOrderDefaultService('embroidery');
+                      setIsMobileOrderOpen(true);
+                    }}
                     style={{
-                      background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
+                      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                      borderRadius: '20px',
+                      padding: '1.25rem',
                       color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '24px',
-                      padding: '0.45rem 0.95rem',
-                      fontWeight: 800,
-                      fontSize: '0.78rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      whiteSpace: 'nowrap',
-                      boxShadow: '0 3px 10px rgba(255, 122, 0, 0.3)',
-                      flexShrink: 0,
-                      cursor: 'pointer'
+                      marginBottom: '1rem',
+                      boxShadow: '0 8px 24px rgba(15, 23, 42, 0.25)',
+                      border: '1.5px solid rgba(255, 255, 255, 0.1)',
+                      cursor: 'pointer',
+                      position: 'relative',
+                      overflow: 'hidden'
                     }}
                   >
-                    <Plus size={14} style={{ strokeWidth: 3 }} /> + New Order
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openOrderWizard({ type: 'embroidery' })}
-                    style={{
+                    <div style={{ position: 'relative', zIndex: 2 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.35rem' }}>
+                        <span style={{
+                          background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                          color: '#ffffff',
+                          fontSize: '0.68rem',
+                          fontWeight: 900,
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '6px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem'
+                        }}>
+                          <Zap size={11} /> 4-8 HOUR EXPRESS
+                        </span>
+                        <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                          • 100% Quality Guaranteed
+                        </span>
+                      </div>
+
+                      <h3 style={{ margin: '0.2rem 0 0.25rem', fontSize: '1.25rem', fontWeight: 900, color: '#ffffff' }}>
+                        Place New Order
+                      </h3>
+                      <p style={{ margin: '0 0 0.85rem', fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.35 }}>
+                        Embroidery Digitizing • Vector Art • Custom Patches
+                      </p>
+
+                      <div style={{
+                        background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                        color: '#ffffff',
+                        padding: '0.65rem 1.15rem',
+                        borderRadius: '12px',
+                        fontWeight: 900,
+                        fontSize: '0.88rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.45rem',
+                        boxShadow: '0 4px 14px rgba(249, 115, 22, 0.4)'
+                      }}>
+                        Start Order Now <ArrowRight size={16} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 5 Quick Action Cards */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(5, 1fr)',
+                    gap: '0.4rem',
+                    marginBottom: '1.25rem'
+                  }}>
+                    {/* 1. New Order */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileOrderDefaultService('embroidery');
+                        setIsMobileOrderOpen(true);
+                      }}
+                      style={{
+                        background: '#ffffff',
+                        border: '1.5px solid #e2e8f0',
+                        borderRadius: '14px',
+                        padding: '0.65rem 0.2rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.3rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#ffedd5', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <PlusCircle size={20} />
+                      </div>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap' }}>New Order</span>
+                    </button>
+
+                    {/* 2. My Orders */}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('orders')}
+                      style={{
+                        background: '#ffffff',
+                        border: '1.5px solid #e2e8f0',
+                        borderRadius: '14px',
+                        padding: '0.65rem 0.2rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.3rem',
+                        cursor: 'pointer',
+                        position: 'relative'
+                      }}
+                    >
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#e0f2fe', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <ClipboardList size={20} />
+                      </div>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap' }}>My Orders</span>
+                      {activeOrders.length > 0 && (
+                        <span style={{ position: 'absolute', top: '4px', right: '4px', background: '#0284c7', color: '#fff', fontSize: '0.55rem', fontWeight: 900, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {activeOrders.length}
+                        </span>
+                      )}
+                    </button>
+
+                    {/* 3. Messages */}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('support')}
+                      style={{
+                        background: '#ffffff',
+                        border: '1.5px solid #e2e8f0',
+                        borderRadius: '14px',
+                        padding: '0.65rem 0.2rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.3rem',
+                        cursor: 'pointer',
+                        position: 'relative'
+                      }}
+                    >
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <MessageSquare size={20} />
+                      </div>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap' }}>Messages</span>
+                      {unreadChatCount > 0 && (
+                        <span style={{ position: 'absolute', top: '4px', right: '4px', background: '#ef4444', color: '#fff', fontSize: '0.55rem', fontWeight: 900, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {unreadChatCount}
+                        </span>
+                      )}
+                    </button>
+
+                    {/* 4. Notifications */}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('notifications')}
+                      style={{
+                        background: '#ffffff',
+                        border: '1.5px solid #e2e8f0',
+                        borderRadius: '14px',
+                        padding: '0.65rem 0.2rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.3rem',
+                        cursor: 'pointer',
+                        position: 'relative'
+                      }}
+                    >
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f1f5f9', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Bell size={20} />
+                      </div>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap' }}>Alerts</span>
+                      {unreadNotifCount > 0 && (
+                        <span style={{ position: 'absolute', top: '4px', right: '4px', background: '#f97316', color: '#fff', fontSize: '0.55rem', fontWeight: 900, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {unreadNotifCount}
+                        </span>
+                      )}
+                    </button>
+
+                    {/* 5. Profile */}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('profile')}
+                      style={{
+                        background: '#ffffff',
+                        border: '1.5px solid #e2e8f0',
+                        borderRadius: '14px',
+                        padding: '0.65rem 0.2rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.3rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <User size={20} />
+                      </div>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap' }}>Profile</span>
+                    </button>
+                  </div>
+
+                  {/* Active Orders Live Progress Snapshot (if any active order) */}
+                  {activeOrders.length > 0 && (
+                    <div style={{
                       background: '#ffffff',
-                      border: '1px solid var(--border-color)',
-                      color: 'var(--navy-900)',
-                      borderRadius: '24px',
-                      padding: '0.45rem 0.85rem',
-                      fontWeight: 700,
-                      fontSize: '0.78rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    🧵 Digitizing
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openOrderWizard({ type: 'vector' })}
-                    style={{
-                      background: '#ffffff',
-                      border: '1px solid var(--border-color)',
-                      color: 'var(--navy-900)',
-                      borderRadius: '24px',
-                      padding: '0.45rem 0.85rem',
-                      fontWeight: 700,
-                      fontSize: '0.78rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    ✒️ Vector Art
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openOrderWizard({ type: 'patch' })}
-                    style={{
-                      background: '#ffffff',
-                      border: '1px solid var(--border-color)',
-                      color: 'var(--navy-900)',
-                      borderRadius: '24px',
-                      padding: '0.45rem 0.85rem',
-                      fontWeight: 700,
-                      fontSize: '0.78rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    🏷️ Patches
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsDepositModalOpen(true)}
-                    style={{
-                      background: '#fff7ed',
-                      border: '1px solid #fed7aa',
-                      color: 'var(--orange-600)',
-                      borderRadius: '24px',
-                      padding: '0.45rem 0.85rem',
-                      fontWeight: 800,
-                      fontSize: '0.78rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    💳 Top-Up (${walletBalance.toFixed(0)})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => window.dispatchEvent(new Event('bdigi_open_chat'))}
-                    style={{
-                      background: '#ffffff',
-                      border: '1px solid var(--border-color)',
-                      color: 'var(--navy-900)',
-                      borderRadius: '24px',
-                      padding: '0.45rem 0.85rem',
-                      fontWeight: 700,
-                      fontSize: '0.78rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    💬 Live Help
-                  </button>
+                      border: '1.5px solid #e2e8f0',
+                      borderRadius: '16px',
+                      padding: '1rem',
+                      marginBottom: '1rem',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>
+                            Active Order In Production
+                          </h4>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('orders')}
+                          style={{ background: 'none', border: 'none', color: '#ea580c', fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer', padding: 0 }}
+                        >
+                          View All ({activeOrders.length}) →
+                        </button>
+                      </div>
+
+                      {(() => {
+                        const topOrd = activeOrders[0];
+                        const primaryImg = topOrd?.artworkUrl || topOrd?.image_url || topOrd?.logo || topOrd?.uploadedFiles?.[0]?.url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
+                        return (
+                          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                            <img
+                              src={primaryImg}
+                              alt={topOrd.title}
+                              style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover', border: '1.5px solid #fed7aa', flexShrink: 0 }}
+                            />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#ea580c', background: '#fff7ed', padding: '0.05rem 0.35rem', borderRadius: '4px' }}>
+                                  {formatOrderId(topOrd.id)}
+                                </span>
+                                <h5 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {topOrd.title}
+                                </h5>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.25rem' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedOrderForDrawer(topOrd)}
+                                  className="btn btn-sm btn-outline"
+                                  style={{ padding: '0.2rem 0.55rem', fontSize: '0.7rem', fontWeight: 700, borderRadius: '6px' }}
+                                >
+                                  Track Order
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenLiveSupport(topOrd.id)}
+                                  className="btn btn-sm btn-primary-orange"
+                                  style={{ padding: '0.2rem 0.55rem', fontSize: '0.7rem', fontWeight: 700, borderRadius: '6px' }}
+                                >
+                                  Chat <MessageSquare size={11} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+
+                  {/* 3 Core Services Choice */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Studio Services
+                    </div>
+
+                    {[
+                      { id: 'embroidery', title: 'Embroidery Digitizing', desc: 'DST, PES, EMB files with wilcom native stitch pathing', icon: Layers, price: '$15' },
+                      { id: 'vector', title: 'Vector Art Tracing', desc: 'Crisp vector AI, EPS, SVG for printing & engraving', icon: PenTool, price: '$12' },
+                      { id: 'patch', title: 'Custom Physical Patches', desc: 'Manufactured custom patches with velcro/iron-on backing', icon: Package, price: '$45' }
+                    ].map(svc => {
+                      const IconComp = svc.icon;
+                      return (
+                        <div
+                          key={svc.id}
+                          onClick={() => {
+                            setMobileOrderDefaultService(svc.id);
+                            setIsMobileOrderOpen(true);
+                          }}
+                          style={{
+                            background: '#ffffff',
+                            border: '1.5px solid #e2e8f0',
+                            borderRadius: '14px',
+                            padding: '0.85rem 1rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#fff7ed', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <IconComp size={20} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>{svc.title}</h5>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 900, color: '#ea580c' }}>From {svc.price}</span>
+                            </div>
+                            <p style={{ margin: '0.1rem 0 0', fontSize: '0.72rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {svc.desc}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
                 </div>
 
                 {/* Orders Section Container */}
@@ -1759,7 +2004,238 @@ export const CustomerDashboard = () => {
               </div>
             )}
 
-            {/* TAB 4: LIVE SUPPORT & ORDER CHAT INBOX */}
+            {/* TAB: MY ORDERS (Clean, high-performance order management) */}
+            {activeTab === 'orders' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {/* Header & Controls */}
+                <div style={{
+                  background: 'var(--bg-card)',
+                  border: '1.5px solid var(--border-color)',
+                  borderRadius: '16px',
+                  padding: '1.25rem 1.5rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '1rem',
+                  boxShadow: 'var(--shadow-sm)'
+                }}>
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                      My Orders
+                    </h2>
+                    <p style={{ margin: '0.2rem 0 0', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                      Track artwork production, machine files, quotes & revisions
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', background: 'var(--bg-subtle, #f1f5f9)', padding: '3px', borderRadius: '10px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setOrderFilterTab('active')}
+                        style={{
+                          padding: '0.4rem 0.85rem',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: orderFilterTab === 'active' ? '#ffffff' : 'transparent',
+                          color: orderFilterTab === 'active' ? '#ea580c' : 'var(--text-muted)',
+                          fontWeight: orderFilterTab === 'active' ? 900 : 700,
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                          boxShadow: orderFilterTab === 'active' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
+                        }}
+                      >
+                        Active ({activeOrders.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOrderFilterTab('completed')}
+                        style={{
+                          padding: '0.4rem 0.85rem',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: orderFilterTab === 'completed' ? '#ffffff' : 'transparent',
+                          color: orderFilterTab === 'completed' ? '#16a34a' : 'var(--text-muted)',
+                          fontWeight: orderFilterTab === 'completed' ? 900 : 700,
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                          boxShadow: orderFilterTab === 'completed' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
+                        }}
+                      >
+                        Completed ({completedOrders.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOrderFilterTab('all')}
+                        style={{
+                          padding: '0.4rem 0.85rem',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: orderFilterTab === 'all' ? '#ffffff' : 'transparent',
+                          color: orderFilterTab === 'all' ? 'var(--navy-900)' : 'var(--text-muted)',
+                          fontWeight: orderFilterTab === 'all' ? 900 : 700,
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                          boxShadow: orderFilterTab === 'all' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
+                        }}
+                      >
+                        All ({myOrders.length})
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileOrderDefaultService('embroidery');
+                        setIsMobileOrderOpen(true);
+                      }}
+                      className="btn btn-primary-orange"
+                      style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', fontWeight: 800, borderRadius: '10px' }}
+                    >
+                      <PlusCircle size={16} /> + New Order
+                    </button>
+                  </div>
+                </div>
+
+                {/* Orders List / Cards */}
+                {(() => {
+                  const filtered = myOrders.filter(o => {
+                    const s = String(o?.status || '').toLowerCase().trim();
+                    const isCompleted = s === 'completed' || s === 'delivered';
+                    if (orderFilterTab === 'active') return !isCompleted && s !== 'cancelled';
+                    if (orderFilterTab === 'completed') return isCompleted;
+                    return true;
+                  });
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div style={{
+                        background: '#ffffff',
+                        border: '1.5px solid var(--border-color)',
+                        borderRadius: '16px',
+                        padding: '3rem 1.5rem',
+                        textAlign: 'center'
+                      }}>
+                        <Package size={40} style={{ color: '#94a3b8', margin: '0 auto 0.75rem', opacity: 0.5 }} />
+                        <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-950)' }}>
+                          No Orders Found
+                        </h3>
+                        <p style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                          {orderFilterTab === 'active' ? 'You have no active orders in production right now.' : 'No completed orders found in your account history.'}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMobileOrderDefaultService('embroidery');
+                            setIsMobileOrderOpen(true);
+                          }}
+                          className="btn btn-primary-orange"
+                          style={{ padding: '0.65rem 1.25rem', fontSize: '0.88rem', fontWeight: 800, borderRadius: '10px' }}
+                        >
+                          <PlusCircle size={16} /> Place Your First Order
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+                      {filtered.map(ord => {
+                        const primaryImg = ord?.artworkUrl || ord?.image_url || ord?.logo || ord?.uploadedFiles?.[0]?.url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
+                        const statusObj = getStatusBadge(ord.status);
+                        const isDelivered = String(ord.status).toLowerCase() === 'delivered' || String(ord.status).toLowerCase() === 'completed';
+
+                        return (
+                          <div
+                            key={ord.id}
+                            style={{
+                              background: '#ffffff',
+                              border: '1.5px solid var(--border-color)',
+                              borderRadius: '16px',
+                              padding: '1.15rem',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.85rem',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
+                              <img
+                                src={primaryImg}
+                                alt={ord.title}
+                                style={{ width: '60px', height: '60px', borderRadius: '12px', objectFit: 'cover', border: '1.5px solid #fed7aa', flexShrink: 0 }}
+                              />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                  <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#ea580c', background: '#fff7ed', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                                    {formatOrderId(ord.id)}
+                                  </span>
+                                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                    {ord.serviceCategory || (ord.type === 'vector' ? 'Vector' : (ord.type === 'patch' ? 'Patch' : 'Digitizing'))}
+                                  </span>
+                                </div>
+                                <h4 style={{ margin: '0.2rem 0', fontSize: '0.95rem', fontWeight: 900, color: 'var(--navy-950)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {ord.title || 'Studio Order'}
+                                </h4>
+                                <div>{statusObj}</div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '0.65rem', fontSize: '0.78rem' }}>
+                              <span style={{ color: 'var(--text-muted)' }}>Amount: <strong style={{ color: 'var(--navy-950)' }}>${Number(ord.totalPrice || ord.price || 0).toFixed(2)}</strong></span>
+                              <span style={{ color: ord.isRush ? '#ea580c' : '#64748b', fontWeight: 700 }}>
+                                {ord.isRush ? '⚡ Express 4-8h' : '⏱️ Standard 12-24h'}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedOrderForDrawer(ord)}
+                                className="btn btn-outline"
+                                style={{ padding: '0.45rem', fontSize: '0.78rem', fontWeight: 800, borderRadius: '8px', justifyContent: 'center' }}
+                              >
+                                {isDelivered ? '📥 Files & Details' : '🔍 Track Order'}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleOpenLiveSupport(ord.id)}
+                                className="btn btn-primary-orange"
+                                style={{ padding: '0.45rem', fontSize: '0.78rem', fontWeight: 800, borderRadius: '8px', justifyContent: 'center' }}
+                              >
+                                <MessageSquare size={13} /> Chat Digitizer
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* TAB: NOTIFICATIONS VIEW */}
+            {activeTab === 'notifications' && (
+              <ClientNotificationsView
+                onNavigateToOrder={(ordId) => {
+                  const found = myOrders.find(o => String(o.id) === String(ordId) || formatOrderId(o.id) === String(ordId));
+                  if (found && setSelectedOrderForDrawer) {
+                    setSelectedOrderForDrawer(found);
+                  }
+                }}
+                onNavigateToChat={(chatId) => {
+                  setSelectedOrderChatId(chatId);
+                  setActiveTab('support');
+                }}
+                userEmail={userEmail}
+              />
+            )}
+
+            {/* TAB: LIVE SUPPORT & ORDER CHAT INBOX */}
             {activeTab === 'support' && (
               <div style={{ flex: 1, height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <ClientChatInbox initialOrderId={selectedOrderChatId} />
@@ -1955,7 +2431,7 @@ export const CustomerDashboard = () => {
             alignItems: 'center',
             justifyContent: 'center'
           }}>
-            <LayoutDashboard size={19} style={{ color: activeTab === 'dashboard' ? 'var(--orange-600)' : '#64748b' }} />
+            <Home size={19} style={{ color: activeTab === 'dashboard' ? 'var(--orange-600)' : '#64748b' }} />
           </div>
           <span style={{ fontSize: '0.65rem', fontWeight: activeTab === 'dashboard' ? 800 : 600, marginTop: '0.1rem' }}>
             Home
@@ -1966,11 +2442,8 @@ export const CustomerDashboard = () => {
         <button
           type="button"
           onClick={() => {
-            setActiveTab('dashboard');
-            const tableEl = document.getElementById('orders-table-wrapper') || document.querySelector('.orders-table-container');
-            if (tableEl) {
-              tableEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+            setActiveTab('orders');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           style={{
             display: 'flex',
@@ -1978,7 +2451,7 @@ export const CustomerDashboard = () => {
             alignItems: 'center',
             justifyContent: 'center',
             width: '100%',
-            color: '#64748b',
+            color: activeTab === 'orders' ? 'var(--orange-600)' : '#64748b',
             background: 'none',
             border: 'none',
             cursor: 'pointer',
@@ -1990,13 +2463,13 @@ export const CustomerDashboard = () => {
           <div style={{
             padding: '0.15rem 0.55rem',
             borderRadius: '12px',
-            background: 'transparent',
+            background: activeTab === 'orders' ? '#fff7ed' : 'transparent',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             position: 'relative'
           }}>
-            <PackageCheck size={19} style={{ color: '#64748b' }} />
+            <ClipboardList size={19} style={{ color: activeTab === 'orders' ? 'var(--orange-600)' : '#64748b' }} />
             {activeOrders.length > 0 && (
               <span style={{
                 position: 'absolute',
@@ -2016,15 +2489,18 @@ export const CustomerDashboard = () => {
               </span>
             )}
           </div>
-          <span style={{ fontSize: '0.65rem', fontWeight: 600, marginTop: '0.1rem' }}>
+          <span style={{ fontSize: '0.65rem', fontWeight: activeTab === 'orders' ? 800 : 600, marginTop: '0.1rem' }}>
             Orders
           </span>
         </button>
 
-        {/* Tab 3: Center Elevated + Order Action (Fiverr Standard) */}
+        {/* Tab 3: Center Elevated + Order Action */}
         <button
           type="button"
-          onClick={() => setIsServiceSelectorOpen(true)}
+          onClick={() => {
+            setMobileOrderDefaultService('embroidery');
+            setIsMobileOrderOpen(true);
+          }}
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -2064,11 +2540,12 @@ export const CustomerDashboard = () => {
           </span>
         </button>
 
-        {/* Tab 4: Live Inbox / Support */}
+        {/* Tab 4: Live Messages */}
         <button
           type="button"
           onClick={() => {
-            window.dispatchEvent(new Event('bdigi_open_chat'));
+            setActiveTab('support');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           style={{
             display: 'flex',
@@ -2095,52 +2572,83 @@ export const CustomerDashboard = () => {
             position: 'relative'
           }}>
             <MessageSquare size={19} style={{ color: activeTab === 'support' ? 'var(--orange-600)' : '#64748b' }} />
-            <span style={{
-              position: 'absolute',
-              top: '2px',
-              right: '5px',
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: '#10b981',
-              border: '1.5px solid #ffffff'
-            }} />
+            {unreadChatCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '-2px',
+                right: '4px',
+                background: '#ef4444',
+                color: '#ffffff',
+                fontSize: '0.58rem',
+                fontWeight: 900,
+                borderRadius: '9999px',
+                padding: '0.05rem 0.3rem',
+                minWidth: '15px',
+                textAlign: 'center',
+                lineHeight: 1.2
+              }}>
+                {unreadChatCount}
+              </span>
+            )}
           </div>
           <span style={{ fontSize: '0.65rem', fontWeight: activeTab === 'support' ? 800 : 600, marginTop: '0.1rem' }}>
-            Inbox
+            Messages
           </span>
         </button>
 
-        {/* Tab 5: Studio Wallet */}
+        {/* Tab 5: Alerts / Notifications */}
         <button
           type="button"
-          onClick={() => setIsDepositModalOpen(true)}
+          onClick={() => {
+            setActiveTab('notifications');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
           style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             width: '100%',
-            color: '#64748b',
+            color: activeTab === 'notifications' ? 'var(--orange-600)' : '#64748b',
             background: 'none',
             border: 'none',
             cursor: 'pointer',
             padding: '0.2rem 0',
+            position: 'relative',
             transition: 'all 0.18s ease'
           }}
         >
           <div style={{
             padding: '0.15rem 0.55rem',
             borderRadius: '12px',
-            background: 'transparent',
+            background: activeTab === 'notifications' ? '#fff7ed' : 'transparent',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            position: 'relative'
           }}>
-            <Wallet size={19} style={{ color: '#64748b' }} />
+            <Bell size={19} style={{ color: activeTab === 'notifications' ? 'var(--orange-600)' : '#64748b' }} />
+            {unreadNotifCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '-2px',
+                right: '4px',
+                background: '#f97316',
+                color: '#ffffff',
+                fontSize: '0.58rem',
+                fontWeight: 900,
+                borderRadius: '9999px',
+                padding: '0.05rem 0.3rem',
+                minWidth: '15px',
+                textAlign: 'center',
+                lineHeight: 1.2
+              }}>
+                {unreadNotifCount}
+              </span>
+            )}
           </div>
-          <span style={{ fontSize: '0.65rem', fontWeight: 600, marginTop: '0.1rem' }}>
-            ${walletBalance.toFixed(0)}
+          <span style={{ fontSize: '0.65rem', fontWeight: activeTab === 'notifications' ? 800 : 600, marginTop: '0.1rem' }}>
+            Alerts
           </span>
         </button>
       </nav>
@@ -2417,6 +2925,16 @@ export const CustomerDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* MOBILE 5-STEP STREAMLINED ORDER FLOW MODAL */}
+      <MobileSimpleOrderModal
+        isOpen={isMobileOrderOpen}
+        onClose={() => setIsMobileOrderOpen(false)}
+        defaultService={mobileOrderDefaultService}
+        onOrderCreated={(newOrd) => {
+          setActiveTab('orders');
+        }}
+      />
 
     </div>
   );

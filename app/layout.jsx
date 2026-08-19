@@ -17,6 +17,8 @@ import GlobalUploadModal from '../src/components/common/GlobalUploadModal';
 import { MetaPixelTracker } from '../src/components/common/MetaPixelTracker';
 import { VisitorPromotionBanner } from '../src/components/public/VisitorPromotionBanner';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
+import PWAInstallBanner from '../src/components/common/PWAInstallBanner';
+import PWARegistrar from '../src/components/common/PWARegistrar';
 
 const getMetadataBase = () => {
   const envUrl = (process.env.NEXT_PUBLIC_SITE_URL || '').trim();
@@ -31,6 +33,7 @@ const getMetadataBase = () => {
 
 export const metadata = {
   metadataBase: getMetadataBase(),
+  manifest: '/manifest.json',
   icons: {
     icon: [
       { url: '/favicon.ico' },
@@ -38,6 +41,11 @@ export const metadata = {
     ],
     shortcut: '/favicon.ico',
     apple: '/favicon.svg',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'BDigitizing'
   },
   title: {
     default: 'B Digitizing & Vector Studio | Custom Embroidery & Vector Art',
@@ -152,6 +160,8 @@ export default function RootLayout({ children }) {
               <GlobalUploadModal />
               <MetaPixelTracker />
               <VisitorPromotionBanner />
+              <PWAInstallBanner />
+              <PWARegistrar />
             </div>
           </ErrorBoundary>
         </StateProvider>

@@ -11,7 +11,9 @@ import {
   Settings, 
   LogOut, 
   Wallet,
-  PlusCircle
+  PlusCircle,
+  Bell,
+  ClipboardList
 } from 'lucide-react';
 
 export const ClientSidebar = ({
@@ -24,6 +26,7 @@ export const ClientSidebar = ({
   patchCount = 0,
   _storeCount = 0,
   unreadChatCount = 0,
+  unreadNotifCount = 0,
   unpaidCount = 0,
   onOpenDepositModal,
   onOpenLiveSupport,
@@ -36,7 +39,7 @@ export const ClientSidebar = ({
   }, []);
 
   const effectiveUser = mounted ? activeUser : null;
-  const userName = effectiveUser?.name || 'Sarah Jenkins';
+  const userName = effectiveUser?.name || 'Studio Client';
   const userCompany = effectiveUser?.company || 'Apex Athletics Apparel';
   const userInitial = (userName[0] || 'S').toUpperCase();
   const displayWallet = mounted ? walletBalance : 150.00;
@@ -50,12 +53,25 @@ export const ClientSidebar = ({
           label: 'Dashboard',
           icon: LayoutDashboard
         },
+        {
+          id: 'orders',
+          label: 'My Orders',
+          icon: ClipboardList,
+          badge: (digitizingCount + vectorCount + patchCount) > 0 ? (digitizingCount + vectorCount + patchCount) : null
+        },
         { 
           id: 'support', 
           label: 'Messages', 
           icon: MessageSquare, 
           badge: unreadChatCount > 0 ? unreadChatCount : null,
           liveDot: true 
+        },
+        {
+          id: 'notifications',
+          label: 'Notifications',
+          icon: Bell,
+          badge: unreadNotifCount > 0 ? unreadNotifCount : null,
+          isUnread: unreadNotifCount > 0
         }
       ]
     },
