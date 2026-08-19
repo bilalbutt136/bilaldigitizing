@@ -151,12 +151,63 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
     }
   };
 
-  const [processSteps, setProcessSteps] = useState([]);
-  const [timelineSpecs, setTimelineSpecs] = useState([]);
+  const defaultPatchProcessSteps = [
+    {
+      step: '01',
+      title: 'Submit Artwork & Custom Specs',
+      desc: 'Upload your vector logo or sketch. Select patch style (embroidered, woven, or 3D PVC), backing type, border style, and dimensions.'
+    },
+    {
+      step: '02',
+      title: 'Free Digital Proof & Sample Approval',
+      desc: 'Our master digitizers engineer a precision stitch-path mock-up and digital proof for your approval with unlimited free revisions.'
+    },
+    {
+      step: '03',
+      title: 'Precision Machine Production & Hand QA',
+      desc: 'Manufactured with high-density Madeira threads and laser-cut edges on commercial Japanese looms, followed by 100% manual inspection.'
+    },
+    {
+      step: '04',
+      title: 'Secure Packaging & Express Doorstep Air Delivery',
+      desc: 'Carefully packaged with optional retail backer cards and dispatched via express air courier (DHL/FedEx) with door-to-door tracking.'
+    }
+  ];
+
+  const defaultPatchTimelineSpecs = [
+    {
+      label: 'Digital Production Proof',
+      time: '12–24 Hours',
+      note: 'Free unlimited revisions until approved'
+    },
+    {
+      label: 'Sample Run (10–50 Pcs)',
+      time: '3–5 Business Days',
+      note: 'Fast prototype & club batches'
+    },
+    {
+      label: 'Production Run (100–500 Pcs)',
+      time: '5–7 Business Days',
+      note: 'Uniform & commercial batch orders'
+    },
+    {
+      label: 'Wholesale Bulk (500+ Pcs)',
+      time: '7–10 Business Days',
+      note: 'Priority dedicated factory line'
+    },
+    {
+      label: 'Express Doorstep Air Shipping',
+      time: '3–5 Days Worldwide',
+      note: 'DHL / FedEx with live tracking'
+    }
+  ];
+
+  const [processSteps, setProcessSteps] = useState(defaultPatchProcessSteps);
+  const [timelineSpecs, setTimelineSpecs] = useState(defaultPatchTimelineSpecs);
 
   useEffect(() => {
     import('../../services/supabaseService').then(({ getCmsContent }) => {
-      getCmsContent('process_steps').then(data => {
+      getCmsContent('patch_process_steps').then(data => {
         if (data && data.length > 0) {
           setProcessSteps(data.map((item, idx) => ({
             step: String(idx + 1).padStart(2, '0'),
@@ -164,16 +215,17 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
             desc: item.description
           })));
         }
-      });
+      }).catch(() => {});
+
       getCmsContent('patch_timeline').then(data => {
         if (data && data.length > 0) {
           setTimelineSpecs(data.map(item => ({
             label: item.label,
-            time: item.value,
+            time: item.value || item.time,
             note: item.note || ''
           })));
         }
-      });
+      }).catch(() => {});
     });
   }, []);
 
