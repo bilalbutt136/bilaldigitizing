@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useGoogleLogin } from '@react-oauth/google';
+import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
 import { Loader2 } from 'lucide-react';
 
-export const GoogleCustomSignInButton = ({ onAuthSuccess, onAuthError, style = {}, text = 'Continue with Google' }) => {
+const GOOGLE_CLIENT_ID = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '421520521310-7appibeh1m7cdd90iid17lsq8thlq2oc.apps.googleusercontent.com').trim();
+
+const GoogleButtonInternal = ({ onAuthSuccess, onAuthError, style = {}, text = 'Continue with Google' }) => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const googleLogin = useGoogleLogin({
@@ -94,5 +96,13 @@ export const GoogleCustomSignInButton = ({ onAuthSuccess, onAuthError, style = {
         </>
       )}
     </button>
+  );
+};
+
+export const GoogleCustomSignInButton = (props) => {
+  return (
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <GoogleButtonInternal {...props} />
+    </GoogleOAuthProvider>
   );
 };

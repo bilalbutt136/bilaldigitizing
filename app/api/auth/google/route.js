@@ -6,7 +6,7 @@ export async function POST(request) {
     const { userInfo } = await request.json().catch(() => ({}));
 
     if (!userInfo || !userInfo.email) {
-      return NextResponse.json({ error: 'Invalid Google user information received.' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid Google account data received.' }, { status: 400 });
     }
 
     const email = String(userInfo.email).toLowerCase().trim();
@@ -27,7 +27,35 @@ export async function POST(request) {
       role = 'admin';
     }
 
-    // 2. Check or create client profile in public.clients table
+    // 2. Ensure user exists in Supabase auth.users
+    let authUserId = null;
+    try {
+      const { data: createdUser, error: createAuthErr } = await supabase.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        user_metadata: {
+          full_name: name,
+          name,
+          avatar_url: avatarUrl,
+          role
+        }
+      });
+
+      if (!createAuthErr && createdUser?.user) {
+        authUserId = createdUser.user.id;
+      } else {
+        // User already exists in auth.users
+        const { data: usersList } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+        const matchedUser = usersList?.users?.find(u => (u.email || '').toLowerCase() === email);
+        if (matchedUser) {
+          authUserId = matchedUser.id;
+        }
+      }
+    } catch (authAdminErr) {
+      console.warn('[Google Auth API] Auth user check notice:', authAdminErr?.message);
+    }
+
+    // 3. Ensure client record in public.clients
     const { data: existingClient } = await supabase
       .from('clients')
       .select('*')
@@ -46,18 +74,20 @@ export async function POST(request) {
         status: 'active',
         created_at: new Date().toISOString()
       };
+      if (authUserId) {
+        newClient.id = authUserId;
+      }
 
-      const { data: inserted, error: insertErr } = await supabase
+      const { data: inserted } = await supabase
         .from('clients')
         .insert([newClient])
         .select()
         .maybeSingle();
 
-      if (!insertErr && inserted) {
+      if (inserted) {
         clientRecord = inserted;
       }
     } else {
-      // Update avatar or role if needed
       await supabase
         .from('clients')
         .update({
@@ -67,38 +97,10 @@ export async function POST(request) {
         .eq('email', email);
     }
 
-    // 3. Check or create auth user in Supabase auth.users using admin API
-    let authUserId = clientRecord?.id || `google_${userInfo.sub || Date.now()}`;
-    
-    try {
-      const { data: usersList } = await supabase.auth.admin.listUsers();
-      const matchedUser = usersList?.users?.find(u => (u.email || '').toLowerCase() === email);
-
-      if (matchedUser) {
-        authUserId = matchedUser.id;
-      } else {
-        const { data: createdUser, error: createAuthErr } = await supabase.auth.admin.createUser({
-          email,
-          email_confirm: true,
-          user_metadata: {
-            full_name: name,
-            name,
-            avatar_url: avatarUrl,
-            role
-          }
-        });
-
-        if (!createAuthErr && createdUser?.user) {
-          authUserId = createdUser.user.id;
-        }
-      }
-    } catch (authAdminErr) {
-      console.warn('[Google Auth API] Admin user provision notice:', authAdminErr?.message);
-    }
-
     // 4. Construct complete authentic user object
+    const finalUserId = authUserId || clientRecord?.id || `google_${userInfo.sub || Date.now()}`;
     const returnUser = {
-      id: authUserId,
+      id: finalUserId,
       email,
       name: clientRecord?.name || name,
       role: role,
