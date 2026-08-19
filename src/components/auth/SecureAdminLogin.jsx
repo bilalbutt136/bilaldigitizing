@@ -52,14 +52,14 @@ export const SecureAdminLogin = () => {
       alignItems: 'center',
       justifyContent: 'center',
       padding: '3rem 1.5rem',
-      background: 'var(--navy-950)',
-      color: '#ffffff'
+      background: 'var(--bg-main)',
+      color: 'var(--color-text-primary)'
     }}>
       <div className="card" style={{
         maxWidth: '440px',
         width: '100%',
         padding: '2.5rem',
-        background: '#ffffff',
+        background: 'var(--bg-card)',
         boxShadow: 'var(--shadow-xl)',
         borderRadius: 'var(--radius-xl)'
       }}>

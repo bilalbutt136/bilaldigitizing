@@ -90,7 +90,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
           className="no-print"
           style={{
             padding: '1.25rem 1.75rem',
-            background: 'var(--navy-950)',
+            background: '#090d16',
             color: '#ffffff',
             display: 'flex',
             justifyContent: 'space-between',
@@ -159,7 +159,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
             </div>
 
             <div style={{ textAlign: 'right' }}>
-              <div style={{ background: 'var(--navy-900)', color: '#ffffff', padding: '0.4rem 0.85rem', borderRadius: 'var(--radius-sm)', fontWeight: 800, fontSize: '1.1rem', display: 'inline-block' }}>
+              <div style={{ background: '#0f172a', color: '#ffffff', padding: '0.4rem 0.85rem', borderRadius: 'var(--radius-sm)', fontWeight: 800, fontSize: '1.1rem', display: 'inline-block' }}>
                 JOB ID: {formatOrderId(order.id)}
               </div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
@@ -302,7 +302,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
 
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
               <thead>
-                <tr style={{ background: 'var(--navy-900)', color: '#ffffff', textAlign: 'left' }}>
+                <tr style={{ background: '#0f172a', color: '#ffffff', textAlign: 'left' }}>
                   <th style={{ padding: '0.65rem 0.85rem', borderRadius: '4px 0 0 0' }}>Stop #</th>
                   <th style={{ padding: '0.65rem 0.85rem' }}>Swatch</th>
                   <th style={{ padding: '0.65rem 0.85rem' }}>Thread Code & Brand</th>

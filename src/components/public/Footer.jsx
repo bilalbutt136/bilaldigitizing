@@ -37,7 +37,7 @@ export const Footer = () => {
   const currentYear = mounted ? new Date().getFullYear() : 2026;
 
   return (
-    <footer style={{ background: 'var(--navy-950)', color: '#94a3b8', paddingTop: '4.5rem', paddingBottom: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+    <footer style={{ background: '#090d16', color: '#94a3b8', paddingTop: '4.5rem', paddingBottom: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
       <div className="container" style={{ padding: '0 1.5rem', maxWidth: '1280px', margin: '0 auto' }}>
         
         {/* Main 5 Columns */}

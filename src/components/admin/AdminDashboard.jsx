@@ -31,7 +31,11 @@ import {
   DollarSign,
   Phone,
   Type,
-  LayoutTemplate
+  LayoutTemplate,
+  Palette,
+  Megaphone,
+  ShieldCheck,
+  Building2
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -226,9 +230,12 @@ export const AdminDashboard = () => {
       ]
     },
     {
-      title: 'SYSTEM',
+      title: 'SYSTEM & SETTINGS',
       items: [
-        { id: 'settings', label: 'System Settings', icon: Settings },
+        { id: 'settings-theme', label: 'Theme & Brand Engine', icon: Palette },
+        { id: 'settings-meta', label: 'Meta Pixel & SEO', icon: Megaphone },
+        { id: 'settings-admin', label: 'Admin Team & Security', icon: ShieldCheck },
+        { id: 'settings-general', label: 'Studio Profile & Defaults', icon: Building2 },
         { id: 'signout', label: 'Sign Out', icon: LogOut, danger: true }
       ]
     }
@@ -286,7 +293,7 @@ export const AdminDashboard = () => {
               {activeTab === 'chat' && 'Messages'}
               {activeTab === 'promotions' && 'Promotions'}
               {activeTab === 'contact' && 'Contact Info'}
-              {activeTab === 'settings' && 'Studio Settings'}
+              {activeTab.startsWith('settings') && 'System Settings & Control Center'}
             </h3>
           </div>
         </div>
@@ -398,7 +405,7 @@ export const AdminDashboard = () => {
         left: 0,
         bottom: 0,
         width: '280px',
-        background: '#ffffff',
+        background: 'var(--bg-card)',
         borderRight: '1px solid var(--border-color)',
         boxShadow: '4px 0 20px rgba(15, 23, 42, 0.04)',
         overflowY: 'auto',
@@ -872,7 +879,11 @@ export const AdminDashboard = () => {
         {activeTab === 'chat' && <AdminChatInbox />}
         {activeTab === 'promotions' && <PromotionsManager />}
         {activeTab === 'contact' && <ContactInfoManager />}
-        {activeTab === 'settings' && <SystemSettingsManager />}
+        {activeTab === 'settings' && <SystemSettingsManager activeSubTab="theme" />}
+        {activeTab === 'settings-theme' && <SystemSettingsManager activeSubTab="theme" />}
+        {activeTab === 'settings-meta' && <SystemSettingsManager activeSubTab="meta" />}
+        {activeTab === 'settings-admin' && <SystemSettingsManager activeSubTab="security" />}
+        {activeTab === 'settings-general' && <SystemSettingsManager activeSubTab="general" />}
 
       </main>
 

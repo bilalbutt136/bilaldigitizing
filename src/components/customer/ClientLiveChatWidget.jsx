@@ -725,7 +725,7 @@ export const ClientLiveChatWidget = () => {
           {/* Header Bar */}
           <div style={{
             padding: '0.85rem 1.15rem',
-            background: 'var(--navy-950)',
+            background: 'linear-gradient(135deg, #090d16 0%, #0f172a 100%)',
             color: '#ffffff',
             display: 'flex',
             justifyContent: 'space-between',

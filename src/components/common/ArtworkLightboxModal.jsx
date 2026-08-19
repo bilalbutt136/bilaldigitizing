@@ -49,7 +49,7 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
       <div 
         className="modal-content" 
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '900px', background: 'var(--navy-950)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)' }}
+        style={{ maxWidth: '900px', background: 'var(--color-surface, #111827)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)' }}
       >
         
         {/* Header */}

@@ -178,7 +178,7 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
   }, []);
 
   return (
-    <div style={{ background: 'var(--navy-950)', color: '#ffffff', minHeight: '100vh', paddingBottom: '5rem' }}>
+    <div style={{ background: 'var(--bg-main)', color: 'var(--color-text-primary)', minHeight: '100vh', paddingBottom: '5rem' }}>
       
       {/* SECTION 1: High-Impact Hero & Overview Banner */}
       {!hideHero && (
@@ -319,7 +319,7 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
       </section>
 
       {/* SECTION 2: Step-by-Step Workflow ("How It Works" for Physical Patches) */}
-      <section style={{ padding: '5rem 0', background: 'var(--navy-950)' }}>
+      <section style={{ padding: '5rem 0', background: 'var(--bg-surface, #0f172a)', borderTop: '1px solid var(--border-color)' }}>
         <div className="container">
           
           <div style={{

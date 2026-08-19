@@ -141,7 +141,7 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
   };
 
   return (
-    <div style={{ background: 'var(--navy-950)', color: '#ffffff', minHeight: '100vh', paddingBottom: '5rem' }}>
+    <div style={{ background: 'var(--bg-main)', color: 'var(--color-text-primary)', minHeight: '100vh', paddingBottom: '5rem' }}>
       
       {/* Hero Banner */}
       {!hideHero && (

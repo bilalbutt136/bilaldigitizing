@@ -370,7 +370,7 @@ export const PortfolioSlider = ({ isHero = false }) => {
   if (isHero) return visualizerCard;
 
   return (
-    <section id="portfolio" style={{ padding: '5rem 0', background: 'var(--navy-950)', color: '#ffffff' }}>
+    <section id="portfolio" style={{ padding: '5rem 0', background: 'var(--bg-main)', color: 'var(--color-text-primary)' }}>
       <div className="container">
         {/* Header */}
         <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 3rem' }}>

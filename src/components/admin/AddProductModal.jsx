@@ -147,7 +147,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
         {/* Modal Header */}
         <div style={{
           padding: '1.25rem 1.75rem',
-          background: 'var(--navy-950)',
+          background: '#090d16',
           color: '#ffffff',
           display: 'flex',
           justifyContent: 'space-between',
