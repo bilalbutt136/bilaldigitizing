@@ -410,12 +410,34 @@ export const HeroSection = () => {
 
   return (
     <section className="theme-hero-section" style={{
-      background: '#ffffff',
+      background: 'var(--hero-bg)',
       color: 'var(--hero-text-primary)',
       padding: '2rem 0 3.25rem',
       position: 'relative',
       overflow: 'hidden'
     }}>
+      {/* Ambient Glows */}
+      <div style={{
+        position: 'absolute',
+        top: '-15%',
+        left: '-5%',
+        width: '600px',
+        height: '600px',
+        background: 'radial-gradient(circle, rgba(249, 115, 22, 0.1) 0%, transparent 60%)',
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
+      <div style={{
+        position: 'absolute',
+        bottom: '-15%',
+        right: '-5%',
+        width: '550px',
+        height: '550px',
+        background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 60%)',
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
+
       <style dangerouslySetInnerHTML={{__html: `
         .blinking-green-dot {
           width: 8px;
