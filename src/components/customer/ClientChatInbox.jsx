@@ -92,8 +92,36 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   const [mobileView, setMobileView] = useState(initialOrderId ? 'chat' : 'list');
   
   const chatFeedRef = useRef(null);
+  const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+
+  const scrollToBottom = (behavior = 'smooth') => {
+    if (chatFeedRef.current) {
+      chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
+    }
+    requestAnimationFrame(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+      } else if (chatFeedRef.current) {
+        chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
+      }
+    });
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+      } else if (chatFeedRef.current) {
+        chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
+      }
+    }, 60);
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+      } else if (chatFeedRef.current) {
+        chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
+      }
+    }, 220);
+  };
 
   // Build unified thread list combining general support and active order discussions with chat history
   const buildThreadList = (remoteConvs = [], existingThreads = []) => {
@@ -497,15 +525,10 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     };
   }, [conversations, activeChatId, defaultSupportId]);
 
-  // Scroll messages to bottom on thread change or message arrival
+  // Scroll messages to bottom on thread change, message arrival, or when support is typing
   useEffect(() => {
-    if (chatFeedRef.current) {
-      chatFeedRef.current.scrollTo({
-        top: chatFeedRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
-    }
-  }, [activeChatId, activeChat?.messages?.length]);
+    scrollToBottom('smooth');
+  }, [activeChatId, activeChat?.messages?.length, isSupportTyping, replyingTo, mobileView]);
 
   // Helper to compute client unread count strictly for Support messages
   const getThreadUnreadCount = (conv) => {
@@ -708,6 +731,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     broadcastTypingStatus(targetConvId, clientName, 'client', false);
     playNotificationSound('send');
     showToast('Message sent to production studio team!', 'success');
+    scrollToBottom('smooth');
 
     // Persistence to Supabase
     if (isSupabaseConfigured) {
@@ -1206,6 +1230,9 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 </span>
               </div>
             )}
+
+            {/* Auto-scroll end anchor */}
+            <div ref={messagesEndRef} style={{ height: '1px', flexShrink: 0, marginTop: '2px' }} />
           </div>
 
           {/* QUOTED REPLY PREVIEW BANNER (WhatsApp Style) */}

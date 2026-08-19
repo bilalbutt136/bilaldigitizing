@@ -364,12 +364,37 @@ export const AdminChatInbox = () => {
     }
   };
 
-  // Auto-scroll chat feed on new messages
-  useEffect(() => {
+  const scrollToBottom = (behavior = 'smooth') => {
     if (chatFeedRef.current) {
       chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
     }
-  }, [activeChat?.messages?.length]);
+    requestAnimationFrame(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+      } else if (chatFeedRef.current) {
+        chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
+      }
+    });
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+      } else if (chatFeedRef.current) {
+        chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
+      }
+    }, 60);
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+      } else if (chatFeedRef.current) {
+        chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
+      }
+    }, 220);
+  };
+
+  // Auto-scroll chat feed on new messages, thread switch, or typing state
+  useEffect(() => {
+    scrollToBottom('smooth');
+  }, [currentActiveChatId, activeChat?.messages?.length, isClientTyping, replyingTo]);
 
   // Mark active conversation read when opening
   useEffect(() => {
@@ -484,6 +509,7 @@ export const AdminChatInbox = () => {
     broadcastTypingStatus(currentActiveChatId, 'Studio Support', 'admin', false);
     playNotificationSound('send');
     showToast(`Reply sent to ${activeInfo.customerName || 'Customer'}!`, 'success');
+    scrollToBottom('smooth');
 
     if (isSupabaseConfigured) {
       try {

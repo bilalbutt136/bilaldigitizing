@@ -321,20 +321,39 @@ export const ClientLiveChatWidget = () => {
     : 0;
 
   const chatFeedRef = useRef(null);
+  const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = (behavior = 'smooth') => {
     if (chatFeedRef.current) {
-      chatFeedRef.current.scrollTo({
-        top: chatFeedRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
+      chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
     }
+    requestAnimationFrame(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+      } else if (chatFeedRef.current) {
+        chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
+      }
+    });
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+      } else if (chatFeedRef.current) {
+        chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
+      }
+    }, 60);
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+      } else if (chatFeedRef.current) {
+        chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
+      }
+    }, 220);
   };
 
   useEffect(() => {
     if (isOpen) {
-      scrollToBottom();
+      scrollToBottom('smooth');
       if (clientThread?.id) {
         if (typeof window !== 'undefined') {
           localStorage.setItem('bdigi_read_client_' + clientThread.id, String(Date.now()));
@@ -348,7 +367,7 @@ export const ClientLiveChatWidget = () => {
         ));
       }
     }
-  }, [isOpen, clientThread?.id]);
+  }, [isOpen, clientThread?.id, clientThread?.messages?.length, isSupportTyping, replyingTo]);
 
   // Mount Guard: Don't render until mounted or if on excluded screen
   if (!mounted || isExcluded) {
@@ -439,6 +458,7 @@ export const ClientLiveChatWidget = () => {
     setReplyingTo(null);
     broadcastTypingStatus(convId, cleanName, 'client', false);
     showToast('Message sent to Support!', 'success');
+    scrollToBottom('smooth');
   };
 
   const handleFileAttach = async (e) => {
@@ -764,6 +784,9 @@ export const ClientLiveChatWidget = () => {
                     </span>
                   </div>
                 )}
+
+                {/* Auto-scroll end anchor */}
+                <div ref={messagesEndRef} style={{ height: '1px', flexShrink: 0, marginTop: '2px' }} />
               </div>
 
               {/* QUOTED REPLY PREVIEW BANNER */}
