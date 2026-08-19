@@ -1150,15 +1150,35 @@ button, input, select, textarea, a {
 
 @media (max-width: 768px) {
   .chat-inbox-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: 100% !important;
     display: flex !important;
     flex-direction: column !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  .chat-threads-column {
+    width: 100% !important;
+    height: 100% !important;
+    flex: 1 !important;
+    min-height: 0 !important;
   }
   .chat-threads-column.hide-on-mobile-thread {
     display: none !important;
   }
+  .chat-messages-column {
+    width: 100% !important;
+    height: 100% !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+  }
   .chat-messages-column.hide-on-mobile-chat {
     display: none !important;
+  }
+  .client-portal-fluid-container {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
   }
 }
 

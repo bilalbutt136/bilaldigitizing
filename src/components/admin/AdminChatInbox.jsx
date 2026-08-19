@@ -1073,15 +1073,16 @@ export const AdminChatInbox = () => {
           >
             {/* Header Canvas */}
             <div style={{
-              padding: '0.85rem 1.25rem',
+              padding: '0.65rem 0.85rem',
               borderBottom: '1.5px solid var(--color-border)',
               background: 'var(--color-surface, #ffffff)',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
+              gap: '0.5rem',
               flexShrink: 0
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1 }}>
                 <button
                   type="button"
                   className="mobile-only"
@@ -1091,68 +1092,68 @@ export const AdminChatInbox = () => {
                     border: '1px solid var(--color-border, #cbd5e1)',
                     color: 'var(--color-text-primary, var(--navy-900))',
                     borderRadius: '8px',
-                    padding: '0.35rem 0.65rem',
-                    fontSize: '0.8rem',
+                    padding: '0.35rem 0.55rem',
+                    fontSize: '0.75rem',
                     fontWeight: 800,
                     cursor: 'pointer',
+                    display: 'flex',
                     alignItems: 'center',
-                    gap: '0.35rem',
+                    gap: '0.25rem',
                     flexShrink: 0
                   }}
                   aria-label="Back to conversations list"
                 >
-                  ← Inbox
+                  ← Back
                 </button>
 
                 <div style={{ position: 'relative', flexShrink: 0 }}>
                   {activeInfo.isOrder ? (
-                    <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'var(--navy-900)', color: 'var(--orange-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.85rem', border: '1.5px solid var(--orange-500)' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--navy-900)', color: 'var(--orange-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.75rem', border: '1.5px solid var(--orange-500)' }}>
                       {activeInfo.orderNum ? activeInfo.orderNum.substring(0, 5) : 'ORD'}
                     </div>
                   ) : (
                     <img
                       src={activeChat.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeInfo.customerName)}&background=0f172a&color=fff`}
                       alt={activeInfo.customerName}
-                      style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-border)' }}
+                      style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-border)' }}
                     />
                   )}
                   <span style={{
                     position: 'absolute',
                     bottom: 0,
                     right: 0,
-                    width: '11px',
-                    height: '11px',
+                    width: '9px',
+                    height: '9px',
                     borderRadius: '50%',
                     background: activeChat.status === 'online' ? '#10b981' : '#94a3b8',
                     border: '2px solid var(--color-surface, #ffffff)'
                   }} />
                 </div>
 
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--color-text-primary, var(--navy-950))', margin: 0 }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflow: 'hidden' }}>
+                    <h3 style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--color-text-primary, var(--navy-950))', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {activeInfo.isOrder ? `${activeInfo.serviceCategory} — ${activeInfo.orderNum}` : activeInfo.customerName}
                     </h3>
                     <span style={{
-                      fontSize: '0.7rem',
-                      padding: '0.15rem 0.5rem',
-                      borderRadius: '6px',
+                      fontSize: '0.65rem',
+                      padding: '0.05rem 0.35rem',
+                      borderRadius: '4px',
                       background: activeInfo.isOrder ? '#fff7ed' : 'rgba(16, 185, 129, 0.1)',
                       color: activeInfo.isOrder ? '#ea580c' : '#10b981',
                       border: `1px solid ${activeInfo.isOrder ? '#fed7aa' : 'rgba(16, 185, 129, 0.25)'}`,
-                      fontWeight: 800
+                      fontWeight: 800,
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0
                     }}>
-                      {activeInfo.isOrder ? '🧵 Order Discussion' : '🎧 Live Support & Quotes'}
+                      {activeInfo.isOrder ? 'Order' : 'Support'}
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     <span>Client: <strong style={{ color: 'var(--color-text-primary, var(--navy-800))' }}>{activeInfo.customerName}</strong></span>
                     {activeInfo.customerEmail && (
-                      <span>• 📧 <strong style={{ color: 'var(--color-text-primary, var(--navy-800))' }}>{activeInfo.customerEmail}</strong></span>
-                    )}
-                    {activeChat.company && (
-                      <span>• 🏢 {activeChat.company}</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>• {activeInfo.customerEmail}</span>
                     )}
                   </div>
                 </div>
@@ -1164,9 +1165,9 @@ export const AdminChatInbox = () => {
                   type="button"
                   onClick={() => setSelectedOrderForDrawer(activeInfo.matchOrd)}
                   className="btn btn-sm btn-outline"
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 800, padding: '0.4rem 0.85rem' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 800, padding: '0.35rem 0.55rem', fontSize: '0.72rem', flexShrink: 0, whiteSpace: 'nowrap' }}
                 >
-                  Inspect Order Tracker <ChevronRight size={14} />
+                  Order <ChevronRight size={12} />
                 </button>
               )}
             </div>
@@ -1319,8 +1320,8 @@ export const AdminChatInbox = () => {
             )}
 
             {/* Messaging Input Area */}
-            <form onSubmit={handleSendMessage} style={{ padding: '1rem 1.5rem 1.25rem', borderTop: '1.5px solid var(--color-border)', background: 'var(--color-surface, #ffffff)' }}>
-              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <form onSubmit={handleSendMessage} style={{ padding: '0.65rem 0.85rem', borderTop: '1.5px solid var(--color-border)', background: 'var(--color-surface, #ffffff)', width: '100%', boxSizing: 'border-box' }}>
+              <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', width: '100%' }}>
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -1337,9 +1338,9 @@ export const AdminChatInbox = () => {
                     background: 'var(--color-subtle, #f1f5f9)',
                     border: '1.5px solid var(--color-border)',
                     color: 'var(--color-text-secondary, var(--navy-700))',
-                    width: '42px',
-                    height: '42px',
-                    borderRadius: 'var(--radius-sm)',
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '8px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1348,7 +1349,7 @@ export const AdminChatInbox = () => {
                   }}
                   title="Attach Image, PDF, Vector or Machine File"
                 >
-                  <Paperclip size={18} />
+                  <Paperclip size={16} />
                 </button>
 
                 <button
@@ -1358,22 +1359,23 @@ export const AdminChatInbox = () => {
                     background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.15))',
                     border: '1.5px solid rgba(99, 102, 241, 0.4)',
                     color: '#4f46e5',
-                    padding: '0 0.85rem',
-                    height: '42px',
-                    borderRadius: 'var(--radius-sm)',
+                    padding: '0 0.55rem',
+                    height: '36px',
+                    borderRadius: '8px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
+                    gap: '4px',
                     fontWeight: 800,
-                    fontSize: '0.82rem',
+                    fontSize: '0.78rem',
                     cursor: 'pointer',
                     flexShrink: 0,
-                    transition: 'all 0.2s ease'
+                    transition: 'all 0.2s ease',
+                    whiteSpace: 'nowrap'
                   }}
                   title="Create & Send Custom Offer"
                 >
-                  <Tag size={15} className="text-indigo-600" />
-                  <span>Create Offer</span>
+                  <Tag size={13} className="text-indigo-600" />
+                  <span>Offer</span>
                 </button>
 
                 <input
@@ -1382,13 +1384,11 @@ export const AdminChatInbox = () => {
                   placeholder={
                     replyingTo 
                       ? `Reply to ${replyingTo.senderName || 'Customer'}...` 
-                      : (activeInfo.isOrder 
-                          ? `Reply to Order ${activeInfo.orderNum} discussion with ${activeInfo.customerName}...` 
-                          : `Reply to ${activeInfo.customerName} on Live Support...`)
+                      : 'Type a message...'
                   }
                   value={replyInput}
                   onChange={handleInputChange}
-                  style={{ flex: 1, height: '42px', fontSize: '0.9rem' }}
+                  style={{ flex: 1, minWidth: 0, height: '36px', fontSize: '0.85rem', padding: '0 0.75rem', borderRadius: '8px', boxSizing: 'border-box' }}
                 />
 
                 <button
@@ -1396,17 +1396,20 @@ export const AdminChatInbox = () => {
                   className="btn btn-primary-orange"
                   disabled={(!replyInput.trim() && !attachedFile) || isUploadingAttachment}
                   style={{
-                    height: '42px',
-                    padding: '0 1.25rem',
+                    height: '36px',
+                    padding: '0 0.85rem',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.45rem',
+                    gap: '0.35rem',
                     fontWeight: 800,
+                    fontSize: '0.82rem',
+                    borderRadius: '8px',
+                    flexShrink: 0,
                     opacity: ((!replyInput.trim() && !attachedFile) || isUploadingAttachment) ? 0.5 : 1,
                     cursor: ((!replyInput.trim() && !attachedFile) || isUploadingAttachment) ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  Send <Send size={16} />
+                  <span>Send</span> <Send size={13} />
                 </button>
               </div>
             </form>

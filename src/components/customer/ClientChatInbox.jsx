@@ -1248,15 +1248,16 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           
           {/* Active Thread Header */}
           <div style={{
-            padding: '0.85rem 1.25rem',
+            padding: '0.65rem 0.85rem',
             borderBottom: '1px solid var(--color-border)',
             background: 'var(--color-surface, #ffffff)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            gap: '0.5rem',
             flexShrink: 0
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1 }}>
               <button
                 type="button"
                 className="mobile-only"
@@ -1266,23 +1267,24 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                   border: '1px solid var(--color-border, #cbd5e1)',
                   color: 'var(--color-text-primary, var(--navy-900))',
                   borderRadius: '8px',
-                  padding: '0.35rem 0.65rem',
-                  fontSize: '0.8rem',
+                  padding: '0.35rem 0.55rem',
+                  fontSize: '0.75rem',
                   fontWeight: 800,
                   cursor: 'pointer',
+                  display: 'flex',
                   alignItems: 'center',
-                  gap: '0.35rem',
+                  gap: '0.25rem',
                   flexShrink: 0
                 }}
                 aria-label="Back to conversations"
               >
-                ← All Chats
+                ← Back
               </button>
 
               <div style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
+                width: '34px',
+                height: '34px',
+                borderRadius: '8px',
                 background: activeChat.rawOrderId ? '#f0fdf4' : 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
                 color: activeChat.rawOrderId ? '#16a34a' : '#ffffff',
                 display: 'flex',
@@ -1292,40 +1294,51 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 flexShrink: 0
               }}>
                 {activeChat.rawOrderId ? (
-                  activeChat.serviceCategory?.includes('Vector') ? <PenTool size={18} /> :
-                  activeChat.serviceCategory?.includes('Patch') ? <Package size={18} /> :
-                  <Layers size={18} />
+                  activeChat.serviceCategory?.includes('Vector') ? <PenTool size={16} /> :
+                  activeChat.serviceCategory?.includes('Patch') ? <Package size={16} /> :
+                  <Layers size={16} />
                 ) : (
-                  <Sparkles size={18} style={{ color: 'var(--color-primary, #ff7a00)' }} />
+                  <Sparkles size={16} style={{ color: 'var(--color-primary, #ff7a00)' }} />
                 )}
               </div>
-              <div>
-                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: 'var(--color-text-primary, var(--navy-950))' }}>
-                  {activeChat.rawOrderId ? `🧵 ${activeChat.title}` : '🎧 Live Studio Support & Quotes'}
+
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <h4 style={{
+                  margin: 0,
+                  fontSize: '0.88rem',
+                  fontWeight: 800,
+                  color: 'var(--color-text-primary, var(--navy-950))',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
+                  {activeChat.rawOrderId ? `${activeChat.title}` : 'Studio Live Support'}
                 </h4>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.1rem', overflow: 'hidden' }}>
                   <span style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.3rem',
-                    fontSize: '0.7rem',
+                    gap: '0.25rem',
+                    fontSize: '0.68rem',
                     color: '#16a34a',
-                    fontWeight: 700
+                    fontWeight: 700,
+                    whiteSpace: 'nowrap'
                   }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }} />
-                    {activeChat.rawOrderId ? 'Order Discussion' : 'Live Studio Team (Online)'}
+                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#16a34a' }} />
+                    {activeChat.rawOrderId ? 'Order Discussion' : 'Online'}
                   </span>
                   {activeChat.orderStatus && (
                     <span style={{
-                      fontSize: '0.68rem',
+                      fontSize: '0.65rem',
                       fontWeight: 800,
                       textTransform: 'uppercase',
-                      padding: '0.1rem 0.4rem',
+                      padding: '0.05rem 0.35rem',
                       borderRadius: '4px',
                       background: 'var(--color-subtle, #f1f5f9)',
-                      color: 'var(--color-text-secondary, var(--navy-700))'
+                      color: 'var(--color-text-secondary, var(--navy-700))',
+                      whiteSpace: 'nowrap'
                     }}>
-                      Status: {activeChat.orderStatus}
+                      {activeChat.orderStatus}
                     </span>
                   )}
                 </div>
@@ -1345,17 +1358,19 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                   background: 'var(--color-subtle, #f8fafc)',
                   border: '1px solid var(--color-border, #cbd5e1)',
                   borderRadius: '8px',
-                  padding: '0.4rem 0.75rem',
-                  fontSize: '0.75rem',
+                  padding: '0.35rem 0.55rem',
+                  fontSize: '0.72rem',
                   fontWeight: 800,
                   color: 'var(--color-text-primary, var(--navy-900))',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.35rem'
+                  gap: '0.25rem',
+                  flexShrink: 0,
+                  whiteSpace: 'nowrap'
                 }}
               >
-                View Order Details <ChevronRight size={13} />
+                Details <ChevronRight size={12} />
               </button>
             )}
           </div>
@@ -1526,13 +1541,15 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           <form
             onSubmit={handleSendMessage}
             style={{
-              padding: '0.85rem 1.25rem',
+              padding: '0.65rem 0.85rem',
               borderTop: '1px solid var(--color-border)',
               background: 'var(--color-surface, #ffffff)',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.65rem',
-              flexShrink: 0
+              gap: '0.5rem',
+              flexShrink: 0,
+              width: '100%',
+              boxSizing: 'border-box'
             }}
           >
             <input
@@ -1548,9 +1565,9 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploadingAttachment}
               style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
                 background: 'var(--color-subtle, #f8fafc)',
                 border: '1.5px solid var(--color-border, #cbd5e1)',
                 color: 'var(--color-text-secondary, var(--navy-700))',
@@ -1570,16 +1587,18 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               type="text"
               value={messageInput}
               onChange={handleInputChange}
-              placeholder={replyingTo ? `Reply to ${replyingTo.senderName || 'Support'}...` : `Message ${activeChat.title}...`}
+              placeholder={replyingTo ? `Reply to ${replyingTo.senderName || 'Support'}...` : 'Type a message...'}
               style={{
                 flex: 1,
-                padding: '0.65rem 1rem',
-                fontSize: '0.88rem',
-                borderRadius: '10px',
+                minWidth: 0,
+                padding: '0.55rem 0.85rem',
+                fontSize: '0.85rem',
+                borderRadius: '8px',
                 border: '1.5px solid var(--color-border, #cbd5e1)',
                 outline: 'none',
                 background: 'var(--color-subtle, #ffffff)',
-                color: 'var(--color-text-primary, var(--navy-950))'
+                color: 'var(--color-text-primary, var(--navy-950))',
+                boxSizing: 'border-box'
               }}
             />
 
@@ -1588,18 +1607,19 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               disabled={(!messageInput.trim() && !attachedFile) || isUploadingAttachment}
               className="btn btn-primary-orange"
               style={{
-                padding: '0.65rem 1.15rem',
-                borderRadius: '10px',
-                fontSize: '0.88rem',
+                padding: '0.55rem 0.85rem',
+                borderRadius: '8px',
+                fontSize: '0.82rem',
                 fontWeight: 800,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.4rem',
+                gap: '0.35rem',
+                flexShrink: 0,
                 opacity: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 0.5 : 1,
                 cursor: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 'not-allowed' : 'pointer'
               }}
             >
-              Send <Send size={15} />
+              <span>Send</span> <Send size={13} />
             </button>
           </form>
 
