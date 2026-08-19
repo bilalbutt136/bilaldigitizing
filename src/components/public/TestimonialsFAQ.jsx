@@ -74,25 +74,16 @@ export const TestimonialsFAQ = () => {
         {/* Testimonials Block */}
         <div style={{ marginBottom: '5.5rem' }}>
           <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              color: 'var(--orange-700)',
-              background: 'var(--orange-50)',
-              border: '1px solid var(--orange-200)',
-              padding: '0.35rem 0.95rem',
-              borderRadius: '9999px',
-              fontWeight: 800,
-              fontSize: '0.85rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              marginBottom: '1rem'
-            }}>
-              <Quote size={15} /> Verified Customer Feedback
+            <div className="badge-pill-glow" style={{ marginBottom: '1rem' }}>
+              <Quote size={15} style={{ color: 'var(--orange-500)' }} />
+              <span>Verified Customer Feedback</span>
             </div>
             <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', color: 'var(--navy-950)', marginBottom: '1rem', fontWeight: 900, letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-              {testTitle}
+              {testTitle.includes('1,200+') ? (
+                <>Trusted by <span className="text-gradient-orange">1,200+</span> Apparel Decorators & Brands</>
+              ) : (
+                testTitle
+              )}
             </h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.65 }}>
               {testSub}
@@ -186,26 +177,17 @@ export const TestimonialsFAQ = () => {
         {/* FAQs Accordion Block */}
         <div style={{ maxWidth: '840px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              color: 'var(--orange-700)',
-              background: 'var(--orange-50)',
-              border: '1px solid var(--orange-200)',
-              padding: '0.35rem 0.95rem',
-              borderRadius: '9999px',
-              fontWeight: 800,
-              fontSize: '0.85rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              marginBottom: '1rem'
-            }}>
-              <HelpCircle size={15} /> Help & Answers
+            <div className="badge-pill-glow" style={{ marginBottom: '1rem' }}>
+              <HelpCircle size={15} style={{ color: 'var(--orange-500)' }} />
+              <span>Help & Answers</span>
             </div>
 
             <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', color: 'var(--navy-950)', marginBottom: '1rem', fontWeight: 900, letterSpacing: '-0.02em' }}>
-              {faqTitle}
+              {faqTitle.includes('Questions') ? (
+                <>Frequently Asked <span className="text-gradient-orange">Questions</span></>
+              ) : (
+                faqTitle
+              )}
             </h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.65, marginBottom: '2rem' }}>
               {faqSub}

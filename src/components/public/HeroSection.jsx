@@ -593,59 +593,58 @@ export const HeroSection = () => {
           <div className="hero-left-content" style={{ textAlign: 'left' }}>
             
             {/* Dynamic Badge */}
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              background: 'rgba(249, 115, 22, 0.12)',
-              border: '1px solid rgba(249, 115, 22, 0.3)',
-              color: 'var(--orange-600)',
-              padding: '0.3rem 0.85rem',
-              borderRadius: '9999px',
-              fontSize: '0.8rem',
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              marginBottom: '0.85rem'
-            }}>
-              <Sparkles size={13} />
-              {badge}
+            <div className="badge-pill-glow" style={{ marginBottom: '1rem' }}>
+              <Sparkles size={14} style={{ color: 'var(--orange-500)' }} />
+              <span>{badge}</span>
             </div>
 
             {/* Dynamic Main Title */}
             <h1 style={{
-              fontSize: 'clamp(1.65rem, 5vw, 2.75rem)',
+              fontSize: 'clamp(1.75rem, 5vw, 2.9rem)',
               fontWeight: 900,
               lineHeight: 1.15,
               color: 'var(--hero-text-primary)',
-              marginBottom: '0.75rem',
+              marginBottom: '0.85rem',
               letterSpacing: '-0.025em',
               fontFamily: 'var(--font-heading)',
               wordBreak: 'break-word',
               overflowWrap: 'break-word'
             }}>
-              {title}
+              {title.includes('&') ? (
+                <>
+                  {title.split('&')[0]} & <span className="text-gradient-orange">{title.split('&')[1]}</span>
+                </>
+              ) : title.includes('Services') ? (
+                <>
+                  {title.replace('Services', '')} <span className="text-gradient-orange">Services</span>
+                </>
+              ) : (
+                title
+              )}
             </h1>
 
             {/* Dynamic Highlight / Subheading */}
             <div style={{
-              fontSize: 'clamp(0.88rem, 2.8vw, 1.1rem)',
-              fontWeight: 700,
+              fontSize: 'clamp(0.95rem, 2.8vw, 1.15rem)',
+              fontWeight: 800,
               color: 'var(--orange-600)',
-              marginBottom: '0.75rem',
+              marginBottom: '0.85rem',
               lineHeight: 1.35,
               wordBreak: 'break-word',
-              overflowWrap: 'break-word'
+              overflowWrap: 'break-word',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
             }}>
-              {highlight}
+              <span className="text-gradient-orange">{highlight}</span>
             </div>
 
             {/* Dynamic Description */}
             <p style={{
-              fontSize: 'clamp(0.85rem, 2.6vw, 0.975rem)',
-              lineHeight: 1.55,
+              fontSize: 'clamp(0.88rem, 2.6vw, 1rem)',
+              lineHeight: 1.6,
               color: 'var(--hero-text-secondary)',
-              marginBottom: '1.25rem',
+              marginBottom: '1.35rem',
               maxWidth: '100%',
               wordBreak: 'break-word',
               overflowWrap: 'break-word'
@@ -657,21 +656,23 @@ export const HeroSection = () => {
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.5rem',
-              marginBottom: '1.5rem',
-              background: 'var(--hero-card-bg)',
-              border: '1px solid var(--hero-card-border)',
-              padding: 'clamp(0.75rem, 2vw, 1rem) clamp(0.85rem, 2vw, 1.15rem)',
-              borderRadius: '12px',
+              gap: '0.6rem',
+              marginBottom: '1.75rem',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 247, 237, 0.6) 100%)',
+              border: '1.5px solid rgba(249, 115, 22, 0.18)',
+              padding: 'clamp(0.85rem, 2vw, 1.15rem) clamp(0.95rem, 2vw, 1.25rem)',
+              borderRadius: '16px',
               textAlign: 'left',
               width: '100%',
               boxSizing: 'border-box',
-              boxShadow: 'var(--shadow-sm)'
+              boxShadow: '0 4px 20px -2px rgba(249, 115, 22, 0.06)'
             }}>
               {featuresList.slice(0, 3).map((featText, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.55rem', fontSize: '0.85rem', color: 'var(--hero-text-primary)', fontWeight: 600, wordBreak: 'break-word' }}>
-                  <CheckCircle2 size={15} style={{ color: 'var(--orange-500)', flexShrink: 0, marginTop: '2px' }} />
-                  <span style={{ lineHeight: 1.4 }}>{featText}</span>
+                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', fontSize: '0.875rem', color: 'var(--hero-text-primary)', fontWeight: 700, wordBreak: 'break-word' }}>
+                  <div style={{ background: 'var(--orange-50)', padding: '2px', borderRadius: '50%', display: 'flex', flexShrink: 0, marginTop: '1px' }}>
+                    <CheckCircle2 size={16} style={{ color: 'var(--orange-500)' }} />
+                  </div>
+                  <span style={{ lineHeight: 1.45 }}>{featText}</span>
                 </div>
               ))}
             </div>
@@ -681,24 +682,26 @@ export const HeroSection = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '0.85rem',
-              marginBottom: '1.5rem'
+              marginBottom: '1.75rem'
             }}>
               <button 
                 type="button"
                 className="btn btn-primary-orange btn-lg"
                 onClick={handlePrimaryAction}
                 style={{ 
-                  padding: '0.85rem 1.6rem',
-                  fontSize: '0.95rem',
+                  padding: '0.9rem 1.85rem',
+                  fontSize: '0.98rem',
                   fontWeight: 800,
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.45rem'
+                  gap: '0.5rem',
+                  borderRadius: '14px',
+                  boxShadow: '0 8px 24px rgba(249, 115, 22, 0.35)'
                 }}
               >
-                <Upload size={16} />
+                <Upload size={17} />
                 <span>{primaryCtaText}</span>
-                <ArrowRight size={16} />
+                <ArrowRight size={17} />
               </button>
 
               <button 
@@ -706,14 +709,17 @@ export const HeroSection = () => {
                 className="btn btn-outline btn-lg"
                 onClick={handleSecondaryAction}
                 style={{ 
-                  color: 'var(--hero-text-primary)', 
-                  borderColor: 'var(--hero-card-border)',
-                  padding: '0.85rem 1.4rem', 
-                  fontSize: '0.95rem',
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  color: 'var(--navy-900)', 
+                  border: '1.5px solid rgba(15, 23, 42, 0.15)',
+                  padding: '0.9rem 1.5rem', 
+                  fontSize: '0.98rem',
                   fontWeight: 700,
                   display: 'inline-flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  borderRadius: '14px',
+                  boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)'
                 }}
               >
                 <span>{secondaryCtaText}</span>
@@ -730,8 +736,10 @@ export const HeroSection = () => {
                 const IconComp = ICON_MAP[stat.icon] || Star;
                 return (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <IconComp size={16} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
-                    <span style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--hero-text-secondary)', whiteSpace: 'nowrap' }}>
+                    <div style={{ background: 'rgba(249, 115, 22, 0.1)', padding: '4px', borderRadius: '8px', display: 'flex' }}>
+                      <IconComp size={15} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
+                    </div>
+                    <span style={{ fontSize: '0.835rem', fontWeight: 700, color: 'var(--hero-text-secondary)', whiteSpace: 'nowrap' }}>
                       <strong style={{ color: 'var(--orange-600)', marginRight: '3px' }}>{stat.value}</strong>
                       {stat.label}
                     </span>
@@ -751,11 +759,11 @@ export const HeroSection = () => {
             <div 
               className="hero-showcase-card"
               style={{
-                background: 'var(--hero-card-bg)',
-                border: '1.5px solid var(--hero-card-border)',
+                background: 'linear-gradient(135deg, #ffffff 0%, #fffaf5 100%)',
+                border: '1.5px solid rgba(249, 115, 22, 0.2)',
                 borderRadius: '24px',
                 padding: '1.35rem',
-                boxShadow: 'var(--hero-card-shadow)',
+                boxShadow: '0 20px 50px -10px rgba(249, 115, 22, 0.12), 0 8px 24px -4px rgba(15, 23, 42, 0.06)',
                 width: '100%',
                 maxWidth: '680px',
                 backdropFilter: 'blur(16px)',
@@ -770,20 +778,20 @@ export const HeroSection = () => {
                   <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem', letterSpacing: '0.06em' }}>
                     <span className="blinking-green-dot" /> LIVE SHOWCASE
                   </div>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--hero-text-primary)', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontSize: '0.98rem', fontWeight: 800, color: 'var(--hero-text-primary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {(currentImage?.title || previewTitle || '').replace(/Emrboidery/gi, 'Embroidery')}
                   </div>
                 </div>
 
                 {hasMultipleImages && (
                   <span style={{
-                    fontSize: '0.72rem',
+                    fontSize: '0.75rem',
                     fontWeight: 800,
-                    background: 'var(--bg-subtle)',
-                    border: '1px solid var(--hero-card-border)',
-                    padding: '0.2rem 0.55rem',
+                    background: 'var(--orange-50)',
+                    border: '1px solid var(--orange-200)',
+                    padding: '0.25rem 0.65rem',
                     borderRadius: '9999px',
-                    color: 'var(--hero-text-secondary)',
+                    color: 'var(--orange-700)',
                     flexShrink: 0
                   }}>
                     {currentSlideIdx + 1} / {activeShowcaseImages.length}

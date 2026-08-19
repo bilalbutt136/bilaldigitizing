@@ -125,26 +125,17 @@ export const WhyChooseUs = () => {
         
         {/* Trust Grid Section Header */}
         <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            background: 'var(--orange-50)',
-            border: '1px solid var(--orange-200)',
-            color: 'var(--orange-700)',
-            fontWeight: 800,
-            fontSize: '0.85rem',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            padding: '0.35rem 0.95rem',
-            borderRadius: '9999px',
-            marginBottom: '1rem'
-          }}>
-            <Award size={15} /> Industry Proven Precision
+          <div className="badge-pill-glow" style={{ marginBottom: '1rem' }}>
+            <Award size={15} style={{ color: 'var(--orange-500)' }} />
+            <span>Industry Proven Precision</span>
           </div>
 
           <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', color: 'var(--navy-950)', marginBottom: '1rem', fontWeight: 900, letterSpacing: '-0.02em' }}>
-            {title}
+            {title.includes('BDigitizing') ? (
+              <>Why Choose <span className="text-gradient-orange">BDigitizing</span>?</>
+            ) : (
+              title
+            )}
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.65 }}>
             {subtext}
@@ -163,33 +154,35 @@ export const WhyChooseUs = () => {
                 key={item.id || idx} 
                 className="card"
                 style={{ 
-                  padding: '2rem 1.5rem',
+                  padding: '2.25rem 1.75rem',
                   background: 'var(--bg-card)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '16px',
+                  border: '1.5px solid var(--border-color)',
+                  borderRadius: '20px',
                   boxShadow: 'var(--shadow-sm)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   textAlign: 'center',
-                  cursor: 'default'
+                  cursor: 'default',
+                  transition: 'all 0.3s ease'
                 }}
               >
                 <div style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '14px',
-                  background: 'var(--orange-50)',
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, rgba(255, 107, 0, 0.08) 0%, rgba(249, 115, 22, 0.16) 100%)',
+                  border: '1px solid rgba(249, 115, 22, 0.22)',
                   color: 'var(--orange-500)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: '1.25rem',
-                  boxShadow: '0 4px 12px rgba(249, 115, 22, 0.12)'
+                  marginBottom: '1.35rem',
+                  boxShadow: '0 4px 16px rgba(249, 115, 22, 0.12)'
                 }}>
                   <IconRenderer iconName={item.icon} size={28} />
                 </div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.6rem' }}>
                   {item.title}
                 </h3>
                 <p style={{ fontSize: '0.925rem', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
@@ -202,26 +195,17 @@ export const WhyChooseUs = () => {
 
         {/* Workflow Section Header */}
         <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            background: 'var(--orange-50)',
-            border: '1px solid var(--orange-200)',
-            color: 'var(--orange-700)',
-            fontWeight: 800,
-            fontSize: '0.85rem',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            padding: '0.35rem 0.95rem',
-            borderRadius: '9999px',
-            marginBottom: '1rem'
-          }}>
-            <ShieldCheck size={16} /> Seamless Step-by-Step Process
+          <div className="badge-pill-glow" style={{ marginBottom: '1rem' }}>
+            <ShieldCheck size={16} style={{ color: 'var(--orange-500)' }} />
+            <span>Seamless Step-by-Step Process</span>
           </div>
 
           <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', color: 'var(--navy-950)', marginBottom: '0.75rem', fontWeight: 900, letterSpacing: '-0.02em' }}>
-            {workflowTitle}
+            {workflowTitle.includes(':') ? (
+              <>{workflowTitle.split(':')[0]}: <span className="text-gradient-orange">{workflowTitle.split(':')[1]}</span></>
+            ) : (
+              workflowTitle
+            )}
           </h2>
 
           <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.65 }}>

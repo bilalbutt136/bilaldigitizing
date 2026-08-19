@@ -85,22 +85,9 @@ export const FinalCTA = () => {
         alignItems: 'center',
         textAlign: 'center',
       }}>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.4rem',
-          backgroundColor: 'var(--cta-badge-bg)',
-          border: '1px solid var(--cta-badge-border)',
-          color: 'var(--cta-badge-text)',
-          padding: '0.35rem 0.95rem',
-          borderRadius: '9999px',
-          fontSize: '0.85rem',
-          fontWeight: '800',
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          marginBottom: '1.5rem',
-        }}>
-          <Sparkles size={15} /> {ctaBadge}
+        <div className="badge-pill-glow" style={{ marginBottom: '1.5rem' }}>
+          <Sparkles size={15} style={{ color: 'var(--orange-500)' }} />
+          <span>{ctaBadge}</span>
         </div>
         
         <h2 style={{
@@ -112,7 +99,11 @@ export const FinalCTA = () => {
           marginBottom: '1.25rem',
           letterSpacing: '-0.025em'
         }}>
-          {content.title}
+          {content.title.includes('Into') ? (
+            <>{content.title.split('Into')[0]} Into <span className="text-gradient-orange">{content.title.split('Into')[1]}</span></>
+          ) : (
+            content.title
+          )}
         </h2>
         
         <p style={{

@@ -173,23 +173,9 @@ export const ServicesSection = () => {
 
         {/* Section Header */}
         <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto 2.75rem' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.45rem',
-            background: 'var(--orange-50)',
-            border: '1px solid var(--orange-200)',
-            color: 'var(--orange-700)',
-            padding: '0.35rem 0.95rem',
-            borderRadius: '9999px',
-            fontSize: '0.85rem',
-            fontWeight: '800',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            marginBottom: '1rem',
-          }}>
-            <Sparkles size={16} />
-            Professional Studio Services
+          <div className="badge-pill-glow" style={{ marginBottom: '1rem' }}>
+            <Sparkles size={16} style={{ color: 'var(--orange-500)' }} />
+            <span>Professional Studio Services</span>
           </div>
 
           <h2 style={{
@@ -202,13 +188,13 @@ export const ServicesSection = () => {
             letterSpacing: '-0.025em'
           }}>
             {activeTab === 'embroidery' && (
-              <>Commercial <span style={{ color: 'var(--orange-500)' }}>Embroidery Digitizing</span></>
+              <>Commercial <span className="text-gradient-orange">Embroidery Digitizing</span></>
             )}
             {activeTab === 'vector-art' && (
-              <>Precision <span style={{ color: 'var(--orange-500)' }}>Vector Art Conversion</span></>
+              <>Precision <span className="text-gradient-orange">Vector Art Conversion</span></>
             )}
             {activeTab === 'patches' && (
-              <>Premium <span style={{ color: 'var(--orange-500)' }}>Physical Custom Patches</span></>
+              <>Premium <span className="text-gradient-orange">Physical Custom Patches</span></>
             )}
           </h2>
 

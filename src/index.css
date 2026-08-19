@@ -57,27 +57,27 @@
   --border-focus: var(--orange-500);
 
   /* Hero & Section Theme Variables (Light Mode Defaults) */
-  --hero-bg: linear-gradient(135deg, #ffffff 0%, #f8fafc 45%, #eff6ff 100%);
-  --hero-tabs-bg: rgba(255, 255, 255, 0.9);
-  --hero-tabs-border: rgba(15, 23, 42, 0.1);
+  --hero-bg: radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249, 115, 22, 0.08) 0%, rgba(99, 102, 241, 0.04) 50%, transparent 80%), linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --hero-tabs-bg: rgba(255, 255, 255, 0.85);
+  --hero-tabs-border: rgba(226, 232, 240, 0.9);
   --hero-text-primary: #0f172a;
   --hero-text-secondary: #475569;
   --hero-card-bg: #ffffff;
-  --hero-card-border: rgba(15, 23, 42, 0.1);
-  --hero-card-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+  --hero-card-border: rgba(249, 115, 22, 0.15);
+  --hero-card-shadow: 0 20px 50px -15px rgba(249, 115, 22, 0.1), 0 4px 16px rgba(15, 23, 42, 0.04);
 
-  --banner-bg: #ffffff;
-  --banner-border: rgba(15, 23, 42, 0.1);
+  --banner-bg: linear-gradient(135deg, #ffffff 0%, #fffbf6 50%, #f8fafc 100%);
+  --banner-border: rgba(249, 115, 22, 0.2);
   --banner-title: #0f172a;
   --banner-desc: #475569;
 
-  --stats-bar-bg: #ffffff;
-  --stats-card-bg: #f8fafc;
-  --stats-card-border: rgba(15, 23, 42, 0.08);
+  --stats-bar-bg: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --stats-card-bg: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  --stats-card-border: rgba(249, 115, 22, 0.15);
   --stats-number-color: #0f172a;
   --stats-label-color: #64748b;
 
-  --cta-bg: #ffffff;
+  --cta-bg: radial-gradient(ellipse 90% 70% at 50% 0%, rgba(249, 115, 22, 0.1) 0%, rgba(99, 102, 241, 0.05) 50%, transparent 80%), linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   --cta-title: #0f172a;
   --cta-desc: #475569;
   --cta-badge-bg: rgba(249, 115, 22, 0.1);
@@ -97,6 +97,60 @@
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 24px;
+}
+
+/* ==========================================================================
+   HIGH-END GRADIENT TYPOGRAPHY & STYLISH TOKENS
+   ========================================================================== */
+.text-gradient-orange {
+  background: linear-gradient(135deg, #ff5500 0%, #ea580c 50%, #f97316 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  display: inline-block;
+}
+
+.text-gradient-indigo {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #0284c7 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  display: inline-block;
+}
+
+.text-gradient-dark {
+  background: linear-gradient(135deg, #020617 0%, #1e293b 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  display: inline-block;
+}
+
+[data-theme="dark"] .text-gradient-dark, body.dark-mode .text-gradient-dark {
+  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+.badge-pill-glow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.38rem 1.1rem;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.08) 0%, rgba(249, 115, 22, 0.14) 100%);
+  border: 1px solid rgba(249, 115, 22, 0.28);
+  color: #ea580c;
+  box-shadow: 0 2px 10px rgba(249, 115, 22, 0.1);
+  backdrop-filter: blur(8px);
+}
+
+[data-theme="dark"] .badge-pill-glow, body.dark-mode .badge-pill-glow {
+  background: rgba(249, 115, 22, 0.15) !important;
+  border-color: rgba(249, 115, 22, 0.4) !important;
+  color: #fb923c !important;
+  box-shadow: 0 0 15px rgba(249, 115, 22, 0.25) !important;
 }
 
 /* Glassmorphism System */

@@ -49,22 +49,9 @@ export const PortfolioPreview = () => {
         
         {/* Header */}
         <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            padding: '0.35rem 0.95rem',
-            backgroundColor: 'var(--orange-50, #fff7ed)',
-            color: 'var(--orange-700, #c2410c)',
-            border: '1px solid var(--orange-200)',
-            borderRadius: '9999px',
-            fontSize: '0.85rem',
-            fontWeight: '800',
-            marginBottom: '1rem',
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase'
-          }}>
-            <Sparkles size={15} /> {badgeText}
+          <div className="badge-pill-glow" style={{ marginBottom: '1rem' }}>
+            <Sparkles size={15} style={{ color: 'var(--orange-500)' }} />
+            <span>{badgeText}</span>
           </div>
           <h2 style={{
             fontFamily: 'var(--font-heading)',
@@ -75,7 +62,11 @@ export const PortfolioPreview = () => {
             lineHeight: '1.2',
             letterSpacing: '-0.02em'
           }}>
-            {titleText}
+            {titleText.includes('Precision') ? (
+              <>Crafted with <span className="text-gradient-orange">Precision</span></>
+            ) : (
+              titleText
+            )}
           </h2>
           <p style={{
             fontSize: '1.1rem',
