@@ -98,6 +98,22 @@ export const MetaSeoTrackingSettings = () => {
     }
   };
 
+  const handleSendTestEvent = async () => {
+    try {
+      if (typeof window !== 'undefined' && window.fbq && metaPixelId) {
+        window.fbq('trackCustom', 'AdminPortalTestPing', {
+          time: new Date().toISOString(),
+          status: 'verified'
+        });
+      }
+      showToast('⚡ Live test tracking event dispatched!', 'success');
+      // Refresh event logs
+      setTimeout(loadEvents, 1000);
+    } catch {
+      showToast('Test event failed to send.', 'error');
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       
@@ -262,7 +278,15 @@ export const MetaSeoTrackingSettings = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button 
+              type="button" 
+              onClick={handleSendTestEvent} 
+              className="btn btn-outline btn-lg" 
+              style={{ fontWeight: 700, padding: '0.85rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+            >
+              <Activity size={18} style={{ color: '#3b82f6' }} /> Test Tracking Ping
+            </button>
             <button type="submit" disabled={isSaving} className="btn btn-primary-orange btn-lg" style={{ fontWeight: 800, padding: '0.85rem 2rem' }}>
               <Save size={18} /> {isSaving ? 'Saving Changes...' : 'Save Tracking Configurations'}
             </button>
