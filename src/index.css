@@ -7,6 +7,8 @@
   /* Premium Light Mode Theme */
   --bg-main: #f8fafc;
   --bg-card: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f1f5f9;
   
   --navy-950: #020617; /* Deeper space navy */
   --navy-900: #0f172a;
@@ -47,11 +49,42 @@
   --blue-glow: var(--orange-glow);
 
   --text-main: #0f172a;
+  --text-heading: #020617;
   --text-muted: #64748b;
   --text-light: #94a3b8;
 
   --border-color: rgba(15, 23, 42, 0.1);
   --border-focus: var(--orange-500);
+
+  /* Hero & Section Theme Variables (Light Mode Defaults) */
+  --hero-bg: linear-gradient(135deg, #ffffff 0%, #f8fafc 45%, #eff6ff 100%);
+  --hero-tabs-bg: rgba(255, 255, 255, 0.9);
+  --hero-tabs-border: rgba(15, 23, 42, 0.1);
+  --hero-text-primary: #0f172a;
+  --hero-text-secondary: #475569;
+  --hero-card-bg: #ffffff;
+  --hero-card-border: rgba(15, 23, 42, 0.1);
+  --hero-card-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+
+  --banner-bg: #ffffff;
+  --banner-border: rgba(15, 23, 42, 0.1);
+  --banner-title: #0f172a;
+  --banner-desc: #475569;
+
+  --stats-bar-bg: #ffffff;
+  --stats-card-bg: #f8fafc;
+  --stats-card-border: rgba(15, 23, 42, 0.08);
+  --stats-number-color: #0f172a;
+  --stats-label-color: #64748b;
+
+  --cta-bg: #ffffff;
+  --cta-title: #0f172a;
+  --cta-desc: #475569;
+  --cta-badge-bg: rgba(249, 115, 22, 0.1);
+  --cta-badge-border: rgba(249, 115, 22, 0.3);
+  --cta-badge-text: #c2410c;
+  --cta-btn-outline-color: #0f172a;
+  --cta-btn-outline-border: rgba(15, 23, 42, 0.2);
 
   /* Premium Multi-Layer Shadows */
   --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.04);
@@ -463,6 +496,7 @@ h1, h2, h3, h4, h5, h6 {
   --bg-card: #111827; /* Rich slate card */
   --bg-surface: #1a2234; /* Elevated container */
   --bg-elevated: #1e293b;
+  --bg-subtle: #151d2e;
   --bg-input: #151d2e;
   
   --text-main: #f8fafc;
@@ -478,6 +512,35 @@ h1, h2, h3, h4, h5, h6 {
 
   --border-color: rgba(255, 255, 255, 0.12);
   --card-border: rgba(255, 255, 255, 0.08);
+
+  --hero-bg: linear-gradient(135deg, #020617 0%, #0b0f19 60%, #111827 100%);
+  --hero-tabs-bg: rgba(15, 23, 42, 0.85);
+  --hero-tabs-border: rgba(255, 255, 255, 0.14);
+  --hero-text-primary: #ffffff;
+  --hero-text-secondary: #94a3b8;
+  --hero-card-bg: rgba(15, 23, 42, 0.85);
+  --hero-card-border: rgba(255, 255, 255, 0.14);
+  --hero-card-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7);
+
+  --banner-bg: linear-gradient(135deg, #0f172a 0%, #111827 100%);
+  --banner-border: rgba(255, 255, 255, 0.12);
+  --banner-title: #ffffff;
+  --banner-desc: #cbd5e1;
+
+  --stats-bar-bg: #090d16;
+  --stats-card-bg: rgba(255, 255, 255, 0.03);
+  --stats-card-border: rgba(255, 255, 255, 0.08);
+  --stats-number-color: #ffffff;
+  --stats-label-color: #94a3b8;
+
+  --cta-bg: #0b0f19;
+  --cta-title: #ffffff;
+  --cta-desc: #cbd5e1;
+  --cta-badge-bg: rgba(249, 115, 22, 0.15);
+  --cta-badge-border: rgba(249, 115, 22, 0.35);
+  --cta-badge-text: var(--orange-400);
+  --cta-btn-outline-color: #ffffff;
+  --cta-btn-outline-border: rgba(255, 255, 255, 0.25);
 
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);

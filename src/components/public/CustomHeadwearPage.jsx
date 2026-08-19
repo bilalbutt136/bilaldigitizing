@@ -26,11 +26,11 @@ export const CustomHeadwearPage = () => {
     <div style={{ background: 'var(--bg-main)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
       {/* 1. Hero Header Banner */}
-      <div style={{
-        background: 'linear-gradient(135deg, var(--navy-950) 0%, var(--navy-900) 100%)',
-        color: '#ffffff',
+      <div className="theme-hero-section" style={{
+        background: 'var(--hero-bg)',
+        color: 'var(--text-main)',
         padding: '3.75rem 0 3.25rem',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        borderBottom: '1px solid var(--border-color)',
         position: 'relative',
         overflow: 'hidden'
       }}>
@@ -40,7 +40,7 @@ export const CustomHeadwearPage = () => {
           right: '-80px',
           width: '350px',
           height: '350px',
-          background: 'rgba(249, 115, 22, 0.15)',
+          background: 'rgba(249, 115, 22, 0.1)',
           borderRadius: '50%',
           filter: 'blur(80px)',
           pointerEvents: 'none'
@@ -52,17 +52,17 @@ export const CustomHeadwearPage = () => {
             alignItems: 'center', 
             gap: '0.5rem', 
             fontSize: '0.85rem', 
-            color: '#94a3b8', 
+            color: 'var(--text-muted)', 
             marginBottom: '1.25rem' 
           }}>
             <button 
               onClick={() => navigate('/')} 
-              style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 0, fontWeight: 600 }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 0, fontWeight: 600 }}
             >
               Home
             </button>
-
-            <span style={{ color: 'var(--orange-400)', fontWeight: 700 }}>Headwear & 3D Puff Caps</span>
+            <span>/</span>
+            <span style={{ color: 'var(--orange-600)', fontWeight: 700 }}>Headwear & 3D Puff Caps</span>
           </div>
 
           <div style={{ maxWidth: '820px' }}>
@@ -70,9 +70,9 @@ export const CustomHeadwearPage = () => {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.4rem',
-              background: 'rgba(249, 115, 22, 0.15)',
-              border: '1px solid rgba(249, 115, 22, 0.35)',
-              color: 'var(--orange-400)',
+              background: 'rgba(249, 115, 22, 0.12)',
+              border: '1px solid rgba(249, 115, 22, 0.3)',
+              color: 'var(--orange-600)',
               fontWeight: 800,
               fontSize: '0.825rem',
               textTransform: 'uppercase',
@@ -88,7 +88,7 @@ export const CustomHeadwearPage = () => {
               fontSize: '2.85rem', 
               fontFamily: 'var(--font-heading)', 
               fontWeight: 800, 
-              color: '#ffffff', 
+              color: 'var(--hero-text-primary)', 
               marginBottom: '1rem',
               lineHeight: 1.15,
               letterSpacing: '-0.02em'
@@ -96,7 +96,7 @@ export const CustomHeadwearPage = () => {
               Custom 3D Puff Caps & Headwear
             </h1>
 
-            <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: 1.65, marginBottom: '2.25rem' }}>
+            <p style={{ color: 'var(--hero-text-secondary)', fontSize: '1.1rem', lineHeight: 1.65, marginBottom: '2.25rem' }}>
               Structured snapbacks, trucker hats, and athletic caps engineered with 3mm High-Density EVA Foam for dramatic 3D raised embroidery depth that commands attention.
             </p>
 
@@ -106,7 +106,7 @@ export const CustomHeadwearPage = () => {
               flexWrap: 'wrap',
               gap: '1.5rem',
               fontSize: '0.9rem',
-              color: '#e2e8f0',
+              color: 'var(--hero-text-primary)',
               fontWeight: 700
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>

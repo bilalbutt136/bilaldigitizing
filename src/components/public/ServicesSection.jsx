@@ -230,25 +230,25 @@ export const ServicesSection = () => {
         {activeTab === 'embroidery' && (
           <div>
             {/* 1. Introduction Banner */}
-            <div style={{
-              background: 'linear-gradient(135deg, var(--navy-950) 0%, var(--navy-900) 100%)',
-              color: '#ffffff',
+            <div className="theme-service-banner" style={{
+              background: 'var(--banner-bg)',
+              color: 'var(--text-main)',
               borderRadius: '24px',
               padding: '3rem 2.5rem',
               marginBottom: '3.5rem',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              boxShadow: 'var(--shadow-xl)',
+              border: '1.5px solid var(--banner-border)',
+              boxShadow: 'var(--shadow-lg)',
               position: 'relative',
               overflow: 'hidden'
             }}>
               <div style={{ maxWidth: '820px' }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(249, 115, 22, 0.15)', border: '1px solid rgba(249, 115, 22, 0.35)', color: 'var(--orange-400)', padding: '0.35rem 0.95rem', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(249, 115, 22, 0.12)', border: '1px solid rgba(249, 115, 22, 0.3)', color: 'var(--orange-600)', padding: '0.35rem 0.95rem', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1.25rem' }}>
                   <Layers size={16} /> Factory-Grade Machine Embroidery Digitizing
                 </div>
-                <h3 style={{ fontSize: 'clamp(1.85rem, 3.2vw, 2.4rem)', fontWeight: 900, marginBottom: '1rem', lineHeight: 1.2, color: '#ffffff' }}>
+                <h3 style={{ fontSize: 'clamp(1.85rem, 3.2vw, 2.4rem)', fontWeight: 900, marginBottom: '1rem', lineHeight: 1.2, color: 'var(--banner-title)' }}>
                   Engineered For Smooth Running With Zero Thread Breaks
                 </h3>
-                <p style={{ color: '#cbd5e1', fontSize: '1.05rem', lineHeight: 1.65, marginBottom: '2rem' }}>
+                <p style={{ color: 'var(--banner-desc)', fontSize: '1.05rem', lineHeight: 1.65, marginBottom: '2rem' }}>
                   We convert your logos and artwork into high-efficiency stitch files designed specifically for your fabric type (caps, pique polos, fleece hoodies, performance wear, or leather) and machine make.
                 </p>
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -384,25 +384,25 @@ export const ServicesSection = () => {
         {activeTab === 'vector-art' && (
           <div>
             {/* 1. Introduction Banner */}
-            <div style={{
-              background: 'linear-gradient(135deg, var(--navy-950) 0%, var(--navy-900) 100%)',
-              color: '#ffffff',
+            <div className="theme-service-banner" style={{
+              background: 'var(--banner-bg)',
+              color: 'var(--text-main)',
               borderRadius: '24px',
               padding: '3rem 2.5rem',
               marginBottom: '3.5rem',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              boxShadow: 'var(--shadow-xl)',
+              border: '1.5px solid var(--banner-border)',
+              boxShadow: 'var(--shadow-lg)',
               position: 'relative',
               overflow: 'hidden'
             }}>
               <div style={{ maxWidth: '820px' }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(249, 115, 22, 0.15)', border: '1px solid rgba(249, 115, 22, 0.35)', color: 'var(--orange-400)', padding: '0.35rem 0.95rem', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(249, 115, 22, 0.12)', border: '1px solid rgba(249, 115, 22, 0.3)', color: 'var(--orange-600)', padding: '0.35rem 0.95rem', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1.25rem' }}>
                   <PenTool size={16} /> Precision Vector Redraw & Color Separation
                 </div>
-                <h3 style={{ fontSize: 'clamp(1.85rem, 3.2vw, 2.4rem)', fontWeight: 900, marginBottom: '1rem', lineHeight: 1.2, color: '#ffffff' }}>
+                <h3 style={{ fontSize: 'clamp(1.85rem, 3.2vw, 2.4rem)', fontWeight: 900, marginBottom: '1rem', lineHeight: 1.2, color: 'var(--banner-title)' }}>
                   Infinitely Scalable Vector Art Ready For Any Print Application
                 </h3>
-                <p style={{ color: '#cbd5e1', fontSize: '1.05rem', lineHeight: 1.65, marginBottom: '2rem' }}>
+                <p style={{ color: 'var(--banner-desc)', fontSize: '1.05rem', lineHeight: 1.65, marginBottom: '2rem' }}>
                   Convert blurry low-resolution JPEGs, pixelated PNGs, photographs, or hand sketches into razor-sharp scalable vector artwork with clean Bézier nodes, exact Pantone color matching, and separated print layers.
                 </p>
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -538,25 +538,25 @@ export const ServicesSection = () => {
         {activeTab === 'patches' && (
           <div>
             {/* 1. Introduction Banner */}
-            <div style={{
-              background: 'linear-gradient(135deg, var(--navy-950) 0%, var(--navy-900) 100%)',
-              color: '#ffffff',
+            <div className="theme-service-banner" style={{
+              background: 'var(--banner-bg)',
+              color: 'var(--text-main)',
               borderRadius: '24px',
               padding: '3rem 2.5rem',
               marginBottom: '3.5rem',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              boxShadow: 'var(--shadow-xl)',
+              border: '1.5px solid var(--banner-border)',
+              boxShadow: 'var(--shadow-lg)',
               position: 'relative',
               overflow: 'hidden'
             }}>
               <div style={{ maxWidth: '820px' }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(249, 115, 22, 0.15)', border: '1px solid rgba(249, 115, 22, 0.35)', color: 'var(--orange-400)', padding: '0.35rem 0.95rem', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(249, 115, 22, 0.12)', border: '1px solid rgba(249, 115, 22, 0.3)', color: 'var(--orange-600)', padding: '0.35rem 0.95rem', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1.25rem' }}>
                   <Tag size={16} /> Premium Custom Physical Patches & Emblems
                 </div>
-                <h3 style={{ fontSize: 'clamp(1.85rem, 3.2vw, 2.4rem)', fontWeight: 900, marginBottom: '1rem', lineHeight: 1.2, color: '#ffffff' }}>
+                <h3 style={{ fontSize: 'clamp(1.85rem, 3.2vw, 2.4rem)', fontWeight: 900, marginBottom: '1rem', lineHeight: 1.2, color: 'var(--banner-title)' }}>
                   Custom Embroidered, Woven & 3D Molded PVC Patches
                 </h3>
-                <p style={{ color: '#cbd5e1', fontSize: '1.05rem', lineHeight: 1.65, marginBottom: '2rem' }}>
+                <p style={{ color: 'var(--banner-desc)', fontSize: '1.05rem', lineHeight: 1.65, marginBottom: '2rem' }}>
                   Elevate your uniforms, headwear, jackets, and tactical gear with commercial-quality custom patches. Available with Velcro hook & loop, iron-on, or adhesive backings delivered to your doorstep.
                 </p>
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>

@@ -50,9 +50,9 @@ export const FinalCTA = () => {
   const badge4 = dbSettings.cta_trust_badge_4 || '100% Satisfaction';
 
   return (
-    <section style={{
+    <section className="theme-final-cta-section" style={{
       width: '100%',
-      backgroundColor: 'var(--navy-950, #0f172a)',
+      backgroundColor: 'var(--cta-bg)',
       position: 'relative',
       padding: '6rem 0',
       overflow: 'hidden',
@@ -60,7 +60,7 @@ export const FinalCTA = () => {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+      borderTop: '1px solid var(--border-color)'
     }}>
       {/* Background Radial Glow */}
       <div style={{
@@ -70,7 +70,7 @@ export const FinalCTA = () => {
         transform: 'translate(-50%, -50%)',
         width: '800px',
         height: '800px',
-        background: 'radial-gradient(circle, rgba(249, 115, 22, 0.12) 0%, rgba(15, 23, 42, 0) 70%)',
+        background: 'radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, rgba(15, 23, 42, 0) 70%)',
         pointerEvents: 'none',
         zIndex: 0,
       }} />
@@ -89,9 +89,9 @@ export const FinalCTA = () => {
           display: 'inline-flex',
           alignItems: 'center',
           gap: '0.4rem',
-          backgroundColor: 'rgba(249, 115, 22, 0.15)',
-          border: '1px solid rgba(249, 115, 22, 0.35)',
-          color: 'var(--orange-400)',
+          backgroundColor: 'var(--cta-badge-bg)',
+          border: '1px solid var(--cta-badge-border)',
+          color: 'var(--cta-badge-text)',
           padding: '0.35rem 0.95rem',
           borderRadius: '9999px',
           fontSize: '0.85rem',
@@ -104,7 +104,7 @@ export const FinalCTA = () => {
         </div>
         
         <h2 style={{
-          color: '#ffffff',
+          color: 'var(--cta-title)',
           fontFamily: 'var(--font-heading)',
           fontSize: 'clamp(2.1rem, 4vw, 3.25rem)',
           fontWeight: '900',
@@ -116,7 +116,7 @@ export const FinalCTA = () => {
         </h2>
         
         <p style={{
-          color: '#94a3b8',
+          color: 'var(--cta-desc)',
           fontSize: '1.125rem',
           lineHeight: '1.65',
           marginBottom: '2.5rem',
@@ -152,8 +152,8 @@ export const FinalCTA = () => {
             className="btn btn-outline btn-lg"
             onClick={() => navigate('/pricing')}
             style={{
-              color: '#ffffff',
-              borderColor: 'rgba(255, 255, 255, 0.25)',
+              color: 'var(--cta-btn-outline-color)',
+              borderColor: 'var(--cta-btn-outline-border)',
               padding: '0.95rem 2rem',
               fontSize: '1.05rem',
               fontWeight: 700
@@ -169,24 +169,24 @@ export const FinalCTA = () => {
           gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))',
           justifyItems: 'center',
           gap: '1rem',
-          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          borderTop: '1px solid var(--border-color)',
           paddingTop: '2.25rem',
           width: '100%',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', fontSize: '0.85rem', fontWeight: '600' }}>
-            <Shield size={18} style={{ color: 'var(--orange-400)', flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--cta-desc)', fontSize: '0.85rem', fontWeight: '600' }}>
+            <Shield size={18} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
             <span>{badge1}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', fontSize: '0.85rem', fontWeight: '600' }}>
-            <Globe size={18} style={{ color: 'var(--orange-400)', flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--cta-desc)', fontSize: '0.85rem', fontWeight: '600' }}>
+            <Globe size={18} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
             <span>{badge2}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', fontSize: '0.85rem', fontWeight: '600' }}>
-            <Zap size={18} style={{ color: 'var(--orange-400)', flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--cta-desc)', fontSize: '0.85rem', fontWeight: '600' }}>
+            <Zap size={18} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
             <span>{badge3}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', fontSize: '0.85rem', fontWeight: '600' }}>
-            <CheckCircle2 size={18} style={{ color: '#10b981', flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--cta-desc)', fontSize: '0.85rem', fontWeight: '600' }}>
+            <CheckCircle2 size={18} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
             <span>{badge4}</span>
           </div>
         </div>
@@ -194,4 +194,3 @@ export const FinalCTA = () => {
     </section>
   );
 };
-

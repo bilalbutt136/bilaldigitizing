@@ -72,14 +72,14 @@ const AnimatedNumber = ({ end, duration = 2000, suffix = '', isStatic = false, s
 
   if (isStatic) {
     return (
-      <span ref={ref} style={{ fontWeight: '800', fontSize: '2.15rem', color: '#ffffff', textShadow: '0 0 20px rgba(255, 122, 0, 0.3)', fontFamily: 'var(--font-heading)' }}>
+      <span ref={ref} style={{ fontWeight: '800', fontSize: '2.15rem', color: 'var(--stats-number-color, var(--navy-950))', fontFamily: 'var(--font-heading)' }}>
         {staticText}
       </span>
     );
   }
 
   return (
-    <span ref={ref} style={{ fontWeight: '800', fontSize: '2.15rem', color: '#ffffff', textShadow: '0 0 20px rgba(255, 122, 0, 0.3)', fontFamily: 'var(--font-heading)' }}>
+    <span ref={ref} style={{ fontWeight: '800', fontSize: '2.15rem', color: 'var(--stats-number-color, var(--navy-950))', fontFamily: 'var(--font-heading)' }}>
       {formatNumber(count)}
       <span style={{ color: 'var(--orange-500, #ff7a00)' }}>{suffix}</span>
     </span>
@@ -112,10 +112,11 @@ export const TrustStatsBar = () => {
 
   return (
     <section 
+      className="theme-trust-stats-bar"
       style={{
-        backgroundColor: 'var(--navy-950, #0f172a)',
-        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+        backgroundColor: 'var(--stats-bar-bg)',
+        borderTop: '1px solid var(--border-color)',
+        borderBottom: '1px solid var(--border-color)',
         padding: '3rem 0',
         position: 'relative',
         overflow: 'hidden'
@@ -124,7 +125,7 @@ export const TrustStatsBar = () => {
       <div style={{
         position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
         width: '60%', height: '100%',
-        background: 'radial-gradient(ellipse at top, rgba(255, 122, 0, 0.08) 0%, rgba(15, 23, 42, 0) 70%)',
+        background: 'radial-gradient(ellipse at top, rgba(255, 122, 0, 0.06) 0%, rgba(15, 23, 42, 0) 70%)',
         pointerEvents: 'none'
       }} />
 
@@ -133,36 +134,37 @@ export const TrustStatsBar = () => {
           {displayStats.map((stat) => (
             <div 
               key={stat.id} 
+              className="theme-stat-item"
               style={{ 
                 display: 'flex', 
                 flexDirection: 'column', 
                 alignItems: 'center', 
                 textAlign: 'center', 
-                padding: '1.25rem 1rem',
-                background: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid rgba(255, 255, 255, 0.05)',
+                padding: '1.35rem 1rem',
+                background: 'var(--stats-card-bg)',
+                border: '1px solid var(--stats-card-border)',
                 borderRadius: '16px',
-                backdropFilter: 'blur(8px)',
+                boxShadow: 'var(--shadow-sm)',
                 transition: 'all 0.3s ease'
               }}
             >
               <div style={{ 
-                background: 'rgba(255, 122, 0, 0.12)', 
+                background: 'rgba(255, 122, 0, 0.1)', 
                 padding: '0.75rem', 
                 borderRadius: '14px', 
                 marginBottom: '0.85rem', 
                 display: 'inline-flex', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
-                boxShadow: '0 0 16px rgba(255, 122, 0, 0.2)' 
+                boxShadow: '0 0 16px rgba(255, 122, 0, 0.15)' 
               }}>
                 {stat.icon}
               </div>
               <AnimatedNumber end={stat.value} suffix={stat.suffix} isStatic={stat.isStatic} staticText={stat.staticText} />
               <span style={{ 
-                color: '#94a3b8', 
+                color: 'var(--stats-label-color)', 
                 fontSize: '0.85rem', 
-                fontWeight: '600', 
+                fontWeight: '700', 
                 marginTop: '0.4rem', 
                 textTransform: 'uppercase', 
                 letterSpacing: '0.06em', 

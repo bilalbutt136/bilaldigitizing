@@ -672,12 +672,12 @@ export const CustomerDashboard = () => {
                 </div>
 
                 {/* User Info Header */}
-                <div style={{ background: 'linear-gradient(135deg, var(--navy-950) 0%, #0f172a 100%)', borderRadius: '12px', padding: '0.85rem', color: '#ffffff', marginBottom: '1rem' }}>
-                  <div style={{ fontWeight: 800, fontSize: '0.9rem' }}>{activeUser?.name || 'Client'}</div>
-                  <div style={{ fontSize: '0.73rem', color: '#94a3b8' }}>{activeUser?.company || ''}</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem', background: 'rgba(255,255,255,0.08)', padding: '0.35rem 0.6rem', borderRadius: '6px', fontSize: '0.73rem' }}>
-                    <span style={{ color: '#cbd5e1' }}>Wallet Credit:</span>
-                    <strong style={{ color: 'var(--orange-400)', fontWeight: 800 }}>${walletBalance.toFixed(2)}</strong>
+                <div style={{ background: 'var(--bg-subtle, #f1f5f9)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '0.85rem', color: 'var(--text-main)', marginBottom: '1rem' }}>
+                  <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--navy-950)' }}>{activeUser?.name || 'Client'}</div>
+                  <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>{activeUser?.company || ''}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '0.35rem 0.6rem', borderRadius: '6px', fontSize: '0.73rem' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Wallet Credit:</span>
+                    <strong style={{ color: 'var(--orange-600)', fontWeight: 800 }}>${walletBalance.toFixed(2)}</strong>
                   </div>
                 </div>
 
