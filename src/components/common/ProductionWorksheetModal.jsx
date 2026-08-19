@@ -56,8 +56,8 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
         onClick={(e) => e.stopPropagation()}
         style={{ 
           maxWidth: '920px', 
-          background: '#ffffff', 
-          color: 'var(--navy-900)',
+          background: 'var(--color-surface, #ffffff)', 
+          color: 'var(--color-text-primary, var(--navy-900))',
           maxHeight: '94vh',
           overflowY: 'auto'
         }}

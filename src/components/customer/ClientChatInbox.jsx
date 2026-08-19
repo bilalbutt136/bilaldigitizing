@@ -666,8 +666,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   return (
     <div style={{
       padding: 0,
-      background: '#ffffff',
-      border: '1.5px solid var(--border-color)',
+      background: 'var(--color-surface, #ffffff)',
+      border: '1.5px solid var(--color-border)',
       borderRadius: '16px',
       overflow: 'hidden',
       flex: 1,
@@ -694,38 +694,38 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         <div 
           className={`chat-threads-column ${mobileView === 'chat' ? 'hide-on-mobile-thread' : ''}`}
           style={{
-            borderRight: '1px solid var(--border-color)',
+            borderRight: '1px solid var(--color-border)',
             display: 'flex',
             flexDirection: 'column',
-            background: '#f8fafc',
+            background: 'var(--color-subtle, #f8fafc)',
             overflow: 'hidden'
           }}
         >
           {/* Thread List Header & Search */}
-          <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', background: '#ffffff' }}>
+          <div style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface, #ffffff)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <div style={{
                   width: '32px',
                   height: '32px',
                   borderRadius: '8px',
-                  background: 'rgba(249, 115, 22, 0.1)',
-                  color: 'var(--orange-600)',
+                  background: 'var(--color-primary-light, rgba(249, 115, 22, 0.1))',
+                  color: 'var(--color-primary, var(--orange-600))',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
                   <MessageSquare size={16} />
                 </div>
-                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--navy-950)', margin: 0 }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--color-text-primary, var(--navy-950))', margin: 0 }}>
                   Conversations
                 </h3>
               </div>
               <span style={{
                 fontSize: '0.7rem',
                 fontWeight: 700,
-                color: 'var(--text-muted)',
-                background: '#f1f5f9',
+                color: 'var(--color-text-muted, var(--text-muted))',
+                background: 'var(--color-subtle, #f1f5f9)',
                 padding: '0.2rem 0.5rem',
                 borderRadius: '6px'
               }}>
@@ -746,8 +746,9 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                   padding: '0.5rem 0.75rem 0.5rem 2.2rem',
                   fontSize: '0.825rem',
                   borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
-                  background: '#ffffff',
+                  border: '1px solid var(--color-border, #cbd5e1)',
+                  background: 'var(--color-surface, #ffffff)',
+                  color: 'var(--color-text-primary, #0f172a)',
                   outline: 'none'
                 }}
               />
@@ -824,16 +825,16 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                     style={{
                       padding: '0.75rem',
                       borderRadius: '10px',
-                      background: isActive ? '#ffffff' : 'transparent',
-                      border: isActive ? '1.5px solid var(--orange-500)' : '1px solid transparent',
-                      boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.04)' : 'none',
+                      background: isActive ? 'var(--color-surface, #ffffff)' : 'transparent',
+                      border: isActive ? '1.5px solid var(--color-primary, var(--orange-500))' : '1px solid transparent',
+                      boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
                       marginBottom: '0.35rem',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
                       position: 'relative'
                     }}
                     onMouseOver={(e) => {
-                      if (!isActive) e.currentTarget.style.background = '#f1f5f9';
+                      if (!isActive) e.currentTarget.style.background = 'var(--color-subtle, #f1f5f9)';
                     }}
                     onMouseOut={(e) => {
                       if (!isActive) e.currentTarget.style.background = 'transparent';
@@ -928,14 +929,14 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         {/* RIGHT PANEL: CHAT FEED & INPUT */}
         <div 
           className={`chat-messages-column ${mobileView === 'list' ? 'hide-on-mobile-chat' : ''}`}
-          style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, background: '#ffffff', overflow: 'hidden' }}
+          style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, background: 'var(--color-surface, #ffffff)', overflow: 'hidden' }}
         >
           
           {/* Active Thread Header */}
           <div style={{
             padding: '0.85rem 1.25rem',
-            borderBottom: '1px solid var(--border-color)',
-            background: '#ffffff',
+            borderBottom: '1px solid var(--color-border)',
+            background: 'var(--color-surface, #ffffff)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -947,9 +948,9 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 className="mobile-only"
                 onClick={() => setMobileView('list')}
                 style={{
-                  background: '#f1f5f9',
-                  border: '1px solid #cbd5e1',
-                  color: 'var(--navy-900)',
+                  background: 'var(--color-subtle, #f1f5f9)',
+                  border: '1px solid var(--color-border, #cbd5e1)',
+                  color: 'var(--color-text-primary, var(--navy-900))',
                   borderRadius: '8px',
                   padding: '0.35rem 0.65rem',
                   fontSize: '0.8rem',
@@ -981,11 +982,11 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                   activeChat.serviceCategory?.includes('Patch') ? <Package size={18} /> :
                   <Layers size={18} />
                 ) : (
-                  <Sparkles size={18} style={{ color: 'var(--orange-400)' }} />
+                  <Sparkles size={18} style={{ color: 'var(--color-primary, #ff7a00)' }} />
                 )}
               </div>
               <div>
-                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: 'var(--color-text-primary, var(--navy-950))' }}>
                   {activeChat.title}
                 </h4>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
@@ -1007,8 +1008,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                       textTransform: 'uppercase',
                       padding: '0.1rem 0.4rem',
                       borderRadius: '4px',
-                      background: '#f1f5f9',
-                      color: 'var(--navy-700)'
+                      background: 'var(--color-subtle, #f1f5f9)',
+                      color: 'var(--color-text-secondary, var(--navy-700))'
                     }}>
                       Status: {activeChat.orderStatus}
                     </span>
@@ -1027,13 +1028,13 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                   }
                 }}
                 style={{
-                  background: '#f8fafc',
-                  border: '1px solid #cbd5e1',
+                  background: 'var(--color-subtle, #f8fafc)',
+                  border: '1px solid var(--color-border, #cbd5e1)',
                   borderRadius: '8px',
                   padding: '0.4rem 0.75rem',
                   fontSize: '0.75rem',
                   fontWeight: 800,
-                  color: 'var(--navy-900)',
+                  color: 'var(--color-text-primary, var(--navy-900))',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -1055,7 +1056,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               display: 'flex',
               flexDirection: 'column',
               gap: '0.65rem',
-              background: '#f8fafc'
+              background: 'var(--color-subtle, #f8fafc)'
             }}
           >
             {(activeChat.messages || []).length === 0 ? (
@@ -1203,8 +1204,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
             onSubmit={handleSendMessage}
             style={{
               padding: '0.85rem 1.25rem',
-              borderTop: '1px solid var(--border-color)',
-              background: '#ffffff',
+              borderTop: '1px solid var(--color-border)',
+              background: 'var(--color-surface, #ffffff)',
               display: 'flex',
               alignItems: 'center',
               gap: '0.65rem',
@@ -1227,9 +1228,9 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 width: '38px',
                 height: '38px',
                 borderRadius: '10px',
-                background: '#f8fafc',
-                border: '1.5px solid #cbd5e1',
-                color: 'var(--navy-700)',
+                background: 'var(--color-subtle, #f8fafc)',
+                border: '1.5px solid var(--color-border, #cbd5e1)',
+                color: 'var(--color-text-secondary, var(--navy-700))',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1252,10 +1253,10 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 padding: '0.65rem 1rem',
                 fontSize: '0.88rem',
                 borderRadius: '10px',
-                border: '1.5px solid #cbd5e1',
+                border: '1.5px solid var(--color-border, #cbd5e1)',
                 outline: 'none',
-                background: '#ffffff',
-                color: 'var(--navy-950)'
+                background: 'var(--color-subtle, #ffffff)',
+                color: 'var(--color-text-primary, var(--navy-950))'
               }}
             />
 

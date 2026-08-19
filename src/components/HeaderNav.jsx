@@ -596,9 +596,9 @@ export const HeaderNav = () => {
                       }}
                       style={{
                         position: 'relative',
-                        background: isNotificationDropdownOpen ? '#ff7a00' : '#f8fafc',
-                        border: '1px solid var(--border-color)',
-                        color: isNotificationDropdownOpen ? '#ffffff' : 'var(--navy-800)',
+                        background: isNotificationDropdownOpen ? 'var(--color-primary, #ff7a00)' : 'var(--color-subtle, #f8fafc)',
+                        border: '1px solid var(--color-border)',
+                        color: isNotificationDropdownOpen ? '#ffffff' : 'var(--color-text-primary, var(--navy-800))',
                         width: '38px',
                         height: '38px',
                         borderRadius: '9999px',
@@ -718,9 +718,9 @@ export const HeaderNav = () => {
                       }}
                       style={{
                         position: 'relative',
-                        background: isSupportDropdownOpen ? '#f1f5f9' : 'transparent',
+                        background: isSupportDropdownOpen ? 'var(--color-subtle, #f1f5f9)' : 'transparent',
                         border: '1px solid transparent',
-                        color: 'var(--navy-600)',
+                        color: 'var(--color-text-secondary, var(--navy-600))',
                         width: '38px',
                         height: '38px',
                         borderRadius: '9999px',
@@ -732,7 +732,7 @@ export const HeaderNav = () => {
                       }}
                       aria-label="Support & Help"
                       title="Support & Help"
-                      onMouseOver={(e) => { if(!isSupportDropdownOpen) e.currentTarget.style.background = '#f1f5f9'; }}
+                      onMouseOver={(e) => { if(!isSupportDropdownOpen) e.currentTarget.style.background = 'var(--color-subtle, #f1f5f9)'; }}
                       onMouseOut={(e) => { if(!isSupportDropdownOpen) e.currentTarget.style.background = 'transparent'; }}
                     >
                       <HelpCircle size={18} />
@@ -745,43 +745,43 @@ export const HeaderNav = () => {
                         top: 'calc(100% + 8px)',
                         right: 0,
                         width: 'min(240px, calc(100vw - 20px))',
-                        background: '#ffffff',
-                        border: '1.5px solid var(--border-color)',
+                        background: 'var(--color-surface, #ffffff)',
+                        border: '1.5px solid var(--color-border)',
                         borderRadius: '12px',
-                        boxShadow: '0 12px 32px rgba(15, 23, 42, 0.15)',
+                        boxShadow: 'var(--shadow-xl, 0 12px 32px rgba(15, 23, 42, 0.25))',
                         padding: '0.5rem',
                         zIndex: 3000,
                         animation: 'fadeIn 0.15s ease-out'
                       }}>
                         <button 
                           onClick={() => { setIsSupportDropdownOpen(false); navigate('/faqs'); }}
-                          style={{ width: '100%', textAlign: 'left', padding: '0.65rem 0.85rem', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--navy-900)', fontSize: '0.875rem', fontWeight: 600 }}
-                          onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                          style={{ width: '100%', textAlign: 'left', padding: '0.65rem 0.85rem', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--color-text-primary, var(--navy-900))', fontSize: '0.875rem', fontWeight: 600 }}
+                          onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-subtle, #f8fafc)'}
                           onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
                         >
                           Ask the Community / FAQs
                         </button>
                         <button 
                           onClick={() => { setIsSupportDropdownOpen(false); navigate('/blogs'); }}
-                          style={{ width: '100%', textAlign: 'left', padding: '0.65rem 0.85rem', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--navy-900)', fontSize: '0.875rem', fontWeight: 600 }}
-                          onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                          style={{ width: '100%', textAlign: 'left', padding: '0.65rem 0.85rem', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--color-text-primary, var(--navy-900))', fontSize: '0.875rem', fontWeight: 600 }}
+                          onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-subtle, #f8fafc)'}
                           onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
                         >
                           Blogs
                         </button>
                         <button 
                           onClick={() => { setIsSupportDropdownOpen(false); navigate('/terms'); }}
-                          style={{ width: '100%', textAlign: 'left', padding: '0.65rem 0.85rem', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--navy-900)', fontSize: '0.875rem', fontWeight: 600 }}
-                          onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                          style={{ width: '100%', textAlign: 'left', padding: '0.65rem 0.85rem', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--color-text-primary, var(--navy-900))', fontSize: '0.875rem', fontWeight: 600 }}
+                          onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-subtle, #f8fafc)'}
                           onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
                         >
                           Terms and Conditions
                         </button>
-                        <div style={{ height: '1px', background: 'var(--border-color)', margin: '0.35rem 0' }}></div>
+                        <div style={{ height: '1px', background: 'var(--color-border)', margin: '0.35rem 0' }}></div>
                         <button 
                           onClick={() => { setIsSupportDropdownOpen(false); handleOpenLiveSupport(); }}
-                          style={{ width: '100%', textAlign: 'left', padding: '0.65rem 0.85rem', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--orange-600)', fontSize: '0.875rem', fontWeight: 700 }}
-                          onMouseOver={(e) => e.currentTarget.style.background = '#fff7ed'}
+                          style={{ width: '100%', textAlign: 'left', padding: '0.65rem 0.85rem', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--color-primary, var(--orange-600))', fontSize: '0.875rem', fontWeight: 700 }}
+                          onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-primary-light, #fff7ed)'}
                           onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
                         >
                           Support (24/7 Live Chat)

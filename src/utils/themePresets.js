@@ -625,19 +625,38 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
     root.style.setProperty(propName, propValue);
   });
 
-  // 4. Map semantic tokens to legacy aliases for backward compatibility
-  root.style.setProperty('--orange-500', tokenSet['--color-primary'] || '#ea580c');
-  root.style.setProperty('--orange-600', tokenSet['--color-primary-hover'] || '#c2410c');
-  root.style.setProperty('--orange-400', tokenSet['--color-secondary'] || '#f97316');
-  root.style.setProperty('--orange-50', tokenSet['--color-primary-light'] || '#ffedd5');
+  // 4. Map semantic tokens to legacy aliases for complete backward compatibility
+  root.style.setProperty('--orange-500', tokenSet['--color-primary'] || (mode === 'dark' ? '#fb923c' : '#ea580c'));
+  root.style.setProperty('--orange-600', tokenSet['--color-primary-hover'] || (mode === 'dark' ? '#f97316' : '#c2410c'));
+  root.style.setProperty('--orange-400', tokenSet['--color-secondary'] || (mode === 'dark' ? '#fdba74' : '#f97316'));
+  root.style.setProperty('--orange-50', tokenSet['--color-primary-light'] || (mode === 'dark' ? 'rgba(251, 146, 60, 0.15)' : '#ffedd5'));
   root.style.setProperty('--orange-glow', tokenSet['--color-primary-glow'] || 'rgba(249, 115, 22, 0.35)');
-  root.style.setProperty('--bg-main', tokenSet['--color-background'] || '#f8fafc');
-  root.style.setProperty('--bg-card', tokenSet['--color-surface'] || '#ffffff');
-  root.style.setProperty('--bg-surface', tokenSet['--color-surface-elevated'] || '#ffffff');
-  root.style.setProperty('--bg-subtle', tokenSet['--color-subtle'] || '#f1f5f9');
-  root.style.setProperty('--border-color', tokenSet['--color-border'] || 'rgba(15, 23, 42, 0.1)');
-  root.style.setProperty('--text-main', tokenSet['--color-text-primary'] || '#0f172a');
-  root.style.setProperty('--text-muted', tokenSet['--color-text-muted'] || '#64748b');
+  root.style.setProperty('--bg-main', tokenSet['--color-background'] || (mode === 'dark' ? '#0a0e17' : '#f8fafc'));
+  root.style.setProperty('--bg-card', tokenSet['--color-surface'] || (mode === 'dark' ? '#111827' : '#ffffff'));
+  root.style.setProperty('--bg-surface', tokenSet['--color-surface-elevated'] || (mode === 'dark' ? '#1a2234' : '#ffffff'));
+  root.style.setProperty('--bg-subtle', tokenSet['--color-subtle'] || (mode === 'dark' ? '#141d2f' : '#f1f5f9'));
+  root.style.setProperty('--border-color', tokenSet['--color-border'] || (mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(15, 23, 42, 0.1)'));
+  root.style.setProperty('--text-main', tokenSet['--color-text-primary'] || (mode === 'dark' ? '#f8fafc' : '#0f172a'));
+  root.style.setProperty('--text-muted', tokenSet['--color-text-muted'] || (mode === 'dark' ? '#94a3b8' : '#64748b'));
+  root.style.setProperty('--text-light', tokenSet['--color-text-muted'] || (mode === 'dark' ? '#94a3b8' : '#94a3b8'));
+  root.style.setProperty('--text-heading', mode === 'dark' ? '#ffffff' : '#0f172a');
+
+  // Dynamic high-contrast mapping for legacy navy palette tokens
+  if (mode === 'dark') {
+    root.style.setProperty('--navy-950', '#ffffff');
+    root.style.setProperty('--navy-900', '#f8fafc');
+    root.style.setProperty('--navy-800', '#f1f5f9');
+    root.style.setProperty('--navy-700', '#e2e8f0');
+    root.style.setProperty('--navy-600', '#cbd5e1');
+    root.style.setProperty('--navy-100', tokenSet['--color-subtle'] || '#141d2f');
+  } else {
+    root.style.setProperty('--navy-950', '#020617');
+    root.style.setProperty('--navy-900', '#0f172a');
+    root.style.setProperty('--navy-800', '#1e293b');
+    root.style.setProperty('--navy-700', '#334155');
+    root.style.setProperty('--navy-600', '#475569');
+    root.style.setProperty('--navy-100', '#f1f5f9');
+  }
 
   // 5. Handle optional custom brand overrides (Admin Branding Manager)
   if (customBrandOverrides?.primary) {

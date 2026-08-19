@@ -501,8 +501,8 @@ export const AdminChatInbox = () => {
   return (
     <div style={{ 
       padding: 0, 
-      background: '#ffffff', 
-      border: '1.5px solid var(--border-color)', 
+      background: 'var(--color-surface, #ffffff)', 
+      border: '1.5px solid var(--color-border)', 
       borderRadius: 'var(--radius-lg)', 
       overflow: 'hidden',
       flex: 1,
@@ -528,8 +528,8 @@ export const AdminChatInbox = () => {
         <div 
           className={`chat-threads-column ${mobileView === 'chat' ? 'hide-on-mobile-thread' : ''}`}
           style={{
-            borderRight: '1.5px solid var(--border-color)',
-            background: 'var(--card-bg)',
+            borderRight: '1.5px solid var(--color-border)',
+            background: 'var(--color-subtle, #f8fafc)',
             display: 'flex',
             flexDirection: 'column',
             height: '100%',
@@ -538,22 +538,22 @@ export const AdminChatInbox = () => {
           }}
         >
           {/* Header */}
-          <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', background: '#ffffff' }}>
+          <div style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface, #ffffff)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <div style={{
                   width: '32px',
                   height: '32px',
                   borderRadius: '8px',
-                  background: 'rgba(255, 122, 0, 0.1)',
-                  color: 'var(--orange-500)',
+                  background: 'var(--color-primary-light, rgba(255, 122, 0, 0.1))',
+                  color: 'var(--color-primary, var(--orange-500))',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
                   <MessageSquare size={16} />
                 </div>
-                <h3 style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0 }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--color-text-primary, var(--navy-950))', margin: 0 }}>
                   Client Inbox
                 </h3>
               </div>
@@ -561,8 +561,8 @@ export const AdminChatInbox = () => {
               <span style={{
                 fontSize: '0.725rem',
                 fontWeight: 800,
-                color: 'var(--orange-600)',
-                background: 'rgba(255, 122, 0, 0.1)',
+                color: 'var(--color-primary, var(--orange-600))',
+                background: 'var(--color-primary-light, rgba(255, 122, 0, 0.1))',
                 padding: '0.2rem 0.5rem',
                 borderRadius: '6px'
               }}>
@@ -572,7 +572,7 @@ export const AdminChatInbox = () => {
 
             {/* Search Input */}
             <div style={{ position: 'relative', marginBottom: '0.65rem' }}>
-              <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted, var(--text-muted))' }} />
               <input
                 type="text"
                 value={searchTerm}
@@ -583,9 +583,10 @@ export const AdminChatInbox = () => {
                   padding: '0.5rem 0.75rem 0.5rem 2.2rem',
                   fontSize: '0.825rem',
                   borderRadius: '8px',
-                  border: '1px solid var(--border-color)',
+                  border: '1px solid var(--color-border)',
                   outline: 'none',
-                  background: '#ffffff'
+                  background: 'var(--color-surface, #ffffff)',
+                  color: 'var(--color-text-primary, #0f172a)'
                 }}
               />
               {searchTerm && (
@@ -639,13 +640,13 @@ export const AdminChatInbox = () => {
                       padding: '0.85rem',
                       marginBottom: '0.35rem',
                       borderRadius: '10px',
-                      border: isActive ? '1.5px solid var(--orange-500)' : '1px solid transparent',
-                      background: isActive ? '#ffffff' : 'transparent',
+                      border: isActive ? '1.5px solid var(--color-primary, var(--orange-500))' : '1px solid transparent',
+                      background: isActive ? 'var(--color-surface, #ffffff)' : 'transparent',
                       boxShadow: isActive ? '0 2px 8px rgba(249, 115, 22, 0.12)' : 'none',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease'
                     }}
-                    onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = '#f1f5f9'; }}
+                    onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--color-subtle, #f1f5f9)'; }}
                     onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
                   >
                     <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
@@ -754,15 +755,15 @@ export const AdminChatInbox = () => {
               flexDirection: 'column', 
               height: '100%', 
               minHeight: 0, 
-              background: '#ffffff', 
+              background: 'var(--color-surface, #ffffff)', 
               overflow: 'hidden' 
             }}
           >
             {/* Header Canvas */}
             <div style={{
               padding: '0.85rem 1.25rem',
-              borderBottom: '1.5px solid var(--border-color)',
-              background: '#ffffff',
+              borderBottom: '1.5px solid var(--color-border)',
+              background: 'var(--color-surface, #ffffff)',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -774,9 +775,9 @@ export const AdminChatInbox = () => {
                   className="mobile-only"
                   onClick={() => setMobileView('list')}
                   style={{
-                    background: '#f1f5f9',
-                    border: '1px solid #cbd5e1',
-                    color: 'var(--navy-900)',
+                    background: 'var(--color-subtle, #f1f5f9)',
+                    border: '1px solid var(--color-border, #cbd5e1)',
+                    color: 'var(--color-text-primary, var(--navy-900))',
                     borderRadius: '8px',
                     padding: '0.35rem 0.65rem',
                     fontSize: '0.8rem',
@@ -800,7 +801,7 @@ export const AdminChatInbox = () => {
                     <img
                       src={activeChat.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeInfo.customerName)}&background=0f172a&color=fff`}
                       alt={activeInfo.customerName}
-                      style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-color)' }}
+                      style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-border)' }}
                     />
                   )}
                   <span style={{
@@ -811,23 +812,23 @@ export const AdminChatInbox = () => {
                     height: '11px',
                     borderRadius: '50%',
                     background: activeChat.status === 'online' ? '#10b981' : '#94a3b8',
-                    border: '2px solid #ffffff'
+                    border: '2px solid var(--color-surface, #ffffff)'
                   }} />
                 </div>
 
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0 }}>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--color-text-primary, var(--navy-950))', margin: 0 }}>
                       {activeInfo.customerName}
                     </h3>
-                    <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.45rem', borderRadius: '4px', background: activeInfo.isOrder ? '#fff7ed' : '#ecfdf5', color: activeInfo.isOrder ? '#ea580c' : '#059669', border: `1px solid ${activeInfo.isOrder ? '#fed7aa' : '#a7f3d0'}`, fontWeight: 800 }}>
+                    <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.45rem', borderRadius: '4px', background: activeInfo.isOrder ? 'var(--color-primary-light, #fff7ed)' : 'rgba(16, 185, 129, 0.1)', color: activeInfo.isOrder ? 'var(--color-primary, #ea580c)' : '#10b981', border: `1px solid ${activeInfo.isOrder ? 'var(--color-border)' : 'rgba(16, 185, 129, 0.25)'}`, fontWeight: 800 }}>
                       {activeInfo.isOrder ? activeInfo.orderSubtitle : 'Support Conversation'}
                     </span>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
                     {activeInfo.customerEmail && (
-                      <span>📧 <strong style={{ color: 'var(--navy-800)' }}>{activeInfo.customerEmail}</strong></span>
+                      <span>📧 <strong style={{ color: 'var(--color-text-primary, var(--navy-800))' }}>{activeInfo.customerEmail}</strong></span>
                     )}
                     {activeChat.company && (
                       <span>🏢 {activeChat.company}</span>
@@ -859,7 +860,7 @@ export const AdminChatInbox = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '0.75rem',
-                background: '#f8fafc'
+                background: 'var(--color-subtle, #f8fafc)'
               }}
             >
               {activeChat.messages.length === 0 ? (
@@ -893,9 +894,9 @@ export const AdminChatInbox = () => {
                   alignItems: 'center',
                   gap: '0.5rem',
                   padding: '0.45rem 0.85rem',
-                  background: '#ffffff',
+                  background: 'var(--color-surface, #ffffff)',
                   borderRadius: '16px',
-                  border: '1.5px solid var(--border-color)',
+                  border: '1.5px solid var(--color-border)',
                   width: 'fit-content',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                   margin: '0.25rem 0'
@@ -991,7 +992,7 @@ export const AdminChatInbox = () => {
             )}
 
             {/* Messaging Input Area */}
-            <form onSubmit={handleSendMessage} style={{ padding: '1rem 1.5rem 1.25rem', borderTop: '1.5px solid var(--border-color)', background: '#ffffff' }}>
+            <form onSubmit={handleSendMessage} style={{ padding: '1rem 1.5rem 1.25rem', borderTop: '1.5px solid var(--color-border)', background: 'var(--color-surface, #ffffff)' }}>
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                 <input
                   type="file"
@@ -1006,9 +1007,9 @@ export const AdminChatInbox = () => {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploadingAttachment}
                   style={{
-                    background: '#f1f5f9',
-                    border: '1.5px solid var(--border-color)',
-                    color: 'var(--navy-700)',
+                    background: 'var(--color-subtle, #f1f5f9)',
+                    border: '1.5px solid var(--color-border)',
+                    color: 'var(--color-text-secondary, var(--navy-700))',
                     width: '42px',
                     height: '42px',
                     borderRadius: 'var(--radius-sm)',

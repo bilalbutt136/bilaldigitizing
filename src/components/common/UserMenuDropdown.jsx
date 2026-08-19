@@ -132,39 +132,39 @@ export const UserMenuDropdown = () => {
           top: 'calc(100% + 6px)',
           right: 0,
           width: '260px',
-          background: '#ffffff',
-          border: '1.5px solid var(--border-color)',
+          background: 'var(--color-surface, #ffffff)',
+          border: '1.5px solid var(--color-border)',
           borderRadius: 'var(--radius-md)',
-          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.12)',
+          boxShadow: 'var(--shadow-xl, 0 10px 30px rgba(0, 0, 0, 0.25))',
           zIndex: 2000,
           overflow: 'hidden',
           animation: 'fadeIn 0.15s ease-out'
         }}>
           
           {/* Menu User Header (Compact 3-Line Layout) */}
-          <div style={{ padding: '0.65rem 0.85rem', background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
-            <div style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', lineHeight: 1.2 }}>
+          <div style={{ padding: '0.65rem 0.85rem', background: 'var(--color-subtle, #f8fafc)', borderBottom: '1px solid var(--color-border)' }}>
+            <div style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--color-text-primary, var(--navy-900))', lineHeight: 1.2 }}>
               {cleanName || 'Verified User'}
             </div>
-            <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginTop: '0.1rem', lineHeight: 1.2 }}>
+            <div style={{ fontSize: '0.73rem', color: 'var(--color-text-muted)', marginTop: '0.1rem', lineHeight: 1.2 }}>
               {activeUser?.email || 'Not signed in'}
             </div>
             <div style={{ marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span style={{ fontSize: '0.65rem', background: '#fff7ed', color: 'var(--orange-700)', fontWeight: 800, padding: '0.1rem 0.45rem', borderRadius: '9999px', border: '1px solid var(--orange-300)', lineHeight: 1.2 }}>
+              <span style={{ fontSize: '0.65rem', background: 'var(--color-primary-light, #fff7ed)', color: 'var(--color-primary, var(--orange-700))', fontWeight: 800, padding: '0.1rem 0.45rem', borderRadius: '9999px', border: '1px solid var(--color-primary)', lineHeight: 1.2 }}>
                 {badgeLabel}
               </span>
-              <span style={{ fontSize: '0.65rem', background: '#ecfdf5', color: '#047857', fontWeight: 800, padding: '0.1rem 0.45rem', borderRadius: '9999px', lineHeight: 1.2 }}>
+              <span style={{ fontSize: '0.65rem', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', fontWeight: 800, padding: '0.1rem 0.45rem', borderRadius: '9999px', lineHeight: 1.2 }}>
                 ONLINE
               </span>
             </div>
           </div>
 
           {/* Quick Wallet Summary */}
-          <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', fontWeight: 700, color: 'var(--navy-800)' }}>
-              <Wallet size={15} style={{ color: 'var(--orange-500)' }} /> Studio Wallet:
+          <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--color-surface, #ffffff)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-primary, var(--navy-800))' }}>
+              <Wallet size={15} style={{ color: 'var(--color-primary, var(--orange-500))' }} /> Studio Wallet:
             </div>
-            <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--orange-600)' }}>
+            <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--color-primary, var(--orange-600))' }}>
               ${walletBalance.toFixed(2)}
             </span>
           </div>
@@ -189,17 +189,17 @@ export const UserMenuDropdown = () => {
                   textAlign: 'left',
                   fontSize: '0.875rem',
                   fontWeight: 700,
-                  color: 'var(--navy-900)',
+                  color: 'var(--color-text-primary, var(--navy-900))',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.65rem',
                   cursor: 'pointer',
                   transition: 'background 0.15s'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-subtle, #f1f5f9)'}
                 onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
               >
-                <Settings size={16} style={{ color: 'var(--orange-500)' }} /> Admin Portal
+                <Settings size={16} style={{ color: 'var(--color-primary, var(--orange-500))' }} /> Admin Portal
               </button>
             )}
 
@@ -219,17 +219,17 @@ export const UserMenuDropdown = () => {
                 textAlign: 'left',
                 fontSize: '0.875rem',
                 fontWeight: 700,
-                color: 'var(--navy-900)',
+                color: 'var(--color-text-primary, var(--navy-900))',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.65rem',
                 cursor: 'pointer',
                 transition: 'background 0.15s'
               }}
-              onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+              onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-subtle, #f1f5f9)'}
               onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
             >
-              <User size={16} style={{ color: 'var(--orange-500)' }} /> Client Dashboard
+              <User size={16} style={{ color: 'var(--color-primary, var(--orange-500))' }} /> Client Dashboard
             </button>
 
             {/* Account Settings Option */}
@@ -247,17 +247,17 @@ export const UserMenuDropdown = () => {
                 textAlign: 'left',
                 fontSize: '0.875rem',
                 fontWeight: 600,
-                color: 'var(--navy-900)',
+                color: 'var(--color-text-primary, var(--navy-900))',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.65rem',
                 cursor: 'pointer',
                 transition: 'background 0.15s'
               }}
-              onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+              onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-subtle, #f1f5f9)'}
               onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
             >
-              <Settings size={16} style={{ color: 'var(--navy-700)' }} /> Account Settings & Wallet
+              <Settings size={16} style={{ color: 'var(--color-text-secondary, var(--navy-700))' }} /> Account Settings & Wallet
             </button>
 
             {/* Theme Switcher Toggle Option */}
@@ -272,14 +272,14 @@ export const UserMenuDropdown = () => {
                 textAlign: 'left',
                 fontSize: '0.875rem',
                 fontWeight: 600,
-                color: 'var(--navy-900)',
+                color: 'var(--color-text-primary, var(--navy-900))',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 cursor: 'pointer',
                 transition: 'background 0.15s'
               }}
-              onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+              onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-subtle, #f1f5f9)'}
               onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -317,20 +317,20 @@ export const UserMenuDropdown = () => {
                 textAlign: 'left',
                 fontSize: '0.875rem',
                 fontWeight: 600,
-                color: 'var(--navy-900)',
+                color: 'var(--color-text-primary, var(--navy-900))',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.65rem',
                 cursor: 'pointer',
                 transition: 'background 0.15s'
               }}
-              onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+              onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-subtle, #f1f5f9)'}
               onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
             >
-              <PlusCircle size={16} style={{ color: 'var(--orange-500)' }} /> New Design Brief
+              <PlusCircle size={16} style={{ color: 'var(--color-primary, var(--orange-500))' }} /> New Design Brief
             </button>
 
-            <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '0.4rem 0' }} />
+            <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '0.4rem 0' }} />
 
             {/* Logout Option */}
             <button
@@ -344,17 +344,17 @@ export const UserMenuDropdown = () => {
                 textAlign: 'left',
                 fontSize: '0.875rem',
                 fontWeight: 700,
-                color: '#dc2626',
+                color: '#ef4444',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.65rem',
                 cursor: 'pointer',
                 transition: 'background 0.15s'
               }}
-              onMouseOver={(e) => e.currentTarget.style.background = '#fee2e2'}
+              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)'}
               onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
             >
-              <LogOut size={16} style={{ color: '#dc2626' }} /> Sign Out
+              <LogOut size={16} style={{ color: '#ef4444' }} /> Sign Out
             </button>
           </div>
 

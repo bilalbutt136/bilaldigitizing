@@ -666,35 +666,44 @@ body.dark-mode h3,
 body.dark-mode h4,
 body.dark-mode h5,
 body.dark-mode h6 {
-  color: #f8fafc !important;
+  color: #ffffff !important;
 }
 
 /* Header & Navigation in Dark Mode */
 [data-theme="dark"] header, body.dark-mode header {
-  background-color: rgba(9, 13, 22, 0.95) !important;
+  background-color: var(--color-surface, #111827) !important;
   backdrop-filter: blur(16px) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.1)) !important;
 }
 
-[data-theme="dark"] header nav button, body.dark-mode header nav button {
+[data-theme="dark"] header nav button, 
+[data-theme="dark"] header nav a,
+body.dark-mode header nav button,
+body.dark-mode header nav a {
   color: #cbd5e1 !important;
 }
-[data-theme="dark"] header nav button:hover, body.dark-mode header nav button:hover {
-  color: var(--orange-400) !important;
+[data-theme="dark"] header nav button:hover, 
+[data-theme="dark"] header nav a:hover,
+body.dark-mode header nav button:hover,
+body.dark-mode header nav a:hover {
+  color: var(--color-primary, var(--orange-400)) !important;
 }
 
 /* Modals & Overlays in Dark Mode */
 [data-theme="dark"] .modal-overlay, body.dark-mode .modal-overlay {
   background: rgba(3, 7, 18, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
 }
 [data-theme="dark"] .modal-content, 
 [data-theme="dark"] .modal-dialog,
+[data-theme="dark"] .order-wizard-dialog,
 body.dark-mode .modal-content,
-body.dark-mode .modal-dialog {
-  background: #111827 !important;
-  background-color: #111827 !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  color: #f8fafc !important;
+body.dark-mode .modal-dialog,
+body.dark-mode .order-wizard-dialog {
+  background: var(--color-surface, #111827) !important;
+  background-color: var(--color-surface, #111827) !important;
+  border-color: var(--color-border, rgba(255, 255, 255, 0.12)) !important;
+  color: var(--color-text-primary, #f8fafc) !important;
 }
 
 /* Cards, Panels, Sidebars & Tables in Dark Mode */
@@ -708,6 +717,7 @@ body.dark-mode .modal-dialog {
 [data-theme="dark"] .customer-sidebar,
 [data-theme="dark"] .client-sidebar,
 [data-theme="dark"] .admin-sidebar-fixed,
+[data-theme="dark"] .mobile-order-card,
 [data-theme="dark"] aside,
 body.dark-mode .card,
 body.dark-mode .stat-card,
@@ -719,31 +729,23 @@ body.dark-mode .client-sidebar-saas,
 body.dark-mode .customer-sidebar,
 body.dark-mode .client-sidebar,
 body.dark-mode .admin-sidebar-fixed,
+body.dark-mode .mobile-order-card,
 body.dark-mode aside {
-  background: #111827 !important;
-  background-color: #111827 !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  color: #f8fafc !important;
+  background: var(--color-surface, #111827) !important;
+  background-color: var(--color-surface, #111827) !important;
+  border-color: var(--color-border, rgba(255, 255, 255, 0.1)) !important;
+  color: var(--color-text-primary, #f8fafc) !important;
 }
 
-/* Mobile cards in Dark Mode */
-[data-theme="dark"] .mobile-order-card,
-body.dark-mode .mobile-order-card {
-  background: #111827 !important;
-  background-color: #111827 !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  color: #f8fafc !important;
-}
-
-/* Dropdown Menus in Dark Mode */
+/* Dropdown Menus & Popups in Dark Mode */
 [data-theme="dark"] .dropdown-menu,
 [data-theme="dark"] [role="menu"],
 body.dark-mode .dropdown-menu,
 body.dark-mode [role="menu"] {
-  background-color: #1e293b !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6) !important;
-  color: #f8fafc !important;
+  background-color: var(--color-surface, #111827) !important;
+  border-color: var(--color-border, rgba(255, 255, 255, 0.14)) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7) !important;
+  color: var(--color-text-primary, #f8fafc) !important;
 }
 
 /* Form Controls, Inputs & Textareas in Dark Mode */
@@ -755,10 +757,10 @@ body.dark-mode .form-control,
 body.dark-mode input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
 body.dark-mode textarea,
 body.dark-mode select {
-  background: #1a2234 !important;
-  background-color: #1a2234 !important;
-  color: #f8fafc !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.14) !important;
+  background: var(--color-subtle, #1a2234) !important;
+  background-color: var(--color-subtle, #1a2234) !important;
+  color: var(--color-text-primary, #f8fafc) !important;
+  border: 1.5px solid var(--color-border, rgba(255, 255, 255, 0.15)) !important;
 }
 
 [data-theme="dark"] input:focus,
@@ -767,15 +769,15 @@ body.dark-mode select {
 body.dark-mode input:focus,
 body.dark-mode textarea:focus,
 body.dark-mode select:focus {
-  border-color: var(--orange-500) !important;
-  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.25) !important;
+  border-color: var(--color-primary, var(--orange-500)) !important;
+  box-shadow: 0 0 0 3px var(--color-primary-glow, rgba(249, 115, 22, 0.25)) !important;
 }
 
 [data-theme="dark"] input::placeholder,
 [data-theme="dark"] textarea::placeholder,
 body.dark-mode input::placeholder,
 body.dark-mode textarea::placeholder {
-  color: #64748b !important;
+  color: var(--color-text-muted, #94a3b8) !important;
 }
 
 /* Tables & Grid Rows in Dark Mode */
@@ -787,14 +789,14 @@ body.dark-mode textarea::placeholder {
 [data-theme="dark"] th, 
 body.dark-mode thead,
 body.dark-mode th {
-  background: #1a2234 !important;
-  background-color: #1a2234 !important;
+  background: var(--color-subtle, #1a2234) !important;
+  background-color: var(--color-subtle, #1a2234) !important;
   color: #ffffff !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.12)) !important;
 }
 [data-theme="dark"] td, body.dark-mode td {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
-  color: #e2e8f0 !important;
+  border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.08)) !important;
+  color: var(--color-text-secondary, #cbd5e1) !important;
 }
 [data-theme="dark"] tr:hover td, body.dark-mode tr:hover td {
   background-color: rgba(255, 255, 255, 0.04) !important;
@@ -802,13 +804,30 @@ body.dark-mode th {
 
 /* Outline Buttons in Dark Mode */
 [data-theme="dark"] .btn-outline, body.dark-mode .btn-outline {
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  color: #f1f5f9 !important;
+  border-color: var(--color-border, rgba(255, 255, 255, 0.2)) !important;
+  color: var(--color-text-primary, #f1f5f9) !important;
   background-color: transparent !important;
 }
 [data-theme="dark"] .btn-outline:hover, body.dark-mode .btn-outline:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: #ffffff !important;
+  background: var(--color-primary-light, rgba(255, 255, 255, 0.1)) !important;
+  color: var(--color-primary, #ffffff) !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* Mobile App Navigation & Headers in Dark Mode */
+[data-theme="dark"] .mobile-bottom-nav, body.dark-mode .mobile-bottom-nav {
+  background: var(--color-surface, #111827) !important;
+  border-top: 1px solid var(--color-border, rgba(255, 255, 255, 0.12)) !important;
+  color: var(--color-text-primary, #f8fafc) !important;
+}
+[data-theme="dark"] .mobile-app-header, body.dark-mode .mobile-app-header {
+  background: var(--color-surface, #111827) !important;
+  border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.12)) !important;
+  color: var(--color-text-primary, #f8fafc) !important;
+}
+[data-theme="dark"] .mobile-only, body.dark-mode .mobile-only {
+  background: var(--color-surface, #111827) !important;
+  color: var(--color-text-primary, #f8fafc) !important;
 }
 
 @keyframes fadeIn {

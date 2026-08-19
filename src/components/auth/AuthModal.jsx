@@ -239,8 +239,9 @@ export const AuthModal = () => {
           borderRadius: '24px', 
           overflow: 'hidden',
           boxShadow: '0 25px 70px rgba(15, 23, 42, 0.35)',
-          border: '1px solid rgba(226, 232, 240, 0.8)',
-          background: '#ffffff',
+          border: '1px solid var(--color-border)',
+          background: 'var(--color-surface, #ffffff)',
+          color: 'var(--color-text-primary, #0f172a)',
           display: 'grid',
           gridTemplateColumns: 'minmax(300px, 390px) 1fr',
           position: 'relative'
@@ -254,7 +255,8 @@ export const AuthModal = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            background: '#ffffff',
+            background: 'var(--color-surface, #ffffff)',
+            color: 'var(--color-text-primary, #0f172a)',
             zIndex: 100,
             padding: '1.75rem 2rem',
             overflowY: 'auto',
@@ -262,21 +264,21 @@ export const AuthModal = () => {
             flexDirection: 'column',
             animation: 'fadeIn 0.15s ease-out'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1.5px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1.5px solid var(--color-border)', paddingBottom: '0.75rem' }}>
               <div>
-                <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#ff7a00', background: 'rgba(255,122,0,0.12)', padding: '0.15rem 0.5rem', borderRadius: '4px', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--color-primary, #ff7a00)', background: 'var(--color-primary-light, rgba(255,122,0,0.12))', padding: '0.15rem 0.5rem', borderRadius: '4px', textTransform: 'uppercase' }}>
                   LEGAL DOCUMENTATION
                 </span>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0.25rem 0 0' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-text-primary, var(--navy-900))', margin: '0.25rem 0 0' }}>
                   {legalModalType === 'terms' ? 'Terms of Service & Studio Agreement' : 'Privacy Policy & Data Protection Standards'}
                 </h3>
               </div>
               <button 
                 type="button" 
                 onClick={() => setLegalModalType(null)} 
-                style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s ease' }}
-                onMouseOver={(e) => { e.currentTarget.style.background = '#ff7a00'; e.currentTarget.style.color = '#ffffff'; }}
-                onMouseOut={(e) => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = 'var(--navy-900)'; }}
+                style={{ background: 'var(--color-subtle, #f1f5f9)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-text-primary)', transition: 'all 0.15s ease' }}
+                onMouseOver={(e) => { e.currentTarget.style.background = 'var(--color-primary, #ff7a00)'; e.currentTarget.style.color = '#ffffff'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = 'var(--color-subtle, #f1f5f9)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
               >
                 <X size={16} />
               </button>
@@ -346,9 +348,9 @@ export const AuthModal = () => {
             position: 'absolute',
             top: '1.25rem',
             right: '1.25rem',
-            background: '#f1f5f9', 
-            border: '1px solid var(--border-color)', 
-            color: 'var(--navy-900)', 
+            background: 'var(--color-subtle, #f1f5f9)', 
+            border: '1px solid var(--color-border)', 
+            color: 'var(--color-text-primary, var(--navy-900))', 
             width: '36px',
             height: '36px',
             borderRadius: '50%',
@@ -359,8 +361,8 @@ export const AuthModal = () => {
             zIndex: 10,
             transition: 'all 0.15s ease'
           }}
-          onMouseOver={(e) => { e.currentTarget.style.background = '#ff7a00'; e.currentTarget.style.color = '#ffffff'; }}
-          onMouseOut={(e) => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = 'var(--navy-900)'; }}
+          onMouseOver={(e) => { e.currentTarget.style.background = 'var(--color-primary, #ff7a00)'; e.currentTarget.style.color = '#ffffff'; }}
+          onMouseOut={(e) => { e.currentTarget.style.background = 'var(--color-subtle, #f1f5f9)'; e.currentTarget.style.color = 'var(--color-text-primary, var(--navy-900))'; }}
           aria-label="Close"
         >
           <X size={18} />
