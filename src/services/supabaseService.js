@@ -1239,6 +1239,86 @@ export async function fetchChatMessages(chatId, email) {
   } catch { return []; }
 }
 
+export async function createCustomOffer(offerPayload) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/offers', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ action: 'createOffer', payload: offerPayload })
+    });
+    const data = await res.json();
+    if (data.message) {
+      broadcastLiveMessage(data.message);
+    }
+    return data;
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+export async function acceptCustomOffer(offerId) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/offers', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ action: 'acceptOffer', payload: { offerId } })
+    });
+    const data = await res.json();
+    if (data.message) {
+      broadcastLiveMessage(data.message);
+    }
+    return data;
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+export async function declineCustomOffer(offerId) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/offers', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ action: 'declineOffer', payload: { offerId } })
+    });
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+export async function cancelCustomOffer(offerId) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/offers', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ action: 'cancelOffer', payload: { offerId } })
+    });
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+export async function fetchCustomOffer(offerId) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`/api/offers?action=getOffer&offerId=${encodeURIComponent(offerId)}`, {
+      headers,
+      cache: 'no-store'
+    });
+    const data = await res.json();
+    return data.offer || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function addChatMessage(chatId, messageObj) {
   const fullMsg = {
     ...messageObj,

@@ -835,6 +835,12 @@ export const ClientLiveChatWidget = () => {
                       senderDisplayName={isClient ? 'You' : 'Support'}
                       onReply={(m) => setReplyingTo(m)}
                       formatTime={formatChatTime}
+                      themePreset="client"
+                      onOrderClick={(ordId) => {
+                        if (typeof window !== 'undefined') {
+                          window.location.href = `/client-portal?tab=orders&orderId=${ordId}`;
+                        }
+                      }}
                     />
                   );
                 })}

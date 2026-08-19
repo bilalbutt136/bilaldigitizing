@@ -1271,6 +1271,12 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                     senderDisplayName={isMe ? 'You' : (msg.senderName || msg.sender_name || 'Studio Support')}
                     onReply={(m) => setReplyingTo(m)}
                     formatTime={formatChatTime}
+                    themePreset="client"
+                    onOrderClick={(ordId) => {
+                      if (typeof setSelectedOrderForDrawer === 'function') {
+                        setSelectedOrderForDrawer(ordId);
+                      }
+                    }}
                   />
                 );
               })

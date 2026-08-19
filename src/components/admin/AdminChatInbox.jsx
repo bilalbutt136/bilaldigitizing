@@ -14,6 +14,7 @@ import {
 } from '../../services/supabaseService';
 import { playNotificationSound } from '../../utils/audioNotification';
 import WhatsAppChatMessage from '../common/WhatsAppChatMessage';
+import AdminCreateOfferModal from './AdminCreateOfferModal';
 import {
   MessageSquare,
   Send,
@@ -22,7 +23,9 @@ import {
   ChevronRight,
   X,
   Loader2,
-  Reply
+  Reply,
+  Tag,
+  Sparkles
 } from 'lucide-react';
 
 const formatChatTime = (timestamp) => {
@@ -171,6 +174,7 @@ export const AdminChatInbox = () => {
   const [replyInput, setReplyInput] = useState('');
   const [attachedFile, setAttachedFile] = useState(null); // { name, url, size, format }
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
   const [isClientTyping, setIsClientTyping] = useState(false);
   const [mobileView, setMobileView] = useState('list');
@@ -1122,6 +1126,31 @@ export const AdminChatInbox = () => {
                   <Paperclip size={18} />
                 </button>
 
+                <button
+                  type="button"
+                  onClick={() => setIsOfferModalOpen(true)}
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.15))',
+                    border: '1.5px solid rgba(99, 102, 241, 0.4)',
+                    color: '#4f46e5',
+                    padding: '0 0.85rem',
+                    height: '42px',
+                    borderRadius: 'var(--radius-sm)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontWeight: 800,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                    transition: 'all 0.2s ease'
+                  }}
+                  title="Create & Send Custom Offer"
+                >
+                  <Tag size={15} className="text-indigo-600" />
+                  <span>Create Offer</span>
+                </button>
+
                 <input
                   type="text"
                   className="form-control"
@@ -1157,6 +1186,43 @@ export const AdminChatInbox = () => {
           </div>
         )}
       </div>
+
+      {/* Admin Create Custom Offer Modal */}
+      {isOfferModalOpen && (
+        <AdminCreateOfferModal
+          isOpen={isOfferModalOpen}
+          onClose={() => setIsOfferModalOpen(false)}
+          conversationId={currentActiveChatId}
+          clientName={activeInfo.customerName || 'Customer'}
+          clientEmail={activeInfo.customerEmail || ''}
+          onOfferCreated={(newOffer, newMsg) => {
+            if (newMsg) {
+              setConversations(prev => {
+                const updated = prev.map(conv => {
+                  if (conv.id === currentActiveChatId) {
+                    return {
+                      ...conv,
+                      messages: [...(conv.messages || []), newMsg],
+                      updatedAt: new Date().toISOString(),
+                      lastMessageTime: Date.now()
+                    };
+                  }
+                  return conv;
+                });
+                const deduplicated = deduplicateThreads(updated);
+                if (typeof window !== 'undefined') {
+                  try {
+                    localStorage.setItem(cacheKey, JSON.stringify(deduplicated));
+                  } catch {}
+                }
+                return deduplicated;
+              });
+              scrollToBottom('smooth');
+            }
+          }}
+          showToast={showToast}
+        />
+      )}
 
     </div>
   );

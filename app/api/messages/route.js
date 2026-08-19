@@ -176,6 +176,8 @@ export async function GET(request) {
             attachment_size: m.attachment_size || null,
             attachment_type: m.attachment_type || null,
             reply_to: m.reply_to || null,
+            offer_id: m.offer_id || m.offerId || null,
+            offer_data: m.offer_data || m.offerData || null,
             is_read: m.is_read || false,
             timestamp: m.timestamp || m.created_at
           }));
@@ -197,6 +199,8 @@ export async function GET(request) {
               attachment_size: om.attachment_size || null,
               attachment_type: om.attachment_type || null,
               reply_to: om.reply_to || null,
+              offer_id: om.offer_id || om.offerId || null,
+              offer_data: om.offer_data || om.offerData || null,
               is_read: om.is_read || false,
               timestamp: om.created_at
             };
@@ -269,6 +273,8 @@ export async function GET(request) {
         attachment_size: m.attachment_size || null,
         attachment_type: m.attachment_type || null,
         reply_to: m.reply_to || null,
+        offer_id: m.offer_id || m.offerId || null,
+        offer_data: m.offer_data || m.offerData || null,
         is_read: m.is_read || false,
         timestamp: m.timestamp || m.created_at
       }));
@@ -297,6 +303,8 @@ export async function GET(request) {
                 attachment_size: om.attachment_size || null,
                 attachment_type: om.attachment_type || null,
                 reply_to: om.reply_to || null,
+                offer_id: om.offer_id || om.offerId || null,
+                offer_data: om.offer_data || om.offerData || null,
                 is_read: om.is_read || false,
                 timestamp: om.created_at
               };
@@ -478,6 +486,8 @@ export async function POST(request) {
         attachment_size: payload.attachment_size || payload.attachmentSize || null,
         attachment_type: payload.attachment_type || payload.attachmentType || null,
         reply_to: payload.reply_to || payload.replyTo || null,
+        offer_id: payload.offer_id || payload.offerId || null,
+        offer_data: payload.offer_data || payload.offerData || null,
         is_read: false,
         timestamp: payload.timestamp || nowIso,
         created_at: nowIso

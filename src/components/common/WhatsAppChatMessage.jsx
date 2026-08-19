@@ -19,6 +19,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { downloadFileDirectly, openPdfInNewTab } from '../../utils/fileDownloader';
+import OfferCardMessage from './OfferCardMessage';
 
 /**
  * Determines file category from URL or filename
@@ -42,6 +43,7 @@ export function getFileCategory(fileName = '', fileUrl = '') {
  * - Direct download actions
  * - Interactive lightbox preview modal
  * - Hover toolbar (Reply, Zoom, Download)
+ * - Custom Offer Cards
  */
 export default function WhatsAppChatMessage({
   message,
@@ -49,12 +51,54 @@ export default function WhatsAppChatMessage({
   senderDisplayName = '',
   onReply = () => {},
   formatTime = (t) => t || 'Just now',
-  themePreset = null
+  themePreset = null,
+  onOrderClick = () => {}
 }) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
   if (!message) return null;
+
+  // Render Custom Offer Card
+  if (message.offer_data || message.offer) {
+    return (
+      <div
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: isMe ? 'flex-end' : 'flex-start',
+          maxWidth: '92%',
+          alignSelf: isMe ? 'flex-end' : 'flex-start',
+          position: 'relative',
+          margin: '0.4rem 0'
+        }}
+      >
+        <div style={{
+          fontSize: '0.7rem',
+          fontWeight: 700,
+          color: 'var(--text-muted, #64748b)',
+          marginBottom: '0.25rem',
+          padding: '0 0.4rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.4rem'
+        }}>
+          <span>{senderDisplayName || (isMe ? 'You' : (message.sender_name || 'Studio Support'))}</span>
+          <span>•</span>
+          <span>{formatTime(message.timestamp || message.created_at)}</span>
+        </div>
+        <OfferCardMessage
+          offer={message.offer_data || message.offer}
+          messageId={message.id}
+          isMe={isMe}
+          isAdmin={themePreset === 'admin' || (isMe && message.sender === 'admin')}
+          onOrderClick={onOrderClick}
+        />
+      </div>
+    );
+  }
 
   const fileName = message.attachment_name || message.attachment || '';
   const fileUrl = message.attachment_url || (typeof message.attachment === 'string' && message.attachment.startsWith('http') ? message.attachment : null);
