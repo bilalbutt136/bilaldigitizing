@@ -34,6 +34,15 @@ import {
 } from 'lucide-react';
 
 // Format timestamp safely to human-readable string
+const parseMessageTime = (msg) => {
+  if (!msg) return 0;
+  const raw = msg.timestamp || msg.created_at || msg.createdAt || msg.time;
+  if (!raw) return 0;
+  if (typeof raw === 'number') return raw;
+  const parsed = new Date(raw).getTime();
+  return isNaN(parsed) ? 0 : parsed;
+};
+
 const formatChatTime = (timestamp) => {
   if (!timestamp) return 'Just now';
   try {
@@ -74,6 +83,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   const clientEmail = (activeUser.email || '').toLowerCase().trim();
   const clientName = activeUser.name || 'Client';
 
+  const cacheKey = useMemo(() => `bdigi_inbox_cache_${clientEmail || 'guest'}`, [clientEmail]);
+
   const defaultSupportId = useMemo(() => {
     return clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')
       ? `support-${clientEmail}`
@@ -96,6 +107,21 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+
+  // Instant local cache hydration on mount for zero-latency load on refresh
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setConversations(parsed);
+          }
+        }
+      } catch {}
+    }
+  }, [cacheKey]);
 
   const scrollToBottom = (behavior = 'smooth') => {
     if (chatFeedRef.current) {
@@ -159,7 +185,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         if (rm && (rm.id || rm.text)) {
           let matched = false;
           for (const [key, existingMsg] of supportMessagesMap.entries()) {
-            if (existingMsg.id === rm.id || (existingMsg.text === rm.text && Math.abs(new Date(existingMsg.timestamp) - new Date(rm.timestamp)) < 5000)) {
+            if (existingMsg.id === rm.id || (existingMsg.text === rm.text && Math.abs(parseMessageTime(existingMsg) - parseMessageTime(rm)) < 5000)) {
               supportMessagesMap.set(key, rm);
               matched = true;
               break;
@@ -187,7 +213,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       ];
     }
 
-    generalMessages.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+    generalMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
 
     const genLastMsg = generalMessages[generalMessages.length - 1];
     const genLastTimestamp = genLastMsg?.timestamp || existingSupport?.updatedAt || new Date().toISOString();
@@ -274,7 +300,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       });
 
       const combinedMessages = Array.from(orderMessagesMap.values());
-      combinedMessages.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+      combinedMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
 
       const isTargetedOrder = initialOrderId && (initialOrderId === ord.id || initialOrderId === `order-${ord.id}`);
       const isCurrentlyActive = activeChatId === orderThreadId;
@@ -323,7 +349,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         (conv.messages || []).forEach(rm => msgsMap.set(rm.id || rm.text, rm));
 
         const msgs = Array.from(msgsMap.values());
-        msgs.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+        msgs.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
 
         if (msgs.length === 0 && conv.id !== activeChatId) return;
 
@@ -378,6 +404,11 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       if (isMounted) {
         setConversations(prev => {
           const fullThreads = buildThreadList(remoteConvs, prev);
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem(cacheKey, JSON.stringify(fullThreads));
+            } catch {}
+          }
           // If an initial order was passed, select that thread immediately
           if (initialOrderId) {
             const targetId = initialOrderId.startsWith('order-') ? initialOrderId : `order-${initialOrderId}`;
@@ -720,11 +751,13 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
       const updated = safePrev.map(conv => {
         if (isTarget(conv)) {
+          const nextMsgs = [...(conv.messages || []), newMsg];
+          nextMsgs.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
           return {
             ...conv,
             unreadCount: 0,
             clientUnreadCount: 0,
-            messages: [...(conv.messages || []), newMsg],
+            messages: nextMsgs,
             lastMessageTime: nowTime,
             updatedAt: nowIso
           };
@@ -732,11 +765,19 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         return conv;
       });
 
-      return [...updated].sort((a, b) => {
+      const sortedList = [...updated].sort((a, b) => {
         const timeA = a.lastMessageTime || (a.updatedAt ? new Date(a.updatedAt).getTime() : 0);
         const timeB = b.lastMessageTime || (b.updatedAt ? new Date(b.updatedAt).getTime() : 0);
         return timeB - timeA;
       });
+
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(sortedList));
+        } catch {}
+      }
+
+      return sortedList;
     });
 
     // Optimistic state update in orders context if order thread

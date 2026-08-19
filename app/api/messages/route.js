@@ -4,6 +4,15 @@ import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 
 export const dynamic = 'force-dynamic';
 
+const parseMessageTime = (msg) => {
+  if (!msg) return 0;
+  const raw = msg.timestamp || msg.created_at || msg.createdAt || msg.time;
+  if (!raw) return 0;
+  if (typeof raw === 'number') return raw;
+  const parsed = new Date(raw).getTime();
+  return isNaN(parsed) ? 0 : parsed;
+};
+
 export async function GET(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
@@ -197,7 +206,7 @@ export async function GET(request) {
           });
         }
 
-        convDirectMsgs.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+        convDirectMsgs.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
 
         // Compute role-appropriate unread count
         const unreadCount = isAdmin 
@@ -299,7 +308,7 @@ export async function GET(request) {
         } catch {}
       }
 
-      mappedMessages.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+      mappedMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
       
       return NextResponse.json({ messages: mappedMessages });
     }
@@ -409,22 +418,22 @@ export async function POST(request) {
           : (cleanUserEmail && cleanUserEmail !== 'client@studio.com' ? `support-${cleanUserEmail}` : 'general-support');
       }
 
-      // Upsert conversation to prevent Foreign Key constraint violations
+      // Upsert conversation to prevent Foreign Key constraint violations and ensure persistent existence
       try {
+        let orderInfo = null;
+        if (rawOrderId) {
+          const { data: o } = await supabase.from('orders').select('title, client_name, client_email, notes').eq('id', rawOrderId).maybeSingle();
+          orderInfo = o;
+        }
+
+        const fallbackName = user?.user_metadata?.full_name || (user?.email ? user.email.split('@')[0] : 'Client');
+        const finalClientName = isAdmin ? (orderInfo?.client_name || 'Client') : (payload.sender_name || payload.senderName || fallbackName);
+        const finalClientEmail = isAdmin ? (orderInfo?.client_email || 'client@studio.com') : (payload.client_email || cleanUserEmail);
+        const finalOrderTitle = orderInfo?.title || payload.order_title || payload.orderTitle || (isOrder ? `Order #${rawOrderId}` : 'Live Support');
+
         const { data: existingConv } = await supabase.from('conversations').select('*').eq('id', convId).maybeSingle();
 
         if (!existingConv) {
-          let orderInfo = null;
-          if (rawOrderId) {
-            const { data: o } = await supabase.from('orders').select('title, client_name, client_email, notes').eq('id', rawOrderId).maybeSingle();
-            orderInfo = o;
-          }
-
-          const fallbackName = user?.user_metadata?.full_name || (user?.email ? user.email.split('@')[0] : 'Client');
-          const finalClientName = isAdmin ? (orderInfo?.client_name || 'Client') : (payload.sender_name || payload.senderName || fallbackName);
-          const finalClientEmail = isAdmin ? (orderInfo?.client_email || 'client@studio.com') : (payload.client_email || cleanUserEmail);
-          const finalOrderTitle = orderInfo?.title || payload.order_title || payload.orderTitle || (isOrder ? `Order #${rawOrderId}` : 'Live Support');
-
           await supabase.from('conversations').insert([{
             id: convId,
             order_id: rawOrderId,
@@ -439,6 +448,12 @@ export async function POST(request) {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }]);
+        } else {
+          await supabase.from('conversations').update({
+            client_name: existingConv.client_name === 'Guest Client' && finalClientName !== 'Guest Client' ? finalClientName : existingConv.client_name,
+            client_email: (existingConv.client_email === 'guest@bdigitizing.pro' || !existingConv.client_email) && finalClientEmail !== 'guest@bdigitizing.pro' ? finalClientEmail : existingConv.client_email,
+            updated_at: new Date().toISOString()
+          }).eq('id', convId);
         }
       } catch (convUpsertErr) {
         console.warn('Conversation upsert notice:', convUpsertErr.message);

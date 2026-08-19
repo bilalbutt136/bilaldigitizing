@@ -93,20 +93,28 @@ export const resolveThreadInfo = (conv, orders = []) => {
   };
 };
 
+const parseMessageTime = (msg) => {
+  if (!msg) return 0;
+  const raw = msg.timestamp || msg.created_at || msg.createdAt || msg.time;
+  if (!raw) return 0;
+  if (typeof raw === 'number') return raw;
+  const parsed = new Date(raw).getTime();
+  return isNaN(parsed) ? 0 : parsed;
+};
+
 // Helper to clean, deduplicate, and sort conversation threads by latest message time
 const deduplicateThreads = (rawList) => {
   if (!Array.isArray(rawList)) return [];
   const map = new Map();
   rawList.forEach(conv => {
     const cleanMessages = (conv.messages || []).filter(m => m.id);
+    cleanMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
 
     const key = (conv.id || conv.clientEmail || conv.clientName || '').toLowerCase().trim();
     if (!key) return;
 
     const lastMsg = cleanMessages[cleanMessages.length - 1];
-    const lastTime = lastMsg?.timestamp && !isNaN(new Date(lastMsg.timestamp).getTime())
-      ? new Date(lastMsg.timestamp).getTime()
-      : (conv.updatedAt ? new Date(conv.updatedAt).getTime() : 0);
+    const lastTime = lastMsg ? parseMessageTime(lastMsg) : (conv.updatedAt ? new Date(conv.updatedAt).getTime() : 0);
 
     const convUnread = conv.adminUnreadCount ?? conv.unreadCount ?? 0;
 
@@ -122,14 +130,13 @@ const deduplicateThreads = (rawList) => {
       const existing = map.get(key);
       const combinedMessages = [...(existing.messages || [])];
       cleanMessages.forEach(m => {
-        if (!combinedMessages.some(ex => ex.id === m.id || (ex.text === m.text && Math.abs(new Date(ex.timestamp) - new Date(m.timestamp)) < 2000))) {
+        if (!combinedMessages.some(ex => ex.id === m.id || (ex.text === m.text && Math.abs(parseMessageTime(ex) - parseMessageTime(m)) < 2000))) {
           combinedMessages.push(m);
         }
       });
+      combinedMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
       const updatedLastMsg = combinedMessages[combinedMessages.length - 1];
-      const updatedLastTime = updatedLastMsg?.timestamp && !isNaN(new Date(updatedLastMsg.timestamp).getTime())
-        ? new Date(updatedLastMsg.timestamp).getTime()
-        : (existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0);
+      const updatedLastTime = updatedLastMsg ? parseMessageTime(updatedLastMsg) : (existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0);
 
       const combinedUnread = Math.max(existing.adminUnreadCount || 0, convUnread);
 
@@ -156,6 +163,7 @@ export const AdminChatInbox = () => {
   const { showToast, setSelectedOrderForDrawer, orders = [] } = useAppState();
 
   const [conversations, setConversations] = useState([]);
+  const cacheKey = 'bdigi_admin_inbox_cache';
 
   const [activeChatId, setActiveChatId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -171,6 +179,22 @@ export const AdminChatInbox = () => {
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
+  // Instant local cache hydration on mount for zero-latency load on refresh
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setConversations(parsed);
+            if (parsed[0]?.id) setActiveChatId(parsed[0].id);
+          }
+        }
+      } catch {}
+    }
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
     const loadChats = async () => {
@@ -185,14 +209,20 @@ export const AdminChatInbox = () => {
             if (!existing) return fc;
             const combined = [...(fc.messages || [])];
             (existing.messages || []).forEach(em => {
-              if (!combined.some(m => m.id === em.id || (m.text === em.text && Math.abs(new Date(m.timestamp) - new Date(em.timestamp)) < 5000))) {
+              if (!combined.some(m => m.id === em.id || (m.text === em.text && Math.abs(parseMessageTime(m) - parseMessageTime(em)) < 5000))) {
                 combined.push(em);
               }
             });
-            combined.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+            combined.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
             return { ...fc, messages: combined };
           });
-          return deduplicateThreads(merged);
+          const deduplicated = deduplicateThreads(merged);
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem(cacheKey, JSON.stringify(deduplicated));
+            } catch {}
+          }
+          return deduplicated;
         });
         if (!activeChatId && data[0]?.id) {
           setActiveChatId(data[0].id);
@@ -256,7 +286,7 @@ export const AdminChatInbox = () => {
           const updated = safePrev.map(conv => {
             if (conv.id === newMsg.conversation_id) {
               const currentMsgs = conv.messages || [];
-              const existsIndex = currentMsgs.findIndex(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(new Date(m.timestamp) - new Date(newMsg.timestamp)) < 5000));
+              const existsIndex = currentMsgs.findIndex(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(parseMessageTime(m) - parseMessageTime(newMsg)) < 5000));
               
               let nextMsgs;
               if (existsIndex >= 0) {
@@ -265,6 +295,7 @@ export const AdminChatInbox = () => {
               } else {
                 nextMsgs = [...currentMsgs, newMsg];
               }
+              nextMsgs.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
               
               const isCurrentlyOpen = activeChatId === conv.id;
               return {
@@ -280,7 +311,13 @@ export const AdminChatInbox = () => {
             return conv;
           });
 
-          return deduplicateThreads(updated);
+          const deduplicated = deduplicateThreads(updated);
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem(cacheKey, JSON.stringify(deduplicated));
+            } catch {}
+          }
+          return deduplicated;
         });
       },
       (convPayload) => {
@@ -489,19 +526,31 @@ export const AdminChatInbox = () => {
     };
 
     // Optimistic UI update
-    setConversations(prev => prev.map(conv => {
-      if (conv.id === currentActiveChatId) {
-        return {
-          ...conv,
-          unreadCount: 0,
-          adminUnreadCount: 0,
-          messages: [...(conv.messages || []), newMsg],
-          updatedAt: nowIso,
-          lastMessageTime: Date.now()
-        };
+    setConversations(prev => {
+      const updated = prev.map(conv => {
+        if (conv.id === currentActiveChatId) {
+          const nextMsgs = [...(conv.messages || []), newMsg];
+          nextMsgs.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+          return {
+            ...conv,
+            unreadCount: 0,
+            adminUnreadCount: 0,
+            messages: nextMsgs,
+            updatedAt: nowIso,
+            lastMessageTime: Date.now()
+          };
+        }
+        return conv;
+      });
+
+      const deduplicated = deduplicateThreads(updated);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(deduplicated));
+        } catch {}
       }
-      return conv;
-    }));
+      return deduplicated;
+    });
 
     setReplyInput('');
     setAttachedFile(null);

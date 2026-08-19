@@ -25,6 +25,16 @@ import {
   Reply
 } from 'lucide-react';
 
+// Format timestamp safely to human-readable string
+const parseMessageTime = (msg) => {
+  if (!msg) return 0;
+  const raw = msg.timestamp || msg.created_at || msg.createdAt || msg.time;
+  if (!raw) return 0;
+  if (typeof raw === 'number') return raw;
+  const parsed = new Date(raw).getTime();
+  return isNaN(parsed) ? 0 : parsed;
+};
+
 const formatChatTime = (timestamp) => {
   if (!timestamp) return 'Just now';
   try {
@@ -82,9 +92,26 @@ export const ClientLiveChatWidget = () => {
   const clientCompany = activeUser?.company || `${cleanName}'s Account`;
   const avatarUrl = activeUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0f172a&color=fff`;
 
+  const cacheKey = `bdigi_widget_cache_${clientEmail || 'guest'}`;
+
   const targetConvId = clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')
     ? `support-${clientEmail}`
     : 'general-support';
+
+  // Instant local cache hydration on mount for zero-latency load on refresh
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setChats(parsed);
+          }
+        }
+      } catch {}
+    }
+  }, [cacheKey]);
 
   // Live typing subscription from admin
   useEffect(() => {
@@ -133,21 +160,28 @@ export const ClientLiveChatWidget = () => {
         if (data && data.length > 0 && isMounted) {
           setChats(prev => {
             const safePrev = Array.isArray(prev) ? prev : [];
-            return data.map(remoteConv => {
+            const merged = data.map(remoteConv => {
               const localConv = safePrev.find(c => c.id === remoteConv.id || (isSupportId(c.id) && isSupportId(remoteConv.id)));
               if (!localConv) return remoteConv;
               const combinedMessages = [...(remoteConv.messages || [])];
               (localConv.messages || []).forEach(lm => {
-                if (!combinedMessages.some(rm => rm.id === lm.id || (rm.text === lm.text && Math.abs(new Date(rm.timestamp) - new Date(lm.timestamp)) < 5000))) {
+                if (!combinedMessages.some(rm => rm.id === lm.id || (rm.text === lm.text && Math.abs(parseMessageTime(rm) - parseMessageTime(lm)) < 5000))) {
                   combinedMessages.push(lm);
                 }
               });
-              combinedMessages.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+              combinedMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
               return {
                 ...remoteConv,
                 messages: combinedMessages
               };
             });
+
+            if (typeof window !== 'undefined') {
+              try {
+                localStorage.setItem(cacheKey, JSON.stringify(merged));
+              } catch {}
+            }
+            return merged;
           });
         }
       }
@@ -193,45 +227,55 @@ export const ClientLiveChatWidget = () => {
             (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail);
           const exists = safePrev.some(isTargetConv);
 
+          let nextChats;
           if (!exists) {
             const newThread = {
               id: newMsg.conversation_id,
               clientName: newMsg.senderName || cleanName,
               clientEmail: clientEmail,
-              clientCompany: clientCompany,
-              orderId: 'General Inquiries',
-              orderTitle: 'Live Support',
+              company: clientCompany,
+              avatar: avatarUrl,
               status: 'online',
-              unreadCount: newMsg.sender === 'admin' ? 1 : 0,
-              clientUnreadCount: newMsg.sender === 'admin' ? 1 : 0,
+              unreadCount: 0,
+              clientUnreadCount: 0,
               messages: [newMsg],
+              createdAt: newMsg.timestamp,
               updatedAt: newMsg.timestamp
             };
-            return [newThread, ...safePrev];
+            nextChats = [newThread, ...safePrev];
+          } else {
+            nextChats = safePrev.map(c => {
+              if (isTargetConv(c)) {
+                const currentMsgs = c.messages || [];
+                const existsIndex = currentMsgs.findIndex(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(parseMessageTime(m) - parseMessageTime(newMsg)) < 5000));
+                let nextMsgs;
+                if (existsIndex >= 0) {
+                  nextMsgs = [...currentMsgs];
+                  nextMsgs[existsIndex] = { ...nextMsgs[existsIndex], ...newMsg };
+                } else {
+                  nextMsgs = [...currentMsgs, newMsg];
+                }
+                nextMsgs.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+
+                return {
+                  ...c,
+                  messages: nextMsgs,
+                  unreadCount: isOpen ? 0 : (c.unreadCount || 0) + (newMsg.sender === 'admin' ? 1 : 0),
+                  clientUnreadCount: isOpen ? 0 : (c.clientUnreadCount || 0) + (newMsg.sender === 'admin' ? 1 : 0),
+                  updatedAt: newMsg.timestamp
+                };
+              }
+              return c;
+            });
           }
 
-          return safePrev.map(c => {
-            if (isTargetConv(c)) {
-              const currentMsgs = c.messages || [];
-              const existsIndex = currentMsgs.findIndex(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(new Date(m.timestamp) - new Date(newMsg.timestamp)) < 5000));
-              let nextMsgs;
-              if (existsIndex >= 0) {
-                nextMsgs = [...currentMsgs];
-                nextMsgs[existsIndex] = { ...nextMsgs[existsIndex], ...newMsg };
-              } else {
-                nextMsgs = [...currentMsgs, newMsg];
-              }
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem(cacheKey, JSON.stringify(nextChats));
+            } catch {}
+          }
 
-              return {
-                ...c,
-                messages: nextMsgs,
-                unreadCount: isOpen ? 0 : (c.unreadCount || 0) + (newMsg.sender === 'admin' ? 1 : 0),
-                clientUnreadCount: isOpen ? 0 : (c.clientUnreadCount || 0) + (newMsg.sender === 'admin' ? 1 : 0),
-                updatedAt: newMsg.timestamp
-              };
-            }
-            return c;
-          });
+          return nextChats;
         });
       },
       (convPayload) => {
@@ -434,38 +478,49 @@ export const ClientLiveChatWidget = () => {
       const isTarget = (c) => c.id === convId || (isSupportId(c.id) && isSupportId(convId)) || (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail);
       const exists = safePrev.some(isTarget);
 
+      let nextChats;
       if (exists) {
-        return safePrev.map(c => {
+        nextChats = safePrev.map(c => {
           if (isTarget(c)) {
-            const alreadyHas = (c.messages || []).some(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(new Date(m.timestamp) - new Date(newMsg.timestamp)) < 2000));
+            const alreadyHas = (c.messages || []).some(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(parseMessageTime(m) - parseMessageTime(newMsg)) < 2000));
             if (alreadyHas) return c;
+            const updatedMsgs = [...(c.messages || []), newMsg];
+            updatedMsgs.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
             return {
               ...c,
               unreadCount: 0,
               clientUnreadCount: 0,
-              messages: [...(c.messages || []), newMsg],
+              messages: updatedMsgs,
               updatedAt: nowIso
             };
           }
           return c;
         });
+      } else {
+        const newThread = {
+          id: convId,
+          clientName: cleanName,
+          clientEmail: clientEmail,
+          company: clientCompany,
+          avatar: avatarUrl,
+          orderId: 'General Inquiries',
+          orderTitle: 'Live Digitizer & Studio Helpdesk',
+          status: 'online',
+          unreadCount: 0,
+          clientUnreadCount: 0,
+          messages: [newMsg],
+          updatedAt: nowIso
+        };
+        nextChats = [newThread, ...safePrev];
       }
 
-      const newThread = {
-        id: convId,
-        clientName: cleanName,
-        clientEmail: clientEmail,
-        company: clientCompany,
-        avatar: avatarUrl,
-        orderId: 'General Inquiries',
-        orderTitle: 'Live Digitizer & Studio Helpdesk',
-        status: 'online',
-        unreadCount: 0,
-        clientUnreadCount: 0,
-        messages: [newMsg],
-        updatedAt: nowIso
-      };
-      return [newThread, ...safePrev];
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(nextChats));
+        } catch {}
+      }
+
+      return nextChats;
     });
 
     if (isSupabaseConfigured) {
