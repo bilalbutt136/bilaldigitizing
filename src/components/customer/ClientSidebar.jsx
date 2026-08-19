@@ -52,7 +52,7 @@ export const ClientSidebar = ({
         },
         { 
           id: 'support', 
-          label: 'Messages & Support', 
+          label: 'Messages', 
           icon: MessageSquare, 
           badge: unreadChatCount > 0 ? unreadChatCount : null,
           liveDot: true 

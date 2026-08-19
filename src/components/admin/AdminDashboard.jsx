@@ -204,7 +204,7 @@ export const AdminDashboard = () => {
         { id: 'clients', label: 'Accounts & Wallets', icon: Users, badge: safeClients.length },
         { 
           id: 'chat', 
-          label: 'Live Chat', 
+          label: 'Messages', 
           icon: MessageSquare, 
           badge: adminUnreadCount > 0 ? adminUnreadCount : null,
           isUnread: adminUnreadCount > 0
@@ -283,7 +283,7 @@ export const AdminDashboard = () => {
               {activeTab === 'services' && 'Service Rates & Tiers'}
               {activeTab === 'portfolio' && 'Portfolio & Work Gallery'}
               {activeTab === 'clients' && 'Client Directory'}
-              {activeTab === 'chat' && 'Live Chat & Support'}
+              {activeTab === 'chat' && 'Messages'}
               {activeTab === 'promotions' && 'Promotions'}
               {activeTab === 'contact' && 'Contact Info'}
               {activeTab === 'settings' && 'Studio Settings'}

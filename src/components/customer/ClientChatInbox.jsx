@@ -30,7 +30,11 @@ import {
   X,
   FileText,
   Loader2,
-  Reply
+  Reply,
+  Headphones,
+  LifeBuoy,
+  Inbox,
+  ShoppingBag
 } from 'lucide-react';
 
 // Format timestamp safely to human-readable string
@@ -93,9 +97,10 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
   const [mounted, setMounted] = useState(false);
   const [conversations, setConversations] = useState([]);
+  const [activeSection, setActiveSection] = useState(initialOrderId ? 'conversations' : 'conversations'); // 'conversations' (My Conversations) | 'support' (Support)
+  const [subFilter, setSubFilter] = useState('all'); // 'all' | 'unread'
   const [activeChatId, setActiveChatId] = useState(initialOrderId ? (initialOrderId.startsWith('order-') ? initialOrderId : `order-${initialOrderId}`) : defaultSupportId);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterMode, setFilterMode] = useState('all'); // 'all' | 'orders' | 'support' | 'unread'
   const [messageInput, setMessageInput] = useState('');
   const [attachedFile, setAttachedFile] = useState(null); // { name, url, size, format }
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
@@ -725,20 +730,39 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     }, 2500);
   };
 
-  // Filter conversations based on search and selected filterMode
-  const filteredConversations = conversations.filter(conv => {
-    const matchesSearch = 
-      (conv.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (conv.orderId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (conv.orderTitle || '').toLowerCase().includes(searchTerm.toLowerCase());
+  // Separate into 2 core messaging sections: My Conversations (Orders) vs Support
+  const orderConversations = useMemo(() => {
+    return conversations.filter(c => c.rawOrderId || c.id?.startsWith('order-'));
+  }, [conversations]);
 
-    if (!matchesSearch) return false;
+  const supportConversations = useMemo(() => {
+    return conversations.filter(c => isSupportId(c.id));
+  }, [conversations]);
 
-    const unreadNum = getThreadUnreadCount(conv);
-    if (filterMode === 'orders') return conv.id.startsWith('order-') || conv.rawOrderId;
-    if (filterMode === 'support') return isSupportId(conv.id);
-    if (filterMode === 'unread') return unreadNum > 0;
-    return true;
+  const orderUnreadTotal = useMemo(() => {
+    return orderConversations.reduce((sum, c) => sum + getThreadUnreadCount(c), 0);
+  }, [orderConversations]);
+
+  const supportUnreadTotal = useMemo(() => {
+    return supportConversations.reduce((sum, c) => sum + getThreadUnreadCount(c), 0);
+  }, [supportConversations]);
+
+  const currentSectionThreads = activeSection === 'conversations' ? orderConversations : supportConversations;
+
+  // Filter conversations based on search, activeSection, and subFilter
+  const filteredConversations = currentSectionThreads.filter(conv => {
+    if (subFilter === 'unread') {
+      if (getThreadUnreadCount(conv) === 0) return false;
+    }
+
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase().trim();
+    return (
+      (conv.title || '').toLowerCase().includes(term) ||
+      (conv.orderId || '').toLowerCase().includes(term) ||
+      (conv.orderTitle || '').toLowerCase().includes(term) ||
+      (conv.messages || []).some(m => (m.text || '').toLowerCase().includes(term))
+    );
   });
 
   const handleSendMessage = async (e) => {
@@ -928,50 +952,124 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
             overflow: 'hidden'
           }}
         >
-          {/* Thread List Header & Search */}
-          <div style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface, #ffffff)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <div style={{
-                  width: '32px',
-                  height: '32px',
+          {/* Thread List Header & Section Switcher */}
+          <div style={{ padding: '0.85rem 1rem', borderBottom: '1.5px solid var(--color-border)', background: 'var(--color-surface, #ffffff)' }}>
+            
+            {/* Primary 2-Section Switcher: My Conversations vs Support */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              background: '#f1f5f9',
+              padding: '3px',
+              borderRadius: '10px',
+              marginBottom: '0.75rem',
+              gap: '4px'
+            }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSection('conversations');
+                  const first = orderConversations[0];
+                  if (first && !orderConversations.some(c => c.id === activeChatId)) {
+                    setActiveChatId(first.id);
+                  }
+                }}
+                style={{
+                  padding: '0.45rem 0.5rem',
                   borderRadius: '8px',
-                  background: 'var(--color-primary-light, rgba(249, 115, 22, 0.1))',
-                  color: 'var(--color-primary, var(--orange-600))',
+                  border: 'none',
+                  background: activeSection === 'conversations' ? '#ffffff' : 'transparent',
+                  color: activeSection === 'conversations' ? 'var(--orange-600)' : 'var(--navy-700)',
+                  fontWeight: activeSection === 'conversations' ? 800 : 600,
+                  fontSize: '0.78rem',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <MessageSquare size={16} />
-                </div>
-                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--color-text-primary, var(--navy-950))', margin: 0 }}>
-                  Conversations
-                </h3>
-              </div>
-              <span style={{
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                color: 'var(--color-text-muted, var(--text-muted))',
-                background: 'var(--color-subtle, #f1f5f9)',
-                padding: '0.2rem 0.5rem',
-                borderRadius: '6px'
-              }}>
-                {conversations.length} Threads
-              </span>
+                  justifyContent: 'center',
+                  gap: '5px',
+                  cursor: 'pointer',
+                  boxShadow: activeSection === 'conversations' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Layers size={14} style={{ color: activeSection === 'conversations' ? 'var(--orange-600)' : '#64748b' }} />
+                <span>My Conversations</span>
+                {orderUnreadTotal > 0 ? (
+                  <span style={{
+                    background: '#ef4444',
+                    color: '#ffffff',
+                    fontSize: '0.625rem',
+                    fontWeight: 900,
+                    padding: '1px 5px',
+                    borderRadius: '9999px'
+                  }}>
+                    {orderUnreadTotal}
+                  </span>
+                ) : (
+                  <span style={{ fontSize: '0.68rem', opacity: 0.65, fontWeight: 700 }}>
+                    ({orderConversations.length})
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSection('support');
+                  const first = supportConversations[0] || { id: defaultSupportId };
+                  if (!supportConversations.some(c => c.id === activeChatId)) {
+                    setActiveChatId(first.id);
+                  }
+                }}
+                style={{
+                  padding: '0.45rem 0.5rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: activeSection === 'support' ? '#ffffff' : 'transparent',
+                  color: activeSection === 'support' ? 'var(--orange-600)' : 'var(--navy-700)',
+                  fontWeight: activeSection === 'support' ? 800 : 600,
+                  fontSize: '0.78rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '5px',
+                  cursor: 'pointer',
+                  boxShadow: activeSection === 'support' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Headphones size={14} style={{ color: activeSection === 'support' ? 'var(--orange-600)' : '#64748b' }} />
+                <span>Support</span>
+                {supportUnreadTotal > 0 ? (
+                  <span style={{
+                    background: '#ef4444',
+                    color: '#ffffff',
+                    fontSize: '0.625rem',
+                    fontWeight: 900,
+                    padding: '1px 5px',
+                    borderRadius: '9999px'
+                  }}>
+                    {supportUnreadTotal}
+                  </span>
+                ) : (
+                  <span style={{ fontSize: '0.68rem', opacity: 0.65, fontWeight: 700 }}>
+                    ({supportConversations.length})
+                  </span>
+                )}
+              </button>
             </div>
 
             {/* Search Input */}
-            <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
+            <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
               <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search orders, threads..."
+                placeholder={activeSection === 'conversations' ? "Search order discussions, designs..." : "Search support inquiries..."}
                 style={{
                   width: '100%',
-                  padding: '0.5rem 0.75rem 0.5rem 2.2rem',
-                  fontSize: '0.825rem',
+                  padding: '0.45rem 0.75rem 0.45rem 2.2rem',
+                  fontSize: '0.8rem',
                   borderRadius: '8px',
                   border: '1px solid var(--color-border, #cbd5e1)',
                   background: 'var(--color-surface, #ffffff)',
@@ -989,45 +1087,34 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               )}
             </div>
 
-            {/* Filter Pills */}
-            <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
-              {[
-                { id: 'all', label: 'All' },
-                { id: 'orders', label: 'Orders' },
-                { id: 'support', label: 'Support' },
-                { id: 'unread', label: 'Unread' }
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setFilterMode(tab.id)}
-                  style={{
-                    padding: '0.25rem 0.6rem',
-                    fontSize: '0.725rem',
-                    fontWeight: 700,
-                    borderRadius: '6px',
-                    border: 'none',
-                    background: filterMode === tab.id ? 'var(--navy-900)' : '#f1f5f9',
-                    color: filterMode === tab.id ? '#ffffff' : 'var(--navy-700)',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  {tab.label}
-                  {tab.id === 'unread' && conversations.filter(c => getThreadUnreadCount(c) > 0).length > 0 && (
-                    <span style={{
-                      marginLeft: '0.35rem',
-                      background: 'var(--orange-500)',
-                      color: '#fff',
-                      fontSize: '0.65rem',
-                      padding: '0.05rem 0.35rem',
-                      borderRadius: '999px'
-                    }}>
-                      {conversations.filter(c => getThreadUnreadCount(c) > 0).length}
-                    </span>
-                  )}
-                </button>
-              ))}
+            {/* Sub-Filters: All | Unread */}
+            <div style={{ display: 'flex', gap: '0.35rem' }}>
+              <button
+                type="button"
+                className={`btn btn-sm ${subFilter === 'all' ? 'btn-primary-orange' : 'btn-outline'}`}
+                style={{
+                  padding: '0.2rem 0.55rem',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  borderRadius: '6px'
+                }}
+                onClick={() => setSubFilter('all')}
+              >
+                All ({currentSectionThreads.length})
+              </button>
+              <button
+                type="button"
+                className={`btn btn-sm ${subFilter === 'unread' ? 'btn-primary-orange' : 'btn-outline'}`}
+                style={{
+                  padding: '0.2rem 0.55rem',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  borderRadius: '6px'
+                }}
+                onClick={() => setSubFilter('unread')}
+              >
+                Unread ({currentSectionThreads.filter(c => getThreadUnreadCount(c) > 0).length})
+              </button>
             </div>
           </div>
 
