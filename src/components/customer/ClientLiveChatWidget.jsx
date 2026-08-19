@@ -277,16 +277,37 @@ export const ClientLiveChatWidget = () => {
     };
   }, [mounted, isExcluded]);
 
-  // Safely resolve the active chat thread for regular support chat
+  // Safely resolve the active chat thread for regular support chat, aggregating all support messages
   const safeChats = Array.isArray(chats) ? chats : [];
-  const clientThread = safeChats.find(c => 
+  const supportConvs = safeChats.filter(c => 
     c.id === targetConvId ||
     (isSupportId(c.id) && isSupportId(targetConvId)) ||
-    (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail) ||
+    (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail && !c.orderId && !c.order_id && !c.id?.startsWith('order-')) ||
     (!c.orderId && !c.order_id && !c.id?.startsWith('order-'))
-  ) || {
+  );
+
+  const aggregatedSupportMessagesMap = new Map();
+  supportConvs.forEach(conv => {
+    (conv.messages || []).forEach(m => {
+      if (m && (m.id || m.text)) {
+        const key = m.id || `${m.sender}-${m.text}-${m.timestamp}`;
+        aggregatedSupportMessagesMap.set(key, m);
+      }
+    });
+  });
+
+  const combinedSupportMessages = Array.from(aggregatedSupportMessagesMap.values());
+  combinedSupportMessages.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+
+  const clientThread = {
     id: targetConvId,
-    messages: []
+    clientName: cleanName,
+    clientEmail: clientEmail,
+    clientCompany: clientCompany,
+    orderId: 'General Inquiries',
+    orderTitle: 'Live Support',
+    status: 'online',
+    messages: combinedSupportMessages
   };
 
   const unreadCount = !isOpen

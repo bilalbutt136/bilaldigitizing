@@ -15,34 +15,81 @@ export async function GET(request) {
 
     if (action === 'fetchConversations') {
       const cleanUserEmail = (user?.email || emailParam || '').toLowerCase().trim();
-      let convQuery = supabase.from('conversations').select('*').order('updated_at', { ascending: false });
+      
+      let convData = [];
+      if (isAdmin) {
+        const { data, error } = await supabase
+          .from('conversations')
+          .select('*')
+          .order('updated_at', { ascending: false });
+        if (!error && data) convData = data;
+      } else {
+        const collectedMap = new Map();
 
-      // If not an admin, show conversations matching user's email or support threads
-      if (!isAdmin) {
-        if (cleanUserEmail && cleanUserEmail !== 'client@studio.com') {
-          let orderThreadIds = [];
+        // 1. Fetch conversations by client email
+        if (cleanUserEmail && cleanUserEmail !== 'client@studio.com' && !cleanUserEmail.includes('guest@bdigitizing.pro')) {
           try {
-            const { data: userOrders } = await supabase.from('orders').select('id').ilike('client_email', cleanUserEmail);
-            if (userOrders && userOrders.length > 0) {
-              orderThreadIds = userOrders.map(o => `order-${o.id}`);
-            }
+            const { data: byEmail } = await supabase
+              .from('conversations')
+              .select('*')
+              .ilike('client_email', cleanUserEmail);
+            (byEmail || []).forEach(c => collectedMap.set(c.id, c));
           } catch {}
 
-          const orderOrFilter = orderThreadIds.length > 0 ? `,id.in.(${orderThreadIds.join(',')})` : '';
-          convQuery = convQuery.or(`client_email.ilike.${cleanUserEmail},id.eq.general-support,id.ilike.support-${cleanUserEmail}%,id.ilike.support-guest%${orderOrFilter}`);
+          try {
+            const { data: bySupportId } = await supabase
+              .from('conversations')
+              .select('*')
+              .or(`id.eq.general-support,id.ilike.support-${cleanUserEmail}%,id.ilike.support-guest%`);
+            (bySupportId || []).forEach(c => collectedMap.set(c.id, c));
+          } catch {}
+
+          // 2. Fetch conversations associated with client's orders
+          try {
+            const { data: userOrders } = await supabase
+              .from('orders')
+              .select('id, title, client_name, client_email')
+              .ilike('client_email', cleanUserEmail);
+            
+            if (userOrders && userOrders.length > 0) {
+              const orderIds = userOrders.map(o => o.id);
+              const threadIds = userOrders.map(o => `order-${o.id}`);
+              
+              const { data: byOrderIds } = await supabase
+                .from('conversations')
+                .select('*')
+                .in('order_id', orderIds);
+              (byOrderIds || []).forEach(c => collectedMap.set(c.id, c));
+
+              const { data: byThreadIds } = await supabase
+                .from('conversations')
+                .select('*')
+                .in('id', threadIds);
+              (byThreadIds || []).forEach(c => collectedMap.set(c.id, c));
+            }
+          } catch {}
         } else {
-          convQuery = convQuery.or(`id.eq.general-support,id.ilike.support-guest%`);
+          try {
+            const { data: generalConvs } = await supabase
+              .from('conversations')
+              .select('*')
+              .or(`id.eq.general-support,id.ilike.support-guest%`);
+            (generalConvs || []).forEach(c => collectedMap.set(c.id, c));
+          } catch {}
         }
+
+        convData = Array.from(collectedMap.values());
       }
 
-      const { data: convData, error: convError } = await convQuery;
-      if (convError) {
-        console.error('[Messages API fetchConversations error]:', convError.message);
-        return NextResponse.json({ conversations: [] });
+      // Build target list of conversation IDs for messages lookup
+      const conversationIdSet = new Set((convData || []).map(c => c.id));
+      conversationIdSet.add('general-support');
+      if (cleanUserEmail && cleanUserEmail !== 'client@studio.com') {
+        conversationIdSet.add(`support-${cleanUserEmail}`);
       }
 
-      const conversationIds = (convData || []).map(c => c.id);
-      
+      const conversationIds = Array.from(conversationIdSet);
+
       let messagesData = [];
       if (conversationIds.length > 0) {
         const { data: mData, error: msgError } = await supabase
@@ -54,6 +101,31 @@ export async function GET(request) {
           messagesData = mData;
         }
       }
+
+      // Ensure any conversation that has messages exists in convData
+      const existingConvIds = new Set((convData || []).map(c => c.id));
+      messagesData.forEach(m => {
+        if (m.conversation_id && !existingConvIds.has(m.conversation_id)) {
+          const cId = m.conversation_id;
+          const isOrder = cId.startsWith('order-');
+          const rawId = isOrder ? cId.replace('order-', '') : null;
+          convData.push({
+            id: cId,
+            client_name: user?.user_metadata?.full_name || 'Client',
+            client_email: cleanUserEmail || 'client@studio.com',
+            client_company: 'Studio Client',
+            order_id: rawId,
+            order_title: isOrder ? `Order #${rawId}` : 'Live Support',
+            status: 'online',
+            admin_unread_count: 0,
+            client_unread_count: 0,
+            unread_count: 0,
+            created_at: m.created_at || new Date().toISOString(),
+            updated_at: m.created_at || new Date().toISOString()
+          });
+          existingConvIds.add(cId);
+        }
+      });
 
       const conversations = (convData || []).map(conv => {
         const mappedMessages = messagesData
