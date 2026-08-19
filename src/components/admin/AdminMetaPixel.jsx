@@ -44,7 +44,15 @@ export const AdminMetaPixel = () => {
     setIsSaving(true);
     
     try {
-      await updateSiteSettings({ metaPixelId: pixelId.trim() });
+      const trimmedId = pixelId.trim();
+      if (typeof window !== 'undefined' && trimmedId) {
+        try { localStorage.setItem('meta_pixel_id', trimmedId); } catch {}
+        if (window.fbq) {
+          window.fbq('init', trimmedId);
+          window.fbq('track', 'PageView');
+        }
+      }
+      await updateSiteSettings({ metaPixelId: trimmedId });
       showToast('Meta Pixel ID saved successfully. Tracking is now active.', 'success');
     } catch (error) {
       showToast('Failed to save Meta Pixel ID.', 'error');

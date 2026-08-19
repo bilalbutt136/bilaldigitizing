@@ -120,6 +120,12 @@ export const AuthModal = () => {
       }
 
       setIsAuthModalOpen(false);
+      
+      // Track Login Event
+      import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
+        trackMetaEvent('Login', { method: 'email', status: 'success' });
+      }).catch(() => {});
+
       if (result?.role === 'admin') {
         navigate('/admin-portal');
       } else {
@@ -164,6 +170,12 @@ export const AuthModal = () => {
       }
 
       setIsAuthModalOpen(false);
+
+      // Track CompleteRegistration Event
+      import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
+        trackMetaEvent('CompleteRegistration', { method: 'email', status: 'success' });
+      }).catch(() => {});
+
       navigate('/client-portal');
       if (orderWizardInitialData || authModalTarget === 'customer') {
         setTimeout(() => {

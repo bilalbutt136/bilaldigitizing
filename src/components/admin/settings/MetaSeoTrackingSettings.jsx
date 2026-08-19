@@ -79,8 +79,17 @@ export const MetaSeoTrackingSettings = () => {
     e?.preventDefault?.();
     setIsSaving(true);
     try {
+      const trimmedPixelId = metaPixelId.trim();
+      if (typeof window !== 'undefined' && trimmedPixelId) {
+        try { localStorage.setItem('meta_pixel_id', trimmedPixelId); } catch {}
+        if (window.fbq) {
+          window.fbq('init', trimmedPixelId);
+          window.fbq('track', 'PageView');
+        }
+      }
+
       await updateSiteSettings({
-        metaPixelId: metaPixelId.trim(),
+        metaPixelId: trimmedPixelId,
         googleAnalyticsId: googleAnalyticsId.trim(),
         tiktokPixelId: tiktokPixelId.trim(),
         enableAutoTracking,
@@ -100,14 +109,14 @@ export const MetaSeoTrackingSettings = () => {
 
   const handleSendTestEvent = async () => {
     try {
-      if (typeof window !== 'undefined' && window.fbq && metaPixelId) {
-        window.fbq('trackCustom', 'AdminPortalTestPing', {
-          time: new Date().toISOString(),
-          status: 'verified'
-        });
-      }
-      showToast('⚡ Live test tracking event dispatched!', 'success');
-      // Refresh event logs
+      const { trackMetaEvent } = await import('../../common/MetaPixelTracker');
+      trackMetaEvent('AdminPortalTestPing', {
+        time: new Date().toISOString(),
+        status: 'verified',
+        test_source: 'MetaSeoTrackingSettings'
+      }, 'Platform Admin');
+
+      showToast('⚡ Live test tracking event dispatched to Meta Pixel & Database!', 'success');
       setTimeout(loadEvents, 1000);
     } catch {
       showToast('Test event failed to send.', 'error');

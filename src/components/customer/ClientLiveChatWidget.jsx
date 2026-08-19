@@ -499,6 +499,14 @@ export const ClientLiveChatWidget = () => {
     const convId = clientThread.id || targetConvId;
     const nowIso = new Date().toISOString();
 
+    // Track Meta Pixel Contact Event
+    import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
+      trackMetaEvent('Contact', {
+        content_name: 'Client Live Chat',
+        category: 'Customer Support Inquiry'
+      });
+    }).catch(() => {});
+
     const newMsg = {
       id: 'msg-client-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
       conversation_id: convId,

@@ -211,10 +211,35 @@ export const CheckoutModal = () => {
     },
   ];
 
+  // Track InitiateCheckout when modal opens
+  useEffect(() => {
+    if (isCheckoutModalOpen && checkoutSession?.amount) {
+      import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
+        trackMetaEvent('InitiateCheckout', {
+          value: Number(checkoutSession.amount) || 0,
+          currency: 'USD',
+          order_id: checkoutSession?.orderId || null,
+          num_items: 1
+        });
+      }).catch(() => {});
+    }
+  }, [isCheckoutModalOpen, checkoutSession?.amount]);
+
   const handleSelectMethod = async (methodId) => {
+    const amount = parseFloat(checkoutSession?.amount || 0);
+
+    // Track AddPaymentInfo
+    import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
+      trackMetaEvent('AddPaymentInfo', {
+        payment_method: methodId,
+        value: amount,
+        currency: 'USD',
+        order_id: checkoutSession?.orderId || null
+      });
+    }).catch(() => {});
+
     // 1. Handle Studio Wallet payment directly
     if (methodId === 'studio_wallet') {
-      const amount = parseFloat(checkoutSession?.amount || 0);
       const currentBalance = parseFloat(walletBalance || 0);
       
       if (currentBalance < amount) {
@@ -232,6 +257,18 @@ export const CheckoutModal = () => {
         if (success) {
           setIsPaid(true);
           showToast('Payment successful! Funds deducted from your Studio Wallet.', 'success');
+
+          // Track Purchase Event
+          import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
+            trackMetaEvent('Purchase', {
+              value: amount,
+              currency: 'USD',
+              order_id: orderId,
+              content_name: 'Studio Wallet Payment',
+              content_type: 'product',
+              num_items: 1
+            });
+          }).catch(() => {});
           
           if (checkoutSession?.offerId) {
             try {

@@ -243,6 +243,17 @@ export const OrderWizardModal = () => {
   useEffect(() => {
     if (isOrderWizardOpen) {
       setCurrentStep(1);
+
+      // Track InitiateCheckout on Order Wizard open
+      import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
+        trackMetaEvent('InitiateCheckout', {
+          content_name: orderWizardInitialData?.title || 'Order Wizard Configurator',
+          content_category: orderWizardInitialData?.type || 'Custom Digitizing',
+          value: 10.00,
+          currency: 'USD'
+        });
+      }).catch(() => {});
+
       const code = orderWizardInitialData?.promoCode || siteSettings?.announcement?.promoCode || 'SAVE20';
       if (code) {
         setPromoCodeInput(code);

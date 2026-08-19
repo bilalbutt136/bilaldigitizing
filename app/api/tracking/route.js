@@ -9,14 +9,19 @@ export async function POST(request) {
 
     if (action === 'logEvent' && payload && typeof payload === 'object') {
       const sanitizedRecord = {
-        event_name: String(payload.event_name || payload.eventName || 'page_view').slice(0, 100),
-        event_data: typeof payload.event_data === 'object' ? payload.event_data : (payload.data || {}),
-        path: String(payload.path || payload.url || '').slice(0, 500),
-        created_at: new Date().toISOString()
+        event_name: String(payload.event_name || payload.eventName || 'PageView').slice(0, 100),
+        user_role: String(payload.user_role || payload.userRole || 'Guest Visitor').slice(0, 100),
+        source: String(payload.source || 'Visitor browser').slice(0, 100),
+        traffic_source: String(payload.traffic_source || payload.trafficSource || 'Direct').slice(0, 200),
+        value: String(payload.value !== undefined ? payload.value : '—').slice(0, 100),
+        page_path: String(payload.page_path || payload.pagePath || payload.path || payload.url || '/').slice(0, 500),
+        event_time: new Date().toISOString()
       };
 
       const { error } = await supabase.from('tracking_events').insert([sanitizedRecord]);
-      if (error) throw error;
+      if (error) {
+        console.warn('[Tracking API POST] Supabase insert warning:', error.message);
+      }
       return NextResponse.json({ success: true });
     }
 
