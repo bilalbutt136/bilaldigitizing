@@ -1,5 +1,5 @@
-// BDigitizing Studio PWA Service Worker with Instant Auto-Update
-const CACHE_VERSION = 'bdigi-pwa-v2-' + Date.now();
+// BDigitizing Studio PWA Service Worker
+const CACHE_VERSION = 'bdigi-pwa-v2.1';
 const STATIC_ASSETS = [
   '/favicon.svg',
   '/favicon.ico',
@@ -7,7 +7,6 @@ const STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_VERSION).then((cache) => {
       return cache.addAll(STATIC_ASSETS).catch((err) => {
