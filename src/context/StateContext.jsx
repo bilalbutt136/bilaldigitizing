@@ -152,7 +152,7 @@ export const StateProvider = ({ children }) => {
 
   // Global Theme Mode State ('light' | 'dark') & Color Preset
   const [theme, setThemeState] = useState('light');
-  const [colorTheme, setColorThemeState] = useState('executive-navy');
+  const [colorTheme, setColorThemeState] = useState('studio-orange');
   const [customBrandColors, setCustomBrandColorsState] = useState(null);
 
   const applyThemeToDOM = (tMode = theme, cPreset = colorTheme, cBrand = customBrandColors) => {
@@ -162,7 +162,7 @@ export const StateProvider = ({ children }) => {
 
   useEffect(() => {
     const savedMode = (typeof window !== 'undefined' && localStorage.getItem('bdigi_theme')) || 'light';
-    const savedPreset = (typeof window !== 'undefined' && localStorage.getItem('bdigi_color_theme')) || 'executive-navy';
+    const savedPreset = (typeof window !== 'undefined' && localStorage.getItem('bdigi_color_theme')) || 'studio-orange';
     const savedBrand = (typeof window !== 'undefined' && JSON.parse(localStorage.getItem('bdigi_custom_brand') || 'null')) || null;
 
     setThemeState(savedMode);

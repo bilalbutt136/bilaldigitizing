@@ -13,6 +13,101 @@
 
 export const THEME_PRESETS = [
   {
+    id: 'studio-orange',
+    name: 'Executive Studio Pro',
+    category: 'Creative Studio',
+    description: 'Precision luxury slate surfaces, obsidian headers, subtle warm ambient glow, and vivid amber CTA buttons.',
+    bestFor: 'High-End Commercial Digitizing & Vector Studio',
+    palette: {
+      primary: '#ea580c',
+      secondary: '#f97316',
+      accent: '#fb923c',
+      surface: '#ffffff'
+    },
+    tokens: {
+      light: {
+        '--color-primary': '#ea580c',
+        '--color-primary-hover': '#c2410c',
+        '--color-primary-light': '#fff7ed',
+        '--color-primary-glow': 'rgba(234, 88, 12, 0.28)',
+        '--color-primary-text': '#ffffff',
+        '--color-secondary': '#f97316',
+        '--color-accent': '#fb923c',
+        '--color-accent-light': '#fff7ed',
+        '--color-background': '#f6f8fb',
+        '--color-surface': '#ffffff',
+        '--color-surface-elevated': '#ffffff',
+        '--color-subtle': '#f1f5f9',
+        '--color-border': 'rgba(15, 23, 42, 0.09)',
+        '--color-border-hover': 'rgba(15, 23, 42, 0.22)',
+        '--color-border-focus': '#ea580c',
+        '--color-text-primary': '#0f172a',
+        '--color-text-secondary': '#334155',
+        '--color-text-muted': '#64748b',
+        '--color-text-on-primary': '#ffffff',
+        '--hero-bg': 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249, 115, 22, 0.06) 0%, rgba(241, 245, 249, 0.7) 50%, #f6f8fb 100%)',
+        '--hero-tabs-bg': '#ffffff',
+        '--hero-tabs-border': 'rgba(203, 213, 225, 0.85)',
+        '--hero-text-primary': '#0f172a',
+        '--hero-text-secondary': '#475569',
+        '--hero-card-bg': '#ffffff',
+        '--hero-card-border': 'rgba(226, 232, 240, 0.95)',
+        '--hero-card-shadow': '0 16px 40px -10px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.03)',
+        '--banner-bg': 'linear-gradient(135deg, #ffffff 0%, #fffbf6 50%, #f6f8fb 100%)',
+        '--banner-border': 'rgba(234, 88, 12, 0.16)',
+        '--banner-title': '#0f172a',
+        '--banner-desc': '#475569',
+        '--stats-bar-bg': '#f6f8fb',
+        '--stats-card-bg': '#ffffff',
+        '--stats-card-border': 'rgba(226, 232, 240, 0.95)',
+        '--stats-number-color': '#0f172a',
+        '--stats-label-color': '#64748b',
+        '--cta-bg': 'radial-gradient(ellipse 90% 70% at 50% 0%, rgba(249, 115, 22, 0.08) 0%, rgba(241, 245, 249, 0.6) 50%, #f6f8fb 100%)',
+        '--cta-title': '#0f172a',
+        '--cta-desc': '#475569',
+        '--cta-badge-bg': '#fff7ed',
+        '--cta-badge-border': '#fed7aa',
+        '--cta-badge-text': '#c2410c',
+        '--cta-btn-outline-color': '#0f172a',
+        '--cta-btn-outline-border': 'rgba(15, 23, 42, 0.2)'
+      },
+      dark: {
+        '--color-primary': '#fb923c',
+        '--color-primary-hover': '#f97316',
+        '--color-primary-light': 'rgba(251, 146, 60, 0.15)',
+        '--color-primary-glow': 'rgba(251, 146, 60, 0.35)',
+        '--color-primary-text': '#7c2d12',
+        '--color-secondary': '#fdba74',
+        '--color-accent': '#f97316',
+        '--color-accent-light': 'rgba(251, 146, 60, 0.1)',
+        '--color-background': '#0a0e17',
+        '--color-surface': '#111827',
+        '--color-surface-elevated': '#1a2234',
+        '--color-subtle': '#141d2f',
+        '--color-border': 'rgba(251, 146, 60, 0.18)',
+        '--color-border-hover': 'rgba(251, 146, 60, 0.32)',
+        '--color-border-focus': '#fb923c',
+        '--color-text-primary': '#f8fafc',
+        '--color-text-secondary': '#cbd5e1',
+        '--color-text-muted': '#94a3b8',
+        '--color-text-on-primary': '#0a0e17',
+        '--hero-bg': 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249, 115, 22, 0.18) 0%, rgba(124, 45, 18, 0.4) 50%, transparent 80%), linear-gradient(180deg, #0a0e17 0%, #111827 100%)',
+        '--hero-card-bg': '#111827',
+        '--hero-card-border': 'rgba(251, 146, 60, 0.22)',
+        '--hero-card-shadow': '0 20px 50px -15px rgba(0, 0, 0, 0.6)',
+        '--banner-bg': 'linear-gradient(135deg, #111827 0%, #1a2234 50%, #0a0e17 100%)',
+        '--banner-border': 'rgba(251, 146, 60, 0.24)',
+        '--stats-bar-bg': '#0a0e17',
+        '--stats-card-bg': '#111827',
+        '--stats-card-border': 'rgba(251, 146, 60, 0.18)',
+        '--cta-bg': 'radial-gradient(ellipse 90% 70% at 50% 0%, rgba(249, 115, 22, 0.18) 0%, rgba(124, 45, 18, 0.3) 50%, transparent 80%), linear-gradient(180deg, #0a0e17 0%, #111827 100%)',
+        '--cta-badge-bg': 'rgba(249, 115, 22, 0.12)',
+        '--cta-badge-border': 'rgba(249, 115, 22, 0.35)',
+        '--cta-badge-text': '#fb923c'
+      }
+    }
+  },
+  {
     id: 'executive-navy',
     name: 'Executive Navy',
     category: 'Corporate',
@@ -509,89 +604,6 @@ export const THEME_PRESETS = [
         '--cta-badge-text': '#fb7185'
       }
     }
-  },
-  {
-    id: 'studio-orange',
-    name: 'Studio Flame',
-    category: 'Creative Studio',
-    description: 'Vibrant flame orange, amber highlights, warm modern contrast for custom apparel.',
-    bestFor: 'Design Studios / Custom Apparel & Badges',
-    palette: {
-      primary: '#ea580c',
-      secondary: '#f97316',
-      accent: '#fb923c',
-      surface: '#ffffff'
-    },
-    tokens: {
-      light: {
-        '--color-primary': '#ea580c',
-        '--color-primary-hover': '#c2410c',
-        '--color-primary-light': '#ffedd5',
-        '--color-primary-glow': 'rgba(249, 115, 22, 0.35)',
-        '--color-primary-text': '#ffffff',
-        '--color-secondary': '#f97316',
-        '--color-accent': '#fb923c',
-        '--color-accent-light': '#fff7ed',
-        '--color-background': '#f8fafc',
-        '--color-surface': '#ffffff',
-        '--color-surface-elevated': '#ffffff',
-        '--color-subtle': '#f1f5f9',
-        '--color-border': 'rgba(249, 115, 22, 0.15)',
-        '--color-border-hover': 'rgba(249, 115, 22, 0.3)',
-        '--color-border-focus': '#ea580c',
-        '--color-text-primary': '#0f172a',
-        '--color-text-secondary': '#334155',
-        '--color-text-muted': '#64748b',
-        '--color-text-on-primary': '#ffffff',
-        '--hero-bg': 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249, 115, 22, 0.08) 0%, rgba(99, 102, 241, 0.04) 50%, transparent 80%), linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-        '--hero-card-bg': '#ffffff',
-        '--hero-card-border': 'rgba(249, 115, 22, 0.18)',
-        '--hero-card-shadow': '0 20px 50px -15px rgba(249, 115, 22, 0.12), 0 4px 16px rgba(15, 23, 42, 0.04)',
-        '--banner-bg': 'linear-gradient(135deg, #ffffff 0%, #fffbf6 50%, #f8fafc 100%)',
-        '--banner-border': 'rgba(249, 115, 22, 0.2)',
-        '--stats-bar-bg': 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-        '--stats-card-bg': 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-        '--stats-card-border': 'rgba(249, 115, 22, 0.15)',
-        '--cta-bg': 'radial-gradient(ellipse 90% 70% at 50% 0%, rgba(249, 115, 22, 0.1) 0%, rgba(99, 102, 241, 0.05) 50%, transparent 80%), linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-        '--cta-badge-bg': 'rgba(249, 115, 22, 0.1)',
-        '--cta-badge-border': 'rgba(249, 115, 22, 0.3)',
-        '--cta-badge-text': '#c2410c'
-      },
-      dark: {
-        '--color-primary': '#fb923c',
-        '--color-primary-hover': '#f97316',
-        '--color-primary-light': 'rgba(251, 146, 60, 0.15)',
-        '--color-primary-glow': 'rgba(251, 146, 60, 0.35)',
-        '--color-primary-text': '#7c2d12',
-        '--color-secondary': '#fdba74',
-        '--color-accent': '#f97316',
-        '--color-accent-light': 'rgba(251, 146, 60, 0.1)',
-        '--color-background': '#0a0e17',
-        '--color-surface': '#111827',
-        '--color-surface-elevated': '#1a2234',
-        '--color-subtle': '#141d2f',
-        '--color-border': 'rgba(251, 146, 60, 0.18)',
-        '--color-border-hover': 'rgba(251, 146, 60, 0.32)',
-        '--color-border-focus': '#fb923c',
-        '--color-text-primary': '#f8fafc',
-        '--color-text-secondary': '#cbd5e1',
-        '--color-text-muted': '#94a3b8',
-        '--color-text-on-primary': '#0a0e17',
-        '--hero-bg': 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249, 115, 22, 0.18) 0%, rgba(124, 45, 18, 0.4) 50%, transparent 80%), linear-gradient(180deg, #0a0e17 0%, #111827 100%)',
-        '--hero-card-bg': '#111827',
-        '--hero-card-border': 'rgba(251, 146, 60, 0.22)',
-        '--hero-card-shadow': '0 20px 50px -15px rgba(0, 0, 0, 0.6)',
-        '--banner-bg': 'linear-gradient(135deg, #111827 0%, #1a2234 50%, #0a0e17 100%)',
-        '--banner-border': 'rgba(251, 146, 60, 0.24)',
-        '--stats-bar-bg': '#0a0e17',
-        '--stats-card-bg': '#111827',
-        '--stats-card-border': 'rgba(251, 146, 60, 0.18)',
-        '--cta-bg': 'radial-gradient(ellipse 90% 70% at 50% 0%, rgba(249, 115, 22, 0.18) 0%, rgba(124, 45, 18, 0.3) 50%, transparent 80%), linear-gradient(180deg, #0a0e17 0%, #111827 100%)',
-        '--cta-badge-bg': 'rgba(249, 115, 22, 0.12)',
-        '--cta-badge-border': 'rgba(249, 115, 22, 0.35)',
-        '--cta-badge-text': '#fb923c'
-      }
-    }
   }
 ];
 
@@ -605,7 +617,7 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
   if (typeof document === 'undefined') return;
 
   const root = document.documentElement;
-  const theme = THEME_PRESETS.find(t => t.id === presetId) || THEME_PRESETS[6]; // default to studio-orange
+  const theme = THEME_PRESETS.find(t => t.id === presetId) || THEME_PRESETS[0]; // default to studio-orange (Executive Studio Pro)
 
   // 1. Set root HTML attributes
   root.setAttribute('data-theme-preset', theme.id);
