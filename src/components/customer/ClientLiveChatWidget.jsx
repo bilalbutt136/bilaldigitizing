@@ -4,14 +4,25 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { playNotificationSound } from '../../utils/audioNotification';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
-import { fetchConversations, addChatMessage, subscribeToLiveMessages, markConversationAsRead } from '../../services/supabaseService';
+import { 
+  fetchConversations, 
+  addChatMessage, 
+  subscribeToLiveMessages, 
+  markConversationAsRead,
+  uploadFileToCloudinaryFull,
+  broadcastTypingStatus,
+  subscribeToTypingStatus
+} from '../../services/supabaseService';
+import WhatsAppChatMessage from '../common/WhatsAppChatMessage';
 import {
   MessageSquare,
   X,
   Send,
   Paperclip,
   Minimize2,
-  Maximize2
+  Maximize2,
+  Loader2,
+  Reply
 } from 'lucide-react';
 
 const formatChatTime = (timestamp) => {
@@ -46,8 +57,12 @@ export const ClientLiveChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messageInput, setMessageInput] = useState('');
-  const [attachedFile, setAttachedFile] = useState(null);
+  const [attachedFile, setAttachedFile] = useState(null); // { name, url, size, format }
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [isSupportTyping, setIsSupportTyping] = useState(false);
   const [chats, setChats] = useState([]);
+  const typingTimeoutRef = useRef(null);
 
   // Check if admin user or admin page to avoid mounting customer chat on admin screens
   const isExcluded = authUser?.role === 'admin' || 
@@ -70,6 +85,42 @@ export const ClientLiveChatWidget = () => {
   const targetConvId = clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')
     ? `support-${clientEmail}`
     : 'general-support';
+
+  // Live typing subscription from admin
+  useEffect(() => {
+    let supportTypingTimer = null;
+    const unsubTyping = subscribeToTypingStatus((payload) => {
+      if (!payload) return;
+      const isTargetThread = payload.conversationId === targetConvId || isSupportId(payload.conversationId);
+      if (isTargetThread && payload.senderRole === 'admin') {
+        if (payload.isTyping) {
+          setIsSupportTyping(true);
+          if (supportTypingTimer) clearTimeout(supportTypingTimer);
+          supportTypingTimer = setTimeout(() => {
+            setIsSupportTyping(false);
+          }, 3500);
+        } else {
+          setIsSupportTyping(false);
+        }
+      }
+    });
+
+    return () => {
+      if (unsubTyping) unsubTyping();
+      if (supportTypingTimer) clearTimeout(supportTypingTimer);
+    };
+  }, [targetConvId]);
+
+  const handleInputChange = (e) => {
+    const val = e.target.value;
+    setMessageInput(val);
+
+    broadcastTypingStatus(targetConvId, cleanName, 'client', true);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      broadcastTypingStatus(targetConvId, cleanName, 'client', false);
+    }, 2500);
+  };
 
   useEffect(() => {
     if (!mounted || isExcluded) return;
@@ -283,8 +334,19 @@ export const ClientLiveChatWidget = () => {
       senderName: cleanName,
       sender_name: cleanName,
       client_email: clientEmail,
-      text: messageInput.trim() || (attachedFile ? `Attached file: ${attachedFile.name}` : ''),
+      text: messageInput.trim(),
       attachment: attachedFile ? attachedFile.name : null,
+      attachment_url: attachedFile ? attachedFile.url : null,
+      attachment_name: attachedFile ? attachedFile.name : null,
+      attachment_size: attachedFile ? attachedFile.size : null,
+      attachment_type: attachedFile ? attachedFile.format : null,
+      reply_to: replyingTo ? {
+        id: replyingTo.id,
+        sender_name: replyingTo.senderName || replyingTo.sender_name || 'Studio Support',
+        text: replyingTo.text,
+        attachment: replyingTo.attachment_name || replyingTo.attachment,
+        attachment_url: replyingTo.attachment_url
+      } : null,
       timestamp: nowIso,
       created_at: nowIso
     };
@@ -339,17 +401,35 @@ export const ClientLiveChatWidget = () => {
     playNotificationSound('send');
     setMessageInput('');
     setAttachedFile(null);
+    setReplyingTo(null);
+    broadcastTypingStatus(convId, cleanName, 'client', false);
     showToast('Message sent to Support!', 'success');
   };
 
-  const handleFileAttach = (e) => {
+  const handleFileAttach = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setAttachedFile({
-        name: file.name,
-        size: (file.size / 1024).toFixed(1) + ' KB'
-      });
-      showToast(`Attached ${file.name} to message`, 'info');
+    if (!file) return;
+
+    setIsUploadingAttachment(true);
+    showToast(`Uploading ${file.name}...`, 'info');
+    try {
+      const uploaded = await uploadFileToCloudinaryFull(file, 'client-uploads', 'chat-attachments');
+      if (uploaded && uploaded.url) {
+        setAttachedFile({
+          name: file.name,
+          url: uploaded.url,
+          size: uploaded.size || (file.size / 1024).toFixed(1) + ' KB',
+          format: uploaded.format || file.name.split('.').pop()
+        });
+        showToast(`Ready to send: ${file.name}`, 'success');
+      } else {
+        showToast('Failed to upload file. Please try again.', 'error');
+      }
+    } catch (err) {
+      showToast('Error uploading attachment: ' + err.message, 'error');
+    } finally {
+      setIsUploadingAttachment(false);
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -611,97 +691,135 @@ export const ClientLiveChatWidget = () => {
                   </div>
                 )}
 
-                {(clientThread.messages || []).map((msg) => {
+                {(clientThread.messages || []).map((msg, index) => {
                   const isClient = msg.sender === 'client';
                   return (
-                    <div
-                      key={msg.id}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: isClient ? 'flex-end' : 'flex-start'
-                      }}
-                    >
-                      <div style={{
-                        fontSize: '0.68rem',
-                        color: 'var(--text-muted)',
-                        marginBottom: '0.15rem',
-                        fontWeight: 700,
-                        padding: '0 0.2rem'
-                      }}>
-                        {isClient ? 'You' : 'Support'} • {formatChatTime(msg.timestamp)}
-                      </div>
-
-                      <div style={{
-                        maxWidth: '82%',
-                        padding: '0.7rem 0.95rem',
-                        borderRadius: isClient ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
-                        background: isClient ? 'linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%)' : '#ffffff',
-                        color: isClient ? '#ffffff' : 'var(--navy-900)',
-                        border: isClient ? 'none' : '1px solid var(--border-color)',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                        fontSize: '0.85rem',
-                        lineHeight: 1.45
-                      }}>
-                        {msg.text}
-
-                        {msg.attachment && (
-                          <div style={{
-                            marginTop: '0.4rem',
-                            paddingTop: '0.4rem',
-                            borderTop: isClient ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid var(--border-color)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            fontSize: '0.75rem',
-                            fontWeight: 700
-                          }}>
-                            <Paperclip size={13} /> {msg.attachment}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    <WhatsAppChatMessage
+                      key={msg.id || index}
+                      message={msg}
+                      isMe={isClient}
+                      senderDisplayName={isClient ? 'You' : 'Support'}
+                      onReply={(m) => setReplyingTo(m)}
+                      formatTime={formatChatTime}
+                    />
                   );
                 })}
+
+                {/* LIVE TYPING INDICATOR */}
+                {isSupportTyping && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    padding: '0.35rem 0.75rem',
+                    background: '#ffffff',
+                    borderRadius: '14px',
+                    border: '1px solid var(--border-color)',
+                    width: 'fit-content',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                    margin: '0.2rem 0'
+                  }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-primary, #ea580c)' }}>
+                      Support is typing
+                    </span>
+                    <span style={{ display: 'inline-flex', gap: '3px' }}>
+                      <span style={{ width: '3.5px', height: '3.5px', borderRadius: '50%', background: 'var(--color-primary, #ea580c)' }}></span>
+                      <span style={{ width: '3.5px', height: '3.5px', borderRadius: '50%', background: 'var(--color-primary, #ea580c)' }}></span>
+                      <span style={{ width: '3.5px', height: '3.5px', borderRadius: '50%', background: 'var(--color-primary, #ea580c)' }}></span>
+                    </span>
+                  </div>
+                )}
               </div>
+
+              {/* QUOTED REPLY PREVIEW BANNER */}
+              {replyingTo && (
+                <div style={{
+                  padding: '0.4rem 0.85rem',
+                  background: '#fff7ed',
+                  borderTop: '1px solid #fed7aa',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                  animation: 'fadeIn 0.15s ease-out'
+                }}>
+                  <div style={{ borderLeft: '3px solid var(--color-primary, #ff7a00)', paddingLeft: '0.5rem', minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-primary, #ea580c)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <Reply size={11} /> Replying to {replyingTo.senderName || replyingTo.sender_name || 'Support'}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {replyingTo.text || (replyingTo.attachment ? `📎 ${replyingTo.attachment}` : 'Media file')}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setReplyingTo(null)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary, #ea580c)', padding: '2px' }}
+                    title="Cancel reply"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+
+              {/* UPLOADING ATTACHMENT SPINNER */}
+              {isUploadingAttachment && (
+                <div style={{
+                  padding: '0.35rem 0.85rem',
+                  background: '#eff6ff',
+                  borderTop: '1px solid #bfdbfe',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  color: '#1d4ed8',
+                  fontSize: '0.72rem',
+                  fontWeight: 700
+                }}>
+                  <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Uploading attachment...
+                </div>
+              )}
+
+              {/* Attached File Preview */}
+              {attachedFile && !isUploadingAttachment && (
+                <div style={{
+                  padding: '0.35rem 0.85rem',
+                  background: '#f0fdf4',
+                  borderTop: '1px solid #bbf7d0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontSize: '0.72rem',
+                  color: '#15803d',
+                  fontWeight: 700
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Paperclip size={12} />
+                    <span>Ready: <strong>{attachedFile.name}</strong></span>
+                  </div>
+                  <button type="button" onClick={() => setAttachedFile(null)} style={{ background: 'none', border: 'none', color: '#15803d', cursor: 'pointer', padding: 0 }}>
+                    <X size={12} />
+                  </button>
+                </div>
+              )}
 
               {/* Input Form */}
               <form onSubmit={handleSendMessage} style={{ padding: '0.75rem 1rem', borderTop: '1px solid var(--border-color)', background: '#ffffff' }}>
-                {attachedFile && (
-                  <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    background: '#fff7ed',
-                    border: '1px solid var(--orange-300)',
-                    color: 'var(--orange-800)',
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    padding: '0.2rem 0.55rem',
-                    borderRadius: '9999px',
-                    marginBottom: '0.45rem'
-                  }}>
-                    <Paperclip size={12} /> {attachedFile.name}
-                    <button type="button" onClick={() => setAttachedFile(null)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', padding: 0 }}>
-                      <X size={12} />
-                    </button>
-                  </div>
-                )}
-
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <input
                     type="file"
                     ref={fileInputRef}
                     onChange={handleFileAttach}
                     style={{ display: 'none' }}
+                    accept=".png,.jpg,.jpeg,.webp,.gif,.svg,.pdf,.ai,.eps,.dst,.pes,.emb,.zip,.rar"
                   />
 
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingAttachment}
                     style={{
                       background: '#f1f5f9',
-                      border: '1px solid var(--border-color)',
+                      border: '1.5px solid var(--border-color)',
                       color: 'var(--navy-700)',
                       width: '36px',
                       height: '36px',
@@ -709,10 +827,10 @@ export const ClientLiveChatWidget = () => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      cursor: 'pointer',
+                      cursor: isUploadingAttachment ? 'not-allowed' : 'pointer',
                       flexShrink: 0
                     }}
-                    title="Attach File"
+                    title="Attach Image, PDF, Vector or Machine File"
                   >
                     <Paperclip size={16} />
                   </button>
@@ -720,23 +838,25 @@ export const ClientLiveChatWidget = () => {
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="Type message..."
+                    placeholder={replyingTo ? `Reply to ${replyingTo.senderName || 'Support'}...` : 'Type message...'}
                     value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
+                    onChange={handleInputChange}
                     style={{ flex: 1, height: '36px', fontSize: '0.85rem' }}
                   />
 
                   <button
                     type="submit"
                     className="btn btn-primary-orange"
-                    disabled={!messageInput.trim() && !attachedFile}
+                    disabled={(!messageInput.trim() && !attachedFile) || isUploadingAttachment}
                     style={{
                       height: '36px',
                       padding: '0 1rem',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.35rem',
-                      fontSize: '0.85rem'
+                      fontSize: '0.85rem',
+                      opacity: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 0.5 : 1,
+                      cursor: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 'not-allowed' : 'pointer'
                     }}
                   >
                     <Send size={15} />

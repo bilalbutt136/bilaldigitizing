@@ -7,9 +7,13 @@ import {
   fetchConversations, 
   addChatMessage, 
   subscribeToLiveMessages,
-  markConversationAsRead
+  markConversationAsRead,
+  uploadFileToCloudinaryFull,
+  broadcastTypingStatus,
+  subscribeToTypingStatus
 } from '../../services/supabaseService';
 import { playNotificationSound } from '../../utils/audioNotification';
+import WhatsAppChatMessage from '../common/WhatsAppChatMessage';
 import {
   MessageSquare,
   Send,
@@ -23,7 +27,9 @@ import {
   Clock,
   CheckCheck,
   X,
-  FileText
+  FileText,
+  Loader2,
+  Reply
 } from 'lucide-react';
 
 // Format timestamp safely to human-readable string
@@ -79,11 +85,15 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMode, setFilterMode] = useState('all'); // 'all' | 'orders' | 'support' | 'unread'
   const [messageInput, setMessageInput] = useState('');
-  const [attachedFile, setAttachedFile] = useState(null);
+  const [attachedFile, setAttachedFile] = useState(null); // { name, url, size, format }
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [isSupportTyping, setIsSupportTyping] = useState(false);
   const [mobileView, setMobileView] = useState(initialOrderId ? 'chat' : 'list');
   
   const chatFeedRef = useRef(null);
   const fileInputRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   // Build unified thread list combining general support and active order discussions with chat history
   const buildThreadList = (remoteConvs = []) => {
@@ -461,6 +471,44 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     }
   }, [activeChat?.id]);
 
+  // Subscribe to live typing indicators from Admin
+  useEffect(() => {
+    let supportTypingTimer = null;
+    const unsubTyping = subscribeToTypingStatus((payload) => {
+      if (!payload || !activeChat?.id) return;
+      const isTargetThread = payload.conversationId === activeChat.id || (isSupportId(payload.conversationId) && isSupportId(activeChat.id));
+      if (isTargetThread && payload.senderRole === 'admin') {
+        if (payload.isTyping) {
+          setIsSupportTyping(true);
+          if (supportTypingTimer) clearTimeout(supportTypingTimer);
+          supportTypingTimer = setTimeout(() => {
+            setIsSupportTyping(false);
+          }, 3500);
+        } else {
+          setIsSupportTyping(false);
+        }
+      }
+    });
+
+    return () => {
+      if (unsubTyping) unsubTyping();
+      if (supportTypingTimer) clearTimeout(supportTypingTimer);
+    };
+  }, [activeChat?.id]);
+
+  const handleInputChange = (e) => {
+    const val = e.target.value;
+    setMessageInput(val);
+
+    const targetConvId = activeChat?.id || defaultSupportId;
+    broadcastTypingStatus(targetConvId, clientName, 'client', true);
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      broadcastTypingStatus(targetConvId, clientName, 'client', false);
+    }, 2500);
+  };
+
   // Filter conversations based on search and selected filterMode
   const filteredConversations = conversations.filter(conv => {
     const matchesSearch = 
@@ -494,8 +542,19 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       sender: 'client',
       senderName: clientName,
       sender_name: clientName,
-      text: messageInput.trim() || (attachedFile ? `Attached file: ${attachedFile.name}` : ''),
+      text: messageInput.trim(),
       attachment: attachedFile ? attachedFile.name : null,
+      attachment_url: attachedFile ? attachedFile.url : null,
+      attachment_name: attachedFile ? attachedFile.name : null,
+      attachment_size: attachedFile ? attachedFile.size : null,
+      attachment_type: attachedFile ? attachedFile.format : null,
+      reply_to: replyingTo ? {
+        id: replyingTo.id,
+        sender_name: replyingTo.senderName || replyingTo.sender_name || 'Studio Support',
+        text: replyingTo.text,
+        attachment: replyingTo.attachment_name || replyingTo.attachment,
+        attachment_url: replyingTo.attachment_url
+      } : null,
       timestamp: nowIso,
       created_at: nowIso
     };
@@ -560,6 +619,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
     setMessageInput('');
     setAttachedFile(null);
+    setReplyingTo(null);
+    broadcastTypingStatus(targetConvId, clientName, 'client', false);
     playNotificationSound('send');
     showToast('Message sent to production studio team!', 'success');
 
@@ -573,14 +634,30 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     }
   };
 
-  const handleFileAttach = (e) => {
+  const handleFileAttach = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setAttachedFile({
-        name: file.name,
-        size: (file.size / 1024).toFixed(1) + ' KB'
-      });
-      showToast(`Attached file: ${file.name}`, 'info');
+    if (!file) return;
+
+    setIsUploadingAttachment(true);
+    showToast(`Uploading ${file.name}...`, 'info');
+    try {
+      const uploaded = await uploadFileToCloudinaryFull(file, 'client-uploads', 'chat-attachments');
+      if (uploaded && uploaded.url) {
+        setAttachedFile({
+          name: file.name,
+          url: uploaded.url,
+          size: uploaded.size || (file.size / 1024).toFixed(1) + ' KB',
+          format: uploaded.format || file.name.split('.').pop()
+        });
+        showToast(`Ready: ${file.name}`, 'success');
+      } else {
+        showToast('Failed to upload file. Please try again.', 'error');
+      }
+    } catch (err) {
+      showToast('Error uploading attachment: ' + err.message, 'error');
+    } finally {
+      setIsUploadingAttachment(false);
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -977,7 +1054,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.85rem',
+              gap: '0.65rem',
               background: '#f8fafc'
             }}
           >
@@ -1007,99 +1084,114 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 const isMe = msg.sender === 'client';
 
                 return (
-                  <div
+                  <WhatsAppChatMessage
                     key={msg.id || index}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: isMe ? 'flex-end' : 'flex-start',
-                      maxWidth: '80%',
-                      alignSelf: isMe ? 'flex-end' : 'flex-start'
-                    }}
-                  >
-                    <div style={{
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      color: 'var(--text-muted)',
-                      marginBottom: '0.25rem',
-                      padding: '0 0.35rem'
-                    }}>
-                      {isMe ? 'You' : (msg.senderName || 'Studio Support')}
-                    </div>
-
-                    <div style={{
-                      padding: '0.75rem 1rem',
-                      borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                      background: isMe ? 'var(--orange-500)' : '#ffffff',
-                      color: isMe ? '#ffffff' : 'var(--navy-950)',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
-                      border: isMe ? 'none' : '1px solid #e2e8f0',
-                      fontSize: '0.88rem',
-                      lineHeight: 1.5,
-                      wordBreak: 'break-word'
-                    }}>
-                      {msg.text}
-
-                      {msg.attachment && (
-                        <div style={{
-                          marginTop: '0.5rem',
-                          padding: '0.4rem 0.65rem',
-                          borderRadius: '8px',
-                          background: isMe ? 'rgba(0,0,0,0.15)' : '#f1f5f9',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                          fontSize: '0.78rem',
-                          fontWeight: 700
-                        }}>
-                          <FileText size={14} />
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {msg.attachment}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      fontSize: '0.68rem',
-                      color: '#94a3b8',
-                      marginTop: '0.25rem',
-                      padding: '0 0.35rem'
-                    }}>
-                      <Clock size={10} />
-                      <span>{formatChatTime(msg.timestamp)}</span>
-                      {isMe && <CheckCheck size={12} style={{ color: msg.is_read ? '#3b82f6' : '#94a3b8', marginLeft: '0.2rem' }} />}
-                    </div>
-                  </div>
+                    message={msg}
+                    isMe={isMe}
+                    senderDisplayName={isMe ? 'You' : (msg.senderName || msg.sender_name || 'Studio Support')}
+                    onReply={(m) => setReplyingTo(m)}
+                    formatTime={formatChatTime}
+                  />
                 );
               })
             )}
+
+            {/* LIVE TYPING INDICATOR (WhatsApp Style) */}
+            {isSupportTyping && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.45rem 0.85rem',
+                background: '#ffffff',
+                borderRadius: '16px',
+                border: '1px solid #e2e8f0',
+                width: 'fit-content',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                margin: '0.25rem 0'
+              }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-primary, #ea580c)' }}>
+                  Studio Support is typing
+                </span>
+                <span style={{ display: 'inline-flex', gap: '3px' }}>
+                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-primary, #ea580c)' }}></span>
+                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-primary, #ea580c)' }}></span>
+                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-primary, #ea580c)' }}></span>
+                </span>
+              </div>
+            )}
           </div>
 
-          {/* Attached File Preview */}
-          {attachedFile && (
+          {/* QUOTED REPLY PREVIEW BANNER (WhatsApp Style) */}
+          {replyingTo && (
             <div style={{
-              padding: '0.4rem 1.25rem',
+              padding: '0.5rem 1.25rem',
               background: '#fff7ed',
               borderTop: '1px solid #fed7aa',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              fontSize: '0.75rem',
-              color: 'var(--orange-800)',
+              gap: '0.75rem',
+              animation: 'fadeIn 0.15s ease-out'
+            }}>
+              <div style={{ borderLeft: '3.5px solid var(--color-primary, #ff7a00)', paddingLeft: '0.6rem', minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--color-primary, #ea580c)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <Reply size={12} /> Replying to {replyingTo.senderName || replyingTo.sender_name || 'Studio Support'}
+                </div>
+                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {replyingTo.text || (replyingTo.attachment ? `📎 ${replyingTo.attachment}` : 'Media file')}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReplyingTo(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary, #ea580c)', padding: '4px' }}
+                title="Cancel reply"
+              >
+                <X size={15} />
+              </button>
+            </div>
+          )}
+
+          {/* UPLOADING ATTACHMENT SPINNER */}
+          {isUploadingAttachment && (
+            <div style={{
+              padding: '0.45rem 1.25rem',
+              background: '#eff6ff',
+              borderTop: '1px solid #bfdbfe',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              color: '#1d4ed8',
+              fontSize: '0.76rem',
               fontWeight: 700
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Paperclip size={13} />
-                <span>Attached: <strong>{attachedFile.name}</strong> ({attachedFile.size})</span>
+              <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Uploading attachment to secure studio storage...
+            </div>
+          )}
+
+          {/* Attached File Preview */}
+          {attachedFile && !isUploadingAttachment && (
+            <div style={{
+              padding: '0.45rem 1.25rem',
+              background: '#f0fdf4',
+              borderTop: '1px solid #bbf7d0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '0.76rem',
+              color: '#15803d',
+              fontWeight: 700
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <Paperclip size={14} />
+                <span>Ready to send: <strong>{attachedFile.name}</strong> ({attachedFile.size})</span>
               </div>
               <button
                 type="button"
                 onClick={() => setAttachedFile(null)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--orange-800)' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#15803d' }}
+                title="Remove attachment"
               >
                 <X size={14} />
               </button>
@@ -1124,11 +1216,13 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               ref={fileInputRef}
               onChange={handleFileAttach}
               style={{ display: 'none' }}
+              accept=".png,.jpg,.jpeg,.webp,.gif,.svg,.pdf,.ai,.eps,.dst,.pes,.emb,.zip,.rar"
             />
 
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
+              disabled={isUploadingAttachment}
               style={{
                 width: '38px',
                 height: '38px',
@@ -1139,11 +1233,11 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
+                cursor: isUploadingAttachment ? 'not-allowed' : 'pointer',
                 transition: 'all 0.15s ease',
                 flexShrink: 0
               }}
-              title="Attach File"
+              title="Attach Image, PDF, Vector or Embroidery File"
             >
               <Paperclip size={16} />
             </button>
@@ -1151,8 +1245,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
             <input
               type="text"
               value={messageInput}
-              onChange={(e) => setMessageInput(e.target.value)}
-              placeholder={`Message ${activeChat.title}...`}
+              onChange={handleInputChange}
+              placeholder={replyingTo ? `Reply to ${replyingTo.senderName || 'Support'}...` : `Message ${activeChat.title}...`}
               style={{
                 flex: 1,
                 padding: '0.65rem 1rem',
@@ -1167,7 +1261,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
             <button
               type="submit"
-              disabled={!messageInput.trim() && !attachedFile}
+              disabled={(!messageInput.trim() && !attachedFile) || isUploadingAttachment}
               className="btn btn-primary-orange"
               style={{
                 padding: '0.65rem 1.15rem',
@@ -1177,8 +1271,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.4rem',
-                opacity: (!messageInput.trim() && !attachedFile) ? 0.5 : 1,
-                cursor: (!messageInput.trim() && !attachedFile) ? 'not-allowed' : 'pointer'
+                opacity: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 0.5 : 1,
+                cursor: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 'not-allowed' : 'pointer'
               }}
             >
               Send <Send size={15} />

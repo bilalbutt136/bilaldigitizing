@@ -1277,6 +1277,7 @@ export async function markConversationAsRead(chatId) {
 let globalChatChannel = null;
 const messageListeners = new Set();
 const conversationListeners = new Set();
+const typingListeners = new Set();
 
 export function getSharedChatChannel() {
   if (!isSupabaseConfigured || !supabase) return null;
@@ -1287,7 +1288,7 @@ export function getSharedChatChannel() {
       }
     });
 
-    // 1. Instant WebSocket broadcast listener
+    // 1. Instant WebSocket broadcast listeners
     globalChatChannel.on('broadcast', { event: 'new_message' }, (event) => {
       if (event.payload) {
         messageListeners.forEach(listener => {
@@ -1300,6 +1301,14 @@ export function getSharedChatChannel() {
       if (event.payload) {
         conversationListeners.forEach(listener => {
           try { listener({ eventType: 'UPDATE', new: event.payload, record: event.payload }); } catch (err) {}
+        });
+      }
+    });
+
+    globalChatChannel.on('broadcast', { event: 'typing' }, (event) => {
+      if (event.payload) {
+        typingListeners.forEach(listener => {
+          try { listener(event.payload); } catch (err) {}
         });
       }
     });
@@ -1351,6 +1360,35 @@ export function broadcastLiveMessage(messagePayload) {
   } catch (err) {
     console.warn('Broadcast live message notice:', err);
   }
+}
+
+export function broadcastTypingStatus(conversationId, senderName, senderRole, isTyping = true) {
+  try {
+    const channel = getSharedChatChannel();
+    if (channel) {
+      channel.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: {
+          conversationId,
+          senderName,
+          senderRole,
+          isTyping,
+          timestamp: Date.now()
+        }
+      });
+    }
+  } catch (err) {
+    console.warn('Broadcast typing status notice:', err);
+  }
+}
+
+export function subscribeToTypingStatus(onTypingChange) {
+  if (onTypingChange) typingListeners.add(onTypingChange);
+  getSharedChatChannel();
+  return () => {
+    if (onTypingChange) typingListeners.delete(onTypingChange);
+  };
 }
 
 export function subscribeToLiveMessages(onMessageChange, onConversationChange) {

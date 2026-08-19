@@ -57,6 +57,11 @@ export async function GET(request) {
             sender_name: m.sender_name,
             text: m.text,
             attachment: m.attachment,
+            attachment_url: m.attachment_url || null,
+            attachment_name: m.attachment_name || m.attachment || null,
+            attachment_size: m.attachment_size || null,
+            attachment_type: m.attachment_type || null,
+            reply_to: m.reply_to || null,
             is_read: m.is_read || false,
             timestamp: m.timestamp || m.created_at
           }));
@@ -111,6 +116,11 @@ export async function GET(request) {
         sender_name: m.sender_name,
         text: m.text,
         attachment: m.attachment,
+        attachment_url: m.attachment_url || null,
+        attachment_name: m.attachment_name || m.attachment || null,
+        attachment_size: m.attachment_size || null,
+        attachment_type: m.attachment_type || null,
+        reply_to: m.reply_to || null,
         is_read: m.is_read || false,
         timestamp: m.timestamp || m.created_at
       }));
@@ -248,7 +258,12 @@ export async function POST(request) {
         sender: actualSender,
         sender_name: actualSenderName,
         text: payload.text || '',
-        attachment: payload.attachment || null,
+        attachment: payload.attachment || payload.attachment_name || null,
+        attachment_url: payload.attachment_url || payload.attachmentUrl || null,
+        attachment_name: payload.attachment_name || payload.attachmentName || payload.attachment || null,
+        attachment_size: payload.attachment_size || payload.attachmentSize || null,
+        attachment_type: payload.attachment_type || payload.attachmentType || null,
+        reply_to: payload.reply_to || payload.replyTo || null,
         is_read: false,
         timestamp: payload.timestamp || nowIso,
         created_at: nowIso
@@ -270,6 +285,10 @@ export async function POST(request) {
             is_staff: isAdmin,
             message: dbPayload.text,
             attachment: dbPayload.attachment,
+            attachment_url: dbPayload.attachment_url,
+            attachment_name: dbPayload.attachment_name,
+            attachment_size: dbPayload.attachment_size,
+            reply_to: dbPayload.reply_to,
             is_read: false,
             created_at: nowIso
           }]);

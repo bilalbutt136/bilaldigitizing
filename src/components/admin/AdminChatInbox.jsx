@@ -3,15 +3,26 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
-import { fetchConversations, addChatMessage, markConversationAsRead, subscribeToLiveMessages } from '../../services/supabaseService';
+import { 
+  fetchConversations, 
+  addChatMessage, 
+  markConversationAsRead, 
+  subscribeToLiveMessages,
+  uploadFileToCloudinaryFull,
+  broadcastTypingStatus,
+  subscribeToTypingStatus
+} from '../../services/supabaseService';
 import { playNotificationSound } from '../../utils/audioNotification';
+import WhatsAppChatMessage from '../common/WhatsAppChatMessage';
 import {
   MessageSquare,
   Send,
   Search,
   Paperclip,
   ChevronRight,
-  X
+  X,
+  Loader2,
+  Reply
 } from 'lucide-react';
 
 const formatChatTime = (timestamp) => {
@@ -150,11 +161,15 @@ export const AdminChatInbox = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMode, setFilterMode] = useState('all'); // 'all' | 'unread'
   const [replyInput, setReplyInput] = useState('');
-  const [attachedFile, setAttachedFile] = useState(null);
+  const [attachedFile, setAttachedFile] = useState(null); // { name, url, size, format }
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [isClientTyping, setIsClientTyping] = useState(false);
   const [mobileView, setMobileView] = useState('list');
   const chatFeedRef = useRef(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -187,6 +202,11 @@ export const AdminChatInbox = () => {
           senderName: record.sender_name,
           text: record.text,
           attachment: record.attachment,
+          attachment_url: record.attachment_url,
+          attachment_name: record.attachment_name,
+          attachment_size: record.attachment_size,
+          attachment_type: record.attachment_type,
+          reply_to: record.reply_to,
           is_read: record.is_read || false,
           timestamp: record.timestamp || record.created_at || new Date().toISOString()
         };
@@ -212,63 +232,56 @@ export const AdminChatInbox = () => {
               unreadCount: newMsg.sender === 'client' ? 1 : 0,
               adminUnreadCount: newMsg.sender === 'client' ? 1 : 0,
               messages: [newMsg],
-              updatedAt: newMsg.timestamp,
-              lastMessageTime: Date.now()
+              lastMessageTime: Date.now(),
+              updatedAt: new Date().toISOString()
             };
             return [newThread, ...safePrev];
           }
 
-          const updated = safePrev.map(c => {
-            if (c.id === newMsg.conversation_id) {
-              const alreadyHas = (c.messages || []).some(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(new Date(m.timestamp) - new Date(newMsg.timestamp)) < 2000));
-              if (alreadyHas) return c;
+          const updated = safePrev.map(conv => {
+            if (conv.id === newMsg.conversation_id) {
+              const currentMsgs = conv.messages || [];
+              if (currentMsgs.some(m => m.id === newMsg.id)) return conv;
+              
+              const isCurrentlyOpen = activeChatId === conv.id;
               return {
-                ...c,
-                messages: [...(c.messages || []), newMsg],
-                unreadCount: activeChatId === c.id ? 0 : (c.unreadCount || 0) + (newMsg.sender === 'client' ? 1 : 0),
-                adminUnreadCount: activeChatId === c.id ? 0 : (c.adminUnreadCount || 0) + (newMsg.sender === 'client' ? 1 : 0),
-                updatedAt: newMsg.timestamp,
-                lastMessageTime: Date.now()
+                ...conv,
+                clientName: conv.clientName || newMsg.senderName,
+                unreadCount: isCurrentlyOpen ? 0 : (conv.unreadCount || 0) + (newMsg.sender === 'client' ? 1 : 0),
+                adminUnreadCount: isCurrentlyOpen ? 0 : (conv.adminUnreadCount || 0) + (newMsg.sender === 'client' ? 1 : 0),
+                messages: [...currentMsgs, newMsg],
+                lastMessageTime: Date.now(),
+                updatedAt: new Date().toISOString()
               };
             }
-            return c;
+            return conv;
           });
 
-          return [...updated].sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
+          return deduplicateThreads(updated);
         });
       },
       (convPayload) => {
         if (!isMounted) return;
-        const conv = convPayload.new || convPayload.record;
-        if (!conv) return;
+        const fresh = convPayload.new || convPayload.record;
+        if (!fresh) return;
 
         setConversations(prev => {
           const safePrev = Array.isArray(prev) ? prev : [];
-          const exists = safePrev.some(c => c.id === conv.id);
-          if (!exists) {
-            const newThread = {
-              id: conv.id,
-              clientName: conv.client_name || 'Customer',
-              clientEmail: conv.client_email || '',
-              clientCompany: conv.client_company || 'Studio Client',
-              orderId: conv.order_id || 'Support',
-              orderTitle: conv.order_title || 'Direct Support',
-              avatar: conv.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
-              status: 'online',
-              unreadCount: conv.admin_unread_count ?? conv.unread_count ?? 0,
-              adminUnreadCount: conv.admin_unread_count ?? conv.unread_count ?? 0,
-              messages: [],
-              updatedAt: conv.created_at || new Date().toISOString(),
-              lastMessageTime: Date.now()
-            };
-            return [newThread, ...safePrev];
-          }
-          return safePrev.map(c => c.id === conv.id ? { 
-            ...c, 
-            ...conv,
-            unreadCount: conv.admin_unread_count ?? conv.unread_count ?? c.unreadCount ?? 0,
-            adminUnreadCount: conv.admin_unread_count ?? conv.unread_count ?? c.adminUnreadCount ?? 0
-          } : c);
+          const updated = safePrev.map(c => {
+            if (c.id === fresh.id) {
+              return {
+                ...c,
+                unreadCount: activeChatId === fresh.id ? 0 : (fresh.admin_unread_count ?? fresh.unread_count ?? c.unreadCount),
+                adminUnreadCount: activeChatId === fresh.id ? 0 : (fresh.admin_unread_count ?? fresh.unread_count ?? c.adminUnreadCount),
+                clientName: fresh.client_name || c.clientName,
+                clientEmail: fresh.client_email || c.clientEmail,
+                status: fresh.status || c.status,
+                updatedAt: fresh.updated_at || c.updatedAt
+              };
+            }
+            return c;
+          });
+          return deduplicateThreads(updated);
         });
       }
     );
@@ -279,23 +292,77 @@ export const AdminChatInbox = () => {
     };
   }, [activeChatId]);
 
-  // Internal auto-scroll chat feed to bottom without scrolling parent window
-  const scrollToBottom = () => {
-    if (chatFeedRef.current) {
-      chatFeedRef.current.scrollTo({
-        top: chatFeedRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
+  // Derive currently active conversation object with safety fallbacks
+  const currentActiveChatId = activeChatId || (conversations.length > 0 ? conversations[0].id : null);
+  
+  const activeChat = conversations.find(c => c.id === currentActiveChatId) || (conversations.length > 0 ? conversations[0] : {
+    id: 'placeholder',
+    clientName: 'Live Customer Support',
+    messages: []
+  });
+
+  const activeInfo = resolveThreadInfo(activeChat, orders);
+
+  // Subscribe to live typing indicators from client
+  useEffect(() => {
+    let clientTypingTimer = null;
+    const unsubTyping = subscribeToTypingStatus((payload) => {
+      if (!payload || !currentActiveChatId) return;
+      const isTargetThread = payload.conversationId === currentActiveChatId;
+      if (isTargetThread && payload.senderRole === 'client') {
+        if (payload.isTyping) {
+          setIsClientTyping(true);
+          if (clientTypingTimer) clearTimeout(clientTypingTimer);
+          clientTypingTimer = setTimeout(() => {
+            setIsClientTyping(false);
+          }, 3500);
+        } else {
+          setIsClientTyping(false);
+        }
+      }
+    });
+
+    return () => {
+      if (unsubTyping) unsubTyping();
+      if (clientTypingTimer) clearTimeout(clientTypingTimer);
+    };
+  }, [currentActiveChatId]);
+
+  const handleInputChange = (e) => {
+    const val = e.target.value;
+    setReplyInput(val);
+
+    if (currentActiveChatId) {
+      broadcastTypingStatus(currentActiveChatId, 'Studio Support', 'admin', true);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        broadcastTypingStatus(currentActiveChatId, 'Studio Support', 'admin', false);
+      }, 2500);
     }
   };
 
+  // Auto-scroll chat feed on new messages
   useEffect(() => {
-    scrollToBottom();
-  }, [activeChatId, conversations]);
+    if (chatFeedRef.current) {
+      chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
+    }
+  }, [activeChat?.messages?.length]);
 
-  const activeChat = conversations.find(c => c.id === activeChatId) || conversations[0] || null;
-  const currentActiveChatId = activeChat ? activeChat.id : activeChatId;
-  const activeInfo = resolveThreadInfo(activeChat, orders);
+  // Mark active conversation read when opening
+  useEffect(() => {
+    if (currentActiveChatId && isSupabaseConfigured) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('bdigi_read_admin_' + currentActiveChatId, String(Date.now()));
+        window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: currentActiveChatId } }));
+      }
+      markConversationAsRead(currentActiveChatId);
+      setConversations(prev => prev.map(c => 
+        c.id === currentActiveChatId 
+          ? { ...c, unreadCount: 0, adminUnreadCount: 0 } 
+          : c
+      ));
+    }
+  }, [currentActiveChatId]);
 
   // Helper to compute admin unread count strictly for client messages
   const getThreadUnreadCount = (conv) => {
@@ -327,25 +394,13 @@ export const AdminChatInbox = () => {
     ));
   };
 
-  // Auto-mark active chat as read
-  useEffect(() => {
-    if (activeChat?.id) {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('bdigi_read_admin_' + activeChat.id, String(Date.now()));
-        window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: activeChat.id } }));
-      }
-      markConversationAsRead(activeChat.id);
-      setConversations(prev => prev.map(c => 
-        c.id === activeChat.id ? { ...c, unreadCount: 0, adminUnreadCount: 0 } : c
-      ));
-    }
-  }, [activeChatId, activeChat?.id]);
-
+  // Filter conversations list based on search and selected filter
   const filteredConversations = conversations.filter(conv => {
     const info = resolveThreadInfo(conv, orders);
     const matchesSearch = 
+      (conv.clientName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (conv.clientEmail || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (info.customerName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (info.customerEmail || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (info.orderNum || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (info.orderTitle || '').toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -368,8 +423,19 @@ export const AdminChatInbox = () => {
       sender: 'admin',
       senderName: 'Support',
       sender_name: 'Support',
-      text: replyInput.trim() || (attachedFile ? `Attached file: ${attachedFile.name}` : ''),
+      text: replyInput.trim(),
       attachment: attachedFile ? attachedFile.name : null,
+      attachment_url: attachedFile ? attachedFile.url : null,
+      attachment_name: attachedFile ? attachedFile.name : null,
+      attachment_size: attachedFile ? attachedFile.size : null,
+      attachment_type: attachedFile ? attachedFile.format : null,
+      reply_to: replyingTo ? {
+        id: replyingTo.id,
+        sender_name: replyingTo.senderName || replyingTo.sender_name || (activeInfo.customerName || 'Customer'),
+        text: replyingTo.text,
+        attachment: replyingTo.attachment_name || replyingTo.attachment,
+        attachment_url: replyingTo.attachment_url
+      } : null,
       timestamp: nowIso,
       created_at: nowIso
     };
@@ -391,6 +457,8 @@ export const AdminChatInbox = () => {
 
     setReplyInput('');
     setAttachedFile(null);
+    setReplyingTo(null);
+    broadcastTypingStatus(currentActiveChatId, 'Studio Support', 'admin', false);
     playNotificationSound('send');
     showToast(`Reply sent to ${activeInfo.customerName || 'Customer'}!`, 'success');
 
@@ -403,14 +471,30 @@ export const AdminChatInbox = () => {
     }
   };
 
-  const handleFileAttach = (e) => {
+  const handleFileAttach = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setAttachedFile({
-        name: file.name,
-        size: (file.size / 1024).toFixed(1) + ' KB'
-      });
-      showToast(`Attached ${file.name} to message`, 'info');
+    if (!file) return;
+
+    setIsUploadingAttachment(true);
+    showToast(`Uploading ${file.name}...`, 'info');
+    try {
+      const uploaded = await uploadFileToCloudinaryFull(file, 'admin-deliveries', 'chat-attachments');
+      if (uploaded && uploaded.url) {
+        setAttachedFile({
+          name: file.name,
+          url: uploaded.url,
+          size: uploaded.size || (file.size / 1024).toFixed(1) + ' KB',
+          format: uploaded.format || file.name.split('.').pop()
+        });
+        showToast(`Ready to send: ${file.name}`, 'success');
+      } else {
+        showToast('Failed to upload file. Please try again.', 'error');
+      }
+    } catch (err) {
+      showToast('Error uploading attachment: ' + err.message, 'error');
+    } finally {
+      setIsUploadingAttachment(false);
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -774,7 +858,7 @@ export const AdminChatInbox = () => {
                 overflowY: 'auto',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1rem',
+                gap: '0.75rem',
                 background: '#f8fafc'
               }}
             >
@@ -787,98 +871,140 @@ export const AdminChatInbox = () => {
               ) : null}
 
               {/* Message Bubbles */}
-              {activeChat.messages.map((msg) => {
+              {activeChat.messages.map((msg, index) => {
                 const isAdmin = msg.sender === 'admin';
 
                 return (
-                  <div
-                    key={msg.id}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: isAdmin ? 'flex-end' : 'flex-start'
-                    }}
-                  >
-                    <div style={{
-                      fontSize: '0.72rem',
-                      color: 'var(--text-muted)',
-                      marginBottom: '0.25rem',
-                      fontWeight: 700,
-                      padding: '0 0.25rem'
-                    }}>
-                      {isAdmin ? 'Support' : (activeInfo.customerName || msg.senderName || 'Customer')} • {formatChatTime(msg.timestamp)}
-                    </div>
-
-                    <div style={{
-                      maxWidth: '75%',
-                      padding: '0.85rem 1.15rem',
-                      borderRadius: isAdmin ? '18px 18px 2px 18px' : '18px 18px 18px 2px',
-                      background: isAdmin ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' : '#ffffff',
-                      color: isAdmin ? '#ffffff' : 'var(--navy-900)',
-                      border: isAdmin ? '1.5px solid #0f172a' : '1.5px solid var(--border-color)',
-                      boxShadow: '0 3px 10px rgba(0,0,0,0.05)',
-                      fontSize: '0.9rem',
-                      lineHeight: 1.5
-                    }}>
-                      {msg.text}
-
-                      {msg.attachment && (
-                        <div style={{
-                          marginTop: '0.5rem',
-                          paddingTop: '0.5rem',
-                          borderTop: isAdmin ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid var(--border-color)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          color: isAdmin ? '#f97316' : 'var(--navy-900)'
-                        }}>
-                          <Paperclip size={14} /> {msg.attachment}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <WhatsAppChatMessage
+                    key={msg.id || index}
+                    message={msg}
+                    isMe={isAdmin}
+                    senderDisplayName={isAdmin ? 'Support' : (activeInfo.customerName || msg.senderName || msg.sender_name || 'Customer')}
+                    onReply={(m) => setReplyingTo(m)}
+                    formatTime={formatChatTime}
+                  />
                 );
               })}
+
+              {/* CLIENT LIVE TYPING INDICATOR */}
+              {isClientTyping && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.45rem 0.85rem',
+                  background: '#ffffff',
+                  borderRadius: '16px',
+                  border: '1.5px solid var(--border-color)',
+                  width: 'fit-content',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                  margin: '0.25rem 0'
+                }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-primary, #ea580c)' }}>
+                    {activeInfo.customerName || 'Customer'} is typing
+                  </span>
+                  <span style={{ display: 'inline-flex', gap: '3px' }}>
+                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-primary, #ea580c)' }}></span>
+                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-primary, #ea580c)' }}></span>
+                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-primary, #ea580c)' }}></span>
+                  </span>
+                </div>
+              )}
 
               <div ref={messagesEndRef} />
             </div>
 
+            {/* QUOTED REPLY BANNER (WhatsApp Style) */}
+            {replyingTo && (
+              <div style={{
+                padding: '0.5rem 1.5rem',
+                background: '#fff7ed',
+                borderTop: '1px solid #fed7aa',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.75rem',
+                animation: 'fadeIn 0.15s ease-out'
+              }}>
+                <div style={{ borderLeft: '3.5px solid var(--color-primary, #ff7a00)', paddingLeft: '0.6rem', minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--color-primary, #ea580c)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Reply size={12} /> Replying to {replyingTo.senderName || replyingTo.sender_name || (activeInfo.customerName || 'Customer')}
+                  </div>
+                  <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {replyingTo.text || (replyingTo.attachment ? `📎 ${replyingTo.attachment}` : 'Media file')}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReplyingTo(null)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary, #ea580c)', padding: '4px' }}
+                  title="Cancel reply"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            )}
+
+            {/* UPLOADING ATTACHMENT SPINNER */}
+            {isUploadingAttachment && (
+              <div style={{
+                padding: '0.45rem 1.5rem',
+                background: '#eff6ff',
+                borderTop: '1px solid #bfdbfe',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                color: '#1d4ed8',
+                fontSize: '0.76rem',
+                fontWeight: 700
+              }}>
+                <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Uploading attachment to secure studio storage...
+              </div>
+            )}
+
+            {/* Attached File Preview */}
+            {attachedFile && !isUploadingAttachment && (
+              <div style={{
+                padding: '0.45rem 1.5rem',
+                background: '#f0fdf4',
+                borderTop: '1px solid #bbf7d0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '0.76rem',
+                color: '#15803d',
+                fontWeight: 700
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                  <Paperclip size={14} />
+                  <span>Ready to send: <strong>{attachedFile.name}</strong> ({attachedFile.size})</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAttachedFile(null)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#15803d' }}
+                  title="Remove attachment"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+
             {/* Messaging Input Area */}
             <form onSubmit={handleSendMessage} style={{ padding: '1rem 1.5rem 1.25rem', borderTop: '1.5px solid var(--border-color)', background: '#ffffff' }}>
-              {attachedFile && (
-                <div style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  background: '#fff7ed',
-                  border: '1px solid var(--orange-400)',
-                  color: 'var(--orange-800)',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  padding: '0.25rem 0.75rem',
-                  borderRadius: '9999px',
-                  marginBottom: '0.65rem'
-                }}>
-                  <Paperclip size={13} /> {attachedFile.name} ({attachedFile.size})
-                  <button type="button" onClick={() => setAttachedFile(null)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', padding: 0 }}>
-                    <X size={13} />
-                  </button>
-                </div>
-              )}
-
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                 <input
                   type="file"
                   ref={fileInputRef}
                   onChange={handleFileAttach}
                   style={{ display: 'none' }}
+                  accept=".png,.jpg,.jpeg,.webp,.gif,.svg,.pdf,.ai,.eps,.dst,.pes,.emb,.zip,.rar"
                 />
 
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingAttachment}
                   style={{
                     background: '#f1f5f9',
                     border: '1.5px solid var(--border-color)',
@@ -889,10 +1015,10 @@ export const AdminChatInbox = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    cursor: 'pointer',
+                    cursor: isUploadingAttachment ? 'not-allowed' : 'pointer',
                     flexShrink: 0
                   }}
-                  title="Attach File"
+                  title="Attach Image, PDF, Vector or Machine File"
                 >
                   <Paperclip size={18} />
                 </button>
@@ -900,23 +1026,25 @@ export const AdminChatInbox = () => {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder={`Reply to ${activeInfo.customerName}...`}
+                  placeholder={replyingTo ? `Reply to ${replyingTo.senderName || 'Customer'}...` : `Reply to ${activeInfo.customerName}...`}
                   value={replyInput}
-                  onChange={(e) => setReplyInput(e.target.value)}
+                  onChange={handleInputChange}
                   style={{ flex: 1, height: '42px', fontSize: '0.9rem' }}
                 />
 
                 <button
                   type="submit"
                   className="btn btn-primary-orange"
-                  disabled={!replyInput.trim() && !attachedFile}
+                  disabled={(!replyInput.trim() && !attachedFile) || isUploadingAttachment}
                   style={{
                     height: '42px',
                     padding: '0 1.25rem',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.45rem',
-                    fontWeight: 800
+                    fontWeight: 800,
+                    opacity: ((!replyInput.trim() && !attachedFile) || isUploadingAttachment) ? 0.5 : 1,
+                    cursor: ((!replyInput.trim() && !attachedFile) || isUploadingAttachment) ? 'not-allowed' : 'pointer'
                   }}
                 >
                   Send <Send size={16} />
