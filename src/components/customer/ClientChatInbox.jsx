@@ -97,9 +97,14 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
   const [mounted, setMounted] = useState(false);
   const [conversations, setConversations] = useState([]);
-  const [activeSection, setActiveSection] = useState(initialOrderId ? 'conversations' : 'conversations'); // 'conversations' (My Conversations) | 'support' (Support)
+  const isTargetingSupport = initialOrderId === 'general-support' || (initialOrderId && String(initialOrderId).startsWith('support-'));
+  const [activeSection, setActiveSection] = useState(isTargetingSupport ? 'support' : (initialOrderId ? 'conversations' : 'conversations'));
   const [subFilter, setSubFilter] = useState('all'); // 'all' | 'unread'
-  const [activeChatId, setActiveChatId] = useState(initialOrderId ? (initialOrderId.startsWith('order-') ? initialOrderId : `order-${initialOrderId}`) : defaultSupportId);
+  const [activeChatId, setActiveChatId] = useState(
+    initialOrderId
+      ? (isTargetingSupport ? (initialOrderId === 'general-support' ? defaultSupportId : initialOrderId) : (initialOrderId.startsWith('order-') ? initialOrderId : `order-${initialOrderId}`))
+      : defaultSupportId
+  );
   const [searchTerm, setSearchTerm] = useState('');
   const [messageInput, setMessageInput] = useState('');
   const [attachedFile, setAttachedFile] = useState(null); // { name, url, size, format }
@@ -416,8 +421,10 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           }
           // If an initial order was passed, select that thread immediately
           if (initialOrderId) {
-            const targetId = initialOrderId.startsWith('order-') ? initialOrderId : `order-${initialOrderId}`;
-            if (fullThreads.some(t => t.id === targetId)) {
+            const targetId = (initialOrderId === 'general-support' || String(initialOrderId).startsWith('support-'))
+              ? (initialOrderId === 'general-support' ? defaultSupportId : initialOrderId)
+              : (initialOrderId.startsWith('order-') ? initialOrderId : `order-${initialOrderId}`);
+            if (fullThreads.some(t => t.id === targetId || (isSupportId(targetId) && isSupportId(t.id)))) {
               setActiveChatId(targetId);
             }
           } else if (!activeChatId || activeChatId === 'general-support') {

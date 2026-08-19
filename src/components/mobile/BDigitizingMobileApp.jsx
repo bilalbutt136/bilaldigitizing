@@ -107,14 +107,20 @@ export const BDigitizingMobileApp = () => {
     return !clientEmail || clientEmail === userEmail || userEmail === 'client@studio.com';
   });
 
-  const activeOrders = myOrders.filter(o => {
+  const deliveredOrders = myOrders.filter(o => {
     const s = String(o?.status || '').toLowerCase().trim();
-    return s !== 'completed' && s !== 'cancelled' && s !== 'delivered';
+    return s === 'delivered' || (Array.isArray(o?.uploadedMachineFiles) && o.uploadedMachineFiles.length > 0 && s !== 'completed' && s !== 'cancelled');
   });
 
   const completedOrders = myOrders.filter(o => {
     const s = String(o?.status || '').toLowerCase().trim();
-    return s === 'completed' || s === 'delivered';
+    return s === 'completed';
+  });
+
+  const activeOrders = myOrders.filter(o => {
+    const s = String(o?.status || '').toLowerCase().trim();
+    const isDeliv = s === 'delivered' || (Array.isArray(o?.uploadedMachineFiles) && o.uploadedMachineFiles.length > 0);
+    return !isDeliv && s !== 'completed' && s !== 'cancelled';
   });
 
   // Load Real-time Notifications & Messages
@@ -752,10 +758,11 @@ export const BDigitizingMobileApp = () => {
             </div>
           </div>
 
-          {/* Sub-filter Switcher */}
-          <div style={{ padding: '0.75rem 1rem 0.25rem', display: 'flex', gap: '0.4rem' }}>
+          {/* Sub-filter Switcher with Delivered, Active, Completed */}
+          <div style={{ padding: '0.75rem 1rem 0.25rem', display: 'flex', gap: '0.4rem', overflowX: 'auto' }}>
             {[
               { id: 'all', label: `All (${myOrders.length})` },
+              { id: 'delivered', label: `📦 Delivered (${deliveredOrders.length})`, highlight: deliveredOrders.length > 0 },
               { id: 'active', label: `Active (${activeOrders.length})` },
               { id: 'completed', label: `Completed (${completedOrders.length})` }
             ].map(f => (
@@ -766,12 +773,16 @@ export const BDigitizingMobileApp = () => {
                 style={{
                   padding: '0.35rem 0.75rem',
                   borderRadius: '20px',
-                  border: orderFilter === f.id ? '1.5px solid #0f172a' : '1px solid #cbd5e1',
-                  background: orderFilter === f.id ? '#0f172a' : '#ffffff',
-                  color: orderFilter === f.id ? '#ffffff' : '#475569',
+                  border: orderFilter === f.id ? '1.5px solid #0f172a' : f.highlight ? '1.5px solid #10b981' : '1px solid #cbd5e1',
+                  background: orderFilter === f.id ? '#0f172a' : f.highlight ? '#ecfdf5' : '#ffffff',
+                  color: orderFilter === f.id ? '#ffffff' : f.highlight ? '#047857' : '#475569',
                   fontSize: '0.75rem',
                   fontWeight: 800,
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
                 }}
               >
                 {f.label}
@@ -779,14 +790,16 @@ export const BDigitizingMobileApp = () => {
             ))}
           </div>
 
-          {/* Order Cards List (Exact layout matching Screenshot 2) */}
+          {/* Order Cards List */}
           <div style={{ padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             {(() => {
               const filtered = myOrders.filter(o => {
                 const s = String(o?.status || '').toLowerCase().trim();
-                const isDone = s === 'completed' || s === 'delivered';
-                if (orderFilter === 'active') return !isDone && s !== 'cancelled';
-                if (orderFilter === 'completed') return isDone;
+                const isDelivered = s === 'delivered' || (Array.isArray(o?.uploadedMachineFiles) && o.uploadedMachineFiles.length > 0 && s !== 'completed' && s !== 'cancelled');
+                const isCompleted = s === 'completed';
+                if (orderFilter === 'delivered') return isDelivered;
+                if (orderFilter === 'active') return !isDelivered && !isCompleted && s !== 'cancelled';
+                if (orderFilter === 'completed') return isCompleted;
                 return true;
               });
 
@@ -805,7 +818,7 @@ export const BDigitizingMobileApp = () => {
                       No Orders Found
                     </h4>
                     <p style={{ margin: '0 0 1rem', fontSize: '0.78rem', color: '#64748b' }}>
-                      {orderFilter === 'active' ? 'You have no active orders in production.' : 'No completed orders in your history.'}
+                      {orderFilter === 'delivered' ? 'No delivered orders pending review.' : orderFilter === 'active' ? 'You have no active orders in production.' : 'No completed orders in your history.'}
                     </p>
                     <button
                       type="button"
@@ -829,7 +842,20 @@ export const BDigitizingMobileApp = () => {
 
               return filtered.map(ord => {
                 const primaryImg = ord?.artworkUrl || ord?.image_url || ord?.logo || ord?.uploadedFiles?.[0]?.url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
-                const isCompleted = String(ord?.status || '').toLowerCase() === 'completed' || String(ord?.status || '').toLowerCase() === 'delivered';
+                const s = String(ord?.status || '').toLowerCase().trim();
+                const isDelivered = s === 'delivered' || (Array.isArray(ord?.uploadedMachineFiles) && ord.uploadedMachineFiles.length > 0 && s !== 'completed');
+                const isCompleted = s === 'completed';
+                const isRevision = s === 'revision' || s === 'modification';
+
+                let badgeInfo = { label: 'IN PROGRESS', bg: '#eff6ff', border: '#bae6fd', color: '#0284c7' };
+                if (isDelivered) {
+                  badgeInfo = { label: '📦 DELIVERED', bg: '#ecfdf5', border: '#86efac', color: '#047857' };
+                } else if (isCompleted) {
+                  badgeInfo = { label: '✓ COMPLETED', bg: '#f1f5f9', border: '#cbd5e1', color: '#334155' };
+                } else if (isRevision) {
+                  badgeInfo = { label: '🔄 REVISION', bg: '#fff7ed', border: '#fdba74', color: '#ea580c' };
+                }
+
                 const priceVal = Number(ord.totalPrice || ord.price || 15).toFixed(2);
                 const dateStr = ord.created_at ? new Date(ord.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Jul 31, 2026';
 
@@ -838,14 +864,14 @@ export const BDigitizingMobileApp = () => {
                     key={ord.id}
                     onClick={() => setSelectedOrderForDrawer(ord)}
                     style={{
-                      background: '#ffffff',
-                      border: '1px solid #e2e8f0',
+                      background: isDelivered ? '#ffffff' : '#ffffff',
+                      border: isDelivered ? '1.5px solid #86efac' : '1px solid #e2e8f0',
                       borderRadius: '14px',
                       padding: '1rem',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '0.75rem',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                      boxShadow: isDelivered ? '0 4px 14px rgba(16, 185, 129, 0.08)' : '0 2px 8px rgba(0,0,0,0.03)',
                       cursor: 'pointer'
                     }}
                   >
@@ -911,18 +937,37 @@ export const BDigitizingMobileApp = () => {
                       </div>
 
                       <span style={{
-                        background: isCompleted ? '#ecfdf5' : '#eff6ff',
-                        color: isCompleted ? '#059669' : '#0284c7',
-                        border: isCompleted ? '1px solid #a7f3d0' : '1px solid #bae6fd',
+                        background: badgeInfo.bg,
+                        color: badgeInfo.color,
+                        border: `1px solid ${badgeInfo.border}`,
                         fontSize: '0.68rem',
                         fontWeight: 900,
-                        padding: '0.15rem 0.5rem',
+                        padding: '0.18rem 0.55rem',
                         borderRadius: '6px',
                         textTransform: 'uppercase'
                       }}>
-                        {isCompleted ? 'COMPLETED' : 'IN PROGRESS'}
+                        {badgeInfo.label}
                       </span>
                     </div>
+
+                    {/* Delivered Quick Review Bar */}
+                    {isDelivered && (
+                      <div style={{
+                        background: '#f0fdf4',
+                        border: '1px dashed #86efac',
+                        borderRadius: '8px',
+                        padding: '0.45rem 0.75rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        fontSize: '0.75rem',
+                        fontWeight: 800,
+                        color: '#047857'
+                      }}>
+                        <span>📦 Files Ready for Download</span>
+                        <span style={{ textDecoration: 'underline' }}>Review & Approve →</span>
+                      </div>
+                    )}
 
                     {/* Bottom Row: Date + 3 Dots Menu */}
                     <div style={{

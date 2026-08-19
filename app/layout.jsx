@@ -151,6 +151,7 @@ export default function RootLayout({ children }) {
               <div className="desktop-website-wrapper">
                 <Footer />
                 <VisitorPromotionBanner />
+                <ClientLiveChatWidget />
               </div>
 
               {/* Global Interactive Modals & Drawers */}
@@ -160,7 +161,6 @@ export default function RootLayout({ children }) {
               <CheckoutModal />
               <OrderTrackerDrawer />
               <DepositModal />
-              <ClientLiveChatWidget />
               <ToastContainer />
               <GlobalUploadModal />
               <MetaPixelTracker />

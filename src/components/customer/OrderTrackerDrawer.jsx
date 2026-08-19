@@ -238,12 +238,41 @@ export const OrderTrackerDrawer = () => {
 
       const existingFiles = ord.uploadedMachineFiles || [];
       const updatedFiles = [...uploadedCloudinaryFiles, ...existingFiles];
-
       const deliveryNoteText = deliveryMessage.trim() || 'Your production stitch files and preview documents are ready for download.';
 
+      // Construct Multi-Delivery Structured History (1st Delivery, 2nd Delivery, etc.)
+      const existingDeliveries = Array.isArray(ord.deliveries) ? ord.deliveries : [];
+      let baseDeliveries = [...existingDeliveries];
+      if (baseDeliveries.length === 0 && existingFiles.length > 0) {
+        baseDeliveries.push({
+          id: 'delivery_initial',
+          deliveryNumber: 1,
+          title: 'Initial Delivery',
+          deliveryDate: ord.deliveryDate || ord.created_at || new Date().toISOString(),
+          deliveryMessage: ord.deliveryNotes || ord.deliveryMessage || 'Initial production stitch files.',
+          deliveredBy: 'Master Digitizer Desk',
+          files: existingFiles
+        });
+      }
+
+      const newDeliveryNumber = baseDeliveries.length + 1;
+      const newDeliveryItem = {
+        id: `delivery_${Date.now()}`,
+        deliveryNumber: newDeliveryNumber,
+        title: newDeliveryNumber === 1 ? 'Initial Delivery' : `Revision Delivery #${newDeliveryNumber - 1}`,
+        deliveryDate: new Date().toISOString(),
+        deliveryMessage: deliveryNoteText,
+        deliveredBy: authUser?.name || 'Master Digitizer Desk',
+        files: uploadedCloudinaryFiles.length > 0 ? uploadedCloudinaryFiles : existingFiles
+      };
+
+      const updatedDeliveries = [newDeliveryItem, ...baseDeliveries];
+
       await updateOrderStatus(ord.id, 'delivered', {
-        outputFileUrl: uploadedCloudinaryFiles.length > 0 ? uploadedCloudinaryFiles[0].url || uploadedCloudinaryFiles[0].name : '',
+        status: 'delivered',
+        outputFileUrl: uploadedCloudinaryFiles.length > 0 ? (uploadedCloudinaryFiles[0].url || uploadedCloudinaryFiles[0].name) : (ord.outputFileUrl || ''),
         uploadedMachineFiles: updatedFiles,
+        deliveries: updatedDeliveries,
         deliveryNotes: deliveryNoteText,
         deliveryMessage: deliveryNoteText,
         deliveryDate: new Date().toISOString()
@@ -252,14 +281,14 @@ export const OrderTrackerDrawer = () => {
       // Also add as a chat notification message
       await addOrderMessage(
         ord.id,
-        `📦 Order Delivered:\n${deliveryNoteText}\n${updatedFiles.length} file(s) available for download.`,
+        `📦 Delivery #${newDeliveryNumber} Dispatched:\n${deliveryNoteText}\n${(uploadedCloudinaryFiles.length > 0 ? uploadedCloudinaryFiles.length : updatedFiles.length)} file(s) available for download.`,
         authUser?.name || 'Master Digitizer Desk',
         'admin'
       );
 
       setAdminFilesList([]);
       setDeliveryMessage('');
-      showToast(`🎉 Order successfully delivered to client!`, 'success');
+      showToast(`🎉 Delivery #${newDeliveryNumber} successfully sent to client!`, 'success');
     } catch (err) {
       console.error('Delivery error:', err);
       showToast('Delivery failed. Please try again.', 'error');
@@ -711,67 +740,160 @@ export const OrderTrackerDrawer = () => {
               </form>
             )}
 
-            {/* CUSTOMER DELIVERY MESSAGE DISPLAY */}
-            {isDelivered && (ord.deliveryNotes || ord.deliveryMessage) && (
-              <div style={{ background: '#ecfdf5', border: '1.5px solid #a7f3d0', padding: '1rem 1.25rem', borderRadius: '12px', marginBottom: '1.25rem' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#065f46', textTransform: 'uppercase', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <Sparkles size={13} /> Digitizer Delivery Note:
-                </div>
-                <div style={{ fontSize: '0.88rem', color: '#047857', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
-                  {ord.deliveryNotes || ord.deliveryMessage}
-                </div>
-              </div>
-            )}
+            {/* MULTI-DELIVERY HISTORY TIMELINE (1st, 2nd, 3rd Deliveries) */}
+            {isDelivered && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                {Array.isArray(ord.deliveries) && ord.deliveries.length > 0 ? (
+                  ord.deliveries.map((delivery, dIdx) => {
+                    const isLatest = dIdx === 0;
+                    const dFiles = Array.isArray(delivery.files) && delivery.files.length > 0 ? delivery.files : uniqueMachineFiles;
+                    const dDateStr = delivery.deliveryDate ? new Date(delivery.deliveryDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Recently delivered';
 
-            {/* DELIVERABLE MACHINE FILES GRID */}
-            {isDelivered ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.85rem', marginBottom: '1.25rem' }}>
-                {uniqueMachineFiles.length > 0 ? (
-                  uniqueMachineFiles.map((f, idx) => {
-                    const ext = (f.format || f.name?.split('.').pop() || 'dst').toUpperCase();
                     return (
-                      <div key={idx} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '1.4rem' }}>🧵</span>
-                          <div style={{ minWidth: 0, flex: 1 }}>
-                            <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.84rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name || `Machine_File.${ext}`}</div>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>.{ext} Production File</div>
+                      <div 
+                        key={delivery.id || dIdx}
+                        style={{
+                          background: isLatest ? '#f0fdf4' : '#f8fafc',
+                          border: isLatest ? '1.5px solid #86efac' : '1px solid #e2e8f0',
+                          borderRadius: '14px',
+                          padding: '1.25rem',
+                          boxShadow: isLatest ? '0 4px 14px rgba(16, 185, 129, 0.08)' : 'none'
+                        }}
+                      >
+                        {/* Delivery Header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem', borderBottom: isLatest ? '1px solid #bbf7d0' : '1px solid #e2e8f0', paddingBottom: '0.65rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '1.15rem' }}>📦</span>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                                <strong style={{ fontSize: '0.95rem', color: isLatest ? '#065f46' : 'var(--navy-900)' }}>
+                                  {delivery.title || `Delivery #${delivery.deliveryNumber || (ord.deliveries.length - dIdx)}`}
+                                </strong>
+                                {isLatest && (
+                                  <span style={{ background: '#10b981', color: '#ffffff', fontSize: '0.65rem', fontWeight: 900, padding: '0.15rem 0.5rem', borderRadius: '9999px', textTransform: 'uppercase' }}>
+                                    Latest Delivery
+                                  </span>
+                                )}
+                              </div>
+                              <span style={{ fontSize: '0.72rem', color: isLatest ? '#047857' : 'var(--text-muted)' }}>
+                                Dispatched {dDateStr} by {delivery.deliveredBy || 'Master Digitizer Desk'}
+                              </span>
+                            </div>
                           </div>
+
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: isLatest ? '#059669' : 'var(--text-muted)' }}>
+                            {dFiles.length} file(s)
+                          </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadFileAsset(f, ext)}
-                          className="btn btn-outline btn-sm"
-                          style={{ width: '100%', gap: '0.3rem', justifyContent: 'center', fontSize: '0.78rem', fontWeight: 700 }}
-                        >
-                          <Download size={13} /> Download .{ext}
-                        </button>
+
+                        {/* Delivery Note */}
+                        {(delivery.deliveryMessage || delivery.deliveryNotes) && (
+                          <div style={{ background: isLatest ? '#ffffff' : '#f1f5f9', border: isLatest ? '1px solid #bbf7d0' : '1px solid #e2e8f0', padding: '0.75rem 1rem', borderRadius: '10px', marginBottom: '0.85rem' }}>
+                            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: isLatest ? '#065f46' : 'var(--navy-800)', textTransform: 'uppercase', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                              <Sparkles size={12} /> Digitizer Note:
+                            </div>
+                            <div style={{ fontSize: '0.84rem', color: isLatest ? '#047857' : 'var(--text-main)', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>
+                              {delivery.deliveryMessage || delivery.deliveryNotes}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Delivery Files Grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.65rem' }}>
+                          {dFiles.map((f, fIdx) => {
+                            const ext = (f.format || f.name?.split('.').pop() || 'dst').toUpperCase();
+                            return (
+                              <div key={fIdx} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                  <span style={{ fontSize: '1.2rem' }}>🧵</span>
+                                  <div style={{ minWidth: 0, flex: 1 }}>
+                                    <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                      {f.name || `Stitch_File.${ext}`}
+                                    </div>
+                                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>.{ext} Production File</div>
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownloadFileAsset(f, ext)}
+                                  className="btn btn-outline btn-sm"
+                                  style={{ width: '100%', gap: '0.25rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, padding: '0.3rem 0.5rem' }}
+                                >
+                                  <Download size={12} /> Download .{ext}
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     );
                   })
                 ) : (
-                  allDownloadFormats.map(fmt => (
-                    <div key={fmt} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '1.4rem' }}>🧵</span>
-                        <div>
-                          <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.84rem' }}>Format (.{fmt.toUpperCase()})</div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Standard Stitch Package</div>
+                  <div>
+                    {/* Fallback Single Delivery Display */}
+                    {(ord.deliveryNotes || ord.deliveryMessage) && (
+                      <div style={{ background: '#ecfdf5', border: '1.5px solid #a7f3d0', padding: '1rem 1.25rem', borderRadius: '12px', marginBottom: '1.25rem' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#065f46', textTransform: 'uppercase', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <Sparkles size={13} /> Digitizer Delivery Note:
+                        </div>
+                        <div style={{ fontSize: '0.88rem', color: '#047857', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                          {ord.deliveryNotes || ord.deliveryMessage}
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadFileAsset(null, fmt)}
-                        className="btn btn-outline btn-sm"
-                        style={{ width: '100%', gap: '0.3rem', justifyContent: 'center', fontSize: '0.78rem', fontWeight: 700 }}
-                      >
-                        <Download size={13} /> Download .{fmt.toUpperCase()}
-                      </button>
+                    )}
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.85rem', marginBottom: '1.25rem' }}>
+                      {uniqueMachineFiles.length > 0 ? (
+                        uniqueMachineFiles.map((f, idx) => {
+                          const ext = (f.format || f.name?.split('.').pop() || 'dst').toUpperCase();
+                          return (
+                            <div key={idx} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span style={{ fontSize: '1.4rem' }}>🧵</span>
+                                <div style={{ minWidth: 0, flex: 1 }}>
+                                  <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.84rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name || `Machine_File.${ext}`}</div>
+                                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>.{ext} Production File</div>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadFileAsset(f, ext)}
+                                className="btn btn-outline btn-sm"
+                                style={{ width: '100%', gap: '0.3rem', justifyContent: 'center', fontSize: '0.78rem', fontWeight: 700 }}
+                              >
+                                <Download size={13} /> Download .{ext}
+                              </button>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        allDownloadFormats.map(fmt => (
+                          <div key={fmt} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ fontSize: '1.4rem' }}>🧵</span>
+                              <div>
+                                <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.84rem' }}>Format (.{fmt.toUpperCase()})</div>
+                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Standard Stitch Package</div>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadFileAsset(null, fmt)}
+                              className="btn btn-outline btn-sm"
+                              style={{ width: '100%', gap: '0.3rem', justifyContent: 'center', fontSize: '0.78rem', fontWeight: 700 }}
+                            >
+                              <Download size={13} /> Download .{fmt.toUpperCase()}
+                            </button>
+                          </div>
+                        ))
+                      )}
                     </div>
-                  ))
+                  </div>
                 )}
               </div>
-            ) : (
+            )}
+
+            {!isDelivered && (
               <div style={{ padding: '1.5rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', textAlign: 'center', marginBottom: '1.25rem' }}>
                 <Clock size={24} style={{ color: 'var(--orange-500)', margin: '0 auto 0.4rem' }} />
                 <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.92rem' }}>Order Currently in Master Digitizing Production</div>
