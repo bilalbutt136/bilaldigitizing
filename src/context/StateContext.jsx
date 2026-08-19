@@ -9,6 +9,7 @@ import {
   upsertClientInSupabase,
   signInWithGoogleIdToken,
   signInWithGoogleOAuth,
+  promptGoogleIdentitySignIn,
   signInWithAppleIdToken,
   signInWithAppleOAuth,
   signInWithSupabaseAuth,
@@ -975,8 +976,10 @@ export const StateProvider = ({ children }) => {
       }
       return res;
     } else {
-      const res = await signInWithGoogleOAuth('/client-portal');
-      if (!res.success) {
+      const res = await promptGoogleIdentitySignIn();
+      if (res?.success && res?.data?.user) {
+        await finishAuth(res.data.user);
+      } else if (!res?.success && res?.error) {
         showToast(res.error || 'Google Sign-In failed.', 'error');
       }
       return res;

@@ -84,6 +84,42 @@ export async function signInWithGoogleIdToken(idToken) {
   }
 }
 
+export async function promptGoogleIdentitySignIn() {
+  if (typeof window === 'undefined') return { success: false, error: 'Window undefined' };
+
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '421520521310-7appibeh1m7cdd90iid17lsq8thlq2oc.apps.googleusercontent.com';
+
+  if (window.google?.accounts?.id && googleClientId) {
+    return new Promise((resolve) => {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: async (response) => {
+            if (response.credential) {
+              const res = await signInWithGoogleIdToken(response.credential);
+              resolve(res);
+            } else {
+              resolve({ success: false, error: 'No credential returned from Google.' });
+            }
+          },
+          auto_select: false,
+          cancel_on_tap_outside: true
+        });
+
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            signInWithGoogleOAuth('/client-portal').then(resolve);
+          }
+        });
+      } catch (err) {
+        signInWithGoogleOAuth('/client-portal').then(resolve);
+      }
+    });
+  }
+
+  return signInWithGoogleOAuth('/client-portal');
+}
+
 export async function signInWithGoogleOAuth(redirectTo = '/client-portal') {
   if (!isSupabaseConfigured) return { success: false, error: 'Database not configured.' };
   try {
