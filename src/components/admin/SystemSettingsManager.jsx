@@ -1,9 +1,8 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { Settings, ShieldCheck, UserPlus, X } from 'lucide-react';
+import { Settings, ShieldCheck, UserPlus, X, Palette, Sun, Moon, Sparkles, RefreshCw, Sliders, Check } from 'lucide-react';
 import { AdminMetaPixel } from './AdminMetaPixel';
+import ThemePreviewCard from '../common/ThemePreviewCard';
 
 export const SystemSettingsManager = () => {
   const {
@@ -12,13 +11,26 @@ export const SystemSettingsManager = () => {
     adminUsers = [],
     addAdminUser,
     authUser,
-    showToast
+    showToast,
+    colorTheme,
+    setColorTheme,
+    availableThemes = [],
+    theme,
+    setTheme,
+    customBrandColors,
+    setCustomBrandColors
   } = useAppState();
 
   const [adminEmail, setAdminEmail] = useState(authUser?.email || '');
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
   const [newAdminName, setNewAdminName] = useState('');
   const [newAdminEmail, setNewAdminEmail] = useState('');
+
+  // Custom Brand Colors Local State
+  const [customPrimary, setCustomPrimary] = useState(customBrandColors?.primary || '#0f2b48');
+  const [customSecondary, setCustomSecondary] = useState(customBrandColors?.secondary || '#1e40af');
+  const [customAccent, setCustomAccent] = useState(customBrandColors?.accent || '#0284c7');
+  const [isCustomBrandActive, setIsCustomBrandActive] = useState(!!customBrandColors);
 
   useEffect(() => {
     if (siteSettings?.adminEmail) {
@@ -28,11 +40,204 @@ export const SystemSettingsManager = () => {
 
   const configuredAdminEmail = (siteSettings?.adminEmail || authUser?.email || '').toLowerCase().trim();
 
+  const handleSaveCustomBrand = (e) => {
+    e.preventDefault();
+    setCustomBrandColors({
+      primary: customPrimary,
+      secondary: customSecondary,
+      accent: customAccent
+    });
+    setIsCustomBrandActive(true);
+    showToast('Custom brand colors applied and saved!', 'success');
+  };
+
+  const handleResetBrandColors = () => {
+    setCustomBrandColors(null);
+    setIsCustomBrandActive(false);
+    showToast('Reset to theme default colors.', 'info');
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       
-      {/* 1. Core Studio Settings */}
-      <div className="card" style={{ padding: '2rem', background: '#ffffff', borderRadius: '16px' }}>
+      {/* 1. GLOBAL BRANDING & THEME MANAGEMENT (Admin Controlled) */}
+      <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1.5px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+          <div>
+            <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--navy-950)', margin: '0 0 0.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Palette size={22} style={{ color: 'var(--orange-500)' }} />
+              Platform Branding & Global Theme Engine
+            </h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: 0 }}>
+              Control the default theme preset for the entire studio, customize brand colors, or test live appearance.
+            </p>
+          </div>
+
+          {/* Mode Switcher */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-subtle)', padding: '0.35rem 0.5rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+            <button
+              type="button"
+              onClick={() => setTheme('light')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.4rem 0.75rem',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 700,
+                fontSize: '0.825rem',
+                background: theme === 'light' ? 'var(--bg-card)' : 'transparent',
+                color: theme === 'light' ? 'var(--navy-950)' : 'var(--text-muted)',
+                boxShadow: theme === 'light' ? 'var(--shadow-sm)' : 'none',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Sun size={15} style={{ color: theme === 'light' ? '#f59e0b' : 'inherit' }} />
+              Light
+            </button>
+            <button
+              type="button"
+              onClick={() => setTheme('dark')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.4rem 0.75rem',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 700,
+                fontSize: '0.825rem',
+                background: theme === 'dark' ? 'var(--bg-card)' : 'transparent',
+                color: theme === 'dark' ? 'var(--navy-950)' : 'var(--text-muted)',
+                boxShadow: theme === 'dark' ? 'var(--shadow-sm)' : 'none',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Moon size={15} style={{ color: theme === 'dark' ? '#60a5fa' : 'inherit' }} />
+              Dark
+            </button>
+          </div>
+        </div>
+
+        {/* Global Preset Selector Grid */}
+        <div style={{ marginBottom: '2rem' }}>
+          <label style={{ display: 'block', fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-950)', marginBottom: '0.75rem' }}>
+            Select Active Theme Preset
+          </label>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
+            gap: '1.25rem'
+          }}>
+            {availableThemes.map((preset) => (
+              <ThemePreviewCard
+                key={preset.id}
+                themePreset={preset}
+                isSelected={colorTheme === preset.id}
+                mode={theme}
+                onSelect={(id) => setColorTheme(id)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Custom Brand Colors Override Form */}
+        <div style={{ background: 'var(--bg-subtle)', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Sliders size={18} style={{ color: 'var(--orange-500)' }} />
+              <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--navy-950)', margin: 0 }}>
+                Custom Brand Color Overrides (Optional)
+              </h4>
+            </div>
+            {isCustomBrandActive && (
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, background: 'var(--orange-100)', color: 'var(--orange-700)', padding: '0.2rem 0.6rem', borderRadius: '9999px' }}>
+                Custom Brand Active
+              </span>
+            )}
+          </div>
+
+          <form onSubmit={handleSaveCustomBrand} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'flex-end' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.4rem' }}>
+                Primary Brand Color
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '0.4rem 0.6rem' }}>
+                <input 
+                  type="color" 
+                  value={customPrimary} 
+                  onChange={(e) => setCustomPrimary(e.target.value)} 
+                  style={{ width: '32px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', background: 'none' }}
+                />
+                <input 
+                  type="text" 
+                  value={customPrimary} 
+                  onChange={(e) => setCustomPrimary(e.target.value)} 
+                  style={{ border: 'none', background: 'transparent', fontSize: '0.85rem', fontWeight: 700, width: '100%', outline: 'none', color: 'var(--navy-900)' }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.4rem' }}>
+                Secondary Brand Color
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '0.4rem 0.6rem' }}>
+                <input 
+                  type="color" 
+                  value={customSecondary} 
+                  onChange={(e) => setCustomSecondary(e.target.value)} 
+                  style={{ width: '32px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', background: 'none' }}
+                />
+                <input 
+                  type="text" 
+                  value={customSecondary} 
+                  onChange={(e) => setCustomSecondary(e.target.value)} 
+                  style={{ border: 'none', background: 'transparent', fontSize: '0.85rem', fontWeight: 700, width: '100%', outline: 'none', color: 'var(--navy-900)' }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.4rem' }}>
+                Accent Color
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '0.4rem 0.6rem' }}>
+                <input 
+                  type="color" 
+                  value={customAccent} 
+                  onChange={(e) => setCustomAccent(e.target.value)} 
+                  style={{ width: '32px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', background: 'none' }}
+                />
+                <input 
+                  type="text" 
+                  value={customAccent} 
+                  onChange={(e) => setCustomAccent(e.target.value)} 
+                  style={{ border: 'none', background: 'transparent', fontSize: '0.85rem', fontWeight: 700, width: '100%', outline: 'none', color: 'var(--navy-900)' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button type="submit" className="btn btn-primary-orange" style={{ padding: '0.65rem 1.15rem', fontSize: '0.875rem' }}>
+                <Sparkles size={15} /> Apply Colors
+              </button>
+              {isCustomBrandActive && (
+                <button type="button" onClick={handleResetBrandColors} className="btn btn-outline" style={{ padding: '0.65rem 0.85rem', fontSize: '0.875rem' }}>
+                  <RefreshCw size={14} /> Reset
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+      {/* 2. Core Studio Settings */}
+      <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1.5px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
         <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--navy-900)' }}>
           🛡️ Studio Admin Settings
         </h3>

@@ -4,57 +4,105 @@
   --font-heading: 'Plus Jakarta Sans', 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
 
-  /* Premium Light Mode Theme */
-  --bg-main: #f8fafc;
-  --bg-card: #ffffff;
-  --bg-surface: #ffffff;
-  --bg-subtle: #f1f5f9;
+  /* ==========================================================================
+     CENTRAL SEMANTIC DESIGN TOKENS
+     ========================================================================== */
+  --color-primary: #ea580c;
+  --color-primary-hover: #c2410c;
+  --color-primary-light: #ffedd5;
+  --color-primary-glow: rgba(249, 115, 22, 0.35);
+  --color-primary-text: #ffffff;
+
+  --color-secondary: #f97316;
+  --color-accent: #fb923c;
+  --color-accent-light: #fff7ed;
+
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-subtle: #f1f5f9;
+
+  --color-border: rgba(15, 23, 42, 0.1);
+  --color-border-hover: rgba(15, 23, 42, 0.25);
+  --color-border-focus: var(--color-primary);
+
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-text-on-primary: #ffffff;
+
+  /* Standardized Semantic Status Tokens */
+  --color-success: #10b981;
+  --color-success-bg: #ecfdf5;
+  --color-success-border: #a7f3d0;
+  --color-success-text: #065f46;
+
+  --color-warning: #f59e0b;
+  --color-warning-bg: #fffbeb;
+  --color-warning-border: #fde68a;
+  --color-warning-text: #92400e;
+
+  --color-error: #ef4444;
+  --color-error-bg: #fef2f2;
+  --color-error-border: #fecaca;
+  --color-error-text: #991b1b;
+
+  --color-info: #0284c7;
+  --color-info-bg: #f0f9ff;
+  --color-info-border: #bae6fd;
+  --color-info-text: #075985;
+
+  /* Legacy Aliases & Surface Mappings */
+  --bg-main: var(--color-background);
+  --bg-card: var(--color-surface);
+  --bg-surface: var(--color-surface-elevated);
+  --bg-subtle: var(--color-subtle);
   
-  --navy-950: #020617; /* Deeper space navy */
+  --navy-950: #020617;
   --navy-900: #0f172a;
   --navy-800: #1e293b;
   --navy-700: #334155;
   --navy-600: #475569;
   --navy-100: #f1f5f9;
 
-  /* Vibrant Glow Orange Palette */
-  --orange-500: #f97316;
-  --orange-600: #ea580c;
-  --orange-700: #c2410c;
+  /* Primary Palette Aliases */
+  --orange-500: var(--color-secondary);
+  --orange-600: var(--color-primary);
+  --orange-700: var(--color-primary-hover);
   --orange-800: #9a3412;
   --orange-900: #7c2d12;
-  --orange-400: #fb923c;
+  --orange-400: var(--color-accent);
   --orange-300: #fdba74;
   --orange-200: #fed7aa;
-  --orange-100: #ffedd5;
-  --orange-50: #fff7ed;
-  --orange-glow: rgba(249, 115, 22, 0.4);
+  --orange-100: var(--color-primary-light);
+  --orange-50: var(--color-accent-light);
+  --orange-glow: var(--color-primary-glow);
 
   /* Semantic Palettes */
-  --green-500: #10b981;
+  --green-500: var(--color-success);
   --green-600: #059669;
-  --green-50: #ecfdf5;
+  --green-50: var(--color-success-bg);
   
   /* Fallbacks for brand consistency */
-  --blue-50: var(--orange-50);
-  --blue-100: var(--orange-100);
-  --blue-200: var(--orange-200);
-  --blue-300: var(--orange-300);
-  --blue-400: var(--orange-400);
-  --blue-500: var(--orange-500);
-  --blue-600: var(--orange-600);
-  --blue-700: var(--orange-700);
-  --blue-800: var(--orange-800);
-  --blue-900: var(--orange-900);
-  --blue-glow: var(--orange-glow);
+  --blue-50: var(--color-info-bg);
+  --blue-100: #e0f2fe;
+  --blue-200: #bae6fd;
+  --blue-300: #7dd3fc;
+  --blue-400: #38bdf8;
+  --blue-500: var(--color-info);
+  --blue-600: #0284c7;
+  --blue-700: #0369a1;
+  --blue-800: #075985;
+  --blue-900: #0c4a6e;
+  --blue-glow: rgba(2, 132, 199, 0.35);
 
-  --text-main: #0f172a;
-  --text-heading: #020617;
-  --text-muted: #64748b;
+  --text-main: var(--color-text-primary);
+  --text-heading: var(--color-text-primary);
+  --text-muted: var(--color-text-muted);
   --text-light: #94a3b8;
 
-  --border-color: rgba(15, 23, 42, 0.1);
-  --border-focus: var(--orange-500);
+  --border-color: var(--color-border);
+  --border-focus: var(--color-border-focus);
 
   /* Hero & Section Theme Variables (Light Mode Defaults) */
   --hero-bg: radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249, 115, 22, 0.08) 0%, rgba(99, 102, 241, 0.04) 50%, transparent 80%), linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
@@ -289,9 +337,9 @@ h1, h2, h3, h4, h5, h6 {
 .btn-primary-orange,
 .btn-blue,
 .btn-navy {
-  background: linear-gradient(135deg, var(--orange-400) 0%, var(--orange-600) 100%);
-  color: #ffffff !important;
-  box-shadow: var(--shadow-md), 0 4px 15px var(--orange-glow);
+  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%) !important;
+  color: var(--color-text-on-primary, #ffffff) !important;
+  box-shadow: var(--shadow-md), 0 4px 15px var(--color-primary-glow);
   border: none;
 }
 
@@ -305,16 +353,16 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-outline {
   background: transparent;
-  border: 2px solid var(--orange-500);
-  color: var(--orange-500) !important;
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary) !important;
   font-weight: 700;
 }
 
 .btn-outline:hover {
-  background: var(--orange-50);
-  color: var(--orange-600) !important;
+  background: var(--color-primary-light);
+  color: var(--color-primary-hover) !important;
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px var(--orange-glow);
+  box-shadow: 0 4px 15px var(--color-primary-glow);
 }
 
 .btn-sm {
@@ -329,7 +377,7 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: var(--radius-lg);
 }
 
-/* Status Badges */
+/* Status Badges with Accessible Semantic Tokens */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -344,18 +392,18 @@ h1, h2, h3, h4, h5, h6 {
   backdrop-filter: blur(4px);
 }
 
-.badge-submitted { background: var(--orange-50); color: var(--orange-700); border: 1px solid var(--orange-200); }
-.badge-assigned { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+.badge-submitted { background: var(--color-primary-light); color: var(--color-primary); border: 1px solid var(--color-border); }
+.badge-assigned { background: var(--color-info-bg); color: var(--color-info-text); border: 1px solid var(--color-info-border); }
 .badge-digitizing { background: #fae8ff; color: #86198f; border: 1px solid #f5d0fe; }
 .badge-qc { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
-.badge-completed { background: var(--green-50); color: var(--green-700); border: 1px solid #a7f3d0; }
-.badge-rush { background: #ffe4e6; color: #e11d48; border: 1px solid #fecdd3; }
+.badge-completed { background: var(--color-success-bg); color: var(--color-success-text); border: 1px solid var(--color-success-border); }
+.badge-rush { background: var(--color-error-bg); color: var(--color-error-text); border: 1px solid var(--color-error-border); }
 
 /* Premium Card System */
 .card {
-  background: var(--bg-card);
+  background: var(--color-surface, #ffffff);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
   transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
   position: relative;
@@ -365,7 +413,7 @@ h1, h2, h3, h4, h5, h6 {
 .card:hover {
   transform: translateY(-5px);
   box-shadow: var(--shadow-xl);
-  border-color: rgba(249, 115, 22, 0.3);
+  border-color: var(--color-primary);
 }
 
 /* Subtle glow overlay for cards */

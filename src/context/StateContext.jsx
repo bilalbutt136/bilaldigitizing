@@ -40,6 +40,7 @@ import {
 } from '../services/supabaseService';
 
 import { playNotificationSound } from '../utils/audioNotification';
+import { THEME_PRESETS, applyThemePresetToDOM } from '../utils/themePresets';
 
 const StateContext = createContext();
 
@@ -141,23 +142,26 @@ export const StateProvider = ({ children }) => {
     }
   };
 
-  // Global Theme Mode State ('light' | 'dark')
+  // Global Theme Mode State ('light' | 'dark') & Color Preset
   const [theme, setThemeState] = useState('light');
+  const [colorTheme, setColorThemeState] = useState('executive-navy');
+  const [customBrandColors, setCustomBrandColorsState] = useState(null);
 
-  const applyThemeToDOM = (t) => {
+  const applyThemeToDOM = (tMode = theme, cPreset = colorTheme, cBrand = customBrandColors) => {
     if (typeof window === 'undefined') return;
-    document.documentElement.setAttribute('data-theme', t);
-    if (t === 'dark') {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
-    }
+    applyThemePresetToDOM(cPreset, tMode, cBrand);
   };
 
   useEffect(() => {
-    const saved = (typeof window !== 'undefined' && localStorage.getItem('bdigi_theme')) || 'light';
-    setThemeState(saved);
-    applyThemeToDOM(saved);
+    const savedMode = (typeof window !== 'undefined' && localStorage.getItem('bdigi_theme')) || 'light';
+    const savedPreset = (typeof window !== 'undefined' && localStorage.getItem('bdigi_color_theme')) || 'executive-navy';
+    const savedBrand = (typeof window !== 'undefined' && JSON.parse(localStorage.getItem('bdigi_custom_brand') || 'null')) || null;
+
+    setThemeState(savedMode);
+    setColorThemeState(savedPreset);
+    setCustomBrandColorsState(savedBrand);
+
+    applyThemePresetToDOM(savedPreset, savedMode, savedBrand);
   }, []);
 
   const toggleTheme = () => {
@@ -166,8 +170,8 @@ export const StateProvider = ({ children }) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('bdigi_theme', nextTheme);
     }
-    applyThemeToDOM(nextTheme);
-    showToast(nextTheme === 'dark' ? 'Dark theme enabled 🌙' : 'Light theme enabled ☀️', 'info');
+    applyThemePresetToDOM(colorTheme, nextTheme, customBrandColors);
+    showToast(nextTheme === 'dark' ? 'Dark mode enabled 🌙' : 'Light mode enabled ☀️', 'info');
   };
 
   const setTheme = (newTheme) => {
@@ -176,7 +180,36 @@ export const StateProvider = ({ children }) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('bdigi_theme', validTheme);
     }
-    applyThemeToDOM(validTheme);
+    applyThemePresetToDOM(colorTheme, validTheme, customBrandColors);
+  };
+
+  const setColorTheme = (presetId, customBrand = null) => {
+    const targetPreset = THEME_PRESETS.find(t => t.id === presetId)?.id || 'executive-navy';
+    setColorThemeState(targetPreset);
+    if (customBrand) {
+      setCustomBrandColorsState(customBrand);
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bdigi_color_theme', targetPreset);
+      if (customBrand) {
+        localStorage.setItem('bdigi_custom_brand', JSON.stringify(customBrand));
+      }
+    }
+    applyThemePresetToDOM(targetPreset, theme, customBrand || customBrandColors);
+    showToast(`Theme updated to ${THEME_PRESETS.find(t => t.id === targetPreset)?.name || 'New Theme'} ✨`, 'success');
+  };
+
+  const setCustomBrandColors = (brandOverrides) => {
+    setCustomBrandColorsState(brandOverrides);
+    if (typeof window !== 'undefined') {
+      if (brandOverrides) {
+        localStorage.setItem('bdigi_custom_brand', JSON.stringify(brandOverrides));
+      } else {
+        localStorage.removeItem('bdigi_custom_brand');
+      }
+    }
+    applyThemePresetToDOM(colorTheme, theme, brandOverrides);
+    showToast('Brand colors updated successfully!', 'success');
   };
   
   // Checkout & Payment states
@@ -1450,6 +1483,8 @@ export const StateProvider = ({ children }) => {
       depositFunds, deductWalletBalance,
       toast, showToast,
       theme, toggleTheme, setTheme,
+      colorTheme, setColorTheme, availableThemes: THEME_PRESETS,
+      customBrandColors, setCustomBrandColors,
       notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead, unreadNotificationsCount,
       unreadChatCount, refreshUnreadChatCount,
       createOrder, updateOrderStatus, addRevisionRequest, addOrderMessage, cancelOrder,

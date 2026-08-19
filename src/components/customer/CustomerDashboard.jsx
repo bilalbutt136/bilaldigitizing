@@ -31,13 +31,15 @@ import {
   AlertCircle,
   LayoutDashboard,
   PackageCheck,
-  Plus
+  Plus,
+  Palette
 } from 'lucide-react';
 import { ClientSidebar } from './ClientSidebar';
 import { ClientChatInbox } from './ClientChatInbox';
 import { EmbroideryDigitizingPage } from '../public/EmbroideryDigitizingPage';
 import { VectorArtPage } from '../public/VectorArtPage';
 import { CustomPatchesSection } from '../public/CustomPatchesSection';
+import ThemePreviewCard from '../common/ThemePreviewCard';
 import { fetchConversations, subscribeToLiveMessages } from '../../services/supabaseService';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
 
@@ -56,7 +58,13 @@ export const CustomerDashboard = () => {
     setIsCheckoutModalOpen,
     setCheckoutSession,
     showToast,
-    logout
+    logout,
+    theme,
+    toggleTheme,
+    setTheme,
+    colorTheme,
+    setColorTheme,
+    availableThemes = []
   } = useAppState();
 
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'support' | 'digitizing' | 'vector' | 'patches' | 'profile' | 'settings'
@@ -1760,10 +1768,92 @@ export const CustomerDashboard = () => {
 
             {/* TAB 5: SETTINGS */}
             {activeTab === 'settings' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div className="card" style={{ padding: '2rem', background: '#ffffff', border: '1.5px solid var(--border-color)', borderRadius: '16px' }}>
-                  <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
-                    Client Studio Preferences & Settings
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                
+                {/* 1. APPEARANCE & THEME CUSTOMIZATION CARD */}
+                <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1.5px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+                    <div>
+                      <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--navy-950)', margin: '0 0 0.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Palette size={22} style={{ color: 'var(--orange-500)' }} />
+                        Appearance & Theme System
+                      </h2>
+                      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: 0 }}>
+                        Choose your preferred studio brand theme and color palette. Updates instantly across your portal.
+                      </p>
+                    </div>
+
+                    {/* Mode Toggle Switch (Light / Dark) */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-subtle)', padding: '0.35rem 0.5rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                      <button
+                        type="button"
+                        onClick={() => setTheme('light')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.4rem 0.75rem',
+                          borderRadius: '8px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontWeight: 700,
+                          fontSize: '0.825rem',
+                          background: theme === 'light' ? 'var(--bg-card)' : 'transparent',
+                          color: theme === 'light' ? 'var(--navy-950)' : 'var(--text-muted)',
+                          boxShadow: theme === 'light' ? 'var(--shadow-sm)' : 'none',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <Sun size={15} style={{ color: theme === 'light' ? '#f59e0b' : 'inherit' }} />
+                        Light
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTheme('dark')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.4rem 0.75rem',
+                          borderRadius: '8px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontWeight: 700,
+                          fontSize: '0.825rem',
+                          background: theme === 'dark' ? 'var(--bg-card)' : 'transparent',
+                          color: theme === 'dark' ? 'var(--navy-950)' : 'var(--text-muted)',
+                          boxShadow: theme === 'dark' ? 'var(--shadow-sm)' : 'none',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <Moon size={15} style={{ color: theme === 'dark' ? '#60a5fa' : 'inherit' }} />
+                        Dark
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Themes Grid */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
+                    gap: '1.25rem'
+                  }}>
+                    {availableThemes.map((preset) => (
+                      <ThemePreviewCard
+                        key={preset.id}
+                        themePreset={preset}
+                        isSelected={colorTheme === preset.id}
+                        mode={theme}
+                        onSelect={(id) => setColorTheme(id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* 2. STUDIO PREFERENCES CARD */}
+                <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1.5px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
+                  <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+                    Production Preferences & Alerts
                   </h2>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -1773,7 +1863,7 @@ export const CustomerDashboard = () => {
                       </label>
                       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                         {['.DST (Tajima)', '.PES (Brother)', '.EXP (Melco)', '.EMB (Wilcom)', '.JEF (Janome)'].map(fmt => (
-                          <span key={fmt} style={{ background: '#f1f5f9', border: '1px solid var(--border-color)', padding: '0.4rem 0.75rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, color: 'var(--navy-800)' }}>
+                          <span key={fmt} style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-color)', padding: '0.4rem 0.75rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, color: 'var(--navy-800)' }}>
                             ✓ {fmt}
                           </span>
                         ))}
@@ -1795,6 +1885,7 @@ export const CustomerDashboard = () => {
                     </div>
                   </div>
                 </div>
+
               </div>
             )}
 
