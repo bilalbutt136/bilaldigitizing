@@ -34,42 +34,42 @@ export const THEME_PRESETS = [
         '--color-secondary': '#f97316',
         '--color-accent': '#fb923c',
         '--color-accent-light': '#fff7ed',
-        '--color-background': '#f6f8fb',
+        '--color-background': '#f8fafc',
         '--color-surface': '#ffffff',
         '--color-surface-elevated': '#ffffff',
         '--color-subtle': '#f1f5f9',
-        '--color-border': 'rgba(15, 23, 42, 0.09)',
-        '--color-border-hover': 'rgba(15, 23, 42, 0.22)',
+        '--color-border': '#e2e8f0',
+        '--color-border-hover': '#cbd5e1',
         '--color-border-focus': '#ea580c',
-        '--color-text-primary': '#0f172a',
+        '--color-text-primary': '#090d16',
         '--color-text-secondary': '#334155',
         '--color-text-muted': '#64748b',
         '--color-text-on-primary': '#ffffff',
-        '--hero-bg': 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249, 115, 22, 0.06) 0%, rgba(241, 245, 249, 0.7) 50%, #f6f8fb 100%)',
+        '--hero-bg': 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249, 115, 22, 0.07) 0%, rgba(241, 245, 249, 0.8) 50%, #f8fafc 100%)',
         '--hero-tabs-bg': '#ffffff',
-        '--hero-tabs-border': 'rgba(203, 213, 225, 0.85)',
-        '--hero-text-primary': '#0f172a',
-        '--hero-text-secondary': '#475569',
+        '--hero-tabs-border': '#e2e8f0',
+        '--hero-text-primary': '#090d16',
+        '--hero-text-secondary': '#334155',
         '--hero-card-bg': '#ffffff',
-        '--hero-card-border': 'rgba(226, 232, 240, 0.95)',
+        '--hero-card-border': '#e2e8f0',
         '--hero-card-shadow': '0 16px 40px -10px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.03)',
-        '--banner-bg': 'linear-gradient(135deg, #ffffff 0%, #fffbf6 50%, #f6f8fb 100%)',
+        '--banner-bg': 'linear-gradient(135deg, #ffffff 0%, #fffbf6 50%, #f8fafc 100%)',
         '--banner-border': 'rgba(234, 88, 12, 0.16)',
-        '--banner-title': '#0f172a',
-        '--banner-desc': '#475569',
-        '--stats-bar-bg': '#f6f8fb',
+        '--banner-title': '#090d16',
+        '--banner-desc': '#334155',
+        '--stats-bar-bg': '#f8fafc',
         '--stats-card-bg': '#ffffff',
-        '--stats-card-border': 'rgba(226, 232, 240, 0.95)',
-        '--stats-number-color': '#0f172a',
+        '--stats-card-border': '#e2e8f0',
+        '--stats-number-color': '#090d16',
         '--stats-label-color': '#64748b',
-        '--cta-bg': 'radial-gradient(ellipse 90% 70% at 50% 0%, rgba(249, 115, 22, 0.08) 0%, rgba(241, 245, 249, 0.6) 50%, #f6f8fb 100%)',
-        '--cta-title': '#0f172a',
-        '--cta-desc': '#475569',
+        '--cta-bg': 'radial-gradient(ellipse 90% 70% at 50% 0%, rgba(249, 115, 22, 0.08) 0%, rgba(241, 245, 249, 0.7) 50%, #f8fafc 100%)',
+        '--cta-title': '#090d16',
+        '--cta-desc': '#334155',
         '--cta-badge-bg': '#fff7ed',
         '--cta-badge-border': '#fed7aa',
         '--cta-badge-text': '#c2410c',
-        '--cta-btn-outline-color': '#0f172a',
-        '--cta-btn-outline-border': 'rgba(15, 23, 42, 0.2)'
+        '--cta-btn-outline-color': '#090d16',
+        '--cta-btn-outline-border': '#cbd5e1'
       },
       dark: {
         '--color-primary': '#fb923c',
@@ -641,17 +641,17 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
   root.style.setProperty('--orange-500', tokenSet['--color-primary'] || (mode === 'dark' ? '#fb923c' : '#ea580c'));
   root.style.setProperty('--orange-600', tokenSet['--color-primary-hover'] || (mode === 'dark' ? '#f97316' : '#c2410c'));
   root.style.setProperty('--orange-400', tokenSet['--color-secondary'] || (mode === 'dark' ? '#fdba74' : '#f97316'));
-  root.style.setProperty('--orange-50', tokenSet['--color-primary-light'] || (mode === 'dark' ? 'rgba(251, 146, 60, 0.15)' : '#ffedd5'));
+  root.style.setProperty('--orange-50', tokenSet['--color-primary-light'] || (mode === 'dark' ? 'rgba(251, 146, 60, 0.15)' : '#fff7ed'));
   root.style.setProperty('--orange-glow', tokenSet['--color-primary-glow'] || 'rgba(249, 115, 22, 0.35)');
   root.style.setProperty('--bg-main', tokenSet['--color-background'] || (mode === 'dark' ? '#0a0e17' : '#f8fafc'));
   root.style.setProperty('--bg-card', tokenSet['--color-surface'] || (mode === 'dark' ? '#111827' : '#ffffff'));
   root.style.setProperty('--bg-surface', tokenSet['--color-surface-elevated'] || (mode === 'dark' ? '#1a2234' : '#ffffff'));
   root.style.setProperty('--bg-subtle', tokenSet['--color-subtle'] || (mode === 'dark' ? '#141d2f' : '#f1f5f9'));
-  root.style.setProperty('--border-color', tokenSet['--color-border'] || (mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(15, 23, 42, 0.1)'));
-  root.style.setProperty('--text-main', tokenSet['--color-text-primary'] || (mode === 'dark' ? '#f8fafc' : '#0f172a'));
+  root.style.setProperty('--border-color', tokenSet['--color-border'] || (mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0'));
+  root.style.setProperty('--text-main', tokenSet['--color-text-primary'] || (mode === 'dark' ? '#f8fafc' : '#090d16'));
   root.style.setProperty('--text-muted', tokenSet['--color-text-muted'] || (mode === 'dark' ? '#94a3b8' : '#64748b'));
   root.style.setProperty('--text-light', tokenSet['--color-text-muted'] || (mode === 'dark' ? '#94a3b8' : '#94a3b8'));
-  root.style.setProperty('--text-heading', mode === 'dark' ? '#ffffff' : '#0f172a');
+  root.style.setProperty('--text-heading', mode === 'dark' ? '#ffffff' : '#090d16');
 
   // Dynamic high-contrast mapping for legacy navy palette tokens
   if (mode === 'dark') {
@@ -662,7 +662,7 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
     root.style.setProperty('--navy-600', '#cbd5e1');
     root.style.setProperty('--navy-100', tokenSet['--color-subtle'] || '#141d2f');
   } else {
-    root.style.setProperty('--navy-950', '#020617');
+    root.style.setProperty('--navy-950', '#090d16');
     root.style.setProperty('--navy-900', '#0f172a');
     root.style.setProperty('--navy-800', '#1e293b');
     root.style.setProperty('--navy-700', '#334155');

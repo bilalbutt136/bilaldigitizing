@@ -17,16 +17,16 @@
   --color-accent: #fb923c;
   --color-accent-light: #fff7ed;
 
-  --color-background: #f6f8fb;
+  --color-background: #f8fafc;
   --color-surface: #ffffff;
   --color-surface-elevated: #ffffff;
   --color-subtle: #f1f5f9;
 
-  --color-border: rgba(15, 23, 42, 0.09);
-  --color-border-hover: rgba(15, 23, 42, 0.22);
+  --color-border: #e2e8f0;
+  --color-border-hover: #cbd5e1;
   --color-border-focus: var(--color-primary);
 
-  --color-text-primary: #0f172a;
+  --color-text-primary: #090d16;
   --color-text-secondary: #334155;
   --color-text-muted: #64748b;
   --color-text-on-primary: #ffffff;
@@ -58,7 +58,7 @@
   --bg-surface: var(--color-surface-elevated);
   --bg-subtle: var(--color-subtle);
   
-  --navy-950: #020617;
+  --navy-950: #090d16;
   --navy-900: #0f172a;
   --navy-800: #1e293b;
   --navy-700: #334155;
@@ -105,40 +105,40 @@
   --border-focus: var(--color-border-focus);
 
   /* Hero & Section Theme Variables (Light Mode Defaults - Luxury Studio Scheme) */
-  --hero-bg: radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249, 115, 22, 0.06) 0%, rgba(241, 245, 249, 0.7) 50%, #f6f8fb 100%);
+  --hero-bg: radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249, 115, 22, 0.07) 0%, rgba(241, 245, 249, 0.8) 50%, #f8fafc 100%);
   --hero-tabs-bg: #ffffff;
-  --hero-tabs-border: rgba(203, 213, 225, 0.85);
-  --hero-text-primary: #0f172a;
-  --hero-text-secondary: #475569;
+  --hero-tabs-border: #e2e8f0;
+  --hero-text-primary: #090d16;
+  --hero-text-secondary: #334155;
   --hero-card-bg: #ffffff;
-  --hero-card-border: rgba(226, 232, 240, 0.95);
+  --hero-card-border: #e2e8f0;
   --hero-card-shadow: 0 16px 40px -10px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.03);
 
-  --banner-bg: linear-gradient(135deg, #ffffff 0%, #fffbf6 50%, #f6f8fb 100%);
+  --banner-bg: linear-gradient(135deg, #ffffff 0%, #fffbf6 50%, #f8fafc 100%);
   --banner-border: rgba(234, 88, 12, 0.16);
-  --banner-title: #0f172a;
-  --banner-desc: #475569;
+  --banner-title: #090d16;
+  --banner-desc: #334155;
 
-  --stats-bar-bg: #f6f8fb;
+  --stats-bar-bg: #f8fafc;
   --stats-card-bg: #ffffff;
-  --stats-card-border: rgba(226, 232, 240, 0.95);
-  --stats-number-color: #0f172a;
+  --stats-card-border: #e2e8f0;
+  --stats-number-color: #090d16;
   --stats-label-color: #64748b;
 
-  --cta-bg: radial-gradient(ellipse 90% 70% at 50% 0%, rgba(249, 115, 22, 0.08) 0%, rgba(241, 245, 249, 0.6) 50%, #f6f8fb 100%);
-  --cta-title: #0f172a;
-  --cta-desc: #475569;
+  --cta-bg: radial-gradient(ellipse 90% 70% at 50% 0%, rgba(249, 115, 22, 0.08) 0%, rgba(241, 245, 249, 0.7) 50%, #f8fafc 100%);
+  --cta-title: #090d16;
+  --cta-desc: #334155;
   --cta-badge-bg: #fff7ed;
   --cta-badge-border: #fed7aa;
   --cta-badge-text: #c2410c;
-  --cta-btn-outline-color: #0f172a;
-  --cta-btn-outline-border: rgba(15, 23, 42, 0.2);
+  --cta-btn-outline-color: #090d16;
+  --cta-btn-outline-border: #cbd5e1;
 
   /* Premium Multi-Layer Shadows */
-  --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.03);
-  --shadow-lg: 0 12px 24px -4px rgba(15, 23, 42, 0.07), 0 4px 8px -4px rgba(15, 23, 42, 0.03);
-  --shadow-xl: 0 20px 35px -6px rgba(15, 23, 42, 0.09), 0 8px 12px -6px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 12px 24px -4px rgba(15, 23, 42, 0.09), 0 4px 8px -2px rgba(15, 23, 42, 0.04);
+  --shadow-xl: 0 20px 35px -6px rgba(15, 23, 42, 0.1), 0 8px 16px -4px rgba(15, 23, 42, 0.05);
   --shadow-glow: 0 0 20px rgba(249, 115, 22, 0.25), 0 10px 15px -3px rgba(249, 115, 22, 0.3);
 
   --radius-sm: 8px;
