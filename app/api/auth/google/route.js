@@ -55,7 +55,7 @@ export async function POST(request) {
       console.warn('[Google Auth API] Auth user check notice:', authAdminErr?.message);
     }
 
-    // 3. Ensure client record in public.clients
+    // 3. Ensure client record in public.clients table
     const { data: existingClient } = await supabase
       .from('clients')
       .select('*')
@@ -97,7 +97,24 @@ export async function POST(request) {
         .eq('email', email);
     }
 
-    // 4. Construct complete authentic user object
+    // 4. Generate official session link/token_hash for the browser to verify and persist GoTrue session
+    let tokenHash = null;
+    let emailOtp = null;
+    try {
+      const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
+        type: 'magiclink',
+        email: email
+      });
+
+      if (!linkErr && linkData?.properties) {
+        tokenHash = linkData.properties.hashed_token || null;
+        emailOtp = linkData.properties.email_otp || null;
+      }
+    } catch (genErr) {
+      console.warn('[Google Auth API] Generate link notice:', genErr?.message);
+    }
+
+    // 5. Construct authentic user object
     const finalUserId = authUserId || clientRecord?.id || `google_${userInfo.sub || Date.now()}`;
     const returnUser = {
       id: finalUserId,
@@ -111,6 +128,8 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
+      token_hash: tokenHash,
+      email_otp: emailOtp,
       user: returnUser
     });
   } catch (error) {

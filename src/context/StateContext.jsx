@@ -602,18 +602,33 @@ export const StateProvider = ({ children }) => {
 
           upsertClientInSupabase({ ...uData, role }).catch(() => {});
         } else {
-          // If Supabase has no authenticated session, clear any stale local user state immediately (Rule 3)
+          // If Supabase has no active session, verify if a freshly authenticated user exists locally
           if (!cancelled) {
-            setIsAuthenticated(false);
-            setAuthUser(null);
-            setCurrentView('public');
-            setWalletBalance(0);
+            let hasValidLocalUser = false;
             try {
               if (typeof window !== 'undefined') {
-                localStorage.removeItem('bdigi_auth_user');
-                localStorage.removeItem('bdigi_current_view');
+                const saved = localStorage.getItem('bdigi_auth_user');
+                if (saved) {
+                  const parsed = JSON.parse(saved);
+                  if (parsed && parsed.email) {
+                    hasValidLocalUser = true;
+                  }
+                }
               }
             } catch {}
+
+            if (!hasValidLocalUser) {
+              setIsAuthenticated(false);
+              setAuthUser(null);
+              setCurrentView('public');
+              setWalletBalance(0);
+              try {
+                if (typeof window !== 'undefined') {
+                  localStorage.removeItem('bdigi_auth_user');
+                  localStorage.removeItem('bdigi_current_view');
+                }
+              } catch {}
+            }
           }
         }
       } catch (sessErr) {

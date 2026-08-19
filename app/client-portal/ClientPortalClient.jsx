@@ -16,7 +16,17 @@ export function ClientPortalClient() {
   useEffect(() => {
     if (!isMounted || !isAuthInitialized) return;
     
-    if (!isAuthenticated) {
+    let isUserLoggedIn = isAuthenticated;
+    if (!isUserLoggedIn && typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('bdigi_auth_user');
+        if (saved && JSON.parse(saved)?.email) {
+          isUserLoggedIn = true;
+        }
+      } catch {}
+    }
+
+    if (!isUserLoggedIn) {
       setAuthModalMode('login');
       setIsAuthModalOpen(true);
       setCurrentView('public');

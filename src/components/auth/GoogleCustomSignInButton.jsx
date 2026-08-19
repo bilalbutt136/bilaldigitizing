@@ -28,6 +28,20 @@ const GoogleButtonInternal = ({ onAuthSuccess, onAuthError, style = {}, text = '
         });
         const data = await res.json();
         if (data.success && data.user) {
+          if (data.token_hash) {
+            try {
+              const { supabase } = await import('../../lib/supabase/client');
+              if (supabase) {
+                await supabase.auth.verifyOtp({
+                  token_hash: data.token_hash,
+                  type: 'magiclink'
+                });
+              }
+            } catch (vErr) {
+              console.warn('[Google Sign-In] Session verify notice:', vErr);
+            }
+          }
+
           if (onAuthSuccess) {
             await onAuthSuccess(data.user);
           }
