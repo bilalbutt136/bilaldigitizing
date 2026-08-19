@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { acceptCustomOffer, declineCustomOffer, cancelCustomOffer } from '../../services/supabaseService';
 import { playNotificationSound } from '../../utils/audioNotification';
+import { useAppState } from '../../context/StateContext';
 
 /**
  * Custom Offer Card Message rendered inside Chat Feeds
@@ -30,8 +31,11 @@ export default function OfferCardMessage({
   isMe = false,
   isAdmin = false,
   onOrderClick = () => {},
-  showToast = () => {}
+  showToast: propShowToast = null
 }) {
+  const { setCheckoutSession, setIsCheckoutModalOpen, showToast: contextShowToast } = useAppState() || {};
+  const showToast = propShowToast || contextShowToast || (() => {});
+
   const [isAccepting, setIsAccepting] = useState(false);
   const [isDeclining, setIsDeclining] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -145,8 +149,25 @@ export default function OfferCardMessage({
     }
   };
 
-  const handleAccept = async () => {
-    if (isAccepting || currentStatus !== 'sent') return;
+  const isPending = !['accepted', 'declined', 'expired', 'cancelled'].includes(currentStatus);
+
+  const handleLaunchPayment = () => {
+    if (setCheckoutSession && setIsCheckoutModalOpen) {
+      setCheckoutSession({
+        amount: price,
+        orderId: offer.order_id || `off-${offer.id}`,
+        offerId: offer.id,
+        serviceTitle: `Custom Offer: ${offer.title}`,
+        offerData: offer
+      });
+      setIsCheckoutModalOpen(true);
+    } else {
+      handleDirectAccept();
+    }
+  };
+
+  const handleDirectAccept = async () => {
+    if (isAccepting) return;
     setIsAccepting(true);
     try {
       const res = await acceptCustomOffer(offer.id);
@@ -165,7 +186,7 @@ export default function OfferCardMessage({
   };
 
   const handleDecline = async () => {
-    if (isDeclining || currentStatus !== 'sent') return;
+    if (isDeclining || !isPending) return;
     setIsDeclining(true);
     try {
       const res = await declineCustomOffer(offer.id);
@@ -296,17 +317,17 @@ export default function OfferCardMessage({
           </div>
         </div>
 
-        {/* Action Controls */}
-        {currentStatus === 'sent' && !isAdmin && (
+        {/* Action Controls for Customer */}
+        {isPending && !isAdmin && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <button
-              onClick={handleAccept}
+              onClick={handleLaunchPayment}
               disabled={isAccepting || isDeclining}
               style={{
                 width: '100%',
-                padding: '0.65rem 1rem',
+                padding: '0.7rem 1rem',
                 borderRadius: '10px',
-                background: 'linear-gradient(135deg, #059669, #10b981)',
+                background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
                 border: 'none',
                 color: '#ffffff',
                 fontWeight: 800,
@@ -321,7 +342,7 @@ export default function OfferCardMessage({
               }}
             >
               {isAccepting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-              {isAccepting ? 'Accepting...' : `Accept Offer • $${price.toFixed(2)}`}
+              {isAccepting ? 'Processing...' : `Accept & Pay • $${price.toFixed(2)}`}
             </button>
 
             <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -363,9 +384,9 @@ export default function OfferCardMessage({
         )}
 
         {/* Admin Controls */}
-        {isAdmin && currentStatus === 'sent' && (
+        {isAdmin && isPending && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.4rem', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
-            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Awaiting client response</span>
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Awaiting client payment & acceptance</span>
             <button
               onClick={handleCancel}
               disabled={isCancelling}

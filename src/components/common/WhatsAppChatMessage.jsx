@@ -93,7 +93,7 @@ export default function WhatsAppChatMessage({
           offer={message.offer_data || message.offer}
           messageId={message.id}
           isMe={isMe}
-          isAdmin={themePreset === 'admin' || (isMe && message.sender === 'admin')}
+          isAdmin={themePreset === 'admin'}
           onOrderClick={onOrderClick}
         />
       </div>

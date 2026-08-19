@@ -15,7 +15,7 @@ import {
   ArrowLeft,
   ArrowRight
 } from 'lucide-react';
-import { getAuthHeaders } from '../../services/supabaseService';
+import { getAuthHeaders, acceptCustomOffer } from '../../services/supabaseService';
 
 // Authentic Branded Payment Method SVG Components
 const WalletBrandIcon = () => (
@@ -233,6 +233,14 @@ export const CheckoutModal = () => {
           setIsPaid(true);
           showToast('Payment successful! Funds deducted from your Studio Wallet.', 'success');
           
+          if (checkoutSession?.offerId) {
+            try {
+              await acceptCustomOffer(checkoutSession.offerId);
+            } catch (offErr) {
+              console.warn('Custom offer accept on wallet checkout notice:', offErr);
+            }
+          }
+
           if (orderId && updateOrderStatus) {
             await updateOrderStatus(orderId, 'in_progress', { paymentStatus: 'paid', payment_status: 'paid' });
           }
@@ -342,6 +350,15 @@ export const CheckoutModal = () => {
           if (data.success && (data.status === 'paid' || data.status === 'completed')) {
             setIsPaid(true);
             showToast('Payment confirmed! Order assigned to design desk.', 'success');
+            
+            if (checkoutSession?.offerId) {
+              try {
+                await acceptCustomOffer(checkoutSession.offerId);
+              } catch (offErr) {
+                console.warn('Custom offer accept on gateway checkout notice:', offErr);
+              }
+            }
+
             if (checkoutSession?.orderId && updateOrderStatus) {
               updateOrderStatus(checkoutSession.orderId, 'in_progress', { paymentStatus: 'paid', payment_status: 'paid' });
             }
