@@ -88,7 +88,7 @@ export const PortfolioPage = () => {
       
       {/* 1. Page Header Banner */}
       <section style={{
-        background: 'linear-gradient(135deg, var(--navy-950, #0f172a) 0%, #0b1329 60%, #1e1b4b 100%)',
+        background: 'linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%)',
         color: '#ffffff',
         padding: '3.5rem 0 3rem',
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
@@ -113,12 +113,12 @@ export const PortfolioPage = () => {
             alignItems: 'center', 
             gap: '0.5rem', 
             fontSize: '0.85rem', 
-            color: '#94a3b8', 
+            color: '#cbd5e1', 
             marginBottom: '1.25rem' 
           }}>
             <button 
               onClick={() => navigate('/')} 
-              style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 0, fontWeight: 600 }}
+              style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', padding: 0, fontWeight: 600 }}
             >
               Home
             </button>
@@ -159,7 +159,7 @@ export const PortfolioPage = () => {
 
             <p style={{
               fontSize: '1.1rem',
-              color: '#94a3b8',
+              color: '#cbd5e1',
               lineHeight: 1.6,
               margin: 0
             }}>
@@ -177,7 +177,7 @@ export const PortfolioPage = () => {
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem' }}>
             <div style={{
               display: 'inline-flex',
-              background: 'var(--color-surface, #ffffff)',
+              background: 'var(--bg-card)',
               border: '1.5px solid var(--border-color)',
               padding: '0.35rem',
               borderRadius: '9999px',
@@ -208,8 +208,8 @@ export const PortfolioPage = () => {
                       background: isSelected 
                         ? 'linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%)' 
                         : 'transparent',
-                      color: isSelected ? '#ffffff' : 'var(--color-text-secondary)',
-                      fontWeight: isSelected ? 800 : 600,
+                      color: isSelected ? '#ffffff' : 'var(--color-text-primary)',
+                      fontWeight: isSelected ? 800 : 700,
                       fontSize: '0.875rem',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
@@ -219,8 +219,8 @@ export const PortfolioPage = () => {
                     <IconComp size={15} />
                     <span>{cat.label}</span>
                     <span style={{
-                      background: isSelected ? 'rgba(255, 255, 255, 0.25)' : '#f1f5f9',
-                      color: isSelected ? '#ffffff' : '#64748b',
+                      background: isSelected ? 'rgba(255, 255, 255, 0.25)' : 'var(--color-subtle)',
+                      color: isSelected ? '#ffffff' : 'var(--color-text-muted)',
                       fontSize: '0.72rem',
                       fontWeight: 800,
                       padding: '0.1rem 0.45rem',
@@ -236,9 +236,9 @@ export const PortfolioPage = () => {
 
           {/* Portfolio Grid */}
           {filteredItems.length === 0 ? (
-            <div className="card" style={{ padding: '4rem 2rem', textAlign: 'center', background: '#ffffff', border: '1.5px dashed var(--border-color)', borderRadius: '20px', maxWidth: '600px', margin: '0 auto' }}>
+            <div className="card" style={{ padding: '4rem 2rem', textAlign: 'center', background: 'var(--bg-card)', border: '1.5px dashed var(--border-color)', borderRadius: '20px', maxWidth: '600px', margin: '0 auto' }}>
               <Sparkles size={40} style={{ color: 'var(--orange-500)', margin: '0 auto 1rem' }} />
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '0.5rem' }}>
                 Curating New Projects
               </h3>
               <p style={{ fontSize: '0.925rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
