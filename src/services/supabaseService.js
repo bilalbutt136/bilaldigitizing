@@ -1210,10 +1210,12 @@ export async function createConversation(dbConv) {
   } catch { return null; }
 }
 
-export async function fetchConversations() {
+export async function fetchConversations(email) {
   try {
     const headers = await getAuthHeaders();
-    const res = await fetch('/api/messages?action=fetchConversations', {
+    const cleanEmail = email ? String(email).toLowerCase().trim() : '';
+    const query = cleanEmail ? `&clientEmail=${encodeURIComponent(cleanEmail)}` : '';
+    const res = await fetch(`/api/messages?action=fetchConversations${query}`, {
       headers,
       cache: 'no-store'
     });

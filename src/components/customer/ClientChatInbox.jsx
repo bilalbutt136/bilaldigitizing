@@ -96,33 +96,81 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   const typingTimeoutRef = useRef(null);
 
   // Build unified thread list combining general support and active order discussions with chat history
-  const buildThreadList = (remoteConvs = []) => {
+  const buildThreadList = (remoteConvs = [], existingThreads = []) => {
     const threadMap = new Map();
+    const existingMap = new Map((existingThreads || []).map(t => [t.id, t]));
 
     // 1. General Studio Support Thread
     const generalId = defaultSupportId;
-    const remoteGeneral = remoteConvs.find(c => 
+    
+    // Find all support conversations in remoteConvs (both general-support and support-${clientEmail} or other support threads)
+    const remoteSupportConvs = (remoteConvs || []).filter(c => 
       c.id === generalId || 
       c.id === 'general-support' || 
+      isSupportId(c.id) ||
       (!c.orderId && !c.order_id && !c.id?.startsWith('order-'))
     );
     
-    const generalMessages = remoteGeneral?.messages && remoteGeneral.messages.length > 0 ? remoteGeneral.messages : [
-      {
-        id: 'welcome-msg',
-        conversation_id: generalId,
-        sender: 'admin',
-        senderName: 'Support',
-        text: `Welcome ${clientName}! How can our support team assist you today?`,
-        timestamp: new Date().toISOString()
+    const existingSupport = (existingThreads || []).find(c => isSupportId(c.id) || c.id === generalId);
+    
+    // Aggregate all support messages from remote and local state
+    const supportMessagesMap = new Map();
+    
+    // Add existing local messages first
+    (existingSupport?.messages || []).forEach(m => {
+      if (m && (m.id || m.text)) {
+        const key = m.id || `${m.sender}-${m.text}-${m.timestamp}`;
+        supportMessagesMap.set(key, m);
       }
-    ];
+    });
+
+    // Add remote support messages
+    remoteSupportConvs.forEach(rc => {
+      (rc.messages || []).forEach(rm => {
+        if (rm && (rm.id || rm.text)) {
+          let matched = false;
+          for (const [key, existingMsg] of supportMessagesMap.entries()) {
+            if (existingMsg.id === rm.id || (existingMsg.text === rm.text && Math.abs(new Date(existingMsg.timestamp) - new Date(rm.timestamp)) < 5000)) {
+              supportMessagesMap.set(key, rm);
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) {
+            const key = rm.id || `${rm.sender}-${rm.text}-${rm.timestamp}`;
+            supportMessagesMap.set(key, rm);
+          }
+        }
+      });
+    });
+
+    let generalMessages = Array.from(supportMessagesMap.values());
+    if (generalMessages.length === 0) {
+      generalMessages = [
+        {
+          id: 'welcome-msg',
+          conversation_id: generalId,
+          sender: 'admin',
+          senderName: 'Support',
+          text: `Welcome ${clientName}! How can our support team assist you today?`,
+          timestamp: new Date().toISOString()
+        }
+      ];
+    }
+
+    generalMessages.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
 
     const genLastMsg = generalMessages[generalMessages.length - 1];
-    const genLastTimestamp = genLastMsg?.timestamp || remoteGeneral?.updatedAt || remoteGeneral?.created_at;
+    const genLastTimestamp = genLastMsg?.timestamp || existingSupport?.updatedAt || new Date().toISOString();
     const genLastTime = genLastTimestamp && !isNaN(new Date(genLastTimestamp).getTime())
       ? new Date(genLastTimestamp).getTime()
       : Date.now();
+
+    const maxSupportUnread = Math.max(
+      existingSupport?.clientUnreadCount ?? 0,
+      ...remoteSupportConvs.map(c => c.clientUnreadCount ?? c.unreadCount ?? 0),
+      0
+    );
 
     threadMap.set(generalId, {
       id: generalId,
@@ -132,11 +180,11 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       serviceType: 'general',
       serviceCategory: 'Support',
       status: 'online',
-      unreadCount: remoteGeneral?.clientUnreadCount ?? remoteGeneral?.unreadCount ?? 0,
-      clientUnreadCount: remoteGeneral?.clientUnreadCount ?? 0,
+      unreadCount: maxSupportUnread,
+      clientUnreadCount: maxSupportUnread,
       messages: generalMessages,
       lastMessageTime: genLastTime,
-      updatedAt: genLastTimestamp || new Date().toISOString()
+      updatedAt: genLastTimestamp
     });
 
     // 2. Order-specific Threads ONLY for orders that have chat history (or currently targeted)
@@ -147,28 +195,57 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
     myOrders.forEach(ord => {
       const orderThreadId = `order-${ord.id}`;
-      const remoteOrderConv = remoteConvs.find(c => c.id === orderThreadId || c.orderId === ord.id || c.order_id === ord.id);
+      const remoteOrderConv = (remoteConvs || []).find(c => c.id === orderThreadId || c.orderId === ord.id || c.order_id === ord.id);
+      const existingOrderThread = existingMap.get(orderThreadId);
 
-      // Collect messages from order object and remote conversation
-      const ordMessages = Array.isArray(ord.messages) ? ord.messages.map(m => ({
-        id: m.id || `msg-${Math.random()}`,
-        conversation_id: orderThreadId,
-        sender: m.senderRole === 'admin' ? 'admin' : (m.sender === 'admin' ? 'admin' : 'client'),
-        senderName: m.senderRole === 'admin' || m.sender === 'admin' ? 'Support' : (m.sender || m.senderName || clientName),
-        text: m.text || m.message || '',
-        attachment: m.attachment || m.attachments?.[0]?.name || null,
-        attachmentUrl: m.attachmentUrl || m.attachments?.[0]?.url || null,
-        timestamp: m.timestamp || m.created_at || new Date().toISOString()
-      })) : [];
+      const orderMessagesMap = new Map();
 
-      const remoteMsgs = Array.isArray(remoteOrderConv?.messages) ? remoteOrderConv.messages : [];
-      const combinedMessages = [...ordMessages];
-      
-      remoteMsgs.forEach(rm => {
-        if (!combinedMessages.some(m => m.id === rm.id || (m.text === rm.text && Math.abs(new Date(m.timestamp) - new Date(rm.timestamp)) < 2000))) {
-          combinedMessages.push(rm);
+      // Order messages from local state
+      (existingOrderThread?.messages || []).forEach(m => {
+        if (m) {
+          const key = m.id || `${m.sender}-${m.text}-${m.timestamp}`;
+          orderMessagesMap.set(key, m);
         }
       });
+
+      // Order messages from order object
+      if (Array.isArray(ord.messages)) {
+        ord.messages.forEach(m => {
+          const msgObj = {
+            id: m.id || `msg-${Math.random()}`,
+            conversation_id: orderThreadId,
+            sender: m.senderRole === 'admin' ? 'admin' : (m.sender === 'admin' ? 'admin' : 'client'),
+            senderName: m.senderRole === 'admin' || m.sender === 'admin' ? 'Support' : (m.sender || m.senderName || clientName),
+            text: m.text || m.message || '',
+            attachment: m.attachment || m.attachments?.[0]?.name || null,
+            attachmentUrl: m.attachmentUrl || m.attachments?.[0]?.url || null,
+            timestamp: m.timestamp || m.created_at || new Date().toISOString()
+          };
+          const key = msgObj.id || `${msgObj.sender}-${msgObj.text}`;
+          if (!orderMessagesMap.has(key)) orderMessagesMap.set(key, msgObj);
+        });
+      }
+
+      // Order messages from remote conversation
+      (remoteOrderConv?.messages || []).forEach(rm => {
+        if (rm && (rm.id || rm.text)) {
+          let matched = false;
+          for (const [key, existingMsg] of orderMessagesMap.entries()) {
+            if (existingMsg.id === rm.id || (existingMsg.text === rm.text && Math.abs(new Date(existingMsg.timestamp) - new Date(rm.timestamp)) < 5000)) {
+              orderMessagesMap.set(key, rm);
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) {
+            const key = rm.id || `${rm.sender}-${rm.text}-${rm.timestamp}`;
+            orderMessagesMap.set(key, rm);
+          }
+        }
+      });
+
+      const combinedMessages = Array.from(orderMessagesMap.values());
+      combinedMessages.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
 
       const isTargetedOrder = initialOrderId && (initialOrderId === ord.id || initialOrderId === `order-${ord.id}`);
       const isCurrentlyActive = activeChatId === orderThreadId;
@@ -200,8 +277,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         orderStatus: ord.status || 'submitted',
         price: parseFloat(ord.price || 0),
         artworkUrl: ord.artworkUrl || ord.image_url || ord.logo,
-        unreadCount: remoteOrderConv?.clientUnreadCount ?? remoteOrderConv?.unreadCount ?? 0,
-        clientUnreadCount: remoteOrderConv?.clientUnreadCount ?? 0,
+        unreadCount: remoteOrderConv?.clientUnreadCount ?? remoteOrderConv?.unreadCount ?? existingOrderThread?.unreadCount ?? 0,
+        clientUnreadCount: remoteOrderConv?.clientUnreadCount ?? existingOrderThread?.clientUnreadCount ?? 0,
         messages: combinedMessages,
         lastMessageTime: ordLastTime,
         updatedAt: ordLastTimestamp || new Date().toISOString()
@@ -209,9 +286,16 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     });
 
     // 3. Include any other remote conversations belonging to this client with messages
-    remoteConvs.forEach(conv => {
+    (remoteConvs || []).forEach(conv => {
       if (!threadMap.has(conv.id) && !isSupportId(conv.id)) {
-        const msgs = conv.messages || [];
+        const existingThread = existingMap.get(conv.id);
+        const msgsMap = new Map();
+        (existingThread?.messages || []).forEach(m => msgsMap.set(m.id || m.text, m));
+        (conv.messages || []).forEach(rm => msgsMap.set(rm.id || rm.text, rm));
+
+        const msgs = Array.from(msgsMap.values());
+        msgs.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+
         if (msgs.length === 0 && conv.id !== activeChatId) return;
 
         const lastMsg = msgs[msgs.length - 1];
@@ -263,18 +347,19 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       }
 
       if (isMounted) {
-        const fullThreads = buildThreadList(remoteConvs);
-        setConversations(fullThreads);
-
-        // If an initial order was passed, select that thread immediately
-        if (initialOrderId) {
-          const targetId = initialOrderId.startsWith('order-') ? initialOrderId : `order-${initialOrderId}`;
-          if (fullThreads.some(t => t.id === targetId)) {
-            setActiveChatId(targetId);
+        setConversations(prev => {
+          const fullThreads = buildThreadList(remoteConvs, prev);
+          // If an initial order was passed, select that thread immediately
+          if (initialOrderId) {
+            const targetId = initialOrderId.startsWith('order-') ? initialOrderId : `order-${initialOrderId}`;
+            if (fullThreads.some(t => t.id === targetId)) {
+              setActiveChatId(targetId);
+            }
+          } else if (!activeChatId || activeChatId === 'general-support') {
+            setActiveChatId(fullThreads[0]?.id || defaultSupportId);
           }
-        } else if (!activeChatId || activeChatId === 'general-support') {
-          setActiveChatId(fullThreads[0]?.id || defaultSupportId);
-        }
+          return fullThreads;
+        });
       }
     };
 
@@ -339,11 +424,21 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
           const updated = safePrev.map(thread => {
             if (isMatchThread(thread)) {
-              const alreadyHas = (thread.messages || []).some(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(new Date(m.timestamp) - new Date(newMsg.timestamp)) < 2000));
-              if (alreadyHas) return thread;
+              const currentMsgs = thread.messages || [];
+              const existsIndex = currentMsgs.findIndex(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(new Date(m.timestamp) - new Date(newMsg.timestamp)) < 5000));
+              
+              let nextMsgs;
+              if (existsIndex >= 0) {
+                // Update optimistic message with confirmed server message
+                nextMsgs = [...currentMsgs];
+                nextMsgs[existsIndex] = { ...nextMsgs[existsIndex], ...newMsg };
+              } else {
+                nextMsgs = [...currentMsgs, newMsg];
+              }
+
               return {
                 ...thread,
-                messages: [...(thread.messages || []), newMsg],
+                messages: nextMsgs,
                 unreadCount: activeChatId === thread.id ? 0 : (thread.unreadCount || 0) + (newMsg.sender === 'admin' ? 1 : 0),
                 clientUnreadCount: activeChatId === thread.id ? 0 : (thread.clientUnreadCount || 0) + (newMsg.sender === 'admin' ? 1 : 0),
                 lastMessageTime: msgTime,
@@ -368,29 +463,13 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
         setConversations(prev => {
           const safePrev = Array.isArray(prev) ? prev : [];
-          const exists = safePrev.some(c => c.id === conv.id || (isSupportId(c.id) && isSupportId(conv.id)));
-          if (!exists) {
-            const newThread = {
-              id: conv.id,
-              title: conv.order_title || conv.title || 'Support Thread',
-              orderId: conv.order_id || 'Direct Discussion',
-              orderTitle: conv.order_title || 'Support',
-              serviceType: 'general',
-              unreadCount: conv.client_unread_count ?? 0,
-              clientUnreadCount: conv.client_unread_count ?? 0,
-              messages: [],
-              lastMessageTime: Date.now(),
-              updatedAt: conv.created_at || new Date().toISOString()
-            };
-            return [newThread, ...safePrev];
-          }
           return safePrev.map(c => {
             if (c.id === conv.id || (isSupportId(c.id) && isSupportId(conv.id))) {
               return {
                 ...c,
-                ...conv,
                 unreadCount: conv.client_unread_count ?? c.unreadCount ?? 0,
-                clientUnreadCount: conv.client_unread_count ?? c.clientUnreadCount ?? 0
+                clientUnreadCount: conv.client_unread_count ?? c.clientUnreadCount ?? 0,
+                updatedAt: conv.updated_at || c.updatedAt
               };
             }
             return c;

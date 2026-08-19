@@ -417,8 +417,8 @@ export const StateProvider = ({ children }) => {
 
   const refreshUnreadChatCount = React.useCallback(async () => {
     try {
-      if (!isSupabaseConfigured) return;
-      const convs = await fetchConversations();
+      const userEmail = authUser?.email || currentUser?.email;
+      const convs = await fetchConversations(userEmail);
       if (Array.isArray(convs)) {
         let currentRole = 'customer';
         try {

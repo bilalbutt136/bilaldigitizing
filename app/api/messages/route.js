@@ -20,7 +20,16 @@ export async function GET(request) {
       // If not an admin, show conversations matching user's email or support threads
       if (!isAdmin) {
         if (cleanUserEmail && cleanUserEmail !== 'client@studio.com') {
-          convQuery = convQuery.or(`client_email.ilike.${cleanUserEmail},id.eq.general-support,id.ilike.support-${cleanUserEmail}%,id.ilike.support-guest%`);
+          let orderThreadIds = [];
+          try {
+            const { data: userOrders } = await supabase.from('orders').select('id').ilike('client_email', cleanUserEmail);
+            if (userOrders && userOrders.length > 0) {
+              orderThreadIds = userOrders.map(o => `order-${o.id}`);
+            }
+          } catch {}
+
+          const orderOrFilter = orderThreadIds.length > 0 ? `,id.in.(${orderThreadIds.join(',')})` : '';
+          convQuery = convQuery.or(`client_email.ilike.${cleanUserEmail},id.eq.general-support,id.ilike.support-${cleanUserEmail}%,id.ilike.support-guest%${orderOrFilter}`);
         } else {
           convQuery = convQuery.or(`id.eq.general-support,id.ilike.support-guest%`);
         }

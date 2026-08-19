@@ -177,10 +177,25 @@ export const AdminChatInbox = () => {
       if (!isMounted) return;
       const data = await fetchConversations();
       if (data && data.length > 0 && isMounted) {
-        const sorted = deduplicateThreads(data);
-        setConversations(sorted);
-        if (!activeChatId && sorted[0]?.id) {
-          setActiveChatId(sorted[0].id);
+        setConversations(prev => {
+          const fresh = deduplicateThreads(data);
+          const safePrev = Array.isArray(prev) ? prev : [];
+          const merged = fresh.map(fc => {
+            const existing = safePrev.find(p => p.id === fc.id);
+            if (!existing) return fc;
+            const combined = [...(fc.messages || [])];
+            (existing.messages || []).forEach(em => {
+              if (!combined.some(m => m.id === em.id || (m.text === em.text && Math.abs(new Date(m.timestamp) - new Date(em.timestamp)) < 5000))) {
+                combined.push(em);
+              }
+            });
+            combined.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+            return { ...fc, messages: combined };
+          });
+          return deduplicateThreads(merged);
+        });
+        if (!activeChatId && data[0]?.id) {
+          setActiveChatId(data[0].id);
         }
       }
     };
@@ -241,7 +256,15 @@ export const AdminChatInbox = () => {
           const updated = safePrev.map(conv => {
             if (conv.id === newMsg.conversation_id) {
               const currentMsgs = conv.messages || [];
-              if (currentMsgs.some(m => m.id === newMsg.id)) return conv;
+              const existsIndex = currentMsgs.findIndex(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(new Date(m.timestamp) - new Date(newMsg.timestamp)) < 5000));
+              
+              let nextMsgs;
+              if (existsIndex >= 0) {
+                nextMsgs = [...currentMsgs];
+                nextMsgs[existsIndex] = { ...nextMsgs[existsIndex], ...newMsg };
+              } else {
+                nextMsgs = [...currentMsgs, newMsg];
+              }
               
               const isCurrentlyOpen = activeChatId === conv.id;
               return {
@@ -249,7 +272,7 @@ export const AdminChatInbox = () => {
                 clientName: conv.clientName || newMsg.senderName,
                 unreadCount: isCurrentlyOpen ? 0 : (conv.unreadCount || 0) + (newMsg.sender === 'client' ? 1 : 0),
                 adminUnreadCount: isCurrentlyOpen ? 0 : (conv.adminUnreadCount || 0) + (newMsg.sender === 'client' ? 1 : 0),
-                messages: [...currentMsgs, newMsg],
+                messages: nextMsgs,
                 lastMessageTime: Date.now(),
                 updatedAt: new Date().toISOString()
               };

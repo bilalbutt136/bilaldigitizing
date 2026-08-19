@@ -131,7 +131,24 @@ export const ClientLiveChatWidget = () => {
       if (isSupabaseConfigured) {
         const data = await fetchConversations(clientEmail);
         if (data && data.length > 0 && isMounted) {
-          setChats(data);
+          setChats(prev => {
+            const safePrev = Array.isArray(prev) ? prev : [];
+            return data.map(remoteConv => {
+              const localConv = safePrev.find(c => c.id === remoteConv.id || (isSupportId(c.id) && isSupportId(remoteConv.id)));
+              if (!localConv) return remoteConv;
+              const combinedMessages = [...(remoteConv.messages || [])];
+              (localConv.messages || []).forEach(lm => {
+                if (!combinedMessages.some(rm => rm.id === lm.id || (rm.text === lm.text && Math.abs(new Date(rm.timestamp) - new Date(lm.timestamp)) < 5000))) {
+                  combinedMessages.push(lm);
+                }
+              });
+              combinedMessages.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+              return {
+                ...remoteConv,
+                messages: combinedMessages
+              };
+            });
+          });
         }
       }
     };
@@ -195,11 +212,19 @@ export const ClientLiveChatWidget = () => {
 
           return safePrev.map(c => {
             if (isTargetConv(c)) {
-              const alreadyHas = (c.messages || []).some(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(new Date(m.timestamp) - new Date(newMsg.timestamp)) < 2000));
-              if (alreadyHas) return c;
+              const currentMsgs = c.messages || [];
+              const existsIndex = currentMsgs.findIndex(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(new Date(m.timestamp) - new Date(newMsg.timestamp)) < 5000));
+              let nextMsgs;
+              if (existsIndex >= 0) {
+                nextMsgs = [...currentMsgs];
+                nextMsgs[existsIndex] = { ...nextMsgs[existsIndex], ...newMsg };
+              } else {
+                nextMsgs = [...currentMsgs, newMsg];
+              }
+
               return {
                 ...c,
-                messages: [...(c.messages || []), newMsg],
+                messages: nextMsgs,
                 unreadCount: isOpen ? 0 : (c.unreadCount || 0) + (newMsg.sender === 'admin' ? 1 : 0),
                 clientUnreadCount: isOpen ? 0 : (c.clientUnreadCount || 0) + (newMsg.sender === 'admin' ? 1 : 0),
                 updatedAt: newMsg.timestamp
@@ -216,30 +241,13 @@ export const ClientLiveChatWidget = () => {
 
         setChats(prev => {
           const safePrev = Array.isArray(prev) ? prev : [];
-          const exists = safePrev.some(c => c.id === conv.id || (isSupportId(c.id) && isSupportId(conv.id)));
-          if (!exists) {
-            const newThread = {
-              id: conv.id,
-              clientName: conv.client_name || cleanName,
-              clientEmail: conv.client_email || clientEmail,
-              clientCompany: conv.client_company || clientCompany,
-              orderId: conv.order_id || 'Support',
-              orderTitle: conv.order_title || 'Direct Support',
-              status: 'online',
-              unreadCount: conv.client_unread_count ?? 0,
-              clientUnreadCount: conv.client_unread_count ?? 0,
-              messages: [],
-              updatedAt: conv.created_at || new Date().toISOString()
-            };
-            return [newThread, ...safePrev];
-          }
           return safePrev.map(c => {
             if (c.id === conv.id || (isSupportId(c.id) && isSupportId(conv.id))) {
               return {
                 ...c, 
-                ...conv,
                 unreadCount: conv.client_unread_count ?? c.unreadCount ?? 0,
-                clientUnreadCount: conv.client_unread_count ?? c.clientUnreadCount ?? 0
+                clientUnreadCount: conv.client_unread_count ?? c.clientUnreadCount ?? 0,
+                updatedAt: conv.updated_at || c.updatedAt
               };
             }
             return c;
