@@ -1284,6 +1284,9 @@ export async function declineCustomOffer(offerId) {
       body: JSON.stringify({ action: 'declineOffer', payload: { offerId } })
     });
     const data = await res.json();
+    if (data.message) {
+      broadcastLiveMessage(data.message);
+    }
     return data;
   } catch (err) {
     return { error: err.message };
@@ -1299,6 +1302,9 @@ export async function cancelCustomOffer(offerId) {
       body: JSON.stringify({ action: 'cancelOffer', payload: { offerId } })
     });
     const data = await res.json();
+    if (data.message) {
+      broadcastLiveMessage(data.message);
+    }
     return data;
   } catch (err) {
     return { error: err.message };

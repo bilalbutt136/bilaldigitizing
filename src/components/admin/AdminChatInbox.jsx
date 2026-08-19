@@ -1059,6 +1059,12 @@ export const AdminChatInbox = () => {
                     senderDisplayName={isAdmin ? 'Support' : (activeInfo.customerName || msg.senderName || msg.sender_name || 'Customer')}
                     onReply={(m) => setReplyingTo(m)}
                     formatTime={formatChatTime}
+                    themePreset="admin"
+                    onOrderClick={(ordId) => {
+                      if (activeInfo.matchOrd) {
+                        setSelectedOrderForDrawer(activeInfo.matchOrd);
+                      }
+                    }}
                   />
                 );
               })}

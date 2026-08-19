@@ -437,8 +437,8 @@ export async function POST(request) {
       return NextResponse.json({ success: true, offer: updatedOffer });
     }
 
-    // 4. ACTION: CANCEL OFFER (Admin only)
-    if (action === 'cancelOffer') {
+    // 4. ACTION: CANCEL / WITHDRAW OFFER (Admin only)
+    if (action === 'cancelOffer' || action === 'withdrawOffer') {
       if (!isAdmin) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
       }
@@ -448,20 +448,51 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Missing offerId' }, { status: 400 });
       }
 
+      let offer = null;
+      try {
+        const { data: offData } = await supabase.from('custom_offers').select('*').eq('id', offerId).maybeSingle();
+        offer = offData;
+      } catch {}
+
       const updatedOffer = {
+        ...(offer || {}),
         status: 'cancelled',
         updated_at: nowIso
       };
 
+      // 1. Update in custom_offers table
       try {
         await supabase.from('custom_offers').update({ status: 'cancelled', updated_at: nowIso }).eq('id', offerId);
       } catch {}
 
+      // 2. Update offer_data in messages table
       try {
-        await supabase.from('messages').update({ 'offer_data->status': 'cancelled' }).eq('offer_id', offerId);
+        await supabase.from('messages').update({ offer_data: updatedOffer }).eq('offer_id', offerId);
       } catch {}
 
-      return NextResponse.json({ success: true, status: 'cancelled' });
+      // 3. Update in order_messages table if applicable
+      try {
+        await supabase.from('order_messages').update({ offer_data: updatedOffer }).eq('offer_id', offerId);
+      } catch {}
+
+      // 4. Post announcement in conversation that offer was withdrawn
+      if (offer?.conversation_id) {
+        const cancelMsg = {
+          id: `msg-can-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          conversation_id: offer.conversation_id,
+          sender: 'admin',
+          sender_name: 'Studio Support',
+          text: `🚫 Offer "${offer.title || 'Custom Offer'}" was withdrawn by Studio Support.`,
+          timestamp: nowIso,
+          created_at: nowIso,
+          is_read: false
+        };
+        try {
+          await supabase.from('messages').insert([cancelMsg]);
+        } catch {}
+      }
+
+      return NextResponse.json({ success: true, status: 'cancelled', offer: updatedOffer });
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });

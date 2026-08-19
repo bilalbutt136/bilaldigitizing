@@ -1,6 +1,5 @@
 'use client';
 
-import React, { useState } from 'react';
 import { 
   Sparkles, 
   Clock, 
@@ -16,7 +15,9 @@ import {
   FileText,
   Loader2,
   ExternalLink,
-  DollarSign
+  DollarSign,
+  Ban,
+  Undo2
 } from 'lucide-react';
 import { acceptCustomOffer, declineCustomOffer, cancelCustomOffer } from '../../services/supabaseService';
 import { playNotificationSound } from '../../utils/audioNotification';
@@ -79,6 +80,7 @@ export default function OfferCardMessage({
           </span>
         );
       case 'declined':
+      case 'rejected':
         return (
           <span style={{
             display: 'inline-flex',
@@ -92,7 +94,7 @@ export default function OfferCardMessage({
             border: '1px solid rgba(244, 63, 94, 0.4)',
             color: '#f43f5e'
           }}>
-            <XCircle size={12} /> Declined
+            <XCircle size={12} /> Rejected
           </span>
         );
       case 'expired':
@@ -113,6 +115,7 @@ export default function OfferCardMessage({
           </span>
         );
       case 'cancelled':
+      case 'withdrawn':
         return (
           <span style={{
             display: 'inline-flex',
@@ -122,11 +125,11 @@ export default function OfferCardMessage({
             fontWeight: 800,
             padding: '3px 10px',
             borderRadius: '999px',
-            background: 'rgba(100, 116, 139, 0.15)',
-            border: '1px solid rgba(100, 116, 139, 0.4)',
-            color: '#94a3b8'
+            background: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid rgba(239, 68, 68, 0.4)',
+            color: '#f87171'
           }}>
-            Cancelled
+            <Ban size={12} /> Withdrawn
           </span>
         );
       default:
@@ -332,7 +335,7 @@ export default function OfferCardMessage({
                 color: '#ffffff',
                 fontWeight: 800,
                 fontSize: '0.88rem',
-                cursor: isAccepting ? 'not-allowed' : 'pointer',
+                cursor: (isAccepting || isDeclining) ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -342,7 +345,7 @@ export default function OfferCardMessage({
               }}
             >
               {isAccepting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-              {isAccepting ? 'Processing...' : `Accept & Pay • $${price.toFixed(2)}`}
+              {isAccepting ? 'Processing...' : `Accept Offer • $${price.toFixed(2)}`}
             </button>
 
             <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -351,57 +354,79 @@ export default function OfferCardMessage({
                 disabled={isAccepting || isDeclining}
                 style={{
                   flex: 1,
-                  padding: '0.45rem',
+                  padding: '0.55rem',
                   borderRadius: '8px',
-                  background: 'rgba(244, 63, 94, 0.1)',
-                  border: '1px solid rgba(244, 63, 94, 0.3)',
+                  background: 'rgba(244, 63, 94, 0.12)',
+                  border: '1.5px solid rgba(244, 63, 94, 0.35)',
                   color: '#fb7185',
-                  fontWeight: 700,
-                  fontSize: '0.78rem',
-                  cursor: isDeclining ? 'not-allowed' : 'pointer'
+                  fontWeight: 800,
+                  fontSize: '0.8rem',
+                  cursor: (isAccepting || isDeclining) ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease'
                 }}
               >
-                {isDeclining ? 'Declining...' : 'Decline'}
+                {isDeclining ? <Loader2 size={13} className="animate-spin" /> : <XCircle size={13} />}
+                {isDeclining ? 'Rejecting...' : 'Reject Offer'}
               </button>
               <button
                 onClick={() => setIsDetailsOpen(true)}
                 style={{
                   flex: 1,
-                  padding: '0.45rem',
+                  padding: '0.55rem',
                   borderRadius: '8px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
                   color: '#cbd5e1',
                   fontWeight: 700,
-                  fontSize: '0.78rem',
-                  cursor: 'pointer'
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease'
                 }}
               >
+                <Eye size={13} />
                 View Details
               </button>
             </div>
           </div>
         )}
 
-        {/* Admin Controls */}
+        {/* Admin Controls (Prominent Withdraw Offer) */}
         {isAdmin && isPending && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.4rem', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
-            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Awaiting client payment & acceptance</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginTop: '0.2rem' }}>
             <button
               onClick={handleCancel}
               disabled={isCancelling}
               style={{
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                color: '#fb7185',
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                textDecoration: 'underline'
+                width: '100%',
+                padding: '0.65rem 1rem',
+                borderRadius: '8px',
+                background: 'rgba(239, 68, 68, 0.15)',
+                border: '1.5px solid rgba(239, 68, 68, 0.45)',
+                color: '#f87171',
+                fontWeight: 800,
+                fontSize: '0.82rem',
+                cursor: isCancelling ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'all 0.15s ease'
               }}
             >
-              {isCancelling ? 'Cancelling...' : 'Cancel Offer'}
+              {isCancelling ? <Loader2 size={14} className="animate-spin" /> : <Ban size={14} />}
+              {isCancelling ? 'Withdrawing Offer...' : 'Withdraw Offer'}
             </button>
+            <div style={{ textAlign: 'center', fontSize: '0.7rem', color: '#94a3b8' }}>
+              Awaiting client response • You can withdraw before acceptance
+            </div>
           </div>
         )}
 
