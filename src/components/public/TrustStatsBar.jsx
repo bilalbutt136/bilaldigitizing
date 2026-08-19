@@ -114,21 +114,13 @@ export const TrustStatsBar = () => {
     <section 
       className="theme-trust-stats-bar"
       style={{
-        backgroundColor: 'var(--stats-bar-bg)',
+        backgroundColor: '#ffffff',
         borderTop: '1px solid var(--border-color)',
         borderBottom: '1px solid var(--border-color)',
         padding: '3rem 0',
-        position: 'relative',
-        overflow: 'hidden'
+        position: 'relative'
       }}
     >
-      <div style={{
-        position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
-        width: '60%', height: '100%',
-        background: 'radial-gradient(ellipse at top, rgba(255, 122, 0, 0.06) 0%, rgba(15, 23, 42, 0) 70%)',
-        pointerEvents: 'none'
-      }} />
-
       <div className="container" style={{ position: 'relative', zIndex: 1 }}>
         <div className="grid-responsive-4" style={{ alignItems: 'center' }}>
           {displayStats.map((stat) => (

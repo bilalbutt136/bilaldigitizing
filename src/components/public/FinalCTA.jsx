@@ -52,29 +52,15 @@ export const FinalCTA = () => {
   return (
     <section className="theme-final-cta-section" style={{
       width: '100%',
-      backgroundColor: 'var(--cta-bg)',
+      backgroundColor: '#ffffff',
       position: 'relative',
       padding: '6rem 0',
-      overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       borderTop: '1px solid var(--border-color)'
     }}>
-      {/* Background Radial Glow */}
-      <div style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: '800px',
-        height: '800px',
-        background: 'radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, rgba(15, 23, 42, 0) 70%)',
-        pointerEvents: 'none',
-        zIndex: 0,
-      }} />
-      
       <div className="container" style={{
         position: 'relative',
         zIndex: 1,
