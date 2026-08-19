@@ -658,19 +658,19 @@ export const HeroSection = () => {
               flexDirection: 'column',
               gap: '0.6rem',
               marginBottom: '1.75rem',
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 247, 237, 0.6) 100%)',
-              border: '1.5px solid rgba(249, 115, 22, 0.18)',
+              background: 'var(--hero-card-bg)',
+              border: '1.5px solid var(--hero-card-border)',
               padding: 'clamp(0.85rem, 2vw, 1.15rem) clamp(0.95rem, 2vw, 1.25rem)',
               borderRadius: '16px',
               textAlign: 'left',
               width: '100%',
               boxSizing: 'border-box',
-              boxShadow: '0 4px 20px -2px rgba(249, 115, 22, 0.06)'
+              boxShadow: 'var(--hero-card-shadow)'
             }}>
               {featuresList.slice(0, 3).map((featText, idx) => (
                 <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', fontSize: '0.875rem', color: 'var(--hero-text-primary)', fontWeight: 700, wordBreak: 'break-word' }}>
-                  <div style={{ background: 'var(--orange-50)', padding: '2px', borderRadius: '50%', display: 'flex', flexShrink: 0, marginTop: '1px' }}>
-                    <CheckCircle2 size={16} style={{ color: 'var(--orange-500)' }} />
+                  <div style={{ background: 'var(--color-primary-light)', padding: '2px', borderRadius: '50%', display: 'flex', flexShrink: 0, marginTop: '1px' }}>
+                    <CheckCircle2 size={16} style={{ color: 'var(--color-primary)' }} />
                   </div>
                   <span style={{ lineHeight: 1.45 }}>{featText}</span>
                 </div>
@@ -696,7 +696,7 @@ export const HeroSection = () => {
                   alignItems: 'center',
                   gap: '0.5rem',
                   borderRadius: '14px',
-                  boxShadow: '0 8px 24px rgba(249, 115, 22, 0.35)'
+                  boxShadow: '0 8px 24px var(--color-primary-glow)'
                 }}
               >
                 <Upload size={17} />
@@ -709,9 +709,9 @@ export const HeroSection = () => {
                 className="btn btn-outline btn-lg"
                 onClick={handleSecondaryAction}
                 style={{ 
-                  background: 'rgba(255, 255, 255, 0.9)',
-                  color: 'var(--navy-900)', 
-                  border: '1.5px solid rgba(15, 23, 42, 0.15)',
+                  background: 'var(--hero-card-bg)',
+                  color: 'var(--hero-text-primary)', 
+                  border: '1.5px solid var(--hero-card-border)',
                   padding: '0.9rem 1.5rem', 
                   fontSize: '0.98rem',
                   fontWeight: 700,
@@ -719,7 +719,7 @@ export const HeroSection = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderRadius: '14px',
-                  boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)'
+                  boxShadow: 'var(--shadow-sm)'
                 }}
               >
                 <span>{secondaryCtaText}</span>
@@ -736,11 +736,11 @@ export const HeroSection = () => {
                 const IconComp = ICON_MAP[stat.icon] || Star;
                 return (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <div style={{ background: 'rgba(249, 115, 22, 0.1)', padding: '4px', borderRadius: '8px', display: 'flex' }}>
-                      <IconComp size={15} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
+                    <div style={{ background: 'var(--color-primary-light)', padding: '4px', borderRadius: '8px', display: 'flex' }}>
+                      <IconComp size={15} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                     </div>
                     <span style={{ fontSize: '0.835rem', fontWeight: 700, color: 'var(--hero-text-secondary)', whiteSpace: 'nowrap' }}>
-                      <strong style={{ color: 'var(--orange-600)', marginRight: '3px' }}>{stat.value}</strong>
+                      <strong style={{ color: 'var(--color-primary)', marginRight: '3px' }}>{stat.value}</strong>
                       {stat.label}
                     </span>
                   </div>
@@ -759,11 +759,11 @@ export const HeroSection = () => {
             <div 
               className="hero-showcase-card"
               style={{
-                background: 'linear-gradient(135deg, #ffffff 0%, #fffaf5 100%)',
-                border: '1.5px solid rgba(249, 115, 22, 0.2)',
+                background: 'var(--hero-card-bg)',
+                border: '1.5px solid var(--hero-card-border)',
                 borderRadius: '24px',
                 padding: '1.35rem',
-                boxShadow: '0 20px 50px -10px rgba(249, 115, 22, 0.12), 0 8px 24px -4px rgba(15, 23, 42, 0.06)',
+                boxShadow: 'var(--hero-card-shadow)',
                 width: '100%',
                 maxWidth: '680px',
                 backdropFilter: 'blur(16px)',

@@ -119,9 +119,9 @@ export const TestimonialsFAQ = () => {
                       <span style={{ 
                         fontSize: '0.75rem', 
                         fontWeight: 800, 
-                        background: 'var(--orange-50)', 
-                        color: 'var(--orange-700)',
-                        border: '1px solid var(--orange-200)',
+                        background: 'var(--color-primary-light)', 
+                        color: 'var(--color-primary)',
+                        border: '1px solid var(--color-border)',
                         padding: '0.25rem 0.65rem',
                         borderRadius: '9999px',
                         textTransform: 'uppercase',
@@ -130,42 +130,42 @@ export const TestimonialsFAQ = () => {
                         {serviceLabel}
                       </span>
                     </div>
-                    <p style={{ color: 'var(--navy-800)', fontSize: '0.975rem', lineHeight: 1.65, marginBottom: '2rem', fontStyle: 'italic' }}>
+                    <p style={{ color: 'var(--color-text-secondary, var(--navy-800))', fontSize: '0.975rem', lineHeight: 1.65, marginBottom: '2rem', fontStyle: 'italic' }}>
                       "{t.comment}"
                     </p>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', borderTop: '1px solid rgba(15, 23, 42, 0.06)', paddingTop: '1.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.25rem' }}>
                     {t.avatar ? (
                       <img 
                         src={t.avatar} 
                         alt={t.name} 
-                        style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--orange-200)' }}
+                        style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-border)' }}
                       />
                     ) : (
                       <div style={{
                         width: '44px',
                         height: '44px',
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, var(--orange-500), var(--orange-600))',
-                        color: '#ffffff',
+                        background: 'linear-gradient(135deg, var(--color-secondary), var(--color-primary))',
+                        color: 'var(--color-text-on-primary, #ffffff)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontWeight: 800,
                         fontSize: '1.05rem',
-                        border: '2px solid var(--orange-200)',
-                        boxShadow: '0 2px 6px rgba(249, 115, 22, 0.25)',
+                        border: '2px solid var(--color-border)',
+                        boxShadow: '0 2px 6px var(--color-primary-glow)',
                         flexShrink: 0
                       }}>
                         {(t.name || 'U').charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div>
-                      <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-950)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        {t.name} <CheckCircle2 size={14} style={{ color: '#10b981' }} />
+                      <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--color-text-primary, var(--navy-950))', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        {t.name} <CheckCircle2 size={14} style={{ color: 'var(--color-success, #10b981)' }} />
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>{t.role}</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, var(--text-muted))', fontWeight: 600 }}>{t.role}</div>
                     </div>
                   </div>
                 </div>
@@ -211,10 +211,10 @@ export const TestimonialsFAQ = () => {
                       fontSize: '0.88rem',
                       fontWeight: 700,
                       cursor: 'pointer',
-                      border: isActive ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
-                      background: isActive ? 'var(--orange-500)' : '#ffffff',
-                      color: isActive ? '#ffffff' : 'var(--navy-800)',
-                      boxShadow: isActive ? '0 2px 8px rgba(249, 115, 22, 0.25)' : 'var(--shadow-sm)',
+                      border: isActive ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
+                      background: isActive ? 'var(--color-primary)' : 'var(--color-surface, #ffffff)',
+                      color: isActive ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-text-primary)',
+                      boxShadow: isActive ? '0 2px 8px var(--color-primary-glow)' : 'var(--shadow-sm)',
                       transition: 'all 0.15s ease'
                     }}
                   >
@@ -233,9 +233,9 @@ export const TestimonialsFAQ = () => {
                   key={faq.id || idx}
                   className="card"
                   style={{
-                    background: 'var(--bg-card)',
+                    background: 'var(--color-surface, var(--bg-card))',
                     borderRadius: '16px',
-                    border: isOpen ? '1.5px solid var(--orange-400)' : '1px solid var(--border-color)',
+                    border: isOpen ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                     boxShadow: isOpen ? 'var(--shadow-md)' : 'var(--shadow-sm)',
                     overflow: 'hidden',
                     transition: 'all 0.25s ease'
@@ -255,13 +255,13 @@ export const TestimonialsFAQ = () => {
                       textAlign: 'left',
                       fontWeight: 700,
                       fontSize: '1.05rem',
-                      color: isOpen ? 'var(--orange-600)' : 'var(--navy-950)',
+                      color: isOpen ? 'var(--color-primary)' : 'var(--color-text-primary)',
                       fontFamily: 'var(--font-heading)'
                     }}
                   >
                     <span style={{ paddingRight: '1rem' }}>{faq.question || faq.q}</span>
                     <div style={{ 
-                      color: isOpen ? 'var(--orange-500)' : 'var(--text-muted)',
+                      color: isOpen ? 'var(--color-primary)' : 'var(--color-text-muted)',
                       transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                       transition: 'transform 0.25s ease',
                       flexShrink: 0

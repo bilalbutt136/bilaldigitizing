@@ -171,14 +171,14 @@ export const WhyChooseUs = () => {
                   width: '60px',
                   height: '60px',
                   borderRadius: '16px',
-                  background: 'linear-gradient(135deg, rgba(255, 107, 0, 0.08) 0%, rgba(249, 115, 22, 0.16) 100%)',
-                  border: '1px solid rgba(249, 115, 22, 0.22)',
-                  color: 'var(--orange-500)',
+                  background: 'var(--color-primary-light)',
+                  border: '1px solid var(--color-border)',
+                  color: 'var(--color-primary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: '1.35rem',
-                  boxShadow: '0 4px 16px rgba(249, 115, 22, 0.12)'
+                  boxShadow: '0 4px 16px var(--color-primary-glow)'
                 }}>
                   <IconRenderer iconName={item.icon} size={28} />
                 </div>
@@ -223,9 +223,9 @@ export const WhyChooseUs = () => {
                 style={{ 
                   padding: '2.25rem 1.75rem', 
                   textAlign: 'left', 
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '16px',
+                  background: 'var(--color-surface, var(--bg-card))',
+                  border: '1.5px solid var(--color-border)',
+                  borderRadius: '20px',
                   boxShadow: 'var(--shadow-sm)',
                   display: 'flex',
                   flexDirection: 'column',
@@ -238,11 +238,11 @@ export const WhyChooseUs = () => {
                     <span style={{
                       fontSize: '0.8rem',
                       fontWeight: 900,
-                      background: 'linear-gradient(135deg, var(--orange-500), var(--orange-600))',
-                      color: '#ffffff',
+                      background: 'linear-gradient(135deg, var(--color-secondary), var(--color-primary))',
+                      color: 'var(--color-text-on-primary, #ffffff)',
                       padding: '0.35rem 0.85rem',
                       borderRadius: '9999px',
-                      boxShadow: '0 4px 12px rgba(249, 115, 22, 0.35)',
+                      boxShadow: '0 4px 12px var(--color-primary-glow)',
                       letterSpacing: '0.04em'
                     }}>
                       STEP {item.step_number || `0${idx + 1}`}
@@ -252,9 +252,9 @@ export const WhyChooseUs = () => {
                       width: '44px',
                       height: '44px',
                       borderRadius: '12px',
-                      background: 'var(--orange-50)',
-                      border: '1px solid var(--orange-200)',
-                      color: 'var(--orange-500)',
+                      background: 'var(--color-primary-light)',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-primary)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'

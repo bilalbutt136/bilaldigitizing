@@ -3,7 +3,7 @@
 import React from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
-import { Upload, ArrowRight, Shield, Globe, Zap, CheckCircle2, Sparkles } from 'lucide-react';
+import { Upload, ArrowRight, Shield, Globe, Zap, CheckCircle2, Sparkles, Lock } from 'lucide-react';
 
 export const FinalCTA = () => {
   const navigate = useNavigate();
@@ -143,8 +143,8 @@ export const FinalCTA = () => {
             className="btn btn-outline btn-lg"
             onClick={() => navigate('/pricing')}
             style={{
-              color: 'var(--cta-btn-outline-color)',
-              borderColor: 'var(--cta-btn-outline-border)',
+              color: 'var(--color-text-primary)',
+              borderColor: 'var(--color-border)',
               padding: '0.95rem 2rem',
               fontSize: '1.05rem',
               fontWeight: 700
@@ -165,19 +165,19 @@ export const FinalCTA = () => {
           width: '100%',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--cta-desc)', fontSize: '0.85rem', fontWeight: '600' }}>
-            <Shield size={18} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
+            <Shield size={18} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
             <span>{badge1}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--cta-desc)', fontSize: '0.85rem', fontWeight: '600' }}>
-            <Globe size={18} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
+            <Globe size={18} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
             <span>{badge2}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--cta-desc)', fontSize: '0.85rem', fontWeight: '600' }}>
-            <Zap size={18} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
+            <Lock size={18} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
             <span>{badge3}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--cta-desc)', fontSize: '0.85rem', fontWeight: '600' }}>
-            <CheckCircle2 size={18} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
+            <Zap size={18} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
             <span>{badge4}</span>
           </div>
         </div>
