@@ -385,7 +385,11 @@ export const HeroSection = () => {
 
   const handleSecondaryAction = () => {
     resolveAction(secondaryBtnAction, () => {
-      if (activeTab === 'embroidery') {
+      const targetId = activeTab !== 'all' ? `${activeTab}-packages-grid` : 'services';
+      const el = document.getElementById(targetId) || document.getElementById('services');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      } else if (activeTab === 'embroidery') {
         navigate('/services/embroidery-digitizing');
       } else if (activeTab === 'vector-art') {
         navigate('/services/vector-tracing');

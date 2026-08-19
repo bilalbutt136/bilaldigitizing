@@ -38,6 +38,19 @@ export const ServicesSection = () => {
     setOpenFaqIndex(null);
   };
 
+  const handleSelectTabAndScrollToPackages = (tabId) => {
+    if (setActiveHomeServiceTab) {
+      setActiveHomeServiceTab(tabId);
+    }
+    setOpenFaqIndex(null);
+    setTimeout(() => {
+      const target = document.getElementById(`${tabId}-packages-grid`) || document.getElementById('services');
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 60);
+  };
+
   const handleLaunchOrder = (serviceType, tierKey = 'standard', pkgData = null) => {
     const sType = serviceType === 'patch' || serviceType === 'patches' 
       ? 'patch' 
@@ -281,16 +294,16 @@ export const ServicesSection = () => {
                   <button 
                     type="button"
                     className="btn btn-primary-orange"
-                    style={{ flex: 1, justifyContent: 'center', fontWeight: 800, padding: '0.65rem 0.85rem', fontSize: '0.875rem' }}
-                    onClick={() => handleLaunchOrder('embroidery')}
+                    style={{ flex: 1, justifyContent: 'center', fontWeight: 800, padding: '0.7rem 0.85rem', fontSize: '0.875rem' }}
+                    onClick={() => handleSelectTabAndScrollToPackages('embroidery')}
                   >
-                    <Upload size={15} /> Order Digitizing
+                    <Upload size={15} /> Choose Package & Order →
                   </button>
                   <button 
                     type="button"
                     className="btn btn-outline"
-                    style={{ fontWeight: 700, padding: '0.65rem 0.75rem', fontSize: '0.825rem' }}
-                    onClick={() => handleSelectTab('embroidery')}
+                    style={{ fontWeight: 700, padding: '0.7rem 0.75rem', fontSize: '0.825rem' }}
+                    onClick={() => handleSelectTabAndScrollToPackages('embroidery')}
                   >
                     Details
                   </button>
@@ -359,16 +372,16 @@ export const ServicesSection = () => {
                   <button 
                     type="button"
                     className="btn btn-primary-orange"
-                    style={{ flex: 1, justifyContent: 'center', fontWeight: 800, padding: '0.65rem 0.85rem', fontSize: '0.875rem', background: '#2563eb', borderColor: '#2563eb' }}
-                    onClick={() => handleLaunchOrder('vector')}
+                    style={{ flex: 1, justifyContent: 'center', fontWeight: 800, padding: '0.7rem 0.85rem', fontSize: '0.875rem', background: '#2563eb', borderColor: '#2563eb' }}
+                    onClick={() => handleSelectTabAndScrollToPackages('vector-art')}
                   >
-                    <Upload size={15} /> Order Vector Art
+                    <Upload size={15} /> Choose Package & Order →
                   </button>
                   <button 
                     type="button"
                     className="btn btn-outline"
-                    style={{ fontWeight: 700, padding: '0.65rem 0.75rem', fontSize: '0.825rem' }}
-                    onClick={() => handleSelectTab('vector-art')}
+                    style={{ fontWeight: 700, padding: '0.7rem 0.75rem', fontSize: '0.825rem' }}
+                    onClick={() => handleSelectTabAndScrollToPackages('vector-art')}
                   >
                     Details
                   </button>
@@ -437,16 +450,16 @@ export const ServicesSection = () => {
                   <button 
                     type="button"
                     className="btn btn-primary-orange"
-                    style={{ flex: 1, justifyContent: 'center', fontWeight: 800, padding: '0.65rem 0.85rem', fontSize: '0.875rem', background: '#059669', borderColor: '#059669' }}
-                    onClick={() => handleLaunchOrder('patch')}
+                    style={{ flex: 1, justifyContent: 'center', fontWeight: 800, padding: '0.7rem 0.85rem', fontSize: '0.875rem', background: '#059669', borderColor: '#059669' }}
+                    onClick={() => handleSelectTabAndScrollToPackages('patches')}
                   >
-                    <Upload size={15} /> Order Patches
+                    <Upload size={15} /> Choose Package & Order →
                   </button>
                   <button 
                     type="button"
                     className="btn btn-outline"
-                    style={{ fontWeight: 700, padding: '0.65rem 0.75rem', fontSize: '0.825rem' }}
-                    onClick={() => handleSelectTab('patches')}
+                    style={{ fontWeight: 700, padding: '0.7rem 0.75rem', fontSize: '0.825rem' }}
+                    onClick={() => handleSelectTabAndScrollToPackages('patches')}
                   >
                     Details
                   </button>
@@ -541,10 +554,15 @@ export const ServicesSection = () => {
             </div>
 
             {/* 4. Packages & Pricing Grid (Dynamic from DB) */}
-            <div style={{ marginBottom: '3.5rem' }}>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '1.5rem', textAlign: 'center' }}>
-                Embroidery Digitizing Packages ({embroideryTiers.length})
-              </h3>
+            <div id="embroidery-packages-grid" style={{ marginBottom: '3.5rem', scrollMarginTop: '110px' }}>
+              <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+                <h3 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '0.4rem' }}>
+                  Choose Your Embroidery Package to Start ({embroideryTiers.length} Tiers)
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem', margin: 0 }}>
+                  Select any package tier below to launch your order instantly with pre-configured settings.
+                </p>
+              </div>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
@@ -695,10 +713,15 @@ export const ServicesSection = () => {
             </div>
 
             {/* 4. Packages & Pricing Grid (Dynamic from DB) */}
-            <div style={{ marginBottom: '3.5rem' }}>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '1.5rem', textAlign: 'center' }}>
-                Vector Art Conversion Packages ({vectorTiers.length})
-              </h3>
+            <div id="vector-art-packages-grid" style={{ marginBottom: '3.5rem', scrollMarginTop: '110px' }}>
+              <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+                <h3 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '0.4rem' }}>
+                  Choose Your Vector Art Package to Start ({vectorTiers.length} Tiers)
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem', margin: 0 }}>
+                  Select any package tier below to launch your order instantly with pre-configured settings.
+                </p>
+              </div>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
@@ -849,10 +872,15 @@ export const ServicesSection = () => {
             </div>
 
             {/* 4. Packages & Quantity Pricing Tiers (Dynamic from DB) */}
-            <div style={{ marginBottom: '3.5rem' }}>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '1.5rem', textAlign: 'center' }}>
-                Patches Quantity & Pricing Packages ({patchTiers.length})
-              </h3>
+            <div id="patches-packages-grid" style={{ marginBottom: '3.5rem', scrollMarginTop: '110px' }}>
+              <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+                <h3 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '0.4rem' }}>
+                  Choose Your Custom Patches Package to Start ({patchTiers.length} Tiers)
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem', margin: 0 }}>
+                  Select any quantity tier below to launch your patch order instantly with pre-configured volume pricing.
+                </p>
+              </div>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
