@@ -72,6 +72,36 @@ export const PWARegistrar = () => {
         window.addEventListener('load', registerAndTrackSW, { once: true });
       }
     }
+
+    // Global Auto-Recovery for Next.js Chunk Loading Mismatches on new deployments
+    if (typeof window !== 'undefined') {
+      const handleGlobalChunkError = (e) => {
+        const errorMsg = e?.message || e?.reason?.message || '';
+        const errorName = e?.error?.name || e?.reason?.name || '';
+        const isChunkError = 
+          errorName === 'ChunkLoadError' ||
+          errorMsg.includes('Loading chunk') ||
+          errorMsg.includes('Failed to fetch dynamically imported module') ||
+          errorMsg.includes('_next/static/chunks');
+
+        if (isChunkError) {
+          const lastReload = sessionStorage.getItem('last_chunk_reload');
+          const now = Date.now();
+          if (!lastReload || (now - Number(lastReload)) > 10000) {
+            sessionStorage.setItem('last_chunk_reload', String(now));
+            window.location.reload();
+          }
+        }
+      };
+
+      window.addEventListener('error', handleGlobalChunkError);
+      window.addEventListener('unhandledrejection', handleGlobalChunkError);
+
+      return () => {
+        window.removeEventListener('error', handleGlobalChunkError);
+        window.removeEventListener('unhandledrejection', handleGlobalChunkError);
+      };
+    }
   }, []);
 
   return null;

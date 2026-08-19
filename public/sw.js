@@ -38,8 +38,12 @@ self.addEventListener('message', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Pass through non-GET and API requests directly to network
-  if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
+  // Pass through non-GET, API requests, and Next.js chunks directly to network
+  if (
+    event.request.method !== 'GET' || 
+    event.request.url.includes('/api/') ||
+    event.request.url.includes('/_next/')
+  ) {
     return;
   }
 
@@ -54,7 +58,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-while-revalidate for static assets
+  // Stale-while-revalidate for standalone static assets (icons, manifest)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request)
