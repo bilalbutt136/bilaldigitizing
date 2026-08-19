@@ -5,6 +5,7 @@ import { useAppState } from '../../context/StateContext';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
 import { 
   fetchConversations, 
+  fetchChatMessages,
   addChatMessage, 
   subscribeToLiveMessages,
   markConversationAsRead,
@@ -548,7 +549,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     }).length;
   };
 
-  const handleSelectThread = (threadId) => {
+  const handleSelectThread = async (threadId) => {
     setActiveChatId(threadId);
     setMobileView('chat');
     if (typeof window !== 'undefined') {
@@ -561,6 +562,34 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         ? { ...c, unreadCount: 0, clientUnreadCount: 0 } 
         : c
     ));
+
+    // Refresh thread messages from server to guarantee 100% complete history
+    if (isSupabaseConfigured) {
+      try {
+        const freshMsgs = await fetchChatMessages(threadId, clientEmail);
+        if (Array.isArray(freshMsgs) && freshMsgs.length > 0) {
+          setConversations(prev => {
+            const safePrev = Array.isArray(prev) ? prev : [];
+            return safePrev.map(c => {
+              if (c.id === threadId || (isSupportId(c.id) && isSupportId(threadId))) {
+                const combined = [...(c.messages || [])];
+                freshMsgs.forEach(fm => {
+                  const idx = combined.findIndex(m => m.id === fm.id || (m.text === fm.text && Math.abs(new Date(m.timestamp) - new Date(fm.timestamp)) < 5000));
+                  if (idx >= 0) {
+                    combined[idx] = { ...combined[idx], ...fm };
+                  } else {
+                    combined.push(fm);
+                  }
+                });
+                combined.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+                return { ...c, messages: combined };
+              }
+              return c;
+            });
+          });
+        }
+      } catch {}
+    }
   };
 
   // Auto-mark active conversation as read in Client Chat

@@ -17,6 +17,8 @@ export async function GET(request) {
       const cleanUserEmail = (user?.email || emailParam || '').toLowerCase().trim();
       
       let convData = [];
+      let userOrderIds = [];
+
       if (isAdmin) {
         const { data, error } = await supabase
           .from('conversations')
@@ -52,13 +54,13 @@ export async function GET(request) {
               .ilike('client_email', cleanUserEmail);
             
             if (userOrders && userOrders.length > 0) {
-              const orderIds = userOrders.map(o => o.id);
+              userOrderIds = userOrders.map(o => o.id);
               const threadIds = userOrders.map(o => `order-${o.id}`);
               
               const { data: byOrderIds } = await supabase
                 .from('conversations')
                 .select('*')
-                .in('order_id', orderIds);
+                .in('order_id', userOrderIds);
               (byOrderIds || []).forEach(c => collectedMap.set(c.id, c));
 
               const { data: byThreadIds } = await supabase
@@ -87,6 +89,9 @@ export async function GET(request) {
       if (cleanUserEmail && cleanUserEmail !== 'client@studio.com') {
         conversationIdSet.add(`support-${cleanUserEmail}`);
       }
+      userOrderIds.forEach(id => {
+        conversationIdSet.add(`order-${id}`);
+      });
 
       const conversationIds = Array.from(conversationIdSet);
 
@@ -100,6 +105,23 @@ export async function GET(request) {
         if (!msgError && mData) {
           messagesData = mData;
         }
+      }
+
+      // Also retrieve order_messages for all involved order IDs to ensure zero history loss
+      let orderMessagesData = [];
+      const orderIdsToFetch = userOrderIds.length > 0 
+        ? userOrderIds 
+        : (convData || []).filter(c => c.order_id || c.id?.startsWith('order-')).map(c => c.order_id || c.id.replace('order-', ''));
+
+      if (orderIdsToFetch.length > 0) {
+        try {
+          const { data: omData } = await supabase
+            .from('order_messages')
+            .select('*')
+            .in('order_id', orderIdsToFetch)
+            .order('created_at', { ascending: true });
+          if (omData) orderMessagesData = omData;
+        } catch {}
       }
 
       // Ensure any conversation that has messages exists in convData
@@ -128,7 +150,9 @@ export async function GET(request) {
       });
 
       const conversations = (convData || []).map(conv => {
-        const mappedMessages = messagesData
+        const rawOrdId = conv.order_id || (conv.id?.startsWith('order-') ? conv.id.replace('order-', '') : null);
+
+        const convDirectMsgs = messagesData
           .filter(m => m.conversation_id === conv.id)
           .map(m => ({
             id: m.id,
@@ -146,6 +170,34 @@ export async function GET(request) {
             is_read: m.is_read || false,
             timestamp: m.timestamp || m.created_at
           }));
+
+        // Merge order_messages if this is an order conversation
+        if (rawOrdId && orderMessagesData.length > 0) {
+          const matchingOrderMsgs = orderMessagesData.filter(om => om.order_id === rawOrdId);
+          matchingOrderMsgs.forEach(om => {
+            const mapped = {
+              id: String(om.id),
+              conversation_id: conv.id,
+              sender: om.sender_role === 'admin' ? 'admin' : (om.sender === 'admin' ? 'admin' : 'client'),
+              senderName: om.sender_name || (om.sender_role === 'admin' ? 'Support' : conv.client_name || 'Client'),
+              sender_name: om.sender_name,
+              text: om.message || om.text || '',
+              attachment: om.attachment || om.attachment_name || null,
+              attachment_url: om.attachment_url || null,
+              attachment_name: om.attachment_name || om.attachment || null,
+              attachment_size: om.attachment_size || null,
+              attachment_type: om.attachment_type || null,
+              reply_to: om.reply_to || null,
+              is_read: om.is_read || false,
+              timestamp: om.created_at
+            };
+            if (!convDirectMsgs.some(m => m.id === mapped.id || (m.text === mapped.text && Math.abs(new Date(m.timestamp) - new Date(mapped.timestamp)) < 5000))) {
+              convDirectMsgs.push(mapped);
+            }
+          });
+        }
+
+        convDirectMsgs.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
 
         // Compute role-appropriate unread count
         const unreadCount = isAdmin 
@@ -166,7 +218,7 @@ export async function GET(request) {
           clientUnreadCount: conv.client_unread_count ?? 0,
           createdAt: conv.created_at,
           updatedAt: conv.updated_at,
-          messages: mappedMessages
+          messages: convDirectMsgs
         };
       });
 
@@ -178,18 +230,24 @@ export async function GET(request) {
         return NextResponse.json({ error: 'Missing chatId' }, { status: 400 });
       }
 
+      const cleanUserEmail = (user?.email || emailParam || '').toLowerCase().trim();
+      const rawOrderId = chatId.startsWith('order-') ? chatId.replace('order-', '') : (chatId.match(/^[A-Z0-9-]+$/i) ? chatId : null);
+
+      let targetIds = [chatId];
+      if (chatId === 'general-support' || chatId.startsWith('support-')) {
+        targetIds = ['general-support'];
+        if (cleanUserEmail && cleanUserEmail !== 'client@studio.com') {
+          targetIds.push(`support-${cleanUserEmail}`);
+        }
+      }
+
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .eq('conversation_id', chatId)
+        .in('conversation_id', targetIds)
         .order('created_at', { ascending: true });
         
-      if (error) {
-        console.error('[Messages API fetchMessages error]:', error.message);
-        return NextResponse.json({ messages: [] });
-      }
-      
-      const mappedMessages = (data || []).map(m => ({
+      let mappedMessages = (data || []).map(m => ({
         id: m.id,
         conversation_id: m.conversation_id,
         sender: m.sender,
@@ -205,6 +263,43 @@ export async function GET(request) {
         is_read: m.is_read || false,
         timestamp: m.timestamp || m.created_at
       }));
+
+      // If order thread, also query order_messages
+      if (rawOrderId) {
+        try {
+          const { data: omData } = await supabase
+            .from('order_messages')
+            .select('*')
+            .eq('order_id', rawOrderId)
+            .order('created_at', { ascending: true });
+
+          if (omData && omData.length > 0) {
+            omData.forEach(om => {
+              const mapped = {
+                id: String(om.id),
+                conversation_id: chatId,
+                sender: om.sender_role === 'admin' ? 'admin' : (om.sender === 'admin' ? 'admin' : 'client'),
+                senderName: om.sender_name || (om.sender_role === 'admin' ? 'Support' : 'Client'),
+                sender_name: om.sender_name,
+                text: om.message || om.text || '',
+                attachment: om.attachment || om.attachment_name || null,
+                attachment_url: om.attachment_url || null,
+                attachment_name: om.attachment_name || om.attachment || null,
+                attachment_size: om.attachment_size || null,
+                attachment_type: om.attachment_type || null,
+                reply_to: om.reply_to || null,
+                is_read: om.is_read || false,
+                timestamp: om.created_at
+              };
+              if (!mappedMessages.some(m => m.id === mapped.id || (m.text === mapped.text && Math.abs(new Date(m.timestamp) - new Date(mapped.timestamp)) < 5000))) {
+                mappedMessages.push(mapped);
+              }
+            });
+          }
+        } catch {}
+      }
+
+      mappedMessages.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
       
       return NextResponse.json({ messages: mappedMessages });
     }

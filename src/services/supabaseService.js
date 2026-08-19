@@ -1224,6 +1224,21 @@ export async function fetchConversations(email) {
   } catch { return []; }
 }
 
+export async function fetchChatMessages(chatId, email) {
+  try {
+    if (!chatId) return [];
+    const headers = await getAuthHeaders();
+    const cleanEmail = email ? String(email).toLowerCase().trim() : '';
+    const query = cleanEmail ? `&clientEmail=${encodeURIComponent(cleanEmail)}` : '';
+    const res = await fetch(`/api/messages?action=fetchMessages&chatId=${encodeURIComponent(chatId)}${query}`, {
+      headers,
+      cache: 'no-store'
+    });
+    const data = await res.json();
+    return data.messages || [];
+  } catch { return []; }
+}
+
 export async function addChatMessage(chatId, messageObj) {
   const fullMsg = {
     ...messageObj,

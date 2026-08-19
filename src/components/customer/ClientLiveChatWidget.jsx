@@ -354,6 +354,30 @@ export const ClientLiveChatWidget = () => {
   useEffect(() => {
     if (isOpen) {
       scrollToBottom('smooth');
+      if (isSupabaseConfigured) {
+        fetchConversations(clientEmail).then(data => {
+          if (Array.isArray(data) && data.length > 0) {
+            setChats(prev => {
+              const safePrev = Array.isArray(prev) ? prev : [];
+              return data.map(remoteConv => {
+                const localConv = safePrev.find(c => c.id === remoteConv.id || (isSupportId(c.id) && isSupportId(remoteConv.id)));
+                if (!localConv) return remoteConv;
+                const combinedMessages = [...(remoteConv.messages || [])];
+                (localConv.messages || []).forEach(lm => {
+                  if (!combinedMessages.some(rm => rm.id === lm.id || (rm.text === lm.text && Math.abs(new Date(rm.timestamp) - new Date(lm.timestamp)) < 5000))) {
+                    combinedMessages.push(lm);
+                  }
+                });
+                combinedMessages.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+                return {
+                  ...remoteConv,
+                  messages: combinedMessages
+                };
+              });
+            });
+          }
+        }).catch(() => {});
+      }
       if (clientThread?.id) {
         if (typeof window !== 'undefined') {
           localStorage.setItem('bdigi_read_client_' + clientThread.id, String(Date.now()));
