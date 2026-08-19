@@ -10,8 +10,11 @@ import { PortfolioPreview } from '../src/components/public/PortfolioPreview';
 import { TestimonialsFAQ } from '../src/components/public/TestimonialsFAQ';
 import { FinalCTA } from '../src/components/public/FinalCTA';
 
+import { normalizeCategory } from '../src/utils/categoryUtils';
+
 export default function HomePage() {
-  const { setCurrentView } = useAppState();
+  const { setCurrentView, activeHomeServiceTab } = useAppState();
+  const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
 
   useEffect(() => {
     setCurrentView('public');
@@ -21,11 +24,15 @@ export default function HomePage() {
     <>
       <HeroSection />
       <ServicesSection />
-      <TrustStatsBar />
-      <WhyChooseUs />
-      <PortfolioPreview />
-      <TestimonialsFAQ />
-      <FinalCTA />
+      {activeTab === 'all' && (
+        <>
+          <TrustStatsBar />
+          <WhyChooseUs />
+          <PortfolioPreview />
+          <TestimonialsFAQ />
+          <FinalCTA />
+        </>
+      )}
     </>
   );
 }
