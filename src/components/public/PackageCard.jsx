@@ -106,8 +106,8 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
     <div
       onClick={() => onSelect && onSelect(cat)}
       style={{
-        background: '#ffffff',
-        border: isPopular ? `2px solid ${tierTheme.color}` : '1.5px solid #e2e8f0',
+        background: 'var(--color-surface, #ffffff)',
+        border: isPopular ? `2px solid ${tierTheme.color}` : '1.5px solid var(--color-border)',
         borderRadius: '18px',
         padding: '1.75rem 1.4rem 1.35rem',
         position: 'relative',
@@ -115,7 +115,7 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
         flexDirection: 'column',
         justifyContent: 'space-between',
         height: '100%',
-        boxShadow: isPopular ? `0 12px 30px ${tierTheme.glow}` : '0 4px 16px rgba(0, 0, 0, 0.04)',
+        boxShadow: isPopular ? `0 12px 30px ${tierTheme.glow}` : 'var(--shadow-sm)',
         transform: isPopular ? 'translateY(-4px)' : 'none',
         transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
         cursor: 'pointer',
@@ -155,14 +155,14 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
             <span style={{ fontSize: '0.68rem', fontWeight: 800, color: tierTheme.color, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>
               {tierTheme.serviceLabel} · #{idx + 1}
             </span>
-            <h3 style={{ fontSize: '1.125rem', fontFamily: 'var(--font-heading, "Inter", sans-serif)', fontWeight: 900, margin: '0.1rem 0 0', color: '#0f172a', lineHeight: 1.25, minHeight: '2.8rem', display: 'flex', alignItems: 'center' }}>
+            <h3 style={{ fontSize: '1.125rem', fontFamily: 'var(--font-heading, "Inter", sans-serif)', fontWeight: 900, margin: '0.1rem 0 0', color: 'var(--color-text-primary)', lineHeight: 1.25, minHeight: '2.8rem', display: 'flex', alignItems: 'center' }}>
               {cat.title}
             </h3>
           </div>
         </div>
 
         {descriptionText && (
-          <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '1rem', lineHeight: 1.45, minHeight: '2.8rem' }}>
+          <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '1rem', lineHeight: 1.45, minHeight: '2.8rem' }}>
             {descriptionText}
           </p>
         )}
@@ -171,9 +171,9 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
         <div style={{
           marginBottom: '1.15rem',
           padding: '0.85rem 1rem',
-          background: '#f8fafc',
+          background: 'var(--color-subtle, var(--bg-subtle))',
           borderRadius: '12px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid var(--color-border)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -185,12 +185,12 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
               {displayRate}
             </div>
             {displayStrikePrice && (
-              <div style={{ fontSize: '1.1rem', color: '#94a3b8', textDecoration: 'line-through', fontWeight: 700 }}>
+              <div style={{ fontSize: '1.1rem', color: 'var(--color-text-muted)', textDecoration: 'line-through', fontWeight: 700 }}>
                 {displayStrikePrice}
               </div>
             )}
           </div>
-          <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 800, marginTop: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'center' }}>
+          <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', fontWeight: 800, marginTop: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'center' }}>
             {unitText}
           </div>
         </div>
@@ -199,10 +199,10 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.35rem' }}>
           {(cat.features || []).map((feat, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-              <div style={{ background: '#dcfce7', color: '#16a34a', padding: '0.15rem', borderRadius: '50%', marginTop: '2px', flexShrink: 0, display: 'flex' }}>
+              <div style={{ background: 'rgba(16, 185, 129, 0.16)', color: '#10b981', padding: '0.15rem', borderRadius: '50%', marginTop: '2px', flexShrink: 0, display: 'flex' }}>
                 <CheckCircle size={13} />
               </div>
-              <span style={{ fontSize: '0.825rem', color: '#1e293b', fontWeight: 600, lineHeight: 1.35 }}>
+              <span style={{ fontSize: '0.825rem', color: 'var(--color-text-primary)', fontWeight: 600, lineHeight: 1.35 }}>
                 {feat}
               </span>
             </div>
@@ -243,7 +243,7 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
         </button>
 
         {turnaroundText && (
-          <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#64748b', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+          <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
             <Clock size={13} style={{ color: tierTheme.color }} /> Express Delivery: {turnaroundText}
           </div>
         )}

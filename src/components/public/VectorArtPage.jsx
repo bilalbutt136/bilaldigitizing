@@ -452,7 +452,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
       )}
       {/* 2. Pricing Tier Cards OR Order Configuration Form View */}
       {!isOrderViewOpen ? (
-        <section style={{ padding: '5rem 0 6rem', background: '#f1f5f9', color: '#0f172a' }}>
+        <section style={{ padding: '5rem 0 6rem', background: 'var(--bg-main)', color: 'var(--color-text-primary)' }}>
           <div id="pricing-tiers" className="container" style={{ maxWidth: '1240px', overflow: 'visible' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 290px), 1fr))', gap: '2rem', marginBottom: '1.5rem', paddingTop: '1rem', overflow: 'visible' }}>
             

@@ -76,7 +76,7 @@ export const CustomerSewOutsSection = () => {
     : 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80';
 
   return (
-    <section id="sew-outs" style={{ padding: '5rem 0', background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
+    <section id="sew-outs" style={{ padding: '5rem 0', background: 'var(--bg-main)', borderBottom: '1px solid var(--border-color)' }}>
       <div className="container">
         
         {/* Section Header */}

@@ -177,11 +177,11 @@ export const PortfolioPage = () => {
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem' }}>
             <div style={{
               display: 'inline-flex',
-              background: '#ffffff',
+              background: 'var(--color-surface, #ffffff)',
               border: '1.5px solid var(--border-color)',
               padding: '0.35rem',
               borderRadius: '9999px',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
+              boxShadow: 'var(--shadow-sm)',
               flexWrap: 'wrap',
               justifyContent: 'center',
               gap: '0.25rem'
@@ -208,12 +208,12 @@ export const PortfolioPage = () => {
                       background: isSelected 
                         ? 'linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%)' 
                         : 'transparent',
-                      color: isSelected ? '#ffffff' : 'var(--navy-800)',
+                      color: isSelected ? '#ffffff' : 'var(--color-text-secondary)',
                       fontWeight: isSelected ? 800 : 600,
                       fontSize: '0.875rem',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
-                      boxShadow: isSelected ? '0 4px 12px rgba(249, 115, 22, 0.3)' : 'none'
+                      boxShadow: isSelected ? '0 4px 12px var(--color-primary-glow)' : 'none'
                     }}
                   >
                     <IconComp size={15} />
@@ -273,24 +273,24 @@ export const PortfolioPage = () => {
                       setActiveItemModal(item);
                     }}
                     style={{
-                      background: '#ffffff',
+                      background: 'var(--color-surface, var(--bg-card))',
                       border: '1px solid var(--border-color)',
                       borderRadius: '20px',
                       overflow: 'hidden',
                       cursor: 'pointer',
                       transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
+                      boxShadow: 'var(--shadow-sm)',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between'
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-6px)';
-                      e.currentTarget.style.boxShadow = '0 16px 36px rgba(0, 0, 0, 0.08)';
+                      e.currentTarget.style.boxShadow = 'var(--shadow-xl)';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.04)';
+                      e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
                     }}
                   >
                     <div>
@@ -319,9 +319,9 @@ export const PortfolioPage = () => {
                         {/* Top Category Badge */}
                         <div style={{ position: 'absolute', top: '12px', left: '12px' }}>
                           <span style={{
-                            background: badgeBg,
-                            color: badgeColor,
-                            border: `1px solid ${badgeColor}40`,
+                            background: 'rgba(249, 115, 22, 0.12)',
+                            color: '#ea580c',
+                            border: '1px solid #ea580c40',
                             fontSize: '0.725rem',
                             fontWeight: 800,
                             padding: '0.3rem 0.75rem',
@@ -358,7 +358,7 @@ export const PortfolioPage = () => {
                         <h3 style={{
                           fontSize: '1.15rem',
                           fontWeight: 800,
-                          color: 'var(--navy-950)',
+                          color: 'var(--color-text-primary)',
                           margin: '0 0 0.5rem',
                           lineHeight: 1.3
                         }}>
@@ -367,7 +367,7 @@ export const PortfolioPage = () => {
 
                         <p style={{
                           fontSize: '0.875rem',
-                          color: 'var(--text-muted)',
+                          color: 'var(--color-text-muted)',
                           lineHeight: 1.55,
                           margin: '0 0 1rem',
                           display: '-webkit-box',
@@ -381,17 +381,17 @@ export const PortfolioPage = () => {
                         {/* Tags Pill Bar */}
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
                           {item.stitchCount && (
-                            <span style={{ fontSize: '0.75rem', fontWeight: 700, background: '#f1f5f9', color: '#334155', padding: '0.25rem 0.6rem', borderRadius: '6px' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, background: 'var(--color-subtle)', color: 'var(--color-text-secondary)', padding: '0.25rem 0.6rem', borderRadius: '6px' }}>
                               ⚡ {item.stitchCount}
                             </span>
                           )}
                           {item.formats && (
-                            <span style={{ fontSize: '0.75rem', fontWeight: 700, background: '#f1f5f9', color: '#334155', padding: '0.25rem 0.6rem', borderRadius: '6px' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, background: 'var(--color-subtle)', color: 'var(--color-text-secondary)', padding: '0.25rem 0.6rem', borderRadius: '6px' }}>
                               📁 {item.formats}
                             </span>
                           )}
                           {item.beforeImg && (
-                            <span style={{ fontSize: '0.75rem', fontWeight: 700, background: '#ecfdf5', color: '#059669', padding: '0.25rem 0.6rem', borderRadius: '6px' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.25rem 0.6rem', borderRadius: '6px' }}>
                               ✓ Before & After
                             </span>
                           )}
@@ -400,11 +400,11 @@ export const PortfolioPage = () => {
                     </div>
 
                     {/* Card Footer Button */}
-                    <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border-color)', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+                    <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border-color)', background: 'var(--color-subtle, var(--bg-subtle))', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-muted)' }}>
                         {item.clientType}
                       </span>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--orange-600)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                         Inspect Project <ArrowRight size={14} />
                       </span>
                     </div>
@@ -418,130 +418,115 @@ export const PortfolioPage = () => {
         </div>
       </section>
 
-      {/* 3. LIGHTBOX / INSPECTION MODAL */}
+      {/* 3. Interactive Modal Preview */}
       {activeItemModal && (
         <div 
-          className="modal-overlay"
+          className="modal-overlay" 
+          onClick={() => setActiveItemModal(null)}
           style={{
             position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            background: 'rgba(15, 23, 42, 0.85)',
-            backdropFilter: 'blur(10px)',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.8)',
+            backdropFilter: 'blur(8px)',
             zIndex: 9999,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '1rem',
-            overflowY: 'auto'
+            padding: '1.5rem'
           }}
-          onClick={() => setActiveItemModal(null)}
         >
           <div 
-            className="modal-content"
+            className="modal-dialog"
+            onClick={(e) => e.stopPropagation()}
             style={{
-              background: '#ffffff',
+              background: 'var(--color-surface, var(--bg-card))',
               borderRadius: '24px',
               maxWidth: '900px',
               width: '100%',
-              maxHeight: '92vh',
-              overflowY: 'auto',
-              boxShadow: '0 30px 80px rgba(0,0,0,0.4)',
-              border: '1px solid var(--border-color)',
+              overflow: 'hidden',
+              boxShadow: 'var(--shadow-xl)',
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
-              overflow: 'hidden'
+              gridTemplateColumns: '1.2fr 1fr',
+              border: '1px solid var(--border-color)'
             }}
-            onClick={(e) => e.stopPropagation()}
           >
-            {/* Left Side: High-Res Image Display */}
+            {/* Left Side: Big Image Display */}
             <div style={{
               background: 'radial-gradient(circle at center, #1e293b 0%, #090d16 100%)',
               padding: '2rem',
               display: 'flex',
               flexDirection: 'column',
-              justifyContent: 'space-between',
               alignItems: 'center',
+              justifyContent: 'center',
               position: 'relative'
             }}>
-              
-              {/* Optional Toggle if before image exists */}
-              {activeItemModal.beforeImg ? (
+              <img 
+                src={showOriginalInModal && activeItemModal.beforeImg ? activeItemModal.beforeImg : activeItemModal.afterImg} 
+                alt={activeItemModal.title}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '400px',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.4))'
+                }}
+              />
+
+              {/* Before/After Switcher (if exists) */}
+              {activeItemModal.beforeImg && (
                 <div style={{
-                  display: 'inline-flex',
-                  background: 'rgba(255, 255, 255, 0.12)',
+                  position: 'absolute',
+                  bottom: '20px',
+                  display: 'flex',
+                  background: 'rgba(15, 23, 42, 0.85)',
+                  padding: '4px',
                   borderRadius: '9999px',
-                  padding: '0.25rem',
-                  backdropFilter: 'blur(8px)',
-                  marginBottom: '1rem',
-                  border: '1px solid rgba(255, 255, 255, 0.2)'
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(8px)'
                 }}>
                   <button
                     type="button"
                     onClick={() => setShowOriginalInModal(false)}
                     style={{
+                      padding: '0.4rem 1rem',
+                      borderRadius: '9999px',
+                      border: 'none',
                       background: !showOriginalInModal ? 'var(--orange-500)' : 'transparent',
                       color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '9999px',
-                      padding: '0.35rem 0.85rem',
-                      fontWeight: 800,
                       fontSize: '0.78rem',
+                      fontWeight: 700,
                       cursor: 'pointer'
                     }}
                   >
-                    Digitized Production
+                    Digitized Result
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowOriginalInModal(true)}
                     style={{
+                      padding: '0.4rem 1rem',
+                      borderRadius: '9999px',
+                      border: 'none',
                       background: showOriginalInModal ? 'var(--orange-500)' : 'transparent',
                       color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '9999px',
-                      padding: '0.35rem 0.85rem',
-                      fontWeight: 800,
                       fontSize: '0.78rem',
+                      fontWeight: 700,
                       cursor: 'pointer'
                     }}
                   >
                     Original Artwork
                   </button>
                 </div>
-              ) : (
-                <div style={{ height: '30px' }} />
               )}
-
-              {/* Main Image */}
-              <div style={{ width: '100%', height: '360px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img
-                  src={showOriginalInModal && activeItemModal.beforeImg ? activeItemModal.beforeImg : activeItemModal.afterImg}
-                  alt={activeItemModal.title}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    objectFit: 'contain',
-                    borderRadius: '12px'
-                  }}
-                />
-              </div>
-
-              <div style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 600, marginTop: '1rem' }}>
-                {showOriginalInModal ? 'Showing Customer Raw Artwork' : 'Showing Master Commercial File Sew-Out'}
-              </div>
             </div>
 
             {/* Right Side: Specifications & Order Action */}
-            <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#ffffff' }}>
+            <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: 'var(--color-surface, var(--bg-card))' }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                   <span style={{
-                    background: 'var(--orange-50)',
-                    color: 'var(--orange-600)',
-                    border: '1px solid var(--orange-200)',
+                    background: 'var(--color-primary-light)',
+                    color: 'var(--color-primary)',
+                    border: '1px solid var(--color-border)',
                     fontSize: '0.75rem',
                     fontWeight: 800,
                     padding: '0.3rem 0.75rem',
@@ -554,48 +539,48 @@ export const PortfolioPage = () => {
                   <button
                     type="button"
                     onClick={() => setActiveItemModal(null)}
-                    style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '0.4rem', cursor: 'pointer' }}
+                    style={{ background: 'var(--color-subtle)', color: 'var(--color-text-primary)', border: 'none', borderRadius: '8px', padding: '0.4rem', cursor: 'pointer' }}
                   >
                     <X size={18} />
                   </button>
                 </div>
 
-                <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 0.75rem', lineHeight: 1.25 }}>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--color-text-primary)', margin: '0 0 0.75rem', lineHeight: 1.25 }}>
                   {activeItemModal.title}
                 </h2>
 
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 1.5rem' }}>
+                <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', lineHeight: 1.6, margin: '0 0 1.5rem' }}>
                   {activeItemModal.description}
                 </p>
 
                 {/* Technical Specifications Grid */}
-                <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                <div style={{ background: 'var(--color-subtle, var(--bg-subtle))', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
                   
                   {activeItemModal.stitchCount && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                      <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Stitch Density:</span>
-                      <strong style={{ color: 'var(--navy-900)' }}>{activeItemModal.stitchCount}</strong>
+                      <span style={{ color: 'var(--color-text-muted)', fontWeight: 600 }}>Stitch Density:</span>
+                      <strong style={{ color: 'var(--color-text-primary)' }}>{activeItemModal.stitchCount}</strong>
                     </div>
                   )}
 
                   {activeItemModal.formats && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                      <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Formats Included:</span>
-                      <strong style={{ color: 'var(--navy-900)' }}>{activeItemModal.formats}</strong>
+                      <span style={{ color: 'var(--color-text-muted)', fontWeight: 600 }}>Formats Included:</span>
+                      <strong style={{ color: 'var(--color-text-primary)' }}>{activeItemModal.formats}</strong>
                     </div>
                   )}
 
                   {activeItemModal.colors && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                      <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Thread & Color:</span>
-                      <strong style={{ color: 'var(--navy-900)' }}>{activeItemModal.colors}</strong>
+                      <span style={{ color: 'var(--color-text-muted)', fontWeight: 600 }}>Thread & Color:</span>
+                      <strong style={{ color: 'var(--color-text-primary)' }}>{activeItemModal.colors}</strong>
                     </div>
                   )}
 
                   {activeItemModal.clientType && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                      <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Application:</span>
-                      <strong style={{ color: 'var(--navy-900)' }}>{activeItemModal.clientType}</strong>
+                      <span style={{ color: 'var(--color-text-muted)', fontWeight: 600 }}>Application:</span>
+                      <strong style={{ color: 'var(--color-text-primary)' }}>{activeItemModal.clientType}</strong>
                     </div>
                   )}
 

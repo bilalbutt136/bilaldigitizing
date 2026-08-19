@@ -594,33 +594,46 @@ h1, h2, h3, h4, h5, h6 {
    DARK THEME MODE STYLES (PREMIUM OBSIDIAN & HIGH-CONTRAST TEXT)
    ========================================================================== */
 [data-theme="dark"], body.dark-mode {
+  --color-background: #090d16;
+  --color-surface: #111827;
+  --color-surface-elevated: #1a2234;
+  --color-subtle: #141d2f;
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-border-hover: rgba(255, 255, 255, 0.24);
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  --color-text-on-primary: #090d16;
+
   --bg-main: #090d16; /* Deep obsidian canvas */
   --bg-card: #111827; /* Rich slate card */
   --bg-surface: #1a2234; /* Elevated container */
   --bg-elevated: #1e293b;
-  --bg-subtle: #151d2e;
-  --bg-input: #151d2e;
+  --bg-subtle: #141d2f;
+  --bg-input: #141d2f;
   
   --text-main: #f8fafc;
   --text-heading: #ffffff;
   --text-muted: #94a3b8;
-  --text-light: #64748b;
+  --text-light: #94a3b8;
 
   --navy-950: #f8fafc;
   --navy-900: #f1f5f9;
+  --navy-850: #e2e8f0;
   --navy-800: #e2e8f0;
   --navy-700: #cbd5e1;
   --navy-600: #94a3b8;
+  --navy-100: #141d2f;
 
   --border-color: rgba(255, 255, 255, 0.12);
   --card-border: rgba(255, 255, 255, 0.08);
 
-  --hero-bg: linear-gradient(135deg, #020617 0%, #0b0f19 60%, #111827 100%);
-  --hero-tabs-bg: rgba(15, 23, 42, 0.85);
+  --hero-bg: radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249, 115, 22, 0.16) 0%, rgba(15, 23, 42, 0.8) 50%, #090d16 100%);
+  --hero-tabs-bg: #111827;
   --hero-tabs-border: rgba(255, 255, 255, 0.14);
   --hero-text-primary: #ffffff;
   --hero-text-secondary: #94a3b8;
-  --hero-card-bg: rgba(15, 23, 42, 0.85);
+  --hero-card-bg: #111827;
   --hero-card-border: rgba(255, 255, 255, 0.14);
   --hero-card-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7);
 
@@ -630,12 +643,12 @@ h1, h2, h3, h4, h5, h6 {
   --banner-desc: #cbd5e1;
 
   --stats-bar-bg: #090d16;
-  --stats-card-bg: rgba(255, 255, 255, 0.03);
+  --stats-card-bg: #111827;
   --stats-card-border: rgba(255, 255, 255, 0.08);
   --stats-number-color: #ffffff;
   --stats-label-color: #94a3b8;
 
-  --cta-bg: #0b0f19;
+  --cta-bg: radial-gradient(ellipse 90% 70% at 50% 0%, rgba(249, 115, 22, 0.16) 0%, rgba(15, 23, 42, 0.8) 50%, #090d16 100%);
   --cta-title: #ffffff;
   --cta-desc: #cbd5e1;
   --cta-badge-bg: rgba(249, 115, 22, 0.15);

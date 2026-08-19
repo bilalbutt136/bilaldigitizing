@@ -535,11 +535,11 @@ export const HeroSection = () => {
             className="hero-nav-tabs-wrapper"
             style={{
               display: 'inline-flex',
-              background: '#ffffff',
-              border: '1px solid rgba(203, 213, 225, 0.85)',
+              background: 'var(--hero-tabs-bg, var(--color-surface))',
+              border: '1px solid var(--hero-tabs-border, var(--color-border))',
               padding: '0.35rem',
               borderRadius: '9999px',
-              boxShadow: '0 4px 20px -2px rgba(15, 23, 42, 0.06)',
+              boxShadow: 'var(--shadow-sm)',
               flexWrap: 'wrap',
               justifyContent: 'center',
               gap: '0.25rem',
@@ -564,17 +564,17 @@ export const HeroSection = () => {
                     borderRadius: '9999px',
                     border: 'none',
                     background: isSelected 
-                      ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' 
+                      ? 'linear-gradient(135deg, var(--color-secondary), var(--color-primary))' 
                       : 'transparent',
-                    color: isSelected ? '#ffffff' : '#475569',
+                    color: isSelected ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-text-secondary)',
                     fontWeight: isSelected ? 800 : 600,
                     fontSize: '0.875rem',
                     cursor: 'pointer',
                     transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                    boxShadow: isSelected ? '0 4px 14px rgba(15, 23, 42, 0.18)' : 'none'
+                    boxShadow: isSelected ? '0 4px 14px var(--color-primary-glow)' : 'none'
                   }}
                 >
-                  <Icon size={15} style={{ color: isSelected ? '#f59e0b' : '#64748b' }} />
+                  <Icon size={15} style={{ color: isSelected ? 'inherit' : 'var(--color-text-muted)' }} />
                   <span>{tab.label}</span>
                 </button>
               );
@@ -598,13 +598,13 @@ export const HeroSection = () => {
             {/* Dynamic Badge */}
             <div className="badge-pill-glow" style={{ 
               marginBottom: '1rem',
-              background: '#fff7ed',
-              border: '1px solid #fed7aa',
-              color: '#c2410c',
+              background: 'var(--color-primary-light)',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-primary)',
               fontWeight: 800,
-              boxShadow: '0 2px 8px rgba(234, 88, 12, 0.08)'
+              boxShadow: '0 2px 8px var(--color-primary-glow)'
             }}>
-              <Sparkles size={14} style={{ color: '#ea580c' }} />
+              <Sparkles size={14} style={{ color: 'var(--color-primary)' }} />
               <span>{badge}</span>
             </div>
 
@@ -613,7 +613,7 @@ export const HeroSection = () => {
               fontSize: 'clamp(1.75rem, 5vw, 2.9rem)',
               fontWeight: 900,
               lineHeight: 1.15,
-              color: '#0f172a',
+              color: 'var(--color-text-primary)',
               marginBottom: '0.85rem',
               letterSpacing: '-0.025em',
               fontFamily: 'var(--font-heading)',
@@ -637,7 +637,7 @@ export const HeroSection = () => {
             <div style={{
               fontSize: 'clamp(0.95rem, 2.8vw, 1.15rem)',
               fontWeight: 800,
-              color: '#ea580c',
+              color: 'var(--color-primary)',
               marginBottom: '0.85rem',
               lineHeight: 1.35,
               wordBreak: 'break-word',
@@ -653,7 +653,7 @@ export const HeroSection = () => {
             <p style={{
               fontSize: 'clamp(0.88rem, 2.6vw, 1rem)',
               lineHeight: 1.6,
-              color: '#475569',
+              color: 'var(--color-text-secondary)',
               marginBottom: '1.35rem',
               maxWidth: '100%',
               wordBreak: 'break-word',
@@ -668,19 +668,19 @@ export const HeroSection = () => {
               flexDirection: 'column',
               gap: '0.65rem',
               marginBottom: '1.75rem',
-              background: '#ffffff',
-              border: '1px solid #e2e8f0',
+              background: 'var(--color-surface, var(--bg-card))',
+              border: '1px solid var(--color-border)',
               padding: 'clamp(0.95rem, 2vw, 1.25rem) clamp(1rem, 2vw, 1.35rem)',
               borderRadius: '16px',
               textAlign: 'left',
               width: '100%',
               boxSizing: 'border-box',
-              boxShadow: '0 4px 20px -2px rgba(15, 23, 42, 0.04)'
+              boxShadow: 'var(--shadow-sm)'
             }}>
               {featuresList.slice(0, 3).map((featText, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', fontSize: '0.875rem', color: '#1e293b', fontWeight: 600, wordBreak: 'break-word' }}>
-                  <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', padding: '3px', borderRadius: '50%', display: 'flex', flexShrink: 0, marginTop: '1px' }}>
-                    <CheckCircle2 size={15} style={{ color: '#ea580c' }} />
+                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', fontSize: '0.875rem', color: 'var(--color-text-primary)', fontWeight: 600, wordBreak: 'break-word' }}>
+                  <div style={{ background: 'var(--color-primary-light)', border: '1px solid var(--color-border)', padding: '3px', borderRadius: '50%', display: 'flex', flexShrink: 0, marginTop: '1px' }}>
+                    <CheckCircle2 size={15} style={{ color: 'var(--color-primary)' }} />
                   </div>
                   <span style={{ lineHeight: 1.5 }}>{featText}</span>
                 </div>
@@ -699,8 +699,8 @@ export const HeroSection = () => {
                 className="btn btn-primary-orange btn-lg"
                 onClick={handlePrimaryAction}
                 style={{ 
-                  background: 'linear-gradient(135deg, #ff6b00 0%, #ea580c 100%)',
-                  color: '#ffffff',
+                  background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                  color: 'var(--color-text-on-primary, #ffffff)',
                   border: 'none',
                   padding: '0.9rem 1.85rem',
                   fontSize: '0.98rem',
@@ -709,7 +709,7 @@ export const HeroSection = () => {
                   alignItems: 'center',
                   gap: '0.5rem',
                   borderRadius: '14px',
-                  boxShadow: '0 8px 24px rgba(234, 88, 12, 0.32)',
+                  boxShadow: '0 8px 24px var(--color-primary-glow)',
                   cursor: 'pointer'
                 }}
               >
@@ -723,9 +723,9 @@ export const HeroSection = () => {
                 className="btn btn-outline btn-lg"
                 onClick={handleSecondaryAction}
                 style={{ 
-                  background: '#ffffff',
-                  color: '#0f172a', 
-                  border: '1.5px solid #cbd5e1',
+                  background: 'var(--color-surface, transparent)',
+                  color: 'var(--color-text-primary)', 
+                  border: '1.5px solid var(--color-border)',
                   padding: '0.9rem 1.5rem', 
                   fontSize: '0.98rem',
                   fontWeight: 700,
@@ -733,7 +733,7 @@ export const HeroSection = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderRadius: '14px',
-                  boxShadow: '0 2px 6px rgba(15, 23, 42, 0.04)',
+                  boxShadow: 'var(--shadow-sm)',
                   cursor: 'pointer'
                 }}
               >
@@ -754,7 +754,7 @@ export const HeroSection = () => {
                     <div style={{ background: 'var(--color-primary-light)', padding: '4px', borderRadius: '8px', display: 'flex' }}>
                       <IconComp size={15} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                     </div>
-                    <span style={{ fontSize: '0.835rem', fontWeight: 700, color: 'var(--hero-text-secondary)', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '0.835rem', fontWeight: 700, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
                       <strong style={{ color: 'var(--color-primary)', marginRight: '3px' }}>{stat.value}</strong>
                       {stat.label}
                     </span>
@@ -774,11 +774,11 @@ export const HeroSection = () => {
             <div 
               className="hero-showcase-card"
               style={{
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
+                background: 'var(--hero-card-bg, var(--color-surface))',
+                border: '1px solid var(--hero-card-border, var(--color-border))',
                 borderRadius: '24px',
                 padding: '1.35rem',
-                boxShadow: '0 20px 45px -10px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.03)',
+                boxShadow: 'var(--hero-card-shadow, var(--shadow-xl))',
                 width: '100%',
                 maxWidth: '680px',
                 position: 'relative',
@@ -789,10 +789,10 @@ export const HeroSection = () => {
               {/* Header Title & Slide Index Counter */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', gap: '0.5rem' }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem', letterSpacing: '0.06em' }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem', letterSpacing: '0.06em' }}>
                     <span className="blinking-green-dot" /> LIVE SHOWCASE
                   </div>
-                  <div style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0f172a', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontSize: '0.98rem', fontWeight: 800, color: 'var(--color-text-primary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {(currentImage?.title || previewTitle || '').replace(/Emrboidery/gi, 'Embroidery')}
                   </div>
                 </div>
@@ -801,11 +801,11 @@ export const HeroSection = () => {
                   <span style={{
                     fontSize: '0.75rem',
                     fontWeight: 800,
-                    background: '#fff7ed',
-                    border: '1px solid #fed7aa',
+                    background: 'var(--color-primary-light)',
+                    border: '1px solid var(--color-border)',
                     padding: '0.25rem 0.65rem',
                     borderRadius: '9999px',
-                    color: '#c2410c',
+                    color: 'var(--color-primary)',
                     flexShrink: 0
                   }}>
                     {currentSlideIdx + 1} / {activeShowcaseImages.length}

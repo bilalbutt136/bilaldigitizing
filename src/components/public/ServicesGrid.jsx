@@ -79,7 +79,7 @@ export const ServicesGrid = () => {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              background: '#ffffff',
+              background: 'var(--color-surface, var(--bg-card))',
               borderTop: '5px solid var(--orange-500)',
               borderRadius: '16px',
               boxShadow: 'var(--shadow-md)',
@@ -88,29 +88,29 @@ export const ServicesGrid = () => {
           >
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
-                <div style={{ background: 'rgba(249, 115, 22, 0.1)', color: 'var(--orange-600)', padding: '0.9rem', borderRadius: '12px', display: 'inline-flex' }}>
+                <div style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.9rem', borderRadius: '12px', display: 'inline-flex' }}>
                   <Layers size={32} />
                 </div>
-                <span style={{ fontSize: '0.85rem', fontWeight: 800, background: '#fff7ed', color: 'var(--orange-600)', border: '1.5px solid #ffedd5', padding: '0.35rem 0.85rem', borderRadius: '9999px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 800, background: 'var(--color-primary-light)', color: 'var(--color-primary)', border: '1.5px solid var(--color-border)', padding: '0.35rem 0.85rem', borderRadius: '9999px' }}>
                   Starting $10.00
                 </span>
               </div>
 
-              <h3 style={{ fontSize: '1.5rem', marginBottom: '0.65rem', color: 'var(--navy-900)', fontWeight: 800 }}>
+              <h3 style={{ fontSize: '1.5rem', marginBottom: '0.65rem', color: 'var(--color-text-primary)', fontWeight: 800 }}>
                 Custom Embroidery Digitizing
               </h3>
 
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
                 Commercial machine-ready stitch files engineered for Tajima, Brother, Melco, Janome & Barudan machines with zero thread breaks and precise density underlay.
               </p>
 
               {/* Pricing Tiers Badge */}
-              <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.5rem', fontSize: '0.825rem' }}>
-                <strong style={{ color: 'var(--navy-900)', display: 'block', marginBottom: '0.25rem' }}>Pricing Tiers:</strong>
-                <span style={{ color: 'var(--navy-700)' }}>Left Chest ($10) • Cap/Hat ($12) • Jacket Back ($35)</span>
+              <div style={{ background: 'var(--color-subtle, var(--bg-subtle))', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid var(--color-border)', marginBottom: '1.5rem', fontSize: '0.825rem' }}>
+                <strong style={{ color: 'var(--color-text-primary)', display: 'block', marginBottom: '0.25rem' }}>Pricing Tiers:</strong>
+                <span style={{ color: 'var(--color-text-secondary)' }}>Left Chest ($10) • Cap/Hat ($12) • Jacket Back ($35)</span>
               </div>
 
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--navy-800)' }}>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
                 <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <CheckCircle2 size={16} style={{ color: '#10b981' }} /> Format Delivery: .DST, .PES, .EXP, .EMB, .JEF
                 </li>
@@ -124,11 +124,11 @@ export const ServicesGrid = () => {
             </div>
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid var(--border-color)', fontSize: '0.825rem', color: 'var(--navy-700)', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid var(--color-border)', fontSize: '0.825rem', color: 'var(--color-text-secondary)', marginBottom: '1.25rem' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}>
                   <Clock size={15} style={{ color: 'var(--orange-500)' }} /> 8 - 12 Hours Delivery
                 </span>
-                <span style={{ fontWeight: 700, color: 'var(--green-700)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <span style={{ fontWeight: 700, color: 'var(--color-success, #10b981)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <Download size={14} /> Instant File Portal
                 </span>
               </div>
@@ -151,8 +151,8 @@ export const ServicesGrid = () => {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              background: '#ffffff',
-              borderTop: '5px solid var(--orange-500)',
+              background: 'var(--color-surface, var(--bg-card))',
+              borderTop: '5px solid #3b82f6',
               borderRadius: '16px',
               boxShadow: 'var(--shadow-md)',
               transition: 'all 0.25s ease'
@@ -160,29 +160,29 @@ export const ServicesGrid = () => {
           >
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
-                <div style={{ background: 'rgba(249, 115, 22, 0.1)', color: 'var(--orange-600)', padding: '0.9rem', borderRadius: '12px', display: 'inline-flex' }}>
+                <div style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#38bdf8', padding: '0.9rem', borderRadius: '12px', display: 'inline-flex' }}>
                   <PenTool size={32} />
                 </div>
-                <span style={{ fontSize: '0.85rem', fontWeight: 800, background: '#fff7ed', color: 'var(--orange-600)', border: '1.5px solid #ffedd5', padding: '0.35rem 0.85rem', borderRadius: '9999px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 800, background: 'rgba(59, 130, 246, 0.15)', color: '#38bdf8', border: '1.5px solid rgba(59, 130, 246, 0.3)', padding: '0.35rem 0.85rem', borderRadius: '9999px' }}>
                   Starting $15.00
                 </span>
               </div>
 
-              <h3 style={{ fontSize: '1.5rem', marginBottom: '0.65rem', color: 'var(--navy-900)', fontWeight: 800 }}>
+              <h3 style={{ fontSize: '1.5rem', marginBottom: '0.65rem', color: 'var(--color-text-primary)', fontWeight: 800 }}>
                 Vector Tracing & Redrawing
               </h3>
 
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
                 Transform pixelated JPEGs, PNGs, hand-drawn sketches, or low-res logos into 100% hand-drawn, razor-sharp scalable vector graphics for printing.
               </p>
 
               {/* Pricing Tiers Badge */}
-              <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.5rem', fontSize: '0.825rem' }}>
-                <strong style={{ color: 'var(--navy-900)', display: 'block', marginBottom: '0.25rem' }}>Pricing Tiers:</strong>
-                <span style={{ color: 'var(--navy-700)' }}>Simple Redraw ($15) • Complex Mascot ($25)</span>
+              <div style={{ background: 'var(--color-subtle, var(--bg-subtle))', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid var(--color-border)', marginBottom: '1.5rem', fontSize: '0.825rem' }}>
+                <strong style={{ color: 'var(--color-text-primary)', display: 'block', marginBottom: '0.25rem' }}>Pricing Tiers:</strong>
+                <span style={{ color: 'var(--color-text-secondary)' }}>Simple Redraw ($15) • Complex Mascot ($25)</span>
               </div>
 
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--navy-800)' }}>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
                 <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <CheckCircle2 size={16} style={{ color: '#10b981' }} /> Vector Delivery: .AI, .EPS, .SVG, .PDF, .CDR
                 </li>
@@ -196,18 +196,18 @@ export const ServicesGrid = () => {
             </div>
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid var(--border-color)', fontSize: '0.825rem', color: 'var(--navy-700)', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid var(--color-border)', fontSize: '0.825rem', color: 'var(--color-text-secondary)', marginBottom: '1.25rem' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}>
-                  <Clock size={15} style={{ color: 'var(--orange-500)' }} /> 6 - 12 Hours Delivery
+                  <Clock size={15} style={{ color: '#3b82f6' }} /> 6 - 12 Hours Delivery
                 </span>
-                <span style={{ fontWeight: 700, color: 'var(--green-700)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <span style={{ fontWeight: 700, color: 'var(--color-success, #10b981)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <Download size={14} /> Instant File Portal
                 </span>
               </div>
 
               <button 
                 className="btn btn-primary-orange"
-                style={{ width: '100%', justifyContent: 'space-between', fontWeight: 800, padding: '0.75rem 1.25rem' }}
+                style={{ width: '100%', justifyContent: 'space-between', fontWeight: 800, padding: '0.75rem 1.25rem', background: '#2563eb', borderColor: '#2563eb' }}
                 onClick={() => handleOrderRedirect('vector', '/services/vector-tracing')}
               >
                 Configure Vector Redraw <ArrowRight size={18} />
@@ -225,9 +225,9 @@ export const ServicesGrid = () => {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.4rem',
-            background: '#fff7ed',
-            border: '1.5px solid var(--orange-300)',
-            color: 'var(--orange-700)',
+            background: 'var(--color-primary-light)',
+            border: '1.5px solid var(--color-border)',
+            color: 'var(--color-primary)',
             fontWeight: 800,
             fontSize: '0.85rem',
             textTransform: 'uppercase',
@@ -239,11 +239,11 @@ export const ServicesGrid = () => {
             <Truck size={16} /> Physical Custom Patches & Emblems (Worldwide Shipping)
           </div>
 
-          <h2 style={{ fontSize: '2.25rem', color: 'var(--navy-900)', marginBottom: '0.75rem', fontWeight: 800 }}>
+          <h2 style={{ fontSize: '2.25rem', color: 'var(--color-text-primary)', marginBottom: '0.75rem', fontWeight: 800 }}>
             Custom Manufactured Patches & Emblems
           </h2>
 
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: 1.6 }}>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '1.05rem', lineHeight: 1.6 }}>
             High-density embroidered, genuine leather, and 3D soft PVC custom patches manufactured with merrowed borders and shipped directly to your door.
           </p>
         </div>
@@ -262,7 +262,7 @@ export const ServicesGrid = () => {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              background: '#ffffff',
+              background: 'var(--color-surface, var(--bg-card))',
               border: '2px solid var(--orange-400)',
               borderRadius: '16px',
               boxShadow: 'var(--shadow-md)'
@@ -270,26 +270,26 @@ export const ServicesGrid = () => {
           >
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                <div style={{ background: 'rgba(249, 115, 22, 0.1)', color: 'var(--orange-600)', padding: '0.85rem', borderRadius: '12px', display: 'inline-flex' }}>
+                <div style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', padding: '0.85rem', borderRadius: '12px', display: 'inline-flex' }}>
                   <Tag size={30} />
                 </div>
-                <span style={{ fontSize: '0.85rem', fontWeight: 800, background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', padding: '0.35rem 0.85rem', borderRadius: '9999px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 800, background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '0.35rem 0.85rem', borderRadius: '9999px' }}>
                   Worldwide Physical Delivery
                 </span>
               </div>
 
-              <h3 style={{ fontSize: '1.6rem', marginBottom: '0.65rem', color: 'var(--navy-900)', fontWeight: 800 }}>
+              <h3 style={{ fontSize: '1.6rem', marginBottom: '0.65rem', color: 'var(--color-text-primary)', fontWeight: 800 }}>
                 Custom Patches & Emblems
               </h3>
 
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.975rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.975rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
                 Premium embroidered, genuine leather, and 3D soft tactical PVC custom patches. Choose from merrowed edges, iron-on, velcro, or sew-on backing options with precision die-cut shaping.
               </p>
 
-              <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
-                <strong style={{ color: 'var(--navy-900)', display: 'block', marginBottom: '0.25rem' }}>Bulk Tiered Rates:</strong>
-                <span style={{ color: 'var(--orange-600)', fontWeight: 800 }}>From $1.50 / patch</span>
-                <span style={{ color: 'var(--navy-700)', marginLeft: '0.5rem' }}>(Volume Tier Pricing Available)</span>
+              <div style={{ background: 'var(--color-subtle, var(--bg-subtle))', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid var(--color-border)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+                <strong style={{ color: 'var(--color-text-primary)', display: 'block', marginBottom: '0.25rem' }}>Bulk Tiered Rates:</strong>
+                <span style={{ color: 'var(--color-primary)', fontWeight: 800 }}>From $1.50 / patch</span>
+                <span style={{ color: 'var(--color-text-secondary)', marginLeft: '0.5rem' }}>(Volume Tier Pricing Available)</span>
               </div>
             </div>
 

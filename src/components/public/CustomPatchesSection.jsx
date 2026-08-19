@@ -286,7 +286,7 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
       )}
 
       {/* Pricing Tiers Section */}
-      <section id="pricing-tiers" style={{ padding: '5rem 0 6rem', background: '#f1f5f9', color: '#0f172a' }}>
+      <section id="pricing-tiers" style={{ padding: '5rem 0 6rem', background: 'var(--bg-main)', color: 'var(--color-text-primary)' }}>
         <div className="container" style={{ maxWidth: '1240px', margin: '0 auto', overflow: 'visible' }}>
 
           {/* Streamlined Pricing Tiers Grid */}
