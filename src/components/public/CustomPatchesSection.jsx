@@ -151,21 +151,6 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
     }
   };
 
-  const sampleShowcaseGrid = portfolioSamples
-    ? portfolioSamples
-        .filter(s => (s.category || '').toLowerCase().includes('patch'))
-        .map((s, idx) => ({
-          id: s.id || `psamp-${idx}`,
-          title: s.title || 'Custom Patch',
-          category: s.categoryLabel || 'Custom Patch',
-          badgeColor: '#fb923c',
-          image: s.afterImg || s.originalImage || s.digitizedImage || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
-          specs: s.description || 'Custom patch specifications',
-          rate: '',
-          tierKey: 'standard'
-        }))
-    : [];
-
   const [processSteps, setProcessSteps] = useState([]);
   const [timelineSpecs, setTimelineSpecs] = useState([]);
 
@@ -333,124 +318,7 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
         </div>
       </section>
 
-
-      {/* SECTION 2: Custom Patches Showcase & Sew-Out / Sample Grid */}
-      <section style={{ padding: '5rem 0', background: '#0f172a', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="container">
-          
-          <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 3.5rem' }}>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              background: 'rgba(56, 189, 248, 0.15)',
-              border: '1px solid rgba(56, 189, 248, 0.4)',
-              color: '#38bdf8',
-              fontWeight: 800,
-              fontSize: '0.85rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              padding: '0.35rem 0.85rem',
-              borderRadius: '9999px',
-              marginBottom: '0.75rem'
-            }}>
-              <ImageIcon size={16} /> Production Portfolio & Sample Showcase
-            </div>
-
-            <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.4rem)', color: '#ffffff', marginBottom: '0.85rem', fontWeight: 800 }}>
-              Physical Custom Patch Showcase
-            </h2>
-
-            <p style={{ color: '#94a3b8', fontSize: '1.05rem', lineHeight: 1.6 }}>
-              Inspect physical patches produced by our studio. From tactical rubber PVC and merrowed embroidered emblems to luxury debossed leather.
-            </p>
-          </div>
-
-          {/* Sample Cards Grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-            gap: '1.5rem',
-            maxWidth: '1200px',
-            margin: '0 auto'
-          }}>
-            {sampleShowcaseGrid.map(samp => (
-              <div
-                key={samp.id}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '16px',
-                  overflow: 'hidden',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  transition: 'all 0.25s ease'
-                }}
-              >
-                <div style={{ position: 'relative', height: '210px', width: '100%', overflow: 'hidden', background: '#1e293b' }}>
-                  <img
-                    src={samp.image}
-                    alt={samp.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    top: '12px',
-                    left: '12px',
-                    background: 'rgba(15, 23, 42, 0.85)',
-                    backdropFilter: 'blur(4px)',
-                    color: samp.badgeColor,
-                    fontSize: '0.72rem',
-                    fontWeight: 800,
-                    padding: '0.3rem 0.75rem',
-                    borderRadius: '9999px',
-                    border: `1px solid ${samp.badgeColor}44`,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em'
-                  }}>
-                    {samp.category}
-                  </div>
-                </div>
-
-                <div style={{ padding: '1.25rem' }}>
-                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.35rem' }}>
-                    {samp.title}
-                  </h3>
-                  <div style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 600, marginBottom: '1rem', lineHeight: 1.4 }}>
-                    {samp.specs}
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pt: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--orange-400)' }}>
-                      Starting at {samp.rate}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleStartOrder(samp.tierKey)}
-                      style={{
-                        background: 'rgba(255, 122, 0, 0.15)',
-                        border: '1px solid rgba(255, 122, 0, 0.35)',
-                        color: 'var(--orange-400)',
-                        fontSize: '0.78rem',
-                        fontWeight: 800,
-                        padding: '0.4rem 0.85rem',
-                        borderRadius: '9999px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Order Similar Patch →
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-        </div>
-      </section>
-
-      {/* SECTION 3: Step-by-Step Workflow ("How It Works" for Physical Patches) */}
+      {/* SECTION 2: Step-by-Step Workflow ("How It Works" for Physical Patches) */}
       <section style={{ padding: '5rem 0', background: 'var(--navy-950)' }}>
         <div className="container">
           
