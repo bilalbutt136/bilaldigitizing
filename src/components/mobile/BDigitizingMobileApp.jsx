@@ -37,7 +37,8 @@ import {
   Tag,
   Palette,
   LogOut,
-  Info
+  Info,
+  Globe
 } from 'lucide-react';
 import { 
   fetchConversations, 
@@ -65,7 +66,8 @@ export const BDigitizingMobileApp = () => {
     showToast,
     logout,
     theme,
-    setTheme
+    setTheme,
+    setMobileMode
   } = useAppState();
 
   // Active Tab: 'home' | 'inbox' | 'categories' | 'orders' | 'profile'
@@ -1304,6 +1306,27 @@ export const BDigitizingMobileApp = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                   <Sparkles size={20} style={{ color: '#64748b' }} />
                   <span style={{ fontSize: '0.92rem', fontWeight: 600, color: '#0f172a' }}>Share feedback</span>
+                </div>
+                <ChevronRight size={18} style={{ color: '#94a3b8' }} />
+              </div>
+
+              <div 
+                onClick={() => {
+                  if (setMobileMode) setMobileMode('website');
+                  showToast('Switched to Website view 🌐', 'info');
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.85rem 0',
+                  borderBottom: '1px solid #f1f5f9',
+                  cursor: 'pointer'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <Globe size={20} style={{ color: '#64748b' }} />
+                  <span style={{ fontSize: '0.92rem', fontWeight: 600, color: '#0f172a' }}>Switch to Website View</span>
                 </div>
                 <ChevronRight size={18} style={{ color: '#94a3b8' }} />
               </div>

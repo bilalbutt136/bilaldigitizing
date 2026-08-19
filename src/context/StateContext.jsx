@@ -207,6 +207,42 @@ export const StateProvider = ({ children }) => {
     showToast(`Theme updated to ${THEME_PRESETS.find(t => t.id === targetPreset)?.name || 'New Theme'} ✨`, 'success');
   };
 
+  // Mobile View Mode: 'website' (default for mobile browser) | 'app' (default when launched as standalone PWA or selected)
+  const [mobileMode, setMobileModeState] = useState('website');
+  const [isStandaloneApp, setIsStandaloneApp] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                           window.navigator.standalone === true;
+      setIsStandaloneApp(isStandalone);
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlApp = urlParams.get('app') === 'true' || urlParams.get('mode') === 'app';
+      const urlWeb = urlParams.get('web') === 'true' || urlParams.get('mode') === 'web';
+      
+      const savedMode = localStorage.getItem('bdigi_mobile_mode');
+      if (urlApp || isStandalone) {
+        setMobileModeState('app');
+      } else if (urlWeb) {
+        setMobileModeState('website');
+      } else if (savedMode === 'app' || savedMode === 'website') {
+        setMobileModeState(savedMode);
+      } else {
+        setMobileModeState('website');
+      }
+    }
+  }, []);
+
+  const setMobileMode = (mode) => {
+    setMobileModeState(mode);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('bdigi_mobile_mode', mode);
+      } catch {}
+    }
+  };
+
   const setCustomBrandColors = (brandOverrides) => {
     setCustomBrandColorsState(brandOverrides);
     if (typeof window !== 'undefined') {
@@ -1689,7 +1725,8 @@ export const StateProvider = ({ children }) => {
       unreadChatCount, refreshUnreadChatCount,
       createOrder, updateOrderStatus, addRevisionRequest, addOrderMessage, cancelOrder,
       completeOrder, deleteOrder, ORDER_STATUSES, assignDigitizer,
-      fetchUserWalletBalance, refreshOrders
+      fetchUserWalletBalance, refreshOrders,
+      mobileMode, setMobileMode, isStandaloneApp
     }}>
       {children}
     </StateContext.Provider>

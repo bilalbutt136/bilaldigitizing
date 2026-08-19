@@ -1148,15 +1148,13 @@ button, input, select, textarea, a {
   overflow: hidden;
 }
 
+.mobile-app-wrapper {
+  display: block;
+  width: 100%;
+  min-height: 100vh;
+}
+
 @media (max-width: 768px) {
-  .desktop-website-wrapper {
-    display: none !important;
-  }
-  .mobile-app-wrapper {
-    display: block !important;
-    width: 100% !important;
-    min-height: 100vh !important;
-  }
   .chat-inbox-grid {
     grid-template-columns: 100% !important;
     display: flex !important;
@@ -1191,12 +1189,6 @@ button, input, select, textarea, a {
 }
 
 @media (min-width: 769px) {
-  .desktop-website-wrapper {
-    display: block !important;
-  }
-  .mobile-app-wrapper {
-    display: none !important;
-  }
   .desktop-table-view { display: block !important; }
   .mobile-cards-view { display: none !important; }
   .mobile-app-header { display: none !important; }

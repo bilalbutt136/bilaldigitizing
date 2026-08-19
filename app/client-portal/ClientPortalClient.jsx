@@ -7,7 +7,7 @@ import { BDigitizingMobileApp } from '../../src/components/mobile/BDigitizingMob
 
 export function ClientPortalClient() {
   const [isMounted, setIsMounted] = useState(false);
-  const { setCurrentView, isAuthenticated, isAuthInitialized, setIsAuthModalOpen, setAuthModalMode } = useAppState();
+  const { setCurrentView, isAuthenticated, isAuthInitialized, setIsAuthModalOpen, setAuthModalMode, mobileMode } = useAppState();
 
   useEffect(() => {
     setIsMounted(true);
@@ -36,14 +36,17 @@ export function ClientPortalClient() {
     );
   }
 
-  return (
-    <>
-      <div className="mobile-app-wrapper">
+  if (mobileMode === 'app') {
+    return (
+      <div className="mobile-app-wrapper" style={{ width: '100%', minHeight: '100vh', background: '#ffffff' }}>
         <BDigitizingMobileApp />
       </div>
-      <div className="desktop-website-wrapper">
-        <CustomerDashboard />
-      </div>
-    </>
+    );
+  }
+
+  return (
+    <div className="customer-portal-desktop-wrapper">
+      <CustomerDashboard />
+    </div>
   );
 }

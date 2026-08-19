@@ -2,23 +2,8 @@ import '../src/index.css';
 import './globals.css';
 import { Suspense } from 'react';
 import { StateProvider } from '../src/context/StateContext';
-import { HeaderNav } from '../src/components/HeaderNav';
-import { Footer } from '../src/components/public/Footer';
-import { AnnouncementBar } from '../src/components/public/AnnouncementBar';
-import { AuthModal } from '../src/components/auth/AuthModal';
-import { OrderWizardModal } from '../src/components/customer/OrderWizardModal';
-import { StoreOrderModal } from '../src/components/customer/StoreOrderModal';
-import { OrderTrackerDrawer } from '../src/components/customer/OrderTrackerDrawer';
-import { DepositModal } from '../src/components/customer/DepositModal';
-import { CheckoutModal } from '../src/components/customer/CheckoutModal';
-import { ClientLiveChatWidget } from '../src/components/customer/ClientLiveChatWidget';
-import ToastContainer from './ToastContainer';
-import GlobalUploadModal from '../src/components/common/GlobalUploadModal';
-import { MetaPixelTracker } from '../src/components/common/MetaPixelTracker';
-import { VisitorPromotionBanner } from '../src/components/public/VisitorPromotionBanner';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
-import PWAInstallBanner from '../src/components/common/PWAInstallBanner';
-import PWARegistrar from '../src/components/common/PWARegistrar';
+import { ClientLayoutShell } from '../src/components/layout/ClientLayoutShell';
 
 const getMetadataBase = () => {
   const envUrl = (process.env.NEXT_PUBLIC_SITE_URL || '').trim();
@@ -131,42 +116,9 @@ export default function RootLayout({ children }) {
       <body suppressHydrationWarning style={{ fontFamily: "'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
         <StateProvider>
           <ErrorBoundary>
-            <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-              <div className="desktop-website-wrapper">
-                <AnnouncementBar />
-                <Suspense fallback={<header style={{ minHeight: '60px', background: '#ffffff' }} />}>
-                  <HeaderNav />
-                </Suspense>
-              </div>
-              <main style={{ flex: 1 }}>
-                <Suspense fallback={
-                  <div style={{ padding: '3rem 1.5rem', maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
-                    <div style={{ height: '36px', width: '50%', background: '#e2e8f0', borderRadius: '8px' }} />
-                    <div style={{ height: '20px', width: '75%', background: '#f1f5f9', borderRadius: '6px' }} />
-                  </div>
-                }>
-                  {children}
-                </Suspense>
-              </main>
-              <div className="desktop-website-wrapper">
-                <Footer />
-                <VisitorPromotionBanner />
-                <ClientLiveChatWidget />
-              </div>
-
-              {/* Global Interactive Modals & Drawers */}
-              <AuthModal />
-              <OrderWizardModal />
-              <StoreOrderModal />
-              <CheckoutModal />
-              <OrderTrackerDrawer />
-              <DepositModal />
-              <ToastContainer />
-              <GlobalUploadModal />
-              <MetaPixelTracker />
-              <PWAInstallBanner />
-              <PWARegistrar />
-            </div>
+            <ClientLayoutShell>
+              {children}
+            </ClientLayoutShell>
           </ErrorBoundary>
         </StateProvider>
       </body>

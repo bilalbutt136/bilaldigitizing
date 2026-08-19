@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Download, X, Sparkles, Smartphone, Share, PlusSquare } from 'lucide-react';
+import { useAppState } from '../../context/StateContext';
 
 export const PWAInstallBanner = () => {
+  const { setMobileMode } = useAppState();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showBanner, setShowBanner] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -171,6 +173,31 @@ export const PWAInstallBanner = () => {
           >
             <Download size={13} />
             <span>Install App</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (setMobileMode) setMobileMode('app');
+              setShowBanner(false);
+            }}
+            style={{
+              background: 'rgba(255, 255, 255, 0.15)',
+              color: '#ffffff',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+              borderRadius: '10px',
+              padding: '0.45rem 0.65rem',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <Smartphone size={12} />
+            <span>App Mode</span>
           </button>
 
           <button

@@ -13,34 +13,36 @@ import { BDigitizingMobileApp } from '../src/components/mobile/BDigitizingMobile
 import { normalizeCategory } from '../src/utils/categoryUtils';
 
 export default function HomePage() {
-  const { setCurrentView, activeHomeServiceTab } = useAppState();
+  const { setCurrentView, activeHomeServiceTab, mobileMode } = useAppState();
   const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
 
   useEffect(() => {
     setCurrentView('public');
   }, [setCurrentView]);
 
-  return (
-    <>
-      {/* 1. NATIVE MOBILE APP EXPERIENCE (Never loads full bulky website on mobile) */}
-      <div className="mobile-app-wrapper">
+  // If in Standalone App mode (or user toggled App Mode), render the 5-tab Fiverr-style mobile app
+  if (mobileMode === 'app') {
+    return (
+      <div className="mobile-app-wrapper" style={{ width: '100%', minHeight: '100vh', background: '#ffffff' }}>
         <BDigitizingMobileApp />
       </div>
+    );
+  }
 
-      {/* 2. DESKTOP WORKSPACE / MARKETING VIEW */}
-      <div className="desktop-website-wrapper">
-        <HeroSection />
-        <ServicesSection />
-        {activeTab === 'all' && (
-          <>
-            <TrustStatsBar />
-            <WhyChooseUs />
-            <PortfolioPreview />
-            <TestimonialsFAQ />
-            <FinalCTA />
-          </>
-        )}
-      </div>
-    </>
+  // Otherwise, render full responsive website for desktop and mobile browsers
+  return (
+    <div className="website-page-wrapper">
+      <HeroSection />
+      <ServicesSection />
+      {activeTab === 'all' && (
+        <>
+          <TrustStatsBar />
+          <WhyChooseUs />
+          <PortfolioPreview />
+          <TestimonialsFAQ />
+          <FinalCTA />
+        </>
+      )}
+    </div>
   );
 }

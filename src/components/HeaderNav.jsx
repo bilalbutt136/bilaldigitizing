@@ -51,7 +51,8 @@ export const HeaderNav = () => {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     unreadNotificationsCount = 0,
-    unreadChatCount = 0
+    unreadChatCount = 0,
+    setMobileMode
   } = useAppState();
 
   const safeCurrentView = mounted ? currentView : 'public';
@@ -969,6 +970,31 @@ export const HeaderNav = () => {
           </button>
 
           <div style={{ marginTop: 'auto', paddingTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <button
+              type="button"
+              onClick={() => {
+                if (setMobileMode) setMobileMode('app');
+                setIsMobileMenuOpen(false);
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '12px',
+                padding: '0.75rem 1rem',
+                fontWeight: 800,
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+              }}
+            >
+              <Sparkles size={16} style={{ color: '#f59e0b' }} />
+              <span>📱 Open BDigitizing App Mode</span>
+            </button>
             {!safeIsAuthenticated ? (
               <>
                 <button
