@@ -299,31 +299,70 @@ export const StateProvider = ({ children }) => {
   const [isPricingSettingsOpen, setIsPricingSettingsOpen] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // Global Notification System State
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (notif) => {
-    const newNotif = {
-      id: `notif-${Date.now()}`,
-      timestamp: 'Just now',
-      read: false,
-      ...notif
-    };
-    setNotifications(prev => [newNotif, ...prev]);
+  // Global Notification System State with localStorage Persistence
+  const [notifications, setNotifications] = useState(() => {
     try {
-      playNotificationSound('notification');
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('bdigi_notifications');
+        return saved ? JSON.parse(saved) : [];
+      }
+    } catch {}
+    return [];
+  });
+
+  const saveNotificationsToStorage = (updatedList) => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('bdigi_notifications', JSON.stringify(updatedList.slice(0, 50)));
+      }
     } catch {}
   };
 
+  const addNotification = (notif) => {
+    if (!notif) return;
+    const newNotif = {
+      id: notif.id || `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      timestamp: notif.timestamp || new Date().toISOString(),
+      read: false,
+      ...notif
+    };
+    setNotifications(prev => {
+      const safePrev = Array.isArray(prev) ? prev : [];
+      // Deduplicate by ID
+      const filtered = safePrev.filter(n => n.id !== newNotif.id);
+      const nextList = [newNotif, ...filtered];
+      saveNotificationsToStorage(nextList);
+      return nextList;
+    });
+
+    try {
+      playNotificationSound(notif.soundType || 'notification');
+    } catch {}
+
+    if (notif.showToast !== false && notif.title) {
+      showToast(`${notif.title}${notif.message ? `: ${notif.message}` : ''}`, notif.type || 'info');
+    }
+  };
+
   const markNotificationAsRead = (id) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    setNotifications(prev => {
+      const safePrev = Array.isArray(prev) ? prev : [];
+      const nextList = safePrev.map(n => n.id === id ? { ...n, read: true } : n);
+      saveNotificationsToStorage(nextList);
+      return nextList;
+    });
   };
 
   const markAllNotificationsAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications(prev => {
+      const safePrev = Array.isArray(prev) ? prev : [];
+      const nextList = safePrev.map(n => ({ ...n, read: true }));
+      saveNotificationsToStorage(nextList);
+      return nextList;
+    });
   };
 
-  const unreadNotificationsCount = notifications.filter(n => !n.read).length;
+  const unreadNotificationsCount = Array.isArray(notifications) ? notifications.filter(n => !n.read).length : 0;
 
   // Global Chat Unread Counter (Synced across customer and admin)
   const [unreadChatCount, setUnreadChatCount] = useState(0);
@@ -353,8 +392,41 @@ export const StateProvider = ({ children }) => {
     };
 
     window.addEventListener('bdigi_read_update', handleReadUpdate);
-    const unsubscribe = subscribeToLiveMessages(() => {
+    const unsubscribe = subscribeToLiveMessages((msgPayload) => {
       refreshUnreadChatCount();
+      // Also check if we should trigger an in-app notification from WebSocket broadcast
+      if (msgPayload && msgPayload.new) {
+        const msg = msgPayload.new;
+        let currentRole = 'customer';
+        try {
+          const saved = localStorage.getItem('bdigi_auth_user');
+          if (saved) currentRole = JSON.parse(saved).role || 'customer';
+        } catch {}
+        
+        if (msg.sender === 'client' && currentRole === 'admin') {
+          addNotification({
+            id: `msg-${msg.id || Date.now()}`,
+            title: `💬 New Message from ${msg.sender_name || 'Client'}`,
+            message: msg.text || (msg.attachment ? 'Sent an attachment' : 'Sent a message'),
+            type: 'info',
+            link: '/admin-portal',
+            soundType: 'chat',
+            read: false,
+            timestamp: msg.created_at || new Date().toISOString()
+          });
+        } else if ((msg.sender === 'admin' || msg.sender === 'digitizer') && currentRole !== 'admin') {
+          addNotification({
+            id: `msg-${msg.id || Date.now()}`,
+            title: `💬 New Message from ${msg.sender_name || 'Studio Support'}`,
+            message: msg.text || (msg.attachment ? 'Sent an attachment' : 'Sent a message'),
+            type: 'info',
+            link: '/client-portal',
+            soundType: 'chat',
+            read: false,
+            timestamp: msg.created_at || new Date().toISOString()
+          });
+        }
+      }
     }, () => {
       refreshUnreadChatCount();
     });
@@ -596,35 +668,90 @@ export const StateProvider = ({ children }) => {
       window.addEventListener('storage', handleStorageSync);
     }
 
-    // Supabase Realtime: Global Chat Notifications
+    // Supabase Realtime: Global Live Chat & Order Lifecycle Notifications
     let messageChannel = null;
     if (isSupabaseConfigured && supabase) {
-      messageChannel = supabase.channel(`global-messages-channel-state-${Date.now()}`);
+      messageChannel = supabase.channel(`global-notifications-state-${Date.now()}`);
+      
+      // 1. Live Messages listener
       messageChannel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const msg = payload.new;
         if (!msg) return;
         
-        // Notify admin if a client sends a message
-        if (msg.sender === 'client') {
-          // Check role safely since this is inside a mount useEffect
-          let isAdmin = false;
-          try {
-            const savedUser = localStorage.getItem('bdigi_auth_user');
-            if (savedUser) isAdmin = JSON.parse(savedUser).role === 'admin';
-          } catch {}
+        let currentRole = 'customer';
+        try {
+          const savedUser = localStorage.getItem('bdigi_auth_user');
+          if (savedUser) currentRole = JSON.parse(savedUser).role || 'customer';
+        } catch {}
 
-          if (isAdmin) {
+        if (msg.sender === 'client' && currentRole === 'admin') {
+          addNotification({
+            id: `msg-${msg.id || Date.now()}`,
+            title: `💬 New Message from ${msg.sender_name || 'Client'}`,
+            message: msg.text || (msg.attachment ? 'Sent an attachment' : 'Sent a message'),
+            type: 'info',
+            link: '/admin-portal',
+            soundType: 'chat',
+            read: false,
+            timestamp: msg.created_at || new Date().toISOString()
+          });
+        } else if ((msg.sender === 'admin' || msg.sender === 'digitizer') && currentRole !== 'admin') {
+          addNotification({
+            id: `msg-${msg.id || Date.now()}`,
+            title: `💬 New Message from ${msg.sender_name || 'Studio Support'}`,
+            message: msg.text || (msg.attachment ? 'Sent an attachment' : 'Sent a message'),
+            type: 'info',
+            link: '/client-portal',
+            soundType: 'chat',
+            read: false,
+            timestamp: msg.created_at || new Date().toISOString()
+          });
+        }
+      });
+
+      // 2. Live Orders listener
+      messageChannel.on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+        const ord = payload.new;
+        if (!ord) return;
+        
+        let currentRole = 'customer';
+        let currentUserEmail = '';
+        try {
+          const savedUser = localStorage.getItem('bdigi_auth_user');
+          if (savedUser) {
+            const parsed = JSON.parse(savedUser);
+            currentRole = parsed.role || 'customer';
+            currentUserEmail = (parsed.email || '').toLowerCase().trim();
+          }
+        } catch {}
+
+        const isClientOwner = currentUserEmail && (ord.client_email || ord.clientEmail || '').toLowerCase().trim() === currentUserEmail;
+
+        if (payload.eventType === 'INSERT') {
+          if (currentRole === 'admin') {
             addNotification({
-              id: `msg-${Date.now()}`,
-              title: `New Message from ${msg.sender_name || 'Client'}`,
-              message: msg.text || (msg.attachment ? 'Sent an attachment' : 'Sent a message'),
+              id: `ord-new-${ord.id}`,
+              title: `🚨 New Order ${formatOrderId(ord.id)}`,
+              message: `Received from ${ord.client_name || ord.clientName || ord.client_email || 'Client'}`,
               type: 'info',
-              read: false,
-              timestamp: msg.created_at || new Date().toISOString()
+              link: '/admin-portal',
+              read: false
+            });
+          }
+        } else if (payload.eventType === 'UPDATE') {
+          if (isClientOwner) {
+            addNotification({
+              id: `ord-upd-${ord.id}-${ord.status}`,
+              title: `📦 Order ${formatOrderId(ord.id)} Updated`,
+              message: `Status is now ${String(ord.status || '').toUpperCase()}`,
+              type: 'info',
+              link: '/client-portal',
+              read: false
             });
           }
         }
       });
+
       messageChannel.subscribe();
     }
 
@@ -946,16 +1073,22 @@ export const StateProvider = ({ children }) => {
   };
 
   // Helper to trigger email notifications
-  const triggerEmailNotification = async (type, orderObj) => {
+  const triggerEmailNotification = async (type, orderObj = {}) => {
     try {
       await fetch('/api/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type,
-          orderId: orderObj.id,
-          clientEmail: orderObj.clientEmail,
-          // adminEmail can be picked up by env variable on server side
+          orderId: orderObj.id || orderObj.orderId,
+          clientEmail: orderObj.clientEmail || orderObj.client_email,
+          clientName: orderObj.clientName || orderObj.client_name,
+          serviceName: orderObj.serviceType || orderObj.service_type || orderObj.title,
+          amount: orderObj.price || orderObj.amount || orderObj.total,
+          revisionNotes: orderObj.revisionNotes,
+          messageText: orderObj.messageText,
+          senderName: orderObj.senderName,
+          recipientEmail: orderObj.recipientEmail
         })
       });
     } catch (err) {
@@ -987,6 +1120,13 @@ export const StateProvider = ({ children }) => {
         await createOrderInSupabase(fullOrderPayload);
         setOrders(prev => [fullOrderPayload, ...prev]);
         showToast(`Order ${formatOrderId(localId)} created successfully!`, 'success');
+        addNotification({
+          id: `ord-created-${localId}`,
+          title: `🎉 Order ${formatOrderId(localId)} Placed!`,
+          message: `Your digitizing order has been created and pathing has started.`,
+          type: 'success',
+          link: '/client-portal'
+        });
         triggerEmailNotification('NEW_ORDER', fullOrderPayload);
         return fullOrderPayload;
       } catch (sbErr) {
@@ -996,6 +1136,13 @@ export const StateProvider = ({ children }) => {
 
     setOrders(prev => [fullOrderPayload, ...prev]);
     showToast(`Order ${formatOrderId(localId)} created successfully!`, 'success');
+    addNotification({
+      id: `ord-created-${localId}`,
+      title: `🎉 Order ${formatOrderId(localId)} Placed!`,
+      message: `Your digitizing order has been created and pathing has started.`,
+      type: 'success',
+      link: '/client-portal'
+    });
     triggerEmailNotification('NEW_ORDER', fullOrderPayload);
     return fullOrderPayload;
   };
@@ -1042,13 +1189,33 @@ export const StateProvider = ({ children }) => {
 
     showToast(`Order ${formatOrderId(orderId)} status updated to ${newStatus.toUpperCase()}`, 'success');
 
-    // Trigger email based on new status
-    if (targetOrder) {
-      if (newStatus === 'delivered') {
-        triggerEmailNotification('ORDER_DELIVERED', { ...targetOrder, ...safeExtraData });
-      } else if (newStatus === 'completed') {
-        triggerEmailNotification('ORDER_COMPLETED', { ...targetOrder, ...safeExtraData });
-      }
+    // In-app Notification + Email trigger based on new status
+    if (newStatus === 'delivered') {
+      addNotification({
+        id: `ord-deliv-${orderId}`,
+        title: `📦 Order ${formatOrderId(orderId)} Files Delivered!`,
+        message: `Your digitized production files are ready for inspection and download.`,
+        type: 'success',
+        link: '/client-portal'
+      });
+      triggerEmailNotification('ORDER_DELIVERED', { ...(targetOrder || {}), id: orderId, ...safeExtraData });
+    } else if (newStatus === 'completed') {
+      addNotification({
+        id: `ord-comp-${orderId}`,
+        title: `✅ Order ${formatOrderId(orderId)} Accepted & Completed`,
+        message: `Deliverables confirmed and archived in your studio portfolio.`,
+        type: 'success',
+        link: authUser?.role === 'admin' ? '/admin-portal' : '/client-portal'
+      });
+      triggerEmailNotification('ORDER_COMPLETED', { ...(targetOrder || {}), id: orderId, ...safeExtraData });
+    } else {
+      addNotification({
+        id: `ord-stat-${orderId}-${newStatus}`,
+        title: `🔔 Order ${formatOrderId(orderId)}: ${newStatus.toUpperCase()}`,
+        message: `Order status is now updated to ${newStatus.toUpperCase()}.`,
+        type: 'info',
+        link: authUser?.role === 'admin' ? '/admin-portal' : '/client-portal'
+      });
     }
   };
 
@@ -1063,11 +1230,6 @@ export const StateProvider = ({ children }) => {
       return;
     }
     await updateOrderStatus(orderId, ORDER_STATUSES.COMPLETED);
-    addNotification({
-      title: 'Order Completed',
-      message: `Order ${formatOrderId(orderId)} has been marked as complete.`,
-      type: 'success'
-    });
   };
 
   const addRevisionRequest = async (orderId, revisionNote) => {
@@ -1092,7 +1254,22 @@ export const StateProvider = ({ children }) => {
       }
       return ord;
     }));
+
     showToast(`Revision request sent for Order ${formatOrderId(orderId)}`, 'info');
+    addNotification({
+      id: `rev-${orderId}-${Date.now()}`,
+      title: `🔄 Revision Requested for Order ${formatOrderId(orderId)}`,
+      message: revisionNote ? `"${revisionNote.slice(0, 50)}..."` : 'Revision instructions submitted to digitizers.',
+      type: 'warning',
+      link: authUser?.role === 'admin' ? '/admin-portal' : '/client-portal'
+    });
+
+    const targetOrder = orders.find(o => o.id === orderId);
+    triggerEmailNotification('ORDER_REVISION', { 
+      id: orderId, 
+      clientEmail: targetOrder?.clientEmail || authUser?.email,
+      revisionNotes: revisionNote 
+    });
   };
 
   const addOrderMessage = async (orderId, text, senderName, senderRole = 'admin', attachments = []) => {
@@ -1128,6 +1305,15 @@ export const StateProvider = ({ children }) => {
       }
       return ord;
     }));
+
+    // Trigger email alert for new message
+    const targetOrder = orders.find(o => o.id === orderId);
+    triggerEmailNotification('NEW_MESSAGE', {
+      orderId,
+      clientEmail: targetOrder?.clientEmail,
+      messageText: text,
+      senderName: senderName || (senderRole === 'admin' ? 'Studio Support' : 'Client')
+    });
   };
 
   const cancelOrder = async (orderId) => {

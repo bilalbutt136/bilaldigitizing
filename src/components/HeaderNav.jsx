@@ -618,20 +618,20 @@ export const HeaderNav = () => {
                         position: 'absolute',
                         top: 'calc(100% + 8px)',
                         right: 0,
-                        width: 'min(320px, calc(100vw - 20px))',
-                        background: '#ffffff',
-                        border: '1.5px solid var(--border-color)',
-                        borderRadius: '14px',
-                        boxShadow: '0 12px 32px rgba(15, 23, 42, 0.18)',
-                        padding: '0.85rem',
+                        width: 'min(340px, calc(100vw - 20px))',
+                        background: 'var(--color-surface, #ffffff)',
+                        border: '1.5px solid var(--color-border)',
+                        borderRadius: '16px',
+                        boxShadow: 'var(--shadow-xl, 0 12px 32px rgba(15, 23, 42, 0.18))',
+                        padding: '1rem',
                         zIndex: 3000,
                         animation: 'fadeIn 0.15s ease-out'
                       }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.55rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <span style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--navy-900)' }}>Notifications</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.65rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <span style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--color-text-primary, var(--navy-900))' }}>Notifications</span>
                             {unreadNotificationsCount > 0 && (
-                              <span style={{ fontSize: '0.7rem', background: '#fff7ed', color: '#ff7a00', border: '1px solid #ff7a00', padding: '0.1rem 0.4rem', borderRadius: '10px', fontWeight: 800 }}>
+                              <span style={{ fontSize: '0.72rem', background: 'var(--color-primary-light)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)', padding: '0.1rem 0.45rem', borderRadius: '10px', fontWeight: 800 }}>
                                 {unreadNotificationsCount} unread
                               </span>
                             )}
@@ -639,15 +639,15 @@ export const HeaderNav = () => {
                           <button 
                             type="button" 
                             onClick={() => { if (markAllNotificationsAsRead) markAllNotificationsAsRead(); }}
-                            style={{ background: 'none', border: 'none', color: '#ff7a00', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}
+                            style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}
                           >
                             Mark all read
                           </button>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', maxHeight: '280px', overflowY: 'auto' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto' }}>
                           {notifications.length === 0 ? (
-                            <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                            <div style={{ padding: '1.5rem 1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
                               No notifications yet.
                             </div>
                           ) : (
@@ -663,19 +663,21 @@ export const HeaderNav = () => {
                                   }
                                 }}
                                 style={{ 
-                                  padding: '0.55rem 0.65rem', 
-                                  background: item.read ? '#f8fafc' : '#fff7ed', 
-                                  borderRadius: '8px', 
-                                  borderLeft: item.read ? '3px solid #cbd5e1' : '3px solid #ff7a00',
+                                  padding: '0.65rem 0.75rem', 
+                                  background: item.read ? 'var(--bg-subtle, #f8fafc)' : 'var(--color-primary-light)', 
+                                  borderRadius: '10px', 
+                                  borderLeft: item.read ? '3.5px solid var(--color-border)' : '3.5px solid var(--color-primary)',
                                   cursor: 'pointer',
-                                  transition: 'background 0.15s ease'
+                                  transition: 'all 0.15s ease'
                                 }}
                               >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)' }}>{item.title}</div>
-                                  <span style={{ fontSize: '0.65rem', color: 'var(--text-light)' }}>{item.timestamp}</span>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                                  <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--color-text-primary, var(--navy-900))' }}>{item.title}</div>
+                                  <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
+                                    {item.timestamp ? (item.timestamp.includes('T') ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : item.timestamp) : 'Just now'}
+                                  </span>
                                 </div>
-                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>{item.message}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.2rem', lineHeight: 1.4 }}>{item.message}</div>
                               </div>
                             ))
                           )}
