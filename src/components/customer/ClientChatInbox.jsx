@@ -445,6 +445,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           attachment_size: record.attachment_size || null,
           attachment_type: record.attachment_type || null,
           reply_to: record.reply_to || null,
+          offer_id: record.offer_id || record.offerId || null,
+          offer_data: record.offer_data || record.offerData || null,
           is_read: record.is_read || false,
           timestamp: record.timestamp || record.created_at || new Date().toISOString()
         };
@@ -543,6 +545,52 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       if (typeof unsubscribe === 'function') unsubscribe();
     };
   }, [orders, initialOrderId, clientEmail, clientName, defaultSupportId]);
+
+  // Real-time listener for offer status changes across browser tabs & network
+  useEffect(() => {
+    const handleOfferStatusEvent = (e) => {
+      const { offerId, status: newStatus, offer: freshOffer } = e.detail || {};
+      if (!offerId || !newStatus) return;
+
+      setConversations(prev => {
+        const safePrev = Array.isArray(prev) ? prev : [];
+        return safePrev.map(conv => {
+          let hasModified = false;
+          const nextMsgs = (conv.messages || []).map(m => {
+            const mOfferId = m.offer_id || m.offer_data?.id || m.offer?.id;
+            if (mOfferId === offerId || m.id === offerId) {
+              hasModified = true;
+              const prevOfferData = typeof m.offer_data === 'object' ? (m.offer_data || {}) : {};
+              const mergedOffer = {
+                ...prevOfferData,
+                ...(freshOffer || {}),
+                status: newStatus,
+                updated_at: new Date().toISOString()
+              };
+              return {
+                ...m,
+                offer_data: mergedOffer,
+                offer: mergedOffer
+              };
+            }
+            return m;
+          });
+
+          if (hasModified) {
+            return {
+              ...conv,
+              messages: nextMsgs,
+              updatedAt: new Date().toISOString()
+            };
+          }
+          return conv;
+        });
+      });
+    };
+
+    window.addEventListener('bdigi_offer_status_change', handleOfferStatusEvent);
+    return () => window.removeEventListener('bdigi_offer_status_change', handleOfferStatusEvent);
+  }, []);
 
   // Active chat thread
   const activeChat = useMemo(() => {

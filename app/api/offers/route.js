@@ -379,7 +379,7 @@ export async function POST(request) {
     }
 
     // 3. ACTION: DECLINE OFFER (Customer)
-    if (action === 'declineOffer') {
+    if (action === 'declineOffer' || action === 'rejectOffer') {
       const { offerId } = payload;
       if (!offerId) {
         return NextResponse.json({ error: 'Missing offerId' }, { status: 400 });
@@ -391,27 +391,51 @@ export async function POST(request) {
         offer = offData;
       } catch {}
 
+      if (!offer) {
+        try {
+          const { data: msgRow } = await supabase
+            .from('messages')
+            .select('*')
+            .or(`offer_id.eq.${offerId},id.eq.${offerId}`)
+            .maybeSingle();
+          if (msgRow?.offer_data) {
+            offer = typeof msgRow.offer_data === 'string' ? JSON.parse(msgRow.offer_data) : msgRow.offer_data;
+            if (!offer.conversation_id && msgRow.conversation_id) {
+              offer.conversation_id = msgRow.conversation_id;
+            }
+          }
+        } catch {}
+      }
+
       const updatedOffer = {
         ...(offer || {}),
         status: 'declined',
         updated_at: nowIso
       };
 
+      // 1. Update in custom_offers table
       try {
         await supabase.from('custom_offers').update({ status: 'declined', updated_at: nowIso }).eq('id', offerId);
       } catch {}
 
+      // 2. Update in messages table
       try {
-        await supabase.from('messages').update({ offer_data: updatedOffer }).eq('offer_id', offerId);
+        await supabase.from('messages').update({ offer_data: updatedOffer }).or(`offer_id.eq.${offerId},id.eq.${offerId}`);
       } catch {}
 
+      // 3. Update in order_messages table if applicable
+      try {
+        await supabase.from('order_messages').update({ offer_data: updatedOffer }).eq('offer_id', offerId);
+      } catch {}
+
+      let declineMsg = null;
       if (offer?.conversation_id) {
-        const declineMsg = {
+        declineMsg = {
           id: `msg-dec-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           conversation_id: offer.conversation_id,
           sender: 'client',
           sender_name: offer.client_name || user?.user_metadata?.full_name || 'Client',
-          text: `Declined custom offer: "${offer.title}".`,
+          text: `❌ Declined custom offer: "${offer.title || 'Custom Offer'}".`,
           timestamp: nowIso,
           created_at: nowIso,
           is_read: false
@@ -425,7 +449,7 @@ export async function POST(request) {
             id: `notif-dec-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
             recipient_role: 'admin',
             title: 'Custom Offer Declined',
-            message: `${offer.client_name || 'Customer'} declined the custom offer for "${offer.title}".`,
+            message: `${offer.client_name || 'Customer'} declined the custom offer for "${offer.title || 'Custom Offer'}".`,
             type: 'warning',
             link: `/admin-portal?tab=chat&chatId=${offer.conversation_id}`,
             read: false,
@@ -434,7 +458,7 @@ export async function POST(request) {
         } catch {}
       }
 
-      return NextResponse.json({ success: true, offer: updatedOffer });
+      return NextResponse.json({ success: true, offer: updatedOffer, message: declineMsg });
     }
 
     // 4. ACTION: CANCEL / WITHDRAW OFFER (Admin only)

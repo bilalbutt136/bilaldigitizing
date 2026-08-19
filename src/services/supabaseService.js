@@ -1239,6 +1239,30 @@ export async function fetchChatMessages(chatId, email) {
   } catch { return []; }
 }
 
+export function broadcastOfferStatusChange(offerId, status, offerObj = null) {
+  if (!offerId) return;
+  if (typeof window !== 'undefined') {
+    const detail = { offerId, status, offer: offerObj };
+    window.dispatchEvent(new CustomEvent('bdigi_offer_status_change', { detail }));
+    try {
+      const bc = new BroadcastChannel('bdigi_chat_sync');
+      bc.postMessage({ type: 'offer_status_change', ...detail });
+      bc.close();
+    } catch {}
+  }
+
+  try {
+    const channel = getSharedChatChannel();
+    if (channel) {
+      channel.send({
+        type: 'broadcast',
+        event: 'offer_status_change',
+        payload: { offerId, status, offer: offerObj }
+      });
+    }
+  } catch {}
+}
+
 export async function createCustomOffer(offerPayload) {
   try {
     const headers = await getAuthHeaders();
@@ -1259,6 +1283,7 @@ export async function createCustomOffer(offerPayload) {
 
 export async function acceptCustomOffer(offerId) {
   try {
+    broadcastOfferStatusChange(offerId, 'accepted');
     const headers = await getAuthHeaders();
     const res = await fetch('/api/offers', {
       method: 'POST',
@@ -1269,6 +1294,9 @@ export async function acceptCustomOffer(offerId) {
     if (data.message) {
       broadcastLiveMessage(data.message);
     }
+    if (data.offer) {
+      broadcastOfferStatusChange(offerId, data.offer.status || 'accepted', data.offer);
+    }
     return data;
   } catch (err) {
     return { error: err.message };
@@ -1277,6 +1305,7 @@ export async function acceptCustomOffer(offerId) {
 
 export async function declineCustomOffer(offerId) {
   try {
+    broadcastOfferStatusChange(offerId, 'declined');
     const headers = await getAuthHeaders();
     const res = await fetch('/api/offers', {
       method: 'POST',
@@ -1287,6 +1316,9 @@ export async function declineCustomOffer(offerId) {
     if (data.message) {
       broadcastLiveMessage(data.message);
     }
+    if (data.offer) {
+      broadcastOfferStatusChange(offerId, data.offer.status || 'declined', data.offer);
+    }
     return data;
   } catch (err) {
     return { error: err.message };
@@ -1295,6 +1327,7 @@ export async function declineCustomOffer(offerId) {
 
 export async function cancelCustomOffer(offerId) {
   try {
+    broadcastOfferStatusChange(offerId, 'cancelled');
     const headers = await getAuthHeaders();
     const res = await fetch('/api/offers', {
       method: 'POST',
@@ -1304,6 +1337,9 @@ export async function cancelCustomOffer(offerId) {
     const data = await res.json();
     if (data.message) {
       broadcastLiveMessage(data.message);
+    }
+    if (data.offer) {
+      broadcastOfferStatusChange(offerId, data.offer.status || 'cancelled', data.offer);
     }
     return data;
   } catch (err) {
@@ -1466,6 +1502,23 @@ export function getSharedChatChannel() {
         });
       }
     );
+
+    globalChatChannel.on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'custom_offers' },
+      (payload) => {
+        const record = payload.new || payload.record;
+        if (record?.id) {
+          broadcastOfferStatusChange(record.id, record.status, record);
+        }
+      }
+    );
+
+    globalChatChannel.on('broadcast', { event: 'offer_status_change' }, (event) => {
+      if (event.payload && event.payload.offerId && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('bdigi_offer_status_change', { detail: event.payload }));
+      }
+    });
 
     globalChatChannel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {

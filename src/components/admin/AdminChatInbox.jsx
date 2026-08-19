@@ -294,6 +294,8 @@ export const AdminChatInbox = () => {
           attachment_size: record.attachment_size,
           attachment_type: record.attachment_type,
           reply_to: record.reply_to,
+          offer_id: record.offer_id || record.offerId || null,
+          offer_data: record.offer_data || record.offerData || null,
           is_read: record.is_read || false,
           timestamp: record.timestamp || record.created_at || new Date().toISOString()
         };
@@ -393,6 +395,60 @@ export const AdminChatInbox = () => {
       if (typeof unsubscribe === 'function') unsubscribe();
     };
   }, [activeChatId]);
+
+  // Listen for real-time offer status changes across tabs and backend events
+  useEffect(() => {
+    const handleOfferStatusEvent = (e) => {
+      const { offerId, status: newStatus, offer: freshOffer } = e.detail || {};
+      if (!offerId || !newStatus) return;
+
+      setConversations(prev => {
+        const safePrev = Array.isArray(prev) ? prev : [];
+        const updated = safePrev.map(conv => {
+          let hasModified = false;
+          const nextMsgs = (conv.messages || []).map(m => {
+            const mOfferId = m.offer_id || m.offer_data?.id || m.offer?.id;
+            if (mOfferId === offerId || m.id === offerId) {
+              hasModified = true;
+              const prevOfferData = typeof m.offer_data === 'object' ? (m.offer_data || {}) : {};
+              const mergedOffer = {
+                ...prevOfferData,
+                ...(freshOffer || {}),
+                status: newStatus,
+                updated_at: new Date().toISOString()
+              };
+              return {
+                ...m,
+                offer_data: mergedOffer,
+                offer: mergedOffer
+              };
+            }
+            return m;
+          });
+
+          if (hasModified) {
+            return {
+              ...conv,
+              messages: nextMsgs,
+              updatedAt: new Date().toISOString()
+            };
+          }
+          return conv;
+        });
+
+        const deduplicated = deduplicateThreads(updated);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify(deduplicated));
+          } catch {}
+        }
+        return deduplicated;
+      });
+    };
+
+    window.addEventListener('bdigi_offer_status_change', handleOfferStatusEvent);
+    return () => window.removeEventListener('bdigi_offer_status_change', handleOfferStatusEvent);
+  }, []);
 
   // Derive currently active conversation object with safety fallbacks
   const currentActiveChatId = activeChatId || (conversations.length > 0 ? conversations[0].id : null);

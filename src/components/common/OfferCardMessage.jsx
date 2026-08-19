@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, 
   Clock, 
@@ -43,6 +43,26 @@ export default function OfferCardMessage({
   const [isCancelling, setIsCancelling] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [localStatus, setLocalStatus] = useState(offer?.status || 'sent');
+
+  useEffect(() => {
+    if (offer?.status) {
+      setLocalStatus(offer.status);
+    }
+  }, [offer?.status]);
+
+  useEffect(() => {
+    const handleStatusEvent = (e) => {
+      const { offerId, status: newStatus } = e.detail || {};
+      const myOfferId = offer?.id || offer?.offer_id;
+      if (offerId && (offerId === myOfferId || offerId === messageId)) {
+        if (newStatus) {
+          setLocalStatus(newStatus);
+        }
+      }
+    };
+    window.addEventListener('bdigi_offer_status_change', handleStatusEvent);
+    return () => window.removeEventListener('bdigi_offer_status_change', handleStatusEvent);
+  }, [offer?.id, offer?.offer_id, messageId]);
 
   if (!offer) return null;
 
