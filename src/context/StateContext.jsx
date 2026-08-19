@@ -299,12 +299,16 @@ export const StateProvider = ({ children }) => {
   const [isPricingSettingsOpen, setIsPricingSettingsOpen] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // Global Notification System State with localStorage Persistence
+  // Global Order Notification System State with localStorage Persistence (Orders only)
   const [notifications, setNotifications] = useState(() => {
     try {
       if (typeof window !== 'undefined') {
         const saved = localStorage.getItem('bdigi_notifications');
-        return saved ? JSON.parse(saved) : [];
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          // Filter out legacy chat message items so notification bell is strictly orders and system updates
+          return Array.isArray(parsed) ? parsed.filter(n => !String(n.id || '').startsWith('msg-')) : [];
+        }
       }
     } catch {}
     return [];
@@ -364,7 +368,7 @@ export const StateProvider = ({ children }) => {
 
   const unreadNotificationsCount = Array.isArray(notifications) ? notifications.filter(n => !n.read).length : 0;
 
-  // Global Chat Unread Counter (Synced across customer and admin)
+  // Global Chat Unread Counter (Synced across customer and admin for Inbox badge)
   const [unreadChatCount, setUnreadChatCount] = useState(0);
 
   const refreshUnreadChatCount = React.useCallback(async () => {
@@ -372,7 +376,18 @@ export const StateProvider = ({ children }) => {
       if (!isSupabaseConfigured) return;
       const convs = await fetchConversations();
       if (Array.isArray(convs)) {
-        const total = convs.reduce((sum, c) => sum + (c.unreadCount || c.adminUnreadCount || c.clientUnreadCount || 0), 0);
+        let currentRole = 'customer';
+        try {
+          const saved = localStorage.getItem('bdigi_auth_user');
+          if (saved) currentRole = JSON.parse(saved).role || 'customer';
+        } catch {}
+
+        let total = 0;
+        if (currentRole === 'admin') {
+          total = convs.reduce((sum, c) => sum + (c.adminUnreadCount ?? c.unreadCount ?? 0), 0);
+        } else {
+          total = convs.reduce((sum, c) => sum + (c.clientUnreadCount ?? 0), 0);
+        }
         setUnreadChatCount(total);
       }
     } catch (err) {
@@ -394,7 +409,7 @@ export const StateProvider = ({ children }) => {
     window.addEventListener('bdigi_read_update', handleReadUpdate);
     const unsubscribe = subscribeToLiveMessages((msgPayload) => {
       refreshUnreadChatCount();
-      // Also check if we should trigger an in-app notification from WebSocket broadcast
+      // For chat messages: update Inbox badge, play chat sound, show toast (Do NOT add to Notification Bell list)
       if (msgPayload && msgPayload.new) {
         const msg = msgPayload.new;
         let currentRole = 'customer';
@@ -404,27 +419,11 @@ export const StateProvider = ({ children }) => {
         } catch {}
         
         if (msg.sender === 'client' && currentRole === 'admin') {
-          addNotification({
-            id: `msg-${msg.id || Date.now()}`,
-            title: `💬 New Message from ${msg.sender_name || 'Client'}`,
-            message: msg.text || (msg.attachment ? 'Sent an attachment' : 'Sent a message'),
-            type: 'info',
-            link: '/admin-portal',
-            soundType: 'chat',
-            read: false,
-            timestamp: msg.created_at || new Date().toISOString()
-          });
+          playNotificationSound('chat');
+          showToast(`💬 New inbox message from ${msg.sender_name || 'Client'}`, 'info');
         } else if ((msg.sender === 'admin' || msg.sender === 'digitizer') && currentRole !== 'admin') {
-          addNotification({
-            id: `msg-${msg.id || Date.now()}`,
-            title: `💬 New Message from ${msg.sender_name || 'Studio Support'}`,
-            message: msg.text || (msg.attachment ? 'Sent an attachment' : 'Sent a message'),
-            type: 'info',
-            link: '/client-portal',
-            soundType: 'chat',
-            read: false,
-            timestamp: msg.created_at || new Date().toISOString()
-          });
+          playNotificationSound('chat');
+          showToast(`💬 New inbox message from ${msg.sender_name || 'Studio Support'}`, 'info');
         }
       }
     }, () => {
@@ -673,7 +672,7 @@ export const StateProvider = ({ children }) => {
     if (isSupabaseConfigured && supabase) {
       messageChannel = supabase.channel(`global-notifications-state-${Date.now()}`);
       
-      // 1. Live Messages listener
+      // 1. Live Messages listener: strictly updates Inbox counter and audio alert (never pollutes Notification Bell)
       messageChannel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const msg = payload.new;
         if (!msg) return;
@@ -685,28 +684,13 @@ export const StateProvider = ({ children }) => {
         } catch {}
 
         if (msg.sender === 'client' && currentRole === 'admin') {
-          addNotification({
-            id: `msg-${msg.id || Date.now()}`,
-            title: `💬 New Message from ${msg.sender_name || 'Client'}`,
-            message: msg.text || (msg.attachment ? 'Sent an attachment' : 'Sent a message'),
-            type: 'info',
-            link: '/admin-portal',
-            soundType: 'chat',
-            read: false,
-            timestamp: msg.created_at || new Date().toISOString()
-          });
+          playNotificationSound('chat');
+          showToast(`💬 New inbox message from ${msg.sender_name || 'Client'}`, 'info');
         } else if ((msg.sender === 'admin' || msg.sender === 'digitizer') && currentRole !== 'admin') {
-          addNotification({
-            id: `msg-${msg.id || Date.now()}`,
-            title: `💬 New Message from ${msg.sender_name || 'Studio Support'}`,
-            message: msg.text || (msg.attachment ? 'Sent an attachment' : 'Sent a message'),
-            type: 'info',
-            link: '/client-portal',
-            soundType: 'chat',
-            read: false,
-            timestamp: msg.created_at || new Date().toISOString()
-          });
+          playNotificationSound('chat');
+          showToast(`💬 New inbox message from ${msg.sender_name || 'Studio Support'}`, 'info');
         }
+        refreshUnreadChatCount();
       });
 
       // 2. Live Orders listener

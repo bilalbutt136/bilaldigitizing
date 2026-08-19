@@ -544,24 +544,46 @@ export const HeaderNav = () => {
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.4rem',
-                      background: 'rgba(255, 122, 0, 0.1)',
-                      border: '1px solid rgba(255, 122, 0, 0.35)',
-                      color: 'var(--orange-600)',
+                      gap: '0.45rem',
+                      background: unreadChatCount > 0 ? '#ff7a00' : 'rgba(255, 122, 0, 0.1)',
+                      border: unreadChatCount > 0 ? '1.5px solid #ff7a00' : '1px solid rgba(255, 122, 0, 0.35)',
+                      color: unreadChatCount > 0 ? '#ffffff' : 'var(--orange-600)',
                       padding: '0.45rem 0.85rem',
                       height: '38px',
                       borderRadius: '9px',
                       fontWeight: 800,
                       fontSize: '0.85rem',
                       cursor: 'pointer',
+                      position: 'relative',
                       transition: 'all 0.15s ease'
                     }}
                     onMouseOver={(e) => { e.currentTarget.style.background = '#ff7a00'; e.currentTarget.style.color = '#ffffff'; }}
-                    onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255, 122, 0, 0.1)'; e.currentTarget.style.color = 'var(--orange-600)'; }}
+                    onMouseOut={(e) => { 
+                      e.currentTarget.style.background = unreadChatCount > 0 ? '#ff7a00' : 'rgba(255, 122, 0, 0.1)'; 
+                      e.currentTarget.style.color = unreadChatCount > 0 ? '#ffffff' : 'var(--orange-600)'; 
+                    }}
                     title={safeAuthUser?.role === 'admin' ? 'Open Admin Chat Inbox' : 'Open 24/7 Live Support Chat'}
                   >
                     <MessageSquare size={16} />
                     <span>Inbox</span>
+                    {unreadChatCount > 0 && (
+                      <span style={{
+                        background: '#ffffff',
+                        color: '#ff7a00',
+                        fontSize: '0.68rem',
+                        fontWeight: 900,
+                        padding: '0.1rem 0.45rem',
+                        borderRadius: '9999px',
+                        minWidth: '18px',
+                        height: '18px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.15)'
+                      }}>
+                        {unreadChatCount}
+                      </span>
+                    )}
                   </button>
 
                   {/* TOP HEADER NOTIFICATION BELL WITH DROPDOWN SUPPORT */}

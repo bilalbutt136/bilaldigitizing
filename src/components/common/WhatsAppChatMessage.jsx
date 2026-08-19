@@ -18,6 +18,7 @@ import {
   Archive,
   Image as ImageIcon
 } from 'lucide-react';
+import { downloadFileDirectly, openPdfInNewTab } from '../../utils/fileDownloader';
 
 /**
  * Determines file category from URL or filename
@@ -65,16 +66,14 @@ export default function WhatsAppChatMessage({
     const targetUrl = customUrl || fileUrl;
     const targetName = customName || fileName || 'download';
     if (!targetUrl) return;
+    downloadFileDirectly(targetUrl, targetName);
+  };
 
-    // Use anchor download trick
-    const a = document.createElement('a');
-    a.href = targetUrl;
-    a.download = targetName;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  const handleOpenPdf = (e) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    if (!fileUrl) return;
+    openPdfInNewTab(fileUrl, fileName || 'document.pdf');
   };
 
   return (
@@ -296,10 +295,9 @@ export default function WhatsAppChatMessage({
             {/* Actions for PDF */}
             <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
               {fileUrl && (
-                <a
-                  href={fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  onClick={handleOpenPdf}
                   title="Open PDF in new tab"
                   style={{
                     background: isMe ? 'rgba(255,255,255,0.2)' : '#ffffff',
@@ -309,14 +307,14 @@ export default function WhatsAppChatMessage({
                     padding: '0.35rem 0.6rem',
                     fontSize: '0.72rem',
                     fontWeight: 800,
-                    textDecoration: 'none',
+                    cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.25rem'
                   }}
                 >
                   <Eye size={12} /> Open
-                </a>
+                </button>
               )}
               <button
                 type="button"
