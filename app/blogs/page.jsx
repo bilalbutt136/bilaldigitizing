@@ -144,14 +144,14 @@ export default function BlogsPage() {
     fetchBlogs();
   }, []);
   return (
-    <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: '6rem' }}>
+    <div style={{ background: 'var(--bg-main)', color: 'var(--color-text-primary)', minHeight: '100vh', paddingBottom: '6rem' }}>
       
       {/* Blog Header Hero */}
-      <div style={{ background: 'var(--navy-950)', padding: 'clamp(4rem, 6vw, 6rem) 1.25rem', textAlign: 'center', color: '#ffffff' }}>
+      <div style={{ background: 'var(--bg-surface, #0f172a)', padding: 'clamp(4rem, 6vw, 6rem) 1.25rem', textAlign: 'center', color: '#ffffff' }}>
         <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 900, marginBottom: '1.25rem', letterSpacing: '-0.02em' }}>
           Industry <span style={{ color: 'var(--orange-500)' }}>Insights</span>
         </h1>
-        <p style={{ fontSize: '1.05rem', color: 'var(--navy-200)', maxWidth: '650px', margin: '0 auto', lineHeight: 1.6 }}>
+        <p style={{ fontSize: '1.05rem', color: '#cbd5e1', maxWidth: '650px', margin: '0 auto', lineHeight: 1.6 }}>
           Expert guides, technical deep-dives, and creative inspiration covering everything from commercial embroidery digitizing to scalable vector art and custom patch manufacturing.
         </p>
       </div>
@@ -162,10 +162,10 @@ export default function BlogsPage() {
             <article 
               key={post.id} 
               style={{ 
-                background: '#ffffff', 
+                background: 'var(--bg-card)', 
                 borderRadius: '16px', 
                 overflow: 'hidden', 
-                boxShadow: '0 12px 35px rgba(15, 23, 42, 0.06)',
+                boxShadow: 'var(--shadow-sm)',
                 border: '1px solid var(--border-color)',
                 position: 'relative'
               }}
@@ -191,19 +191,19 @@ export default function BlogsPage() {
               </div>
 
               <div style={{ padding: 'clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 3vw, 2rem)' }}>
-                <h2 style={{ fontSize: 'clamp(1.35rem, 3.5vw, 2.1rem)', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '0.85rem', lineHeight: 1.2, letterSpacing: '-0.01em' }}>
+                <h2 style={{ fontSize: 'clamp(1.35rem, 3.5vw, 2.1rem)', fontWeight: 900, color: 'var(--color-text-primary)', marginBottom: '0.85rem', lineHeight: 1.2, letterSpacing: '-0.01em' }}>
                   {post.title}
                 </h2>
                 
                 {/* Meta Information */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.65rem 1.25rem', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.65rem 1.25rem', color: 'var(--color-text-muted)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '1.5rem' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <User size={15} /> {post.author}
                   </span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <Clock size={15} /> {post.date}
                   </span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--orange-600)' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--color-primary, #ea580c)' }}>
                     <Tag size={15} /> {post.readTime}
                   </span>
                 </div>
@@ -211,7 +211,7 @@ export default function BlogsPage() {
                 {/* Article Content Rendered Safely */}
                 <div 
                   style={{ 
-                    color: 'var(--navy-800)', 
+                    color: 'var(--color-text-secondary)', 
                     fontSize: 'clamp(0.95rem, 2vw, 1.05rem)', 
                     lineHeight: 1.75,
                     display: 'flex',

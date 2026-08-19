@@ -179,7 +179,7 @@ export default function FAQsPage() {
   } : null;
 
   return (
-    <div style={{ background: '#f8fafc', minHeight: '100vh', paddingTop: 'clamp(3rem, 6vw, 4.5rem)', paddingBottom: '6rem' }}>
+    <div style={{ background: 'var(--bg-main)', color: 'var(--color-text-primary)', minHeight: '100vh', paddingTop: 'clamp(3rem, 6vw, 4.5rem)', paddingBottom: '6rem' }}>
       {schemaData && (
         <script
           type="application/ld+json"
@@ -194,9 +194,9 @@ export default function FAQsPage() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.5rem',
-            background: 'var(--orange-50)',
-            border: '1px solid var(--orange-200)',
-            color: 'var(--orange-700)',
+            background: 'var(--color-primary-light, rgba(249, 115, 22, 0.12))',
+            border: '1px solid var(--border-color)',
+            color: 'var(--color-primary, #ea580c)',
             padding: '0.4rem 1rem',
             borderRadius: '9999px',
             fontSize: '0.85rem',
@@ -213,7 +213,7 @@ export default function FAQsPage() {
             fontSize: 'clamp(2.2rem, 4vw, 3.2rem)',
             fontWeight: 900,
             fontFamily: 'var(--font-heading)',
-            color: 'var(--navy-950)',
+            color: 'var(--color-text-primary)',
             marginBottom: '1.25rem',
             letterSpacing: '-0.025em',
             lineHeight: 1.15
@@ -223,7 +223,7 @@ export default function FAQsPage() {
 
           <p style={{
             fontSize: '1.125rem',
-            color: 'var(--text-muted)',
+            color: 'var(--color-text-muted)',
             maxWidth: '680px',
             margin: '0 auto',
             lineHeight: 1.65
@@ -261,8 +261,9 @@ export default function FAQsPage() {
               borderRadius: '14px',
               fontSize: '1.05rem',
               border: '2px solid var(--border-color)',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
-              background: '#ffffff'
+              boxShadow: 'var(--shadow-sm)',
+              background: 'var(--bg-card)',
+              color: 'var(--color-text-primary)'
             }}
           />
           {searchQuery && (
@@ -274,7 +275,8 @@ export default function FAQsPage() {
                 right: '1rem',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                background: '#e2e8f0',
+                background: 'var(--color-subtle)',
+                color: 'var(--color-text-primary)',
                 border: 'none',
                 borderRadius: '999px',
                 padding: '0.25rem 0.6rem',
@@ -307,8 +309,8 @@ export default function FAQsPage() {
                   padding: '0.55rem 1.15rem',
                   borderRadius: '999px',
                   border: isSelected ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
-                  background: isSelected ? 'var(--orange-500)' : '#ffffff',
-                  color: isSelected ? '#ffffff' : 'var(--navy-800)',
+                  background: isSelected ? 'var(--orange-500)' : 'var(--bg-card)',
+                  color: isSelected ? '#ffffff' : 'var(--color-text-primary)',
                   fontWeight: isSelected ? 800 : 600,
                   fontSize: '0.875rem',
                   cursor: 'pointer',
@@ -324,7 +326,7 @@ export default function FAQsPage() {
 
         {/* Results Counter */}
         {searchQuery && (
-          <div style={{ marginBottom: '1.5rem', fontSize: '0.95rem', color: 'var(--navy-800)', fontWeight: 700 }}>
+          <div style={{ marginBottom: '1.5rem', fontSize: '0.95rem', color: 'var(--color-text-primary)', fontWeight: 700 }}>
             Found {totalQuestionsCount} matching question{totalQuestionsCount === 1 ? '' : 's'} for "{searchQuery}"
           </div>
         )}
@@ -332,7 +334,7 @@ export default function FAQsPage() {
         {/* Accordion List */}
         {filteredFaqs.length === 0 ? (
           <div style={{
-            background: '#ffffff',
+            background: 'var(--bg-card)',
             borderRadius: '16px',
             padding: '3.5rem 2rem',
             textAlign: 'center',
@@ -340,10 +342,10 @@ export default function FAQsPage() {
             boxShadow: 'var(--shadow-sm)'
           }}>
             <HelpCircle size={48} style={{ color: 'var(--orange-400)', marginBottom: '1rem' }} />
-            <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.5rem' }}>
+            <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '0.5rem' }}>
               No matching questions found
             </h3>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+            <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
               Try searching with different keywords, or connect with our 24/7 support engineers for immediate help.
             </p>
             <button
@@ -363,25 +365,25 @@ export default function FAQsPage() {
                   alignItems: 'center',
                   gap: '0.75rem',
                   marginBottom: '1.25rem',
-                  borderBottom: '2px solid #e2e8f0',
+                  borderBottom: '2px solid var(--border-color)',
                   paddingBottom: '0.75rem'
                 }}>
                   <div style={{
                     width: '32px',
                     height: '32px',
                     borderRadius: '8px',
-                    background: 'var(--orange-50)',
+                    background: 'var(--color-primary-light, rgba(249, 115, 22, 0.12))',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'var(--orange-600)'
+                    color: 'var(--color-primary, #ea580c)'
                   }}>
                     <Layers size={18} />
                   </div>
                   <h2 style={{
                     fontSize: '1.35rem',
                     fontWeight: 800,
-                    color: 'var(--navy-950)',
+                    color: 'var(--color-text-primary)',
                     fontFamily: 'var(--font-heading)',
                     margin: 0
                   }}>
@@ -398,11 +400,11 @@ export default function FAQsPage() {
                       <div 
                         key={qIdx} 
                         style={{ 
-                          background: '#ffffff', 
+                          background: 'var(--bg-card)', 
                           borderRadius: '14px', 
                           border: isOpen ? '1.5px solid var(--orange-400)' : '1px solid var(--border-color)',
                           overflow: 'hidden',
-                          boxShadow: isOpen ? '0 10px 25px rgba(249, 115, 22, 0.08)' : '0 2px 8px rgba(0,0,0,0.02)',
+                          boxShadow: isOpen ? '0 10px 25px rgba(249, 115, 22, 0.08)' : 'var(--shadow-sm)',
                           transition: 'all 0.25s ease'
                         }}
                       >
@@ -414,11 +416,11 @@ export default function FAQsPage() {
                             justifyContent: 'space-between',
                             alignItems: 'center',
                             padding: '1.25rem 1.5rem',
-                            background: isOpen ? '#fffaf5' : 'transparent',
+                            background: isOpen ? 'var(--color-subtle, var(--bg-subtle))' : 'transparent',
                             border: 'none',
                             cursor: 'pointer',
                             textAlign: 'left',
-                            color: isOpen ? 'var(--orange-600)' : 'var(--navy-950)',
+                            color: isOpen ? 'var(--orange-500)' : 'var(--color-text-primary)',
                             gap: '1rem'
                           }}
                         >
@@ -429,7 +431,7 @@ export default function FAQsPage() {
                             width: '32px',
                             height: '32px',
                             borderRadius: '8px',
-                            background: isOpen ? 'var(--orange-500)' : '#f1f5f9',
+                            background: isOpen ? 'var(--orange-500)' : 'var(--color-subtle, var(--bg-subtle))',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -441,7 +443,7 @@ export default function FAQsPage() {
                               style={{ 
                                 transform: isOpen ? 'rotate(180deg)' : 'rotate(0)', 
                                 transition: 'transform 0.25s ease',
-                                color: isOpen ? '#ffffff' : 'var(--navy-700)'
+                                color: isOpen ? '#ffffff' : 'var(--color-text-muted)'
                               }} 
                             />
                           </div>
@@ -452,15 +454,15 @@ export default function FAQsPage() {
                             maxHeight: isOpen ? '600px' : '0', 
                             overflow: 'hidden', 
                             transition: 'max-height 0.3s ease-in-out',
-                            background: '#ffffff'
+                            background: 'var(--bg-card)'
                           }}
                         >
                           <div style={{
                             padding: '0 1.5rem 1.5rem 1.5rem',
-                            color: 'var(--navy-800)',
+                            color: 'var(--color-text-secondary)',
                             fontSize: '0.975rem',
                             lineHeight: 1.75,
-                            borderTop: '1px solid rgba(0,0,0,0.04)',
+                            borderTop: '1px solid var(--border-color)',
                             paddingTop: '1rem'
                           }}>
                             {faq.a}

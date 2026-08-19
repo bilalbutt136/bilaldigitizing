@@ -23,26 +23,26 @@ export default async function TermsAndConditionsPage() {
   }
 
   return (
-    <div style={{ background: '#f8fafc', minHeight: '100vh', paddingTop: '4rem', paddingBottom: '6rem' }}>
+    <div style={{ background: 'var(--bg-main)', color: 'var(--color-text-primary)', minHeight: '100vh', paddingTop: '4rem', paddingBottom: '6rem' }}>
       <div className="container" style={{ maxWidth: '900px', margin: '0 auto', padding: '0 1.5rem' }}>
         
         <div style={{ marginBottom: '3rem' }}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '1rem', letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--color-text-primary)', marginBottom: '1rem', letterSpacing: '-0.02em' }}>
             Terms & Conditions
           </h1>
-          <p style={{ fontSize: '1.05rem', color: 'var(--text-muted)' }}>
+          <p style={{ fontSize: '1.05rem', color: 'var(--color-text-muted)' }}>
             Last Updated: {lastUpdated}
           </p>
         </div>
 
         <div 
           style={{ 
-            background: '#ffffff', 
+            background: 'var(--bg-card)', 
             padding: '3rem', 
             borderRadius: '16px', 
             border: '1px solid var(--border-color)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-            color: 'var(--navy-800)',
+            boxShadow: 'var(--shadow-sm)',
+            color: 'var(--color-text-secondary)',
             lineHeight: 1.8,
             fontSize: '1.05rem'
           }}
@@ -52,7 +52,7 @@ export default async function TermsAndConditionsPage() {
           ) : (
             <>
               <section style={{ marginBottom: '2.5rem' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1rem' }}>1. Introduction</h2>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '1rem' }}>1. Introduction</h2>
                 <p style={{ marginBottom: '1rem' }}>
                   Welcome to Bilal Digitizing ("we," "our," or "us"). By accessing our website, purchasing our digital services (embroidery digitizing, vector art conversion), or physical products (custom patches), you agree to comply with and be bound by the following terms and conditions. These terms are required for legal compliance and payment gateway processing.
                 </p>

@@ -364,7 +364,7 @@ export default function PricingPage() {
 
 
   return (
-    <main style={{ padding: 'clamp(5rem, 8vw, 8rem) clamp(1rem, 3vw, 2rem) 5rem', background: 'var(--navy-100)', minHeight: '100vh', color: 'var(--text-main)', fontFamily: 'var(--font-body, "Inter", sans-serif)' }}>
+    <main style={{ padding: 'clamp(5rem, 8vw, 8rem) clamp(1rem, 3vw, 2rem) 5rem', background: 'var(--bg-main)', minHeight: '100vh', color: 'var(--color-text-primary)', fontFamily: 'var(--font-body, "Inter", sans-serif)' }}>
       <div className="container" style={{ maxWidth: '1240px', margin: '0 auto', overflow: 'visible' }}>
         
         {/* Header Hero */}
@@ -373,9 +373,9 @@ export default function PricingPage() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.45rem',
-            background: 'var(--orange-50)',
-            border: '1px solid var(--orange-200)',
-            color: 'var(--orange-700)',
+            background: 'var(--color-primary-light, rgba(249, 115, 22, 0.12))',
+            border: '1px solid var(--border-color)',
+            color: 'var(--color-primary, #ea580c)',
             padding: '0.4rem 1.1rem',
             borderRadius: '9999px',
             fontSize: '0.85rem',
@@ -383,16 +383,16 @@ export default function PricingPage() {
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
             marginBottom: '1.25rem',
-            boxShadow: '0 2px 8px rgba(249, 115, 22, 0.1)'
+            boxShadow: 'var(--shadow-sm)'
           }}>
             <Sparkles size={16} />
             Three Master Studio Services · Simple Flat Rates
           </div>
 
-          <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontFamily: 'var(--font-heading)', fontWeight: 900, color: 'var(--navy-900)', marginBottom: '1.25rem', lineHeight: 1.12, letterSpacing: '-0.025em' }}>
+          <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontFamily: 'var(--font-heading)', fontWeight: 900, color: 'var(--color-text-primary)', marginBottom: '1.25rem', lineHeight: 1.12, letterSpacing: '-0.025em' }}>
             Choose Your <span style={{ color: 'var(--orange-500)' }}>Service & Package</span>
           </h1>
-          <p style={{ fontSize: '1.05rem', color: 'var(--text-muted)', maxWidth: '680px', margin: '0 auto', lineHeight: 1.65 }}>
+          <p style={{ fontSize: '1.05rem', color: 'var(--color-text-muted)', maxWidth: '680px', margin: '0 auto', lineHeight: 1.65 }}>
             Factory direct rates for our three master capabilities. 100% free unlimited edits, machine sew-out guarantees, and express delivery.
           </p>
 
@@ -400,10 +400,10 @@ export default function PricingPage() {
           <div style={{
             display: 'inline-flex',
             gap: '0.5rem',
-            background: '#ffffff',
+            background: 'var(--bg-card)',
             padding: '0.45rem',
             borderRadius: '9999px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+            boxShadow: 'var(--shadow-sm)',
             border: '1.5px solid var(--border-color)',
             marginTop: '2rem',
             flexWrap: 'wrap',
@@ -424,7 +424,7 @@ export default function PricingPage() {
                     borderRadius: '9999px',
                     border: 'none',
                     background: isActive ? 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)' : 'transparent',
-                    color: isActive ? '#ffffff' : 'var(--navy-800)',
+                    color: isActive ? '#ffffff' : 'var(--color-text-primary)',
                     fontWeight: isActive ? 800 : 700,
                     fontSize: '0.85rem',
                     cursor: 'pointer',
@@ -456,14 +456,14 @@ export default function PricingPage() {
                 key={pkg.id} 
                 className="card" 
                 style={{
-                  background: '#ffffff',
+                  background: 'var(--bg-card)',
                   border: pkg.isPopular ? `2px solid ${pkg.theme.color}` : '1.5px solid var(--border-color)',
                   borderRadius: '18px',
                   padding: '1.75rem 1.4rem 1.35rem',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
-                  boxShadow: pkg.isPopular ? `0 12px 30px ${pkg.theme.glowColor}` : '0 4px 16px rgba(0, 0, 0, 0.04)',
+                  boxShadow: pkg.isPopular ? `0 12px 30px ${pkg.theme.glowColor}` : 'var(--shadow-sm)',
                   transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                   position: 'relative',
                   overflow: 'visible',
@@ -503,7 +503,7 @@ export default function PricingPage() {
                       <span style={{ fontSize: '0.68rem', fontWeight: 800, color: pkg.theme.color, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>
                         {pkg.categoryLabel}
                       </span>
-                      <h3 style={{ fontSize: '1.125rem', fontFamily: 'var(--font-heading)', fontWeight: 900, margin: '0.1rem 0 0', color: 'var(--navy-900)', lineHeight: 1.25, minHeight: '2.8rem', display: 'flex', alignItems: 'center' }}>
+                      <h3 style={{ fontSize: '1.125rem', fontFamily: 'var(--font-heading)', fontWeight: 900, margin: '0.1rem 0 0', color: 'var(--color-text-primary)', lineHeight: 1.25, minHeight: '2.8rem', display: 'flex', alignItems: 'center' }}>
                         {pkg.title}
                       </h3>
                     </div>
@@ -519,7 +519,7 @@ export default function PricingPage() {
                   <div style={{
                     marginBottom: '1.15rem',
                     padding: '0.85rem 1rem',
-                    background: '#f8fafc',
+                    background: 'var(--color-subtle, var(--bg-subtle))',
                     borderRadius: '12px',
                     border: '1px solid var(--border-color)',
                     display: 'flex',
@@ -547,10 +547,10 @@ export default function PricingPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.35rem' }}>
                     {pkg.features.map((feat, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                        <div style={{ background: '#dcfce7', color: '#16a34a', padding: '0.15rem', borderRadius: '50%', marginTop: '2px', flexShrink: 0, display: 'flex' }}>
+                        <div style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.15rem', borderRadius: '50%', marginTop: '2px', flexShrink: 0, display: 'flex' }}>
                           <CheckCircle size={13} />
                         </div>
-                        <span style={{ fontSize: '0.825rem', color: 'var(--navy-800)', fontWeight: 600, lineHeight: 1.35 }}>
+                        <span style={{ fontSize: '0.825rem', color: 'var(--color-text-secondary)', fontWeight: 600, lineHeight: 1.35 }}>
                           {feat}
                         </span>
                       </div>
@@ -602,7 +602,7 @@ export default function PricingPage() {
         <div style={{
           marginTop: '4.5rem',
           padding: '2rem 2.5rem',
-          background: '#ffffff',
+          background: 'var(--bg-card)',
           borderRadius: '20px',
           border: '1px solid var(--border-color)',
           display: 'flex',
@@ -610,35 +610,35 @@ export default function PricingPage() {
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: '2rem',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)'
+          boxShadow: 'var(--shadow-sm)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ background: '#dcfce7', color: '#16a34a', padding: '0.65rem', borderRadius: '12px' }}>
+            <div style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.65rem', borderRadius: '12px' }}>
               <ShieldCheck size={24} />
             </div>
             <div>
-              <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-900)' }}>100% Quality Guaranteed</div>
-              <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>Free unlimited stitch edits until satisfied</div>
+              <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--color-text-primary)' }}>100% Quality Guaranteed</div>
+              <div style={{ fontSize: '0.825rem', color: 'var(--color-text-muted)' }}>Free unlimited stitch edits until satisfied</div>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ background: '#fff7ed', color: 'var(--orange-500)', padding: '0.65rem', borderRadius: '12px' }}>
+            <div style={{ background: 'rgba(249, 115, 22, 0.15)', color: 'var(--orange-500)', padding: '0.65rem', borderRadius: '12px' }}>
               <Zap size={24} />
             </div>
             <div>
-              <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-900)' }}>Lightning Turnaround</div>
-              <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>4 to 12 hour express production delivery</div>
+              <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--color-text-primary)' }}>Lightning Turnaround</div>
+              <div style={{ fontSize: '0.825rem', color: 'var(--color-text-muted)' }}>4 to 12 hour express production delivery</div>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ background: '#eff6ff', color: '#2563eb', padding: '0.65rem', borderRadius: '12px' }}>
+            <div style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', padding: '0.65rem', borderRadius: '12px' }}>
               <Clock size={24} />
             </div>
             <div>
-              <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-900)' }}>24/7 Studio Support</div>
-              <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>Direct access to master digitizing engineers</div>
+              <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--color-text-primary)' }}>24/7 Studio Support</div>
+              <div style={{ fontSize: '0.825rem', color: 'var(--color-text-muted)' }}>Direct access to master digitizing engineers</div>
             </div>
           </div>
         </div>
