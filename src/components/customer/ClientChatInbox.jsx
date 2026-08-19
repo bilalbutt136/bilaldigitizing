@@ -229,9 +229,9 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
     threadMap.set(generalId, {
       id: generalId,
-      title: 'Support',
+      title: '🎧 Live Studio Support',
       orderId: 'Support',
-      orderTitle: 'Live Studio Support',
+      orderTitle: 'Live Studio Support & Quotes',
       serviceType: 'general',
       serviceCategory: 'Support',
       status: 'online',
@@ -1166,7 +1166,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               </div>
               <div>
                 <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: 'var(--color-text-primary, var(--navy-950))' }}>
-                  {activeChat.title}
+                  {activeChat.rawOrderId ? `🧵 ${activeChat.title}` : '🎧 Live Studio Support & Quotes'}
                 </h4>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
                   <span style={{
@@ -1178,7 +1178,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                     fontWeight: 700
                   }}>
                     <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }} />
-                    Live Studio Team
+                    {activeChat.rawOrderId ? 'Order Discussion' : 'Live Studio Team (Online)'}
                   </span>
                   {activeChat.orderStatus && (
                     <span style={{

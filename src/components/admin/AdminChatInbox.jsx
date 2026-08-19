@@ -109,21 +109,49 @@ const parseMessageTime = (msg) => {
 const deduplicateThreads = (rawList) => {
   if (!Array.isArray(rawList)) return [];
   const map = new Map();
+
   rawList.forEach(conv => {
-    const cleanMessages = (conv.messages || []).filter(m => m.id);
+    if (!conv) return;
+    const cleanMessages = (conv.messages || []).filter(m => m && (m.id || m.text));
     cleanMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
 
-    const key = (conv.id || conv.clientEmail || conv.clientName || '').toLowerCase().trim();
-    if (!key) return;
+    const isOrder = conv.id?.startsWith('order-') || Boolean(conv.orderId && conv.orderId !== 'Support' && conv.orderId !== 'General Inquiries');
+    const rawOrdId = isOrder ? (conv.orderId || conv.id || '').replace('order-', '').replace('#', '').trim() : null;
+
+    let key = '';
+    let unifiedId = conv.id;
+
+    if (isOrder && rawOrdId) {
+      key = `order_${rawOrdId.toLowerCase()}`;
+      unifiedId = `order-${rawOrdId}`;
+    } else {
+      // Support thread: Extract real customer email from conv or its messages
+      let clientEmail = (conv.clientEmail || conv.client_email || '').toLowerCase().trim();
+      if (!clientEmail || clientEmail === 'client@studio.com' || clientEmail.includes('guest@bdigitizing.pro')) {
+        const emailMsg = cleanMessages.find(m => m.client_email && m.client_email !== 'client@studio.com' && !m.client_email.includes('guest@bdigitizing.pro'));
+        if (emailMsg?.client_email) clientEmail = emailMsg.client_email.toLowerCase().trim();
+      }
+
+      if (clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')) {
+        key = `support_${clientEmail}`;
+        unifiedId = `support-${clientEmail}`;
+      } else if (conv.id && conv.id.startsWith('support-') && !conv.id.startsWith('support-guest')) {
+        key = `support_${conv.id.replace('support-', '').toLowerCase().trim()}`;
+        unifiedId = conv.id;
+      } else {
+        key = 'general-support';
+        unifiedId = 'general-support';
+      }
+    }
 
     const lastMsg = cleanMessages[cleanMessages.length - 1];
     const lastTime = lastMsg ? parseMessageTime(lastMsg) : (conv.updatedAt ? new Date(conv.updatedAt).getTime() : 0);
-
     const convUnread = conv.adminUnreadCount ?? conv.unreadCount ?? 0;
 
     if (!map.has(key)) {
       map.set(key, { 
         ...conv, 
+        id: unifiedId,
         unreadCount: convUnread, 
         adminUnreadCount: convUnread,
         messages: cleanMessages,
@@ -143,8 +171,18 @@ const deduplicateThreads = (rawList) => {
 
       const combinedUnread = Math.max(existing.adminUnreadCount || 0, convUnread);
 
+      const resolvedName = (existing.clientName && existing.clientName !== 'Customer' && existing.clientName !== 'Client') 
+        ? existing.clientName 
+        : (conv.clientName || existing.clientName);
+      const resolvedEmail = (existing.clientEmail && existing.clientEmail !== 'client@studio.com') 
+        ? existing.clientEmail 
+        : (conv.clientEmail || existing.clientEmail);
+
       map.set(key, {
         ...existing,
+        id: unifiedId,
+        clientName: resolvedName,
+        clientEmail: resolvedEmail,
         messages: combinedMessages,
         unreadCount: combinedUnread,
         adminUnreadCount: combinedUnread,
@@ -170,7 +208,7 @@ export const AdminChatInbox = () => {
 
   const [activeChatId, setActiveChatId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterMode, setFilterMode] = useState('all'); // 'all' | 'unread'
+  const [filterMode, setFilterMode] = useState('all'); // 'all' | 'orders' | 'support' | 'unread'
   const [replyInput, setReplyInput] = useState('');
   const [attachedFile, setAttachedFile] = useState(null); // { name, url, size, format }
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
@@ -486,18 +524,27 @@ export const AdminChatInbox = () => {
   // Filter conversations list based on search and selected filter
   const filteredConversations = conversations.filter(conv => {
     const info = resolveThreadInfo(conv, orders);
-    const matchesSearch = 
-      (conv.clientName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (conv.clientEmail || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (info.customerName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (info.orderNum || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (info.orderTitle || '').toLowerCase().includes(searchTerm.toLowerCase());
 
-    if (!matchesSearch) return false;
+    if (filterMode === 'unread') {
+      if (getThreadUnreadCount(conv) === 0) return false;
+    } else if (filterMode === 'orders') {
+      if (!info.isOrder) return false;
+    } else if (filterMode === 'support') {
+      if (info.isOrder) return false;
+    }
 
-    const unreadNum = getThreadUnreadCount(conv);
-    if (filterMode === 'unread') return unreadNum > 0;
-    return true;
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase().trim();
+    return (
+      (conv.clientName || '').toLowerCase().includes(term) ||
+      (conv.clientEmail || '').toLowerCase().includes(term) ||
+      (info.customerName || '').toLowerCase().includes(term) ||
+      (info.customerEmail || '').toLowerCase().includes(term) ||
+      (info.orderNum || '').toLowerCase().includes(term) ||
+      (info.orderTitle || '').toLowerCase().includes(term) ||
+      (info.serviceCategory || '').toLowerCase().includes(term) ||
+      (conv.messages || []).some(m => (m.text || '').toLowerCase().includes(term))
+    );
   });
 
   const handleSendMessage = async (e) => {
@@ -702,21 +749,39 @@ export const AdminChatInbox = () => {
             </div>
 
             {/* Filter Toggle */}
-            <div style={{ display: 'flex', gap: '0.35rem' }}>
-              <button
-                className={`btn btn-sm ${filterMode === 'all' ? 'btn-primary-orange' : 'btn-outline'}`}
-                style={{ padding: '0.25rem 0.65rem', fontSize: '0.725rem', borderRadius: '6px' }}
-                onClick={() => setFilterMode('all')}
-              >
-                All ({conversations.length})
-              </button>
-              <button
-                className={`btn btn-sm ${filterMode === 'unread' ? 'btn-primary-orange' : 'btn-outline'}`}
-                style={{ padding: '0.25rem 0.65rem', fontSize: '0.725rem', borderRadius: '6px' }}
-                onClick={() => setFilterMode('unread')}
-              >
-                Unread ({conversations.filter(c => getThreadUnreadCount(c) > 0).length})
-              </button>
+            <div style={{ display: 'flex', gap: '0.3rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
+              {[
+                { id: 'all', label: 'All', count: conversations.length },
+                { id: 'orders', label: 'Orders', count: conversations.filter(c => resolveThreadInfo(c, orders).isOrder).length },
+                { id: 'support', label: 'Support', count: conversations.filter(c => !resolveThreadInfo(c, orders).isOrder).length },
+                { id: 'unread', label: 'Unread', count: conversations.filter(c => getThreadUnreadCount(c) > 0).length }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  className={`btn btn-sm ${filterMode === tab.id ? 'btn-primary-orange' : 'btn-outline'}`}
+                  style={{
+                    padding: '0.25rem 0.55rem',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    borderRadius: '6px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    whiteSpace: 'nowrap'
+                  }}
+                  onClick={() => setFilterMode(tab.id)}
+                >
+                  {tab.label}
+                  <span style={{
+                    fontSize: '0.65rem',
+                    opacity: filterMode === tab.id ? 1 : 0.7,
+                    fontWeight: 800
+                  }}>
+                    ({tab.count})
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
 
@@ -921,19 +986,28 @@ export const AdminChatInbox = () => {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--color-text-primary, var(--navy-950))', margin: 0 }}>
-                      {activeInfo.customerName}
+                      {activeInfo.isOrder ? `${activeInfo.serviceCategory} — ${activeInfo.orderNum}` : activeInfo.customerName}
                     </h3>
-                    <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.45rem', borderRadius: '4px', background: activeInfo.isOrder ? 'var(--color-primary-light, #fff7ed)' : 'rgba(16, 185, 129, 0.1)', color: activeInfo.isOrder ? 'var(--color-primary, #ea580c)' : '#10b981', border: `1px solid ${activeInfo.isOrder ? 'var(--color-border)' : 'rgba(16, 185, 129, 0.25)'}`, fontWeight: 800 }}>
-                      {activeInfo.isOrder ? activeInfo.orderSubtitle : 'Support Conversation'}
+                    <span style={{
+                      fontSize: '0.7rem',
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: '6px',
+                      background: activeInfo.isOrder ? '#fff7ed' : 'rgba(16, 185, 129, 0.1)',
+                      color: activeInfo.isOrder ? '#ea580c' : '#10b981',
+                      border: `1px solid ${activeInfo.isOrder ? '#fed7aa' : 'rgba(16, 185, 129, 0.25)'}`,
+                      fontWeight: 800
+                    }}>
+                      {activeInfo.isOrder ? '🧵 Order Discussion' : '🎧 Live Support & Quotes'}
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                    <span>Client: <strong style={{ color: 'var(--color-text-primary, var(--navy-800))' }}>{activeInfo.customerName}</strong></span>
                     {activeInfo.customerEmail && (
-                      <span>📧 <strong style={{ color: 'var(--color-text-primary, var(--navy-800))' }}>{activeInfo.customerEmail}</strong></span>
+                      <span>• 📧 <strong style={{ color: 'var(--color-text-primary, var(--navy-800))' }}>{activeInfo.customerEmail}</strong></span>
                     )}
                     {activeChat.company && (
-                      <span>🏢 {activeChat.company}</span>
+                      <span>• 🏢 {activeChat.company}</span>
                     )}
                   </div>
                 </div>
@@ -1154,7 +1228,13 @@ export const AdminChatInbox = () => {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder={replyingTo ? `Reply to ${replyingTo.senderName || 'Customer'}...` : `Reply to ${activeInfo.customerName}...`}
+                  placeholder={
+                    replyingTo 
+                      ? `Reply to ${replyingTo.senderName || 'Customer'}...` 
+                      : (activeInfo.isOrder 
+                          ? `Reply to Order ${activeInfo.orderNum} discussion with ${activeInfo.customerName}...` 
+                          : `Reply to ${activeInfo.customerName} on Live Support...`)
+                  }
                   value={replyInput}
                   onChange={handleInputChange}
                   style={{ flex: 1, height: '42px', fontSize: '0.9rem' }}

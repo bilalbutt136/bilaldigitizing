@@ -181,6 +181,25 @@ export async function POST(request) {
         console.error('Failed to insert offer message:', msgErr.message);
       }
 
+      // Mirror to order_messages if this is an order conversation
+      if (conversation_id.startsWith('order-')) {
+        const rawOrdId = conversation_id.replace('order-', '');
+        try {
+          await supabase.from('order_messages').insert([{
+            order_id: rawOrdId,
+            sender: 'admin',
+            sender_role: 'admin',
+            sender_name: 'Studio Support',
+            message: messageDbRow.text,
+            offer_id: offerId,
+            offer_data: offerDbRow,
+            created_at: nowIso
+          }]);
+        } catch (omErr) {
+          console.warn('order_messages offer mirror notice:', omErr.message);
+        }
+      }
+
       // Update conversation timestamp & client unread count
       try {
         const { data: cData } = await supabase.from('conversations').select('client_unread_count').eq('id', conversation_id).maybeSingle();
