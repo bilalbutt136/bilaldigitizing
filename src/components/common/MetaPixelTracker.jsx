@@ -1,13 +1,16 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import Script from 'next/script';
 import { useLocation } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 
-// Helper to ensure window.fbq stub exists immediately for zero-loss queueing
-const ensureFbqStub = () => {
+// Direct, bulletproof DOM injector for Meta Pixel to guarantee instant detection by Meta Pixel Helper
+export const injectMetaPixel = (pixelId) => {
   if (typeof window === 'undefined') return;
+  const cleanId = String(pixelId || '').trim();
+  if (!cleanId) return;
+
+  // 1. Initialize official fbq queue stub
   if (!window.fbq) {
     const n = function() {
       if (n.callMethod) {
@@ -23,6 +26,31 @@ const ensureFbqStub = () => {
     n.queue = [];
     window.fbq = n;
   }
+
+  // 2. Ensure official https://connect.facebook.net/en_US/fbevents.js script is in document.head
+  let scriptEl = document.getElementById('facebook-jssdk-pixel');
+  if (!scriptEl) {
+    scriptEl = document.createElement('script');
+    scriptEl.id = 'facebook-jssdk-pixel';
+    scriptEl.async = true;
+    scriptEl.src = 'https://connect.facebook.net/en_US/fbevents.js';
+    const firstScript = document.getElementsByTagName('script')[0];
+    if (firstScript && firstScript.parentNode) {
+      firstScript.parentNode.insertBefore(scriptEl, firstScript);
+    } else {
+      document.head.appendChild(scriptEl);
+    }
+  }
+
+  // 3. Initialize the Pixel ID and track PageView
+  if (window._fbq_active_pixel_id !== cleanId) {
+    window.fbq('init', cleanId);
+    window.fbq('track', 'PageView');
+    window._fbq_active_pixel_id = cleanId;
+    try {
+      localStorage.setItem('meta_pixel_id', cleanId);
+    } catch {}
+  }
 };
 
 export const MetaPixelTracker = () => {
@@ -31,7 +59,7 @@ export const MetaPixelTracker = () => {
   const pathname = location?.pathname || '';
   const prevPathRef = useRef('');
 
-  // Extract pixel ID from settings, localStorage, or environment variable
+  // Extract pixel ID with multiple robust fallbacks
   const activePixelId = (
     siteSettings?.metaPixelId ||
     (typeof window !== 'undefined' ? localStorage.getItem('meta_pixel_id') : '') ||
@@ -39,37 +67,23 @@ export const MetaPixelTracker = () => {
     ''
   ).trim();
 
-  // 1. Immediately ensure queue stub is alive
+  // 1. Immediately inject and initialize when ID is available
   useEffect(() => {
-    ensureFbqStub();
-  }, []);
-
-  // 2. Initialize pixel when ID becomes available
-  useEffect(() => {
-    if (activePixelId && typeof window !== 'undefined') {
-      ensureFbqStub();
-      if (window._fbq_initialized_id !== activePixelId) {
-        window.fbq('init', activePixelId);
-        window._fbq_initialized_id = activePixelId;
-        try {
-          localStorage.setItem('meta_pixel_id', activePixelId);
-        } catch {}
-      }
+    if (activePixelId) {
+      injectMetaPixel(activePixelId);
     }
   }, [activePixelId]);
 
-  // 3. Automatic PageView & ViewContent on Route Change
+  // 2. Track route changes
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (prevPathRef.current === pathname) return; // Prevent duplicate triggers on same page
+    if (prevPathRef.current === pathname) return;
     prevPathRef.current = pathname;
 
-    ensureFbqStub();
+    if (activePixelId) {
+      injectMetaPixel(activePixelId);
+    }
 
-    const role = authUser?.role === 'admin' ? 'Platform Admin' :
-                 (authUser ? 'Authenticated User' : 'Guest Visitor');
-
-    // Always fire PageView on route navigation
     if (window.fbq) {
       window.fbq('track', 'PageView', {
         page_path: pathname,
@@ -97,6 +111,8 @@ export const MetaPixelTracker = () => {
 
     // Log to Supabase Tracking Events Table
     import('../../services/supabaseService').then(({ logTrackingEventToSupabase }) => {
+      const role = authUser?.role === 'admin' ? 'Platform Admin' :
+                   (authUser ? 'Authenticated User' : 'Guest Visitor');
       logTrackingEventToSupabase({
         eventName: viewContentData ? 'ViewContent' : 'PageView',
         userRole: role,
@@ -108,45 +124,22 @@ export const MetaPixelTracker = () => {
     }).catch(() => {});
   }, [pathname, activePixelId, authUser]);
 
-  if (!activePixelId) return null;
-
-  return (
-    <>
-      <Script
-        id="fb-pixel"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `
-            !function(f,b,e,v,n,t,s)
-            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-            n.queue=[];t=b.createElement(e);t.async=!0;
-            t.src=v;s=b.getElementsByTagName(e)[0];
-            s.parentNode.insertBefore(t,s)}(window, document,'script',
-            'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '${activePixelId}');
-          `,
-        }}
-      />
-      <noscript>
-        <img 
-          height="1" 
-          width="1" 
-          style={{ display: 'none' }}
-          src={`https://www.facebook.com/tr?id=${activePixelId}&ev=PageView&noscript=1`}
-          alt=""
-        />
-      </noscript>
-    </>
-  );
+  return null;
 };
 
 // Standard and Custom Meta Pixel Event Dispatcher for the entire application
 export const trackMetaEvent = (eventName, data = {}, customUserRole = null) => {
   if (typeof window === 'undefined') return;
 
-  ensureFbqStub();
+  const currentId = (
+    (typeof window !== 'undefined' ? localStorage.getItem('meta_pixel_id') : '') ||
+    process.env.NEXT_PUBLIC_META_PIXEL_ID ||
+    ''
+  ).trim();
+
+  if (currentId) {
+    injectMetaPixel(currentId);
+  }
 
   const standardEvents = [
     'PageView',

@@ -82,10 +82,8 @@ export const MetaSeoTrackingSettings = () => {
       const trimmedPixelId = metaPixelId.trim();
       if (typeof window !== 'undefined' && trimmedPixelId) {
         try { localStorage.setItem('meta_pixel_id', trimmedPixelId); } catch {}
-        if (window.fbq) {
-          window.fbq('init', trimmedPixelId);
-          window.fbq('track', 'PageView');
-        }
+        const { injectMetaPixel } = await import('../../common/MetaPixelTracker');
+        injectMetaPixel(trimmedPixelId);
       }
 
       await updateSiteSettings({
@@ -99,7 +97,7 @@ export const MetaSeoTrackingSettings = () => {
         canonicalUrl: canonicalUrl.trim(),
         ogImageUrl: ogImageUrl.trim()
       });
-      showToast('Meta Pixel, Analytics & SEO settings saved to live database!', 'success');
+      showToast('Meta Pixel & Tracking settings saved and activated live!', 'success');
     } catch {
       showToast('Failed to persist settings. Please check network connection.', 'error');
     } finally {
@@ -109,12 +107,16 @@ export const MetaSeoTrackingSettings = () => {
 
   const handleSendTestEvent = async () => {
     try {
-      const { trackMetaEvent } = await import('../../common/MetaPixelTracker');
-      trackMetaEvent('AdminPortalTestPing', {
-        time: new Date().toISOString(),
-        status: 'verified',
-        test_source: 'MetaSeoTrackingSettings'
-      }, 'Platform Admin');
+      const trimmedPixelId = metaPixelId.trim();
+      if (typeof window !== 'undefined' && trimmedPixelId) {
+        const { injectMetaPixel, trackMetaEvent } = await import('../../common/MetaPixelTracker');
+        injectMetaPixel(trimmedPixelId);
+        trackMetaEvent('AdminPortalTestPing', {
+          time: new Date().toISOString(),
+          status: 'verified',
+          test_source: 'MetaSeoTrackingSettings'
+        }, 'Platform Admin');
+      }
 
       showToast('⚡ Live test tracking event dispatched to Meta Pixel & Database!', 'success');
       setTimeout(loadEvents, 1000);
