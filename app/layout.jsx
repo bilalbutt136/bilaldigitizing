@@ -129,7 +129,12 @@ export default function RootLayout({ children }) {
                 <HeaderNav />
               </Suspense>
               <main style={{ flex: 1 }}>
-                <Suspense fallback={<div style={{ padding: '4rem', textAlign: 'center', color: '#94a3b8' }}>Loading Studio Content...</div>}>
+                <Suspense fallback={
+                  <div style={{ padding: '3rem 1.5rem', maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+                    <div style={{ height: '36px', width: '50%', background: '#e2e8f0', borderRadius: '8px' }} />
+                    <div style={{ height: '20px', width: '75%', background: '#f1f5f9', borderRadius: '6px' }} />
+                  </div>
+                }>
                   {children}
                 </Suspense>
               </main>

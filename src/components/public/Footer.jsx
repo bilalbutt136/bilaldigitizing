@@ -30,9 +30,9 @@ export const Footer = () => {
     return null;
   }
 
-  const phone = siteSettings.contactInfo?.phone || siteSettings.contactPhone || '+1 (800) 555-DIGI (3444)';
+  const phone = siteSettings.contactInfo?.phone || siteSettings.contactPhone || '+1 (347) 915-4498';
   const email = siteSettings.contactInfo?.email || siteSettings.supportEmail || 'orders@bdigitizing-pro.com';
-  const whatsapp = siteSettings.contactInfo?.whatsapp || siteSettings.whatsapp || '+1 (800) 555-DIGI (3444)';
+  const whatsapp = siteSettings.contactInfo?.whatsapp || siteSettings.whatsapp || '+1 (347) 915-4498';
   const businessHours = siteSettings.contactInfo?.businessHours || siteSettings.businessHours || '24/7 Support';
   const currentYear = mounted ? new Date().getFullYear() : 2026;
 

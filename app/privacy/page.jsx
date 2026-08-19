@@ -138,7 +138,7 @@ export default async function PrivacyPolicyPage() {
                 </p>
                 <ul style={{ paddingLeft: '1.5rem', listStyleType: 'none', marginLeft: '-1.5rem' }}>
                   <li style={{ marginBottom: '0.25rem' }}><strong>Email:</strong> orders@bdigitizing-pro.com</li>
-                  <li style={{ marginBottom: '0.25rem' }}><strong>Phone:</strong> +1 (800) 555-DIGI (3444)</li>
+                  <li style={{ marginBottom: '0.25rem' }}><strong>Phone:</strong> +1 (347) 915-4498</li>
                   <li style={{ marginBottom: '0.25rem' }}><strong>Support Hours:</strong> 24/7 Operations</li>
                 </ul>
               </section>

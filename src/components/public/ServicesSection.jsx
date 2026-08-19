@@ -155,10 +155,6 @@ export const ServicesSection = () => {
     ]
   };
 
-  if (activeTab === 'all') {
-    return null;
-  }
-
   return (
     <section id="services" style={{ 
       padding: '5.5rem 0 6rem', 
@@ -187,6 +183,9 @@ export const ServicesSection = () => {
             lineHeight: '1.18',
             letterSpacing: '-0.025em'
           }}>
+            {activeTab === 'all' && (
+              <>Complete <span className="text-gradient-orange">Studio Capabilities</span></>
+            )}
             {activeTab === 'embroidery' && (
               <>Commercial <span className="text-gradient-orange">Embroidery Digitizing</span></>
             )}
@@ -204,11 +203,258 @@ export const ServicesSection = () => {
             lineHeight: '1.65',
             margin: '0 auto',
           }}>
+            {activeTab === 'all' && 'Three specialized production departments under one roof: commercial machine stitch files, scalable vector separations, and manufactured custom patches.'}
             {activeTab === 'embroidery' && 'Master machine-ready embroidery stitch files (.DST, .PES, .EMB) with zero thread breaks, calculated pull compensation, and free unlimited revisions.'}
             {activeTab === 'vector-art' && 'Clean, infinitely scalable vector graphics (.AI, .EPS, .SVG, .PDF) with hand-drawn Bézier curves and Pantone color separations ready for press.'}
             {activeTab === 'patches' && 'Custom embroidered, high-density woven, 3D molded PVC, and laser-engraved leather emblems delivered straight to your door.'}
           </p>
         </div>
+
+        {/* ====================================================================
+            VIEW 1: ALL SERVICES MASTER OVERVIEW GRID
+           ==================================================================== */}
+        {activeTab === 'all' && (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
+            gap: '2rem',
+            alignItems: 'stretch'
+          }}>
+            {/* Service 1: Embroidery Digitizing */}
+            <div className="card" style={{
+              padding: '2.25rem 2rem',
+              background: '#ffffff',
+              borderRadius: '20px',
+              border: '1.5px solid var(--border-color)',
+              borderTop: '5px solid var(--orange-500)',
+              boxShadow: 'var(--shadow-md)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              transition: 'all 0.3s ease'
+            }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                  <div style={{ background: 'rgba(249, 115, 22, 0.12)', color: 'var(--orange-600)', padding: '0.75rem', borderRadius: '12px', display: 'flex' }}>
+                    <Layers size={28} />
+                  </div>
+                  <span style={{ fontSize: '0.825rem', fontWeight: 800, background: '#fff7ed', color: 'var(--orange-700)', border: '1px solid #ffedd5', padding: '0.3rem 0.8rem', borderRadius: '999px' }}>
+                    Starts ${embMinPrice.toFixed(2)} Flat
+                  </span>
+                </div>
+
+                <h3 style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '0.65rem' }}>
+                  Embroidery Digitizing
+                </h3>
+
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+                  Commercial machine stitch files hand-mapped for caps, left chest polos, 3D puff foam, and jacket backs with zero thread breaks.
+                </p>
+
+                <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.25rem', fontSize: '0.825rem' }}>
+                  <strong style={{ color: 'var(--navy-900)', display: 'block', marginBottom: '0.2rem' }}>Package Tiers:</strong>
+                  <span style={{ color: 'var(--navy-700)' }}>{embPackagesSummary}</span>
+                </div>
+
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--navy-850)' }}>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CheckCircle2 size={16} style={{ color: '#10b981', flexShrink: 0 }} /> Formats: Tajima .DST, Brother .PES, Wilcom .EMB
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CheckCircle2 size={16} style={{ color: '#10b981', flexShrink: 0 }} /> 100% Hand Pathing & Dual Underlay Protection
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CheckCircle2 size={16} style={{ color: '#10b981', flexShrink: 0 }} /> Free Unlimited Revisions & PDF Color Sequence
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid var(--border-color)', fontSize: '0.825rem', color: 'var(--navy-700)', marginBottom: '1.25rem' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}>
+                    <Clock size={15} style={{ color: 'var(--orange-500)' }} /> 4–12 Hours Turnaround
+                  </span>
+                  <span style={{ fontWeight: 700, color: 'var(--green-700)' }}>Instant Download</span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button 
+                    type="button"
+                    className="btn btn-primary-orange"
+                    style={{ flex: 1, justifyContent: 'center', fontWeight: 800, padding: '0.75rem 1rem', fontSize: '0.9rem' }}
+                    onClick={() => handleLaunchOrder('embroidery')}
+                  >
+                    <Upload size={16} /> Order Digitizing
+                  </button>
+                  <button 
+                    type="button"
+                    className="btn btn-outline"
+                    style={{ fontWeight: 700, padding: '0.75rem 0.85rem', fontSize: '0.85rem' }}
+                    onClick={() => handleSelectTab('embroidery')}
+                  >
+                    Details
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Service 2: Vector Art Conversion */}
+            <div className="card" style={{
+              padding: '2.25rem 2rem',
+              background: '#ffffff',
+              borderRadius: '20px',
+              border: '1.5px solid var(--border-color)',
+              borderTop: '5px solid #3b82f6',
+              boxShadow: 'var(--shadow-md)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              transition: 'all 0.3s ease'
+            }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                  <div style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#2563eb', padding: '0.75rem', borderRadius: '12px', display: 'flex' }}>
+                    <PenTool size={28} />
+                  </div>
+                  <span style={{ fontSize: '0.825rem', fontWeight: 800, background: '#eff6ff', color: '#1d4ed8', border: '1px solid #dbeafe', padding: '0.3rem 0.8rem', borderRadius: '999px' }}>
+                    Starts ${vecMinPrice.toFixed(2)} Flat
+                  </span>
+                </div>
+
+                <h3 style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '0.65rem' }}>
+                  Vector Art Conversion
+                </h3>
+
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+                  Transform low-res JPGs, PNGs, or hand sketches into crisp, infinitely scalable vector artwork with clean Bézier nodes and spot colors.
+                </p>
+
+                <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.25rem', fontSize: '0.825rem' }}>
+                  <strong style={{ color: 'var(--navy-900)', display: 'block', marginBottom: '0.2rem' }}>Package Tiers:</strong>
+                  <span style={{ color: 'var(--navy-700)' }}>{vecPackagesSummary}</span>
+                </div>
+
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--navy-850)' }}>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CheckCircle2 size={16} style={{ color: '#10b981', flexShrink: 0 }} /> Master Suite: .AI, .EPS, .SVG, 300+ DPI PDF
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CheckCircle2 size={16} style={{ color: '#10b981', flexShrink: 0 }} /> Pantone (PMS) Solid Coated Color Separation
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CheckCircle2 size={16} style={{ color: '#10b981', flexShrink: 0 }} /> Vinyl Cut Paths & Screen Printing Ready
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid var(--border-color)', fontSize: '0.825rem', color: 'var(--navy-700)', marginBottom: '1.25rem' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}>
+                    <Clock size={15} style={{ color: '#3b82f6' }} /> 6–12 Hours Turnaround
+                  </span>
+                  <span style={{ fontWeight: 700, color: 'var(--green-700)' }}>Instant Download</span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button 
+                    type="button"
+                    className="btn btn-primary-orange"
+                    style={{ flex: 1, justifyContent: 'center', fontWeight: 800, padding: '0.75rem 1rem', fontSize: '0.9rem', background: '#2563eb', borderColor: '#2563eb' }}
+                    onClick={() => handleLaunchOrder('vector')}
+                  >
+                    <Upload size={16} /> Order Vector Art
+                  </button>
+                  <button 
+                    type="button"
+                    className="btn btn-outline"
+                    style={{ fontWeight: 700, padding: '0.75rem 0.85rem', fontSize: '0.85rem' }}
+                    onClick={() => handleSelectTab('vector-art')}
+                  >
+                    Details
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Service 3: Custom Physical Patches */}
+            <div className="card" style={{
+              padding: '2.25rem 2rem',
+              background: '#ffffff',
+              borderRadius: '20px',
+              border: '1.5px solid var(--border-color)',
+              borderTop: '5px solid #10b981',
+              boxShadow: 'var(--shadow-md)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              transition: 'all 0.3s ease'
+            }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                  <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', padding: '0.75rem', borderRadius: '12px', display: 'flex' }}>
+                    <Tag size={28} />
+                  </div>
+                  <span style={{ fontSize: '0.825rem', fontWeight: 800, background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', padding: '0.3rem 0.8rem', borderRadius: '999px' }}>
+                    Starts ${patchMinPrice.toFixed(2)} / Pc
+                  </span>
+                </div>
+
+                <h3 style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '0.65rem' }}>
+                  Custom Physical Patches
+                </h3>
+
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+                  Custom manufactured physical emblems for uniforms, tactical gear, caps, and jackets. Embroidered, micro-woven, 3D rubber PVC, and leather.
+                </p>
+
+                <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.25rem', fontSize: '0.825rem' }}>
+                  <strong style={{ color: 'var(--navy-900)', display: 'block', marginBottom: '0.2rem' }}>Package Tiers:</strong>
+                  <span style={{ color: 'var(--navy-700)' }}>{patchPackagesSummary}</span>
+                </div>
+
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--navy-850)' }}>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CheckCircle2 size={16} style={{ color: '#10b981', flexShrink: 0 }} /> Low 10 Pcs MOQ & Free 12-Hr Digital Proof
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CheckCircle2 size={16} style={{ color: '#10b981', flexShrink: 0 }} /> Military Velcro, Iron-On & Peel Backings
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CheckCircle2 size={16} style={{ color: '#10b981', flexShrink: 0 }} /> Express Tracked Doorstep Worldwide Shipping
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid var(--border-color)', fontSize: '0.825rem', color: 'var(--navy-700)', marginBottom: '1.25rem' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}>
+                    <Clock size={15} style={{ color: '#10b981' }} /> 3–5 Days Production
+                  </span>
+                  <span style={{ fontWeight: 700, color: 'var(--green-700)' }}>Global Delivery</span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button 
+                    type="button"
+                    className="btn btn-primary-orange"
+                    style={{ flex: 1, justifyContent: 'center', fontWeight: 800, padding: '0.75rem 1rem', fontSize: '0.9rem', background: '#059669', borderColor: '#059669' }}
+                    onClick={() => handleLaunchOrder('patch')}
+                  >
+                    <Upload size={16} /> Order Patches
+                  </button>
+                  <button 
+                    type="button"
+                    className="btn btn-outline"
+                    style={{ fontWeight: 700, padding: '0.75rem 0.85rem', fontSize: '0.85rem' }}
+                    onClick={() => handleSelectTab('patches')}
+                  >
+                    Details
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ====================================================================
             VIEW 2: EMBROIDERY TAB (Dynamic Embroidery Packages)

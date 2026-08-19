@@ -24,15 +24,11 @@ export default function HomePage() {
     <>
       <HeroSection />
       <ServicesSection />
-      {activeTab === 'all' && (
-        <>
-          <TrustStatsBar />
-          <WhyChooseUs />
-          <PortfolioPreview />
-          <TestimonialsFAQ />
-          <FinalCTA />
-        </>
-      )}
+      <TrustStatsBar />
+      <WhyChooseUs />
+      <PortfolioPreview />
+      <TestimonialsFAQ />
+      <FinalCTA />
     </>
   );
 }
