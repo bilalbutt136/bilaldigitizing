@@ -43,6 +43,7 @@ export const HeaderNav = () => {
     setIsAuthModalOpen,
     setAuthModalMode,
     openOrderWizard,
+    openOrderTrackerDrawer,
     setActiveAdminTab,
     setActiveCustomerTab,
     setActiveHomeServiceTab,
@@ -679,6 +680,12 @@ export const HeaderNav = () => {
                                 onClick={() => {
                                   if (markNotificationAsRead) markNotificationAsRead(item.id);
                                   setIsNotificationDropdownOpen(false);
+                                  
+                                  const targetOrderId = item.order_id || item.orderId;
+                                  if (targetOrderId && openOrderTrackerDrawer) {
+                                    openOrderTrackerDrawer(targetOrderId);
+                                  }
+
                                   if (item.link) {
                                     protectedNavigate(safeCurrentView === 'admin' ? 'admin' : 'customer');
                                     navigate(item.link);

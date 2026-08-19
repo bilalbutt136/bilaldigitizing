@@ -1278,11 +1278,13 @@ let globalChatChannel = null;
 const messageListeners = new Set();
 const conversationListeners = new Set();
 const typingListeners = new Set();
+const notificationListeners = new Set();
+const orderListeners = new Set();
 
 export function getSharedChatChannel() {
   if (!isSupabaseConfigured || !supabase) return null;
   if (!globalChatChannel) {
-    globalChatChannel = supabase.channel('bdigitizing-live-chat-hub', {
+    globalChatChannel = supabase.channel('bdigitizing-live-hub-v2', {
       config: {
         broadcast: { self: true }
       }
@@ -1313,6 +1315,14 @@ export function getSharedChatChannel() {
       }
     });
 
+    globalChatChannel.on('broadcast', { event: 'new_notification' }, (event) => {
+      if (event.payload) {
+        notificationListeners.forEach(listener => {
+          try { listener({ eventType: 'INSERT', new: event.payload, record: event.payload }); } catch (err) {}
+        });
+      }
+    });
+
     // 2. Postgres replication listeners
     globalChatChannel.on(
       'postgres_changes',
@@ -1334,7 +1344,31 @@ export function getSharedChatChannel() {
       }
     );
 
-    globalChatChannel.subscribe();
+    globalChatChannel.on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'notifications' },
+      (payload) => {
+        notificationListeners.forEach(listener => {
+          try { listener(payload); } catch (err) {}
+        });
+      }
+    );
+
+    globalChatChannel.on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'orders' },
+      (payload) => {
+        orderListeners.forEach(listener => {
+          try { listener(payload); } catch (err) {}
+        });
+      }
+    );
+
+    globalChatChannel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        // Channel connected
+      }
+    });
   }
   return globalChatChannel;
 }
@@ -1359,6 +1393,27 @@ export function broadcastLiveMessage(messagePayload) {
     }
   } catch (err) {
     console.warn('Broadcast live message notice:', err);
+  }
+}
+
+export function broadcastLiveNotification(notificationPayload) {
+  if (!notificationPayload) return;
+
+  notificationListeners.forEach(listener => {
+    try { listener({ eventType: 'INSERT', new: notificationPayload, record: notificationPayload }); } catch (err) {}
+  });
+
+  try {
+    const channel = getSharedChatChannel();
+    if (channel) {
+      channel.send({
+        type: 'broadcast',
+        event: 'new_notification',
+        payload: notificationPayload
+      });
+    }
+  } catch (err) {
+    console.warn('Broadcast live notification notice:', err);
   }
 }
 
@@ -1395,13 +1450,77 @@ export function subscribeToLiveMessages(onMessageChange, onConversationChange) {
   if (onMessageChange) messageListeners.add(onMessageChange);
   if (onConversationChange) conversationListeners.add(onConversationChange);
 
-  // Initialize shared realtime channel
   getSharedChatChannel();
 
   return () => {
     if (onMessageChange) messageListeners.delete(onMessageChange);
     if (onConversationChange) conversationListeners.delete(onConversationChange);
   };
+}
+
+export function subscribeToNotifications(onNotificationChange) {
+  if (onNotificationChange) notificationListeners.add(onNotificationChange);
+  getSharedChatChannel();
+  return () => {
+    if (onNotificationChange) notificationListeners.delete(onNotificationChange);
+  };
+}
+
+export function subscribeToOrders(onOrderChange) {
+  if (onOrderChange) orderListeners.add(onOrderChange);
+  getSharedChatChannel();
+  return () => {
+    if (onOrderChange) orderListeners.delete(onOrderChange);
+  };
+}
+
+export async function fetchNotificationsFromSupabase() {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/messages?action=fetchNotifications', {
+      headers,
+      cache: 'no-store'
+    });
+    const data = await res.json();
+    return data.notifications || [];
+  } catch { return []; }
+}
+
+export async function createNotificationInSupabase(notif) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/messages', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ action: 'createNotification', payload: notif })
+    });
+    const data = await res.json();
+    return data.notification || notif;
+  } catch { return notif; }
+}
+
+export async function markNotificationAsReadInSupabase(id) {
+  try {
+    const headers = await getAuthHeaders();
+    await fetch('/api/messages', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ action: 'markNotificationRead', payload: { id } })
+    });
+    return true;
+  } catch { return false; }
+}
+
+export async function markAllNotificationsAsReadInSupabase() {
+  try {
+    const headers = await getAuthHeaders();
+    await fetch('/api/messages', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ action: 'markAllNotificationsRead', payload: {} })
+    });
+    return true;
+  } catch { return false; }
 }
 
 // ============================================================

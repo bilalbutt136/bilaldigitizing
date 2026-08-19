@@ -163,6 +163,44 @@ export async function POST(request) {
           }
         }
       }
+
+      // Automatically create notifications in public.notifications
+      try {
+        const nowIso = new Date().toISOString();
+        await supabase.from('notifications').insert([
+          {
+            id: `notif-ord-${mappedDbRow.id}-admin`,
+            user_id: user?.id || null,
+            recipient_role: 'admin',
+            recipient_email: null,
+            title: `🚨 New Order #${mappedDbRow.id}`,
+            message: `Received from ${mappedDbRow.client_name} (${clientEmail}) for ${mappedDbRow.service_category}`,
+            type: 'info',
+            link: '/admin-portal',
+            order_id: mappedDbRow.id,
+            read: false,
+            created_at: nowIso,
+            updated_at: nowIso
+          },
+          {
+            id: `notif-ord-${mappedDbRow.id}-client`,
+            user_id: user?.id || null,
+            recipient_role: 'client',
+            recipient_email: clientEmail,
+            title: `🎉 Order #${mappedDbRow.id} Placed!`,
+            message: `Your digitizing order has been received and pathing has started.`,
+            type: 'success',
+            link: '/client-portal',
+            order_id: mappedDbRow.id,
+            read: false,
+            created_at: nowIso,
+            updated_at: nowIso
+          }
+        ]);
+      } catch (notifErr) {
+        console.warn('Auto notification insert notice:', notifErr.message);
+      }
+
       return NextResponse.json({ success: true, order: insertedOrder[0] });
     }
 
@@ -260,6 +298,47 @@ export async function POST(request) {
         }
       }
 
+      // Automatically create status change notification in public.notifications
+      try {
+        const nowIso = new Date().toISOString();
+        const clientEmail = (targetOrder?.client_email || '').toLowerCase().trim();
+        const resolvedOrderId = targetOrder?.id || rawId;
+
+        if (newStatus === 'delivered') {
+          await supabase.from('notifications').insert([{
+            id: `notif-deliv-${resolvedOrderId}-${Date.now()}`,
+            user_id: null,
+            recipient_role: 'client',
+            recipient_email: clientEmail,
+            title: `📦 Files Ready: Order #${resolvedOrderId}`,
+            message: `Your production embroidery/vector files and QC sew-out preview are ready for download!`,
+            type: 'success',
+            link: '/client-portal',
+            order_id: resolvedOrderId,
+            read: false,
+            created_at: nowIso,
+            updated_at: nowIso
+          }]);
+        } else if (newStatus === 'completed') {
+          await supabase.from('notifications').insert([{
+            id: `notif-comp-${resolvedOrderId}-${Date.now()}`,
+            user_id: null,
+            recipient_role: 'admin',
+            recipient_email: null,
+            title: `✅ Order #${resolvedOrderId} Completed`,
+            message: `Client accepted final deliverables for Order #${resolvedOrderId}.`,
+            type: 'success',
+            link: '/admin-portal',
+            order_id: resolvedOrderId,
+            read: false,
+            created_at: nowIso,
+            updated_at: nowIso
+          }]);
+        }
+      } catch (notifErr) {
+        console.warn('Status change notification notice:', notifErr.message);
+      }
+
       return NextResponse.json({ success: true });
     }
 
@@ -347,6 +426,27 @@ export async function POST(request) {
       }
       await supabase.from('revisions').insert([{ order_id: orderId, details: instructions, status: 'pending' }]);
       await supabase.from('orders').update({ status: 'revision_requested', updated_at: new Date().toISOString() }).eq('id', orderId);
+      
+      try {
+        const nowIso = new Date().toISOString();
+        await supabase.from('notifications').insert([{
+          id: `notif-rev-${orderId}-${Date.now()}`,
+          user_id: user?.id || null,
+          recipient_role: 'admin',
+          recipient_email: null,
+          title: `🔄 Revision Requested: Order #${orderId}`,
+          message: instructions ? `Notes: ${instructions.slice(0, 100)}` : 'Client requested modifications.',
+          type: 'warning',
+          link: '/admin-portal',
+          order_id: orderId,
+          read: false,
+          created_at: nowIso,
+          updated_at: nowIso
+        }]);
+      } catch (notifErr) {
+        console.warn('Revision notification insert notice:', notifErr.message);
+      }
+
       return NextResponse.json({ success: true });
     }
 

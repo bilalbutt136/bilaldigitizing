@@ -151,8 +151,14 @@ export const ClientLiveChatWidget = () => {
           conversation_id: record.conversation_id,
           sender: record.sender,
           senderName: record.sender === 'admin' ? 'Support' : (record.sender_name || cleanName),
+          sender_name: record.sender_name,
           text: record.text,
           attachment: record.attachment,
+          attachment_url: record.attachment_url || null,
+          attachment_name: record.attachment_name || record.attachment || null,
+          attachment_size: record.attachment_size || null,
+          attachment_type: record.attachment_type || null,
+          reply_to: record.reply_to || null,
           is_read: record.is_read || false,
           timestamp: record.timestamp || record.created_at || new Date().toISOString()
         };

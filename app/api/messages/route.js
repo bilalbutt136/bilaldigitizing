@@ -128,6 +128,29 @@ export async function GET(request) {
       return NextResponse.json({ messages: mappedMessages });
     }
 
+    if (action === 'fetchNotifications') {
+      const cleanUserEmail = (user?.email || emailParam || '').toLowerCase().trim();
+      let notifQuery = supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(50);
+
+      if (!isAdmin) {
+        if (cleanUserEmail && cleanUserEmail !== 'client@studio.com') {
+          notifQuery = notifQuery.or(`recipient_email.ilike.${cleanUserEmail},recipient_role.eq.client,recipient_role.eq.all`);
+        } else {
+          notifQuery = notifQuery.or(`recipient_role.eq.client,recipient_role.eq.all`);
+        }
+      } else {
+        notifQuery = notifQuery.or(`recipient_role.eq.admin,recipient_role.eq.all`);
+      }
+
+      const { data: notifData, error: notifErr } = await notifQuery;
+      if (notifErr) {
+        console.warn('[Messages API fetchNotifications notice]:', notifErr.message);
+        return NextResponse.json({ notifications: [] });
+      }
+
+      return NextResponse.json({ notifications: notifData || [] });
+    }
+
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error) {
     console.error('[Messages API GET]', error);
@@ -367,6 +390,66 @@ export async function POST(request) {
         }
       }
       
+      return NextResponse.json({ success: true });
+    }
+
+    if (action === 'createNotification') {
+      const notif = payload;
+      const nowIso = new Date().toISOString();
+      const notifRow = {
+        id: notif.id || `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        user_id: user?.id || null,
+        recipient_role: notif.recipient_role || notif.recipientRole || (isAdmin ? 'admin' : 'client'),
+        recipient_email: notif.recipient_email || notif.recipientEmail || null,
+        title: notif.title || 'System Notification',
+        message: notif.message || '',
+        type: notif.type || 'info',
+        link: notif.link || null,
+        order_id: notif.order_id || notif.orderId || null,
+        read: false,
+        created_at: nowIso,
+        updated_at: nowIso
+      };
+
+      const { data: insertedNotif, error: notifInsertErr } = await supabase
+        .from('notifications')
+        .insert([notifRow])
+        .select();
+
+      if (notifInsertErr) {
+        console.warn('createNotification DB notice:', notifInsertErr.message);
+      }
+
+      return NextResponse.json({ success: true, notification: insertedNotif ? insertedNotif[0] : notifRow });
+    }
+
+    if (action === 'markNotificationRead') {
+      const { notification_id, id } = payload;
+      const targetId = notification_id || id;
+      if (targetId) {
+        await supabase
+          .from('notifications')
+          .update({ read: true, updated_at: new Date().toISOString() })
+          .eq('id', targetId);
+      }
+      return NextResponse.json({ success: true });
+    }
+
+    if (action === 'markAllNotificationsRead') {
+      const cleanUserEmail = (user?.email || payload.clientEmail || '').toLowerCase().trim();
+      const nowIso = new Date().toISOString();
+
+      if (isAdmin) {
+        await supabase
+          .from('notifications')
+          .update({ read: true, updated_at: nowIso })
+          .or('recipient_role.eq.admin,recipient_role.eq.all');
+      } else if (cleanUserEmail) {
+        await supabase
+          .from('notifications')
+          .update({ read: true, updated_at: nowIso })
+          .or(`recipient_email.ilike.${cleanUserEmail},recipient_role.eq.client,recipient_role.eq.all`);
+      }
       return NextResponse.json({ success: true });
     }
 

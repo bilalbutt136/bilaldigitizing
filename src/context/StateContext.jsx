@@ -35,6 +35,14 @@ import {
   saveHeroServiceViaApi,
   fetchConversations,
   subscribeToLiveMessages,
+  fetchNotificationsFromSupabase,
+  createNotificationInSupabase,
+  markNotificationAsReadInSupabase,
+  markAllNotificationsAsReadInSupabase,
+  broadcastLiveNotification,
+  subscribeToNotifications,
+  subscribeToOrders,
+  getAuthHeaders,
   ORDER_STATUSES,
   validateStatusTransition
 } from '../services/supabaseService';
@@ -322,12 +330,19 @@ export const StateProvider = ({ children }) => {
     } catch {}
   };
 
-  const addNotification = (notif) => {
+  const addNotification = (notif, syncToBackend = true) => {
     if (!notif) return;
     const newNotif = {
       id: notif.id || `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      timestamp: notif.timestamp || new Date().toISOString(),
-      read: false,
+      timestamp: notif.timestamp || notif.created_at || new Date().toISOString(),
+      created_at: notif.created_at || notif.timestamp || new Date().toISOString(),
+      read: notif.read || false,
+      title: notif.title || 'Notification',
+      message: notif.message || '',
+      type: notif.type || 'info',
+      link: notif.link || null,
+      order_id: notif.order_id || notif.orderId || null,
+      orderId: notif.order_id || notif.orderId || null,
       ...notif
     };
     setNotifications(prev => {
@@ -346,6 +361,11 @@ export const StateProvider = ({ children }) => {
     if (notif.showToast !== false && notif.title) {
       showToast(`${notif.title}${notif.message ? `: ${notif.message}` : ''}`, notif.type || 'info');
     }
+
+    if (syncToBackend && isSupabaseConfigured) {
+      createNotificationInSupabase(newNotif).catch(() => {});
+      broadcastLiveNotification(newNotif);
+    }
   };
 
   const markNotificationAsRead = (id) => {
@@ -355,6 +375,9 @@ export const StateProvider = ({ children }) => {
       saveNotificationsToStorage(nextList);
       return nextList;
     });
+    if (isSupabaseConfigured) {
+      markNotificationAsReadInSupabase(id).catch(() => {});
+    }
   };
 
   const markAllNotificationsAsRead = () => {
@@ -364,6 +387,27 @@ export const StateProvider = ({ children }) => {
       saveNotificationsToStorage(nextList);
       return nextList;
     });
+    if (isSupabaseConfigured) {
+      markAllNotificationsAsReadInSupabase().catch(() => {});
+    }
+  };
+
+  const openOrderTrackerDrawer = (orderOrId) => {
+    if (!orderOrId) return;
+    if (typeof orderOrId === 'object' && (orderOrId.id || orderOrId.title)) {
+      setSelectedOrderForDrawer(orderOrId);
+      return;
+    }
+    const cleanId = String(orderOrId).trim().replace(/^#+/, '');
+    const found = orders.find(o => {
+      const oClean = String(o.id || '').trim().replace(/^#+/, '');
+      return oClean === cleanId || o.id === orderOrId || o.id === `#${cleanId}`;
+    });
+    if (found) {
+      setSelectedOrderForDrawer(found);
+    } else {
+      setSelectedOrderForDrawer({ id: `#${cleanId}`, title: `Order #${cleanId}`, status: 'in_progress' });
+    }
   };
 
   const unreadNotificationsCount = Array.isArray(notifications) ? notifications.filter(n => !n.read).length : 0;
@@ -667,37 +711,15 @@ export const StateProvider = ({ children }) => {
       window.addEventListener('storage', handleStorageSync);
     }
 
-    // Supabase Realtime: Global Live Chat & Order Lifecycle Notifications
-    let messageChannel = null;
-    if (isSupabaseConfigured && supabase) {
-      messageChannel = supabase.channel(`global-notifications-state-${Date.now()}`);
-      
-      // 1. Live Messages listener: strictly updates Inbox counter and audio alert (never pollutes Notification Bell)
-      messageChannel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
-        const msg = payload.new;
-        if (!msg) return;
-        
-        let currentRole = 'customer';
-        try {
-          const savedUser = localStorage.getItem('bdigi_auth_user');
-          if (savedUser) currentRole = JSON.parse(savedUser).role || 'customer';
-        } catch {}
+    // Supabase Realtime: Unified Live Chat, Notifications & Orders Subscriptions
+    let unsubscribeNotifs = null;
+    let unsubscribeOrders = null;
 
-        if (msg.sender === 'client' && currentRole === 'admin') {
-          playNotificationSound('chat');
-          showToast(`💬 New inbox message from ${msg.sender_name || 'Client'}`, 'info');
-        } else if ((msg.sender === 'admin' || msg.sender === 'digitizer') && currentRole !== 'admin') {
-          playNotificationSound('chat');
-          showToast(`💬 New inbox message from ${msg.sender_name || 'Studio Support'}`, 'info');
-        }
-        refreshUnreadChatCount();
-      });
+    if (isSupabaseConfigured) {
+      unsubscribeNotifs = subscribeToNotifications((payload) => {
+        const notif = payload.new || payload.record;
+        if (!notif) return;
 
-      // 2. Live Orders listener
-      messageChannel.on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
-        const ord = payload.new;
-        if (!ord) return;
-        
         let currentRole = 'customer';
         let currentUserEmail = '';
         try {
@@ -709,36 +731,43 @@ export const StateProvider = ({ children }) => {
           }
         } catch {}
 
-        const isClientOwner = currentUserEmail && (ord.client_email || ord.clientEmail || '').toLowerCase().trim() === currentUserEmail;
+        const notifRole = notif.recipient_role || notif.recipientRole || 'all';
+        const notifEmail = (notif.recipient_email || notif.recipientEmail || '').toLowerCase().trim();
 
-        if (payload.eventType === 'INSERT') {
-          if (currentRole === 'admin') {
-            addNotification({
-              id: `ord-new-${ord.id}`,
-              title: `🚨 New Order ${formatOrderId(ord.id)}`,
-              message: `Received from ${ord.client_name || ord.clientName || ord.client_email || 'Client'}`,
-              type: 'info',
-              link: '/admin-portal',
-              read: false
-            });
-          }
-        } else if (payload.eventType === 'UPDATE') {
-          if (isClientOwner) {
-            addNotification({
-              id: `ord-upd-${ord.id}-${ord.status}`,
-              title: `📦 Order ${formatOrderId(ord.id)} Updated`,
-              message: `Status is now ${String(ord.status || '').toUpperCase()}`,
-              type: 'info',
-              link: '/client-portal',
-              read: false
-            });
-          }
+        const isForMe = 
+          notifRole === 'all' ||
+          (currentRole === 'admin' && notifRole === 'admin') ||
+          (currentRole !== 'admin' && (notifRole === 'client' || (notifEmail && notifEmail === currentUserEmail)));
+
+        if (isForMe) {
+          addNotification({
+            id: notif.id,
+            title: notif.title,
+            message: notif.message,
+            type: notif.type || 'info',
+            link: notif.link,
+            order_id: notif.order_id || notif.orderId,
+            orderId: notif.order_id || notif.orderId,
+            timestamp: notif.created_at || notif.timestamp || new Date().toISOString(),
+            read: notif.read || false
+          }, false);
         }
       });
 
-      messageChannel.subscribe();
-    }
+      unsubscribeOrders = subscribeToOrders(async (payload) => {
+        const ord = payload.new || payload.record;
+        if (!ord) return;
 
+        try {
+          const freshOrders = await fetchOrdersFromSupabase();
+          if (freshOrders && Array.isArray(freshOrders)) {
+            setOrders(freshOrders);
+          }
+        } catch (err) {
+          console.warn('Realtime order update fetch notice:', err);
+        }
+      });
+    }
 
     let authSubscription = null;
     if (isSupabaseConfigured && supabase) {
@@ -787,6 +816,33 @@ export const StateProvider = ({ children }) => {
               if (!cancelled && freshOrders) setOrders(freshOrders);
             });
 
+            fetchNotificationsFromSupabase().then(freshNotifs => {
+              if (!cancelled && Array.isArray(freshNotifs) && freshNotifs.length > 0) {
+                setNotifications(prev => {
+                  const safePrev = Array.isArray(prev) ? prev : [];
+                  const idSet = new Set(safePrev.map(n => n.id));
+                  const merged = [...safePrev];
+                  for (const fn of freshNotifs) {
+                    if (!idSet.has(fn.id)) {
+                      merged.push({
+                        id: fn.id,
+                        title: fn.title,
+                        message: fn.message,
+                        type: fn.type || 'info',
+                        link: fn.link,
+                        order_id: fn.order_id,
+                        orderId: fn.order_id,
+                        timestamp: fn.created_at || fn.timestamp,
+                        read: fn.read || false
+                      });
+                    }
+                  }
+                  saveNotificationsToStorage(merged);
+                  return merged;
+                });
+              }
+            });
+
             try {
               await upsertClientInSupabase({ ...uData, role });
             } catch (err) {
@@ -802,44 +858,17 @@ export const StateProvider = ({ children }) => {
       authSubscription = authListener?.subscription;
     }
 
-    // Supabase Realtime: Instant Bi-Directional Order Synchronization
-    let ordersLiveChannel = null;
-    if (isSupabaseConfigured && supabase) {
-      ordersLiveChannel = supabase.channel(`orders-live-sync-${Date.now()}`);
-      
-      const orderTables = ['orders', 'order_files', 'order_messages', 'revisions', 'transactions', 'clients'];
-      orderTables.forEach(tbl => {
-        ordersLiveChannel.on('postgres_changes', { event: '*', schema: 'public', table: tbl }, async () => {
-          try {
-            const freshOrders = await fetchOrdersFromSupabase();
-            if (freshOrders && Array.isArray(freshOrders)) {
-              setOrders(freshOrders);
-            }
-            if (tbl === 'clients') {
-              const freshClients = await fetchClientsFromSupabase();
-              if (freshClients && freshClients.length > 0) {
-                setClients(freshClients);
-              }
-            }
-          } catch (syncErr) {
-            console.warn('Realtime order sync error:', syncErr);
-          }
-        });
-      });
-      ordersLiveChannel.subscribe();
-    }
-
     return () => {
       cancelled = true;
       authSubscription?.unsubscribe();
+      if (typeof unsubscribeNotifs === 'function') {
+        unsubscribeNotifs();
+      }
+      if (typeof unsubscribeOrders === 'function') {
+        unsubscribeOrders();
+      }
       if (catalogChannel && supabase) {
         supabase.removeChannel(catalogChannel);
-      }
-      if (messageChannel && supabase) {
-        supabase.removeChannel(messageChannel);
-      }
-      if (ordersLiveChannel && supabase) {
-        supabase.removeChannel(ordersLiveChannel);
       }
     };
   }, []);
@@ -1059,9 +1088,10 @@ export const StateProvider = ({ children }) => {
   // Helper to trigger email notifications
   const triggerEmailNotification = async (type, orderObj = {}) => {
     try {
+      const headers = await getAuthHeaders();
       await fetch('/api/email', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           type,
           orderId: orderObj.id || orderObj.orderId,
@@ -1646,7 +1676,7 @@ export const StateProvider = ({ children }) => {
       orderWizardInitialData, openOrderWizard,
       isStoreOrderModalOpen, setIsStoreOrderModalOpen,
       selectedStoreItem, setSelectedStoreItem, openStoreOrderModal,
-      selectedOrderForDrawer, setSelectedOrderForDrawer,
+      selectedOrderForDrawer, setSelectedOrderForDrawer, openOrderTrackerDrawer,
       isPricingSettingsOpen, setIsPricingSettingsOpen,
       walletBalance, setWalletBalance,
       isDepositModalOpen, setIsDepositModalOpen,

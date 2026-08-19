@@ -5,10 +5,6 @@ import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 export async function POST(req) {
   try {
     const { user, isAdmin } = await getServerAuthUser(req);
-    if (!user) {
-      return NextResponse.json({ success: false, error: 'Unauthorized: Authentication required.' }, { status: 401 });
-    }
-
     const body = await req.json().catch(() => ({}));
     const { 
       type, 
@@ -29,6 +25,11 @@ export async function POST(req) {
       return NextResponse.json({ success: false, error: 'Invalid email notification type.' }, { status: 400 });
     }
 
+    // Require either active user session OR valid orderId / clientEmail
+    if (!user && !orderId && !clientEmail && !recipientEmail) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Authentication or valid order payload required.' }, { status: 401 });
+    }
+
     const resendApiKey = process.env.RESEND_API_KEY;
     if (!resendApiKey) {
       console.warn('RESEND_API_KEY is not set. Email notification bypassed.');
@@ -42,7 +43,7 @@ export async function POST(req) {
     const fallbackAdmin = process.env.MASTER_ADMIN_EMAIL || 'shahidbutt59191@gmail.com';
     
     const targetAdminEmail = (adminEmail || fallbackAdmin).toLowerCase().trim();
-    const targetClientEmail = (clientEmail || user.email || '').toLowerCase().trim();
+    const targetClientEmail = (clientEmail || user?.email || recipientEmail || '').toLowerCase().trim();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
 
     // Helper to send email with automatic domain fallback if unverified
