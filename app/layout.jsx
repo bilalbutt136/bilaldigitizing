@@ -132,10 +132,12 @@ export default function RootLayout({ children }) {
         <StateProvider>
           <ErrorBoundary>
             <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-              <AnnouncementBar />
-              <Suspense fallback={<header style={{ minHeight: '60px', background: '#ffffff' }} />}>
-                <HeaderNav />
-              </Suspense>
+              <div className="desktop-website-wrapper">
+                <AnnouncementBar />
+                <Suspense fallback={<header style={{ minHeight: '60px', background: '#ffffff' }} />}>
+                  <HeaderNav />
+                </Suspense>
+              </div>
               <main style={{ flex: 1 }}>
                 <Suspense fallback={
                   <div style={{ padding: '3rem 1.5rem', maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
@@ -146,7 +148,10 @@ export default function RootLayout({ children }) {
                   {children}
                 </Suspense>
               </main>
-              <Footer />
+              <div className="desktop-website-wrapper">
+                <Footer />
+                <VisitorPromotionBanner />
+              </div>
 
               {/* Global Interactive Modals & Drawers */}
               <AuthModal />
@@ -159,7 +164,6 @@ export default function RootLayout({ children }) {
               <ToastContainer />
               <GlobalUploadModal />
               <MetaPixelTracker />
-              <VisitorPromotionBanner />
               <PWAInstallBanner />
               <PWARegistrar />
             </div>

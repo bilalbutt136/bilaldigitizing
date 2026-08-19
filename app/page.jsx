@@ -9,7 +9,7 @@ import { WhyChooseUs } from '../src/components/public/WhyChooseUs';
 import { PortfolioPreview } from '../src/components/public/PortfolioPreview';
 import { TestimonialsFAQ } from '../src/components/public/TestimonialsFAQ';
 import { FinalCTA } from '../src/components/public/FinalCTA';
-
+import { BDigitizingMobileApp } from '../src/components/mobile/BDigitizingMobileApp';
 import { normalizeCategory } from '../src/utils/categoryUtils';
 
 export default function HomePage() {
@@ -22,17 +22,25 @@ export default function HomePage() {
 
   return (
     <>
-      <HeroSection />
-      <ServicesSection />
-      {activeTab === 'all' && (
-        <>
-          <TrustStatsBar />
-          <WhyChooseUs />
-          <PortfolioPreview />
-          <TestimonialsFAQ />
-          <FinalCTA />
-        </>
-      )}
+      {/* 1. NATIVE MOBILE APP EXPERIENCE (Never loads full bulky website on mobile) */}
+      <div className="mobile-app-wrapper">
+        <BDigitizingMobileApp />
+      </div>
+
+      {/* 2. DESKTOP WORKSPACE / MARKETING VIEW */}
+      <div className="desktop-website-wrapper">
+        <HeroSection />
+        <ServicesSection />
+        {activeTab === 'all' && (
+          <>
+            <TrustStatsBar />
+            <WhyChooseUs />
+            <PortfolioPreview />
+            <TestimonialsFAQ />
+            <FinalCTA />
+          </>
+        )}
+      </div>
     </>
   );
 }
