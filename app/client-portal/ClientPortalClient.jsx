@@ -1,22 +1,27 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useAppState } from '../../src/context/StateContext';
 import { CustomerDashboard } from '../../src/components/customer/CustomerDashboard';
 import { BDigitizingMobileApp } from '../../src/components/mobile/BDigitizingMobileApp';
+import { useNavigate } from '../../src/utils/navigation';
 
 export function ClientPortalClient() {
-  const [isMounted, setIsMounted] = useState(false);
-  const { setCurrentView, isAuthenticated, isAuthInitialized, setIsAuthModalOpen, setAuthModalMode, mobileMode } = useAppState();
+  const navigate = useNavigate();
+  const { 
+    isAuthenticated, 
+    isAuthInitialized, 
+    authUser, 
+    mobileMode, 
+    setCurrentView,
+    setIsAuthModalOpen,
+    setAuthModalMode
+  } = useAppState();
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    if (!isAuthInitialized) return;
 
-  useEffect(() => {
-    if (!isMounted || !isAuthInitialized) return;
-    
-    let isUserLoggedIn = isAuthenticated;
+    let isUserLoggedIn = isAuthenticated || !!authUser;
     if (!isUserLoggedIn && typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem('bdigi_auth_user');
@@ -30,21 +35,11 @@ export function ClientPortalClient() {
       setAuthModalMode('login');
       setIsAuthModalOpen(true);
       setCurrentView('public');
+      navigate('/');
     } else {
       setCurrentView('customer');
     }
-  }, [isMounted, isAuthenticated, isAuthInitialized, setCurrentView, setIsAuthModalOpen, setAuthModalMode]);
-
-  if (!isMounted || (!isAuthInitialized && !isAuthenticated)) {
-    return (
-      <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ margin: '0 auto 1rem', width: '36px', height: '36px', border: '3px solid #e2e8f0', borderTopColor: 'var(--orange-500)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-          <div style={{ fontSize: '0.9rem', color: 'var(--navy-800)', fontWeight: 600 }}>Loading Studio App...</div>
-        </div>
-      </div>
-    );
-  }
+  }, [isAuthInitialized, isAuthenticated, authUser, setCurrentView, setIsAuthModalOpen, setAuthModalMode, navigate]);
 
   if (mobileMode === 'app') {
     return (
@@ -54,9 +49,5 @@ export function ClientPortalClient() {
     );
   }
 
-  return (
-    <div className="customer-portal-desktop-wrapper">
-      <CustomerDashboard />
-    </div>
-  );
+  return <CustomerDashboard />;
 }
