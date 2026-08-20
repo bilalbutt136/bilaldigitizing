@@ -605,52 +605,30 @@ export const AdminChatInbox = () => {
     ));
   };
 
-  // Separate into 2 core messaging sections: Customer Inbox vs Support Queue
-  const orderConversations = useMemo(() => {
-    return conversations.filter(c => {
-      const info = resolveThreadInfo(c, orders);
-      return !info.isSupport && (info.isOrder || info.isDirectInbox);
+  const unreadTotal = useMemo(() => {
+    return conversations.reduce((sum, c) => sum + getThreadUnreadCount(c), 0);
+  }, [conversations]);
+
+  // Filter conversations list based on subFilter and search
+  const filteredConversations = useMemo(() => {
+    return conversations.filter(conv => {
+      const info = resolveThreadInfo(conv, orders);
+
+      if (subFilter === 'unread') {
+        if (getThreadUnreadCount(conv) === 0) return false;
+      }
+
+      if (!searchTerm.trim()) return true;
+      const term = searchTerm.toLowerCase().trim();
+      return (
+        (conv.clientName || '').toLowerCase().includes(term) ||
+        (conv.clientEmail || '').toLowerCase().includes(term) ||
+        (info.customerName || '').toLowerCase().includes(term) ||
+        (info.customerEmail || '').toLowerCase().includes(term) ||
+        (conv.messages || []).some(m => (m.text || '').toLowerCase().includes(term))
+      );
     });
-  }, [conversations, orders]);
-
-  const supportConversations = useMemo(() => {
-    return conversations.filter(c => {
-      const info = resolveThreadInfo(c, orders);
-      return info.isSupport;
-    });
-  }, [conversations, orders]);
-
-  const orderUnreadTotal = useMemo(() => {
-    return orderConversations.reduce((sum, c) => sum + getThreadUnreadCount(c), 0);
-  }, [orderConversations]);
-
-  const supportUnreadTotal = useMemo(() => {
-    return supportConversations.reduce((sum, c) => sum + getThreadUnreadCount(c), 0);
-  }, [supportConversations]);
-
-  const currentSectionThreads = activeSection === 'inbox' ? orderConversations : supportConversations;
-
-  // Filter conversations list based on activeSection, subFilter, and search
-  const filteredConversations = currentSectionThreads.filter(conv => {
-    const info = resolveThreadInfo(conv, orders);
-
-    if (subFilter === 'unread') {
-      if (getThreadUnreadCount(conv) === 0) return false;
-    }
-
-    if (!searchTerm.trim()) return true;
-    const term = searchTerm.toLowerCase().trim();
-    return (
-      (conv.clientName || '').toLowerCase().includes(term) ||
-      (conv.clientEmail || '').toLowerCase().includes(term) ||
-      (info.customerName || '').toLowerCase().includes(term) ||
-      (info.customerEmail || '').toLowerCase().includes(term) ||
-      (info.orderNum || '').toLowerCase().includes(term) ||
-      (info.orderTitle || '').toLowerCase().includes(term) ||
-      (info.serviceCategory || '').toLowerCase().includes(term) ||
-      (conv.messages || []).some(m => (m.text || '').toLowerCase().includes(term))
-    );
-  });
+  }, [conversations, subFilter, searchTerm, orders]);
 
   const handleSendMessage = async (e) => {
     e?.preventDefault();
@@ -794,107 +772,35 @@ export const AdminChatInbox = () => {
           {/* Header */}
           <div style={{ padding: '0.85rem 1rem', borderBottom: '1.5px solid var(--color-border)', background: 'var(--color-surface, #ffffff)' }}>
             
-            {/* Primary Section Switcher: Customer Inbox vs Support */}
+            {/* Header: WhatsApp Style Customer List */}
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              background: '#f1f5f9',
-              padding: '3px',
-              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               marginBottom: '0.75rem',
-              gap: '4px'
+              padding: '0.2rem 0.25rem'
             }}>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveSection('inbox');
-                  const first = orderConversations[0];
-                  if (first && !orderConversations.some(c => c.id === activeChatId)) {
-                    setActiveChatId(first.id);
-                  }
-                }}
-                style={{
-                  padding: '0.45rem 0.5rem',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: activeSection === 'inbox' ? '#ffffff' : 'transparent',
-                  color: activeSection === 'inbox' ? 'var(--orange-600)' : 'var(--navy-700)',
-                  fontWeight: activeSection === 'inbox' ? 800 : 600,
-                  fontSize: '0.78rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '5px',
-                  cursor: 'pointer',
-                  boxShadow: activeSection === 'inbox' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <Layers size={14} style={{ color: activeSection === 'inbox' ? 'var(--orange-600)' : '#64748b' }} />
-                <span>Customer Inbox</span>
-                {orderUnreadTotal > 0 ? (
-                  <span style={{
-                    background: '#ef4444',
-                    color: '#ffffff',
-                    fontSize: '0.625rem',
-                    fontWeight: 900,
-                    padding: '1px 5px',
-                    borderRadius: '9999px'
-                  }}>
-                    {orderUnreadTotal}
-                  </span>
-                ) : (
-                  <span style={{ fontSize: '0.68rem', opacity: 0.65, fontWeight: 700 }}>
-                    ({orderConversations.length})
-                  </span>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveSection('support');
-                  const first = supportConversations[0];
-                  if (first && !supportConversations.some(c => c.id === activeChatId)) {
-                    setActiveChatId(first.id);
-                  }
-                }}
-                style={{
-                  padding: '0.45rem 0.5rem',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: activeSection === 'support' ? '#ffffff' : 'transparent',
-                  color: activeSection === 'support' ? 'var(--orange-600)' : 'var(--navy-700)',
-                  fontWeight: activeSection === 'support' ? 800 : 600,
-                  fontSize: '0.78rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '5px',
-                  cursor: 'pointer',
-                  boxShadow: activeSection === 'support' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <Headphones size={14} style={{ color: activeSection === 'support' ? 'var(--orange-600)' : '#64748b' }} />
-                <span>Support</span>
-                {supportUnreadTotal > 0 ? (
-                  <span style={{
-                    background: '#ef4444',
-                    color: '#ffffff',
-                    fontSize: '0.625rem',
-                    fontWeight: 900,
-                    padding: '1px 5px',
-                    borderRadius: '9999px'
-                  }}>
-                    {supportUnreadTotal}
-                  </span>
-                ) : (
-                  <span style={{ fontSize: '0.68rem', opacity: 0.65, fontWeight: 700 }}>
-                    ({supportConversations.length})
-                  </span>
-                )}
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <MessageSquare size={16} className="text-orange-500" />
+                <span style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                  Customer Chats
+                </span>
+                <span style={{ fontSize: '0.72rem', background: '#f1f5f9', color: 'var(--navy-700)', padding: '0.1rem 0.4rem', borderRadius: '9999px', fontWeight: 800 }}>
+                  {conversations.length}
+                </span>
+              </div>
+              {unreadTotal > 0 && (
+                <span style={{
+                  background: '#ef4444',
+                  color: '#ffffff',
+                  fontSize: '0.68rem',
+                  fontWeight: 900,
+                  padding: '0.1rem 0.45rem',
+                  borderRadius: '9999px'
+                }}>
+                  {unreadTotal} Unread
+                </span>
+              )}
             </div>
 
             {/* Search & Sub-Filter Bar */}
@@ -904,7 +810,7 @@ export const AdminChatInbox = () => {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={activeSection === 'inbox' ? "Search orders, customer, designs..." : "Search support inquiries, email..."}
+                placeholder="Search customers, emails, messages..."
                 style={{
                   width: '100%',
                   padding: '0.45rem 0.75rem 0.45rem 2.2rem',
@@ -940,7 +846,7 @@ export const AdminChatInbox = () => {
                   }}
                   onClick={() => setSubFilter('all')}
                 >
-                  All ({currentSectionThreads.length})
+                  All ({conversations.length})
                 </button>
                 <button
                   type="button"
@@ -953,7 +859,7 @@ export const AdminChatInbox = () => {
                   }}
                   onClick={() => setSubFilter('unread')}
                 >
-                  Unread ({currentSectionThreads.filter(c => getThreadUnreadCount(c) > 0).length})
+                  Unread ({unreadTotal})
                 </button>
               </div>
 
@@ -1028,19 +934,13 @@ export const AdminChatInbox = () => {
                     onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
                   >
                     <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
-                      {/* Avatar / Order Thumbnail */}
+                      {/* Avatar / Initials */}
                       <div style={{ position: 'relative', flexShrink: 0 }}>
-                        {info.isOrder ? (
-                          <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--navy-900)', color: 'var(--orange-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.75rem', border: '1px solid var(--orange-500)' }}>
-                            {info.orderNum ? info.orderNum.substring(0, 5) : 'ORD'}
-                          </div>
-                        ) : (
-                          <img
-                            src={conv.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(info.customerName)}&background=0f172a&color=fff`}
-                            alt={info.customerName}
-                            style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--border-color)' }}
-                          />
-                        )}
+                        <img
+                          src={conv.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(info.customerName)}&background=0f172a&color=fff`}
+                          alt={info.customerName}
+                          style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--border-color)' }}
+                        />
                         <span style={{
                           position: 'absolute',
                           bottom: -2,
@@ -1065,23 +965,14 @@ export const AdminChatInbox = () => {
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
-                          {info.isOrder ? (
-                            <span style={{ fontSize: '0.65rem', background: '#fff7ed', color: '#ea580c', border: '1px solid #fed7aa', padding: '0.05rem 0.35rem', borderRadius: '4px', fontWeight: 800, flexShrink: 0 }}>
-                              🧵 {info.serviceCategory} — {info.orderNum}
-                            </span>
-                          ) : info.isDirectInbox ? (
-                            <span style={{ fontSize: '0.65rem', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', padding: '0.05rem 0.35rem', borderRadius: '4px', fontWeight: 800, flexShrink: 0 }}>
-                              💬 Direct Inbox
-                            </span>
-                          ) : (
-                            <span style={{ fontSize: '0.65rem', background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', padding: '0.05rem 0.35rem', borderRadius: '4px', fontWeight: 800, flexShrink: 0 }}>
-                              🎧 Support
-                            </span>
-                          )}
-
                           {info.customerEmail && (
                             <span style={{ fontSize: '0.725rem', color: 'var(--navy-700)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {info.customerEmail}
+                            </span>
+                          )}
+                          {conv.orders && conv.orders.length > 0 && (
+                            <span style={{ fontSize: '0.65rem', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', padding: '0.05rem 0.35rem', borderRadius: '4px', fontWeight: 800, flexShrink: 0 }}>
+                              📦 {conv.orders.length} {conv.orders.length === 1 ? 'Order' : 'Orders'}
                             </span>
                           )}
                         </div>
@@ -1097,7 +988,7 @@ export const AdminChatInbox = () => {
                             textOverflow: 'ellipsis',
                             maxWidth: '175px'
                           }}>
-                            {lastMsg.sender === 'admin' ? 'You: ' : ''}{lastMsg.text || 'No messages yet'}
+                            {lastMsg.sender === 'admin' ? 'You: ' : ''}{lastMsg.text || (lastMsg.attachment ? `📎 Attachment` : 'No messages yet')}
                           </p>
 
                           {threadUnread > 0 && (
@@ -1202,43 +1093,55 @@ export const AdminChatInbox = () => {
 
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflow: 'hidden' }}>
-                    <h3 style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--color-text-primary, var(--navy-950))', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {activeInfo.isOrder ? `${activeInfo.serviceCategory} — ${activeInfo.orderNum}` : activeInfo.customerName}
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--color-text-primary, var(--navy-950))', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {activeInfo.customerName}
                     </h3>
                     <span style={{
                       fontSize: '0.65rem',
-                      padding: '0.05rem 0.35rem',
+                      padding: '0.05rem 0.4rem',
                       borderRadius: '4px',
-                      background: activeInfo.isOrder ? '#fff7ed' : (activeInfo.isDirectInbox ? '#eff6ff' : 'rgba(16, 185, 129, 0.1)'),
-                      color: activeInfo.isOrder ? '#ea580c' : (activeInfo.isDirectInbox ? '#2563eb' : '#10b981'),
-                      border: `1px solid ${activeInfo.isOrder ? '#fed7aa' : (activeInfo.isDirectInbox ? '#bfdbfe' : 'rgba(16, 185, 129, 0.25)')}`,
+                      background: '#ecfdf5',
+                      color: '#059669',
+                      border: '1px solid #a7f3d0',
                       fontWeight: 800,
                       whiteSpace: 'nowrap',
                       flexShrink: 0
                     }}>
-                      {activeInfo.isOrder ? 'Order' : (activeInfo.isDirectInbox ? 'Direct Inbox' : 'Support')}
+                      Direct WhatsApp Chat
                     </span>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    <span>Client: <strong style={{ color: 'var(--color-text-primary, var(--navy-800))' }}>{activeInfo.customerName}</strong></span>
                     {activeInfo.customerEmail && (
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>• {activeInfo.customerEmail}</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--navy-800)', fontWeight: 600 }}>{activeInfo.customerEmail}</span>
+                    )}
+                    {activeChat.orders && activeChat.orders.length > 0 && (
+                      <span style={{ color: 'var(--orange-600)', fontWeight: 700 }}>
+                        • {activeChat.orders.length} {activeChat.orders.length === 1 ? 'Order' : 'Orders'} Total
+                      </span>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* View Order Link if thread is for an active order */}
-              {activeInfo.isOrder && activeInfo.matchOrd && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedOrderForDrawer(activeInfo.matchOrd)}
-                  className="btn btn-sm btn-outline"
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 800, padding: '0.35rem 0.55rem', fontSize: '0.72rem', flexShrink: 0, whiteSpace: 'nowrap' }}
-                >
-                  Order <ChevronRight size={12} />
-                </button>
+              {/* View Customer Orders dropdown / trigger */}
+              {activeChat.orders && activeChat.orders.length > 0 && (
+                <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (activeChat.orders?.[0] && setSelectedOrderForDrawer) {
+                        setSelectedOrderForDrawer(activeChat.orders[0]);
+                      }
+                    }}
+                    className="btn btn-sm btn-outline"
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 800, padding: '0.35rem 0.55rem', fontSize: '0.72rem', whiteSpace: 'nowrap' }}
+                  >
+                    <ShoppingBag size={12} className="text-orange-500" />
+                    <span>Latest #{String(activeChat.orders[0].id).substring(0, 6).toUpperCase()}</span>
+                    <ChevronRight size={12} />
+                  </button>
+                </div>
               )}
             </div>
 
@@ -1422,34 +1325,32 @@ export const AdminChatInbox = () => {
                   <Paperclip size={16} />
                 </button>
 
-                {/* Custom Offer Button (Strictly available ONLY in Customer Inbox / Direct Chats / Orders, NEVER in Support) */}
-                {!activeInfo.isSupport && (
-                  <button
-                    type="button"
-                    onClick={() => setIsOfferModalOpen(true)}
-                    style={{
-                      background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.15))',
-                      border: '1.5px solid rgba(99, 102, 241, 0.4)',
-                      color: '#4f46e5',
-                      padding: '0 0.55rem',
-                      height: '36px',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      fontWeight: 800,
-                      fontSize: '0.78rem',
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                      transition: 'all 0.2s ease',
-                      whiteSpace: 'nowrap'
-                    }}
-                    title="Create & Send Custom Offer"
-                  >
-                    <Tag size={13} className="text-indigo-600" />
-                    <span>Offer</span>
-                  </button>
-                )}
+                {/* Custom Offer Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsOfferModalOpen(true)}
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.15))',
+                    border: '1.5px solid rgba(99, 102, 241, 0.4)',
+                    color: '#4f46e5',
+                    padding: '0 0.55rem',
+                    height: '36px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontWeight: 800,
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                    transition: 'all 0.2s ease',
+                    whiteSpace: 'nowrap'
+                  }}
+                  title="Create & Send Custom Offer"
+                >
+                  <Tag size={13} className="text-indigo-600" />
+                  <span>Offer</span>
+                </button>
 
                 <input
                   type="text"

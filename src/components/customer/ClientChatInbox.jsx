@@ -18,13 +18,7 @@ import WhatsAppChatMessage from '../common/WhatsAppChatMessage';
 import {
   MessageSquare,
   Send,
-  Search,
   Paperclip,
-  ChevronRight,
-  Sparkles,
-  Layers,
-  PenTool,
-  Package,
   Clock,
   CheckCheck,
   X,
@@ -32,12 +26,13 @@ import {
   Loader2,
   Reply,
   Headphones,
-  LifeBuoy,
-  Inbox,
-  ShoppingBag
+  ShoppingBag,
+  RotateCcw,
+  Sparkles,
+  ChevronDown,
+  ExternalLink
 } from 'lucide-react';
 
-// Format timestamp safely to human-readable string
 const parseMessageTime = (msg) => {
   if (!msg) return 0;
   const raw = msg.timestamp || msg.created_at || msg.createdAt || msg.time;
@@ -62,17 +57,11 @@ const formatChatTime = (timestamp) => {
   }
 };
 
-const isSupportId = (id) => {
-  if (!id) return false;
-  return id === 'general-support' || String(id).startsWith('support-');
-};
-
 export const ClientChatInbox = ({ initialOrderId = null }) => {
   const { 
     authUser, 
     currentUser, 
     orders = [], 
-    setOrders,
     setSelectedOrderForDrawer, 
     showToast,
     formatOrderId = (id) => `#${String(id || '').substring(0, 6).toUpperCase()}`
@@ -87,71 +76,26 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   const clientEmail = (activeUser.email || '').toLowerCase().trim();
   const clientName = activeUser.name || 'Client';
 
-  const cacheKey = useMemo(() => `bdigi_inbox_cache_${clientEmail || 'guest'}`, [clientEmail]);
-
-  const defaultDirectInboxId = useMemo(() => {
+  const canonicalChatId = useMemo(() => {
     return clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')
-      ? `inbox-${clientEmail}`
-      : 'inbox-client';
-  }, [clientEmail]);
-
-  const defaultSupportId = useMemo(() => {
-    return clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')
-      ? `support-${clientEmail}`
-      : 'general-support';
+      ? `chat-${clientEmail}`
+      : 'chat-guest';
   }, [clientEmail]);
 
   const [mounted, setMounted] = useState(false);
-  const [conversations, setConversations] = useState([]);
-  const isTargetingSupport = initialOrderId === 'support' || initialOrderId === 'general-support' || initialOrderId === 'help-support' || (initialOrderId && String(initialOrderId).startsWith('support-'));
-  const [activeSection, setActiveSection] = useState(isTargetingSupport ? 'support' : 'conversations');
-  const [subFilter, setSubFilter] = useState('all'); // 'all' | 'unread'
-  const [activeChatId, setActiveChatId] = useState(
-    initialOrderId
-      ? (isTargetingSupport ? (initialOrderId === 'general-support' || initialOrderId === 'help-support' || initialOrderId === 'support' ? defaultSupportId : initialOrderId) : (initialOrderId.startsWith('order-') ? initialOrderId : defaultDirectInboxId))
-      : defaultDirectInboxId
-  );
-
-  // Sync section & active chat when initialOrderId changes
-  useEffect(() => {
-    if (initialOrderId === 'support' || initialOrderId === 'general-support' || initialOrderId === 'help-support' || (initialOrderId && String(initialOrderId).startsWith('support-'))) {
-      setActiveSection('support');
-      setActiveChatId(defaultSupportId);
-    } else if (initialOrderId === 'inbox' || initialOrderId === 'working-chat' || initialOrderId === 'working' || initialOrderId === 'conversations') {
-      setActiveSection('conversations');
-      setActiveChatId(defaultDirectInboxId);
-    } else if (initialOrderId && String(initialOrderId).startsWith('order-')) {
-      setActiveSection('conversations');
-      setActiveChatId(initialOrderId);
-    }
-  }, [initialOrderId, defaultSupportId, defaultDirectInboxId]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [messageInput, setMessageInput] = useState('');
-  const [attachedFile, setAttachedFile] = useState(null); // { name, url, size, format }
+  const [attachedFile, setAttachedFile] = useState(null);
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
   const [isSupportTyping, setIsSupportTyping] = useState(false);
-  const [mobileView, setMobileView] = useState(initialOrderId ? 'chat' : 'list');
-  
+  const [isOrdersMenuOpen, setIsOrdersMenuOpen] = useState(false);
+
   const chatFeedRef = useRef(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-
-  // Instant local cache hydration on mount for zero-latency load on refresh
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setConversations(parsed);
-          }
-        }
-      } catch {}
-    }
-  }, [cacheKey]);
 
   const scrollToBottom = (behavior = 'smooth') => {
     if (chatFeedRef.current) {
@@ -167,739 +111,143 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     setTimeout(() => {
       if (messagesEndRef.current) {
         messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
-      } else if (chatFeedRef.current) {
-        chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
       }
-    }, 60);
-    setTimeout(() => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
-      } else if (chatFeedRef.current) {
-        chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
-      }
-    }, 220);
+    }, 80);
   };
 
-  // Build distinct thread lists for Normal Inbox and Customer Support
-  const buildThreadList = (remoteConvs = [], existingThreads = []) => {
-    const threadMap = new Map();
-    const existingMap = new Map((existingThreads || []).map(t => [t.id, t]));
-
-    // 1. Direct Private Studio Inbox Thread (Direct messaging between customer and admin)
-    const directId = defaultDirectInboxId;
-    const remoteDirectConvs = (remoteConvs || []).filter(c => 
-      c.id === directId || 
-      c.id === `direct-${clientEmail}` || 
-      c.id === 'inbox-client' ||
-      (c.id && (c.id.startsWith('inbox-') || c.id.startsWith('direct-')))
-    );
-    const existingDirectThreads = (existingThreads || []).filter(c => 
-      c.id === directId || 
-      c.id === `direct-${clientEmail}` || 
-      c.id === 'inbox-client' ||
-      c.isDirectInbox ||
-      (c.id && (c.id.startsWith('inbox-') || c.id.startsWith('direct-')))
-    );
-
-    const directMessagesMap = new Map();
-    existingDirectThreads.forEach(dt => {
-      (dt.messages || []).forEach(m => {
-        if (m && (m.id || m.text || m.attachment || m.attachment_url)) {
-          const key = m.id || `${m.sender}-${m.text}-${m.timestamp}`;
-          directMessagesMap.set(key, m);
+  const loadChatHistory = async () => {
+    if (!clientEmail) return;
+    try {
+      const convs = await fetchConversations(clientEmail);
+      const userConv = (convs || []).find(c => c.id === canonicalChatId || c.clientEmail === clientEmail) || convs?.[0];
+      if (userConv && Array.isArray(userConv.messages)) {
+        const sorted = [...userConv.messages].sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+        setMessages(sorted);
+      } else {
+        const directMsgs = await fetchChatMessages(canonicalChatId, clientEmail);
+        if (Array.isArray(directMsgs)) {
+          const sorted = [...directMsgs].sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+          setMessages(sorted);
         }
-      });
-    });
-    remoteDirectConvs.forEach(rc => {
-      (rc.messages || []).forEach(rm => {
-        if (rm && (rm.id || rm.text || rm.attachment || rm.attachment_url)) {
-          let matched = false;
-          for (const [key, existingMsg] of directMessagesMap.entries()) {
-            const isIdMatch = existingMsg.id && rm.id && existingMsg.id === rm.id;
-            const isTextMatch = existingMsg.text && rm.text && existingMsg.text === rm.text && existingMsg.sender === rm.sender && Math.abs(parseMessageTime(existingMsg) - parseMessageTime(rm)) < 20000;
-            const isAttachMatch = existingMsg.attachment_url && rm.attachment_url && existingMsg.attachment_url === rm.attachment_url;
-            if (isIdMatch || isTextMatch || isAttachMatch) {
-              directMessagesMap.set(key, { ...existingMsg, ...rm });
-              matched = true;
-              break;
-            }
-          }
-          if (!matched) {
-            const key = rm.id || `${rm.sender}-${rm.text}-${rm.timestamp}`;
-            directMessagesMap.set(key, rm);
-          }
-        }
-      });
-    });
-
-    let directMessages = Array.from(directMessagesMap.values());
-    if (directMessages.length === 0) {
-      directMessages = [
-        {
-          id: 'welcome-direct-msg',
-          conversation_id: directId,
-          sender: 'admin',
-          senderName: 'Studio Admin',
-          text: `Welcome to your private studio inbox, ${clientName}! Chat directly with our management and senior digitizing team here regarding any inquiries, custom quotes, or updates.`,
-          timestamp: new Date().toISOString()
-        }
-      ];
+      }
+    } catch (err) {
+      console.warn('Load chat history notice:', err);
+    } finally {
+      setLoading(false);
+      scrollToBottom('auto');
     }
-    directMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
-    const dirLastMsg = directMessages[directMessages.length - 1];
-    const dirLastTimestamp = dirLastMsg?.timestamp || existingDirectThreads[0]?.updatedAt || new Date().toISOString();
-    const dirLastTime = dirLastTimestamp && !isNaN(new Date(dirLastTimestamp).getTime())
-      ? new Date(dirLastTimestamp).getTime()
-      : Date.now();
-
-    const maxDirectUnread = Math.max(
-      ...existingDirectThreads.map(c => c.clientUnreadCount ?? 0),
-      ...remoteDirectConvs.map(c => c.clientUnreadCount ?? c.unreadCount ?? 0),
-      0
-    );
-
-    threadMap.set(directId, {
-      id: directId,
-      title: '💬 Studio Admin & Digitizers',
-      orderId: 'Direct Chat',
-      orderTitle: 'Direct Studio Administration & Digitizers',
-      serviceType: 'inbox',
-      serviceCategory: 'Direct Message',
-      isDirectInbox: true,
-      status: 'online',
-      unreadCount: maxDirectUnread,
-      clientUnreadCount: maxDirectUnread,
-      messages: directMessages,
-      lastMessageTime: dirLastTime,
-      updatedAt: dirLastTimestamp
-    });
-
-    // 2. Customer Support & Helpdesk Thread (Support channel for technical assistance & questions)
-    const generalId = defaultSupportId;
-    const remoteSupportConvs = (remoteConvs || []).filter(c => 
-      c.id === generalId || 
-      c.id === 'general-support' || 
-      (isSupportId(c.id) && !c.id?.startsWith('inbox-') && !c.id?.startsWith('direct-'))
-    );
-    const existingSupportThreads = (existingThreads || []).filter(c => 
-      (isSupportId(c.id) || c.id === generalId || c.isSupport) && !c.isDirectInbox && !c.id?.startsWith('inbox-') && !c.id?.startsWith('direct-')
-    );
-
-    const supportMessagesMap = new Map();
-    existingSupportThreads.forEach(st => {
-      (st.messages || []).forEach(m => {
-        if (m && (m.id || m.text || m.attachment || m.attachment_url)) {
-          const key = m.id || `${m.sender}-${m.text}-${m.timestamp}`;
-          supportMessagesMap.set(key, m);
-        }
-      });
-    });
-    remoteSupportConvs.forEach(rc => {
-      (rc.messages || []).forEach(rm => {
-        if (rm && (rm.id || rm.text || rm.attachment || rm.attachment_url)) {
-          let matched = false;
-          for (const [key, existingMsg] of supportMessagesMap.entries()) {
-            const isIdMatch = existingMsg.id && rm.id && existingMsg.id === rm.id;
-            const isTextMatch = existingMsg.text && rm.text && existingMsg.text === rm.text && existingMsg.sender === rm.sender && Math.abs(parseMessageTime(existingMsg) - parseMessageTime(rm)) < 20000;
-            const isAttachMatch = existingMsg.attachment_url && rm.attachment_url && existingMsg.attachment_url === rm.attachment_url;
-            if (isIdMatch || isTextMatch || isAttachMatch) {
-              supportMessagesMap.set(key, { ...existingMsg, ...rm });
-              matched = true;
-              break;
-            }
-          }
-          if (!matched) {
-            const key = rm.id || `${rm.sender}-${rm.text}-${rm.timestamp}`;
-            supportMessagesMap.set(key, rm);
-          }
-        }
-      });
-    });
-
-    let generalMessages = Array.from(supportMessagesMap.values());
-    if (generalMessages.length === 0) {
-      generalMessages = [
-        {
-          id: 'welcome-support-msg',
-          conversation_id: generalId,
-          sender: 'admin',
-          senderName: 'Support',
-          text: `Welcome to Customer Support, ${clientName}! How can our support team assist you today?`,
-          timestamp: new Date().toISOString()
-        }
-      ];
-    }
-    generalMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
-
-    const genLastMsg = generalMessages[generalMessages.length - 1];
-    const genLastTimestamp = genLastMsg?.timestamp || existingSupportThreads[0]?.updatedAt || new Date().toISOString();
-    const genLastTime = genLastTimestamp && !isNaN(new Date(genLastTimestamp).getTime())
-      ? new Date(genLastTimestamp).getTime()
-      : Date.now();
-
-    const maxSupportUnread = Math.max(
-      ...existingSupportThreads.map(c => c.clientUnreadCount ?? 0),
-      ...remoteSupportConvs.map(c => c.clientUnreadCount ?? c.unreadCount ?? 0),
-      0
-    );
-
-    threadMap.set(generalId, {
-      id: generalId,
-      title: '🎧 24/7 Customer Support',
-      orderId: 'Customer Support',
-      orderTitle: '24/7 Customer Support & Helpdesk',
-      serviceType: 'support',
-      serviceCategory: 'Support',
-      isSupport: true,
-      status: 'online',
-      unreadCount: maxSupportUnread,
-      clientUnreadCount: maxSupportUnread,
-      messages: generalMessages,
-      lastMessageTime: genLastTime,
-      updatedAt: genLastTimestamp
-    });
-
-    // 3. Order-specific Threads ONLY for orders that have chat history (or currently targeted)
-    const myOrders = Array.isArray(orders) ? orders.filter(o => {
-      const ordEmail = (o.client_email || o.clientEmail || '').toLowerCase().trim();
-      return !clientEmail || ordEmail === clientEmail || !ordEmail;
-    }) : [];
-
-    myOrders.forEach(ord => {
-      const orderThreadId = `order-${ord.id}`;
-      const remoteOrderConv = (remoteConvs || []).find(c => c.id === orderThreadId || c.orderId === ord.id || c.order_id === ord.id);
-      const existingOrderThread = existingMap.get(orderThreadId);
-
-      const orderMessagesMap = new Map();
-
-      // Order messages from local state
-      (existingOrderThread?.messages || []).forEach(m => {
-        if (m && (m.id || m.text || m.attachment || m.attachment_url)) {
-          const key = m.id || `${m.sender}-${m.text}-${m.timestamp}`;
-          orderMessagesMap.set(key, m);
-        }
-      });
-
-      // Order messages from order object
-      if (Array.isArray(ord.messages)) {
-        ord.messages.forEach(m => {
-          const msgObj = {
-            id: m.id || `msg-${Math.random()}`,
-            conversation_id: orderThreadId,
-            sender: m.senderRole === 'admin' ? 'admin' : (m.sender === 'admin' ? 'admin' : 'client'),
-            senderName: m.senderRole === 'admin' || m.sender === 'admin' ? 'Support' : (m.sender || m.senderName || clientName),
-            text: m.text || m.message || '',
-            attachment: m.attachment || m.attachments?.[0]?.name || null,
-            attachmentUrl: m.attachmentUrl || m.attachments?.[0]?.url || null,
-            timestamp: m.timestamp || m.created_at || new Date().toISOString()
-          };
-          const key = msgObj.id || `${msgObj.sender}-${msgObj.text}`;
-          if (!orderMessagesMap.has(key)) orderMessagesMap.set(key, msgObj);
-        });
-      }
-
-      // Order messages from remote conversation
-      (remoteOrderConv?.messages || []).forEach(rm => {
-        if (rm && (rm.id || rm.text || rm.attachment || rm.attachment_url)) {
-          let matched = false;
-          for (const [key, existingMsg] of orderMessagesMap.entries()) {
-            const isIdMatch = existingMsg.id && rm.id && existingMsg.id === rm.id;
-            const isTextMatch = existingMsg.text && rm.text && existingMsg.text === rm.text && existingMsg.sender === rm.sender && Math.abs(parseMessageTime(existingMsg) - parseMessageTime(rm)) < 20000;
-            const isAttachMatch = existingMsg.attachment_url && rm.attachment_url && existingMsg.attachment_url === rm.attachment_url;
-            if (isIdMatch || isTextMatch || isAttachMatch) {
-              orderMessagesMap.set(key, { ...existingMsg, ...rm });
-              matched = true;
-              break;
-            }
-          }
-          if (!matched) {
-            const key = rm.id || `${rm.sender}-${rm.text}-${rm.timestamp}`;
-            orderMessagesMap.set(key, rm);
-          }
-        }
-      });
-
-      const combinedMessages = Array.from(orderMessagesMap.values());
-      combinedMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
-
-      const isTargetedOrder = initialOrderId && (initialOrderId === ord.id || initialOrderId === `order-${ord.id}`);
-      const isCurrentlyActive = activeChatId === orderThreadId;
-      const hasChatHistory = combinedMessages.length > 0;
-
-      // Filter: only show orders that actually have messages or are actively opened
-      if (!hasChatHistory && !isTargetedOrder && !isCurrentlyActive) {
-        return;
-      }
-
-      const lastMsg = combinedMessages[combinedMessages.length - 1];
-      const ordLastTimestamp = lastMsg?.timestamp || remoteOrderConv?.updatedAt || ord.updatedAt || ord.createdAt;
-      const ordLastTime = ordLastTimestamp && !isNaN(new Date(ordLastTimestamp).getTime())
-        ? new Date(ordLastTimestamp).getTime()
-        : Date.now();
-
-      const svcCategory = ord.serviceCategory || (ord.type === 'vector' ? 'Vector Tracing' : ord.type === 'patches' ? 'Custom Patches' : 'Embroidery Digitizing');
-      const orderNumFormatted = formatOrderId(ord.id);
-
-      threadMap.set(orderThreadId, {
-        id: orderThreadId,
-        orderId: orderNumFormatted,
-        rawOrderId: ord.id,
-        title: `${svcCategory} — #${orderNumFormatted}`,
-        orderTitle: ord.title || `${svcCategory} #${orderNumFormatted}`,
-        orderObj: ord,
-        serviceType: ord.type || ord.serviceCategory || 'embroidery',
-        serviceCategory: svcCategory,
-        orderStatus: ord.status || 'submitted',
-        price: parseFloat(ord.price || 0),
-        artworkUrl: ord.artworkUrl || ord.image_url || ord.logo,
-        unreadCount: remoteOrderConv?.clientUnreadCount ?? remoteOrderConv?.unreadCount ?? existingOrderThread?.unreadCount ?? 0,
-        clientUnreadCount: remoteOrderConv?.clientUnreadCount ?? existingOrderThread?.clientUnreadCount ?? 0,
-        messages: combinedMessages,
-        lastMessageTime: ordLastTime,
-        updatedAt: ordLastTimestamp || new Date().toISOString()
-      });
-    });
-
-    // 3. Include any other remote conversations belonging to this client with messages
-    (remoteConvs || []).forEach(conv => {
-      if (!threadMap.has(conv.id) && !isSupportId(conv.id)) {
-        const existingThread = existingMap.get(conv.id);
-        const msgsMap = new Map();
-        (existingThread?.messages || []).forEach(m => msgsMap.set(m.id || m.text, m));
-        (conv.messages || []).forEach(rm => msgsMap.set(rm.id || rm.text, rm));
-
-        const msgs = Array.from(msgsMap.values());
-        msgs.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
-
-        if (msgs.length === 0 && conv.id !== activeChatId) return;
-
-        const lastMsg = msgs[msgs.length - 1];
-        const convTimestamp = lastMsg?.timestamp || conv.updatedAt || conv.created_at;
-        const convTime = convTimestamp && !isNaN(new Date(convTimestamp).getTime())
-          ? new Date(convTimestamp).getTime()
-          : Date.now();
-
-        threadMap.set(conv.id, {
-          id: conv.id,
-          title: conv.orderTitle || conv.clientName || 'Support Thread',
-          orderId: conv.orderId || 'Order Discussion',
-          orderTitle: conv.orderTitle || 'Direct Support',
-          serviceType: 'general',
-          unreadCount: conv.clientUnreadCount ?? conv.unreadCount ?? 0,
-          clientUnreadCount: conv.clientUnreadCount ?? 0,
-          messages: msgs,
-          lastMessageTime: convTime,
-          updatedAt: convTimestamp || new Date().toISOString()
-        });
-      }
-    });
-
-    const threadList = Array.from(threadMap.values());
-    
-    // Sort strictly by latest message timestamp (descending)
-    threadList.sort((a, b) => {
-      const timeA = a.lastMessageTime || (a.updatedAt ? new Date(a.updatedAt).getTime() : 0);
-      const timeB = b.lastMessageTime || (b.updatedAt ? new Date(b.updatedAt).getTime() : 0);
-      return timeB - timeA;
-    });
-
-    return threadList;
   };
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    loadChatHistory();
+    if (canonicalChatId) {
+      markConversationAsRead(canonicalChatId);
+    }
+  }, [canonicalChatId, clientEmail]);
 
-  // Initialize and load conversations
   useEffect(() => {
-    let isMounted = true;
+    if (initialOrderId && initialOrderId !== 'inbox' && initialOrderId !== 'support' && initialOrderId !== 'general-support') {
+      const ordNum = formatOrderId(initialOrderId);
+      const tag = `[Regarding Order ${ordNum}] `;
+      setMessageInput(prev => prev.includes(tag) ? prev : `${tag}${prev}`);
+    }
+  }, [initialOrderId, formatOrderId]);
 
-    const loadChats = async () => {
-      if (!isMounted) return;
-      let remoteConvs = [];
-      if (isSupabaseConfigured) {
-        remoteConvs = await fetchConversations(clientEmail);
-      }
+  useEffect(() => {
+    const unsubMessages = subscribeToLiveMessages((payload) => {
+      if (!payload) return;
+      const record = payload.new || payload.record || payload;
+      if (!record) return;
 
-      if (isMounted) {
-        setConversations(() => {
-          const fullThreads = buildThreadList(remoteConvs, []);
-          if (typeof window !== 'undefined') {
-            try {
-              localStorage.setItem(cacheKey, JSON.stringify(fullThreads));
-            } catch {}
+      const recordConvId = String(record.conversation_id || '').toLowerCase();
+      const isForThisCustomer = recordConvId === canonicalChatId ||
+        recordConvId === `inbox-${clientEmail}` ||
+        recordConvId === `support-${clientEmail}` ||
+        recordConvId === `direct-${clientEmail}` ||
+        (record.client_email && record.client_email.toLowerCase().trim() === clientEmail);
+
+      if (isForThisCustomer) {
+        setMessages(prev => {
+          if (prev.some(m => m.id === record.id)) {
+            return prev.map(m => m.id === record.id ? { ...m, ...record } : m);
           }
-          // If an initial order was passed, select that thread immediately
-          if (initialOrderId) {
-            const targetId = (initialOrderId === 'general-support' || String(initialOrderId).startsWith('support-'))
-              ? (initialOrderId === 'general-support' ? defaultSupportId : initialOrderId)
-              : (initialOrderId.startsWith('order-') ? initialOrderId : `order-${initialOrderId}`);
-            if (fullThreads.some(t => t.id === targetId || (isSupportId(targetId) && isSupportId(t.id)))) {
-              setActiveChatId(targetId);
-            }
-          } else if (!activeChatId || activeChatId === 'general-support') {
-            setActiveChatId(fullThreads[0]?.id || defaultSupportId);
-          }
-          return fullThreads;
+          const updated = [...prev, {
+            id: record.id,
+            conversation_id: canonicalChatId,
+            sender: record.sender,
+            senderName: record.sender_name || (record.sender === 'admin' ? 'Support' : clientName),
+            sender_name: record.sender_name,
+            text: record.text,
+            attachment: record.attachment,
+            attachment_url: record.attachment_url,
+            attachment_name: record.attachment_name || record.attachment,
+            attachment_size: record.attachment_size,
+            attachment_type: record.attachment_type,
+            reply_to: record.reply_to,
+            offer_id: record.offer_id,
+            offer_data: record.offer_data,
+            is_read: record.is_read || false,
+            timestamp: record.timestamp || record.created_at || new Date().toISOString()
+          }];
+          updated.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+          return updated;
         });
-      }
-    };
 
-    loadChats();
-
-    // Supabase Realtime subscription for instant message push
-    const unsubscribe = subscribeToLiveMessages(
-      (msgPayload) => {
-        if (!isMounted) return;
-        const record = msgPayload.new || msgPayload.record;
-        if (!record) return;
-
-        const newMsg = {
-          id: record.id,
-          conversation_id: record.conversation_id,
-          sender: record.sender,
-          senderName: record.sender_name || (record.sender === 'admin' ? 'Support' : clientName),
-          sender_name: record.sender_name,
-          text: record.text,
-          attachment: record.attachment,
-          attachment_url: record.attachment_url || null,
-          attachment_name: record.attachment_name || record.attachment || null,
-          attachment_size: record.attachment_size || null,
-          attachment_type: record.attachment_type || null,
-          reply_to: record.reply_to || null,
-          offer_id: record.offer_id || record.offerId || null,
-          offer_data: record.offer_data || record.offerData || null,
-          is_read: record.is_read || false,
-          timestamp: record.timestamp || record.created_at || new Date().toISOString()
-        };
-
-        if (newMsg.sender === 'admin' || newMsg.sender === 'support') {
+        if (record.sender === 'admin') {
           playNotificationSound('receive');
+          markConversationAsRead(canonicalChatId);
         }
-
-        setConversations(prev => {
-          const safePrev = Array.isArray(prev) ? prev : [];
-          const msgTime = new Date(newMsg.timestamp).getTime() || Date.now();
-
-          const isMatchThread = (thread) => {
-            if (thread.id === newMsg.conversation_id) return true;
-            if (thread.rawOrderId && newMsg.conversation_id?.includes(thread.rawOrderId)) return true;
-            if (isSupportId(thread.id) && isSupportId(newMsg.conversation_id)) return true;
-            return false;
-          };
-
-          const exists = safePrev.some(isMatchThread);
-          if (!exists) {
-            const isOrder = newMsg.conversation_id?.startsWith('order-');
-            const newThread = {
-              id: newMsg.conversation_id,
-              title: isOrder ? `Order Discussion` : 'Support',
-              orderId: isOrder ? newMsg.conversation_id.replace('order-', '') : 'Support',
-              orderTitle: isOrder ? `Order Discussion` : 'Live Studio Support',
-              serviceType: isOrder ? 'embroidery' : 'general',
-              unreadCount: newMsg.sender === 'admin' ? 1 : 0,
-              clientUnreadCount: newMsg.sender === 'admin' ? 1 : 0,
-              messages: [newMsg],
-              lastMessageTime: msgTime,
-              updatedAt: newMsg.timestamp
-            };
-            return [newThread, ...safePrev];
-          }
-
-          const updated = safePrev.map(thread => {
-            if (isMatchThread(thread)) {
-              const currentMsgs = thread.messages || [];
-              const existsIndex = currentMsgs.findIndex(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(new Date(m.timestamp) - new Date(newMsg.timestamp)) < 5000));
-              
-              let nextMsgs;
-              if (existsIndex >= 0) {
-                // Update optimistic message with confirmed server message
-                nextMsgs = [...currentMsgs];
-                nextMsgs[existsIndex] = { ...nextMsgs[existsIndex], ...newMsg };
-              } else {
-                nextMsgs = [...currentMsgs, newMsg];
-              }
-
-              return {
-                ...thread,
-                messages: nextMsgs,
-                unreadCount: activeChatId === thread.id ? 0 : (thread.unreadCount || 0) + (newMsg.sender === 'admin' ? 1 : 0),
-                clientUnreadCount: activeChatId === thread.id ? 0 : (thread.clientUnreadCount || 0) + (newMsg.sender === 'admin' ? 1 : 0),
-                lastMessageTime: msgTime,
-                updatedAt: new Date().toISOString()
-              };
-            }
-            return thread;
-          });
-
-          // Sort by latest message time
-          return [...updated].sort((a, b) => {
-            const timeA = a.lastMessageTime || (a.updatedAt ? new Date(a.updatedAt).getTime() : 0);
-            const timeB = b.lastMessageTime || (b.updatedAt ? new Date(b.updatedAt).getTime() : 0);
-            return timeB - timeA;
-          });
-        });
-      },
-      (convPayload) => {
-        if (!isMounted) return;
-        const conv = convPayload.new || convPayload.record;
-        if (!conv) return;
-
-        setConversations(prev => {
-          const safePrev = Array.isArray(prev) ? prev : [];
-          return safePrev.map(c => {
-            if (c.id === conv.id || (isSupportId(c.id) && isSupportId(conv.id))) {
-              return {
-                ...c,
-                unreadCount: conv.client_unread_count ?? c.unreadCount ?? 0,
-                clientUnreadCount: conv.client_unread_count ?? c.clientUnreadCount ?? 0,
-                updatedAt: conv.updated_at || c.updatedAt
-              };
-            }
-            return c;
-          });
-        });
+        scrollToBottom('smooth');
       }
-    );
+    });
 
-    return () => {
-      isMounted = false;
-      if (typeof unsubscribe === 'function') unsubscribe();
-    };
-  }, [orders, initialOrderId, clientEmail, clientName, defaultSupportId]);
-
-  // Real-time listener for offer status changes across browser tabs & network
-  useEffect(() => {
-    const handleOfferStatusEvent = (e) => {
-      const { offerId, status: newStatus, offer: freshOffer } = e.detail || {};
-      if (!offerId || !newStatus) return;
-
-      setConversations(prev => {
-        const safePrev = Array.isArray(prev) ? prev : [];
-        return safePrev.map(conv => {
-          let hasModified = false;
-          const nextMsgs = (conv.messages || []).map(m => {
-            const mOfferId = m.offer_id || m.offer_data?.id || m.offer?.id;
-            if (mOfferId === offerId || m.id === offerId) {
-              hasModified = true;
-              const prevOfferData = typeof m.offer_data === 'object' ? (m.offer_data || {}) : {};
-              const mergedOffer = {
-                ...prevOfferData,
-                ...(freshOffer || {}),
-                status: newStatus,
-                updated_at: new Date().toISOString()
-              };
-              return {
-                ...m,
-                offer_data: mergedOffer,
-                offer: mergedOffer
-              };
-            }
-            return m;
-          });
-
-          if (hasModified) {
-            return {
-              ...conv,
-              messages: nextMsgs,
-              updatedAt: new Date().toISOString()
-            };
-          }
-          return conv;
-        });
-      });
-    };
-
-    window.addEventListener('bdigi_offer_status_change', handleOfferStatusEvent);
-    return () => window.removeEventListener('bdigi_offer_status_change', handleOfferStatusEvent);
-  }, []);
-
-  // Active chat thread
-  const activeChat = useMemo(() => {
-    return conversations.find(c => 
-      c.id === activeChatId ||
-      (isSupportId(activeChatId) && isSupportId(c.id))
-    ) || conversations[0] || {
-      id: defaultSupportId,
-      title: 'Support',
-      orderId: 'Support',
-      messages: []
-    };
-  }, [conversations, activeChatId, defaultSupportId]);
-
-  // Scroll messages to bottom on thread change, message arrival, or when support is typing
-  useEffect(() => {
-    scrollToBottom('smooth');
-  }, [activeChatId, activeChat?.messages?.length, isSupportTyping, replyingTo, mobileView]);
-
-  // Helper to compute client unread count strictly for Support messages
-  const getThreadUnreadCount = (conv) => {
-    if (!conv) return 0;
-    if (activeChatId === conv.id || (isSupportId(activeChatId) && isSupportId(conv.id))) return 0;
-    if (typeof conv.clientUnreadCount === 'number' && conv.clientUnreadCount > 0) {
-      return conv.clientUnreadCount;
-    }
-    const lastRead = typeof window !== 'undefined'
-      ? parseInt(localStorage.getItem('bdigi_read_client_' + conv.id) || '0', 10)
-      : 0;
-    const msgs = conv.messages || [];
-    return msgs.filter(m => {
-      if (m.sender !== 'admin' && m.sender !== 'support' && m.sender !== 'staff') return false;
-      const t = m.timestamp ? new Date(m.timestamp).getTime() : 0;
-      return t > lastRead;
-    }).length;
-  };
-
-  const handleSelectThread = async (threadId) => {
-    setActiveChatId(threadId);
-    setMobileView('chat');
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('bdigi_read_client_' + threadId, String(Date.now()));
-      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: threadId } }));
-    }
-    markConversationAsRead(threadId);
-    setConversations(prev => prev.map(c => 
-      (c.id === threadId || (isSupportId(c.id) && isSupportId(threadId))) 
-        ? { ...c, unreadCount: 0, clientUnreadCount: 0 } 
-        : c
-    ));
-
-    // Refresh thread messages from server to guarantee 100% complete history
-    if (isSupabaseConfigured) {
-      try {
-        const freshMsgs = await fetchChatMessages(threadId, clientEmail);
-        if (Array.isArray(freshMsgs) && freshMsgs.length > 0) {
-          setConversations(prev => {
-            const safePrev = Array.isArray(prev) ? prev : [];
-            return safePrev.map(c => {
-              if (c.id === threadId || (isSupportId(c.id) && isSupportId(threadId))) {
-                const combined = [...(c.messages || [])];
-                freshMsgs.forEach(fm => {
-                  const idx = combined.findIndex(m => m.id === fm.id || (m.text === fm.text && Math.abs(new Date(m.timestamp) - new Date(fm.timestamp)) < 5000));
-                  if (idx >= 0) {
-                    combined[idx] = { ...combined[idx], ...fm };
-                  } else {
-                    combined.push(fm);
-                  }
-                });
-                combined.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
-                return { ...c, messages: combined };
-              }
-              return c;
-            });
-          });
-        }
-      } catch {}
-    }
-  };
-
-  // Auto-mark active conversation as read in Client Chat
-  useEffect(() => {
-    if (activeChat?.id) {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('bdigi_read_client_' + activeChat.id, String(Date.now()));
-        window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: activeChat.id } }));
-      }
-      markConversationAsRead(activeChat.id);
-      setConversations(prev => prev.map(c => 
-        (c.id === activeChat.id || (isSupportId(c.id) && isSupportId(activeChat.id))) 
-          ? { ...c, unreadCount: 0, clientUnreadCount: 0 } 
-          : c
-      ));
-    }
-  }, [activeChat?.id]);
-
-  // Subscribe to live typing indicators from Admin
-  useEffect(() => {
-    let supportTypingTimer = null;
     const unsubTyping = subscribeToTypingStatus((payload) => {
-      if (!payload || !activeChat?.id) return;
-      const isTargetThread = payload.conversationId === activeChat.id || (isSupportId(payload.conversationId) && isSupportId(activeChat.id));
-      if (isTargetThread && payload.senderRole === 'admin') {
+      if (!payload) return;
+      const isTarget = payload.conversationId === canonicalChatId ||
+        (payload.senderEmail && payload.senderEmail.toLowerCase().trim() === clientEmail);
+
+      if (isTarget && payload.senderRole === 'admin') {
+        setIsSupportTyping(Boolean(payload.isTyping));
         if (payload.isTyping) {
-          setIsSupportTyping(true);
-          if (supportTypingTimer) clearTimeout(supportTypingTimer);
-          supportTypingTimer = setTimeout(() => {
-            setIsSupportTyping(false);
-          }, 3500);
-        } else {
-          setIsSupportTyping(false);
+          scrollToBottom('smooth');
         }
       }
     });
 
     return () => {
+      if (unsubMessages) unsubMessages();
       if (unsubTyping) unsubTyping();
-      if (supportTypingTimer) clearTimeout(supportTypingTimer);
     };
-  }, [activeChat?.id]);
+  }, [canonicalChatId, clientEmail, clientName]);
 
   const handleInputChange = (e) => {
     const val = e.target.value;
     setMessageInput(val);
 
-    const targetConvId = activeChat?.id || defaultSupportId;
-    broadcastTypingStatus(targetConvId, clientName, 'client', true);
-
+    broadcastTypingStatus(canonicalChatId, clientName, 'client', true);
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
-      broadcastTypingStatus(targetConvId, clientName, 'client', false);
+      broadcastTypingStatus(canonicalChatId, clientName, 'client', false);
     }, 2500);
   };
-
-  // Separate into 2 distinct messaging categories: Normal Inbox (Direct Chat & Orders) vs Customer Support
-  const inboxConversations = useMemo(() => {
-    return conversations.filter(c => c.isDirectInbox || c.isOrder || c.rawOrderId || c.id?.startsWith('order-') || c.id?.startsWith('inbox-') || c.id?.startsWith('direct-'));
-  }, [conversations]);
-
-  const supportConversations = useMemo(() => {
-    return conversations.filter(c => c.isSupport || (isSupportId(c.id) && !c.isDirectInbox && !c.id?.startsWith('inbox-') && !c.id?.startsWith('direct-')));
-  }, [conversations]);
-
-  const inboxUnreadTotal = useMemo(() => {
-    return inboxConversations.reduce((sum, c) => sum + getThreadUnreadCount(c), 0);
-  }, [inboxConversations]);
-
-  const supportUnreadTotal = useMemo(() => {
-    return supportConversations.reduce((sum, c) => sum + getThreadUnreadCount(c), 0);
-  }, [supportConversations]);
-
-  const currentSectionThreads = activeSection === 'conversations' ? inboxConversations : supportConversations;
-
-  // Filter conversations based on search, activeSection, and subFilter
-  const filteredConversations = currentSectionThreads.filter(conv => {
-    if (subFilter === 'unread') {
-      if (getThreadUnreadCount(conv) === 0) return false;
-    }
-
-    if (!searchTerm.trim()) return true;
-    const term = searchTerm.toLowerCase().trim();
-    return (
-      (conv.title || '').toLowerCase().includes(term) ||
-      (conv.orderId || '').toLowerCase().includes(term) ||
-      (conv.orderTitle || '').toLowerCase().includes(term) ||
-      (conv.messages || []).some(m => (m.text || '').toLowerCase().includes(term))
-    );
-  });
 
   const handleSendMessage = async (e) => {
     e?.preventDefault();
     if (!messageInput.trim() && !attachedFile) return;
 
-    const targetConvId = activeChat?.id || defaultSupportId;
     const nowIso = new Date().toISOString();
-    const nowTime = Date.now();
+    const tempMsgId = `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const msgText = messageInput.trim();
 
     const newMsg = {
-      id: 'msg-' + nowTime + '-' + Math.random().toString(36).substring(2, 6),
-      conversation_id: targetConvId,
-      order_id: activeChat.rawOrderId || null,
-      order_title: activeChat.orderTitle || activeChat.title || 'Discussion',
+      id: tempMsgId,
+      conversation_id: canonicalChatId,
       client_email: clientEmail,
       sender: 'client',
       senderName: clientName,
       sender_name: clientName,
-      text: messageInput.trim(),
+      text: msgText,
       attachment: attachedFile ? attachedFile.name : null,
       attachment_url: attachedFile ? attachedFile.url : null,
       attachment_name: attachedFile ? attachedFile.name : null,
@@ -907,125 +255,58 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       attachment_type: attachedFile ? attachedFile.format : null,
       reply_to: replyingTo ? {
         id: replyingTo.id,
-        sender_name: replyingTo.senderName || replyingTo.sender_name || 'Studio Support',
+        sender_name: replyingTo.senderName || replyingTo.sender_name || 'Support',
         text: replyingTo.text,
-        attachment: replyingTo.attachment_name || replyingTo.attachment,
-        attachment_url: replyingTo.attachment_url
+        attachment: replyingTo.attachment_name || replyingTo.attachment
       } : null,
       timestamp: nowIso,
-      created_at: nowIso
+      created_at: nowIso,
+      is_read: false
     };
 
-    // Instant optimistic state update in conversations list
-    setConversations(prev => {
-      const safePrev = Array.isArray(prev) ? prev : [];
-      const isTarget = (c) => c.id === targetConvId || (isSupportId(c.id) && isSupportId(targetConvId));
-      const exists = safePrev.some(isTarget);
-
-      if (!exists) {
-        const newThread = {
-          id: targetConvId,
-          title: activeChat.title || 'Support',
-          orderId: activeChat.orderId || 'Support',
-          orderTitle: activeChat.orderTitle || 'Live Studio Support',
-          serviceType: 'general',
-          unreadCount: 0,
-          clientUnreadCount: 0,
-          messages: [newMsg],
-          lastMessageTime: nowTime,
-          updatedAt: nowIso
-        };
-        return [newThread, ...safePrev];
-      }
-
-      const updated = safePrev.map(conv => {
-        if (isTarget(conv)) {
-          const nextMsgs = [...(conv.messages || []), newMsg];
-          nextMsgs.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
-          return {
-            ...conv,
-            unreadCount: 0,
-            clientUnreadCount: 0,
-            messages: nextMsgs,
-            lastMessageTime: nowTime,
-            updatedAt: nowIso
-          };
-        }
-        return conv;
-      });
-
-      const sortedList = [...updated].sort((a, b) => {
-        const timeA = a.lastMessageTime || (a.updatedAt ? new Date(a.updatedAt).getTime() : 0);
-        const timeB = b.lastMessageTime || (b.updatedAt ? new Date(b.updatedAt).getTime() : 0);
-        return timeB - timeA;
-      });
-
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem(cacheKey, JSON.stringify(sortedList));
-        } catch {}
-      }
-
-      return sortedList;
-    });
-
-    // Optimistic state update in orders context if order thread
-    if (activeChat.rawOrderId && typeof setOrders === 'function') {
-      try {
-        setOrders(prev => (prev || []).map(o => {
-          if (o.id === activeChat.rawOrderId) {
-            return {
-              ...o,
-              messages: [...(o.messages || []), newMsg]
-            };
-          }
-          return o;
-        }));
-      } catch {}
-    }
-
+    setMessages(prev => [...prev, newMsg]);
     setMessageInput('');
     setAttachedFile(null);
     setReplyingTo(null);
-    broadcastTypingStatus(targetConvId, clientName, 'client', false);
-    playNotificationSound('send');
-    showToast('Message sent to production studio team!', 'success');
     scrollToBottom('smooth');
+    broadcastTypingStatus(canonicalChatId, clientName, 'client', false);
 
-    // Persistence to Supabase
-    if (isSupabaseConfigured) {
-      try {
-        await addChatMessage(targetConvId, newMsg);
-      } catch (err) {
-        console.warn('Persist chat message notice:', err);
-      }
+    try {
+      await addChatMessage(canonicalChatId, newMsg, activeUser);
+    } catch (err) {
+      console.error('Send message error:', err);
+      if (showToast) showToast('Failed to deliver message. Retrying...', 'error');
     }
   };
 
-  const handleFileAttach = async (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 25 * 1024 * 1024) {
+      if (showToast) showToast('File size must be under 25MB.', 'error');
+      return;
+    }
+
     setIsUploadingAttachment(true);
-    showToast(`Uploading ${file.name}...`, 'info');
     try {
-      const uploaded = await uploadFileToCloudinaryFull(file, 'client-uploads', 'chat-attachments');
-      if (uploaded && uploaded.url) {
+      const uploadRes = await uploadFileToCloudinaryFull(file);
+      if (uploadRes && uploadRes.url) {
         setAttachedFile({
           name: file.name,
-          url: uploaded.url,
-          size: uploaded.size || (file.size / 1024).toFixed(1) + ' KB',
-          format: uploaded.format || file.name.split('.').pop()
+          url: uploadRes.url,
+          size: file.size,
+          format: file.name.split('.').pop().toLowerCase()
         });
-        showToast(`Ready: ${file.name}`, 'success');
+        if (showToast) showToast(`Attached ${file.name}`, 'success');
       } else {
-        showToast('Failed to upload file. Please try again.', 'error');
+        throw new Error('Upload returned invalid URL');
       }
     } catch (err) {
-      showToast('Error uploading attachment: ' + err.message, 'error');
+      if (showToast) showToast('Failed to upload file. Please try again.', 'error');
     } finally {
       setIsUploadingAttachment(false);
-      if (e.target) e.target.value = '';
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -1033,724 +314,413 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
   return (
     <div style={{
-      padding: 0,
-      background: 'var(--color-surface, #ffffff)',
-      border: '1.5px solid var(--color-border)',
-      borderRadius: '16px',
-      overflow: 'hidden',
-      flex: 1,
-      height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      boxShadow: '0 4px 20px rgba(15, 23, 42, 0.04)'
+      height: 'calc(100vh - 120px)',
+      minHeight: '520px',
+      maxHeight: '880px',
+      background: 'var(--color-surface, #ffffff)',
+      borderRadius: '16px',
+      border: '1.5px solid var(--color-border)',
+      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.04)',
+      overflow: 'hidden'
     }}>
-
-      {/* Main Grid: Left Conversation Sidebar + Right Chat Canvas */}
-      <div 
-        className="chat-inbox-grid"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '320px 1fr',
-          flex: 1,
-          minHeight: 0,
-          height: '100%',
-          overflow: 'hidden'
-        }}
-      >
-
-        {/* LEFT PANEL: THREAD LIST */}
-        <div 
-          className={`chat-threads-column ${mobileView === 'chat' ? 'hide-on-mobile-thread' : ''}`}
-          style={{
-            borderRight: '1px solid var(--color-border)',
-            display: 'flex',
-            flexDirection: 'column',
-            background: 'var(--color-subtle, #f8fafc)',
-            overflow: 'hidden'
-          }}
-        >
-          {/* Thread List Header & Section Switcher */}
-          <div style={{ padding: '0.85rem 1rem', borderBottom: '1.5px solid var(--color-border)', background: 'var(--color-surface, #ffffff)' }}>
-            
-            {/* Primary 2-Section Switcher: My Conversations vs Support */}
+      <div style={{
+        padding: '0.85rem 1.25rem',
+        borderBottom: '1px solid var(--color-border)',
+        background: '#ffffff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexShrink: 0
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ position: 'relative' }}>
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              background: '#f1f5f9',
-              padding: '3px',
-              borderRadius: '10px',
-              marginBottom: '0.75rem',
-              gap: '4px'
+              width: '42px',
+              height: '42px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 900,
+              fontSize: '1rem',
+              border: '2px solid #ea580c'
             }}>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveSection('conversations');
-                  const first = inboxConversations[0] || { id: defaultDirectInboxId };
-                  if (!inboxConversations.some(c => c.id === activeChatId)) {
-                    setActiveChatId(first.id);
-                  }
-                }}
-                style={{
-                  padding: '0.45rem 0.65rem',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: activeSection === 'conversations' ? '#ffffff' : 'transparent',
-                  color: activeSection === 'conversations' ? 'var(--orange-600)' : 'var(--navy-700)',
-                  fontWeight: activeSection === 'conversations' ? 800 : 600,
-                  fontSize: '0.78rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '5px',
-                  cursor: 'pointer',
-                  boxShadow: activeSection === 'conversations' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <MessageSquare size={14} style={{ color: activeSection === 'conversations' ? 'var(--orange-600)' : '#64748b' }} />
-                <span>Inbox</span>
-                {inboxUnreadTotal > 0 ? (
-                  <span style={{
-                    background: '#ef4444',
-                    color: '#ffffff',
-                    fontSize: '0.625rem',
-                    fontWeight: 900,
-                    padding: '1px 5px',
-                    borderRadius: '9999px'
-                  }}>
-                    {inboxUnreadTotal}
-                  </span>
-                ) : (
-                  <span style={{ fontSize: '0.68rem', opacity: 0.65, fontWeight: 700 }}>
-                    ({inboxConversations.length})
-                  </span>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveSection('support');
-                  const first = supportConversations[0] || { id: defaultSupportId };
-                  if (!supportConversations.some(c => c.id === activeChatId)) {
-                    setActiveChatId(first.id);
-                  }
-                }}
-                style={{
-                  padding: '0.45rem 0.65rem',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: activeSection === 'support' ? '#ffffff' : 'transparent',
-                  color: activeSection === 'support' ? 'var(--orange-600)' : 'var(--navy-700)',
-                  fontWeight: activeSection === 'support' ? 800 : 600,
-                  fontSize: '0.78rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '5px',
-                  cursor: 'pointer',
-                  boxShadow: activeSection === 'support' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <Headphones size={14} style={{ color: activeSection === 'support' ? 'var(--orange-600)' : '#64748b' }} />
-                <span>Customer Support</span>
-                {supportUnreadTotal > 0 ? (
-                  <span style={{
-                    background: '#ef4444',
-                    color: '#ffffff',
-                    fontSize: '0.625rem',
-                    fontWeight: 900,
-                    padding: '1px 5px',
-                    borderRadius: '9999px'
-                  }}>
-                    {supportUnreadTotal}
-                  </span>
-                ) : (
-                  <span style={{ fontSize: '0.68rem', opacity: 0.65, fontWeight: 700 }}>
-                    ({supportConversations.length})
-                  </span>
-                )}
-              </button>
+              BD
             </div>
-
-            {/* Search Input */}
-            <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
-              <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={activeSection === 'conversations' ? "Search order discussions, designs..." : "Search support inquiries..."}
-                style={{
-                  width: '100%',
-                  padding: '0.45rem 0.75rem 0.45rem 2.2rem',
-                  fontSize: '0.8rem',
-                  borderRadius: '8px',
-                  border: '1px solid var(--color-border, #cbd5e1)',
-                  background: 'var(--color-surface, #ffffff)',
-                  color: 'var(--color-text-primary, #0f172a)',
-                  outline: 'none'
-                }}
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
-                >
-                  <X size={13} />
-                </button>
-              )}
-            </div>
-
-            {/* Sub-Filters: All | Unread */}
-            <div style={{ display: 'flex', gap: '0.35rem' }}>
-              <button
-                type="button"
-                className={`btn btn-sm ${subFilter === 'all' ? 'btn-primary-orange' : 'btn-outline'}`}
-                style={{
-                  padding: '0.2rem 0.55rem',
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  borderRadius: '6px'
-                }}
-                onClick={() => setSubFilter('all')}
-              >
-                All ({currentSectionThreads.length})
-              </button>
-              <button
-                type="button"
-                className={`btn btn-sm ${subFilter === 'unread' ? 'btn-primary-orange' : 'btn-outline'}`}
-                style={{
-                  padding: '0.2rem 0.55rem',
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  borderRadius: '6px'
-                }}
-                onClick={() => setSubFilter('unread')}
-              >
-                Unread ({currentSectionThreads.filter(c => getThreadUnreadCount(c) > 0).length})
-              </button>
-            </div>
+            <span style={{
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              width: '11px',
+              height: '11px',
+              borderRadius: '50%',
+              background: '#10b981',
+              border: '2px solid #ffffff'
+            }} />
           </div>
 
-          {/* Thread Cards List */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
-            {filteredConversations.length === 0 ? (
-              <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                <MessageSquare size={24} style={{ margin: '0 auto 0.5rem', opacity: 0.4 }} />
-                <p style={{ margin: 0 }}>No conversations found</p>
-              </div>
-            ) : (
-              filteredConversations.map(thread => {
-                const isActive = thread.id === activeChat.id || (isSupportId(thread.id) && isSupportId(activeChat.id));
-                const unread = getThreadUnreadCount(thread);
-                const lastMsg = (thread.messages || [])[(thread.messages || []).length - 1];
-                const isOrder = Boolean(thread.rawOrderId || thread.id.startsWith('order-'));
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                Studio Support & Digitizing Team
+              </h3>
+              <span style={{
+                fontSize: '0.65rem',
+                background: '#ecfdf5',
+                color: '#059669',
+                border: '1px solid #a7f3d0',
+                padding: '0.1rem 0.4rem',
+                borderRadius: '9999px',
+                fontWeight: 800
+              }}>
+                Verified Official
+              </span>
+            </div>
+            <div style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: 700, marginTop: '0.1rem' }}>
+              ● Online • Instant Replies
+            </div>
+          </div>
+        </div>
 
-                return (
-                  <div
-                    key={thread.id}
-                    onClick={() => handleSelectThread(thread.id)}
-                    style={{
-                      padding: '0.75rem',
-                      borderRadius: '10px',
-                      background: isActive ? 'var(--color-surface, #ffffff)' : 'transparent',
-                      border: isActive ? '1.5px solid var(--color-primary, var(--orange-500))' : '1px solid transparent',
-                      boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                      marginBottom: '0.35rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                      position: 'relative'
-                    }}
-                    onMouseOver={(e) => {
-                      if (!isActive) e.currentTarget.style.background = 'var(--color-subtle, #f1f5f9)';
-                    }}
-                    onMouseOut={(e) => {
-                      if (!isActive) e.currentTarget.style.background = 'transparent';
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
-                      {/* Avatar / Icon */}
-                      <div style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '10px',
-                        background: isOrder ? '#f0fdf4' : 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                        color: isOrder ? '#16a34a' : '#ffffff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 900,
-                        fontSize: '0.8rem',
-                        flexShrink: 0
-                      }}>
-                        {isOrder ? (
-                          thread.serviceCategory?.includes('Vector') ? <PenTool size={16} /> :
-                          thread.serviceCategory?.includes('Patch') ? <Package size={16} /> :
-                          <Layers size={16} />
-                        ) : (
-                          <Sparkles size={16} style={{ color: 'var(--orange-400)' }} />
-                        )}
-                      </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', position: 'relative' }}>
+          {orders && orders.length > 0 && (
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setIsOrdersMenuOpen(prev => !prev)}
+                style={{
+                  background: '#f8fafc',
+                  border: '1.5px solid var(--color-border)',
+                  color: 'var(--navy-800)',
+                  padding: '0.4rem 0.75rem',
+                  borderRadius: '8px',
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <ShoppingBag size={14} className="text-orange-500" />
+                <span>Reference Order ({orders.length})</span>
+                <ChevronDown size={13} />
+              </button>
 
-                      {/* Content Info */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.15rem' }}>
-                          <span style={{
-                            fontSize: '0.85rem',
-                            fontWeight: unread > 0 ? 900 : 700,
-                            color: 'var(--navy-950)',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}>
-                            {thread.title}
-                          </span>
-                          <span style={{ fontSize: '0.68rem', color: '#94a3b8', whiteSpace: 'nowrap', marginLeft: '0.4rem' }}>
-                            {formatChatTime(lastMsg?.timestamp || thread.updatedAt)}
-                          </span>
-                        </div>
-
-                        <p style={{
-                          margin: 0,
-                          fontSize: '0.75rem',
-                          color: unread > 0 ? 'var(--navy-900)' : 'var(--text-muted)',
-                          fontWeight: unread > 0 ? 700 : 400,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}>
-                          {lastMsg ? (
-                            <>{lastMsg.sender === 'client' ? 'You: ' : 'Support: '}{lastMsg.text || 'Attachment'}</>
-                          ) : (
-                            'Start a discussion...'
-                          )}
-                        </p>
-                      </div>
-
-                      {/* Unread Badge */}
-                      {unread > 0 && (
-                        <span style={{
-                          background: 'var(--orange-500)',
-                          color: '#ffffff',
-                          fontSize: '0.65rem',
-                          fontWeight: 900,
-                          minWidth: '18px',
-                          height: '18px',
-                          borderRadius: '999px',
+              {isOrdersMenuOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '110%',
+                  right: 0,
+                  width: '280px',
+                  background: '#ffffff',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                  border: '1.5px solid var(--color-border)',
+                  padding: '0.5rem',
+                  zIndex: 50,
+                  maxHeight: '300px',
+                  overflowY: 'auto'
+                }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', padding: '0.35rem 0.5rem', borderBottom: '1px solid #f1f5f9' }}>
+                    Click an order to reference it in chat:
+                  </div>
+                  {orders.map(ord => {
+                    const ordNum = formatOrderId(ord.id);
+                    return (
+                      <div
+                        key={ord.id}
+                        onClick={() => {
+                          const tag = `[Regarding Order ${ordNum} - ${ord.title || ord.service_category || 'Digitizing'}] `;
+                          setMessageInput(prev => prev.includes(tag) ? prev : `${tag}${prev}`);
+                          setIsOrdersMenuOpen(false);
+                        }}
+                        style={{
+                          padding: '0.5rem 0.6rem',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          marginBottom: '2px',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '0 0.3rem',
-                          boxShadow: '0 2px 6px rgba(249, 115, 22, 0.4)'
-                        }}>
-                          {unread}
+                          justifyContent: 'space-between',
+                          fontSize: '0.78rem'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <div>
+                          <strong style={{ color: 'var(--navy-900)' }}>{ordNum}</strong>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{ord.title || ord.service_category || 'Embroidery'}</div>
+                        </div>
+                        <span style={{ fontSize: '0.65rem', background: '#fff7ed', color: '#ea580c', fontWeight: 800, padding: '0.1rem 0.35rem', borderRadius: '4px' }}>
+                          Add Tag
                         </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        {/* RIGHT PANEL: CHAT FEED & INPUT */}
-        <div 
-          className={`chat-messages-column ${mobileView === 'list' ? 'hide-on-mobile-chat' : ''}`}
-          style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, background: 'var(--color-surface, #ffffff)', overflow: 'hidden' }}
-        >
-          
-          {/* Active Thread Header */}
-          <div style={{
-            padding: '0.65rem 0.85rem',
-            borderBottom: '1px solid var(--color-border)',
-            background: 'var(--color-surface, #ffffff)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '0.5rem',
-            flexShrink: 0
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1 }}>
-              <button
-                type="button"
-                className="mobile-only"
-                onClick={() => setMobileView('list')}
-                style={{
-                  background: 'var(--color-subtle, #f1f5f9)',
-                  border: '1px solid var(--color-border, #cbd5e1)',
-                  color: 'var(--color-text-primary, var(--navy-900))',
-                  borderRadius: '8px',
-                  padding: '0.35rem 0.55rem',
-                  fontSize: '0.75rem',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                  flexShrink: 0
-                }}
-                aria-label="Back to conversations"
-              >
-                ← Back
-              </button>
-
-              <div style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '8px',
-                background: activeChat.rawOrderId ? '#f0fdf4' : 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                color: activeChat.rawOrderId ? '#16a34a' : '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 900,
-                flexShrink: 0
-              }}>
-                {activeChat.rawOrderId ? (
-                  activeChat.serviceCategory?.includes('Vector') ? <PenTool size={16} /> :
-                  activeChat.serviceCategory?.includes('Patch') ? <Package size={16} /> :
-                  <Layers size={16} />
-                ) : (
-                  <Sparkles size={16} style={{ color: 'var(--color-primary, #ff7a00)' }} />
-                )}
-              </div>
-
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <h4 style={{
-                  margin: 0,
-                  fontSize: '0.88rem',
-                  fontWeight: 800,
-                  color: 'var(--color-text-primary, var(--navy-950))',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}>
-                  {activeChat.rawOrderId ? `${activeChat.title}` : 'Studio Live Support'}
-                </h4>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.1rem', overflow: 'hidden' }}>
-                  <span style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.25rem',
-                    fontSize: '0.68rem',
-                    color: '#16a34a',
-                    fontWeight: 700,
-                    whiteSpace: 'nowrap'
-                  }}>
-                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#16a34a' }} />
-                    {activeChat.rawOrderId ? 'Order Discussion' : 'Online'}
-                  </span>
-                  {activeChat.orderStatus && (
-                    <span style={{
-                      fontSize: '0.65rem',
-                      fontWeight: 800,
-                      textTransform: 'uppercase',
-                      padding: '0.05rem 0.35rem',
-                      borderRadius: '4px',
-                      background: 'var(--color-subtle, #f1f5f9)',
-                      color: 'var(--color-text-secondary, var(--navy-700))',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {activeChat.orderStatus}
-                    </span>
-                  )}
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
+              )}
             </div>
+          )}
 
-            {/* If Order Thread: Quick Action to open Order Drawer */}
-            {activeChat.rawOrderId && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (activeChat.orderObj && setSelectedOrderForDrawer) {
-                    setSelectedOrderForDrawer(activeChat.orderObj);
-                  }
-                }}
-                style={{
-                  background: 'var(--color-subtle, #f8fafc)',
-                  border: '1px solid var(--color-border, #cbd5e1)',
-                  borderRadius: '8px',
-                  padding: '0.35rem 0.55rem',
-                  fontSize: '0.72rem',
-                  fontWeight: 800,
-                  color: 'var(--color-text-primary, var(--navy-900))',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                  flexShrink: 0,
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                Details <ChevronRight size={12} />
-              </button>
-            )}
-          </div>
-
-          {/* Messages Feed */}
-          <div 
-            ref={chatFeedRef}
+          <button
+            type="button"
+            onClick={loadChatHistory}
             style={{
-              flex: 1,
-              padding: '1.25rem',
-              overflowY: 'auto',
+              background: '#f8fafc',
+              border: '1.5px solid var(--color-border)',
+              color: 'var(--text-muted)',
+              padding: '0.4rem 0.6rem',
+              borderRadius: '8px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
               display: 'flex',
-              flexDirection: 'column',
-              gap: '0.65rem',
-              background: 'var(--color-subtle, #f8fafc)'
+              alignItems: 'center',
+              gap: '0.25rem',
+              cursor: 'pointer'
             }}
+            title="Sync latest messages from database"
           >
-            {(activeChat.messages || []).length === 0 ? (
-              <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--text-muted)', maxWidth: '280px' }}>
-                <div style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '50%',
-                  background: '#ffffff',
-                  border: '1px solid #e2e8f0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 0.75rem',
-                  color: 'var(--orange-500)'
-                }}>
-                  <MessageSquare size={22} />
-                </div>
-                <h5 style={{ margin: '0 0 0.35rem', color: 'var(--navy-950)', fontSize: '0.95rem' }}>Send a Message</h5>
-                <p style={{ margin: 0, fontSize: '0.8rem', lineHeight: 1.4 }}>
-                  Connect directly with our master digitizing and vector team.
-                </p>
-              </div>
-            ) : (
-              (activeChat.messages || []).map((msg, index) => {
-                const isMe = msg.sender === 'client';
-
-                return (
-                  <WhatsAppChatMessage
-                    key={msg.id || index}
-                    message={msg}
-                    isMe={isMe}
-                    senderDisplayName={isMe ? 'You' : (msg.senderName || msg.sender_name || 'Studio Support')}
-                    onReply={(m) => setReplyingTo(m)}
-                    formatTime={formatChatTime}
-                    themePreset="client"
-                    onOrderClick={(ordId) => {
-                      if (typeof setSelectedOrderForDrawer === 'function') {
-                        setSelectedOrderForDrawer(ordId);
-                      }
-                    }}
-                  />
-                );
-              })
-            )}
-
-            {/* LIVE TYPING INDICATOR (WhatsApp Style) */}
-            {isSupportTyping && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.45rem 0.85rem',
-                background: '#ffffff',
-                borderRadius: '16px',
-                border: '1px solid #e2e8f0',
-                width: 'fit-content',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                margin: '0.25rem 0'
-              }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-primary, #ea580c)' }}>
-                  Studio Support is typing
-                </span>
-                <span style={{ display: 'inline-flex', gap: '3px' }}>
-                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-primary, #ea580c)' }}></span>
-                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-primary, #ea580c)' }}></span>
-                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-primary, #ea580c)' }}></span>
-                </span>
-              </div>
-            )}
-
-            {/* Auto-scroll end anchor */}
-            <div ref={messagesEndRef} style={{ height: '1px', flexShrink: 0, marginTop: '2px' }} />
-          </div>
-
-          {/* QUOTED REPLY PREVIEW BANNER (WhatsApp Style) */}
-          {replyingTo && (
-            <div style={{
-              padding: '0.5rem 1.25rem',
-              background: '#fff7ed',
-              borderTop: '1px solid #fed7aa',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '0.75rem',
-              animation: 'fadeIn 0.15s ease-out'
-            }}>
-              <div style={{ borderLeft: '3.5px solid var(--color-primary, #ff7a00)', paddingLeft: '0.6rem', minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--color-primary, #ea580c)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <Reply size={12} /> Replying to {replyingTo.senderName || replyingTo.sender_name || 'Studio Support'}
-                </div>
-                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {replyingTo.text || (replyingTo.attachment ? `📎 ${replyingTo.attachment}` : 'Media file')}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setReplyingTo(null)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary, #ea580c)', padding: '4px' }}
-                title="Cancel reply"
-              >
-                <X size={15} />
-              </button>
-            </div>
-          )}
-
-          {/* UPLOADING ATTACHMENT SPINNER */}
-          {isUploadingAttachment && (
-            <div style={{
-              padding: '0.45rem 1.25rem',
-              background: '#eff6ff',
-              borderTop: '1px solid #bfdbfe',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              color: '#1d4ed8',
-              fontSize: '0.76rem',
-              fontWeight: 700
-            }}>
-              <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Uploading attachment to secure studio storage...
-            </div>
-          )}
-
-          {/* Attached File Preview */}
-          {attachedFile && !isUploadingAttachment && (
-            <div style={{
-              padding: '0.45rem 1.25rem',
-              background: '#f0fdf4',
-              borderTop: '1px solid #bbf7d0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: '0.76rem',
-              color: '#15803d',
-              fontWeight: 700
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                <Paperclip size={14} />
-                <span>Ready to send: <strong>{attachedFile.name}</strong> ({attachedFile.size})</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAttachedFile(null)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#15803d' }}
-                title="Remove attachment"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          )}
-
-          {/* Message Input Bar */}
-          <form
-            onSubmit={handleSendMessage}
-            style={{
-              padding: '0.75rem 1rem',
-              borderTop: '2px solid var(--color-border, #e2e8f0)',
-              background: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.65rem',
-              flexShrink: 0,
-              width: '100%',
-              boxSizing: 'border-box',
-              zIndex: 10,
-              boxShadow: '0 -2px 10px rgba(0,0,0,0.03)'
-            }}
-          >
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileAttach}
-              style={{ display: 'none' }}
-              accept=".png,.jpg,.jpeg,.webp,.gif,.svg,.pdf,.ai,.eps,.dst,.pes,.emb,.zip,.rar"
-            />
-
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploadingAttachment}
-              style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '10px',
-                background: '#f8fafc',
-                border: '1.5px solid #cbd5e1',
-                color: '#334155',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: isUploadingAttachment ? 'not-allowed' : 'pointer',
-                transition: 'all 0.15s ease',
-                flexShrink: 0
-              }}
-              title="Attach Image, PDF, Vector or Embroidery File"
-            >
-              <Paperclip size={18} />
-            </button>
-
-            <input
-              type="text"
-              value={messageInput}
-              onChange={handleInputChange}
-              placeholder={replyingTo ? `Reply to ${replyingTo.senderName || 'Support'}...` : 'Type a message...'}
-              style={{
-                flex: 1,
-                minWidth: 0,
-                padding: '0.65rem 1rem',
-                fontSize: '0.9rem',
-                borderRadius: '10px',
-                border: '1.5px solid #cbd5e1',
-                outline: 'none',
-                background: '#ffffff',
-                color: '#0f172a',
-                boxSizing: 'border-box',
-                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)'
-              }}
-            />
-
-            <button
-              type="submit"
-              disabled={(!messageInput.trim() && !attachedFile) || isUploadingAttachment}
-              style={{
-                padding: '0.65rem 1.25rem',
-                borderRadius: '10px',
-                fontSize: '0.875rem',
-                fontWeight: 800,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                flexShrink: 0,
-                border: 'none',
-                background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
-                color: '#ffffff',
-                boxShadow: '0 2px 10px rgba(234, 88, 12, 0.35)',
-                opacity: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 0.6 : 1,
-                cursor: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 'not-allowed' : 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <span>Send</span> <Send size={15} />
-            </button>
-          </form>
-
+            <RotateCcw size={13} />
+          </button>
         </div>
-
       </div>
 
+      <div 
+        ref={chatFeedRef}
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '1.25rem 1.5rem',
+          background: '#efeae2',
+          backgroundImage: 'radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 0)',
+          backgroundSize: '20px 20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.75rem'
+        }}
+      >
+        <div style={{
+          margin: '0.5rem auto 1rem auto',
+          padding: '0.4rem 1rem',
+          borderRadius: '8px',
+          background: 'rgba(255, 255, 255, 0.85)',
+          border: '1px solid rgba(0, 0, 0, 0.08)',
+          fontSize: '0.72rem',
+          color: 'var(--navy-800)',
+          fontWeight: 700,
+          textAlign: 'center',
+          maxWidth: '420px',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)'
+        }}>
+          🔒 Messages and files are securely stored & synced in real-time with Studio Digitizers.
+        </div>
+
+        {loading ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '0.5rem', color: 'var(--text-muted)' }}>
+            <Loader2 size={20} className="animate-spin text-orange-500" />
+            <span>Loading conversation...</span>
+          </div>
+        ) : messages.length === 0 ? (
+          <div style={{
+            margin: 'auto',
+            textAlign: 'center',
+            padding: '2.5rem 1.5rem',
+            background: '#ffffff',
+            borderRadius: '16px',
+            border: '1.5px solid var(--color-border)',
+            maxWidth: '380px',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.05)'
+          }}>
+            <MessageSquare size={36} className="text-orange-500" style={{ margin: '0 auto 0.75rem' }} />
+            <h4 style={{ margin: '0 0 0.4rem', fontSize: '1rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+              Start a Conversation
+            </h4>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+              Ask a question, request an embroidery quote, or share revisions with our master digitizing team.
+            </p>
+          </div>
+        ) : (
+          messages.map((msg, index) => {
+            const isClient = msg.sender === 'client';
+            return (
+              <WhatsAppChatMessage
+                key={msg.id || index}
+                message={msg}
+                isClient={isClient}
+                clientName={clientName}
+                onReply={(m) => setReplyingTo(m)}
+              />
+            );
+          })
+        )}
+
+        {isSupportTyping && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.45rem 0.85rem',
+            background: '#ffffff',
+            borderRadius: '16px',
+            width: 'fit-content',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            margin: '0.25rem 0'
+          }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#ea580c' }}>
+              Studio Support is typing
+            </span>
+            <span style={{ display: 'inline-flex', gap: '3px' }}>
+              <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ea580c' }} />
+              <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ea580c' }} />
+              <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ea580c' }} />
+            </span>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      {replyingTo && (
+        <div style={{
+          padding: '0.5rem 1.25rem',
+          background: '#fff7ed',
+          borderTop: '1px solid #fed7aa',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '0.75rem',
+          flexShrink: 0
+        }}>
+          <div style={{ borderLeft: '3.5px solid #ea580c', paddingLeft: '0.6rem', minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#ea580c', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Reply size={12} /> Replying to {replyingTo.senderName || replyingTo.sender_name || 'Studio Support'}
+            </div>
+            <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {replyingTo.text || (replyingTo.attachment ? `📎 ${replyingTo.attachment}` : 'Attachment')}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setReplyingTo(null)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ea580c', padding: '4px' }}
+          >
+            <X size={15} />
+          </button>
+        </div>
+      )}
+
+      {attachedFile && (
+        <div style={{
+          padding: '0.5rem 1.25rem',
+          background: '#f8fafc',
+          borderTop: '1px solid var(--color-border)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexShrink: 0
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <FileText size={16} className="text-orange-500" />
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--navy-900)' }}>
+              {attachedFile.name}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAttachedFile(null)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+          >
+            <X size={15} />
+          </button>
+        </div>
+      )}
+
+      <form 
+        onSubmit={handleSendMessage}
+        style={{
+          padding: '0.75rem 1.25rem',
+          background: '#ffffff',
+          borderTop: '1px solid var(--color-border)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.65rem',
+          flexShrink: 0
+        }}
+      >
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          style={{ display: 'none' }} 
+          onChange={handleFileUpload}
+          accept="image/*,.pdf,.dst,.pes,.emb,.exp,.jef,.ai,.eps,.svg,.cdr"
+        />
+
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploadingAttachment}
+          style={{
+            background: '#f1f5f9',
+            border: 'none',
+            color: 'var(--navy-700)',
+            width: '38px',
+            height: '38px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: isUploadingAttachment ? 'not-allowed' : 'pointer',
+            flexShrink: 0
+          }}
+          title="Attach Image, PDF, Vector or Machine File"
+        >
+          {isUploadingAttachment ? <Loader2 size={17} className="animate-spin text-orange-500" /> : <Paperclip size={17} />}
+        </button>
+
+        <input
+          type="text"
+          value={messageInput}
+          onChange={handleInputChange}
+          placeholder="Type a message to Studio Support..."
+          style={{
+            flex: 1,
+            height: '42px',
+            borderRadius: '24px',
+            border: '1.5px solid var(--color-border)',
+            padding: '0 1.15rem',
+            fontSize: '0.85rem',
+            color: 'var(--navy-950)',
+            background: '#f8fafc',
+            outline: 'none'
+          }}
+        />
+
+        <button
+          type="submit"
+          disabled={!messageInput.trim() && !attachedFile}
+          style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '50%',
+            background: (messageInput.trim() || attachedFile) ? '#ea580c' : '#94a3b8',
+            border: 'none',
+            color: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: (messageInput.trim() || attachedFile) ? 'pointer' : 'not-allowed',
+            flexShrink: 0,
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <Send size={16} />
+        </button>
+      </form>
     </div>
   );
 };
