@@ -350,6 +350,9 @@ export const OrderTrackerDrawer = () => {
 
   const handleApproveDelivery = async () => {
     await updateOrderStatus(ord.id, 'completed');
+    if (setSelectedOrderForDrawer) {
+      setSelectedOrderForDrawer(prev => prev ? { ...prev, status: 'completed' } : prev);
+    }
     await addOrderMessage(ord.id, '✅ Delivery Approved & Order Completed by Client.', ord.clientName || 'Client', 'client');
     showToast('🎉 Delivery approved! Thank you for choosing Bilal Digitizing.', 'success');
   };
@@ -499,22 +502,36 @@ export const OrderTrackerDrawer = () => {
               fontWeight: 800, 
               fontSize: '0.8rem', 
               gap: '0.35rem',
-              borderColor: isDelivered ? '#10b981' : undefined,
-              color: isDelivered && activeSection !== 'delivery' ? '#047857' : undefined,
-              background: isDelivered && activeSection !== 'delivery' ? '#ecfdf5' : undefined
+              borderColor: (isCompleted || isDelivered) ? '#10b981' : undefined,
+              color: (isCompleted || isDelivered) && activeSection !== 'delivery' ? '#047857' : undefined,
+              background: (isCompleted || isDelivered) && activeSection !== 'delivery' ? '#ecfdf5' : undefined
             }}
           >
-            <PackageCheck size={14} /> {isAdmin ? 'Deliver Order / Files' : (isDelivered ? '✨ Delivered Files' : 'Deliverables')}
+            <PackageCheck size={14} /> {isAdmin ? 'Deliver Order / Files' : (isCompleted ? '✅ Final Deliverables' : (isDelivered ? '✨ Delivered Files' : 'Deliverables'))}
           </button>
 
-          <button
-            type="button"
-            onClick={() => scrollToSection(modificationRef, 'modification')}
-            className={`btn btn-sm ${activeSection === 'modification' ? 'btn-primary-orange' : 'btn-outline'}`}
-            style={{ fontWeight: 800, fontSize: '0.8rem', gap: '0.35rem' }}
-          >
-            <RotateCcw size={14} /> Request Modification
-          </button>
+          {/* Request Modification Tab: ONLY visible when delivered and not completed / cancelled, OR if revisions history exists on completed */}
+          {(!isCompleted && (ord.status === 'delivered' || ord.status === 'revision' || ord.status === 'revision_requested')) && (
+            <button
+              type="button"
+              onClick={() => scrollToSection(modificationRef, 'modification')}
+              className={`btn btn-sm ${activeSection === 'modification' ? 'btn-primary-orange' : 'btn-outline'}`}
+              style={{ fontWeight: 800, fontSize: '0.8rem', gap: '0.35rem' }}
+            >
+              <RotateCcw size={14} /> {ord.status === 'revision' || ord.status === 'revision_requested' ? '🔄 In Revision' : 'Request Modification'}
+            </button>
+          )}
+
+          {isCompleted && Array.isArray(ord.revisions) && ord.revisions.length > 0 && (
+            <button
+              type="button"
+              onClick={() => scrollToSection(modificationRef, 'modification')}
+              className={`btn btn-sm ${activeSection === 'modification' ? 'btn-primary-orange' : 'btn-outline'}`}
+              style={{ fontWeight: 800, fontSize: '0.8rem', gap: '0.35rem' }}
+            >
+              <RotateCcw size={14} /> Revision History ({ord.revisions.length})
+            </button>
+          )}
 
           <button
             type="button"
@@ -901,8 +918,8 @@ export const OrderTrackerDrawer = () => {
               </div>
             )}
 
-            {/* CUSTOMER APPROVE & MODIFICATION ACTION ROW */}
-            {!isAdmin && isDelivered && ord.status !== 'completed' && (
+            {/* CUSTOMER APPROVE & MODIFICATION ACTION ROW (WHEN DELIVERED) */}
+            {!isAdmin && isDelivered && !isCompleted && ord.status !== 'revision' && ord.status !== 'revision_requested' && (
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid #e2e8f0', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.88rem' }}>Satisfied with the result?</div>
@@ -938,6 +955,47 @@ export const OrderTrackerDrawer = () => {
                     style={{ fontWeight: 800, color: '#b45309', borderColor: '#fde68a', background: '#fffbeb', gap: '0.3rem' }}
                   >
                     <RotateCcw size={14} /> Request Modification
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* CUSTOMER REVISION IN PROGRESS BANNER */}
+            {!isAdmin && (ord.status === 'revision' || ord.status === 'revision_requested') && (
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', background: '#fff1f2', padding: '1rem 1.25rem', borderRadius: '12px', border: '1.5px solid #fecdd3', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#e11d48', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <RotateCcw size={18} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 900, color: '#9f1239', fontSize: '0.92rem' }}>Modification Currently Under Production</div>
+                    <div style={{ fontSize: '0.76rem', color: '#be123c', marginTop: '0.1rem' }}>Our digitizing team is currently revising your design according to your instructions.</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CUSTOMER COMPLETED & APPROVED CELEBRATION ROW */}
+            {!isAdmin && isCompleted && (
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', background: '#ecfdf5', padding: '1rem 1.25rem', borderRadius: '12px', border: '1.5px solid #a7f3d0', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#10b981', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <CheckCircle2 size={20} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 900, color: '#065f46', fontSize: '0.92rem' }}>Order Approved & Completed Successfully!</div>
+                    <div style={{ fontSize: '0.76rem', color: '#047857', marginTop: '0.1rem' }}>All stitch files, source documents, and production worksheets are permanently archived in your studio.</div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadAllDeliveryFiles(activeDeliveryFiles)}
+                    className="btn btn-sm"
+                    style={{ background: '#059669', color: '#ffffff', fontWeight: 800, border: 'none', padding: '0.5rem 1.15rem', borderRadius: '8px', gap: '0.35rem', cursor: 'pointer' }}
+                  >
+                    <Download size={14} /> Download All Files
                   </button>
                 </div>
               </div>
@@ -1080,75 +1138,106 @@ export const OrderTrackerDrawer = () => {
           {/* ================================================================
               SECTION C: MODIFICATION / REVISIONS REQUEST
              ================================================================ */}
-          <div 
-            ref={modificationRef}
-            style={{
-              background: 'var(--bg-card)',
-              borderRadius: '16px',
-              border: '1.5px solid var(--border-color)',
-              padding: '1.5rem',
-              boxShadow: 'var(--shadow-sm)'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1.3rem' }}>🔄</span>
-                <div>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-                    Modification & Revision Requests
-                  </h4>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                    Free unlimited adjustments on density, size, colors, or pull compensation
+          {(ord.status === 'delivered' || ord.status === 'revision' || ord.status === 'revision_requested' || (isCompleted && Array.isArray(ord.revisions) && ord.revisions.length > 0)) && (
+            <div 
+              ref={modificationRef}
+              style={{
+                background: 'var(--bg-card)',
+                borderRadius: '16px',
+                border: '1.5px solid var(--border-color)',
+                padding: '1.5rem',
+                boxShadow: 'var(--shadow-sm)'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '1.3rem' }}>🔄</span>
+                  <div>
+                    <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                      {isCompleted ? 'Revision History (Archived)' : 'Modification & Revision Requests'}
+                    </h4>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                      {isCompleted ? 'Completed project revision logs' : 'Free unlimited adjustments on density, size, colors, or pull compensation'}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Revisions History */}
-            {Array.isArray(ord.revisions) && ord.revisions.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1rem' }}>
-                {ord.revisions.map((rev, idx) => (
-                  <div key={idx} style={{ background: 'rgba(245, 158, 11, 0.12)', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-                    <div style={{ fontSize: '0.72rem', color: '#f59e0b', fontWeight: 800, marginBottom: '0.2rem' }}>
-                      🔄 Revision #{ord.revisions.length - idx} • {new Date(rev.createdAt || rev.created_at || Date.now()).toLocaleDateString()}
+                {isCompleted && (
+                  <span style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.72rem', fontWeight: 800 }}>
+                    ✅ Completed & Locked
+                  </span>
+                )}
+              </div>
+
+              {/* Revision In Progress Banner */}
+              {(ord.status === 'revision' || ord.status === 'revision_requested') && (
+                <div style={{ background: '#fff1f2', border: '1.5px solid #fecdd3', borderRadius: '12px', padding: '1rem 1.2rem', marginBottom: '1rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                  <RotateCcw size={20} style={{ color: '#e11d48', flexShrink: 0, marginTop: '0.15rem' }} />
+                  <div>
+                    <div style={{ fontWeight: 800, color: '#9f1239', fontSize: '0.88rem' }}>Modification Currently Under Production</div>
+                    <div style={{ fontSize: '0.78rem', color: '#be123c', marginTop: '0.2rem', lineHeight: 1.4 }}>
+                      Our master digitizer team is working on your requested changes. You will receive an instant notification as soon as updated stitch files are uploaded.
                     </div>
-                    <div style={{ fontSize: '0.84rem', color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>{rev.note || rev.notes || rev.details}</div>
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              )}
 
-            {/* Submit Revision Form */}
-            <form onSubmit={handleRevisionSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--bg-surface)', padding: '1.15rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                Describe Required Changes:
-              </label>
-              <textarea 
-                className="form-control" 
-                rows="2" 
-                placeholder="Explain what you would like modified (e.g. increase satin stitch width on border, change height to 3.2 inches, change blue thread to navy)..." 
-                value={revisionNote} 
-                onChange={e => setRevisionNote(e.target.value)} 
-                style={{ fontSize: '0.85rem' }}
-              />
+              {/* Revisions History */}
+              {Array.isArray(ord.revisions) && ord.revisions.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1rem' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Revision Logs ({ord.revisions.length})</div>
+                  {ord.revisions.map((rev, idx) => (
+                    <div key={idx} style={{ background: 'rgba(245, 158, 11, 0.08)', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+                      <div style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 800, marginBottom: '0.2rem' }}>
+                        🔄 Revision #{ord.revisions.length - idx} • {new Date(rev.createdAt || rev.created_at || Date.now()).toLocaleDateString()}
+                      </div>
+                      <div style={{ fontSize: '0.84rem', color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>{rev.note || rev.notes || rev.details}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.78rem', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '0.4rem 0.8rem', borderRadius: '8px', fontWeight: 600 }}>
-                  📎 {revisionImage ? revisionImage.name : 'Attach Reference Image / Screenshot'}
-                  <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => { if(e.target.files && e.target.files[0]) setRevisionImage(e.target.files[0]); }} />
-                </label>
+              {/* Submit Revision Form: ONLY active when delivered and NOT completed/in_revision */}
+              {ord.status === 'delivered' && !isCompleted && (
+                <form onSubmit={handleRevisionSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--bg-surface)', padding: '1.15rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                    Describe Required Changes:
+                  </label>
+                  <textarea 
+                    className="form-control" 
+                    rows="2" 
+                    placeholder="Explain what you would like modified (e.g. increase satin stitch width on border, change height to 3.2 inches, change blue thread to navy)..." 
+                    value={revisionNote} 
+                    onChange={e => setRevisionNote(e.target.value)} 
+                    style={{ fontSize: '0.85rem' }}
+                  />
 
-                <button 
-                  type="submit" 
-                  className="btn btn-primary-orange btn-sm" 
-                  disabled={!revisionNote.trim()}
-                  style={{ fontWeight: 800 }}
-                >
-                  Submit Modification Request
-                </button>
-              </div>
-            </form>
-          </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <label style={{ fontSize: '0.78rem', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '0.4rem 0.8rem', borderRadius: '8px', fontWeight: 600 }}>
+                      📎 {revisionImage ? revisionImage.name : 'Attach Reference Image / Screenshot'}
+                      <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => { if(e.target.files && e.target.files[0]) setRevisionImage(e.target.files[0]); }} />
+                    </label>
+
+                    <button 
+                      type="submit" 
+                      className="btn btn-primary-orange btn-sm" 
+                      disabled={!revisionNote.trim()}
+                      style={{ fontWeight: 800 }}
+                    >
+                      Submit Modification Request
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Completed Notice */}
+              {isCompleted && (
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '0.25rem 0' }}>
+                  ℹ️ This order is approved and completed. If you need a completely new design variant, you can place a new order from your dashboard anytime.
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ================================================================
               SECTION D: LIVE MESSAGES & PROJECT COMMUNICATION
@@ -1277,7 +1366,7 @@ export const OrderTrackerDrawer = () => {
               >
                 ✓ Mark Paid (Admin)
               </button>
-            ) : isDelivered && ord.status !== 'completed' && !isAdmin ? (
+            ) : isDelivered && !isCompleted && ord.status !== 'revision' && ord.status !== 'revision_requested' && !isAdmin ? (
               <>
                 <button
                   type="button"
@@ -1307,6 +1396,19 @@ export const OrderTrackerDrawer = () => {
                   <RotateCcw size={14} /> Request Modification
                 </button>
               </>
+            ) : isCompleted && !isAdmin ? (
+              <button
+                type="button"
+                onClick={() => handleDownloadAllDeliveryFiles(activeDeliveryFiles)}
+                className="btn btn-sm"
+                style={{ background: '#059669', color: '#ffffff', fontWeight: 800, border: 'none', padding: '0.5rem 1.15rem', borderRadius: '8px', gap: '0.35rem', cursor: 'pointer' }}
+              >
+                <Download size={14} /> Download Deliverables
+              </button>
+            ) : (ord.status === 'revision' || ord.status === 'revision_requested') && !isAdmin ? (
+              <span style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', padding: '0.4rem 0.8rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                <RotateCcw size={13} /> Modification Under Production
+              </span>
             ) : null}
 
             <button

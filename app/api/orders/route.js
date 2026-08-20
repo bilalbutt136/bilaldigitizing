@@ -418,12 +418,22 @@ export async function POST(request) {
     if (action === 'requestRevision') {
       if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       const { orderId, instructions } = payload;
+      
+      const { data: orderData, error: orderError } = await supabase.from('orders').select('id, client_email, status').eq('id', orderId).maybeSingle();
       if (!isAdmin) {
-        const { data: orderData, error: orderError } = await supabase.from('orders').select('client_email').eq('id', orderId).single();
-        if (orderError || orderData?.client_email?.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
+        if (orderError || !orderData || orderData?.client_email?.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
       }
+
+      if (orderData?.status === 'completed') {
+        return NextResponse.json({ error: 'This order has already been completed and approved. Modifications are not available on completed orders.' }, { status: 400 });
+      }
+
+      if (orderData?.status === 'cancelled') {
+        return NextResponse.json({ error: 'Cannot request modifications on a cancelled order.' }, { status: 400 });
+      }
+
       await supabase.from('revisions').insert([{ order_id: orderId, details: instructions, status: 'pending' }]);
       await supabase.from('orders').update({ status: 'revision_requested', updated_at: new Date().toISOString() }).eq('id', orderId);
       

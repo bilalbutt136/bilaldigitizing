@@ -1805,7 +1805,27 @@ export const CustomerDashboard = () => {
                                   {getPaymentStatusBadge(ord)}
                                 </div>
                                 <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                                  {isDelivered && (
+                                  {ord?.status === 'completed' ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedOrderForDrawer(ord)}
+                                      style={{
+                                        background: '#dcfce7',
+                                        color: '#15803d',
+                                        border: '1px solid #bbf7d0',
+                                        padding: '0.35rem 0.7rem',
+                                        borderRadius: '6px',
+                                        fontWeight: 800,
+                                        fontSize: '0.75rem',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.25rem'
+                                      }}
+                                    >
+                                      <PackageCheck size={13} /> Files Ready
+                                    </button>
+                                  ) : isDelivered ? (
                                     <button
                                       type="button"
                                       onClick={() => setSelectedOrderForDrawer(ord)}
@@ -1824,9 +1844,9 @@ export const CustomerDashboard = () => {
                                         boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)'
                                       }}
                                     >
-                                      <PackageCheck size={13} /> Download
+                                      <PackageCheck size={13} /> Review & Download
                                     </button>
-                                  )}
+                                  ) : null}
 
                                   {!isPaid && (
                                     <button
