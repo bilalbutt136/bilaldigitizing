@@ -161,24 +161,36 @@ export async function POST(request) {
         console.warn('custom_offers table insert fallback:', err.message);
       }
 
-      // Create rich offer chat message
+      // Create rich offer chat message with embedded offer data
       const msgId = `msg-offer-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-      const messageDbRow = {
+      const offerSerialized = JSON.stringify(offerDbRow);
+      const textWithOffer = `📋 Custom Offer: ${offerDbRow.title} ($${finalPrice.toFixed(2)})\n\n[OFFER_DATA:${offerSerialized}]`;
+
+      const standardMessageRow = {
         id: msgId,
         conversation_id: conversation_id,
         sender: 'admin',
         sender_name: 'Studio Support',
-        text: `📋 Custom Offer: ${offerDbRow.title} ($${finalPrice.toFixed(2)})`,
-        offer_id: offerId,
-        offer_data: offerDbRow,
+        text: textWithOffer,
+        attachment: offerSerialized,
         timestamp: nowIso,
         created_at: nowIso,
         is_read: false
       };
 
-      const { error: msgErr } = await supabase.from('messages').insert([messageDbRow]);
-      if (msgErr) {
-        console.error('Failed to insert offer message:', msgErr.message);
+      // Try inserting with offer columns first, fallback to standard text/attachment
+      let insertedMessage = { ...standardMessageRow, offer_id: offerId, offer_data: offerDbRow };
+      try {
+        const { error: msgErr } = await supabase.from('messages').insert([insertedMessage]);
+        if (msgErr) {
+          console.warn('Full offer message insert fallback:', msgErr.message);
+          const { error: stdErr } = await supabase.from('messages').insert([standardMessageRow]);
+          if (stdErr) console.error('Standard offer message insert failed:', stdErr.message);
+          insertedMessage = standardMessageRow;
+        }
+      } catch (err) {
+        await supabase.from('messages').insert([standardMessageRow]);
+        insertedMessage = standardMessageRow;
       }
 
       // Mirror to order_messages if this is an order conversation
@@ -190,17 +202,62 @@ export async function POST(request) {
             sender: 'admin',
             sender_role: 'admin',
             sender_name: 'Studio Support',
-            message: messageDbRow.text,
+            message: textWithOffer,
             offer_id: offerId,
             offer_data: offerDbRow,
             created_at: nowIso
           }]);
         } catch (omErr) {
-          console.warn('order_messages offer mirror notice:', omErr.message);
+          try {
+            await supabase.from('order_messages').insert([{
+              order_id: rawOrdId,
+              sender: 'admin',
+              sender_role: 'admin',
+              sender_name: 'Studio Support',
+              message: textWithOffer,
+              created_at: nowIso
+            }]);
+          } catch {}
         }
       }
 
-      // Update conversation timestamp & client unread count
+      // Also mirror to client's other channel (inbox vs support) for 100% visibility
+      if (cleanClientEmail && !conversation_id.startsWith('order-')) {
+        const altConvId = conversation_id.startsWith('support-') || conversation_id === 'general-support'
+          ? `inbox-${cleanClientEmail}`
+          : `support-${cleanClientEmail}`;
+
+        try {
+          // Ensure alt conversation exists
+          await supabase.from('conversations').upsert([{
+            id: altConvId,
+            client_name: cleanClientName,
+            client_email: cleanClientEmail,
+            order_id: null,
+            title: altConvId.startsWith('inbox-') ? `Direct Inbox — ${cleanClientName}` : `Customer Support — ${cleanClientName}`,
+            updated_at: nowIso,
+            client_unread_count: 1,
+            admin_unread_count: 0
+          }]);
+
+          const mirrorMsgId = `msg-offer-mirror-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+          await supabase.from('messages').insert([{
+            id: mirrorMsgId,
+            conversation_id: altConvId,
+            sender: 'admin',
+            sender_name: 'Studio Support',
+            text: textWithOffer,
+            attachment: offerSerialized,
+            timestamp: nowIso,
+            created_at: nowIso,
+            is_read: false
+          }]);
+        } catch (mirrorErr) {
+          console.warn('Channel offer mirror notice:', mirrorErr.message);
+        }
+      }
+
+      // Update primary conversation timestamp & client unread count
       try {
         const { data: cData } = await supabase.from('conversations').select('client_unread_count').eq('id', conversation_id).maybeSingle();
         const nextClientUnread = (cData?.client_unread_count || 0) + 1;
@@ -233,7 +290,11 @@ export async function POST(request) {
       return NextResponse.json({
         success: true,
         offer: offerDbRow,
-        message: messageDbRow
+        message: {
+          ...insertedMessage,
+          offer_data: offerDbRow,
+          offer_id: offerId
+        }
       });
     }
 

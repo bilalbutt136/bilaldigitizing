@@ -69,7 +69,24 @@ export default function WhatsAppChatMessage({
     }
   }
 
-  // Fallback: If offer_data wasn't attached, but message is a Custom Offer (starts with 📋 Custom Offer: or has offer_id)
+  // 1. Check embedded [OFFER_DATA:...] in text
+  if (!offerObj && message.text && message.text.includes('[OFFER_DATA:')) {
+    try {
+      const match = message.text.match(/\[OFFER_DATA:(\{.*?\})\]/s);
+      if (match && match[1]) {
+        offerObj = JSON.parse(match[1]);
+      }
+    } catch {}
+  }
+
+  // 2. Check JSON in attachment
+  if (!offerObj && message.attachment && typeof message.attachment === 'string' && message.attachment.trim().startsWith('{') && message.attachment.includes('"title"')) {
+    try {
+      offerObj = JSON.parse(message.attachment);
+    } catch {}
+  }
+
+  // 3. Fallback: If offer_data wasn't attached, but message is a Custom Offer (starts with 📋 Custom Offer: or has offer_id)
   if (!offerObj && (message.offer_id || (message.text && message.text.includes('Custom Offer:')))) {
     const rawText = message.text || '';
     const titleMatch = rawText.match(/Custom Offer:\s*([^(]+)/i);
@@ -422,7 +439,7 @@ export default function WhatsAppChatMessage({
         )}
 
         {/* 4. OTHER ATTACHMENT TYPES (Embroidery, Vector, Zip, etc.) */}
-        {fileCategory !== 'image' && fileCategory !== 'pdf' && fileName && (
+        {fileCategory !== 'image' && fileCategory !== 'pdf' && fileName && !fileName.trim().startsWith('{') && (!fileUrl || !fileUrl.startsWith('{')) && (
           <div
             style={{
               background: isMe ? 'rgba(0, 0, 0, 0.12)' : 'var(--bg-subtle, #f8fafc)',
@@ -497,9 +514,9 @@ export default function WhatsAppChatMessage({
         )}
 
         {/* Message Text */}
-        {message.text && (
+        {message.text && Boolean(message.text.replace(/\[OFFER_DATA:.*?\]/gs, '').trim()) && (
           <div style={{ whiteSpace: 'pre-wrap' }}>
-            {message.text}
+            {message.text.replace(/\[OFFER_DATA:.*?\]/gs, '').trim()}
           </div>
         )}
 
