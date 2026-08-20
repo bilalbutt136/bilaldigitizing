@@ -180,61 +180,59 @@ export const ClientSidebar = ({
             </div>
           </div>
 
-          {/* Wallet Credit Box — High Contrast Crystal-Clear Styling */}
+          {/* Wallet Credit Box — Perfectly Fitted & High Contrast */}
           <div style={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center', 
-            background: 'rgba(255, 255, 255, 0.08)', 
-            padding: '0.45rem 0.7rem', 
-            borderRadius: '10px', 
-            border: '1px solid rgba(255, 255, 255, 0.14)',
-            fontSize: '0.75rem' 
+            background: 'rgba(255, 255, 255, 0.07)', 
+            padding: '0.4rem 0.55rem', 
+            borderRadius: '9px', 
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            fontSize: '0.74rem'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Wallet size={14} style={{ color: '#38bdf8', flexShrink: 0 }} />
-              <span style={{ color: '#cbd5e1', fontWeight: 600 }}>Balance:</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', minWidth: 0 }}>
+              <Wallet size={13} style={{ color: '#38bdf8', flexShrink: 0 }} />
+              <span style={{ color: '#94a3b8', fontSize: '0.7rem', fontWeight: 600 }}>Wallet:</span>
               <strong style={{ 
                 color: '#34d399', 
                 fontWeight: 900, 
-                fontSize: '0.88rem',
-                letterSpacing: '0.01em',
-                background: 'rgba(52, 211, 153, 0.16)',
-                padding: '0.12rem 0.45rem',
-                borderRadius: '6px',
-                border: '1px solid rgba(52, 211, 153, 0.35)',
-                display: 'inline-flex',
-                alignItems: 'center'
+                fontSize: '0.82rem',
+                letterSpacing: '-0.01em',
+                background: 'rgba(52, 211, 153, 0.14)',
+                padding: '0.1rem 0.35rem',
+                borderRadius: '4px',
+                border: '1px solid rgba(52, 211, 153, 0.3)'
               }}>
                 ${displayWallet.toFixed(2)}
               </strong>
-              {onOpenDepositModal && (
-                <button
-                  type="button"
-                  onClick={onOpenDepositModal}
-                  style={{
-                    background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '0.22rem 0.5rem',
-                    fontSize: '0.68rem',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.2rem',
-                    boxShadow: '0 2px 8px rgba(234, 88, 12, 0.35)',
-                    transition: 'all 0.18s ease'
-                  }}
-                  title="Add Funds"
-                >
-                  <PlusCircle size={11} style={{ flexShrink: 0 }} /> Add
-                </button>
-              )}
             </div>
+
+            {onOpenDepositModal && (
+              <button
+                type="button"
+                onClick={onOpenDepositModal}
+                style={{
+                  background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '5px',
+                  padding: '0.2rem 0.45rem',
+                  fontSize: '0.65rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.2rem',
+                  flexShrink: 0,
+                  boxShadow: '0 2px 6px rgba(234, 88, 12, 0.3)',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Add Funds"
+              >
+                <PlusCircle size={10} style={{ flexShrink: 0 }} /> Add
+              </button>
+            )}
           </div>
         </div>
 
