@@ -73,10 +73,12 @@ export const CustomerDashboard = () => {
     setTheme,
     colorTheme,
     setColorTheme,
-    availableThemes = []
+    availableThemes = [],
+    activeCustomerTab,
+    setActiveCustomerTab
   } = useAppState();
 
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'orders' | 'support' | 'notifications' | 'digitizing' | 'vector' | 'patches' | 'profile' | 'settings'
+  const [activeTab, setActiveTabLocal] = useState(() => activeCustomerTab || 'dashboard');
   const [selectedOrderChatId, setSelectedOrderChatId] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [orderFilterTab, setOrderFilterTab] = useState('active'); // 'active' | 'completed' | 'all'
@@ -93,6 +95,34 @@ export const CustomerDashboard = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   // Client-side mounting guard for hydration safety
   const [mounted, setMounted] = React.useState(false);
+
+  const setActiveTab = React.useCallback((tab) => {
+    setActiveTabLocal(tab);
+    if (setActiveCustomerTab) {
+      setActiveCustomerTab(tab);
+    }
+  }, [setActiveCustomerTab]);
+
+  // Sync with global activeCustomerTab changes (e.g. from top header navigation)
+  React.useEffect(() => {
+    if (activeCustomerTab && activeCustomerTab !== activeTab) {
+      setActiveTabLocal(activeCustomerTab);
+    }
+  }, [activeCustomerTab, activeTab]);
+
+  // Listen for direct tab switch events (e.g. from HeaderNav Inbox or Live Support buttons)
+  React.useEffect(() => {
+    const handleTabSwitch = (e) => {
+      if (e.detail?.tab) {
+        setActiveTab(e.detail.tab);
+        if (e.detail.orderId) {
+          setSelectedOrderChatId(e.detail.orderId);
+        }
+      }
+    };
+    window.addEventListener('bdigi_switch_tab', handleTabSwitch);
+    return () => window.removeEventListener('bdigi_switch_tab', handleTabSwitch);
+  }, [setActiveTab]);
 
   React.useEffect(() => {
     setMounted(true);

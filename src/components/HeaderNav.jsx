@@ -97,7 +97,9 @@ export const HeaderNav = () => {
     // 2. If authenticated Client in Portal, open Working Chat (Order discussions)
     if (safeIsAuthenticated) {
       if (setActiveCustomerTab) setActiveCustomerTab('support');
-      if (setSelectedOrderChatId) setSelectedOrderChatId('working-chat');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'support', orderId: 'working-chat' } }));
+      }
       protectedNavigate('customer', false);
       navigate('/client-portal');
       return;
@@ -121,7 +123,9 @@ export const HeaderNav = () => {
     // 2. If authenticated Client in Portal, open Help & Support chat
     if (safeIsAuthenticated) {
       if (setActiveCustomerTab) setActiveCustomerTab('help-support');
-      if (setSelectedOrderChatId) setSelectedOrderChatId('general-support');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'help-support', orderId: 'general-support' } }));
+      }
       protectedNavigate('customer', false);
       navigate('/client-portal');
       return;
