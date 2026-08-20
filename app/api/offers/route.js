@@ -221,41 +221,7 @@ export async function POST(request) {
         }
       }
 
-      // Also mirror to client's other channel (inbox vs support) for 100% visibility
-      if (cleanClientEmail && !conversation_id.startsWith('order-')) {
-        const altConvId = conversation_id.startsWith('support-') || conversation_id === 'general-support'
-          ? `inbox-${cleanClientEmail}`
-          : `support-${cleanClientEmail}`;
 
-        try {
-          // Ensure alt conversation exists
-          await supabase.from('conversations').upsert([{
-            id: altConvId,
-            client_name: cleanClientName,
-            client_email: cleanClientEmail,
-            order_id: null,
-            title: altConvId.startsWith('inbox-') ? `Direct Inbox — ${cleanClientName}` : `Customer Support — ${cleanClientName}`,
-            updated_at: nowIso,
-            client_unread_count: 1,
-            admin_unread_count: 0
-          }]);
-
-          const mirrorMsgId = `msg-offer-mirror-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-          await supabase.from('messages').insert([{
-            id: mirrorMsgId,
-            conversation_id: altConvId,
-            sender: 'admin',
-            sender_name: 'Studio Support',
-            text: textWithOffer,
-            attachment: offerSerialized,
-            timestamp: nowIso,
-            created_at: nowIso,
-            is_read: false
-          }]);
-        } catch (mirrorErr) {
-          console.warn('Channel offer mirror notice:', mirrorErr.message);
-        }
-      }
 
       // Update primary conversation timestamp & client unread count
       try {

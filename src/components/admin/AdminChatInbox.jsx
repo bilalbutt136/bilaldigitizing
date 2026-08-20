@@ -52,10 +52,18 @@ const formatChatTime = (timestamp) => {
 
 // Helper to resolve real customer name, real email, and exact order type & number
 export const resolveThreadInfo = (conv, orders = []) => {
-  if (!conv) return { customerName: 'Customer', customerEmail: '', serviceCategory: 'Support', orderNum: '', isOrder: false };
+  if (!conv) return { customerName: 'Customer', customerEmail: '', serviceCategory: 'Support', orderNum: '', isOrder: false, isDirectInbox: false, isSupport: true };
 
-  const isOrder = conv.id?.startsWith('order-') || Boolean(conv.orderId && conv.orderId !== 'Support' && conv.orderId !== 'General Inquiries');
-  const rawId = (conv.orderId || conv.id || '').replace('order-', '').replace('#', '');
+  const idStr = String(conv.id || '');
+  const isSupportThread = idStr === 'general-support' || idStr.startsWith('support-');
+  const isDirectInboxThread = !isSupportThread && (idStr.startsWith('inbox-') || idStr.startsWith('direct-'));
+  const isOrderThread = !isSupportThread && !isDirectInboxThread && (idStr.startsWith('order-') || Boolean(conv.order_id || (conv.orderId && conv.orderId !== 'Support' && conv.orderId !== 'Customer Support' && conv.orderId !== 'Direct Chat')));
+
+  const isOrder = isOrderThread;
+  const isDirectInbox = isDirectInboxThread;
+  const isSupport = isSupportThread || (!isOrder && !isDirectInbox);
+
+  const rawId = isOrder ? (conv.order_id || conv.orderId || conv.id || '').replace('order-', '').replace('#', '').trim() : '';
   
   const matchOrd = isOrder && Array.isArray(orders) 
     ? orders.find(o => String(o.id) === String(rawId) || String(o.id).endsWith(String(rawId))) 
@@ -92,14 +100,16 @@ export const resolveThreadInfo = (conv, orders = []) => {
 
   return {
     isOrder,
+    isDirectInbox,
+    isSupport,
     rawId,
     matchOrd,
     customerName,
     customerEmail,
     serviceCategory,
     orderNum,
-    orderSubtitle: isOrder ? `${serviceCategory} — ${orderNum}` : 'Support',
-    orderTitle: matchOrd?.title || conv.orderTitle || conv.title || (isOrder ? `${serviceCategory} ${orderNum}` : 'Live Support')
+    orderSubtitle: isOrder ? `${serviceCategory} — ${orderNum}` : (isDirectInbox ? 'Direct Inbox' : 'Live Support'),
+    orderTitle: matchOrd?.title || conv.orderTitle || conv.title || (isOrder ? `${serviceCategory} ${orderNum}` : (isDirectInbox ? `Direct Chat — ${customerName}` : 'Live Support'))
   };
 };
 
@@ -599,14 +609,14 @@ export const AdminChatInbox = () => {
   const orderConversations = useMemo(() => {
     return conversations.filter(c => {
       const info = resolveThreadInfo(c, orders);
-      return info.isOrder || c.id?.startsWith('inbox-') || c.id?.startsWith('direct-');
+      return !info.isSupport && (info.isOrder || info.isDirectInbox);
     });
   }, [conversations, orders]);
 
   const supportConversations = useMemo(() => {
     return conversations.filter(c => {
       const info = resolveThreadInfo(c, orders);
-      return !info.isOrder && !c.id?.startsWith('inbox-') && !c.id?.startsWith('direct-');
+      return info.isSupport;
     });
   }, [conversations, orders]);
 
@@ -1059,9 +1069,13 @@ export const AdminChatInbox = () => {
                             <span style={{ fontSize: '0.65rem', background: '#fff7ed', color: '#ea580c', border: '1px solid #fed7aa', padding: '0.05rem 0.35rem', borderRadius: '4px', fontWeight: 800, flexShrink: 0 }}>
                               🧵 {info.serviceCategory} — {info.orderNum}
                             </span>
+                          ) : info.isDirectInbox ? (
+                            <span style={{ fontSize: '0.65rem', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', padding: '0.05rem 0.35rem', borderRadius: '4px', fontWeight: 800, flexShrink: 0 }}>
+                              💬 Direct Inbox
+                            </span>
                           ) : (
                             <span style={{ fontSize: '0.65rem', background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', padding: '0.05rem 0.35rem', borderRadius: '4px', fontWeight: 800, flexShrink: 0 }}>
-                              🟢 Support
+                              🎧 Support
                             </span>
                           )}
 
@@ -1195,14 +1209,14 @@ export const AdminChatInbox = () => {
                       fontSize: '0.65rem',
                       padding: '0.05rem 0.35rem',
                       borderRadius: '4px',
-                      background: activeInfo.isOrder ? '#fff7ed' : 'rgba(16, 185, 129, 0.1)',
-                      color: activeInfo.isOrder ? '#ea580c' : '#10b981',
-                      border: `1px solid ${activeInfo.isOrder ? '#fed7aa' : 'rgba(16, 185, 129, 0.25)'}`,
+                      background: activeInfo.isOrder ? '#fff7ed' : (activeInfo.isDirectInbox ? '#eff6ff' : 'rgba(16, 185, 129, 0.1)'),
+                      color: activeInfo.isOrder ? '#ea580c' : (activeInfo.isDirectInbox ? '#2563eb' : '#10b981'),
+                      border: `1px solid ${activeInfo.isOrder ? '#fed7aa' : (activeInfo.isDirectInbox ? '#bfdbfe' : 'rgba(16, 185, 129, 0.25)')}`,
                       fontWeight: 800,
                       whiteSpace: 'nowrap',
                       flexShrink: 0
                     }}>
-                      {activeInfo.isOrder ? 'Order' : 'Support'}
+                      {activeInfo.isOrder ? 'Order' : (activeInfo.isDirectInbox ? 'Direct Inbox' : 'Support')}
                     </span>
                   </div>
 
