@@ -1214,11 +1214,12 @@ export async function createConversation(dbConv) {
   } catch { return null; }
 }
 
-export async function fetchConversations(email) {
+export async function fetchConversations(email, channel = '') {
   try {
     const headers = await getAuthHeaders();
     const cleanEmail = email ? String(email).toLowerCase().trim() : '';
-    const query = cleanEmail ? `&clientEmail=${encodeURIComponent(cleanEmail)}` : '';
+    let query = cleanEmail ? `&clientEmail=${encodeURIComponent(cleanEmail)}` : '';
+    if (channel) query += `&channel=${encodeURIComponent(channel)}`;
     const res = await fetch(`/api/messages?action=fetchConversations${query}`, {
       headers,
       cache: 'no-store'

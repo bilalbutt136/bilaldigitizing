@@ -11,9 +11,20 @@ const normalizeEmail = (e) => {
   return str;
 };
 
-const getCanonicalChatId = (email) => {
+const isSupportConversation = (id) => {
+  if (!id) return false;
+  const lower = String(id).toLowerCase().trim();
+  return lower === 'general-support' || lower === 'support-guest' || lower === 'help-support' || lower.startsWith('support-');
+};
+
+const getCanonicalInboxId = (email) => {
   const clean = normalizeEmail(email);
-  return clean ? `chat-${clean}` : 'chat-guest';
+  return clean ? `inbox-${clean}` : 'inbox-guest';
+};
+
+const getCanonicalSupportId = (email) => {
+  const clean = normalizeEmail(email);
+  return clean ? `support-${clean}` : 'support-guest';
 };
 
 const parseMessageTime = (msg) => {
@@ -31,6 +42,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
     const chatId = searchParams.get('chatId');
+    const channelParam = searchParams.get('channel'); // 'inbox' | 'support'
     const emailParam = normalizeEmail(searchParams.get('clientEmail') || searchParams.get('email') || '');
     const supabase = createAdminClient();
 
@@ -38,31 +50,31 @@ export async function GET(request) {
       const cleanUserEmail = normalizeEmail(user?.email || emailParam || '');
 
       // 1. Fetch all messages
-      const { data: allMessages, error: msgErr } = await supabase
+      const { data: allMessages } = await supabase
         .from('messages')
         .select('*')
         .order('created_at', { ascending: true });
       const rawMessages = allMessages || [];
 
-      // 2. Fetch all orders (to map client names, emails, and order discussions)
+      // 2. Fetch all orders (for mapping client details & order discussions)
       const { data: allOrders } = await supabase
         .from('orders')
         .select('id, title, client_name, client_email, service_category, service_type, status, price, created_at');
       const rawOrders = allOrders || [];
 
-      // 3. Fetch all clients (for real customer profile names)
+      // 3. Fetch all client profiles
       const { data: allClients } = await supabase
         .from('clients')
         .select('name, full_name, email, company, role');
       const rawClients = allClients || [];
 
-      // 4. Fetch all conversations table records
+      // 4. Fetch existing conversations table records
       const { data: allConvs } = await supabase
         .from('conversations')
         .select('*');
       const rawConvs = allConvs || [];
 
-      // Map helper for orders by email
+      // Map helpers
       const ordersByEmail = new Map();
       const orderToEmailMap = new Map();
       rawOrders.forEach(ord => {
@@ -75,20 +87,21 @@ export async function GET(request) {
         }
       });
 
-      // Map helper for client profiles
       const clientsByEmail = new Map();
       rawClients.forEach(c => {
         const cEmail = normalizeEmail(c.email);
         if (cEmail) clientsByEmail.set(cEmail, c);
       });
 
-      // Group all customer threads: Map<customerEmail, { info, messages } >
-      const customerThreadsMap = new Map();
+      // ----------------------------------------------------
+      // A. BUILD STRICT INBOX CONVERSATIONS (One per customer)
+      // ----------------------------------------------------
+      const inboxThreadsMap = new Map();
 
-      const getOrCreateCustomerThread = (email, fallbackName = 'Customer') => {
+      const getOrCreateInboxThread = (email, fallbackName = 'Customer') => {
         const cleanEmail = normalizeEmail(email);
         const key = cleanEmail || 'guest';
-        if (!customerThreadsMap.has(key)) {
+        if (!inboxThreadsMap.has(key)) {
           const clientProfile = cleanEmail ? clientsByEmail.get(cleanEmail) : null;
           const clientOrders = cleanEmail ? (ordersByEmail.get(cleanEmail) || []) : [];
           
@@ -101,8 +114,8 @@ export async function GET(request) {
           }
           if (!resolvedName) resolvedName = fallbackName || 'Guest Visitor';
 
-          customerThreadsMap.set(key, {
-            id: cleanEmail ? `chat-${cleanEmail}` : 'chat-guest',
+          inboxThreadsMap.set(key, {
+            id: cleanEmail ? `inbox-${cleanEmail}` : 'inbox-guest',
             clientEmail: cleanEmail,
             clientName: resolvedName,
             company: clientProfile?.company || 'Studio Client',
@@ -113,44 +126,92 @@ export async function GET(request) {
             adminUnreadCount: 0,
             clientUnreadCount: 0,
             unreadCount: 0,
+            isSupport: false,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           });
         }
-        return customerThreadsMap.get(key);
+        return inboxThreadsMap.get(key);
       };
 
-      // Seed from existing conversations table
-      rawConvs.forEach(conv => {
-        const convEmail = normalizeEmail(conv.client_email) || (conv.id?.startsWith('chat-') ? normalizeEmail(conv.id.replace('chat-', '')) : (conv.id?.startsWith('inbox-') ? normalizeEmail(conv.id.replace('inbox-', '')) : (conv.id?.startsWith('support-') ? normalizeEmail(conv.id.replace('support-', '')) : '')));
-        const thread = getOrCreateCustomerThread(convEmail, conv.client_name);
-        if (conv.client_name && conv.client_name !== 'Customer' && conv.client_name !== 'Client' && conv.client_name !== 'Guest Client') {
-          thread.clientName = conv.client_name;
+      // ----------------------------------------------------
+      // B. BUILD STRICT SUPPORT CONVERSATIONS (Support Queue)
+      // ----------------------------------------------------
+      const supportThreadsMap = new Map();
+
+      const getOrCreateSupportThread = (email, fallbackName = 'Support User') => {
+        const cleanEmail = normalizeEmail(email);
+        const key = cleanEmail || 'support-guest';
+        if (!supportThreadsMap.has(key)) {
+          const clientProfile = cleanEmail ? clientsByEmail.get(cleanEmail) : null;
+          const clientOrders = cleanEmail ? (ordersByEmail.get(cleanEmail) || []) : [];
+          
+          let resolvedName = clientProfile?.name || clientProfile?.full_name;
+          if (!resolvedName && clientOrders.length > 0) {
+            resolvedName = clientOrders[0].client_name;
+          }
+          if (!resolvedName && cleanEmail) {
+            resolvedName = cleanEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          }
+          if (!resolvedName) resolvedName = fallbackName || (cleanEmail ? 'Customer' : 'Guest Visitor');
+
+          supportThreadsMap.set(key, {
+            id: cleanEmail ? `support-${cleanEmail}` : 'support-guest',
+            clientEmail: cleanEmail,
+            clientName: resolvedName,
+            company: clientProfile?.company || 'Help & Support',
+            status: 'online',
+            avatar: null,
+            orders: clientOrders,
+            messages: [],
+            adminUnreadCount: 0,
+            clientUnreadCount: 0,
+            unreadCount: 0,
+            isSupport: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
         }
-        if (conv.admin_unread_count) thread.adminUnreadCount = Math.max(thread.adminUnreadCount, conv.admin_unread_count);
-        if (conv.client_unread_count) thread.clientUnreadCount = Math.max(thread.clientUnreadCount, conv.client_unread_count);
+        return supportThreadsMap.get(key);
+      };
+
+      // Seed threads from existing conversations table
+      rawConvs.forEach(conv => {
+        const convEmail = normalizeEmail(conv.client_email) || (conv.id?.startsWith('inbox-') ? normalizeEmail(conv.id.replace('inbox-', '')) : (conv.id?.startsWith('support-') ? normalizeEmail(conv.id.replace('support-', '')) : (conv.id?.startsWith('chat-') ? normalizeEmail(conv.id.replace('chat-', '')) : '')));
+        if (isSupportConversation(conv.id)) {
+          const thread = getOrCreateSupportThread(convEmail, conv.client_name);
+          if (conv.client_name && !['Customer', 'Client', 'Guest Client'].includes(conv.client_name)) {
+            thread.clientName = conv.client_name;
+          }
+        } else {
+          const thread = getOrCreateInboxThread(convEmail, conv.client_name);
+          if (conv.client_name && !['Customer', 'Client', 'Guest Client'].includes(conv.client_name)) {
+            thread.clientName = conv.client_name;
+          }
+        }
       });
 
-      // Distribute all messages into their respective single customer thread
+      // Distribute messages strictly according to their channel
       rawMessages.forEach(m => {
-        let matchedEmail = '';
-
-        // Check if conversation_id has email embedded
         const cId = String(m.conversation_id || '').toLowerCase();
-        if (cId.startsWith('chat-')) matchedEmail = normalizeEmail(cId.replace('chat-', ''));
-        else if (cId.startsWith('inbox-')) matchedEmail = normalizeEmail(cId.replace('inbox-', ''));
+        const isSupport = isSupportConversation(cId);
+
+        let matchedEmail = '';
+        if (cId.startsWith('inbox-')) matchedEmail = normalizeEmail(cId.replace('inbox-', ''));
         else if (cId.startsWith('support-')) matchedEmail = normalizeEmail(cId.replace('support-', ''));
         else if (cId.startsWith('direct-')) matchedEmail = normalizeEmail(cId.replace('direct-', ''));
+        else if (cId.startsWith('chat-')) matchedEmail = normalizeEmail(cId.replace('chat-', ''));
         else if (cId.startsWith('order-') || orderToEmailMap.has(cId)) {
           matchedEmail = orderToEmailMap.get(cId) || '';
         }
 
-        // Check message level email
         if (!matchedEmail && m.client_email) {
           matchedEmail = normalizeEmail(m.client_email);
         }
 
-        const thread = getOrCreateCustomerThread(matchedEmail, m.sender_name);
+        const thread = isSupport 
+          ? getOrCreateSupportThread(matchedEmail, m.sender_name)
+          : getOrCreateInboxThread(matchedEmail, m.sender_name);
 
         const mappedMsg = {
           id: m.id,
@@ -167,79 +228,65 @@ export async function GET(request) {
           reply_to: m.reply_to || null,
           offer_id: m.offer_id || m.offerId || null,
           offer_data: m.offer_data || m.offerData || null,
-          is_read: m.is_read || false,
+          is_read: m.is_read === true || m.is_read === 'true',
           timestamp: m.timestamp || m.created_at
         };
 
         thread.messages.push(mappedMsg);
       });
 
-      // Finalize customer threads
-      const conversationList = Array.from(customerThreadsMap.values()).map(thread => {
-        thread.messages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
-        const lastMsg = thread.messages[thread.messages.length - 1];
-        const lastTime = lastMsg ? parseMessageTime(lastMsg) : new Date(thread.updatedAt).getTime();
-        
-        // Count unread for admin
-        const unreadForAdmin = thread.messages.filter(m => m.sender === 'client' && !m.is_read).length;
-        const unreadForClient = thread.messages.filter(m => m.sender === 'admin' && !m.is_read).length;
+      // Finalize and sort lists
+      const finalizeThreads = (threadsMap) => {
+        return Array.from(threadsMap.values()).map(thread => {
+          thread.messages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+          const lastMsg = thread.messages[thread.messages.length - 1];
+          const lastTime = lastMsg ? parseMessageTime(lastMsg) : new Date(thread.updatedAt).getTime();
+          
+          const unreadForAdmin = thread.messages.filter(m => m.sender === 'client' && !m.is_read).length;
+          const unreadForClient = thread.messages.filter(m => m.sender === 'admin' && !m.is_read).length;
 
-        return {
-          ...thread,
-          unreadCount: isAdmin ? unreadForAdmin : unreadForClient,
-          adminUnreadCount: unreadForAdmin,
-          clientUnreadCount: unreadForClient,
-          lastMessageTime: lastTime,
-          updatedAt: lastMsg?.timestamp || thread.updatedAt
-        };
-      });
+          return {
+            ...thread,
+            unreadCount: isAdmin ? unreadForAdmin : unreadForClient,
+            adminUnreadCount: unreadForAdmin,
+            clientUnreadCount: unreadForClient,
+            lastMessageTime: lastTime,
+            updatedAt: lastMsg?.timestamp || thread.updatedAt
+          };
+        }).sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
+      };
 
-      // Filter based on requester role
+      const inboxConversations = finalizeThreads(inboxThreadsMap);
+      const supportConversations = finalizeThreads(supportThreadsMap);
+
+      // Return per-user or admin data
       if (!isAdmin) {
         if (cleanUserEmail) {
-          const userThread = conversationList.find(c => c.clientEmail === cleanUserEmail) || {
-            id: `chat-${cleanUserEmail}`,
-            clientEmail: cleanUserEmail,
-            clientName: user?.user_metadata?.full_name || cleanUserEmail.split('@')[0],
-            company: 'Studio Client',
-            status: 'online',
-            avatar: null,
-            orders: ordersByEmail.get(cleanUserEmail) || [],
-            messages: [],
-            unreadCount: 0,
-            adminUnreadCount: 0,
-            clientUnreadCount: 0,
-            lastMessageTime: Date.now(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
-          return NextResponse.json({ conversations: [userThread] });
+          const userInbox = inboxConversations.find(c => c.clientEmail === cleanUserEmail) || getOrCreateInboxThread(cleanUserEmail);
+          const userSupport = supportConversations.find(c => c.clientEmail === cleanUserEmail) || getOrCreateSupportThread(cleanUserEmail);
+          
+          if (channelParam === 'support') {
+            return NextResponse.json({ conversations: [userSupport], inboxConversations: [userInbox], supportConversations: [userSupport] });
+          } else if (channelParam === 'inbox') {
+            return NextResponse.json({ conversations: [userInbox], inboxConversations: [userInbox], supportConversations: [userSupport] });
+          }
+          return NextResponse.json({ conversations: [userInbox, userSupport], inboxConversations: [userInbox], supportConversations: [userSupport] });
         } else {
-          // Guest visitor
-          const guestThread = conversationList.find(c => c.id === 'chat-guest') || {
-            id: 'chat-guest',
-            clientEmail: '',
-            clientName: 'Guest Visitor',
-            company: 'Guest',
-            status: 'online',
-            avatar: null,
-            orders: [],
-            messages: [],
-            unreadCount: 0,
-            adminUnreadCount: 0,
-            clientUnreadCount: 0,
-            lastMessageTime: Date.now(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
-          return NextResponse.json({ conversations: [guestThread] });
+          const guestSupport = supportConversations.find(c => c.id === 'support-guest') || getOrCreateSupportThread('');
+          return NextResponse.json({ conversations: [guestSupport], inboxConversations: [], supportConversations: [guestSupport] });
         }
       }
 
-      // For Admin: sort all customer chats by newest message time at top (WhatsApp style)
-      conversationList.sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
+      // For Admin
+      let combinedList = [...inboxConversations, ...supportConversations];
+      if (channelParam === 'inbox') combinedList = inboxConversations;
+      else if (channelParam === 'support') combinedList = supportConversations;
 
-      return NextResponse.json({ conversations: conversationList });
+      return NextResponse.json({
+        conversations: combinedList,
+        inboxConversations,
+        supportConversations
+      });
     }
 
     if (action === 'fetchMessages') {
@@ -251,27 +298,63 @@ export async function GET(request) {
       let targetEmail = cleanUserEmail;
       
       const cId = String(chatId).toLowerCase();
-      if (cId.startsWith('chat-')) targetEmail = normalizeEmail(cId.replace('chat-', ''));
-      else if (cId.startsWith('inbox-')) targetEmail = normalizeEmail(cId.replace('inbox-', ''));
-      else if (cId.startsWith('support-')) targetEmail = normalizeEmail(cId.replace('support-', ''));
-      else if (cId.startsWith('direct-')) targetEmail = normalizeEmail(cId.replace('direct-', ''));
+      const isSupport = isSupportConversation(cId);
 
-      // Collect all possible conversation IDs matching this customer
-      const targetIds = new Set([chatId, `chat-${targetEmail}`, `inbox-${targetEmail}`, `support-${targetEmail}`, `direct-${targetEmail}`]);
-      if (!targetEmail) {
-        targetIds.add('chat-guest');
-        targetIds.add('general-support');
+      if (cId.startsWith('support-')) targetEmail = normalizeEmail(cId.replace('support-', ''));
+      else if (cId.startsWith('inbox-')) targetEmail = normalizeEmail(cId.replace('inbox-', ''));
+      else if (cId.startsWith('direct-')) targetEmail = normalizeEmail(cId.replace('direct-', ''));
+      else if (cId.startsWith('chat-')) targetEmail = normalizeEmail(cId.replace('chat-', ''));
+
+      let targetIds = [];
+
+      if (isSupport) {
+        // STRICT SUPPORT CHANNEL
+        targetIds = Array.from(new Set([
+          chatId,
+          targetEmail ? `support-${targetEmail}` : '',
+          'general-support',
+          'support-guest'
+        ].filter(Boolean)));
+      } else {
+        // STRICT INBOX CHANNEL (Include normal inbox and order discussions for this customer)
+        let orderIds = [];
+        if (targetEmail) {
+          try {
+            const { data: customerOrders } = await supabase.from('orders').select('id').ilike('client_email', targetEmail);
+            if (Array.isArray(customerOrders)) {
+              orderIds = customerOrders.map(o => `order-${o.id}`);
+            }
+          } catch {}
+        }
+
+        targetIds = Array.from(new Set([
+          chatId,
+          targetEmail ? `inbox-${targetEmail}` : '',
+          targetEmail ? `direct-${targetEmail}` : '',
+          targetEmail ? `chat-${targetEmail}` : '',
+          ...orderIds
+        ].filter(Boolean)));
       }
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('messages')
         .select('*')
-        .in('conversation_id', Array.from(targetIds))
+        .in('conversation_id', targetIds)
         .order('created_at', { ascending: true });
         
-      const mappedMessages = (data || []).map(m => ({
+      // Ensure strict boundary: filter out any misplaced records
+      const filteredData = (data || []).filter(m => {
+        const msgConvId = String(m.conversation_id || '').toLowerCase();
+        if (isSupport) {
+          return isSupportConversation(msgConvId);
+        } else {
+          return !isSupportConversation(msgConvId);
+        }
+      });
+
+      const mappedMessages = filteredData.map(m => ({
         id: m.id,
-        conversation_id: targetEmail ? `chat-${targetEmail}` : (m.conversation_id || 'chat-guest'),
+        conversation_id: isSupport ? (targetEmail ? `support-${targetEmail}` : 'support-guest') : (targetEmail ? `inbox-${targetEmail}` : (m.conversation_id || 'inbox-client')),
         sender: m.sender,
         senderName: m.sender_name || (m.sender === 'admin' ? 'Support' : 'Client'),
         sender_name: m.sender_name,
@@ -284,7 +367,7 @@ export async function GET(request) {
         reply_to: m.reply_to || null,
         offer_id: m.offer_id || m.offerId || null,
         offer_data: m.offer_data || m.offerData || null,
-        is_read: m.is_read || false,
+        is_read: m.is_read === true || m.is_read === 'true',
         timestamp: m.timestamp || m.created_at
       }));
 
@@ -343,7 +426,8 @@ export async function POST(request) {
 
     if (action === 'upsertConversation') {
       const clientEmail = normalizeEmail(payload.clientEmail || payload.client_email || cleanUserEmail);
-      const canonicalId = getCanonicalChatId(clientEmail);
+      const isSupport = isSupportConversation(payload.id);
+      const canonicalId = isSupport ? getCanonicalSupportId(clientEmail) : getCanonicalInboxId(clientEmail);
 
       const dbPayload = {
         id: canonicalId,
@@ -351,7 +435,7 @@ export async function POST(request) {
         client_email: clientEmail,
         client_company: payload.company || payload.client_company || 'Studio Client',
         order_id: null,
-        order_title: 'Direct WhatsApp Chat',
+        order_title: isSupport ? 'Live Customer Support' : 'Customer Inbox',
         avatar: payload.avatar || null,
         status: payload.status || 'online',
         unread_count: payload.unreadCount || payload.unread_count || 0,
@@ -376,6 +460,7 @@ export async function POST(request) {
         unreadCount: isAdmin ? dbPayload.admin_unread_count : dbPayload.client_unread_count,
         adminUnreadCount: dbPayload.admin_unread_count,
         clientUnreadCount: dbPayload.client_unread_count,
+        isSupport,
         createdAt: new Date().toISOString(),
         updatedAt: dbPayload.updated_at,
         messages: payload.messages || []
@@ -386,17 +471,19 @@ export async function POST(request) {
     
     if (action === 'insertMessage') {
       let passedId = payload.conversation_id || '';
+      const isSupport = isSupportConversation(passedId) || payload.isSupport === true || payload.channel === 'support';
+      
       let targetEmail = normalizeEmail(payload.client_email || payload.clientEmail || cleanUserEmail);
       
       if (!targetEmail) {
         const idLower = String(passedId).toLowerCase();
-        if (idLower.startsWith('chat-')) targetEmail = normalizeEmail(idLower.replace('chat-', ''));
+        if (idLower.startsWith('support-')) targetEmail = normalizeEmail(idLower.replace('support-', ''));
         else if (idLower.startsWith('inbox-')) targetEmail = normalizeEmail(idLower.replace('inbox-', ''));
-        else if (idLower.startsWith('support-')) targetEmail = normalizeEmail(idLower.replace('support-', ''));
         else if (idLower.startsWith('direct-')) targetEmail = normalizeEmail(idLower.replace('direct-', ''));
+        else if (idLower.startsWith('chat-')) targetEmail = normalizeEmail(idLower.replace('chat-', ''));
       }
 
-      const canonicalConvId = getCanonicalChatId(targetEmail);
+      const canonicalConvId = isSupport ? getCanonicalSupportId(targetEmail) : getCanonicalInboxId(targetEmail);
 
       const fallbackName = user?.user_metadata?.full_name || (targetEmail ? targetEmail.split('@')[0] : 'Client');
       const finalClientName = isAdmin ? (payload.client_name || payload.clientName || 'Customer') : (payload.sender_name || payload.senderName || fallbackName);
@@ -407,7 +494,7 @@ export async function POST(request) {
           id: canonicalConvId,
           client_name: finalClientName,
           client_email: targetEmail,
-          client_company: payload.company || 'Studio Client',
+          client_company: payload.company || (isSupport ? 'Customer Support' : 'Studio Client'),
           status: 'online',
           admin_unread_count: isAdmin ? 0 : 1,
           client_unread_count: isAdmin ? 1 : 0,
@@ -427,6 +514,7 @@ export async function POST(request) {
       const dbPayload = {
         id: payload.id || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         conversation_id: canonicalConvId,
+        client_email: targetEmail || null,
         sender: actualSender,
         sender_name: actualSenderName,
         text: payload.text || '',
@@ -514,6 +602,7 @@ export async function POST(request) {
           offer_id: finalInsertedMsg.offer_id || null,
           offer_data: finalInsertedMsg.offer_data || null,
           is_read: false,
+          isSupport,
           timestamp: finalInsertedMsg.timestamp || finalInsertedMsg.created_at
         }
       });
@@ -524,30 +613,40 @@ export async function POST(request) {
       
       if (conversation_id) {
         const nowIso = new Date().toISOString();
+        const isSupport = isSupportConversation(conversation_id);
         let targetEmail = normalizeEmail(clientEmail || client_email || '');
         if (!targetEmail) {
-          targetEmail = normalizeEmail(conversation_id.replace('chat-', '').replace('inbox-', '').replace('support-', '').replace('direct-', ''));
+          targetEmail = normalizeEmail(conversation_id.replace('support-', '').replace('inbox-', '').replace('direct-', '').replace('chat-', ''));
         }
 
-        // Include any related order conversation IDs
-        let orderIds = [];
-        if (targetEmail) {
-          try {
-            const { data: customerOrders } = await supabase.from('orders').select('id').ilike('client_email', targetEmail);
-            if (Array.isArray(customerOrders)) {
-              orderIds = customerOrders.map(o => `order-${o.id}`);
-            }
-          } catch {}
-        }
+        let targetIds = [];
 
-        const targetIds = Array.from(new Set([
-          conversation_id,
-          targetEmail ? `chat-${targetEmail}` : '',
-          targetEmail ? `inbox-${targetEmail}` : '',
-          targetEmail ? `support-${targetEmail}` : '',
-          targetEmail ? `direct-${targetEmail}` : '',
-          ...orderIds
-        ].filter(Boolean)));
+        if (isSupport) {
+          targetIds = Array.from(new Set([
+            conversation_id,
+            targetEmail ? `support-${targetEmail}` : '',
+            'general-support',
+            'support-guest'
+          ].filter(Boolean)));
+        } else {
+          let orderIds = [];
+          if (targetEmail) {
+            try {
+              const { data: customerOrders } = await supabase.from('orders').select('id').ilike('client_email', targetEmail);
+              if (Array.isArray(customerOrders)) {
+                orderIds = customerOrders.map(o => `order-${o.id}`);
+              }
+            } catch {}
+          }
+
+          targetIds = Array.from(new Set([
+            conversation_id,
+            targetEmail ? `inbox-${targetEmail}` : '',
+            targetEmail ? `direct-${targetEmail}` : '',
+            targetEmail ? `chat-${targetEmail}` : '',
+            ...orderIds
+          ].filter(Boolean)));
+        }
 
         const isUserAdmin = Boolean(
           isAdmin || 
@@ -566,13 +665,6 @@ export async function POST(request) {
             .update({ is_read: true })
             .in('conversation_id', targetIds)
             .neq('sender', 'admin');
-
-          if (targetEmail) {
-            await supabase.from('messages')
-              .update({ is_read: true })
-              .ilike('client_email', targetEmail)
-              .neq('sender', 'admin');
-          }
         } else {
           // Client read admin/support's messages
           await supabase.from('conversations')
@@ -583,13 +675,6 @@ export async function POST(request) {
             .update({ is_read: true })
             .in('conversation_id', targetIds)
             .eq('sender', 'admin');
-
-          if (targetEmail) {
-            await supabase.from('messages')
-              .update({ is_read: true })
-              .ilike('client_email', targetEmail)
-              .eq('sender', 'admin');
-          }
         }
       }
       

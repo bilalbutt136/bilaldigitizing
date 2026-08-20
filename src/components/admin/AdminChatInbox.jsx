@@ -635,14 +635,59 @@ export const AdminChatInbox = () => {
     ));
   };
 
-  const unreadTotal = useMemo(() => {
-    return conversations.reduce((sum, c) => sum + getThreadUnreadCount(c), 0);
+  const isSupportThread = (c) => {
+    if (!c) return false;
+    if (c.isSupport === true) return true;
+    const idStr = String(c.id || '').toLowerCase();
+    return idStr === 'general-support' || idStr === 'support-guest' || idStr.startsWith('support-');
+  };
+
+  const inboxConversationsCount = useMemo(() => {
+    return conversations.filter(c => !isSupportThread(c)).length;
+  }, [conversations]);
+
+  const supportConversationsCount = useMemo(() => {
+    return conversations.filter(c => isSupportThread(c)).length;
+  }, [conversations]);
+
+  const inboxUnreadTotal = useMemo(() => {
+    return conversations
+      .filter(c => !isSupportThread(c))
+      .reduce((sum, c) => sum + getThreadUnreadCount(c), 0);
   }, [conversations, activeChatId, currentActiveChatId]);
 
-  // Filter conversations list based on subFilter and search
+  const supportUnreadTotal = useMemo(() => {
+    return conversations
+      .filter(c => isSupportThread(c))
+      .reduce((sum, c) => sum + getThreadUnreadCount(c), 0);
+  }, [conversations, activeChatId, currentActiveChatId]);
+
+  const unreadTotal = useMemo(() => {
+    return activeSection === 'inbox' ? inboxUnreadTotal : supportUnreadTotal;
+  }, [activeSection, inboxUnreadTotal, supportUnreadTotal]);
+
+  // Switch active conversation when switching section if current is not in section
+  const handleSectionSwitch = (section) => {
+    setActiveSection(section);
+    const candidates = conversations.filter(c => section === 'inbox' ? !isSupportThread(c) : isSupportThread(c));
+    if (candidates.length > 0) {
+      const currentIsCandidate = candidates.some(c => c.id === activeChatId);
+      if (!currentIsCandidate) {
+        handleSelectChat(candidates[0].id);
+      }
+    } else {
+      setActiveChatId(null);
+    }
+  };
+
+  // Filter conversations list based on activeSection, subFilter, and search
   const filteredConversations = useMemo(() => {
     return conversations.filter(conv => {
-      const info = resolveThreadInfo(conv, orders);
+      const isSupport = isSupportThread(conv);
+
+      // Strict Channel Separation
+      if (activeSection === 'inbox' && isSupport) return false;
+      if (activeSection === 'support' && !isSupport) return false;
 
       if (subFilter === 'unread') {
         if (getThreadUnreadCount(conv) === 0) return false;
@@ -650,6 +695,7 @@ export const AdminChatInbox = () => {
 
       if (!searchTerm.trim()) return true;
       const term = searchTerm.toLowerCase().trim();
+      const info = resolveThreadInfo(conv, orders);
       return (
         (conv.clientName || '').toLowerCase().includes(term) ||
         (conv.clientEmail || '').toLowerCase().includes(term) ||
@@ -658,7 +704,7 @@ export const AdminChatInbox = () => {
         (conv.messages || []).some(m => (m.text || '').toLowerCase().includes(term))
       );
     });
-  }, [conversations, subFilter, searchTerm, orders]);
+  }, [conversations, activeSection, subFilter, searchTerm, orders, activeChatId, currentActiveChatId]);
 
   const handleSendMessage = async (e) => {
     e?.preventDefault();
@@ -802,35 +848,87 @@ export const AdminChatInbox = () => {
           {/* Header */}
           <div style={{ padding: '0.85rem 1rem', borderBottom: '1.5px solid var(--color-border)', background: 'var(--color-surface, #ffffff)' }}>
             
-            {/* Header: WhatsApp Style Customer List */}
+            {/* Top Channel Switcher: Customer Inbox vs Support Queue */}
             <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '6px',
               marginBottom: '0.75rem',
-              padding: '0.2rem 0.25rem'
+              background: '#f1f5f9',
+              padding: '4px',
+              borderRadius: '10px'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                <MessageSquare size={16} className="text-orange-500" />
-                <span style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--navy-950)' }}>
-                  Customer Chats
-                </span>
-                <span style={{ fontSize: '0.72rem', background: '#f1f5f9', color: 'var(--navy-700)', padding: '0.1rem 0.4rem', borderRadius: '9999px', fontWeight: 800 }}>
-                  {conversations.length}
-                </span>
-              </div>
-              {unreadTotal > 0 && (
-                <span style={{
-                  background: '#ef4444',
-                  color: '#ffffff',
-                  fontSize: '0.68rem',
-                  fontWeight: 900,
-                  padding: '0.1rem 0.45rem',
-                  borderRadius: '9999px'
-                }}>
-                  {unreadTotal} Unread
-                </span>
-              )}
+              <button
+                type="button"
+                onClick={() => handleSectionSwitch('inbox')}
+                style={{
+                  padding: '0.45rem 0.5rem',
+                  borderRadius: '7px',
+                  border: 'none',
+                  background: activeSection === 'inbox' ? '#ffffff' : 'transparent',
+                  color: activeSection === 'inbox' ? '#ea580c' : 'var(--navy-700)',
+                  boxShadow: activeSection === 'inbox' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                  fontWeight: activeSection === 'inbox' ? 900 : 700,
+                  fontSize: '0.75rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.35rem',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Inbox size={13} />
+                <span>Inbox ({inboxConversationsCount})</span>
+                {inboxUnreadTotal > 0 && (
+                  <span style={{
+                    background: '#ef4444',
+                    color: '#ffffff',
+                    fontSize: '0.62rem',
+                    fontWeight: 900,
+                    padding: '0.05rem 0.35rem',
+                    borderRadius: '9999px'
+                  }}>
+                    {inboxUnreadTotal}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSectionSwitch('support')}
+                style={{
+                  padding: '0.45rem 0.5rem',
+                  borderRadius: '7px',
+                  border: 'none',
+                  background: activeSection === 'support' ? '#ffffff' : 'transparent',
+                  color: activeSection === 'support' ? '#ea580c' : 'var(--navy-700)',
+                  boxShadow: activeSection === 'support' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                  fontWeight: activeSection === 'support' ? 900 : 700,
+                  fontSize: '0.75rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.35rem',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Headphones size={13} />
+                <span>Support ({supportConversationsCount})</span>
+                {supportUnreadTotal > 0 && (
+                  <span style={{
+                    background: '#ef4444',
+                    color: '#ffffff',
+                    fontSize: '0.62rem',
+                    fontWeight: 900,
+                    padding: '0.05rem 0.35rem',
+                    borderRadius: '9999px'
+                  }}>
+                    {supportUnreadTotal}
+                  </span>
+                )}
+              </button>
             </div>
 
             {/* Search & Sub-Filter Bar */}
@@ -840,7 +938,7 @@ export const AdminChatInbox = () => {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search customers, emails, messages..."
+                placeholder={activeSection === 'inbox' ? "Search customer inboxes..." : "Search support inquiries..."}
                 style={{
                   width: '100%',
                   padding: '0.45rem 0.75rem 0.45rem 2.2rem',
@@ -876,7 +974,7 @@ export const AdminChatInbox = () => {
                   }}
                   onClick={() => setSubFilter('all')}
                 >
-                  All ({conversations.length})
+                  All ({filteredConversations.length})
                 </button>
                 <button
                   type="button"
@@ -1355,32 +1453,34 @@ export const AdminChatInbox = () => {
                   <Paperclip size={16} />
                 </button>
 
-                {/* Custom Offer Button */}
-                <button
-                  type="button"
-                  onClick={() => setIsOfferModalOpen(true)}
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.15))',
-                    border: '1.5px solid rgba(99, 102, 241, 0.4)',
-                    color: '#4f46e5',
-                    padding: '0 0.55rem',
-                    height: '36px',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    fontWeight: 800,
-                    fontSize: '0.78rem',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                    transition: 'all 0.2s ease',
-                    whiteSpace: 'nowrap'
-                  }}
-                  title="Create & Send Custom Offer"
-                >
-                  <Tag size={13} className="text-indigo-600" />
-                  <span>Offer</span>
-                </button>
+                {/* Custom Offer Button (Only in Normal Customer Inbox, never in Support) */}
+                {(!activeChat?.isSupport && !isSupportThread(activeChat)) && (
+                  <button
+                    type="button"
+                    onClick={() => setIsOfferModalOpen(true)}
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.15))',
+                      border: '1.5px solid rgba(99, 102, 241, 0.4)',
+                      color: '#4f46e5',
+                      padding: '0 0.55rem',
+                      height: '36px',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontWeight: 800,
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      transition: 'all 0.2s ease',
+                      whiteSpace: 'nowrap'
+                    }}
+                    title="Create & Send Custom Offer"
+                  >
+                    <Tag size={13} className="text-indigo-600" />
+                    <span>Offer</span>
+                  </button>
+                )}
 
                 <input
                   type="text"

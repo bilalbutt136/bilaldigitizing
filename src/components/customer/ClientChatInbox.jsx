@@ -30,7 +30,8 @@ import {
   RotateCcw,
   Sparkles,
   ChevronDown,
-  ExternalLink
+  ExternalLink,
+  Inbox
 } from 'lucide-react';
 
 const parseMessageTime = (msg) => {
@@ -76,11 +77,19 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   const clientEmail = (activeUser.email || '').toLowerCase().trim();
   const clientName = activeUser.name || 'Client';
 
+  const isInitialSupport = initialOrderId === 'support' || initialOrderId === 'general-support' || (initialOrderId && String(initialOrderId).startsWith('support-'));
+  const [activeChannel, setActiveChannel] = useState(isInitialSupport ? 'support' : 'inbox');
+
   const canonicalChatId = useMemo(() => {
+    if (activeChannel === 'support') {
+      return clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')
+        ? `support-${clientEmail}`
+        : 'general-support';
+    }
     return clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')
-      ? `chat-${clientEmail}`
-      : 'chat-guest';
-  }, [clientEmail]);
+      ? `inbox-${clientEmail}`
+      : 'inbox-client';
+  }, [clientEmail, activeChannel]);
 
   const [mounted, setMounted] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -117,18 +126,12 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
   const loadChatHistory = async () => {
     if (!clientEmail) return;
+    setLoading(true);
     try {
-      const convs = await fetchConversations(clientEmail);
-      const userConv = (convs || []).find(c => c.id === canonicalChatId || c.clientEmail === clientEmail) || convs?.[0];
-      if (userConv && Array.isArray(userConv.messages)) {
-        const sorted = [...userConv.messages].sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+      const directMsgs = await fetchChatMessages(canonicalChatId, clientEmail);
+      if (Array.isArray(directMsgs)) {
+        const sorted = [...directMsgs].sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
         setMessages(sorted);
-      } else {
-        const directMsgs = await fetchChatMessages(canonicalChatId, clientEmail);
-        if (Array.isArray(directMsgs)) {
-          const sorted = [...directMsgs].sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
-          setMessages(sorted);
-        }
       }
     } catch (err) {
       console.warn('Load chat history notice:', err);
@@ -150,7 +153,10 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   }, [canonicalChatId, clientEmail]);
 
   useEffect(() => {
-    if (initialOrderId && initialOrderId !== 'inbox' && initialOrderId !== 'support' && initialOrderId !== 'general-support') {
+    if (initialOrderId === 'support' || initialOrderId === 'general-support' || (initialOrderId && String(initialOrderId).startsWith('support-'))) {
+      setActiveChannel('support');
+    } else if (initialOrderId && initialOrderId !== 'inbox') {
+      setActiveChannel('inbox');
       const ordNum = formatOrderId(initialOrderId);
       const tag = `[Regarding Order ${ordNum}] `;
       setMessageInput(prev => prev.includes(tag) ? prev : `${tag}${prev}`);
@@ -164,10 +170,14 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       if (!record) return;
 
       const recordConvId = String(record.conversation_id || '').toLowerCase();
+      const isSupportRecord = recordConvId.startsWith('support-') || recordConvId === 'general-support' || recordConvId === 'support-guest' || record.isSupport === true;
+
+      if (activeChannel === 'support' && !isSupportRecord) return;
+      if (activeChannel === 'inbox' && isSupportRecord) return;
+
       const isForThisCustomer = recordConvId === canonicalChatId ||
-        recordConvId === `inbox-${clientEmail}` ||
-        recordConvId === `support-${clientEmail}` ||
-        recordConvId === `direct-${clientEmail}` ||
+        (activeChannel === 'inbox' && (recordConvId === `inbox-${clientEmail}` || recordConvId === `direct-${clientEmail}`)) ||
+        (activeChannel === 'support' && recordConvId === `support-${clientEmail}`) ||
         (record.client_email && record.client_email.toLowerCase().trim() === clientEmail);
 
       if (isForThisCustomer) {
@@ -225,7 +235,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       if (unsubMessages) unsubMessages();
       if (unsubTyping) unsubTyping();
     };
-  }, [canonicalChatId, clientEmail, clientName]);
+  }, [canonicalChatId, clientEmail, clientName, activeChannel]);
 
   const handleInputChange = (e) => {
     const val = e.target.value;
@@ -265,6 +275,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         text: replyingTo.text,
         attachment: replyingTo.attachment_name || replyingTo.attachment
       } : null,
+      isSupport: activeChannel === 'support',
       timestamp: nowIso,
       created_at: nowIso,
       is_read: false
@@ -332,7 +343,85 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       overflow: 'hidden'
     }}>
       <div style={{
-        padding: '0.85rem 1.25rem',
+        padding: '0.65rem 1.25rem 0',
+        background: '#f8fafc',
+        borderBottom: '1px solid var(--color-border)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexShrink: 0
+      }}>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <button
+            type="button"
+            onClick={() => setActiveChannel('inbox')}
+            style={{
+              padding: '0.5rem 1rem',
+              borderRadius: '8px 8px 0 0',
+              border: '1px solid var(--color-border)',
+              borderBottom: activeChannel === 'inbox' ? '2px solid #ea580c' : '1px solid transparent',
+              background: activeChannel === 'inbox' ? '#ffffff' : 'transparent',
+              color: activeChannel === 'inbox' ? '#ea580c' : 'var(--navy-700)',
+              fontWeight: activeChannel === 'inbox' ? 900 : 700,
+              fontSize: '0.82rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Inbox size={15} />
+            <span>Customer Inbox (Orders & Offers)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveChannel('support')}
+            style={{
+              padding: '0.5rem 1rem',
+              borderRadius: '8px 8px 0 0',
+              border: '1px solid var(--color-border)',
+              borderBottom: activeChannel === 'support' ? '2px solid #ea580c' : '1px solid transparent',
+              background: activeChannel === 'support' ? '#ffffff' : 'transparent',
+              color: activeChannel === 'support' ? '#ea580c' : 'var(--navy-700)',
+              fontWeight: activeChannel === 'support' ? 900 : 700,
+              fontSize: '0.82rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Headphones size={15} />
+            <span>24/7 Support Helpdesk</span>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={loadChatHistory}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.25rem',
+            padding: '0.25rem 0.5rem'
+          }}
+          title="Refresh messages"
+        >
+          <RotateCcw size={12} /> Sync
+        </button>
+      </div>
+
+      <div style={{
+        padding: '0.75rem 1.25rem',
         borderBottom: '1px solid var(--color-border)',
         background: '#ffffff',
         display: 'flex',
@@ -343,26 +432,26 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{ position: 'relative' }}>
             <div style={{
-              width: '42px',
-              height: '42px',
+              width: '40px',
+              height: '40px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-              color: '#ffffff',
+              background: activeChannel === 'inbox' ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' : '#ecfdf5',
+              color: activeChannel === 'inbox' ? '#ffffff' : '#059669',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 900,
-              fontSize: '1rem',
-              border: '2px solid #ea580c'
+              fontSize: '0.9rem',
+              border: activeChannel === 'inbox' ? '2px solid #ea580c' : '2px solid #10b981'
             }}>
-              BD
+              {activeChannel === 'inbox' ? 'BD' : <Headphones size={18} />}
             </div>
             <span style={{
               position: 'absolute',
               bottom: 0,
               right: 0,
-              width: '11px',
-              height: '11px',
+              width: '10px',
+              height: '10px',
               borderRadius: '50%',
               background: '#10b981',
               border: '2px solid #ffffff'
@@ -371,129 +460,106 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: 'var(--navy-950)' }}>
-                Studio Support & Digitizing Team
+              <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                {activeChannel === 'inbox' ? 'Studio Management & Digitizing Team' : '24/7 Live Customer Support'}
               </h3>
               <span style={{
                 fontSize: '0.65rem',
-                background: '#ecfdf5',
-                color: '#059669',
-                border: '1px solid #a7f3d0',
-                padding: '0.1rem 0.4rem',
+                background: activeChannel === 'inbox' ? '#fff7ed' : '#ecfdf5',
+                color: activeChannel === 'inbox' ? '#ea580c' : '#059669',
+                border: `1px solid ${activeChannel === 'inbox' ? '#fed7aa' : '#a7f3d0'}`,
+                padding: '0.05rem 0.4rem',
                 borderRadius: '9999px',
                 fontWeight: 800
               }}>
-                Verified Official
+                {activeChannel === 'inbox' ? 'Private Studio Inbox' : 'Support Helpdesk'}
               </span>
             </div>
-            <div style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: 700, marginTop: '0.1rem' }}>
+            <div style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 700, marginTop: '0.1rem' }}>
               ● Online • Instant Replies
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', position: 'relative' }}>
-          {orders && orders.length > 0 && (
-            <div style={{ position: 'relative' }}>
-              <button
-                type="button"
-                onClick={() => setIsOrdersMenuOpen(prev => !prev)}
-                style={{
-                  background: '#f8fafc',
-                  border: '1.5px solid var(--color-border)',
-                  color: 'var(--navy-800)',
-                  padding: '0.4rem 0.75rem',
-                  borderRadius: '8px',
-                  fontSize: '0.78rem',
-                  fontWeight: 800,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  cursor: 'pointer'
-                }}
-              >
-                <ShoppingBag size={14} className="text-orange-500" />
-                <span>Reference Order ({orders.length})</span>
-                <ChevronDown size={13} />
-              </button>
+        {activeChannel === 'inbox' && orders && orders.length > 0 && (
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setIsOrdersMenuOpen(prev => !prev)}
+              style={{
+                background: '#f8fafc',
+                border: '1.5px solid var(--color-border)',
+                color: 'var(--navy-800)',
+                padding: '0.35rem 0.7rem',
+                borderRadius: '8px',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                cursor: 'pointer'
+              }}
+            >
+              <ShoppingBag size={14} className="text-orange-500" />
+              <span>Reference Order ({orders.length})</span>
+              <ChevronDown size={13} />
+            </button>
 
-              {isOrdersMenuOpen && (
-                <div style={{
-                  position: 'absolute',
-                  top: '110%',
-                  right: 0,
-                  width: '280px',
-                  background: '#ffffff',
-                  borderRadius: '12px',
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-                  border: '1.5px solid var(--color-border)',
-                  padding: '0.5rem',
-                  zIndex: 50,
-                  maxHeight: '300px',
-                  overflowY: 'auto'
-                }}>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', padding: '0.35rem 0.5rem', borderBottom: '1px solid #f1f5f9' }}>
-                    Click an order to reference it in chat:
-                  </div>
-                  {orders.map(ord => {
-                    const ordNum = formatOrderId(ord.id);
-                    return (
-                      <div
-                        key={ord.id}
-                        onClick={() => {
-                          const tag = `[Regarding Order ${ordNum} - ${ord.title || ord.service_category || 'Digitizing'}] `;
-                          setMessageInput(prev => prev.includes(tag) ? prev : `${tag}${prev}`);
-                          setIsOrdersMenuOpen(false);
-                        }}
-                        style={{
-                          padding: '0.5rem 0.6rem',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          marginBottom: '2px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          fontSize: '0.78rem'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                      >
-                        <div>
-                          <strong style={{ color: 'var(--navy-900)' }}>{ordNum}</strong>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{ord.title || ord.service_category || 'Embroidery'}</div>
-                        </div>
-                        <span style={{ fontSize: '0.65rem', background: '#fff7ed', color: '#ea580c', fontWeight: 800, padding: '0.1rem 0.35rem', borderRadius: '4px' }}>
-                          Add Tag
-                        </span>
-                      </div>
-                    );
-                  })}
+            {isOrdersMenuOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '110%',
+                right: 0,
+                width: '280px',
+                background: '#ffffff',
+                borderRadius: '12px',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                border: '1.5px solid var(--color-border)',
+                padding: '0.5rem',
+                zIndex: 50,
+                maxHeight: '300px',
+                overflowY: 'auto'
+              }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', padding: '0.35rem 0.5rem', borderBottom: '1px solid #f1f5f9' }}>
+                  Click an order to reference in chat:
                 </div>
-              )}
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={loadChatHistory}
-            style={{
-              background: '#f8fafc',
-              border: '1.5px solid var(--color-border)',
-              color: 'var(--text-muted)',
-              padding: '0.4rem 0.6rem',
-              borderRadius: '8px',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.25rem',
-              cursor: 'pointer'
-            }}
-            title="Sync latest messages from database"
-          >
-            <RotateCcw size={13} />
-          </button>
-        </div>
+                {orders.map(ord => {
+                  const ordNum = formatOrderId(ord.id);
+                  return (
+                    <div
+                      key={ord.id}
+                      onClick={() => {
+                        const tag = `[Regarding Order ${ordNum} - ${ord.title || ord.service_category || 'Digitizing'}] `;
+                        setMessageInput(prev => prev.includes(tag) ? prev : `${tag}${prev}`);
+                        setIsOrdersMenuOpen(false);
+                      }}
+                      style={{
+                        padding: '0.5rem 0.6rem',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        marginBottom: '2px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        fontSize: '0.78rem'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <div>
+                        <strong style={{ color: 'var(--navy-900)' }}>{ordNum}</strong>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{ord.title || ord.service_category || 'Embroidery'}</div>
+                      </div>
+                      <span style={{ fontSize: '0.65rem', background: '#fff7ed', color: '#ea580c', fontWeight: 800, padding: '0.1rem 0.35rem', borderRadius: '4px' }}>
+                        Add Tag
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div 
@@ -511,8 +577,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         }}
       >
         <div style={{
-          margin: '0.5rem auto 1rem auto',
-          padding: '0.4rem 1rem',
+          margin: '0.25rem auto 0.75rem auto',
+          padding: '0.35rem 0.9rem',
           borderRadius: '8px',
           background: 'rgba(255, 255, 255, 0.85)',
           border: '1px solid rgba(0, 0, 0, 0.08)',
@@ -523,7 +589,9 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           maxWidth: '420px',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)'
         }}>
-          🔒 Messages and files are securely stored & synced in real-time with Studio Digitizers.
+          {activeChannel === 'inbox' 
+            ? '🔒 Private Customer Inbox with Studio Digitizers & Management.'
+            : '🎧 24/7 Live Support Helpdesk for inquiries & technical assistance.'}
         </div>
 
         {loading ? (
@@ -542,13 +610,27 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
             maxWidth: '380px',
             boxShadow: '0 4px 15px rgba(0,0,0,0.05)'
           }}>
-            <MessageSquare size={36} className="text-orange-500" style={{ margin: '0 auto 0.75rem' }} />
-            <h4 style={{ margin: '0 0 0.4rem', fontSize: '1rem', fontWeight: 900, color: 'var(--navy-950)' }}>
-              Start a Conversation
-            </h4>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              Ask a question, request an embroidery quote, or share revisions with our master digitizing team.
-            </p>
+            {activeChannel === 'inbox' ? (
+              <>
+                <MessageSquare size={36} className="text-orange-500" style={{ margin: '0 auto 0.75rem' }} />
+                <h4 style={{ margin: '0 0 0.4rem', fontSize: '1rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                  Start Studio Conversation
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                  Ask questions, request custom quotes, or discuss artwork revisions with our master digitizing team.
+                </p>
+              </>
+            ) : (
+              <>
+                <Headphones size={36} className="text-emerald-500" style={{ margin: '0 auto 0.75rem' }} />
+                <h4 style={{ margin: '0 0 0.4rem', fontSize: '1rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                  Customer Support Helpdesk
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                  How can our support team assist you today? Leave your question below.
+                </p>
+              </>
+            )}
           </div>
         ) : (
           messages.map((msg, index) => {
@@ -604,7 +686,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         }}>
           <div style={{ borderLeft: '3.5px solid #ea580c', paddingLeft: '0.6rem', minWidth: 0, flex: 1 }}>
             <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#ea580c', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <Reply size={12} /> Replying to {replyingTo.senderName || replyingTo.sender_name || 'Studio Support'}
+              <Reply size={12} /> Replying to {replyingTo.senderName || replyingTo.sender_name || 'Support'}
             </div>
             <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {replyingTo.text || (replyingTo.attachment ? `📎 ${replyingTo.attachment}` : 'Attachment')}
@@ -692,7 +774,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           type="text"
           value={messageInput}
           onChange={handleInputChange}
-          placeholder="Type a message to Studio Support..."
+          placeholder={activeChannel === 'inbox' ? 'Type a message to Studio Digitizers...' : 'Type a question to 24/7 Support...'}
           style={{
             flex: 1,
             height: '42px',
