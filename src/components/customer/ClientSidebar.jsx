@@ -61,14 +61,14 @@ export const ClientSidebar = ({
         },
         { 
           id: 'support', 
-          label: 'Working Chat', 
+          label: 'Inbox', 
           icon: MessageSquare, 
           badge: unreadChatCount > 0 ? unreadChatCount : null,
           liveDot: true 
         },
         { 
           id: 'help-support', 
-          label: 'Help & Support', 
+          label: 'Customer Support', 
           icon: Headphones, 
           badge: null
         },

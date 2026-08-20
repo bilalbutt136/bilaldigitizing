@@ -121,7 +121,8 @@ const deduplicateThreads = (rawList) => {
     const cleanMessages = (conv.messages || []).filter(m => m && (m.id || m.text));
     cleanMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
 
-    const isOrder = conv.id?.startsWith('order-') || Boolean(conv.orderId && conv.orderId !== 'Support' && conv.orderId !== 'General Inquiries');
+    const isDirectInbox = conv.id?.startsWith('inbox-') || conv.id?.startsWith('direct-');
+    const isOrder = conv.id?.startsWith('order-') || Boolean(conv.orderId && conv.orderId !== 'Support' && conv.orderId !== 'Customer Support' && conv.orderId !== 'General Inquiries' && conv.orderId !== 'Direct Chat');
     const rawOrdId = isOrder ? (conv.orderId || conv.id || '').replace('order-', '').replace('#', '').trim() : null;
 
     let key = '';
@@ -130,6 +131,17 @@ const deduplicateThreads = (rawList) => {
     if (isOrder && rawOrdId) {
       key = `order_${rawOrdId.toLowerCase()}`;
       unifiedId = `order-${rawOrdId}`;
+    } else if (isDirectInbox) {
+      let clientEmail = (conv.clientEmail || conv.client_email || '').toLowerCase().trim();
+      if (!clientEmail || clientEmail === 'client@studio.com' || clientEmail.includes('guest@bdigitizing.pro')) {
+        const emailMsg = cleanMessages.find(m => m.client_email && m.client_email !== 'client@studio.com' && !m.client_email.includes('guest@bdigitizing.pro'));
+        if (emailMsg?.client_email) clientEmail = emailMsg.client_email.toLowerCase().trim();
+      }
+      if (!clientEmail && conv.id) {
+        clientEmail = conv.id.replace('inbox-', '').replace('direct-', '').toLowerCase().trim();
+      }
+      key = `inbox_${clientEmail || 'client'}`;
+      unifiedId = `inbox-${clientEmail || 'client'}`;
     } else {
       // Support thread: Extract real customer email from conv or its messages
       let clientEmail = (conv.clientEmail || conv.client_email || '').toLowerCase().trim();
@@ -588,13 +600,19 @@ export const AdminChatInbox = () => {
     ));
   };
 
-  // Separate into 2 core messaging sections: Customer Inbox vs Support
+  // Separate into 2 core messaging sections: Customer Inbox vs Support Queue
   const orderConversations = useMemo(() => {
-    return conversations.filter(c => resolveThreadInfo(c, orders).isOrder);
+    return conversations.filter(c => {
+      const info = resolveThreadInfo(c, orders);
+      return info.isOrder || c.id?.startsWith('inbox-') || c.id?.startsWith('direct-');
+    });
   }, [conversations, orders]);
 
   const supportConversations = useMemo(() => {
-    return conversations.filter(c => !resolveThreadInfo(c, orders).isOrder);
+    return conversations.filter(c => {
+      const info = resolveThreadInfo(c, orders);
+      return !info.isOrder && !c.id?.startsWith('inbox-') && !c.id?.startsWith('direct-');
+    });
   }, [conversations, orders]);
 
   const orderUnreadTotal = useMemo(() => {

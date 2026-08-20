@@ -109,6 +109,8 @@ export async function GET(request) {
         conversationIdSet.add('general-support');
         if (cleanUserEmail && cleanUserEmail !== 'client@studio.com') {
           conversationIdSet.add(`support-${cleanUserEmail}`);
+          conversationIdSet.add(`inbox-${cleanUserEmail}`);
+          conversationIdSet.add(`direct-${cleanUserEmail}`);
         }
         userOrderIds.forEach(id => {
           conversationIdSet.add(`order-${id}`);

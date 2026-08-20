@@ -89,6 +89,12 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
   const cacheKey = useMemo(() => `bdigi_inbox_cache_${clientEmail || 'guest'}`, [clientEmail]);
 
+  const defaultDirectInboxId = useMemo(() => {
+    return clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')
+      ? `inbox-${clientEmail}`
+      : 'inbox-client';
+  }, [clientEmail]);
+
   const defaultSupportId = useMemo(() => {
     return clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')
       ? `support-${clientEmail}`
@@ -102,8 +108,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   const [subFilter, setSubFilter] = useState('all'); // 'all' | 'unread'
   const [activeChatId, setActiveChatId] = useState(
     initialOrderId
-      ? (isTargetingSupport ? (initialOrderId === 'general-support' || initialOrderId === 'help-support' || initialOrderId === 'support' ? defaultSupportId : initialOrderId) : (initialOrderId.startsWith('order-') ? initialOrderId : null))
-      : null
+      ? (isTargetingSupport ? (initialOrderId === 'general-support' || initialOrderId === 'help-support' || initialOrderId === 'support' ? defaultSupportId : initialOrderId) : (initialOrderId.startsWith('order-') ? initialOrderId : defaultDirectInboxId))
+      : defaultDirectInboxId
   );
 
   // Sync section & active chat when initialOrderId changes
@@ -111,13 +117,14 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     if (initialOrderId === 'support' || initialOrderId === 'general-support' || initialOrderId === 'help-support' || (initialOrderId && String(initialOrderId).startsWith('support-'))) {
       setActiveSection('support');
       setActiveChatId(defaultSupportId);
-    } else if (initialOrderId === 'working-chat' || initialOrderId === 'working' || initialOrderId === 'conversations') {
+    } else if (initialOrderId === 'inbox' || initialOrderId === 'working-chat' || initialOrderId === 'working' || initialOrderId === 'conversations') {
       setActiveSection('conversations');
+      setActiveChatId(defaultDirectInboxId);
     } else if (initialOrderId && String(initialOrderId).startsWith('order-')) {
       setActiveSection('conversations');
       setActiveChatId(initialOrderId);
     }
-  }, [initialOrderId, defaultSupportId]);
+  }, [initialOrderId, defaultSupportId, defaultDirectInboxId]);
   const [searchTerm, setSearchTerm] = useState('');
   const [messageInput, setMessageInput] = useState('');
   const [attachedFile, setAttachedFile] = useState(null); // { name, url, size, format }
@@ -173,32 +180,112 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     }, 220);
   };
 
-  // Build unified thread list combining general support and active order discussions with chat history
+  // Build distinct thread lists for Normal Inbox and Customer Support
   const buildThreadList = (remoteConvs = [], existingThreads = []) => {
     const threadMap = new Map();
     const existingMap = new Map((existingThreads || []).map(t => [t.id, t]));
 
-    // 1. General Studio Support Thread
+    // 1. Direct Private Studio Inbox Thread (Direct messaging between customer and admin)
+    const directId = defaultDirectInboxId;
+    const remoteDirectConvs = (remoteConvs || []).filter(c => 
+      c.id === directId || 
+      c.id === `direct-${clientEmail}` || 
+      c.id === 'inbox-client' ||
+      (c.id && (c.id.startsWith('inbox-') || c.id.startsWith('direct-')))
+    );
+    const existingDirectThreads = (existingThreads || []).filter(c => 
+      c.id === directId || 
+      c.id === `direct-${clientEmail}` || 
+      c.id === 'inbox-client' ||
+      c.isDirectInbox ||
+      (c.id && (c.id.startsWith('inbox-') || c.id.startsWith('direct-')))
+    );
+
+    const directMessagesMap = new Map();
+    existingDirectThreads.forEach(dt => {
+      (dt.messages || []).forEach(m => {
+        if (m && (m.id || m.text || m.attachment || m.attachment_url)) {
+          const key = m.id || `${m.sender}-${m.text}-${m.timestamp}`;
+          directMessagesMap.set(key, m);
+        }
+      });
+    });
+    remoteDirectConvs.forEach(rc => {
+      (rc.messages || []).forEach(rm => {
+        if (rm && (rm.id || rm.text || rm.attachment || rm.attachment_url)) {
+          let matched = false;
+          for (const [key, existingMsg] of directMessagesMap.entries()) {
+            const isIdMatch = existingMsg.id && rm.id && existingMsg.id === rm.id;
+            const isTextMatch = existingMsg.text && rm.text && existingMsg.text === rm.text && existingMsg.sender === rm.sender && Math.abs(parseMessageTime(existingMsg) - parseMessageTime(rm)) < 20000;
+            const isAttachMatch = existingMsg.attachment_url && rm.attachment_url && existingMsg.attachment_url === rm.attachment_url;
+            if (isIdMatch || isTextMatch || isAttachMatch) {
+              directMessagesMap.set(key, { ...existingMsg, ...rm });
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) {
+            const key = rm.id || `${rm.sender}-${rm.text}-${rm.timestamp}`;
+            directMessagesMap.set(key, rm);
+          }
+        }
+      });
+    });
+
+    let directMessages = Array.from(directMessagesMap.values());
+    if (directMessages.length === 0) {
+      directMessages = [
+        {
+          id: 'welcome-direct-msg',
+          conversation_id: directId,
+          sender: 'admin',
+          senderName: 'Studio Admin',
+          text: `Welcome to your private studio inbox, ${clientName}! Chat directly with our management and senior digitizing team here regarding any inquiries, custom quotes, or updates.`,
+          timestamp: new Date().toISOString()
+        }
+      ];
+    }
+    directMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+    const dirLastMsg = directMessages[directMessages.length - 1];
+    const dirLastTimestamp = dirLastMsg?.timestamp || existingDirectThreads[0]?.updatedAt || new Date().toISOString();
+    const dirLastTime = dirLastTimestamp && !isNaN(new Date(dirLastTimestamp).getTime())
+      ? new Date(dirLastTimestamp).getTime()
+      : Date.now();
+
+    const maxDirectUnread = Math.max(
+      ...existingDirectThreads.map(c => c.clientUnreadCount ?? 0),
+      ...remoteDirectConvs.map(c => c.clientUnreadCount ?? c.unreadCount ?? 0),
+      0
+    );
+
+    threadMap.set(directId, {
+      id: directId,
+      title: '💬 Studio Admin & Digitizers',
+      orderId: 'Direct Chat',
+      orderTitle: 'Direct Studio Administration & Digitizers',
+      serviceType: 'inbox',
+      serviceCategory: 'Direct Message',
+      isDirectInbox: true,
+      status: 'online',
+      unreadCount: maxDirectUnread,
+      clientUnreadCount: maxDirectUnread,
+      messages: directMessages,
+      lastMessageTime: dirLastTime,
+      updatedAt: dirLastTimestamp
+    });
+
+    // 2. Customer Support & Helpdesk Thread (Support channel for technical assistance & questions)
     const generalId = defaultSupportId;
-    
-    // Find all support conversations in remoteConvs (both general-support and support-${clientEmail} or other support threads)
     const remoteSupportConvs = (remoteConvs || []).filter(c => 
       c.id === generalId || 
       c.id === 'general-support' || 
-      isSupportId(c.id) ||
-      (!c.orderId && !c.order_id && !c.id?.startsWith('order-'))
+      (isSupportId(c.id) && !c.id?.startsWith('inbox-') && !c.id?.startsWith('direct-'))
     );
-    
     const existingSupportThreads = (existingThreads || []).filter(c => 
-      isSupportId(c.id) || 
-      c.id === generalId ||
-      (!c.orderId && !c.order_id && !c.id?.startsWith('order-'))
+      (isSupportId(c.id) || c.id === generalId || c.isSupport) && !c.isDirectInbox && !c.id?.startsWith('inbox-') && !c.id?.startsWith('direct-')
     );
-    
-    // Aggregate all support messages from all local and remote support threads
+
     const supportMessagesMap = new Map();
-    
-    // 1. Add existing local messages first to guarantee zero message loss
     existingSupportThreads.forEach(st => {
       (st.messages || []).forEach(m => {
         if (m && (m.id || m.text || m.attachment || m.attachment_url)) {
@@ -207,8 +294,6 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         }
       });
     });
-
-    // 2. Add remote support messages
     remoteSupportConvs.forEach(rc => {
       (rc.messages || []).forEach(rm => {
         if (rm && (rm.id || rm.text || rm.attachment || rm.attachment_url)) {
@@ -235,16 +320,15 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     if (generalMessages.length === 0) {
       generalMessages = [
         {
-          id: 'welcome-msg',
+          id: 'welcome-support-msg',
           conversation_id: generalId,
           sender: 'admin',
           senderName: 'Support',
-          text: `Welcome ${clientName}! How can our support team assist you today?`,
+          text: `Welcome to Customer Support, ${clientName}! How can our support team assist you today?`,
           timestamp: new Date().toISOString()
         }
       ];
     }
-
     generalMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
 
     const genLastMsg = generalMessages[generalMessages.length - 1];
@@ -261,11 +345,12 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
     threadMap.set(generalId, {
       id: generalId,
-      title: '🎧 Live Studio Support',
-      orderId: 'Support',
-      orderTitle: 'Live Studio Support & Quotes',
-      serviceType: 'general',
+      title: '🎧 24/7 Customer Support',
+      orderId: 'Customer Support',
+      orderTitle: '24/7 Customer Support & Helpdesk',
+      serviceType: 'support',
       serviceCategory: 'Support',
+      isSupport: true,
       status: 'online',
       unreadCount: maxSupportUnread,
       clientUnreadCount: maxSupportUnread,
@@ -274,7 +359,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       updatedAt: genLastTimestamp
     });
 
-    // 2. Order-specific Threads ONLY for orders that have chat history (or currently targeted)
+    // 3. Order-specific Threads ONLY for orders that have chat history (or currently targeted)
     const myOrders = Array.isArray(orders) ? orders.filter(o => {
       const ordEmail = (o.client_email || o.clientEmail || '').toLowerCase().trim();
       return !clientEmail || ordEmail === clientEmail || !ordEmail;
@@ -762,24 +847,24 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     }, 2500);
   };
 
-  // Separate into 2 core messaging sections: My Conversations (Orders) vs Support
-  const orderConversations = useMemo(() => {
-    return conversations.filter(c => c.rawOrderId || c.id?.startsWith('order-'));
+  // Separate into 2 distinct messaging categories: Normal Inbox (Direct Chat & Orders) vs Customer Support
+  const inboxConversations = useMemo(() => {
+    return conversations.filter(c => c.isDirectInbox || c.isOrder || c.rawOrderId || c.id?.startsWith('order-') || c.id?.startsWith('inbox-') || c.id?.startsWith('direct-'));
   }, [conversations]);
 
   const supportConversations = useMemo(() => {
-    return conversations.filter(c => isSupportId(c.id));
+    return conversations.filter(c => c.isSupport || (isSupportId(c.id) && !c.isDirectInbox && !c.id?.startsWith('inbox-') && !c.id?.startsWith('direct-')));
   }, [conversations]);
 
-  const orderUnreadTotal = useMemo(() => {
-    return orderConversations.reduce((sum, c) => sum + getThreadUnreadCount(c), 0);
-  }, [orderConversations]);
+  const inboxUnreadTotal = useMemo(() => {
+    return inboxConversations.reduce((sum, c) => sum + getThreadUnreadCount(c), 0);
+  }, [inboxConversations]);
 
   const supportUnreadTotal = useMemo(() => {
     return supportConversations.reduce((sum, c) => sum + getThreadUnreadCount(c), 0);
   }, [supportConversations]);
 
-  const currentSectionThreads = activeSection === 'conversations' ? orderConversations : supportConversations;
+  const currentSectionThreads = activeSection === 'conversations' ? inboxConversations : supportConversations;
 
   // Filter conversations based on search, activeSection, and subFilter
   const filteredConversations = currentSectionThreads.filter(conv => {
@@ -1001,13 +1086,13 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 type="button"
                 onClick={() => {
                   setActiveSection('conversations');
-                  const first = orderConversations[0];
-                  if (first && !orderConversations.some(c => c.id === activeChatId)) {
+                  const first = inboxConversations[0] || { id: defaultDirectInboxId };
+                  if (!inboxConversations.some(c => c.id === activeChatId)) {
                     setActiveChatId(first.id);
                   }
                 }}
                 style={{
-                  padding: '0.45rem 0.5rem',
+                  padding: '0.45rem 0.65rem',
                   borderRadius: '8px',
                   border: 'none',
                   background: activeSection === 'conversations' ? '#ffffff' : 'transparent',
@@ -1023,9 +1108,9 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                   transition: 'all 0.15s ease'
                 }}
               >
-                <Layers size={14} style={{ color: activeSection === 'conversations' ? 'var(--orange-600)' : '#64748b' }} />
-                <span>Working Chat</span>
-                {orderUnreadTotal > 0 ? (
+                <MessageSquare size={14} style={{ color: activeSection === 'conversations' ? 'var(--orange-600)' : '#64748b' }} />
+                <span>Inbox</span>
+                {inboxUnreadTotal > 0 ? (
                   <span style={{
                     background: '#ef4444',
                     color: '#ffffff',
@@ -1034,11 +1119,11 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                     padding: '1px 5px',
                     borderRadius: '9999px'
                   }}>
-                    {orderUnreadTotal}
+                    {inboxUnreadTotal}
                   </span>
                 ) : (
                   <span style={{ fontSize: '0.68rem', opacity: 0.65, fontWeight: 700 }}>
-                    ({orderConversations.length})
+                    ({inboxConversations.length})
                   </span>
                 )}
               </button>
@@ -1053,7 +1138,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                   }
                 }}
                 style={{
-                  padding: '0.45rem 0.5rem',
+                  padding: '0.45rem 0.65rem',
                   borderRadius: '8px',
                   border: 'none',
                   background: activeSection === 'support' ? '#ffffff' : 'transparent',
@@ -1070,7 +1155,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 }}
               >
                 <Headphones size={14} style={{ color: activeSection === 'support' ? 'var(--orange-600)' : '#64748b' }} />
-                <span>Help & Support</span>
+                <span>Customer Support</span>
                 {supportUnreadTotal > 0 ? (
                   <span style={{
                     background: '#ef4444',
