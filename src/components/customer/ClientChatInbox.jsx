@@ -522,8 +522,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       }
 
       if (isMounted) {
-        setConversations(prev => {
-          const fullThreads = buildThreadList(remoteConvs, prev);
+        setConversations(() => {
+          const fullThreads = buildThreadList(remoteConvs, []);
           if (typeof window !== 'undefined') {
             try {
               localStorage.setItem(cacheKey, JSON.stringify(fullThreads));

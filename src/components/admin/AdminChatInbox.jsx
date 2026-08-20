@@ -31,7 +31,8 @@ import {
   Inbox,
   LifeBuoy,
   ShoppingBag,
-  ExternalLink
+  ExternalLink,
+  RotateCcw
 } from 'lucide-react';
 
 const formatChatTime = (timestamp) => {
@@ -265,32 +266,26 @@ export const AdminChatInbox = () => {
     const loadChats = async () => {
       if (!isMounted) return;
       const data = await fetchConversations();
-      if (data && data.length > 0 && isMounted) {
-        setConversations(prev => {
+      if (isMounted) {
+        if (data && data.length > 0) {
           const fresh = deduplicateThreads(data);
-          const safePrev = Array.isArray(prev) ? prev : [];
-          const merged = fresh.map(fc => {
-            const existing = safePrev.find(p => p.id === fc.id);
-            if (!existing) return fc;
-            const combined = [...(fc.messages || [])];
-            (existing.messages || []).forEach(em => {
-              if (!combined.some(m => m.id === em.id || (m.text === em.text && Math.abs(parseMessageTime(m) - parseMessageTime(em)) < 5000))) {
-                combined.push(em);
-              }
-            });
-            combined.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
-            return { ...fc, messages: combined };
-          });
-          const deduplicated = deduplicateThreads(merged);
+          setConversations(fresh);
           if (typeof window !== 'undefined') {
             try {
-              localStorage.setItem(cacheKey, JSON.stringify(deduplicated));
+              localStorage.setItem(cacheKey, JSON.stringify(fresh));
             } catch {}
           }
-          return deduplicated;
-        });
-        if (!activeChatId && data[0]?.id) {
-          setActiveChatId(data[0].id);
+          if (!activeChatId && fresh[0]?.id) {
+            setActiveChatId(fresh[0].id);
+          }
+        } else {
+          setConversations([]);
+          setActiveChatId(null);
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.removeItem(cacheKey);
+            } catch {}
+          }
         }
       }
     };
@@ -921,33 +916,72 @@ export const AdminChatInbox = () => {
               )}
             </div>
 
-            {/* Sub-Filters: All | Unread */}
-            <div style={{ display: 'flex', gap: '0.35rem' }}>
+            {/* Sub-Filters: All | Unread + Purge Local Cache Button */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', gap: '0.35rem' }}>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${subFilter === 'all' ? 'btn-primary-orange' : 'btn-outline'}`}
+                  style={{
+                    padding: '0.2rem 0.55rem',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    borderRadius: '6px'
+                  }}
+                  onClick={() => setSubFilter('all')}
+                >
+                  All ({currentSectionThreads.length})
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${subFilter === 'unread' ? 'btn-primary-orange' : 'btn-outline'}`}
+                  style={{
+                    padding: '0.2rem 0.55rem',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    borderRadius: '6px'
+                  }}
+                  onClick={() => setSubFilter('unread')}
+                >
+                  Unread ({currentSectionThreads.filter(c => getThreadUnreadCount(c) > 0).length})
+                </button>
+              </div>
+
               <button
                 type="button"
-                className={`btn btn-sm ${subFilter === 'all' ? 'btn-primary-orange' : 'btn-outline'}`}
-                style={{
-                  padding: '0.2rem 0.55rem',
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  borderRadius: '6px'
+                onClick={async () => {
+                  if (typeof window !== 'undefined') {
+                    try {
+                      localStorage.removeItem(cacheKey);
+                      localStorage.removeItem('bdigi_admin_inbox_cache');
+                    } catch {}
+                  }
+                  showToast('Syncing live database...', 'info');
+                  const fresh = await fetchConversations();
+                  if (fresh && fresh.length > 0) {
+                    setConversations(deduplicateThreads(fresh));
+                  } else {
+                    setConversations([]);
+                    setActiveChatId(null);
+                  }
+                  showToast('Database sync complete ✨', 'success');
                 }}
-                onClick={() => setSubFilter('all')}
-              >
-                All ({currentSectionThreads.length})
-              </button>
-              <button
-                type="button"
-                className={`btn btn-sm ${subFilter === 'unread' ? 'btn-primary-orange' : 'btn-outline'}`}
                 style={{
-                  padding: '0.2rem 0.55rem',
-                  fontSize: '0.7rem',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  fontSize: '0.68rem',
                   fontWeight: 700,
-                  borderRadius: '6px'
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  padding: '0.2rem 0.35rem',
+                  borderRadius: '4px'
                 }}
-                onClick={() => setSubFilter('unread')}
+                title="Force refresh & purge local cache"
               >
-                Unread ({currentSectionThreads.filter(c => getThreadUnreadCount(c) > 0).length})
+                <RotateCcw size={11} /> Sync DB
               </button>
             </div>
           </div>
