@@ -1618,7 +1618,7 @@ export function subscribeToLiveMessages(onMessageChange, onConversationChange) {
   };
 }
 
-export function subscribeToNotifications(onNotificationChange) {
+export function subscribeToNotificationListeners(onNotificationChange) {
   if (onNotificationChange) notificationListeners.add(onNotificationChange);
   getSharedChatChannel();
   return () => {
@@ -1645,6 +1645,65 @@ export async function fetchNotificationsFromSupabase() {
     return data.notifications || [];
   } catch { return []; }
 }
+
+/**
+ * Subscribe to live notifications from the Supabase `notifications` table.
+ * Calls onNewNotification(payload) whenever a new notification is inserted.
+ * Returns an unsubscribe function.
+ */
+export function subscribeToNotifications({ onNewNotification, userEmail, isAdmin = false } = {}) {
+  if (!isSupabaseConfigured || !supabase) return () => {};
+
+  try {
+    const channelName = `notifications-live-${userEmail || 'guest'}-${Date.now()}`;
+    let filter = '';
+    if (!isAdmin && userEmail) {
+      filter = `recipient_role=eq.client`;
+    } else if (isAdmin) {
+      filter = `recipient_role=eq.admin`;
+    }
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          ...(filter ? { filter } : {})
+        },
+        (payload) => {
+          if (typeof onNewNotification === 'function') {
+            const notif = payload.new;
+            // Only surface notification if it belongs to this user
+            if (isAdmin) {
+              if (notif.recipient_role === 'admin' || notif.recipient_role === 'all') {
+                onNewNotification(notif);
+              }
+            } else {
+              const recipientEmail = (notif.recipient_email || '').toLowerCase().trim();
+              const thisEmail = (userEmail || '').toLowerCase().trim();
+              const isForThisUser = notif.recipient_role === 'all' ||
+                (notif.recipient_role === 'client' && (!recipientEmail || recipientEmail === thisEmail));
+              if (isForThisUser) {
+                onNewNotification(notif);
+              }
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      try { supabase.removeChannel(channel); } catch {}
+    };
+  } catch (err) {
+    console.warn('[subscribeToNotifications error]:', err);
+    return () => {};
+  }
+}
+
 
 export async function createNotificationInSupabase(notif) {
   try {

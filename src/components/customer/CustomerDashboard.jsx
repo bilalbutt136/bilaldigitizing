@@ -1699,7 +1699,11 @@ export const CustomerDashboard = () => {
                       <div className="mobile-cards-view">
                         {paginatedCustOrders.map((ord) => {
                           const isPaid = isOrderPaid(ord);
-                          const isDelivered = ord?.status === 'delivered' || (Array.isArray(ord?.uploadedMachineFiles) && ord.uploadedMachineFiles.length > 0 && ord?.status !== 'completed');
+                          const ordStatus = String(ord?.status || '').toLowerCase();
+                          const isDelivered = ordStatus === 'delivered';
+                          const isRevision = ordStatus === 'revision' || ordStatus === 'revision_requested';
+                          const isCompleted = ordStatus === 'completed';
+
                           const primaryImg = 
                             ord?.artworkUrl || 
                             ord?.image_url || 
@@ -1805,7 +1809,7 @@ export const CustomerDashboard = () => {
                                   {getPaymentStatusBadge(ord)}
                                 </div>
                                 <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                                  {ord?.status === 'completed' ? (
+                                  {isCompleted ? (
                                     <button
                                       type="button"
                                       onClick={() => setSelectedOrderForDrawer(ord)}
@@ -1825,6 +1829,21 @@ export const CustomerDashboard = () => {
                                     >
                                       <PackageCheck size={13} /> Files Ready
                                     </button>
+                                  ) : isRevision ? (
+                                    <span style={{
+                                      background: '#fff1f2',
+                                      color: '#e11d48',
+                                      border: '1px solid #fecdd3',
+                                      padding: '0.3rem 0.6rem',
+                                      borderRadius: '6px',
+                                      fontWeight: 800,
+                                      fontSize: '0.72rem',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem'
+                                    }}>
+                                      🔄 Modification Sent
+                                    </span>
                                   ) : isDelivered ? (
                                     <button
                                       type="button"
@@ -1847,6 +1866,7 @@ export const CustomerDashboard = () => {
                                       <PackageCheck size={13} /> Review & Download
                                     </button>
                                   ) : null}
+
 
                                   {!isPaid && (
                                     <button

@@ -41,7 +41,7 @@ import {
   markNotificationAsReadInSupabase,
   markAllNotificationsAsReadInSupabase,
   broadcastLiveNotification,
-  subscribeToNotifications,
+  subscribeToNotificationListeners,
   subscribeToOrders,
   getAuthHeaders,
   ORDER_STATUSES,
@@ -768,7 +768,7 @@ export const StateProvider = ({ children }) => {
     let unsubscribeOrders = null;
 
     if (isSupabaseConfigured) {
-      unsubscribeNotifs = subscribeToNotifications((payload) => {
+      unsubscribeNotifs = subscribeToNotificationListeners((payload) => {
         const notif = payload.new || payload.record;
         if (!notif) return;
 
@@ -1306,35 +1306,53 @@ export const StateProvider = ({ children }) => {
   };
 
   const addRevisionRequest = async (orderId, revisionNote) => {
+    const nowIso = new Date().toISOString();
+
+    // Call the Orders API requestRevision — sets status='revision', inserts revision row, fires dual notifications
     if (isSupabaseConfigured) {
       try {
-        await addRevisionInSupabase(orderId, revisionNote, authUser?.name || 'Client');
-        await updateOrderStatusInSupabase(orderId, 'revision');
+        const headers = await getAuthHeaders().catch(() => ({ 'Content-Type': 'application/json' }));
+        await fetch('/api/orders', {
+          method: 'POST',
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'requestRevision',
+            payload: { orderId, instructions: revisionNote }
+          })
+        });
       } catch (sbErr) {
-        console.warn('Supabase add revision notice:', sbErr);
+        // Fallback: direct Supabase update
+        try {
+          await addRevisionInSupabase(orderId, revisionNote, authUser?.name || 'Client');
+          await updateOrderStatusInSupabase(orderId, 'revision');
+        } catch (fbErr) {
+          console.warn('Supabase add revision fallback notice:', fbErr);
+        }
       }
     }
 
+    // Immediately update local UI state
     setOrders(prev => prev.map(ord => {
       if (ord.id === orderId) {
         return {
           ...ord,
           status: 'revision',
-          updatedAt: new Date().toISOString(),
-          revisions: [{ id: `rev-${Date.now()}`, notes: revisionNote, requestedBy: authUser?.name || 'Client', createdAt: new Date().toISOString() }, ...(ord.revisions || [])],
-          history: [{ timestamp: new Date().toISOString(), label: `Revision Requested: "${revisionNote.slice(0, 35)}..."` }, ...ord.history]
+          updated_at: nowIso,
+          revisions: [{ id: `rev-${Date.now()}`, notes: revisionNote, requestedBy: authUser?.name || 'Client', createdAt: nowIso }, ...(ord.revisions || [])],
+          history: [{ timestamp: nowIso, label: `Revision Requested: "${(revisionNote || '').slice(0, 35)}..."` }, ...(ord.history || [])]
         };
       }
       return ord;
     }));
 
-    showToast(`Revision request sent for Order ${formatOrderId(orderId)}`, 'info');
+    showToast(`Modification request sent for Order ${formatOrderId(orderId)}`, 'info');
     addNotification({
       id: `rev-${orderId}-${Date.now()}`,
-      title: `🔄 Revision Requested for Order ${formatOrderId(orderId)}`,
-      message: revisionNote ? `"${revisionNote.slice(0, 50)}..."` : 'Revision instructions submitted to digitizers.',
-      type: 'warning',
-      link: authUser?.role === 'admin' ? '/admin-portal' : '/client-portal'
+      title: `🔄 Modification Request Submitted`,
+      message: revisionNote ? `"${revisionNote.slice(0, 60)}"` : 'Your modification request has been sent to the digitizer team.',
+      type: 'info',
+      link: '/client-portal',
+      showToast: false
     });
 
     const targetOrder = orders.find(o => o.id === orderId);
@@ -1344,6 +1362,7 @@ export const StateProvider = ({ children }) => {
       revisionNotes: revisionNote 
     });
   };
+
 
   const addOrderMessage = async (orderId, text, senderName, senderRole = 'admin', attachments = []) => {
     if (!text && (!attachments || attachments.length === 0)) return;
@@ -1444,18 +1463,44 @@ export const StateProvider = ({ children }) => {
     const res = await deductWalletViaApi(num, 'Studio Wallet Credit', orderId);
     if (res.success) {
       setWalletBalance(res.balance);
+
+      // The wallet API already sets payment_status='paid' and status='in_progress' in the DB.
+      // We update local state immediately without a second API call to avoid race conditions / overwrites.
       if (orderId) {
-        await updateOrderStatus(orderId, 'in_progress', { paymentStatus: 'paid', payment_status: 'paid' });
+        const cleanOrdId = String(orderId).trim().replace(/^#+/, '');
+        const withHash = `#${cleanOrdId}`;
+        setOrders(prev => prev.map(ord => {
+          const ordClean = String(ord.id || '').trim().replace(/^#+/, '');
+          const isMatch = ordClean === cleanOrdId || ord.id === orderId || ord.id === withHash;
+          if (isMatch) {
+            return {
+              ...ord,
+              status: 'in_progress',
+              payment_status: 'paid',
+              paymentStatus: 'paid',
+              isPaid: true,
+              paid_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+          }
+          return ord;
+        }));
       }
-      await refreshOrders();
-      if (authUser?.email) {
-        await fetchUserWalletBalance(authUser.email);
-      }
+
+      // Refresh from DB for full sync (after slight delay to ensure DB write settled)
+      setTimeout(async () => {
+        await refreshOrders();
+        if (authUser?.email) {
+          await fetchUserWalletBalance(authUser.email);
+        }
+      }, 800);
+
       return true;
     }
     showToast(res.error || 'Wallet payment failed.', 'error');
     return false;
   };
+
 
   const openOrderWizard = (initialData = null) => {
     if (initialData !== undefined && initialData !== null) {

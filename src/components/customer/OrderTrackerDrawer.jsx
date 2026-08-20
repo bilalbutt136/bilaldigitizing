@@ -124,9 +124,14 @@ export const OrderTrackerDrawer = () => {
 
   const isPaid = isOrderPaid(ord);
 
-  // Files are considered ready if order is marked delivered or completed or has uploaded machine files
-  const isDelivered = ord.status === 'delivered' || ord.status === 'completed' || (Array.isArray(ord.uploadedMachineFiles) && ord.uploadedMachineFiles.length > 0);
-  const isCompleted = ord.status === 'completed';
+  // Normalize status — treat 'revision_requested' as 'revision' for all UI guards
+  const normalizedStatus = (ord.status === 'revision_requested') ? 'revision' : (ord.status || 'submitted');
+
+  // Files are considered ready ONLY when status is exactly 'delivered' or 'completed'
+  const isDelivered = normalizedStatus === 'delivered' || normalizedStatus === 'completed';
+  const isCompleted = normalizedStatus === 'completed';
+  const isInRevision = normalizedStatus === 'revision';
+
 
   const isCurrentlyOnAdminPortal = currentView === 'admin' || (typeof window !== 'undefined' && (window.location.pathname.includes('admin') || window.location.pathname.includes('admin-portal')));
   const isAdmin = (authUser?.role === 'admin' && isCurrentlyOnAdminPortal) || currentView === 'admin';
@@ -510,15 +515,15 @@ export const OrderTrackerDrawer = () => {
             <PackageCheck size={14} /> {isAdmin ? 'Deliver Order / Files' : (isCompleted ? '✅ Final Deliverables' : (isDelivered ? '✨ Delivered Files' : 'Deliverables'))}
           </button>
 
-          {/* Request Modification Tab: ONLY visible when delivered and not completed / cancelled, OR if revisions history exists on completed */}
-          {(!isCompleted && (ord.status === 'delivered' || ord.status === 'revision' || ord.status === 'revision_requested')) && (
+          {/* Request Modification Tab: ONLY visible when delivered or in revision, NEVER when completed */}
+          {!isCompleted && (normalizedStatus === 'delivered' || isInRevision) && (
             <button
               type="button"
               onClick={() => scrollToSection(modificationRef, 'modification')}
               className={`btn btn-sm ${activeSection === 'modification' ? 'btn-primary-orange' : 'btn-outline'}`}
               style={{ fontWeight: 800, fontSize: '0.8rem', gap: '0.35rem' }}
             >
-              <RotateCcw size={14} /> {ord.status === 'revision' || ord.status === 'revision_requested' ? '🔄 In Revision' : 'Request Modification'}
+              <RotateCcw size={14} /> {isInRevision ? '🔄 In Revision' : 'Request Modification'}
             </button>
           )}
 
@@ -961,7 +966,7 @@ export const OrderTrackerDrawer = () => {
             )}
 
             {/* CUSTOMER REVISION IN PROGRESS BANNER */}
-            {!isAdmin && (ord.status === 'revision' || ord.status === 'revision_requested') && (
+            {!isAdmin && isInRevision && (
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', background: '#fff1f2', padding: '1rem 1.25rem', borderRadius: '12px', border: '1.5px solid #fecdd3', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#e11d48', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -1138,7 +1143,7 @@ export const OrderTrackerDrawer = () => {
           {/* ================================================================
               SECTION C: MODIFICATION / REVISIONS REQUEST
              ================================================================ */}
-          {(ord.status === 'delivered' || ord.status === 'revision' || ord.status === 'revision_requested' || (isCompleted && Array.isArray(ord.revisions) && ord.revisions.length > 0)) && (
+          {(normalizedStatus === 'delivered' || isInRevision || (isCompleted && Array.isArray(ord.revisions) && ord.revisions.length > 0)) && (
             <div 
               ref={modificationRef}
               style={{
@@ -1170,7 +1175,7 @@ export const OrderTrackerDrawer = () => {
               </div>
 
               {/* Revision In Progress Banner */}
-              {(ord.status === 'revision' || ord.status === 'revision_requested') && (
+              {isInRevision && (
                 <div style={{ background: '#fff1f2', border: '1.5px solid #fecdd3', borderRadius: '12px', padding: '1rem 1.2rem', marginBottom: '1rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
                   <RotateCcw size={20} style={{ color: '#e11d48', flexShrink: 0, marginTop: '0.15rem' }} />
                   <div>
@@ -1405,7 +1410,7 @@ export const OrderTrackerDrawer = () => {
               >
                 <Download size={14} /> Download Deliverables
               </button>
-            ) : (ord.status === 'revision' || ord.status === 'revision_requested') && !isAdmin ? (
+            ) : isInRevision && !isAdmin ? (
               <span style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', padding: '0.4rem 0.8rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                 <RotateCcw size={13} /> Modification Under Production
               </span>

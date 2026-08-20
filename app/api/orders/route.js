@@ -164,6 +164,31 @@ export async function POST(request) {
         }
       }
 
+
+      // Auto-create inbox conversation thread so client always sees an entry
+      try {
+        const convId = `order-${mappedDbRow.id}`;
+        const { data: existingConv } = await supabase.from('conversations').select('id').eq('id', convId).maybeSingle();
+        if (!existingConv) {
+          await supabase.from('conversations').insert([{
+            id: convId,
+            order_id: mappedDbRow.id,
+            order_title: mappedDbRow.title,
+            client_email: clientEmail,
+            client_name: mappedDbRow.client_name,
+            client_company: 'Studio Client',
+            status: 'online',
+            unread_count: 1,
+            admin_unread_count: 1,
+            client_unread_count: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }]);
+        }
+      } catch (convErr) {
+        console.warn('Auto-create conversation notice:', convErr.message);
+      }
+
       // Automatically create notifications in public.notifications
       try {
         const nowIso = new Date().toISOString();
@@ -173,8 +198,8 @@ export async function POST(request) {
             user_id: user?.id || null,
             recipient_role: 'admin',
             recipient_email: null,
-            title: `🚨 New Order #${mappedDbRow.id}`,
-            message: `Received from ${mappedDbRow.client_name} (${clientEmail}) for ${mappedDbRow.service_category}`,
+            title: `🚨 New Order: ${mappedDbRow.title}`,
+            message: `Received from ${mappedDbRow.client_name} (${clientEmail}) — ${mappedDbRow.service_category}. Price: $${mappedDbRow.price}`,
             type: 'info',
             link: '/admin-portal',
             order_id: mappedDbRow.id,
@@ -187,8 +212,8 @@ export async function POST(request) {
             user_id: user?.id || null,
             recipient_role: 'client',
             recipient_email: clientEmail,
-            title: `🎉 Order #${mappedDbRow.id} Placed!`,
-            message: `Your digitizing order has been received and pathing has started.`,
+            title: `🎉 Order Placed Successfully!`,
+            message: `Your order "${mappedDbRow.title}" has been received. Our team will begin production shortly.`,
             type: 'success',
             link: '/client-portal',
             order_id: mappedDbRow.id,
@@ -298,42 +323,118 @@ export async function POST(request) {
         }
       }
 
-      // Automatically create status change notification in public.notifications
+      // ── Comprehensive status-change notifications + auto-ensure conversation ──
       try {
         const nowIso = new Date().toISOString();
         const clientEmail = (targetOrder?.client_email || '').toLowerCase().trim();
+        const clientName = targetOrder?.client_name || 'Client';
         const resolvedOrderId = targetOrder?.id || rawId;
+        const ordTitle = targetOrder?.title || `Order #${resolvedOrderId}`;
 
-        if (newStatus === 'delivered') {
-          await supabase.from('notifications').insert([{
-            id: `notif-deliv-${resolvedOrderId}-${Date.now()}`,
-            user_id: null,
-            recipient_role: 'client',
-            recipient_email: clientEmail,
-            title: `📦 Files Ready: Order #${resolvedOrderId}`,
-            message: `Your production embroidery/vector files and QC sew-out preview are ready for download!`,
-            type: 'success',
-            link: '/client-portal',
+        // Always ensure conversation thread exists
+        const convId = `order-${resolvedOrderId}`;
+        const { data: existingConv } = await supabase.from('conversations').select('id').eq('id', convId).maybeSingle();
+        if (!existingConv) {
+          await supabase.from('conversations').insert([{
+            id: convId,
             order_id: resolvedOrderId,
-            read: false,
+            order_title: ordTitle,
+            client_email: clientEmail,
+            client_name: clientName,
+            client_company: 'Studio Client',
+            status: 'online',
+            unread_count: 0,
+            admin_unread_count: 0,
+            client_unread_count: 0,
             created_at: nowIso,
             updated_at: nowIso
           }]);
-        } else if (newStatus === 'completed') {
-          await supabase.from('notifications').insert([{
-            id: `notif-comp-${resolvedOrderId}-${Date.now()}`,
-            user_id: null,
+        }
+
+        const insertNotif = async (notif) => {
+          try {
+            await supabase.from('notifications').insert([{
+              id: notif.id || `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+              user_id: null,
+              recipient_role: notif.recipient_role || 'client',
+              recipient_email: notif.recipient_email || null,
+              title: notif.title,
+              message: notif.message || '',
+              type: notif.type || 'info',
+              link: notif.link || '/client-portal',
+              order_id: resolvedOrderId,
+              read: false,
+              created_at: nowIso,
+              updated_at: nowIso
+            }]);
+          } catch (e) { console.warn('[insertNotif notice]:', e.message); }
+        };
+
+        if (newStatus === 'in_progress') {
+          await insertNotif({
+            id: `notif-paid-${resolvedOrderId}-admin-${Date.now()}`,
             recipient_role: 'admin',
-            recipient_email: null,
-            title: `✅ Order #${resolvedOrderId} Completed`,
-            message: `Client accepted final deliverables for Order #${resolvedOrderId}.`,
-            type: 'success',
-            link: '/admin-portal',
-            order_id: resolvedOrderId,
-            read: false,
-            created_at: nowIso,
-            updated_at: nowIso
-          }]);
+            title: `💳 Payment Confirmed: ${ordTitle}`,
+            message: `Order from ${clientName} (${clientEmail}) is now paid and in production.`,
+            type: 'success', link: '/admin-portal'
+          });
+          await insertNotif({
+            id: `notif-paid-${resolvedOrderId}-client-${Date.now()}`,
+            recipient_role: 'client', recipient_email: clientEmail,
+            title: `✅ Payment Confirmed — Production Started!`,
+            message: `Your order "${ordTitle}" is now in production. We'll notify you when files are ready.`,
+            type: 'success', link: '/client-portal'
+          });
+
+        } else if (newStatus === 'delivered') {
+          await insertNotif({
+            id: `notif-deliv-${resolvedOrderId}-client-${Date.now()}`,
+            recipient_role: 'client', recipient_email: clientEmail,
+            title: `📦 Files Ready: ${ordTitle}`,
+            message: `Your production files are ready! Review and approve, or request modifications.`,
+            type: 'success', link: '/client-portal'
+          });
+
+        } else if (newStatus === 'revision' || newStatus === 'revision_requested') {
+          await insertNotif({
+            id: `notif-rev-${resolvedOrderId}-admin-${Date.now()}`,
+            recipient_role: 'admin',
+            title: `🔄 Modification Requested: ${ordTitle}`,
+            message: `${clientName} has requested modifications. Please review.`,
+            type: 'warning', link: '/admin-portal'
+          });
+          await insertNotif({
+            id: `notif-rev-${resolvedOrderId}-client-${Date.now()}`,
+            recipient_role: 'client', recipient_email: clientEmail,
+            title: `🔄 Modification Request Submitted`,
+            message: `Your modification request for "${ordTitle}" has been sent to our team.`,
+            type: 'info', link: '/client-portal'
+          });
+
+        } else if (newStatus === 'completed') {
+          await insertNotif({
+            id: `notif-comp-${resolvedOrderId}-admin-${Date.now()}`,
+            recipient_role: 'admin',
+            title: `✅ Order Completed: ${ordTitle}`,
+            message: `${clientName} approved the delivery. Order is now complete.`,
+            type: 'success', link: '/admin-portal'
+          });
+          await insertNotif({
+            id: `notif-comp-${resolvedOrderId}-client-${Date.now()}`,
+            recipient_role: 'client', recipient_email: clientEmail,
+            title: `🎉 Order Complete — Thank You!`,
+            message: `Your order "${ordTitle}" is complete. Download your files anytime from your portal.`,
+            type: 'success', link: '/client-portal'
+          });
+
+        } else if (newStatus === 'cancelled') {
+          await insertNotif({
+            id: `notif-cancel-${resolvedOrderId}-client-${Date.now()}`,
+            recipient_role: 'client', recipient_email: clientEmail,
+            title: `❌ Order Cancelled: ${ordTitle}`,
+            message: `Your order has been cancelled. Contact support if you have questions.`,
+            type: 'error', link: '/client-portal'
+          });
         }
       } catch (notifErr) {
         console.warn('Status change notification notice:', notifErr.message);
@@ -419,7 +520,12 @@ export async function POST(request) {
       if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       const { orderId, instructions } = payload;
       
-      const { data: orderData, error: orderError } = await supabase.from('orders').select('id, client_email, status').eq('id', orderId).maybeSingle();
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select('id, client_email, client_name, title, status')
+        .eq('id', orderId)
+        .maybeSingle();
+
       if (!isAdmin) {
         if (orderError || !orderData || orderData?.client_email?.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
@@ -429,23 +535,52 @@ export async function POST(request) {
       if (orderData?.status === 'completed') {
         return NextResponse.json({ error: 'This order has already been completed and approved. Modifications are not available on completed orders.' }, { status: 400 });
       }
-
       if (orderData?.status === 'cancelled') {
         return NextResponse.json({ error: 'Cannot request modifications on a cancelled order.' }, { status: 400 });
       }
 
-      await supabase.from('revisions').insert([{ order_id: orderId, details: instructions, status: 'pending' }]);
-      await supabase.from('orders').update({ status: 'revision_requested', updated_at: new Date().toISOString() }).eq('id', orderId);
-      
+      const nowIso = new Date().toISOString();
+      const clientEmail = (orderData?.client_email || user.email || '').toLowerCase().trim();
+      const clientName = orderData?.client_name || user.user_metadata?.full_name || 'Client';
+      const ordTitle = orderData?.title || `Order #${orderId}`;
+
+      // Use 'revision' as canonical status (not 'revision_requested') for UI consistency
+      await supabase.from('revisions').insert([{ 
+        order_id: orderId, 
+        details: instructions, 
+        status: 'pending',
+        created_at: nowIso
+      }]);
+      await supabase.from('orders').update({ 
+        status: 'revision', 
+        updated_at: nowIso 
+      }).eq('id', orderId);
+
+      // Ensure conversation thread
+      const convId = `order-${orderId}`;
+      const { data: existingConv } = await supabase.from('conversations').select('id').eq('id', convId).maybeSingle();
+      if (!existingConv) {
+        await supabase.from('conversations').insert([{
+          id: convId, order_id: orderId, order_title: ordTitle,
+          client_email: clientEmail, client_name: clientName,
+          client_company: 'Studio Client', status: 'online',
+          unread_count: 1, admin_unread_count: 1, client_unread_count: 0,
+          created_at: nowIso, updated_at: nowIso
+        }]).catch(() => {});
+      } else {
+        // Bump admin unread
+        await supabase.from('conversations').update({ admin_unread_count: (existingConv?.admin_unread_count || 0) + 1, updated_at: nowIso }).eq('id', convId).catch(() => {});
+      }
+
+      // Admin: modification requested
       try {
-        const nowIso = new Date().toISOString();
         await supabase.from('notifications').insert([{
-          id: `notif-rev-${orderId}-${Date.now()}`,
+          id: `notif-rev-${orderId}-admin-${Date.now()}`,
           user_id: user?.id || null,
           recipient_role: 'admin',
           recipient_email: null,
-          title: `🔄 Revision Requested: Order #${orderId}`,
-          message: instructions ? `Notes: ${instructions.slice(0, 100)}` : 'Client requested modifications.',
+          title: `🔄 Modification Requested: ${ordTitle}`,
+          message: instructions ? `${clientName}: "${instructions.slice(0, 120)}"` : `${clientName} requested modifications.`,
           type: 'warning',
           link: '/admin-portal',
           order_id: orderId,
@@ -454,7 +589,27 @@ export async function POST(request) {
           updated_at: nowIso
         }]);
       } catch (notifErr) {
-        console.warn('Revision notification insert notice:', notifErr.message);
+        console.warn('Revision admin notification notice:', notifErr.message);
+      }
+
+      // Client: submission confirmation
+      try {
+        await supabase.from('notifications').insert([{
+          id: `notif-rev-${orderId}-client-${Date.now()}`,
+          user_id: user?.id || null,
+          recipient_role: 'client',
+          recipient_email: clientEmail,
+          title: `🔄 Modification Request Submitted`,
+          message: `Your modification request for "${ordTitle}" has been sent to our digitizer team.`,
+          type: 'info',
+          link: '/client-portal',
+          order_id: orderId,
+          read: false,
+          created_at: nowIso,
+          updated_at: nowIso
+        }]);
+      } catch (notifErr) {
+        console.warn('Revision client notification notice:', notifErr.message);
       }
 
       return NextResponse.json({ success: true });

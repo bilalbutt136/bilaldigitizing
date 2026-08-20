@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Bell, 
   CheckCheck, 
@@ -13,17 +13,22 @@ import {
   PackageCheck, 
   AlertCircle, 
   Layers,
-  Inbox
+  Inbox,
+  CheckCircle2,
+  RotateCcw,
+  XCircle,
+  CreditCard,
+  Zap
 } from 'lucide-react';
-import { fetchNotificationsFromSupabase, markNotificationAsReadInSupabase, subscribeToLiveMessages } from '../../services/supabaseService';
+import { fetchNotificationsFromSupabase, markNotificationAsReadInSupabase, subscribeToNotifications } from '../../services/supabaseService';
 import { formatOrderId } from '../../context/StateContext';
 
-export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, userEmail }) => {
+export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, userEmail, isAdmin = false }) => {
   const [notifications, setNotifications] = useState([]);
   const [filter, setFilter] = useState('all'); // 'all' | 'unread'
   const [loading, setLoading] = useState(true);
 
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     try {
       setLoading(true);
       const data = await fetchNotificationsFromSupabase();
@@ -35,21 +40,28 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadNotifications();
 
-    const unsubscribe = subscribeToLiveMessages({
-      onNotification: () => {
-        loadNotifications();
+    // Subscribe to live Supabase notifications table inserts
+    const unsubscribeRealtime = subscribeToNotifications({
+      userEmail,
+      isAdmin,
+      onNewNotification: (newNotif) => {
+        setNotifications(prev => {
+          // Deduplicate by ID
+          if (prev.some(n => n.id === newNotif.id)) return prev;
+          return [{ ...newNotif, is_read: false, read: false }, ...prev];
+        });
       }
     });
 
     return () => {
-      if (typeof unsubscribe === 'function') unsubscribe();
+      if (typeof unsubscribeRealtime === 'function') unsubscribeRealtime();
     };
-  }, [userEmail]);
+  }, [userEmail, isAdmin, loadNotifications]);
 
   const handleMarkAsRead = async (id) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true, read: true } : n));
@@ -87,17 +99,46 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
     const type = (notif.type || notif.category || '').toLowerCase();
     const title = (notif.title || '').toLowerCase();
 
-    if (type.includes('offer') || title.includes('offer')) {
-      return <Tag size={18} style={{ color: '#4f46e5' }} />;
+    if (type === 'error' || title.includes('cancelled') || title.includes('cancel')) {
+      return <XCircle size={18} style={{ color: '#dc2626' }} />;
     }
-    if (type.includes('message') || type.includes('chat') || title.includes('message')) {
+    if (title.includes('payment') || title.includes('paid') || title.includes('💳')) {
+      return <CreditCard size={18} style={{ color: '#059669' }} />;
+    }
+    if (title.includes('complete') || title.includes('✅') || title.includes('🎉')) {
+      return <CheckCircle2 size={18} style={{ color: '#16a34a' }} />;
+    }
+    if (title.includes('modification') || title.includes('revision') || title.includes('🔄')) {
+      return <RotateCcw size={18} style={{ color: '#d97706' }} />;
+    }
+    if (title.includes('files ready') || title.includes('delivered') || title.includes('📦') || title.includes('download')) {
+      return <PackageCheck size={18} style={{ color: '#059669' }} />;
+    }
+    if (title.includes('production') || title.includes('in production') || title.includes('⚡')) {
+      return <Zap size={18} style={{ color: '#2563eb' }} />;
+    }
+    if (type === 'message' || type.includes('message') || title.includes('message') || title.includes('💬')) {
       return <MessageSquare size={18} style={{ color: '#f97316' }} />;
     }
-    if (type.includes('deliver') || title.includes('delivered') || title.includes('files ready')) {
-      return <PackageCheck size={18} style={{ color: '#16a34a' }} />;
+    if (type.includes('offer') || title.includes('offer') || title.includes('tag')) {
+      return <Tag size={18} style={{ color: '#4f46e5' }} />;
+    }
+    if (title.includes('new order') || title.includes('placed') || title.includes('🎉') || title.includes('🚨')) {
+      return <Sparkles size={18} style={{ color: '#7c3aed' }} />;
     }
     return <Package size={18} style={{ color: '#0284c7' }} />;
   };
+
+  const getNotifBgColor = (notif) => {
+    const type = (notif.type || '').toLowerCase();
+    const title = (notif.title || '').toLowerCase();
+    if (type === 'error') return { bg: '#fff1f2', border: '#fecaca', icon: '#fee2e2' };
+    if (type === 'warning' || title.includes('modification') || title.includes('revision')) return { bg: '#fffbeb', border: '#fde68a', icon: '#fef3c7' };
+    if (type === 'success') return { bg: '#f0fdf4', border: '#bbf7d0', icon: '#dcfce7' };
+    if (type === 'message') return { bg: '#fff7ed', border: '#fed7aa', icon: '#ffedd5' };
+    return { bg: '#fffcf6', border: '#fed7aa', icon: '#ffedd5' }; // unread default orange
+  };
+
 
   const filteredNotifs = notifications.filter(n => {
     const isUnread = !n.is_read && !n.read;
@@ -231,8 +272,17 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
         ) : (
           filteredNotifs.map(notif => {
             const isUnread = !notif.is_read && !notif.read;
+            const colors = getNotifBgColor(notif);
             const timeStr = notif.created_at || notif.timestamp
-              ? new Date(notif.created_at || notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              ? (() => {
+                  try {
+                    const d = new Date(notif.created_at || notif.timestamp);
+                    const isToday = new Date().toDateString() === d.toDateString();
+                    return isToday
+                      ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                  } catch { return 'Recent'; }
+                })()
               : 'Recent';
 
             return (
@@ -240,8 +290,8 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
                 key={notif.id || Math.random()}
                 onClick={() => handleItemClick(notif)}
                 style={{
-                  background: isUnread ? '#fffcf6' : '#ffffff',
-                  border: isUnread ? '1.5px solid #fed7aa' : '1px solid #e2e8f0',
+                  background: isUnread ? colors.bg : '#ffffff',
+                  border: isUnread ? `1.5px solid ${colors.border}` : '1px solid #e2e8f0',
                   borderRadius: '14px',
                   padding: '0.85rem 1rem',
                   display: 'flex',
@@ -249,7 +299,7 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
                   gap: '0.85rem',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
-                  boxShadow: isUnread ? '0 2px 8px rgba(249, 115, 22, 0.08)' : 'none',
+                  boxShadow: isUnread ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
                   position: 'relative'
                 }}
               >
@@ -258,7 +308,7 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
                   width: '38px',
                   height: '38px',
                   borderRadius: '10px',
-                  background: isUnread ? '#ffedd5' : '#f1f5f9',
+                  background: isUnread ? colors.icon : '#f1f5f9',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
