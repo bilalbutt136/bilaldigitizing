@@ -142,7 +142,10 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     setMounted(true);
     loadChatHistory();
     if (canonicalChatId) {
-      markConversationAsRead(canonicalChatId);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('bdigi_read_client_' + canonicalChatId, String(Date.now()));
+      }
+      markConversationAsRead(canonicalChatId, 'client', clientEmail);
     }
   }, [canonicalChatId, clientEmail]);
 
@@ -195,8 +198,11 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         });
 
         if (record.sender === 'admin') {
-          playNotificationSound('receive');
-          markConversationAsRead(canonicalChatId);
+          playNotificationSound();
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('bdigi_read_client_' + canonicalChatId, String(Date.now()));
+          }
+          markConversationAsRead(canonicalChatId, 'client', clientEmail);
         }
         scrollToBottom('smooth');
       }

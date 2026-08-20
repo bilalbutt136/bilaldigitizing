@@ -1386,18 +1386,25 @@ export async function addChatMessage(chatId, messageObj) {
   } catch { return false; }
 }
 
-export async function markConversationAsRead(chatId) {
+export async function markConversationAsRead(chatId, role = 'admin', clientEmail = '') {
   try {
     if (!chatId) return false;
     const headers = await getAuthHeaders();
     await fetch('/api/messages', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ action: 'markAsRead', payload: { conversation_id: chatId } })
+      body: JSON.stringify({ 
+        action: 'markAsRead', 
+        payload: { 
+          conversation_id: chatId,
+          role,
+          clientEmail
+        } 
+      })
     });
 
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: chatId } }));
+      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: chatId, role } }));
     }
 
     const channel = getSharedChatChannel();
@@ -1405,7 +1412,12 @@ export async function markConversationAsRead(chatId) {
       channel.send({
         type: 'broadcast',
         event: 'conversation_update',
-        payload: { id: chatId, unread_count: 0 }
+        payload: { 
+          id: chatId, 
+          unread_count: 0,
+          admin_unread_count: role === 'admin' ? 0 : undefined,
+          client_unread_count: role === 'client' ? 0 : undefined
+        }
       });
     }
 

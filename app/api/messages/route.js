@@ -520,20 +520,44 @@ export async function POST(request) {
     }
 
     if (action === 'markAsRead') {
-      const { conversation_id } = payload;
+      const { conversation_id, role, clientEmail, client_email } = payload;
       
       if (conversation_id) {
         const nowIso = new Date().toISOString();
-        const targetEmail = normalizeEmail(conversation_id.replace('chat-', '').replace('inbox-', '').replace('support-', '').replace('direct-', ''));
+        let targetEmail = normalizeEmail(clientEmail || client_email || '');
+        if (!targetEmail) {
+          targetEmail = normalizeEmail(conversation_id.replace('chat-', '').replace('inbox-', '').replace('support-', '').replace('direct-', ''));
+        }
+
+        // Include any related order conversation IDs
+        let orderIds = [];
+        if (targetEmail) {
+          try {
+            const { data: customerOrders } = await supabase.from('orders').select('id').ilike('client_email', targetEmail);
+            if (Array.isArray(customerOrders)) {
+              orderIds = customerOrders.map(o => `order-${o.id}`);
+            }
+          } catch {}
+        }
+
         const targetIds = Array.from(new Set([
           conversation_id,
           targetEmail ? `chat-${targetEmail}` : '',
           targetEmail ? `inbox-${targetEmail}` : '',
           targetEmail ? `support-${targetEmail}` : '',
-          targetEmail ? `direct-${targetEmail}` : ''
+          targetEmail ? `direct-${targetEmail}` : '',
+          ...orderIds
         ].filter(Boolean)));
 
-        if (isAdmin) {
+        const isUserAdmin = Boolean(
+          isAdmin || 
+          role === 'admin' || 
+          payload.senderRole === 'admin' ||
+          (user?.email && ['bilalbutt136@gmail.com', 'bilaldigitizing@gmail.com'].includes(user.email.toLowerCase()))
+        );
+
+        if (isUserAdmin) {
+          // Admin read client's messages
           await supabase.from('conversations')
             .update({ admin_unread_count: 0, unread_count: 0, updated_at: nowIso })
             .in('id', targetIds);
@@ -542,7 +566,15 @@ export async function POST(request) {
             .update({ is_read: true })
             .in('conversation_id', targetIds)
             .neq('sender', 'admin');
+
+          if (targetEmail) {
+            await supabase.from('messages')
+              .update({ is_read: true })
+              .ilike('client_email', targetEmail)
+              .neq('sender', 'admin');
+          }
         } else {
+          // Client read admin/support's messages
           await supabase.from('conversations')
             .update({ client_unread_count: 0, updated_at: nowIso })
             .in('id', targetIds);
@@ -551,6 +583,13 @@ export async function POST(request) {
             .update({ is_read: true })
             .in('conversation_id', targetIds)
             .eq('sender', 'admin');
+
+          if (targetEmail) {
+            await supabase.from('messages')
+              .update({ is_read: true })
+              .ilike('client_email', targetEmail)
+              .eq('sender', 'admin');
+          }
         }
       }
       

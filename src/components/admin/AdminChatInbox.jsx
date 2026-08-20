@@ -562,14 +562,26 @@ export const AdminChatInbox = () => {
   // Mark active conversation read when opening
   useEffect(() => {
     if (currentActiveChatId && isSupabaseConfigured) {
+      const targetConv = conversations.find(c => c.id === currentActiveChatId);
+      const email = targetConv?.clientEmail || '';
+      const now = Date.now();
+
       if (typeof window !== 'undefined') {
-        localStorage.setItem('bdigi_read_admin_' + currentActiveChatId, String(Date.now()));
-        window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: currentActiveChatId } }));
+        localStorage.setItem('bdigi_read_admin_' + currentActiveChatId, String(now));
+        if (email) localStorage.setItem('bdigi_read_admin_chat-' + email, String(now));
+        window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: currentActiveChatId, role: 'admin' } }));
       }
-      markConversationAsRead(currentActiveChatId);
+
+      markConversationAsRead(currentActiveChatId, 'admin', email);
+
       setConversations(prev => prev.map(c => 
-        c.id === currentActiveChatId 
-          ? { ...c, unreadCount: 0, adminUnreadCount: 0 } 
+        (c.id === currentActiveChatId || (email && c.clientEmail === email))
+          ? {
+              ...c,
+              unreadCount: 0,
+              adminUnreadCount: 0,
+              messages: (c.messages || []).map(m => m.sender === 'client' ? { ...m, is_read: true } : m)
+            } 
           : c
       ));
     }
@@ -578,36 +590,54 @@ export const AdminChatInbox = () => {
   // Helper to compute admin unread count strictly for client messages
   const getThreadUnreadCount = (conv) => {
     if (!conv) return 0;
-    if (activeChatId === conv.id) return 0;
-    if (typeof conv.adminUnreadCount === 'number' && conv.adminUnreadCount > 0) {
-      return conv.adminUnreadCount;
-    }
-    const lastRead = typeof window !== 'undefined' ? parseInt(localStorage.getItem('bdigi_read_admin_' + conv.id) || '0', 10) : 0;
+    if (activeChatId === conv.id || currentActiveChatId === conv.id) return 0;
+    
+    const lastRead = typeof window !== 'undefined' ? Math.max(
+      parseInt(localStorage.getItem('bdigi_read_admin_' + conv.id) || '0', 10),
+      conv.clientEmail ? parseInt(localStorage.getItem('bdigi_read_admin_chat-' + conv.clientEmail) || '0', 10) : 0
+    ) : 0;
+
     const msgs = conv.messages || [];
-    return msgs.filter(m => {
-      const isClient = m.sender === 'client';
-      if (!isClient) return false;
-      const msgTime = m.timestamp && !isNaN(new Date(m.timestamp).getTime()) ? new Date(m.timestamp).getTime() : 0;
+    const unreadMsgs = msgs.filter(m => {
+      if (m.sender !== 'client') return false;
+      if (m.is_read === true || m.is_read === 'true') return false;
+      const msgTime = parseMessageTime(m);
       return msgTime > lastRead;
-    }).length;
+    });
+
+    return unreadMsgs.length;
   };
 
   const handleSelectChat = (chatId) => {
     setActiveChatId(chatId);
     setMobileView('chat');
+    const targetConv = conversations.find(c => c.id === chatId);
+    const email = targetConv?.clientEmail || '';
+    const now = Date.now();
+
     if (typeof window !== 'undefined') {
-      localStorage.setItem('bdigi_read_admin_' + chatId, String(Date.now()));
-      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: chatId } }));
+      localStorage.setItem('bdigi_read_admin_' + chatId, String(now));
+      if (email) localStorage.setItem('bdigi_read_admin_chat-' + email, String(now));
+      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: chatId, role: 'admin' } }));
     }
-    markConversationAsRead(chatId);
+
+    markConversationAsRead(chatId, 'admin', email);
+
     setConversations(prev => prev.map(c => 
-      c.id === chatId ? { ...c, unreadCount: 0, adminUnreadCount: 0 } : c
+      (c.id === chatId || (email && c.clientEmail === email))
+        ? {
+            ...c,
+            unreadCount: 0,
+            adminUnreadCount: 0,
+            messages: (c.messages || []).map(m => m.sender === 'client' ? { ...m, is_read: true } : m)
+          } 
+        : c
     ));
   };
 
   const unreadTotal = useMemo(() => {
     return conversations.reduce((sum, c) => sum + getThreadUnreadCount(c), 0);
-  }, [conversations]);
+  }, [conversations, activeChatId, currentActiveChatId]);
 
   // Filter conversations list based on subFilter and search
   const filteredConversations = useMemo(() => {
