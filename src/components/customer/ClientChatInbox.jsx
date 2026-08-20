@@ -97,14 +97,27 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
   const [mounted, setMounted] = useState(false);
   const [conversations, setConversations] = useState([]);
-  const isTargetingSupport = initialOrderId === 'general-support' || (initialOrderId && String(initialOrderId).startsWith('support-'));
-  const [activeSection, setActiveSection] = useState(isTargetingSupport ? 'support' : (initialOrderId ? 'conversations' : 'conversations'));
+  const isTargetingSupport = initialOrderId === 'support' || initialOrderId === 'general-support' || initialOrderId === 'help-support' || (initialOrderId && String(initialOrderId).startsWith('support-'));
+  const [activeSection, setActiveSection] = useState(isTargetingSupport ? 'support' : 'conversations');
   const [subFilter, setSubFilter] = useState('all'); // 'all' | 'unread'
   const [activeChatId, setActiveChatId] = useState(
     initialOrderId
-      ? (isTargetingSupport ? (initialOrderId === 'general-support' ? defaultSupportId : initialOrderId) : (initialOrderId.startsWith('order-') ? initialOrderId : `order-${initialOrderId}`))
-      : defaultSupportId
+      ? (isTargetingSupport ? (initialOrderId === 'general-support' || initialOrderId === 'help-support' || initialOrderId === 'support' ? defaultSupportId : initialOrderId) : (initialOrderId.startsWith('order-') ? initialOrderId : null))
+      : null
   );
+
+  // Sync section & active chat when initialOrderId changes
+  useEffect(() => {
+    if (initialOrderId === 'support' || initialOrderId === 'general-support' || initialOrderId === 'help-support' || (initialOrderId && String(initialOrderId).startsWith('support-'))) {
+      setActiveSection('support');
+      setActiveChatId(defaultSupportId);
+    } else if (initialOrderId === 'working-chat' || initialOrderId === 'working' || initialOrderId === 'conversations') {
+      setActiveSection('conversations');
+    } else if (initialOrderId && String(initialOrderId).startsWith('order-')) {
+      setActiveSection('conversations');
+      setActiveChatId(initialOrderId);
+    }
+  }, [initialOrderId, defaultSupportId]);
   const [searchTerm, setSearchTerm] = useState('');
   const [messageInput, setMessageInput] = useState('');
   const [attachedFile, setAttachedFile] = useState(null); // { name, url, size, format }
@@ -1011,7 +1024,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 }}
               >
                 <Layers size={14} style={{ color: activeSection === 'conversations' ? 'var(--orange-600)' : '#64748b' }} />
-                <span>My Conversations</span>
+                <span>Working Chat</span>
                 {orderUnreadTotal > 0 ? (
                   <span style={{
                     background: '#ef4444',
@@ -1057,7 +1070,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 }}
               >
                 <Headphones size={14} style={{ color: activeSection === 'support' ? 'var(--orange-600)' : '#64748b' }} />
-                <span>Support</span>
+                <span>Help & Support</span>
                 {supportUnreadTotal > 0 ? (
                   <span style={{
                     background: '#ef4444',

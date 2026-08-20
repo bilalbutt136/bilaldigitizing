@@ -13,7 +13,8 @@ import {
   Wallet,
   PlusCircle,
   Bell,
-  ClipboardList
+  ClipboardList,
+  Headphones
 } from 'lucide-react';
 
 export const ClientSidebar = ({
@@ -38,15 +39,14 @@ export const ClientSidebar = ({
     setMounted(true);
   }, []);
 
-  const effectiveUser = mounted ? activeUser : null;
-  const userName = effectiveUser?.name || 'Studio Client';
-  const userCompany = effectiveUser?.company || 'Apex Athletics Apparel';
-  const userInitial = (userName[0] || 'S').toUpperCase();
-  const displayWallet = mounted ? walletBalance : 150.00;
+  const displayWallet = Number(walletBalance) || 0;
+  const userName = activeUser?.name || 'Customer Account';
+  const userCompany = activeUser?.company || 'Studio Client';
+  const userInitial = (userName[0] || 'C').toUpperCase();
 
   const sections = [
     {
-      title: 'CORE OPERATIONS',
+      title: 'WORKSPACE',
       items: [
         {
           id: 'dashboard',
@@ -61,10 +61,16 @@ export const ClientSidebar = ({
         },
         { 
           id: 'support', 
-          label: 'Messages', 
+          label: 'Working Chat', 
           icon: MessageSquare, 
           badge: unreadChatCount > 0 ? unreadChatCount : null,
           liveDot: true 
+        },
+        { 
+          id: 'help-support', 
+          label: 'Help & Support', 
+          icon: Headphones, 
+          badge: null
         },
         {
           id: 'notifications',

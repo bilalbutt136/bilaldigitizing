@@ -62,7 +62,7 @@ export const ClientLiveChatWidget = () => {
     setMounted(true);
   }, []);
 
-  const { authUser, currentUser, showToast } = useAppState();
+  const { authUser, currentUser, isAuthenticated, showToast } = useAppState();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -74,11 +74,14 @@ export const ClientLiveChatWidget = () => {
   const [chats, setChats] = useState([]);
   const typingTimeoutRef = useRef(null);
 
-  // Check if admin user or admin page to avoid mounting customer chat on admin screens
-  const isExcluded = authUser?.role === 'admin' || 
+  // Exclude floating chat widget when customer is logged in or on portal/admin pages
+  const isUserLoggedIn = Boolean(authUser || (isAuthenticated && currentUser?.email && currentUser?.email !== 'guest@bdigitizing.pro'));
+  const isExcluded = isUserLoggedIn || authUser?.role === 'admin' || 
     (typeof window !== 'undefined' && (
       window.location.pathname.startsWith('/admin') || 
-      window.location.pathname.startsWith('/secure-admin-login')
+      window.location.pathname.startsWith('/secure-admin-login') ||
+      window.location.pathname.startsWith('/client') ||
+      window.location.pathname.startsWith('/client-portal')
     ));
 
   const activeUser = authUser || currentUser || {

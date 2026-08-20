@@ -203,7 +203,7 @@ export const CustomerDashboard = () => {
   }, [mounted, userEmail, activeTab]);
 
   React.useEffect(() => {
-    if (activeTab === 'support') {
+    if (activeTab === 'support' || activeTab === 'help-support') {
       setUnreadChatCount(0);
     }
     if (activeTab === 'notifications') {
@@ -560,11 +560,11 @@ export const CustomerDashboard = () => {
     <div 
       className="dashboard-main-container" 
       style={{ 
-        padding: activeTab === 'support' ? '0.75rem 0 0' : '1.5rem 0 8rem', 
+        padding: (activeTab === 'support' || activeTab === 'help-support') ? '0.75rem 0 0' : '1.5rem 0 8rem', 
         background: 'var(--bg-main)', 
-        minHeight: activeTab === 'support' ? 'calc(100vh - 75px)' : 'calc(100vh - 80px)',
-        height: activeTab === 'support' ? 'calc(100vh - 75px)' : 'auto',
-        overflow: activeTab === 'support' ? 'hidden' : 'visible',
+        minHeight: (activeTab === 'support' || activeTab === 'help-support') ? 'calc(100vh - 75px)' : 'calc(100vh - 80px)',
+        height: (activeTab === 'support' || activeTab === 'help-support') ? 'calc(100vh - 75px)' : 'auto',
+        overflow: (activeTab === 'support' || activeTab === 'help-support') ? 'hidden' : 'visible',
         boxSizing: 'border-box'
       }}
     >
@@ -576,8 +576,8 @@ export const CustomerDashboard = () => {
           padding: '0 2.25rem', 
           margin: '0 auto', 
           boxSizing: 'border-box',
-          height: activeTab === 'support' ? '100%' : 'auto',
-          display: activeTab === 'support' ? 'flex' : 'block',
+          height: (activeTab === 'support' || activeTab === 'help-support') ? '100%' : 'auto',
+          display: (activeTab === 'support' || activeTab === 'help-support') ? 'flex' : 'block',
           flexDirection: 'column'
         }}
       >
@@ -820,10 +820,10 @@ export const CustomerDashboard = () => {
             gridTemplateColumns: '280px 1fr',
             gap: '2rem',
             alignItems: 'start',
-            flex: activeTab === 'support' ? 1 : 'none',
-            height: activeTab === 'support' ? '100%' : 'auto',
+            flex: (activeTab === 'support' || activeTab === 'help-support') ? 1 : 'none',
+            height: (activeTab === 'support' || activeTab === 'help-support') ? '100%' : 'auto',
             minHeight: 0,
-            overflow: activeTab === 'support' ? 'hidden' : 'visible'
+            overflow: (activeTab === 'support' || activeTab === 'help-support') ? 'hidden' : 'visible'
           }}
         >
 
@@ -855,11 +855,11 @@ export const CustomerDashboard = () => {
              ================================================================== */}
           <main style={{ 
             minWidth: 0,
-            height: activeTab === 'support' ? '100%' : 'auto',
+            height: (activeTab === 'support' || activeTab === 'help-support') ? '100%' : 'auto',
             minHeight: 0,
-            display: activeTab === 'support' ? 'flex' : 'block',
+            display: (activeTab === 'support' || activeTab === 'help-support') ? 'flex' : 'block',
             flexDirection: 'column',
-            overflow: activeTab === 'support' ? 'hidden' : 'visible'
+            overflow: (activeTab === 'support' || activeTab === 'help-support') ? 'hidden' : 'visible'
           }}>
             
             {/* TAB 0: MAIN CLIENT DASHBOARD */}
@@ -2276,10 +2276,10 @@ export const CustomerDashboard = () => {
               />
             )}
 
-            {/* TAB: LIVE SUPPORT & ORDER CHAT INBOX */}
-            {activeTab === 'support' && (
+            {/* TAB: WORKING CHAT & HELP / SUPPORT INBOX */}
+            {(activeTab === 'support' || activeTab === 'help-support') && (
               <div style={{ flex: 1, height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                <ClientChatInbox initialOrderId={selectedOrderChatId} />
+                <ClientChatInbox initialOrderId={activeTab === 'help-support' ? 'help-support' : (selectedOrderChatId || 'working-chat')} />
               </div>
             )}
 
@@ -2633,7 +2633,7 @@ export const CustomerDashboard = () => {
             )}
           </div>
           <span style={{ fontSize: '0.65rem', fontWeight: activeTab === 'support' ? 800 : 600, marginTop: '0.1rem' }}>
-            Messages
+            Working Chat
           </span>
         </button>
 

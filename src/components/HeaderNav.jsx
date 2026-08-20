@@ -85,6 +85,30 @@ export const HeaderNav = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleOpenInbox = () => {
+    // 1. If Admin Portal or Admin user, navigate directly to Admin Chat & Inbox tab
+    if (safeIsAuthenticated && authUser?.role === 'admin') {
+      if (setActiveAdminTab) setActiveAdminTab('chat');
+      protectedNavigate('admin');
+      navigate('/admin-portal');
+      return;
+    }
+
+    // 2. If authenticated Client in Portal, open Working Chat (Order discussions)
+    if (safeIsAuthenticated) {
+      if (setActiveCustomerTab) setActiveCustomerTab('support');
+      if (setSelectedOrderChatId) setSelectedOrderChatId('working-chat');
+      protectedNavigate('customer', false);
+      navigate('/client-portal');
+      return;
+    }
+
+    // 3. If unauthenticated, open public chat widget
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bdigi_open_chat'));
+    }
+  };
+
   const handleOpenLiveSupport = () => {
     // 1. If Admin Portal or Admin user, navigate directly to Admin Chat & Inbox tab
     if (safeIsAuthenticated && authUser?.role === 'admin') {
@@ -94,12 +118,16 @@ export const HeaderNav = () => {
       return;
     }
 
-    // 2. If authenticated Client in Portal, set support tab active
-    if (safeIsAuthenticated && setActiveCustomerTab) {
-      setActiveCustomerTab('support');
+    // 2. If authenticated Client in Portal, open Help & Support chat
+    if (safeIsAuthenticated) {
+      if (setActiveCustomerTab) setActiveCustomerTab('help-support');
+      if (setSelectedOrderChatId) setSelectedOrderChatId('general-support');
+      protectedNavigate('customer', false);
+      navigate('/client-portal');
+      return;
     }
 
-    // 3. Open Live Support Chat widget directly on current view (Home Page or Client Portal)
+    // 3. Open Live Support Chat widget on Public Home Page
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bdigi_open_chat'));
     }
@@ -542,7 +570,7 @@ export const HeaderNav = () => {
                   {/* TOP HEADER CHAT / INBOX BUTTON */}
                   <button
                     type="button"
-                    onClick={handleOpenLiveSupport}
+                    onClick={handleOpenInbox}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -564,7 +592,7 @@ export const HeaderNav = () => {
                       e.currentTarget.style.background = unreadChatCount > 0 ? '#ff7a00' : 'rgba(255, 122, 0, 0.1)'; 
                       e.currentTarget.style.color = unreadChatCount > 0 ? '#ffffff' : 'var(--orange-600)'; 
                     }}
-                    title={safeAuthUser?.role === 'admin' ? 'Open Admin Chat Inbox' : 'Open 24/7 Live Support Chat'}
+                    title={safeAuthUser?.role === 'admin' ? 'Open Admin Chat Inbox' : 'Open Working Chat & Order Discussions'}
                   >
                     <MessageSquare size={16} />
                     <span>Inbox</span>
