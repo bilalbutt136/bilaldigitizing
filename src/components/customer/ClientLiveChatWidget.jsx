@@ -165,7 +165,11 @@ export const ClientLiveChatWidget = () => {
               if (!localConv) return remoteConv;
               const combinedMessages = [...(remoteConv.messages || [])];
               (localConv.messages || []).forEach(lm => {
-                if (!combinedMessages.some(rm => rm.id === lm.id || (rm.text === lm.text && Math.abs(parseMessageTime(rm) - parseMessageTime(lm)) < 5000))) {
+                if (!combinedMessages.some(rm => 
+                  (rm.id && lm.id && rm.id === lm.id) || 
+                  (rm.text && lm.text && rm.text === lm.text && rm.sender === lm.sender && Math.abs(parseMessageTime(rm) - parseMessageTime(lm)) < 20000) ||
+                  (rm.attachment_url && lm.attachment_url && rm.attachment_url === lm.attachment_url)
+                )) {
                   combinedMessages.push(lm);
                 }
               });

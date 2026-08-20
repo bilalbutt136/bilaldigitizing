@@ -167,7 +167,11 @@ const deduplicateThreads = (rawList) => {
       const existing = map.get(key);
       const combinedMessages = [...(existing.messages || [])];
       cleanMessages.forEach(m => {
-        if (!combinedMessages.some(ex => ex.id === m.id || (ex.text === m.text && Math.abs(parseMessageTime(ex) - parseMessageTime(m)) < 2000))) {
+        if (!combinedMessages.some(ex => 
+          (ex.id && m.id && ex.id === m.id) || 
+          (ex.text && m.text && ex.text === m.text && ex.sender === m.sender && Math.abs(parseMessageTime(ex) - parseMessageTime(m)) < 20000) ||
+          (ex.attachment_url && m.attachment_url && ex.attachment_url === m.attachment_url)
+        )) {
           combinedMessages.push(m);
         }
       });

@@ -176,27 +176,36 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       (!c.orderId && !c.order_id && !c.id?.startsWith('order-'))
     );
     
-    const existingSupport = (existingThreads || []).find(c => isSupportId(c.id) || c.id === generalId);
+    const existingSupportThreads = (existingThreads || []).filter(c => 
+      isSupportId(c.id) || 
+      c.id === generalId ||
+      (!c.orderId && !c.order_id && !c.id?.startsWith('order-'))
+    );
     
-    // Aggregate all support messages from remote and local state
+    // Aggregate all support messages from all local and remote support threads
     const supportMessagesMap = new Map();
     
-    // Add existing local messages first
-    (existingSupport?.messages || []).forEach(m => {
-      if (m && (m.id || m.text)) {
-        const key = m.id || `${m.sender}-${m.text}-${m.timestamp}`;
-        supportMessagesMap.set(key, m);
-      }
+    // 1. Add existing local messages first to guarantee zero message loss
+    existingSupportThreads.forEach(st => {
+      (st.messages || []).forEach(m => {
+        if (m && (m.id || m.text || m.attachment || m.attachment_url)) {
+          const key = m.id || `${m.sender}-${m.text}-${m.timestamp}`;
+          supportMessagesMap.set(key, m);
+        }
+      });
     });
 
-    // Add remote support messages
+    // 2. Add remote support messages
     remoteSupportConvs.forEach(rc => {
       (rc.messages || []).forEach(rm => {
-        if (rm && (rm.id || rm.text)) {
+        if (rm && (rm.id || rm.text || rm.attachment || rm.attachment_url)) {
           let matched = false;
           for (const [key, existingMsg] of supportMessagesMap.entries()) {
-            if (existingMsg.id === rm.id || (existingMsg.text === rm.text && Math.abs(parseMessageTime(existingMsg) - parseMessageTime(rm)) < 5000)) {
-              supportMessagesMap.set(key, rm);
+            const isIdMatch = existingMsg.id && rm.id && existingMsg.id === rm.id;
+            const isTextMatch = existingMsg.text && rm.text && existingMsg.text === rm.text && existingMsg.sender === rm.sender && Math.abs(parseMessageTime(existingMsg) - parseMessageTime(rm)) < 20000;
+            const isAttachMatch = existingMsg.attachment_url && rm.attachment_url && existingMsg.attachment_url === rm.attachment_url;
+            if (isIdMatch || isTextMatch || isAttachMatch) {
+              supportMessagesMap.set(key, { ...existingMsg, ...rm });
               matched = true;
               break;
             }
@@ -226,13 +235,13 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     generalMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
 
     const genLastMsg = generalMessages[generalMessages.length - 1];
-    const genLastTimestamp = genLastMsg?.timestamp || existingSupport?.updatedAt || new Date().toISOString();
+    const genLastTimestamp = genLastMsg?.timestamp || existingSupportThreads[0]?.updatedAt || new Date().toISOString();
     const genLastTime = genLastTimestamp && !isNaN(new Date(genLastTimestamp).getTime())
       ? new Date(genLastTimestamp).getTime()
       : Date.now();
 
     const maxSupportUnread = Math.max(
-      existingSupport?.clientUnreadCount ?? 0,
+      ...existingSupportThreads.map(c => c.clientUnreadCount ?? 0),
       ...remoteSupportConvs.map(c => c.clientUnreadCount ?? c.unreadCount ?? 0),
       0
     );
@@ -267,7 +276,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
       // Order messages from local state
       (existingOrderThread?.messages || []).forEach(m => {
-        if (m) {
+        if (m && (m.id || m.text || m.attachment || m.attachment_url)) {
           const key = m.id || `${m.sender}-${m.text}-${m.timestamp}`;
           orderMessagesMap.set(key, m);
         }
@@ -293,11 +302,14 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
       // Order messages from remote conversation
       (remoteOrderConv?.messages || []).forEach(rm => {
-        if (rm && (rm.id || rm.text)) {
+        if (rm && (rm.id || rm.text || rm.attachment || rm.attachment_url)) {
           let matched = false;
           for (const [key, existingMsg] of orderMessagesMap.entries()) {
-            if (existingMsg.id === rm.id || (existingMsg.text === rm.text && Math.abs(new Date(existingMsg.timestamp) - new Date(rm.timestamp)) < 5000)) {
-              orderMessagesMap.set(key, rm);
+            const isIdMatch = existingMsg.id && rm.id && existingMsg.id === rm.id;
+            const isTextMatch = existingMsg.text && rm.text && existingMsg.text === rm.text && existingMsg.sender === rm.sender && Math.abs(parseMessageTime(existingMsg) - parseMessageTime(rm)) < 20000;
+            const isAttachMatch = existingMsg.attachment_url && rm.attachment_url && existingMsg.attachment_url === rm.attachment_url;
+            if (isIdMatch || isTextMatch || isAttachMatch) {
+              orderMessagesMap.set(key, { ...existingMsg, ...rm });
               matched = true;
               break;
             }

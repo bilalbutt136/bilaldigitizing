@@ -29,6 +29,7 @@ export async function GET(request) {
       let userOrderIds = [];
 
       if (isAdmin) {
+        // Admin gets all conversations
         const { data, error } = await supabase
           .from('conversations')
           .select('*')
@@ -93,36 +94,58 @@ export async function GET(request) {
       }
 
       // Build target list of conversation IDs for messages lookup
-      const conversationIdSet = new Set((convData || []).map(c => c.id));
-      conversationIdSet.add('general-support');
-      if (cleanUserEmail && cleanUserEmail !== 'client@studio.com') {
-        conversationIdSet.add(`support-${cleanUserEmail}`);
-      }
-      userOrderIds.forEach(id => {
-        conversationIdSet.add(`order-${id}`);
-      });
-
-      const conversationIds = Array.from(conversationIdSet);
-
       let messagesData = [];
-      if (conversationIds.length > 0) {
+      if (isAdmin) {
+        // Admin fetches all messages to guarantee zero history loss
         const { data: mData, error: msgError } = await supabase
           .from('messages')
           .select('*')
-          .in('conversation_id', conversationIds)
           .order('created_at', { ascending: true });
         if (!msgError && mData) {
           messagesData = mData;
+        }
+      } else {
+        const conversationIdSet = new Set((convData || []).map(c => c.id));
+        conversationIdSet.add('general-support');
+        if (cleanUserEmail && cleanUserEmail !== 'client@studio.com') {
+          conversationIdSet.add(`support-${cleanUserEmail}`);
+        }
+        userOrderIds.forEach(id => {
+          conversationIdSet.add(`order-${id}`);
+          conversationIdSet.add(id);
+        });
+
+        const conversationIds = Array.from(conversationIdSet);
+
+        if (conversationIds.length > 0) {
+          const { data: mData, error: msgError } = await supabase
+            .from('messages')
+            .select('*')
+            .in('conversation_id', conversationIds)
+            .order('created_at', { ascending: true });
+          if (!msgError && mData) {
+            messagesData = mData;
+          }
         }
       }
 
       // Also retrieve order_messages for all involved order IDs to ensure zero history loss
       let orderMessagesData = [];
-      const orderIdsToFetch = userOrderIds.length > 0 
-        ? userOrderIds 
-        : (convData || []).filter(c => c.order_id || c.id?.startsWith('order-')).map(c => c.order_id || c.id.replace('order-', ''));
+      const orderIdsToFetch = isAdmin
+        ? []
+        : (userOrderIds.length > 0 
+            ? userOrderIds 
+            : (convData || []).filter(c => c.order_id || c.id?.startsWith('order-')).map(c => c.order_id || c.id.replace('order-', '')));
 
-      if (orderIdsToFetch.length > 0) {
+      if (isAdmin) {
+        try {
+          const { data: allOmData } = await supabase
+            .from('order_messages')
+            .select('*')
+            .order('created_at', { ascending: true });
+          if (allOmData) orderMessagesData = allOmData;
+        } catch {}
+      } else if (orderIdsToFetch.length > 0) {
         try {
           const { data: omData } = await supabase
             .from('order_messages')
@@ -142,7 +165,7 @@ export async function GET(request) {
           const rawId = isOrder ? cId.replace('order-', '') : null;
           convData.push({
             id: cId,
-            client_name: user?.user_metadata?.full_name || 'Client',
+            client_name: m.sender_name || (isAdmin ? 'Customer' : 'Client'),
             client_email: cleanUserEmail || 'client@studio.com',
             client_company: 'Studio Client',
             order_id: rawId,
@@ -387,13 +410,28 @@ export async function POST(request) {
         updated_at: new Date().toISOString()
       };
 
+      let conv = dbPayload;
       const { data: convData, error } = await supabase.from('conversations').upsert([dbPayload]).select();
       if (error) {
-        console.error('[Messages API upsertConversation error]:', error.message);
-        throw error;
+        console.warn('[Messages API upsertConversation warning]:', error.message, '- retrying with core columns');
+        const corePayload = {
+          id: dbPayload.id,
+          client_name: dbPayload.client_name,
+          client_email: dbPayload.client_email,
+          client_company: dbPayload.client_company,
+          order_id: dbPayload.order_id,
+          order_title: dbPayload.order_title,
+          avatar: dbPayload.avatar,
+          status: dbPayload.status,
+          unread_count: dbPayload.unread_count,
+          updated_at: dbPayload.updated_at
+        };
+        const { data: fallbackData } = await supabase.from('conversations').upsert([corePayload]).select();
+        if (fallbackData && fallbackData[0]) conv = fallbackData[0];
+      } else if (convData && convData[0]) {
+        conv = convData[0];
       }
       
-      const conv = convData ? convData[0] : dbPayload;
       const mappedConv = {
         id: conv.id,
         clientName: conv.client_name,
@@ -442,7 +480,7 @@ export async function POST(request) {
         const { data: existingConv } = await supabase.from('conversations').select('*').eq('id', convId).maybeSingle();
 
         if (!existingConv) {
-          await supabase.from('conversations').insert([{
+          const fullConvPayload = {
             id: convId,
             order_id: rawOrderId,
             order_title: finalOrderTitle,
@@ -455,13 +493,30 @@ export async function POST(request) {
             client_unread_count: isAdmin ? 1 : 0,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          }]);
+          };
+          const { error: convErr } = await supabase.from('conversations').insert([fullConvPayload]);
+          if (convErr) {
+            await supabase.from('conversations').insert([{
+              id: convId,
+              order_id: rawOrderId,
+              order_title: finalOrderTitle,
+              client_name: finalClientName,
+              client_email: finalClientEmail,
+              client_company: payload.company || 'Studio Client',
+              status: 'online',
+              unread_count: 1,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }]);
+          }
         } else {
-          await supabase.from('conversations').update({
-            client_name: existingConv.client_name === 'Guest Client' && finalClientName !== 'Guest Client' ? finalClientName : existingConv.client_name,
-            client_email: (existingConv.client_email === 'guest@bdigitizing.pro' || !existingConv.client_email) && finalClientEmail !== 'guest@bdigitizing.pro' ? finalClientEmail : existingConv.client_email,
-            updated_at: new Date().toISOString()
-          }).eq('id', convId);
+          try {
+            await supabase.from('conversations').update({
+              client_name: existingConv.client_name === 'Guest Client' && finalClientName !== 'Guest Client' ? finalClientName : existingConv.client_name,
+              client_email: (existingConv.client_email === 'guest@bdigitizing.pro' || !existingConv.client_email) && finalClientEmail !== 'guest@bdigitizing.pro' ? finalClientEmail : existingConv.client_email,
+              updated_at: new Date().toISOString()
+            }).eq('id', convId);
+          } catch {}
         }
       } catch (convUpsertErr) {
         console.warn('Conversation upsert notice:', convUpsertErr.message);
@@ -493,29 +548,45 @@ export async function POST(request) {
         created_at: nowIso
       };
       
-      const { error } = await supabase.from('messages').insert([dbPayload]);
-      if (error) {
-        console.error('[Messages API insert error]:', error.message);
-        throw error;
+      // Resilient message insertion with fallback to guaranteed core columns
+      let finalInsertedMsg = dbPayload;
+      const { data: insData, error: insError } = await supabase.from('messages').insert([dbPayload]).select();
+      if (insError) {
+        console.warn('[Messages API primary insert notice]:', insError.message, '- retrying with core columns');
+        const corePayload = {
+          id: dbPayload.id,
+          conversation_id: dbPayload.conversation_id,
+          sender: dbPayload.sender,
+          sender_name: dbPayload.sender_name,
+          text: dbPayload.text || '',
+          attachment: dbPayload.attachment || dbPayload.attachment_url || null,
+          timestamp: dbPayload.timestamp,
+          created_at: dbPayload.created_at
+        };
+        const { data: coreInsData, error: coreError } = await supabase.from('messages').insert([corePayload]).select();
+        if (coreError) {
+          console.error('[Messages API fallback insert error]:', coreError.message);
+          throw coreError;
+        }
+        if (coreInsData && coreInsData[0]) finalInsertedMsg = { ...dbPayload, ...coreInsData[0] };
+      } else if (insData && insData[0]) {
+        finalInsertedMsg = insData[0];
       }
       
       // Mirror to order_messages if an order ID is present
       if (rawOrderId) {
         try {
-          await supabase.from('order_messages').insert([{
+          const omPayload = {
             order_id: rawOrderId,
-            sender_name: dbPayload.sender_name,
+            sender: actualSender,
+            sender_name: dbPayload.sender_name || (isAdmin ? 'Support' : 'Client'),
             sender_role: actualSender,
-            is_staff: isAdmin,
-            message: dbPayload.text,
-            attachment: dbPayload.attachment,
-            attachment_url: dbPayload.attachment_url,
-            attachment_name: dbPayload.attachment_name,
-            attachment_size: dbPayload.attachment_size,
-            reply_to: dbPayload.reply_to,
-            is_read: false,
+            is_internal: false,
+            message: dbPayload.text || '',
+            attachment: dbPayload.attachment || dbPayload.attachment_url || null,
             created_at: nowIso
-          }]);
+          };
+          await supabase.from('order_messages').insert([omPayload]);
         } catch (omErr) {
           console.warn('order_messages mirror notice:', omErr.message);
         }
@@ -528,7 +599,7 @@ export async function POST(request) {
         if (isAdmin) {
           // Admin replied -> Increment client unread, reset admin unread
           const newClientCount = (convData?.client_unread_count || 0) + 1;
-          await supabase.from('conversations')
+          const { error: updErr } = await supabase.from('conversations')
             .update({ 
               updated_at: nowIso, 
               client_unread_count: newClientCount,
@@ -536,10 +607,13 @@ export async function POST(request) {
               unread_count: 0 
             })
             .eq('id', convId);
+          if (updErr) {
+            await supabase.from('conversations').update({ updated_at: nowIso, unread_count: 0 }).eq('id', convId);
+          }
         } else {
           // Client replied -> Increment admin unread, reset client unread
           const newAdminCount = (convData?.admin_unread_count || convData?.unread_count || 0) + 1;
-          await supabase.from('conversations')
+          const { error: updErr } = await supabase.from('conversations')
             .update({ 
               updated_at: nowIso, 
               admin_unread_count: newAdminCount,
@@ -547,12 +621,15 @@ export async function POST(request) {
               client_unread_count: 0 
             })
             .eq('id', convId);
+          if (updErr) {
+            await supabase.from('conversations').update({ updated_at: nowIso, unread_count: newAdminCount }).eq('id', convId);
+          }
         }
       } catch (cntErr) {
         console.warn('Conversation unread_count update notice:', cntErr.message);
       }
 
-      return NextResponse.json({ success: true, message: dbPayload });
+      return NextResponse.json({ success: true, message: finalInsertedMsg });
     }
 
     if (action === 'markAsRead') {
