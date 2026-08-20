@@ -2216,7 +2216,7 @@ export const CustomerDashboard = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
                       {filtered.map(ord => {
                         const primaryImg = ord?.artworkUrl || ord?.image_url || ord?.logo || ord?.uploadedFiles?.[0]?.url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
-                        const statusObj = getStatusBadge(ord.status);
+                        const statusObj = getOrderDeliveryStatusBadge(ord);
                         const isDelivered = String(ord.status).toLowerCase() === 'delivered' || String(ord.status).toLowerCase() === 'completed';
 
                         return (
