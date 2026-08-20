@@ -668,6 +668,47 @@ export const CustomerDashboard = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            {/* Quick Mobile Inbox Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('support');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              style={{
+                background: activeTab === 'support' ? '#fff7ed' : '#f8fafc',
+                border: activeTab === 'support' ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
+                color: activeTab === 'support' ? 'var(--orange-500)' : 'var(--navy-900)',
+                width: '34px',
+                height: '34px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                position: 'relative'
+              }}
+              title="Open Inbox"
+            >
+              <MessageSquare size={16} />
+              {unreadChatCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-4px',
+                  background: '#ef4444',
+                  color: '#ffffff',
+                  fontSize: '0.58rem',
+                  fontWeight: 900,
+                  borderRadius: '9999px',
+                  padding: '0.05rem 0.25rem',
+                  lineHeight: 1
+                }}>
+                  {unreadChatCount}
+                </span>
+              )}
+            </button>
+
             {/* Wallet Button */}
             <button
               type="button"
@@ -2665,7 +2706,7 @@ export const CustomerDashboard = () => {
             )}
           </div>
           <span style={{ fontSize: '0.65rem', fontWeight: activeTab === 'support' ? 800 : 600, marginTop: '0.1rem' }}>
-            Working Chat
+            Inbox
           </span>
         </button>
 

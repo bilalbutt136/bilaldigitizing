@@ -74,14 +74,11 @@ export const ClientLiveChatWidget = () => {
   const [chats, setChats] = useState([]);
   const typingTimeoutRef = useRef(null);
 
-  // Exclude floating chat widget when customer is logged in or on portal/admin pages
-  const isUserLoggedIn = Boolean(authUser || (isAuthenticated && currentUser?.email && currentUser?.email !== 'guest@bdigitizing.pro'));
-  const isExcluded = isUserLoggedIn || authUser?.role === 'admin' || 
+  // Exclude floating chat widget only on admin portal pages
+  const isExcluded = authUser?.role === 'admin' || 
     (typeof window !== 'undefined' && (
       window.location.pathname.startsWith('/admin') || 
-      window.location.pathname.startsWith('/secure-admin-login') ||
-      window.location.pathname.startsWith('/client') ||
-      window.location.pathname.startsWith('/client-portal')
+      window.location.pathname.startsWith('/secure-admin-login')
     ));
 
   const activeUser = authUser || currentUser || {

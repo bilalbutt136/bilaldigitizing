@@ -17,7 +17,8 @@ import {
   Award, 
   HelpCircle, 
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Headphones
 } from 'lucide-react';
 import { UserMenuDropdown } from './common/UserMenuDropdown';
 import { ThemeToggle } from './common/ThemeToggle';
@@ -478,6 +479,48 @@ export const HeaderNav = () => {
             </button>
           )}
 
+          {/* Mobile Quick-Access Inbox Button for Logged-In Users */}
+          {safeIsAuthenticated && (
+            <button
+              type="button"
+              className="mobile-only"
+              onClick={handleOpenInbox}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                border: '1.5px solid var(--border-color)',
+                background: 'var(--bg-card)',
+                color: 'var(--orange-500)',
+                cursor: 'pointer',
+                position: 'relative'
+              }}
+              title="Open Inbox"
+              aria-label="Open Inbox"
+            >
+              <MessageSquare size={19} />
+              {unreadChatCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-4px',
+                  background: '#ef4444',
+                  color: '#ffffff',
+                  fontSize: '0.62rem',
+                  fontWeight: 900,
+                  borderRadius: '9999px',
+                  padding: '1px 5px',
+                  lineHeight: 1.2
+                }}>
+                  {unreadChatCount}
+                </span>
+              )}
+            </button>
+          )}
+
           {/* Mobile Theme Toggle Quick Icon */}
           <div className="mobile-only" style={{ display: 'flex', alignItems: 'center' }}>
             <ThemeToggle />
@@ -498,6 +541,7 @@ export const HeaderNav = () => {
               minHeight: '42px',
               borderRadius: '10px',
               cursor: 'pointer',
+              display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
@@ -1056,19 +1100,51 @@ export const HeaderNav = () => {
                 >
                   <User size={16} /> Client Login
                 </button>
+                <button
+                  className="btn btn-outline btn-lg"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleOpenLiveSupport();
+                  }}
+                  style={{ fontWeight: 700, justifyContent: 'center', width: '100%', borderColor: 'var(--border-color)', color: 'var(--orange-500)', background: 'rgba(255, 122, 0, 0.05)' }}
+                >
+                  <Headphones size={16} /> 🎧 Live Support Chat
+                </button>
               </>
             ) : (
-              <button
-                className="btn btn-primary-orange btn-lg"
-                onClick={() => {
-                  protectedNavigate('customer', false);
-                  setIsMobileMenuOpen(false);
-                  navigate('/client-portal');
-                }}
-                style={{ fontWeight: 800, justifyContent: 'center', width: '100%' }}
-              >
-                <User size={16} /> Go to Dashboard
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', width: '100%' }}>
+                <button
+                  className="btn btn-primary-orange btn-lg"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleOpenInbox();
+                  }}
+                  style={{ fontWeight: 800, justifyContent: 'center', width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <MessageSquare size={16} /> 💬 Open Inbox {unreadChatCount > 0 && `(${unreadChatCount})`}
+                </button>
+                <button
+                  className="btn btn-outline btn-lg"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleOpenLiveSupport();
+                  }}
+                  style={{ fontWeight: 700, justifyContent: 'center', width: '100%', borderColor: 'var(--border-color)', color: 'var(--text-main)' }}
+                >
+                  <Headphones size={16} /> 🎧 Customer Support & Help
+                </button>
+                <button
+                  className="btn btn-outline btn-lg"
+                  onClick={() => {
+                    protectedNavigate('customer', false);
+                    setIsMobileMenuOpen(false);
+                    navigate('/client-portal');
+                  }}
+                  style={{ fontWeight: 700, justifyContent: 'center', width: '100%', borderColor: 'var(--border-color)', color: 'var(--text-main)' }}
+                >
+                  <User size={16} /> Go to Dashboard
+                </button>
+              </div>
             )}
           </div>
         </div>
