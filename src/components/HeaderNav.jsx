@@ -16,7 +16,8 @@ import {
   Image as ImageIcon, 
   Award, 
   HelpCircle, 
-  ArrowRight 
+  ArrowRight,
+  Sparkles
 } from 'lucide-react';
 import { UserMenuDropdown } from './common/UserMenuDropdown';
 import { ThemeToggle } from './common/ThemeToggle';
