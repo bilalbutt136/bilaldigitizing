@@ -96,11 +96,11 @@ export const HeaderNav = () => {
       return;
     }
 
-    // 2. If authenticated Client in Portal, open Working Chat (Order discussions)
+    // 2. If authenticated Client in Portal, open Customer Inbox
     if (safeIsAuthenticated) {
       if (setActiveCustomerTab) setActiveCustomerTab('support');
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'support', orderId: 'working-chat' } }));
+        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'support', orderId: 'inbox' } }));
       }
       protectedNavigate('customer', false);
       navigate('/client-portal');

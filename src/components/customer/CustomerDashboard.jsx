@@ -2352,7 +2352,7 @@ export const CustomerDashboard = () => {
             {/* TAB: WORKING CHAT & HELP / SUPPORT INBOX */}
             {(activeTab === 'support' || activeTab === 'help-support') && (
               <div style={{ flex: 1, height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                <ClientChatInbox initialOrderId={activeTab === 'help-support' ? 'help-support' : (selectedOrderChatId || 'working-chat')} />
+                <ClientChatInbox initialOrderId={activeTab === 'help-support' ? 'help-support' : 'inbox'} />
               </div>
             )}
 

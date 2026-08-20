@@ -77,7 +77,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   const clientEmail = (activeUser.email || '').toLowerCase().trim();
   const clientName = activeUser.name || 'Client';
 
-  const isInitialSupport = initialOrderId === 'support' || initialOrderId === 'general-support' || (initialOrderId && String(initialOrderId).startsWith('support-'));
+  const isInitialSupport = initialOrderId === 'help-support' || initialOrderId === 'support' || initialOrderId === 'general-support' || (initialOrderId && String(initialOrderId).startsWith('support-'));
   const [activeChannel, setActiveChannel] = useState(isInitialSupport ? 'support' : 'inbox');
 
   const canonicalChatId = useMemo(() => {
@@ -124,6 +124,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     }, 80);
   };
 
+  // 1. Initial load of channel chat history from Supabase
   const loadChatHistory = async () => {
     if (!clientEmail) return;
     setLoading(true);
@@ -132,6 +133,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       if (Array.isArray(directMsgs)) {
         const sorted = [...directMsgs].sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
         setMessages(sorted);
+      } else {
+        setMessages([]);
       }
     } catch (err) {
       console.warn('Load chat history notice:', err);
@@ -152,16 +155,19 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     }
   }, [canonicalChatId, clientEmail]);
 
+  // Sync if initialOrderId prop changes (e.g. clicking sidebar Customer Support vs Inbox)
   useEffect(() => {
-    if (initialOrderId === 'support' || initialOrderId === 'general-support' || (initialOrderId && String(initialOrderId).startsWith('support-'))) {
+    if (initialOrderId === 'help-support' || initialOrderId === 'support' || initialOrderId === 'general-support' || (initialOrderId && String(initialOrderId).startsWith('support-'))) {
       setActiveChannel('support');
-    } else if (initialOrderId && initialOrderId !== 'inbox') {
+    } else {
       setActiveChannel('inbox');
-      const ordNum = formatOrderId(initialOrderId);
-      const tag = `[Regarding Order ${ordNum}] `;
-      setMessageInput(prev => prev.includes(tag) ? prev : `${tag}${prev}`);
     }
-  }, [initialOrderId, formatOrderId]);
+  }, [initialOrderId]);
+
+  const handleChannelSwitch = (channel) => {
+    setActiveChannel(channel);
+    setMessages([]);
+  };
 
   useEffect(() => {
     const unsubMessages = subscribeToLiveMessages((payload) => {
@@ -354,7 +360,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         <div style={{ display: 'flex', gap: '6px' }}>
           <button
             type="button"
-            onClick={() => setActiveChannel('inbox')}
+            onClick={() => handleChannelSwitch('inbox')}
             style={{
               padding: '0.5rem 1rem',
               borderRadius: '8px 8px 0 0',
@@ -377,7 +383,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
           <button
             type="button"
-            onClick={() => setActiveChannel('support')}
+            onClick={() => handleChannelSwitch('support')}
             style={{
               padding: '0.5rem 1rem',
               borderRadius: '8px 8px 0 0',
