@@ -637,7 +637,7 @@ export const CustomerDashboard = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-            {/* Wallet Balance Chip */}
+            {/* Wallet Button */}
             <button
               type="button"
               onClick={() => setIsDepositModalOpen(true)}
@@ -646,19 +646,20 @@ export const CustomerDashboard = () => {
                 alignItems: 'center',
                 gap: '0.35rem',
                 background: '#fff7ed',
-                border: '1px solid #fed7aa',
+                border: '1.5px solid #fed7aa',
                 borderRadius: '20px',
                 padding: '0.3rem 0.65rem',
-                color: 'var(--orange-600)',
+                color: '#c2410c',
                 fontWeight: 800,
-                fontSize: '0.75rem',
-                cursor: 'pointer'
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                boxShadow: '0 1px 4px rgba(234, 88, 12, 0.12)'
               }}
               title="Deposit Wallet Funds"
             >
-              <Wallet size={14} style={{ color: 'var(--orange-500)' }} />
-              <span>${walletBalance.toFixed(0)}</span>
-              <span style={{ background: 'var(--orange-500)', color: '#fff', width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 900, lineHeight: 1 }}>+</span>
+              <Wallet size={14} style={{ color: '#ea580c' }} />
+              <span style={{ fontWeight: 900 }}>${walletBalance.toFixed(0)}</span>
+              <span style={{ background: '#ea580c', color: '#fff', width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 900, lineHeight: 1 }}>+</span>
             </button>
 
             {/* Menu Trigger */}
@@ -728,9 +729,9 @@ export const CustomerDashboard = () => {
                 <div style={{ background: 'var(--bg-subtle, #f1f5f9)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '0.85rem', color: 'var(--text-main)', marginBottom: '1rem' }}>
                   <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--navy-950)' }}>{activeUser?.name || 'Client'}</div>
                   <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>{activeUser?.company || ''}</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '0.35rem 0.6rem', borderRadius: '6px', fontSize: '0.73rem' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Wallet Credit:</span>
-                    <strong style={{ color: 'var(--orange-600)', fontWeight: 800 }}>${walletBalance.toFixed(2)}</strong>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '0.45rem 0.65rem', borderRadius: '8px', fontSize: '0.75rem' }}>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Wallet Credit:</span>
+                    <strong style={{ color: '#059669', fontWeight: 900, background: 'var(--color-success-bg, #ecfdf5)', padding: '0.1rem 0.45rem', borderRadius: '6px', border: '1px solid var(--color-success-border, #a7f3d0)' }}>${walletBalance.toFixed(2)}</strong>
                   </div>
                 </div>
 

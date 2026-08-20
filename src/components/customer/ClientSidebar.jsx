@@ -142,80 +142,96 @@ export const ClientSidebar = ({
         {/* User Header Profile Card */}
         <div
           style={{
-            padding: '0.95rem 0.85rem',
-            background: 'linear-gradient(135deg, #090d16 0%, #1e293b 100%)',
-            borderRadius: '12px',
+            padding: '1rem 0.9rem',
+            background: 'linear-gradient(135deg, #0d1322 0%, #1a2238 100%)',
+            borderRadius: '14px',
             color: '#ffffff',
             marginBottom: '1.15rem',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.28)',
             flexShrink: 0
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.65rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
             <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, var(--orange-500), #e66e00)',
+              width: '42px',
+              height: '42px',
+              borderRadius: '11px',
+              background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
               color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 900,
-              fontSize: '1.1rem',
-              boxShadow: '0 4px 14px rgba(255, 122, 0, 0.35)',
+              fontSize: '1.15rem',
+              boxShadow: '0 4px 14px rgba(234, 88, 12, 0.40)',
               flexShrink: 0
             }}>
               {userInitial}
             </div>
 
             <div style={{ overflow: 'hidden' }}>
-              <div style={{ fontWeight: 800, fontSize: '0.875rem', color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>
                 {userName}
               </div>
-              <div style={{ fontSize: '0.7rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ fontSize: '0.72rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {userCompany}
               </div>
             </div>
           </div>
 
-          {/* Wallet Credit Box */}
+          {/* Wallet Credit Box — High Contrast Crystal-Clear Styling */}
           <div style={{ 
             display: 'flex', 
-            justify: 'space-between', 
+            justifyContent: 'space-between', 
             alignItems: 'center', 
             background: 'rgba(255, 255, 255, 0.08)', 
-            padding: '0.4rem 0.65rem', 
-            borderRadius: '8px', 
-            fontSize: '0.73rem' 
+            padding: '0.45rem 0.7rem', 
+            borderRadius: '10px', 
+            border: '1px solid rgba(255, 255, 255, 0.14)',
+            fontSize: '0.75rem' 
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <Wallet size={13} style={{ color: 'var(--orange-400)', flexShrink: 0 }} />
-              <span style={{ color: '#cbd5e1' }}>Wallet Credit:</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <Wallet size={14} style={{ color: '#38bdf8', flexShrink: 0 }} />
+              <span style={{ color: '#cbd5e1', fontWeight: 600 }}>Balance:</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <strong style={{ color: 'var(--orange-400)', fontWeight: 800 }}>${displayWallet.toFixed(2)}</strong>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <strong style={{ 
+                color: '#34d399', 
+                fontWeight: 900, 
+                fontSize: '0.88rem',
+                letterSpacing: '0.01em',
+                background: 'rgba(52, 211, 153, 0.16)',
+                padding: '0.12rem 0.45rem',
+                borderRadius: '6px',
+                border: '1px solid rgba(52, 211, 153, 0.35)',
+                display: 'inline-flex',
+                alignItems: 'center'
+              }}>
+                ${displayWallet.toFixed(2)}
+              </strong>
               {onOpenDepositModal && (
                 <button
                   type="button"
                   onClick={onOpenDepositModal}
                   style={{
-                    background: 'var(--orange-500)',
+                    background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
                     color: '#ffffff',
                     border: 'none',
-                    borderRadius: '4px',
-                    padding: '0.15rem 0.35rem',
-                    fontSize: '0.625rem',
+                    borderRadius: '6px',
+                    padding: '0.22rem 0.5rem',
+                    fontSize: '0.68rem',
                     fontWeight: 800,
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.2rem'
+                    gap: '0.2rem',
+                    boxShadow: '0 2px 8px rgba(234, 88, 12, 0.35)',
+                    transition: 'all 0.18s ease'
                   }}
                   title="Add Funds"
                 >
-                  <PlusCircle size={10} style={{ flexShrink: 0 }} /> Add
+                  <PlusCircle size={11} style={{ flexShrink: 0 }} /> Add
                 </button>
               )}
             </div>
