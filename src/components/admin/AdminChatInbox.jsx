@@ -1422,31 +1422,34 @@ export const AdminChatInbox = () => {
                   <Paperclip size={16} />
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setIsOfferModalOpen(true)}
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.15))',
-                    border: '1.5px solid rgba(99, 102, 241, 0.4)',
-                    color: '#4f46e5',
-                    padding: '0 0.55rem',
-                    height: '36px',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    fontWeight: 800,
-                    fontSize: '0.78rem',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                    transition: 'all 0.2s ease',
-                    whiteSpace: 'nowrap'
-                  }}
-                  title="Create & Send Custom Offer"
-                >
-                  <Tag size={13} className="text-indigo-600" />
-                  <span>Offer</span>
-                </button>
+                {/* Custom Offer Button (Strictly available ONLY in Customer Inbox / Direct Chats / Orders, NEVER in Support) */}
+                {!activeInfo.isSupport && (
+                  <button
+                    type="button"
+                    onClick={() => setIsOfferModalOpen(true)}
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.15))',
+                      border: '1.5px solid rgba(99, 102, 241, 0.4)',
+                      color: '#4f46e5',
+                      padding: '0 0.55rem',
+                      height: '36px',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontWeight: 800,
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      transition: 'all 0.2s ease',
+                      whiteSpace: 'nowrap'
+                    }}
+                    title="Create & Send Custom Offer"
+                  >
+                    <Tag size={13} className="text-indigo-600" />
+                    <span>Offer</span>
+                  </button>
+                )}
 
                 <input
                   type="text"
