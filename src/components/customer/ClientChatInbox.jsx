@@ -1658,15 +1658,17 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           <form
             onSubmit={handleSendMessage}
             style={{
-              padding: '0.65rem 0.85rem',
-              borderTop: '1px solid var(--color-border)',
-              background: 'var(--color-surface, #ffffff)',
+              padding: '0.75rem 1rem',
+              borderTop: '2px solid var(--color-border, #e2e8f0)',
+              background: '#ffffff',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem',
+              gap: '0.65rem',
               flexShrink: 0,
               width: '100%',
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              zIndex: 10,
+              boxShadow: '0 -2px 10px rgba(0,0,0,0.03)'
             }}
           >
             <input
@@ -1682,12 +1684,12 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploadingAttachment}
               style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
-                background: 'var(--color-subtle, #f8fafc)',
-                border: '1.5px solid var(--color-border, #cbd5e1)',
-                color: 'var(--color-text-secondary, var(--navy-700))',
+                width: '42px',
+                height: '42px',
+                borderRadius: '10px',
+                background: '#f8fafc',
+                border: '1.5px solid #cbd5e1',
+                color: '#334155',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1697,7 +1699,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               }}
               title="Attach Image, PDF, Vector or Embroidery File"
             >
-              <Paperclip size={16} />
+              <Paperclip size={18} />
             </button>
 
             <input
@@ -1708,35 +1710,40 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               style={{
                 flex: 1,
                 minWidth: 0,
-                padding: '0.55rem 0.85rem',
-                fontSize: '0.85rem',
-                borderRadius: '8px',
-                border: '1.5px solid var(--color-border, #cbd5e1)',
+                padding: '0.65rem 1rem',
+                fontSize: '0.9rem',
+                borderRadius: '10px',
+                border: '1.5px solid #cbd5e1',
                 outline: 'none',
-                background: 'var(--color-subtle, #ffffff)',
-                color: 'var(--color-text-primary, var(--navy-950))',
-                boxSizing: 'border-box'
+                background: '#ffffff',
+                color: '#0f172a',
+                boxSizing: 'border-box',
+                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)'
               }}
             />
 
             <button
               type="submit"
               disabled={(!messageInput.trim() && !attachedFile) || isUploadingAttachment}
-              className="btn btn-primary-orange"
               style={{
-                padding: '0.55rem 0.85rem',
-                borderRadius: '8px',
-                fontSize: '0.82rem',
+                padding: '0.65rem 1.25rem',
+                borderRadius: '10px',
+                fontSize: '0.875rem',
                 fontWeight: 800,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.35rem',
+                gap: '0.45rem',
                 flexShrink: 0,
-                opacity: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 0.5 : 1,
-                cursor: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 'not-allowed' : 'pointer'
+                border: 'none',
+                background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
+                color: '#ffffff',
+                boxShadow: '0 2px 10px rgba(234, 88, 12, 0.35)',
+                opacity: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 0.6 : 1,
+                cursor: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 'not-allowed' : 'pointer',
+                transition: 'all 0.15s ease'
               }}
             >
-              <span>Send</span> <Send size={13} />
+              <span>Send</span> <Send size={15} />
             </button>
           </form>
 

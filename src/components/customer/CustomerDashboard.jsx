@@ -590,10 +590,11 @@ export const CustomerDashboard = () => {
     <div 
       className="dashboard-main-container" 
       style={{ 
-        padding: (activeTab === 'support' || activeTab === 'help-support') ? '0.75rem 0 0' : '1.5rem 0 8rem', 
+        padding: (activeTab === 'support' || activeTab === 'help-support') ? '0.5rem 0 0.5rem' : '1.5rem 0 8rem', 
         background: 'var(--bg-main)', 
-        minHeight: (activeTab === 'support' || activeTab === 'help-support') ? 'calc(100vh - 75px)' : 'calc(100vh - 80px)',
-        height: (activeTab === 'support' || activeTab === 'help-support') ? 'calc(100vh - 75px)' : 'auto',
+        minHeight: (activeTab === 'support' || activeTab === 'help-support') ? 'calc(100dvh - 125px)' : 'calc(100vh - 80px)',
+        height: (activeTab === 'support' || activeTab === 'help-support') ? 'calc(100dvh - 125px)' : 'auto',
+        maxHeight: (activeTab === 'support' || activeTab === 'help-support') ? 'calc(100dvh - 125px)' : 'none',
         overflow: (activeTab === 'support' || activeTab === 'help-support') ? 'hidden' : 'visible',
         boxSizing: 'border-box'
       }}
@@ -848,10 +849,11 @@ export const CustomerDashboard = () => {
           style={{
             display: 'grid',
             gridTemplateColumns: '280px 1fr',
-            gap: '2rem',
+            gap: '1.5rem',
             alignItems: 'start',
             flex: (activeTab === 'support' || activeTab === 'help-support') ? 1 : 'none',
             height: (activeTab === 'support' || activeTab === 'help-support') ? '100%' : 'auto',
+            maxHeight: (activeTab === 'support' || activeTab === 'help-support') ? '100%' : 'none',
             minHeight: 0,
             overflow: (activeTab === 'support' || activeTab === 'help-support') ? 'hidden' : 'visible'
           }}
