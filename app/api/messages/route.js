@@ -181,14 +181,31 @@ export async function GET(request) {
         }
       });
 
+      const isSupportConvId = (id) => !id || id === 'general-support' || id.startsWith('support-');
+
+      // Unify support conversations for clients so history is never split across IDs
       const conversations = (convData || []).map(conv => {
         const rawOrdId = conv.order_id || (conv.id?.startsWith('order-') ? conv.id.replace('order-', '') : null);
+        const isSupport = isSupportConvId(conv.id) && !rawOrdId;
 
         const convDirectMsgs = messagesData
-          .filter(m => m.conversation_id === conv.id)
+          .filter(m => {
+            if (isSupport) {
+              // Match any support message relevant to this conversation/client
+              if (m.conversation_id === conv.id) return true;
+              if (isSupportConvId(m.conversation_id)) {
+                if (!isAdmin && cleanUserEmail && cleanUserEmail !== 'client@studio.com') {
+                  return m.conversation_id === 'general-support' || m.conversation_id === `support-${cleanUserEmail}` || m.conversation_id.startsWith(`support-${cleanUserEmail}`);
+                }
+                return conv.id === 'general-support' || conv.id === m.conversation_id;
+              }
+              return false;
+            }
+            return m.conversation_id === conv.id || (rawOrdId && (m.conversation_id === `order-${rawOrdId}` || m.conversation_id === rawOrdId));
+          })
           .map(m => ({
             id: m.id,
-            conversation_id: m.conversation_id,
+            conversation_id: isSupport && cleanUserEmail && cleanUserEmail !== 'client@studio.com' ? `support-${cleanUserEmail}` : m.conversation_id,
             sender: m.sender,
             senderName: m.sender_name || (m.sender === 'admin' ? 'Support' : conv.client_name || 'Client'),
             sender_name: m.sender_name,

@@ -457,21 +457,36 @@ export const ClientLiveChatWidget = () => {
           if (Array.isArray(data) && data.length > 0) {
             setChats(prev => {
               const safePrev = Array.isArray(prev) ? prev : [];
-              return data.map(remoteConv => {
-                const localConv = safePrev.find(c => c.id === remoteConv.id || (isSupportId(c.id) && isSupportId(remoteConv.id)));
-                if (!localConv) return remoteConv;
-                const combinedMessages = [...(remoteConv.messages || [])];
-                (localConv.messages || []).forEach(lm => {
-                  if (!combinedMessages.some(rm => rm.id === lm.id || (rm.text === lm.text && Math.abs(new Date(rm.timestamp) - new Date(lm.timestamp)) < 5000))) {
-                    combinedMessages.push(lm);
-                  }
-                });
-                combinedMessages.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
-                return {
-                  ...remoteConv,
-                  messages: combinedMessages
-                };
+              const mergedMap = new Map();
+              
+              // 1. Existing local state messages
+              safePrev.forEach(conv => {
+                const key = conv.id;
+                mergedMap.set(key, { ...conv, messages: [...(conv.messages || [])] });
               });
+
+              // 2. Remote conversations from server
+              data.forEach(remoteConv => {
+                const existing = mergedMap.get(remoteConv.id) || (isSupportId(remoteConv.id) ? Array.from(mergedMap.values()).find(c => isSupportId(c.id)) : null);
+                if (existing) {
+                  const msgs = [...(existing.messages || [])];
+                  (remoteConv.messages || []).forEach(rm => {
+                    if (!msgs.some(em => (em.id && rm.id && em.id === rm.id) || (em.text && rm.text && em.text === rm.text && em.sender === rm.sender && Math.abs(parseMessageTime(em) - parseMessageTime(rm)) < 20000))) {
+                      msgs.push(rm);
+                    }
+                  });
+                  msgs.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+                  mergedMap.set(existing.id, { ...remoteConv, id: existing.id, messages: msgs });
+                } else {
+                  mergedMap.set(remoteConv.id, remoteConv);
+                }
+              });
+
+              const resultList = Array.from(mergedMap.values());
+              if (typeof window !== 'undefined') {
+                try { localStorage.setItem(cacheKey, JSON.stringify(resultList)); } catch {}
+              }
+              return resultList;
             });
           }
         }).catch(() => {});
