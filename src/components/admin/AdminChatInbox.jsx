@@ -815,6 +815,8 @@ export const AdminChatInbox = () => {
       overflow: 'hidden',
       flex: 1,
       height: '100%',
+      maxHeight: '100%',
+      minHeight: 0,
       display: 'flex',
       flexDirection: 'column',
       boxShadow: 'var(--shadow-sm)'
@@ -827,8 +829,10 @@ export const AdminChatInbox = () => {
           display: 'grid', 
           gridTemplateColumns: '340px 1fr', 
           height: '100%', 
+          maxHeight: '100%',
           minHeight: 0, 
-          overflow: 'hidden' 
+          overflow: 'hidden',
+          flex: 1
         }}
       >
 
@@ -1323,11 +1327,12 @@ export const AdminChatInbox = () => {
               ref={chatFeedRef}
               style={{
                 flex: 1,
-                padding: '1.5rem',
+                minHeight: 0,
+                padding: '1rem 1.25rem',
                 overflowY: 'auto',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.75rem',
+                gap: '0.65rem',
                 background: 'var(--color-subtle, #f8fafc)'
               }}
             >
@@ -1466,7 +1471,7 @@ export const AdminChatInbox = () => {
             )}
 
             {/* Messaging Input Area */}
-            <form onSubmit={handleSendMessage} style={{ padding: '0.65rem 0.85rem', borderTop: '1.5px solid var(--color-border)', background: 'var(--color-surface, #ffffff)', width: '100%', boxSizing: 'border-box' }}>
+            <form onSubmit={handleSendMessage} style={{ padding: '0.65rem 0.85rem', borderTop: '1.5px solid var(--color-border)', background: 'var(--color-surface, #ffffff)', width: '100%', boxSizing: 'border-box', flexShrink: 0 }}>
               <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', width: '100%' }}>
                 <input
                   type="file"

@@ -558,10 +558,11 @@ export const AdminDashboard = () => {
       <main className="admin-main-content" style={{
         marginLeft: '280px',
         width: 'calc(100% - 280px)',
-        padding: activeTab === 'chat' ? '1.25rem 1.75rem' : '2rem 2.5rem 4rem',
+        padding: activeTab === 'chat' ? '0.35rem 1.25rem 0.5rem' : '2rem 2.5rem 4rem',
         boxSizing: 'border-box',
-        height: activeTab === 'chat' ? 'calc(100vh - 73px)' : 'auto',
-        minHeight: 'calc(100vh - 73px)',
+        height: activeTab === 'chat' ? 'calc(100dvh - 128px)' : 'auto',
+        maxHeight: activeTab === 'chat' ? 'calc(100dvh - 128px)' : 'none',
+        minHeight: activeTab === 'chat' ? 'calc(100dvh - 128px)' : 'calc(100vh - 73px)',
         overflow: activeTab === 'chat' ? 'hidden' : 'visible',
         display: activeTab === 'chat' ? 'flex' : 'block',
         flexDirection: 'column'
