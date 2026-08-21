@@ -182,9 +182,8 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       if (activeChannel === 'inbox' && isSupportRecord) return;
 
       const isForThisCustomer = recordConvId === canonicalChatId ||
-        (activeChannel === 'inbox' && (recordConvId === `inbox-${clientEmail}` || recordConvId === `direct-${clientEmail}`)) ||
-        (activeChannel === 'support' && recordConvId === `support-${clientEmail}`) ||
-        (record.client_email && record.client_email.toLowerCase().trim() === clientEmail);
+        (activeChannel === 'inbox' && !isSupportRecord && (recordConvId === `inbox-${clientEmail}` || recordConvId === `direct-${clientEmail}` || (record.client_email && record.client_email.toLowerCase().trim() === clientEmail))) ||
+        (activeChannel === 'support' && isSupportRecord && (recordConvId === `support-${clientEmail}` || recordConvId === 'general-support' || (record.client_email && record.client_email.toLowerCase().trim() === clientEmail)));
 
       if (isForThisCustomer) {
         setMessages(prev => {

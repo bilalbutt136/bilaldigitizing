@@ -100,7 +100,7 @@ export const ClientLiveChatWidget = () => {
   const clientCompany = activeUser?.company || `${cleanName}'s Account`;
   const avatarUrl = activeUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0f172a&color=fff`;
 
-  const cacheKey = `bdigi_widget_cache_${clientEmail || 'guest'}`;
+  const cacheKey = `bdigi_live_support_widget_cache_${clientEmail || 'guest'}`;
 
   const targetConvId = clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')
     ? `support-${clientEmail}`
@@ -114,7 +114,7 @@ export const ClientLiveChatWidget = () => {
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setChats(parsed);
+            setChats(parsed.filter(c => isSupportId(c.id)));
           }
         }
       } catch {}
@@ -164,11 +164,12 @@ export const ClientLiveChatWidget = () => {
     const loadChats = async () => {
       if (!isMounted) return;
       if (isSupabaseConfigured) {
-        const data = await fetchConversations(clientEmail);
+        const data = await fetchConversations(clientEmail, 'support');
         if (data && data.length > 0 && isMounted) {
+          const onlySupport = data.filter(c => isSupportId(c.id));
           setChats(prev => {
-            const safePrev = Array.isArray(prev) ? prev : [];
-            const merged = data.map(remoteConv => {
+            const safePrev = Array.isArray(prev) ? prev.filter(c => isSupportId(c.id)) : [];
+            const merged = onlySupport.map(remoteConv => {
               const localConv = safePrev.find(c => c.id === remoteConv.id || (isSupportId(c.id) && isSupportId(remoteConv.id)));
               if (!localConv) return remoteConv;
               const combinedMessages = [...(remoteConv.messages || [])];
@@ -209,6 +210,12 @@ export const ClientLiveChatWidget = () => {
         const record = msgPayload.new || msgPayload.record;
         if (!record) return;
 
+        // Strictly ignore non-support messages (such as Custom Offers and Digitizer Inboxes) in the 24/7 Support Widget
+        const recordConvId = String(record.conversation_id || '').toLowerCase();
+        if (!isSupportId(recordConvId)) {
+          return;
+        }
+
         const newMsg = {
           id: record.id,
           conversation_id: record.conversation_id,
@@ -233,12 +240,12 @@ export const ClientLiveChatWidget = () => {
         }
 
         setChats(prev => {
-          const safePrev = Array.isArray(prev) ? prev : [];
-          const isTargetConv = (c) => 
+          const safePrev = Array.isArray(prev) ? prev.filter(c => isSupportId(c.id)) : [];
+          const isTargetConv = (c) => isSupportId(c.id) && (
             c.id === newMsg.conversation_id || 
             c.id === targetConvId ||
-            (isSupportId(c.id) && isSupportId(newMsg.conversation_id)) ||
-            (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail);
+            (isSupportId(c.id) && isSupportId(newMsg.conversation_id))
+          );
           const exists = safePrev.some(isTargetConv);
 
           let nextChats;
@@ -295,10 +302,10 @@ export const ClientLiveChatWidget = () => {
       (convPayload) => {
         if (!isMounted) return;
         const conv = convPayload.new || convPayload.record;
-        if (!conv) return;
+        if (!conv || !isSupportId(conv.id)) return;
 
         setChats(prev => {
-          const safePrev = Array.isArray(prev) ? prev : [];
+          const safePrev = Array.isArray(prev) ? prev.filter(c => isSupportId(c.id)) : [];
           return safePrev.map(c => {
             if (c.id === conv.id || (isSupportId(c.id) && isSupportId(conv.id))) {
               return {
@@ -383,13 +390,14 @@ export const ClientLiveChatWidget = () => {
     };
   }, [mounted, isExcluded]);
 
-  // Safely resolve the active chat thread for regular support chat, aggregating all support messages
-  const safeChats = Array.isArray(chats) ? chats : [];
+  // Safely resolve the active chat thread for regular support chat, strictly isolating support messages
+  const safeChats = Array.isArray(chats) ? chats.filter(c => isSupportId(c.id)) : [];
   const supportConvs = safeChats.filter(c => 
-    c.id === targetConvId ||
-    (isSupportId(c.id) && isSupportId(targetConvId)) ||
-    (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail && !c.orderId && !c.order_id && !c.id?.startsWith('order-')) ||
-    (!c.orderId && !c.order_id && !c.id?.startsWith('order-'))
+    isSupportId(c.id) && (
+      c.id === targetConvId ||
+      (isSupportId(c.id) && isSupportId(targetConvId)) ||
+      (clientEmail && (c.clientEmail || '').toLowerCase().trim() === clientEmail)
+    )
   );
 
   const aggregatedSupportMessagesMap = new Map();
@@ -461,21 +469,23 @@ export const ClientLiveChatWidget = () => {
     if (isOpen) {
       scrollToBottom('smooth');
       if (isSupabaseConfigured) {
-        fetchConversations(clientEmail).then(data => {
+        fetchConversations(clientEmail, 'support').then(data => {
           if (Array.isArray(data) && data.length > 0) {
+            const onlySupport = data.filter(c => isSupportId(c.id));
             setChats(prev => {
-              const safePrev = Array.isArray(prev) ? prev : [];
+              const safePrev = Array.isArray(prev) ? prev.filter(c => isSupportId(c.id)) : [];
               const mergedMap = new Map();
               
               // 1. Existing local state messages
               safePrev.forEach(conv => {
-                const key = conv.id;
-                mergedMap.set(key, { ...conv, messages: [...(conv.messages || [])] });
+                if (isSupportId(conv.id)) {
+                  mergedMap.set(conv.id, { ...conv, messages: [...(conv.messages || [])] });
+                }
               });
 
               // 2. Remote conversations from server
-              data.forEach(remoteConv => {
-                const existing = mergedMap.get(remoteConv.id) || (isSupportId(remoteConv.id) ? Array.from(mergedMap.values()).find(c => isSupportId(c.id)) : null);
+              onlySupport.forEach(remoteConv => {
+                const existing = mergedMap.get(remoteConv.id) || Array.from(mergedMap.values()).find(c => isSupportId(c.id));
                 if (existing) {
                   const msgs = [...(existing.messages || [])];
                   (remoteConv.messages || []).forEach(rm => {
