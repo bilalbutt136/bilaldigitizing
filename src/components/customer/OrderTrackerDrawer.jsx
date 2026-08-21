@@ -1297,13 +1297,8 @@ export const OrderTrackerDrawer = () => {
                       alignSelf: isMe ? 'flex-end' : 'flex-start',
                       maxWidth: '85%'
                     }}>
-                      <div style={{ fontSize: '0.68rem', color: isMe ? 'rgba(255,255,255,0.85)' : (!isRead ? '#c2410c' : 'var(--text-muted)'), fontWeight: (!isMe && !isRead) ? 900 : 700, marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <div style={{ fontSize: '0.68rem', color: isMe ? 'rgba(255,255,255,0.85)' : 'var(--text-muted)', fontWeight: 700, marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                         <span>{isMsgAdmin ? 'Master Digitizer Desk' : (msg.senderName || msg.sender || 'Client')}</span>
-                        {!isMe && !isRead && (
-                          <span style={{ background: '#ea580c', color: '#fff', fontSize: '0.55rem', padding: '0.05rem 0.35rem', borderRadius: '3px', fontWeight: 900 }}>
-                            NEW
-                          </span>
-                        )}
                         <span>•</span>
                         <span>{msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'}</span>
                       </div>

@@ -230,27 +230,9 @@ export default function WhatsAppChatMessage({
         alignItems: 'center',
         gap: '0.4rem'
       }}>
-        <span style={{ fontWeight: (!resolvedIsMe && !isMessageRead) ? 900 : 700, color: (!resolvedIsMe && !isMessageRead) ? 'var(--orange-600, #ea580c)' : undefined }}>
+        <span>
           {senderDisplayName || (resolvedIsMe ? 'You' : (message.sender_name || (message.sender === 'admin' ? 'Support' : (clientName || 'Customer'))))}
         </span>
-        {!resolvedIsMe && !isMessageRead && (
-          <span style={{
-            background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
-            color: '#ffffff',
-            fontSize: '0.58rem',
-            fontWeight: 900,
-            padding: '0.05rem 0.4rem',
-            borderRadius: '4px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.4px',
-            boxShadow: '0 2px 6px rgba(234, 88, 12, 0.35)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '2px'
-          }}>
-            ● UNREAD
-          </span>
-        )}
         <span>•</span>
         <span>{displayTime}</span>
       </div>
