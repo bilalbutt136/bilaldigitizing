@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { HeroServicesEditor } from './HeroServicesEditor';
 import { DynamicPricingEditor } from './DynamicPricingEditor';
-import { Layers, Sparkles } from 'lucide-react';
+import { ProductionProcessTimelineEditor } from './ProductionProcessTimelineEditor';
+import { Layers, Sparkles, FileCheck } from 'lucide-react';
 
 export const StudioServicesManager = () => {
   const [activeTab, setActiveTab] = useState('dynamic_pricing');
@@ -60,11 +61,34 @@ export const StudioServicesManager = () => {
           <Sparkles size={18} />
           <span>Service Pages & Showcase Content</span>
         </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('process_timelines')}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'process_timelines' ? '3px solid var(--orange-500)' : '3px solid transparent',
+            padding: '0.65rem 1.25rem',
+            fontWeight: 800,
+            fontSize: '0.95rem',
+            color: activeTab === 'process_timelines' ? 'var(--orange-500)' : 'var(--navy-600)',
+            cursor: 'pointer',
+            transition: 'all 0.18s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}
+        >
+          <FileCheck size={18} />
+          <span>Production Steps & Timelines</span>
+        </button>
       </div>
 
       <div>
         {activeTab === 'dynamic_pricing' && <DynamicPricingEditor />}
         {activeTab === 'homepage_services' && <HeroServicesEditor />}
+        {activeTab === 'process_timelines' && <ProductionProcessTimelineEditor />}
       </div>
     </div>
   );

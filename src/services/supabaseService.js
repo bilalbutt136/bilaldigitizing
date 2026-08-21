@@ -1943,3 +1943,17 @@ export async function getCmsContent(key) {
   } catch { return null; }
 }
 
+export async function saveCmsContent(key, content) {
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, content })
+    });
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+

@@ -8,6 +8,7 @@ import {
   Upload, Scissors, ArrowRight, Star, Quote, ChevronRight 
 } from 'lucide-react';
 import { PackageCard } from './PackageCard';
+import { ServiceProcessTimelineSection } from './ServiceProcessTimelineSection';
 
 export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
   const { setIsOrderWizardOpen, openOrderWizard, dynamicPricingTiers = [], homePageConfig = {} } = useAppState();
@@ -280,6 +281,8 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
         </div>
       </section>
 
+      {/* Dynamic 2-Column Production Process Steps & Delivery Timeline */}
+      <ServiceProcessTimelineSection serviceType="embroidery" />
 
     </div>
   );

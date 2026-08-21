@@ -20,6 +20,7 @@ import {
   CreditCard
 } from 'lucide-react';
 import { PackageCard } from './PackageCard';
+import { ServiceProcessTimelineSection } from './ServiceProcessTimelineSection';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 import { matchCategory } from '../../utils/categoryUtils';
 
@@ -1112,6 +1113,9 @@ export const VectorArtPage = ({ hideHero = false }) => {
         </div>
       </div>
       )}
+
+      {/* Dynamic 2-Column Production Process Steps & Delivery Timeline */}
+      <ServiceProcessTimelineSection serviceType="vector" />
     </div>
   );
 };
