@@ -92,22 +92,22 @@ export const HeaderNav = () => {
     if (safeIsAuthenticated && authUser?.role === 'admin') {
       if (setActiveAdminTab) setActiveAdminTab('chat');
       protectedNavigate('admin');
-      navigate('/admin-portal');
+      navigate('/admin-portal?tab=chat');
       return;
     }
 
     // 2. If authenticated Client in Portal, open Customer Inbox
     if (safeIsAuthenticated) {
-      if (setActiveCustomerTab) setActiveCustomerTab('support');
+      if (setActiveCustomerTab) setActiveCustomerTab('inbox');
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'support', orderId: 'inbox' } }));
+        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'inbox', orderId: 'inbox' } }));
       }
       protectedNavigate('customer', false);
-      navigate('/client-portal');
+      navigate('/client-portal?tab=inbox');
       return;
     }
 
-    // 3. If unauthenticated, open public chat widget
+    // 3. If unauthenticated, open public live support chat widget
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bdigi_open_chat'));
     }
@@ -118,7 +118,7 @@ export const HeaderNav = () => {
     if (safeIsAuthenticated && authUser?.role === 'admin') {
       if (setActiveAdminTab) setActiveAdminTab('chat');
       protectedNavigate('admin');
-      navigate('/admin-portal');
+      navigate('/admin-portal?tab=chat');
       return;
     }
 
@@ -129,7 +129,7 @@ export const HeaderNav = () => {
         window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'help-support', orderId: 'general-support' } }));
       }
       protectedNavigate('customer', false);
-      navigate('/client-portal');
+      navigate('/client-portal?tab=help-support');
       return;
     }
 

@@ -76,6 +76,13 @@ export const AdminDashboard = () => {
 
   React.useEffect(() => {
     setMounted(true);
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab');
+      if (tabParam) {
+        setActiveTab(tabParam);
+      }
+    }
   }, []);
 
   // Real-time unread messages calculator for Admin Desk
@@ -256,7 +263,8 @@ export const AdminDashboard = () => {
           padding: '0.75rem 1rem',
           alignItems: 'center',
           justifyContent: 'space-between',
-          boxShadow: 'var(--shadow-sm)'
+          boxShadow: 'var(--shadow-sm)',
+          display: 'flex'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -297,6 +305,45 @@ export const AdminDashboard = () => {
             </h3>
           </div>
         </div>
+
+        {/* Quick Mobile Messages Button for Admin */}
+        <button
+          type="button"
+          onClick={() => setActiveTab('chat')}
+          style={{
+            background: activeTab === 'chat' ? '#fff7ed' : 'var(--bg-surface)',
+            border: activeTab === 'chat' ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
+            color: activeTab === 'chat' ? 'var(--orange-500)' : 'var(--text-main)',
+            width: '38px',
+            height: '38px',
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            position: 'relative'
+          }}
+          aria-label="Open Messages"
+          title="Open Messages"
+        >
+          <MessageSquare size={18} />
+          {adminUnreadCount > 0 && (
+            <span style={{
+              position: 'absolute',
+              top: '-4px',
+              right: '-4px',
+              background: '#ef4444',
+              color: '#ffffff',
+              fontSize: '0.58rem',
+              fontWeight: 900,
+              borderRadius: '9999px',
+              padding: '0.05rem 0.25rem',
+              lineHeight: 1
+            }}>
+              {adminUnreadCount}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* MOBILE SLIDE-OUT DRAWER OVERLAY */}

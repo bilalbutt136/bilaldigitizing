@@ -361,46 +361,48 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
             type="button"
             onClick={() => handleChannelSwitch('inbox')}
             style={{
-              padding: '0.5rem 1rem',
+              padding: '0.45rem 0.75rem',
               borderRadius: '8px 8px 0 0',
               border: '1px solid var(--color-border)',
               borderBottom: activeChannel === 'inbox' ? '2px solid #ea580c' : '1px solid transparent',
               background: activeChannel === 'inbox' ? '#ffffff' : 'transparent',
               color: activeChannel === 'inbox' ? '#ea580c' : 'var(--navy-700)',
               fontWeight: activeChannel === 'inbox' ? 900 : 700,
-              fontSize: '0.82rem',
+              fontSize: '0.8rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.4rem',
+              gap: '0.35rem',
+              whiteSpace: 'nowrap',
               transition: 'all 0.15s ease'
             }}
           >
-            <Inbox size={15} />
-            <span>Customer Inbox (Orders & Offers)</span>
+            <Inbox size={14} />
+            <span>Customer Inbox</span>
           </button>
 
           <button
             type="button"
             onClick={() => handleChannelSwitch('support')}
             style={{
-              padding: '0.5rem 1rem',
+              padding: '0.45rem 0.75rem',
               borderRadius: '8px 8px 0 0',
               border: '1px solid var(--color-border)',
               borderBottom: activeChannel === 'support' ? '2px solid #ea580c' : '1px solid transparent',
               background: activeChannel === 'support' ? '#ffffff' : 'transparent',
               color: activeChannel === 'support' ? '#ea580c' : 'var(--navy-700)',
               fontWeight: activeChannel === 'support' ? 900 : 700,
-              fontSize: '0.82rem',
+              fontSize: '0.8rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.4rem',
+              gap: '0.35rem',
+              whiteSpace: 'nowrap',
               transition: 'all 0.15s ease'
             }}
           >
-            <Headphones size={15} />
-            <span>24/7 Support Helpdesk</span>
+            <Headphones size={14} />
+            <span>24/7 Support</span>
           </button>
         </div>
 

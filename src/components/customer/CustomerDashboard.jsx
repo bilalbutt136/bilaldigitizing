@@ -121,6 +121,16 @@ export const CustomerDashboard = () => {
       }
     };
     window.addEventListener('bdigi_switch_tab', handleTabSwitch);
+
+    // Sync tab from URL query params on mount/refresh
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab');
+      if (tabParam) {
+        setActiveTab(tabParam);
+      }
+    }
+
     return () => window.removeEventListener('bdigi_switch_tab', handleTabSwitch);
   }, [setActiveTab]);
 
@@ -233,7 +243,7 @@ export const CustomerDashboard = () => {
   }, [mounted, userEmail, activeTab]);
 
   React.useEffect(() => {
-    if (activeTab === 'support' || activeTab === 'help-support') {
+    if (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') {
       setUnreadChatCount(0);
     }
     if (activeTab === 'notifications') {
@@ -590,12 +600,12 @@ export const CustomerDashboard = () => {
     <div 
       className="dashboard-main-container" 
       style={{ 
-        padding: (activeTab === 'support' || activeTab === 'help-support') ? '0.5rem 0 0.5rem' : '1.5rem 0 8rem', 
+        padding: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? '0.5rem 0 0.5rem' : '1.5rem 0 8rem', 
         background: 'var(--bg-main)', 
-        minHeight: (activeTab === 'support' || activeTab === 'help-support') ? 'calc(100dvh - 125px)' : 'calc(100vh - 80px)',
-        height: (activeTab === 'support' || activeTab === 'help-support') ? 'calc(100dvh - 125px)' : 'auto',
-        maxHeight: (activeTab === 'support' || activeTab === 'help-support') ? 'calc(100dvh - 125px)' : 'none',
-        overflow: (activeTab === 'support' || activeTab === 'help-support') ? 'hidden' : 'visible',
+        minHeight: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'calc(100dvh - 125px)' : 'calc(100vh - 80px)',
+        height: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'calc(100dvh - 125px)' : 'auto',
+        maxHeight: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'calc(100dvh - 125px)' : 'none',
+        overflow: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'hidden' : 'visible',
         boxSizing: 'border-box'
       }}
     >
@@ -607,8 +617,8 @@ export const CustomerDashboard = () => {
           padding: '0 2.25rem', 
           margin: '0 auto', 
           boxSizing: 'border-box',
-          height: (activeTab === 'support' || activeTab === 'help-support') ? '100%' : 'auto',
-          display: (activeTab === 'support' || activeTab === 'help-support') ? 'flex' : 'block',
+          height: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? '100%' : 'auto',
+          display: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'flex' : 'block',
           flexDirection: 'column'
         }}
       >
@@ -619,18 +629,15 @@ export const CustomerDashboard = () => {
           style={{
             position: 'sticky',
             top: 0,
-            zIndex: 60,
-            background: 'rgba(255, 255, 255, 0.97)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            borderBottom: '1px solid rgba(226, 232, 240, 0.9)',
-            padding: '0.65rem 0.85rem',
-            display: 'flex',
+            zIndex: 95,
+            background: '#ffffff',
+            borderBottom: '1px solid var(--border-color)',
+            padding: '0.75rem 1rem',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: '1rem',
-            borderRadius: '12px',
-            boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)'
+            boxShadow: 'var(--shadow-sm)',
+            width: '100%',
+            boxSizing: 'border-box'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -662,7 +669,7 @@ export const CustomerDashboard = () => {
                 </span>
               </div>
               <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>
-                {activeTab === 'dashboard' ? 'Studio Dashboard' : (activeTab === 'digitizing' ? 'Embroidery Digitizing' : (activeTab === 'vector' ? 'Vector Art' : (activeTab === 'patches' ? 'Custom Patches' : 'Client Portal')))}
+                {activeTab === 'dashboard' ? 'Studio Dashboard' : (activeTab === 'digitizing' ? 'Embroidery Digitizing' : (activeTab === 'vector' ? 'Vector Art' : (activeTab === 'patches' ? 'Custom Patches' : (activeTab === 'inbox' ? 'Customer Inbox' : 'Client Portal'))))}
               </span>
             </div>
           </div>
@@ -672,13 +679,13 @@ export const CustomerDashboard = () => {
             <button
               type="button"
               onClick={() => {
-                setActiveTab('support');
+                setActiveTab('inbox');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               style={{
-                background: activeTab === 'support' ? '#fff7ed' : '#f8fafc',
-                border: activeTab === 'support' ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
-                color: activeTab === 'support' ? 'var(--orange-500)' : 'var(--navy-900)',
+                background: (activeTab === 'support' || activeTab === 'inbox' || activeTab === 'help-support') ? '#fff7ed' : '#f8fafc',
+                border: (activeTab === 'support' || activeTab === 'inbox' || activeTab === 'help-support') ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
+                color: (activeTab === 'support' || activeTab === 'inbox' || activeTab === 'help-support') ? 'var(--orange-500)' : 'var(--navy-900)',
                 width: '34px',
                 height: '34px',
                 borderRadius: '8px',
@@ -816,11 +823,29 @@ export const CustomerDashboard = () => {
                       icon: LayoutDashboard
                     },
                     { 
-                      id: 'support', 
-                      label: 'Messages & Support', 
+                      id: 'orders', 
+                      label: 'My Orders', 
+                      icon: ClipboardList, 
+                      badge: (digitizingOrders.length + vectorOrders.length + patchOrders.length) > 0 ? (digitizingOrders.length + vectorOrders.length + patchOrders.length) : null
+                    },
+                    { 
+                      id: 'inbox', 
+                      label: 'Customer Inbox (Orders & Offers)', 
                       icon: MessageSquare, 
                       badge: unreadChatCount > 0 ? unreadChatCount : null,
                       isUnread: unreadChatCount > 0
+                    },
+                    { 
+                      id: 'help-support', 
+                      label: '24/7 Live Support Helpdesk', 
+                      icon: Headphones
+                    },
+                    { 
+                      id: 'notifications', 
+                      label: 'Notifications', 
+                      icon: Bell, 
+                      badge: unreadNotifCount > 0 ? unreadNotifCount : null,
+                      isUnread: unreadNotifCount > 0
                     },
                     { id: 'digitizing', label: 'Embroidery Digitizing', icon: Layers, badge: digitizingOrders.length },
                     { id: 'vector', label: 'Vector Art Conversion', icon: PenTool, badge: vectorOrders.length },
@@ -892,11 +917,11 @@ export const CustomerDashboard = () => {
             gridTemplateColumns: '280px 1fr',
             gap: '1.5rem',
             alignItems: 'start',
-            flex: (activeTab === 'support' || activeTab === 'help-support') ? 1 : 'none',
-            height: (activeTab === 'support' || activeTab === 'help-support') ? '100%' : 'auto',
-            maxHeight: (activeTab === 'support' || activeTab === 'help-support') ? '100%' : 'none',
+            flex: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 1 : 'none',
+            height: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? '100%' : 'auto',
+            maxHeight: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? '100%' : 'none',
             minHeight: 0,
-            overflow: (activeTab === 'support' || activeTab === 'help-support') ? 'hidden' : 'visible'
+            overflow: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'hidden' : 'visible'
           }}
         >
 
@@ -928,11 +953,11 @@ export const CustomerDashboard = () => {
              ================================================================== */}
           <main style={{ 
             minWidth: 0,
-            height: (activeTab === 'support' || activeTab === 'help-support') ? '100%' : 'auto',
+            height: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? '100%' : 'auto',
             minHeight: 0,
-            display: (activeTab === 'support' || activeTab === 'help-support') ? 'flex' : 'block',
+            display: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'flex' : 'block',
             flexDirection: 'column',
-            overflow: (activeTab === 'support' || activeTab === 'help-support') ? 'hidden' : 'visible'
+            overflow: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'hidden' : 'visible'
           }}>
             
             {/* TAB 0: MAIN CLIENT DASHBOARD */}
@@ -2350,7 +2375,7 @@ export const CustomerDashboard = () => {
             )}
 
             {/* TAB: WORKING CHAT & HELP / SUPPORT INBOX */}
-            {(activeTab === 'support' || activeTab === 'help-support') && (
+            {(activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') && (
               <div style={{ flex: 1, height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <ClientChatInbox initialOrderId={activeTab === 'help-support' ? 'help-support' : 'inbox'} />
               </div>
@@ -2654,11 +2679,11 @@ export const CustomerDashboard = () => {
           </span>
         </button>
 
-        {/* Tab 4: Live Messages */}
+        {/* Tab 4: Live Messages / Inbox */}
         <button
           type="button"
           onClick={() => {
-            setActiveTab('support');
+            setActiveTab('inbox');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           style={{
@@ -2667,7 +2692,7 @@ export const CustomerDashboard = () => {
             alignItems: 'center',
             justifyContent: 'center',
             width: '100%',
-            color: activeTab === 'support' ? 'var(--orange-600)' : '#64748b',
+            color: (activeTab === 'support' || activeTab === 'inbox' || activeTab === 'help-support') ? 'var(--orange-600)' : '#64748b',
             background: 'none',
             border: 'none',
             cursor: 'pointer',
@@ -2679,13 +2704,13 @@ export const CustomerDashboard = () => {
           <div style={{
             padding: '0.15rem 0.55rem',
             borderRadius: '12px',
-            background: activeTab === 'support' ? '#fff7ed' : 'transparent',
+            background: (activeTab === 'support' || activeTab === 'inbox' || activeTab === 'help-support') ? '#fff7ed' : 'transparent',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             position: 'relative'
           }}>
-            <MessageSquare size={19} style={{ color: activeTab === 'support' ? 'var(--orange-600)' : '#64748b' }} />
+            <MessageSquare size={19} style={{ color: (activeTab === 'support' || activeTab === 'inbox' || activeTab === 'help-support') ? 'var(--orange-600)' : '#64748b' }} />
             {unreadChatCount > 0 && (
               <span style={{
                 position: 'absolute',
@@ -2705,7 +2730,7 @@ export const CustomerDashboard = () => {
               </span>
             )}
           </div>
-          <span style={{ fontSize: '0.65rem', fontWeight: activeTab === 'support' ? 800 : 600, marginTop: '0.1rem' }}>
+          <span style={{ fontSize: '0.65rem', fontWeight: (activeTab === 'support' || activeTab === 'inbox' || activeTab === 'help-support') ? 800 : 600, marginTop: '0.1rem' }}>
             Inbox
           </span>
         </button>
