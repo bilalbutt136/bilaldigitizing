@@ -645,9 +645,13 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               <WhatsAppChatMessage
                 key={msg.id || index}
                 message={msg}
+                isMe={isClient}
                 isClient={isClient}
+                senderDisplayName={isClient ? 'You' : 'Studio Support'}
                 clientName={clientName}
                 onReply={(m) => setReplyingTo(m)}
+                formatTime={formatChatTime}
+                themePreset="client"
               />
             );
           })
@@ -737,13 +741,14 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       <form 
         onSubmit={handleSendMessage}
         style={{
-          padding: '0.75rem 1.25rem',
+          padding: '0.85rem 1.25rem',
           background: '#ffffff',
-          borderTop: '1px solid var(--color-border)',
+          borderTop: '1.5px solid var(--color-border)',
           display: 'flex',
           alignItems: 'center',
-          gap: '0.65rem',
-          flexShrink: 0
+          gap: '0.75rem',
+          flexShrink: 0,
+          boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.03)'
         }}
       >
         <input 
@@ -760,20 +765,21 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           disabled={isUploadingAttachment}
           style={{
             background: '#f1f5f9',
-            border: 'none',
+            border: '1.5px solid var(--color-border)',
             color: 'var(--navy-700)',
-            width: '38px',
-            height: '38px',
-            borderRadius: '50%',
+            width: '42px',
+            height: '42px',
+            borderRadius: '12px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: isUploadingAttachment ? 'not-allowed' : 'pointer',
-            flexShrink: 0
+            flexShrink: 0,
+            transition: 'all 0.15s ease'
           }}
           title="Attach Image, PDF, Vector or Machine File"
         >
-          {isUploadingAttachment ? <Loader2 size={17} className="animate-spin text-orange-500" /> : <Paperclip size={17} />}
+          {isUploadingAttachment ? <Loader2 size={18} className="animate-spin text-orange-500" /> : <Paperclip size={18} />}
         </button>
 
         <input
@@ -784,10 +790,10 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           style={{
             flex: 1,
             height: '42px',
-            borderRadius: '24px',
+            borderRadius: '12px',
             border: '1.5px solid var(--color-border)',
             padding: '0 1.15rem',
-            fontSize: '0.85rem',
+            fontSize: '0.88rem',
             color: 'var(--navy-950)',
             background: '#f8fafc',
             outline: 'none'
@@ -798,21 +804,26 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           type="submit"
           disabled={!messageInput.trim() && !attachedFile}
           style={{
-            width: '42px',
             height: '42px',
-            borderRadius: '50%',
-            background: (messageInput.trim() || attachedFile) ? '#ea580c' : '#94a3b8',
+            padding: '0 1.25rem',
+            borderRadius: '12px',
+            background: (messageInput.trim() || attachedFile) ? 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)' : '#cbd5e1',
             border: 'none',
             color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
+            gap: '0.45rem',
+            fontWeight: 800,
+            fontSize: '0.85rem',
             cursor: (messageInput.trim() || attachedFile) ? 'pointer' : 'not-allowed',
             flexShrink: 0,
+            boxShadow: (messageInput.trim() || attachedFile) ? '0 4px 14px rgba(234, 88, 12, 0.35)' : 'none',
             transition: 'all 0.2s ease'
           }}
+          title="Send message"
         >
-          <Send size={16} />
+          <span>Send</span>
+          <Send size={15} />
         </button>
       </form>
     </div>

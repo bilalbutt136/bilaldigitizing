@@ -1050,16 +1050,29 @@ export const AdminChatInbox = () => {
                     onClick={() => handleSelectChat(conv.id)}
                     style={{
                       padding: '0.85rem',
-                      marginBottom: '0.35rem',
+                      marginBottom: '0.45rem',
                       borderRadius: '10px',
-                      border: isActive ? '1.5px solid var(--color-primary, var(--orange-500))' : '1px solid transparent',
-                      background: isActive ? 'var(--color-surface, #ffffff)' : 'transparent',
-                      boxShadow: isActive ? '0 2px 8px rgba(249, 115, 22, 0.12)' : 'none',
+                      border: isActive 
+                        ? '2px solid var(--color-primary, var(--orange-500))' 
+                        : (threadUnread > 0 ? '1.5px solid #bfdbfe' : '1px solid var(--color-border, #e2e8f0)'),
+                      borderLeft: isActive 
+                        ? '4.5px solid var(--color-primary, var(--orange-500))' 
+                        : (threadUnread > 0 ? '4.5px solid #2563eb' : '1px solid var(--color-border, #e2e8f0)'),
+                      background: isActive 
+                        ? 'var(--color-surface, #ffffff)' 
+                        : (threadUnread > 0 ? '#eff6ff' : 'var(--color-surface, #ffffff)'),
+                      boxShadow: isActive 
+                        ? '0 4px 14px rgba(249, 115, 22, 0.16)' 
+                        : (threadUnread > 0 ? '0 2px 8px rgba(37, 99, 235, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.02)'),
                       cursor: 'pointer',
-                      transition: 'all 0.15s ease'
+                      transition: 'all 0.18s ease'
                     }}
-                    onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--color-subtle, #f1f5f9)'; }}
-                    onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                    onMouseEnter={(e) => { 
+                      if (!isActive) e.currentTarget.style.background = threadUnread > 0 ? '#dbeafe' : 'var(--color-subtle, #f1f5f9)'; 
+                    }}
+                    onMouseLeave={(e) => { 
+                      if (!isActive) e.currentTarget.style.background = threadUnread > 0 ? '#eff6ff' : 'var(--color-surface, #ffffff)'; 
+                    }}
                   >
                     <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
                       {/* Avatar / Initials */}
@@ -1067,7 +1080,13 @@ export const AdminChatInbox = () => {
                         <img
                           src={conv.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(info.customerName)}&background=0f172a&color=fff`}
                           alt={info.customerName}
-                          style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--border-color)' }}
+                          style={{ 
+                            width: '40px', 
+                            height: '40px', 
+                            borderRadius: '50%', 
+                            objectFit: 'cover', 
+                            border: threadUnread > 0 ? '2px solid #2563eb' : '1.5px solid var(--border-color)' 
+                          }}
                         />
                         <span style={{
                           position: 'absolute',
@@ -1084,10 +1103,35 @@ export const AdminChatInbox = () => {
                       {/* Info & Last Message */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem' }}>
-                          <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {info.customerName}
+                          <div style={{ 
+                            fontSize: '0.85rem', 
+                            fontWeight: threadUnread > 0 ? 900 : 700, 
+                            color: threadUnread > 0 ? '#1e3a8a' : 'var(--navy-900)', 
+                            whiteSpace: 'nowrap', 
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.35rem'
+                          }}>
+                            <span>{info.customerName}</span>
+                            {threadUnread > 0 && (
+                              <span style={{
+                                width: '7px',
+                                height: '7px',
+                                borderRadius: '50%',
+                                background: '#2563eb',
+                                flexShrink: 0
+                              }} />
+                            )}
                           </div>
-                          <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', flexShrink: 0, marginLeft: '0.35rem' }}>
+                          <span style={{ 
+                            fontSize: '0.68rem', 
+                            color: threadUnread > 0 ? '#1d4ed8' : 'var(--text-muted)', 
+                            fontWeight: threadUnread > 0 ? 800 : 500,
+                            flexShrink: 0, 
+                            marginLeft: '0.35rem' 
+                          }}>
                             {formatChatTime(lastMsg.timestamp)}
                           </span>
                         </div>
@@ -1108,8 +1152,8 @@ export const AdminChatInbox = () => {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <p style={{
                             fontSize: '0.78rem',
-                            color: threadUnread > 0 ? 'var(--navy-900)' : 'var(--text-muted)',
-                            fontWeight: threadUnread > 0 ? 700 : 400,
+                            color: threadUnread > 0 ? '#0f172a' : 'var(--text-muted)',
+                            fontWeight: threadUnread > 0 ? 800 : 400,
                             margin: 0,
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
@@ -1124,15 +1168,16 @@ export const AdminChatInbox = () => {
                               background: '#ef4444',
                               color: '#ffffff',
                               fontSize: '0.68rem',
-                              fontWeight: 800,
-                              minWidth: '18px',
-                              height: '18px',
+                              fontWeight: 900,
+                              minWidth: '20px',
+                              height: '20px',
                               borderRadius: '9999px',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              padding: '0 4px',
-                              flexShrink: 0
+                              padding: '0 5px',
+                              flexShrink: 0,
+                              boxShadow: '0 2px 6px rgba(239, 68, 68, 0.4)'
                             }}>
                               {threadUnread}
                             </span>

@@ -36,6 +36,21 @@ export function getFileCategory(fileName = '', fileUrl = '') {
   return 'document';
 }
 
+const defaultFormatTime = (raw) => {
+  if (!raw) return 'Just now';
+  try {
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return String(raw);
+    const isToday = new Date().toDateString() === d.toDateString();
+    if (isToday) {
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  } catch {
+    return 'Just now';
+  }
+};
+
 /**
  * Reusable WhatsApp-style Chat Message Bubble with:
  * - Rich media previews (Images, PDFs, Vector/Embroidery files)
@@ -44,13 +59,16 @@ export function getFileCategory(fileName = '', fileUrl = '') {
  * - Interactive lightbox preview modal
  * - Hover toolbar (Reply, Zoom, Download)
  * - Custom Offer Cards
+ * - Distinct Read vs Unread color boxes on both Customer & Admin sides
  */
 export default function WhatsAppChatMessage({
   message,
-  isMe = false,
+  isMe,
+  isClient,
   senderDisplayName = '',
+  clientName = '',
   onReply = () => {},
-  formatTime = (t) => t || 'Just now',
+  formatTime,
   themePreset = null,
   onOrderClick = () => {}
 }) {
@@ -58,6 +76,18 @@ export default function WhatsAppChatMessage({
   const [isHovered, setIsHovered] = useState(false);
 
   if (!message) return null;
+
+  const displayTime = (formatTime && typeof formatTime === 'function') 
+    ? formatTime(message.timestamp || message.created_at) 
+    : defaultFormatTime(message.timestamp || message.created_at);
+
+  const resolvedIsMe = isMe !== undefined && isMe !== null
+    ? Boolean(isMe)
+    : (isClient !== undefined && isClient !== null 
+        ? Boolean(isClient) 
+        : (message.sender === 'client' ? themePreset !== 'admin' : themePreset === 'admin'));
+
+  const isMessageRead = message.is_read === true || message.is_read === 'true';
 
   // Extract or construct offer object
   let offerObj = message.offer_data || message.offer || null;
@@ -123,9 +153,9 @@ export default function WhatsAppChatMessage({
         style={{
           display: 'flex',
           flexDirection: 'column',
-          alignItems: isMe ? 'flex-end' : 'flex-start',
+          alignItems: resolvedIsMe ? 'flex-end' : 'flex-start',
           maxWidth: '92%',
-          alignSelf: isMe ? 'flex-end' : 'flex-start',
+          alignSelf: resolvedIsMe ? 'flex-end' : 'flex-start',
           position: 'relative',
           margin: '0.4rem 0'
         }}
@@ -140,14 +170,14 @@ export default function WhatsAppChatMessage({
           alignItems: 'center',
           gap: '0.4rem'
         }}>
-          <span>{senderDisplayName || (isMe ? 'You' : (message.sender_name || 'Studio Support'))}</span>
+          <span>{senderDisplayName || (resolvedIsMe ? 'You' : (message.sender_name || 'Studio Support'))}</span>
           <span>•</span>
-          <span>{formatTime(message.timestamp || message.created_at)}</span>
+          <span>{displayTime}</span>
         </div>
         <OfferCardMessage
           offer={offerObj}
           messageId={message.id}
-          isMe={isMe}
+          isMe={resolvedIsMe}
           isAdmin={themePreset === 'admin'}
           onOrderClick={onOrderClick}
         />
@@ -182,11 +212,11 @@ export default function WhatsAppChatMessage({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        alignItems: isMe ? 'flex-end' : 'flex-start',
+        alignItems: resolvedIsMe ? 'flex-end' : 'flex-start',
         maxWidth: '85%',
-        alignSelf: isMe ? 'flex-end' : 'flex-start',
+        alignSelf: resolvedIsMe ? 'flex-end' : 'flex-start',
         position: 'relative',
-        margin: '0.2rem 0'
+        margin: '0.25rem 0'
       }}
     >
       {/* Sender Label & Timestamp Top Header */}
@@ -200,9 +230,29 @@ export default function WhatsAppChatMessage({
         alignItems: 'center',
         gap: '0.4rem'
       }}>
-        <span>{senderDisplayName || (isMe ? 'You' : (message.sender_name || 'Studio Support'))}</span>
+        <span style={{ fontWeight: (!resolvedIsMe && !isMessageRead) ? 900 : 700, color: (!resolvedIsMe && !isMessageRead) ? 'var(--orange-600, #ea580c)' : undefined }}>
+          {senderDisplayName || (resolvedIsMe ? 'You' : (message.sender_name || (message.sender === 'admin' ? 'Support' : (clientName || 'Customer'))))}
+        </span>
+        {!resolvedIsMe && !isMessageRead && (
+          <span style={{
+            background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
+            color: '#ffffff',
+            fontSize: '0.58rem',
+            fontWeight: 900,
+            padding: '0.05rem 0.4rem',
+            borderRadius: '4px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.4px',
+            boxShadow: '0 2px 6px rgba(234, 88, 12, 0.35)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '2px'
+          }}>
+            ● UNREAD
+          </span>
+        )}
         <span>•</span>
-        <span>{formatTime(message.timestamp || message.created_at)}</span>
+        <span>{displayTime}</span>
       </div>
 
       {/* Main Message Bubble */}
@@ -210,25 +260,41 @@ export default function WhatsAppChatMessage({
         style={{
           position: 'relative',
           padding: (fileCategory === 'image' && fileUrl && !message.text) ? '0.35rem' : '0.75rem 1rem',
-          borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-          background: isMe 
-            ? 'linear-gradient(135deg, var(--color-secondary, #ff7a00) 0%, var(--color-primary, #ea580c) 100%)' 
-            : 'var(--color-surface, #ffffff)',
-          color: isMe ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-text-primary, #0f172a)',
-          border: isMe ? 'none' : '1.5px solid var(--color-border, #e2e8f0)',
-          boxShadow: 'var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.04))',
+          borderRadius: resolvedIsMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+          background: resolvedIsMe 
+            ? (isMessageRead
+                ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' 
+                : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)')
+            : (!isMessageRead 
+                ? '#fffbf5' 
+                : 'var(--color-surface, #ffffff)'),
+          color: resolvedIsMe ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-text-primary, #0f172a)',
+          border: resolvedIsMe 
+            ? 'none' 
+            : (!isMessageRead 
+                ? '1.5px solid #fed7aa' 
+                : '1.5px solid var(--color-border, #e2e8f0)'),
+          borderLeft: (!resolvedIsMe && !isMessageRead)
+            ? '4.5px solid #ea580c'
+            : (resolvedIsMe ? 'none' : '1.5px solid var(--color-border, #e2e8f0)'),
+          boxShadow: resolvedIsMe
+            ? '0 3px 10px rgba(234, 88, 12, 0.22)'
+            : (!isMessageRead 
+                ? '0 4px 14px rgba(234, 88, 12, 0.12)' 
+                : 'var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.04))'),
           fontSize: '0.88rem',
           lineHeight: 1.5,
           wordBreak: 'break-word',
-          minWidth: replyTo ? '220px' : 'auto'
+          minWidth: replyTo ? '220px' : 'auto',
+          transition: 'all 0.2s ease'
         }}
       >
         {/* 1. WHATSAPP-STYLE QUOTED REPLY BOX */}
         {replyTo && (
           <div
             style={{
-              background: isMe ? 'rgba(0, 0, 0, 0.15)' : 'var(--bg-subtle, #f1f5f9)',
-              borderLeft: `4px solid ${isMe ? '#ffffff' : 'var(--color-primary, #ff7a00)'}`,
+              background: resolvedIsMe ? 'rgba(0, 0, 0, 0.15)' : 'var(--bg-subtle, #f1f5f9)',
+              borderLeft: `4px solid ${resolvedIsMe ? '#ffffff' : 'var(--color-primary, #ff7a00)'}`,
               borderRadius: '8px',
               padding: '0.4rem 0.65rem',
               marginBottom: '0.55rem',
@@ -239,13 +305,13 @@ export default function WhatsAppChatMessage({
             <div style={{
               fontWeight: 800,
               fontSize: '0.72rem',
-              color: isMe ? '#ffffff' : 'var(--color-primary, #ea580c)',
+              color: resolvedIsMe ? '#ffffff' : 'var(--color-primary, #ea580c)',
               marginBottom: '0.15rem'
             }}>
               {replyTo.sender_name || 'Original Message'}
             </div>
             <div style={{
-              color: isMe ? 'rgba(255, 255, 255, 0.85)' : 'var(--color-text-muted, #64748b)',
+              color: resolvedIsMe ? 'rgba(255, 255, 255, 0.85)' : 'var(--color-text-muted, #64748b)',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
@@ -525,15 +591,20 @@ export default function WhatsAppChatMessage({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'flex-end',
-          gap: '0.25rem',
+          gap: '0.35rem',
           fontSize: '0.65rem',
-          color: isMe ? 'rgba(255, 255, 255, 0.75)' : 'var(--color-text-muted, #94a3b8)',
+          color: resolvedIsMe ? 'rgba(255, 255, 255, 0.85)' : 'var(--color-text-muted, #94a3b8)',
           marginTop: '0.35rem'
         }}>
           <Clock size={10} />
-          <span>{formatTime(message.timestamp || message.created_at)}</span>
-          {isMe && (
-            <CheckCheck size={13} style={{ color: message.is_read ? '#60a5fa' : 'rgba(255,255,255,0.7)', marginLeft: '0.2rem' }} />
+          <span>{displayTime}</span>
+          {resolvedIsMe && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', marginLeft: '0.2rem' }}>
+              <span style={{ fontSize: '0.62rem', fontWeight: 800, color: isMessageRead ? '#7dd3fc' : 'rgba(255, 255, 255, 0.75)' }}>
+                {isMessageRead ? 'Read' : 'Delivered'}
+              </span>
+              <CheckCheck size={13} style={{ color: isMessageRead ? '#38bdf8' : 'rgba(255,255,255,0.7)' }} />
+            </span>
           )}
         </div>
 
@@ -543,7 +614,7 @@ export default function WhatsAppChatMessage({
             style={{
               position: 'absolute',
               top: '-14px',
-              [isMe ? 'left' : 'right']: '-10px',
+              [resolvedIsMe ? 'left' : 'right']: '-10px',
               background: 'var(--color-surface, #ffffff)',
               border: '1px solid var(--color-border, #e2e8f0)',
               borderRadius: '20px',

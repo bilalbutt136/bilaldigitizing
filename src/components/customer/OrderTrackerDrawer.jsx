@@ -1280,18 +1280,32 @@ export const OrderTrackerDrawer = () => {
               ) : (
                 ord.messages.map((msg, mIdx) => {
                   const isMsgAdmin = msg.senderRole === 'admin' || msg.sender === 'admin';
+                  const isMe = isAdmin ? isMsgAdmin : !isMsgAdmin;
+                  const isRead = msg.is_read === true || msg.is_read === 'true';
+
                   return (
                     <div key={mIdx} style={{ 
-                      background: isMsgAdmin ? 'linear-gradient(135deg, #090f1d 0%, #162033 100%)' : 'var(--bg-surface)', 
-                      color: isMsgAdmin ? '#ffffff' : 'var(--text-main)',
-                      border: isMsgAdmin ? 'none' : '1px solid var(--border-color)',
+                      background: isMe 
+                        ? (isRead ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)')
+                        : (!isRead ? '#fffbf5' : 'var(--bg-surface)'), 
+                      color: isMe ? '#ffffff' : 'var(--text-main)',
+                      border: isMe ? 'none' : (!isRead ? '1.5px solid #fed7aa' : '1px solid var(--border-color)'),
+                      borderLeft: (!isMe && !isRead) ? '4.5px solid #ea580c' : (isMe ? 'none' : '1px solid var(--border-color)'),
+                      boxShadow: isMe ? '0 2px 8px rgba(234, 88, 12, 0.2)' : (!isRead ? '0 3px 10px rgba(234, 88, 12, 0.1)' : 'none'),
                       padding: '0.75rem 1rem', 
                       borderRadius: '10px', 
-                      alignSelf: isMsgAdmin ? 'flex-end' : 'flex-start',
+                      alignSelf: isMe ? 'flex-end' : 'flex-start',
                       maxWidth: '85%'
                     }}>
-                      <div style={{ fontSize: '0.68rem', color: isMsgAdmin ? 'var(--orange-400)' : 'var(--text-muted)', fontWeight: 800, marginBottom: '0.2rem' }}>
-                        {isMsgAdmin ? 'Master Digitizer Desk' : (msg.senderName || msg.sender || 'Client')} • {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'}
+                      <div style={{ fontSize: '0.68rem', color: isMe ? 'rgba(255,255,255,0.85)' : (!isRead ? '#c2410c' : 'var(--text-muted)'), fontWeight: (!isMe && !isRead) ? 900 : 700, marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <span>{isMsgAdmin ? 'Master Digitizer Desk' : (msg.senderName || msg.sender || 'Client')}</span>
+                        {!isMe && !isRead && (
+                          <span style={{ background: '#ea580c', color: '#fff', fontSize: '0.55rem', padding: '0.05rem 0.35rem', borderRadius: '3px', fontWeight: 900 }}>
+                            NEW
+                          </span>
+                        )}
+                        <span>•</span>
+                        <span>{msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'}</span>
                       </div>
                       <div style={{ fontSize: '0.84rem', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>{msg.text}</div>
                     </div>

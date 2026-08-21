@@ -62,7 +62,7 @@ export const ClientLiveChatWidget = () => {
     setMounted(true);
   }, []);
 
-  const { authUser, currentUser, isAuthenticated, showToast } = useAppState();
+  const { authUser, currentUser, isAuthenticated, showToast, activeCustomerTab } = useAppState();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -74,11 +74,19 @@ export const ClientLiveChatWidget = () => {
   const [chats, setChats] = useState([]);
   const typingTimeoutRef = useRef(null);
 
-  // Exclude floating chat widget only on admin portal pages
+  // Exclude floating chat widget on admin portal and when customer is inside the dedicated full-screen Chat Inbox / Support tab
   const isExcluded = authUser?.role === 'admin' || 
     (typeof window !== 'undefined' && (
       window.location.pathname.startsWith('/admin') || 
-      window.location.pathname.startsWith('/secure-admin-login')
+      window.location.pathname.startsWith('/secure-admin-login') ||
+      (window.location.pathname.startsWith('/client-portal') && (
+        activeCustomerTab === 'support' || 
+        activeCustomerTab === 'inbox' || 
+        activeCustomerTab === 'help-support' ||
+        window.location.search.includes('tab=support') || 
+        window.location.search.includes('tab=inbox') ||
+        window.location.search.includes('tab=help-support')
+      ))
     ));
 
   const activeUser = authUser || currentUser || {
@@ -656,11 +664,13 @@ export const ClientLiveChatWidget = () => {
           style={{
             display: 'flex',
             position: 'fixed',
-            bottom: 'clamp(16px, 3vw, 24px)',
-            right: 'clamp(16px, 3vw, 24px)',
+            bottom: (typeof window !== 'undefined' && window.location.pathname.startsWith('/client-portal'))
+              ? 'clamp(80px, 12vw, 95px)'
+              : 'clamp(20px, 3vw, 28px)',
+            right: 'clamp(20px, 3vw, 28px)',
             zIndex: 8500,
-            width: 'clamp(50px, 12vw, 60px)',
-            height: 'clamp(50px, 12vw, 60px)',
+            width: 'clamp(52px, 12vw, 60px)',
+            height: 'clamp(52px, 12vw, 60px)',
             borderRadius: '50%',
             background: 'linear-gradient(135deg, var(--orange-500) 0%, #ea580c 100%)',
             color: '#ffffff',
