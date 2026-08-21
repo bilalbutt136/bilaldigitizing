@@ -1125,13 +1125,13 @@ export async function fetchAdminUsers(email) {
   }
 }
 
-export async function addAdminUserInSupabase(name, email, callerEmail) {
+export async function addAdminUserInSupabase(name, email, password = null, callerEmail = null) {
   try {
     const headers = await getAuthHeaders();
     const res = await fetch('/api/admin/users', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ name, email, callerEmail })
+      body: JSON.stringify({ name, email, password, callerEmail })
     });
     const json = await res.json();
     if (!json?.success) {
@@ -1140,6 +1140,24 @@ export async function addAdminUserInSupabase(name, email, callerEmail) {
     return { success: true, admin: json.admin };
   } catch (err) {
     return { success: false, error: err.message || 'Failed to add admin.' };
+  }
+}
+
+export async function resetAdminPasswordInSupabase(email, newPassword, callerEmail = null) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/admin/users', {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ email, newPassword, callerEmail })
+    });
+    const json = await res.json();
+    if (!json?.success) {
+      return { success: false, error: json?.error || 'Failed to reset password.' };
+    }
+    return { success: true, message: json.message };
+  } catch (err) {
+    return { success: false, error: err.message || 'Failed to reset password.' };
   }
 }
 

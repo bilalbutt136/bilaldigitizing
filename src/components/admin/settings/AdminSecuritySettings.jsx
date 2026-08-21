@@ -14,7 +14,9 @@ import {
   CheckCircle2, 
   KeyRound,
   Users,
-  Power
+  Power,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 export const AdminSecuritySettings = () => {
@@ -24,7 +26,8 @@ export const AdminSecuritySettings = () => {
     authUser,
     showToast,
     adminUsers = [],
-    addAdminUser
+    addAdminUser,
+    resetAdminPassword
   } = useAppState();
 
   const [adminEmail, setAdminEmail] = useState(authUser?.email || '');
@@ -37,7 +40,17 @@ export const AdminSecuritySettings = () => {
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
   const [newAdminName, setNewAdminName] = useState('');
   const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [newAdminPassword, setNewAdminPassword] = useState('');
+  const [showAddAdminPass, setShowAddAdminPass] = useState(false);
   const [isAddingAdmin, setIsAddingAdmin] = useState(false);
+
+  // Reset Admin Password Modal State
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
+  const [resetTargetEmail, setResetTargetEmail] = useState('');
+  const [newResetPassword, setNewResetPassword] = useState('');
+  const [confirmResetPassword, setConfirmResetPassword] = useState('');
+  const [showResetPassText, setShowResetPassText] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   // Live Admins State from API
   const [liveAdmins, setLiveAdmins] = useState([]);
@@ -102,15 +115,20 @@ export const AdminSecuritySettings = () => {
       showToast('Please enter a valid email address.', 'error');
       return;
     }
+    if (newAdminPassword && newAdminPassword.length < 6) {
+      showToast('Password must be at least 6 characters long.', 'error');
+      return;
+    }
     setIsAddingAdmin(true);
     try {
-      const res = await addAdminUser(newAdminName, newAdminEmail);
+      const res = await addAdminUser(newAdminName, newAdminEmail, newAdminPassword);
       if (res && res.success) {
         setNewAdminName('');
         setNewAdminEmail('');
+        setNewAdminPassword('');
         setShowAddAdminModal(false);
         await loadAdminsFromApi();
-        showToast(`Administrator ${newAdminEmail} added successfully!`, 'success');
+        showToast(`Administrator ${newAdminEmail} added and password configured!`, 'success');
       } else {
         showToast(res?.error || 'Failed to add administrator.', 'error');
       }
@@ -118,6 +136,42 @@ export const AdminSecuritySettings = () => {
       showToast('Error creating administrator.', 'error');
     } finally {
       setIsAddingAdmin(false);
+    }
+  };
+
+  const handleOpenResetPassword = (email) => {
+    setResetTargetEmail(email);
+    setNewResetPassword('');
+    setConfirmResetPassword('');
+    setShowResetPasswordModal(true);
+  };
+
+  const handleExecutePasswordReset = async (e) => {
+    e.preventDefault();
+    if (!newResetPassword || newResetPassword.length < 6) {
+      showToast('Password must be at least 6 characters long.', 'error');
+      return;
+    }
+    if (newResetPassword !== confirmResetPassword) {
+      showToast('Passwords do not match. Please verify confirmation.', 'error');
+      return;
+    }
+
+    setIsResettingPassword(true);
+    try {
+      const res = await resetAdminPassword(resetTargetEmail, newResetPassword);
+      if (res && res.success) {
+        setShowResetPasswordModal(false);
+        setNewResetPassword('');
+        setConfirmResetPassword('');
+        showToast(`Password for ${resetTargetEmail} successfully updated in Supabase Auth!`, 'success');
+      } else {
+        showToast(res?.error || 'Failed to reset password.', 'error');
+      }
+    } catch {
+      showToast('Error executing password reset.', 'error');
+    } finally {
+      setIsResettingPassword(false);
     }
   };
 
@@ -158,7 +212,7 @@ export const AdminSecuritySettings = () => {
           </h3>
         </div>
         <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: 0 }}>
-          Manage whitelisted studio operators, configure session timeouts, and control maintenance mode.
+          Manage whitelisted studio operators, configure admin passwords, reset existing passwords, configure session timeouts, and control maintenance mode.
         </p>
       </div>
 
@@ -170,7 +224,7 @@ export const AdminSecuritySettings = () => {
               Authorized Studio Administrators
             </h4>
             <p style={{ fontSize: '0.825rem', color: 'var(--color-text-muted)', margin: 0 }}>
-              Whitelisted Supabase accounts with full access to the operations desk and pricing manager.
+              Whitelisted Supabase accounts with full administrative control. You can set and reset passwords directly.
             </p>
           </div>
           <button
@@ -197,10 +251,19 @@ export const AdminSecuritySettings = () => {
                 {configuredAdminEmail}
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#10b981', background: 'rgba(16, 185, 129, 0.12)', padding: '0.25rem 0.65rem', borderRadius: '8px' }}>
                 ● Active
               </span>
+              <button
+                type="button"
+                onClick={() => handleOpenResetPassword(configuredAdminEmail)}
+                className="btn btn-outline btn-sm"
+                style={{ color: '#6366f1', borderColor: 'rgba(99, 102, 241, 0.35)', padding: '0.35rem 0.75rem', fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                title="Reset Password for Master Admin"
+              >
+                <KeyRound size={13} /> Reset Password
+              </button>
             </div>
           </div>
 
@@ -218,15 +281,24 @@ export const AdminSecuritySettings = () => {
                   {ad.email} {ad.created_at && `• Added ${new Date(ad.created_at).toLocaleDateString()}`}
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#10b981', background: 'rgba(16, 185, 129, 0.12)', padding: '0.25rem 0.65rem', borderRadius: '8px' }}>
                   ● Active
                 </span>
                 <button
                   type="button"
+                  onClick={() => handleOpenResetPassword(ad.email)}
+                  className="btn btn-outline btn-sm"
+                  style={{ color: '#6366f1', borderColor: 'rgba(99, 102, 241, 0.35)', padding: '0.35rem 0.75rem', fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                  title="Reset Password for this Admin"
+                >
+                  <KeyRound size={13} /> Reset Password
+                </button>
+                <button
+                  type="button"
                   onClick={() => handleRevokeAdmin(ad.email)}
                   className="btn btn-outline btn-sm"
-                  style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)', padding: '0.3rem 0.65rem', fontSize: '0.75rem' }}
+                  style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)', padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
                   title="Revoke Admin Privileges"
                 >
                   <Trash2 size={13} /> Revoke
@@ -327,7 +399,7 @@ export const AdminSecuritySettings = () => {
         </div>
       </form>
 
-      {/* ADD NEW ADMIN MODAL DIALOG */}
+      {/* 1. ADD NEW ADMIN MODAL DIALOG */}
       {showAddAdminModal && (
         <div 
           className="modal-overlay"
@@ -347,7 +419,7 @@ export const AdminSecuritySettings = () => {
           <div 
             className="modal-content"
             style={{
-              maxWidth: '440px',
+              maxWidth: '460px',
               width: '100%',
               background: 'var(--bg-card)',
               borderRadius: '20px',
@@ -401,8 +473,44 @@ export const AdminSecuritySettings = () => {
                   onChange={(e) => setNewAdminEmail(e.target.value)} 
                   required 
                 />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.25rem', display: 'block' }}>
+                  Set Admin Password *
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    type={showAddAdminPass ? 'text' : 'password'} 
+                    className="form-control" 
+                    placeholder="Enter password (min 6 characters)" 
+                    value={newAdminPassword} 
+                    onChange={(e) => setNewAdminPassword(e.target.value)} 
+                    required 
+                    minLength={6}
+                    style={{ paddingRight: '2.75rem' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAddAdminPass(!showAddAdminPass)}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--color-text-muted)',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    {showAddAdminPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
                 <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginTop: '0.3rem', display: 'block' }}>
-                  This email will be added to the live Supabase <code>public.admins</code> whitelist.
+                  This password will be immediately active for logging into the Admin Portal.
                 </span>
               </div>
 
@@ -411,7 +519,128 @@ export const AdminSecuritySettings = () => {
                   Cancel
                 </button>
                 <button type="submit" disabled={isAddingAdmin} className="btn btn-primary-orange" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.4rem' }}>
-                  <UserPlus size={15} /> {isAddingAdmin ? 'Adding...' : 'Add Admin'}
+                  <UserPlus size={15} /> {isAddingAdmin ? 'Creating...' : 'Add Admin'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 2. RESET ADMIN PASSWORD MODAL DIALOG */}
+      {showResetPasswordModal && (
+        <div 
+          className="modal-overlay"
+          onClick={() => setShowResetPasswordModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.25rem'
+          }}
+        >
+          <div 
+            className="modal-content"
+            style={{
+              maxWidth: '460px',
+              width: '100%',
+              background: 'var(--bg-card)',
+              borderRadius: '20px',
+              padding: '1.75rem',
+              boxShadow: 'var(--shadow-xl)',
+              position: 'relative',
+              border: '1px solid var(--border-color)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <KeyRound size={22} style={{ color: '#6366f1' }} />
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>
+                  Reset Admin Password
+                </h3>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setShowResetPasswordModal(false)} 
+                style={{ background: 'var(--color-subtle)', color: 'var(--color-text-primary)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleExecutePasswordReset} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.25rem', display: 'block' }}>
+                  Target Admin Account
+                </label>
+                <div style={{ padding: '0.65rem 0.85rem', background: 'var(--color-subtle)', borderRadius: '8px', border: '1px solid var(--border-color)', fontWeight: 700, fontSize: '0.85rem', color: 'var(--color-text-primary)' }}>
+                  {resetTargetEmail}
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.25rem', display: 'block' }}>
+                  New Password *
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    type={showResetPassText ? 'text' : 'password'} 
+                    className="form-control" 
+                    placeholder="Enter new password (min 6 characters)" 
+                    value={newResetPassword} 
+                    onChange={(e) => setNewResetPassword(e.target.value)} 
+                    required 
+                    minLength={6}
+                    style={{ paddingRight: '2.75rem' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPassText(!showResetPassText)}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--color-text-muted)',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    {showResetPassText ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.25rem', display: 'block' }}>
+                  Confirm New Password *
+                </label>
+                <input 
+                  type={showResetPassText ? 'text' : 'password'} 
+                  className="form-control" 
+                  placeholder="Re-enter new password" 
+                  value={confirmResetPassword} 
+                  onChange={(e) => setConfirmResetPassword(e.target.value)} 
+                  required 
+                  minLength={6}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button type="button" onClick={() => setShowResetPasswordModal(false)} className="btn btn-outline" style={{ flex: 1 }}>
+                  Cancel
+                </button>
+                <button type="submit" disabled={isResettingPassword} className="btn btn-primary" style={{ flex: 1, background: '#6366f1', borderColor: '#6366f1', color: '#ffffff', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.4rem' }}>
+                  <KeyRound size={15} /> {isResettingPassword ? 'Updating...' : 'Update Password'}
                 </button>
               </div>
             </form>

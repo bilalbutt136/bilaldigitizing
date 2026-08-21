@@ -24,6 +24,7 @@ import {
   verifyAdminSession,
   fetchAdminUsers,
   addAdminUserInSupabase,
+  resetAdminPasswordInSupabase,
   removeAdminUserInSupabase,
   depositWalletViaApi,
   deductWalletViaApi,
@@ -1922,7 +1923,7 @@ export const StateProvider = ({ children }) => {
     }
   };
 
-  const addAdminUser = async (name, email, _password) => {
+  const addAdminUser = async (name, email, password = null) => {
     const cleanName = (name || '').trim();
     const cleanEmail = (email || '').toLowerCase().trim();
 
@@ -1936,7 +1937,7 @@ export const StateProvider = ({ children }) => {
       return { success: false, error: 'Not authenticated as admin.' };
     }
 
-    const res = await addAdminUserInSupabase(cleanName, cleanEmail, authUser.email);
+    const res = await addAdminUserInSupabase(cleanName, cleanEmail, password, authUser.email);
     if (res.success) {
       setAdminUsers(prev =>
         prev.some(a => (a.email || '').toLowerCase().trim() === cleanEmail)
@@ -1947,6 +1948,26 @@ export const StateProvider = ({ children }) => {
       return { success: true };
     }
     showToast(res.error || 'Failed to create admin.', 'error');
+    return { success: false, error: res.error };
+  };
+
+  const resetAdminPassword = async (email, newPassword) => {
+    const cleanEmail = (email || '').toLowerCase().trim();
+    if (!cleanEmail) {
+      showToast('Email is required for password reset.', 'error');
+      return { success: false, error: 'Missing email' };
+    }
+    if (!newPassword || newPassword.length < 6) {
+      showToast('Password must be at least 6 characters.', 'error');
+      return { success: false, error: 'Password too short' };
+    }
+
+    const res = await resetAdminPasswordInSupabase(cleanEmail, newPassword, authUser?.email);
+    if (res.success) {
+      showToast(`Password for ${cleanEmail} reset successfully!`, 'success');
+      return { success: true };
+    }
+    showToast(res.error || 'Failed to reset password.', 'error');
     return { success: false, error: res.error };
   };
 
@@ -2013,7 +2034,7 @@ export const StateProvider = ({ children }) => {
       homePageConfig, setHomePageConfig, fetchHomePageContent, updateHomePageConfigSettings,
       digitizers, setDigitizers,
       siteSettings, setSiteSettings, updateSiteSettings,
-      adminUsers, setAdminUsers, addAdminUser,
+      adminUsers, setAdminUsers, addAdminUser, resetAdminPassword,
       activeHomeServiceTab, setActiveHomeServiceTab,
       serviceCmsContent, setServiceCmsContent, updateServiceCmsContent,
       testimonials, setTestimonials,
