@@ -324,14 +324,12 @@ export const StateProvider = ({ children }) => {
         discountValue: 10
       },
       promotionalBanner: {
-        enabled: true,
-        title: 'Summer sale — 10% OFF',
-        description: 'Enjoy 10% off your order on All Studio Services.',
-        promoCode: 'SAVE10',
+        enabled: false,
+        title: '',
+        description: '',
+        promoCode: '',
         ctaText: 'Start Your Order',
-        ctaLink: '/order',
-        theme: 'navy',
-        position: 'bottom-right'
+        ctaLink: '/order'
       },
       promoCodes: [
         {

@@ -128,13 +128,7 @@ export const PromotionsManager = () => {
     };
 
     const syncedPromotionalBanner = {
-      enabled: true,
-      title: `${cleanName} — ${discount}% OFF`,
-      description: `Enjoy ${discount}% off your order on ${promoForm.servicesIncluded || 'All Studio Services'}.`,
-      promoCode: cleanCode,
-      ctaText: 'Claim Discount',
-      buttonText: 'Claim Discount',
-      theme: 'navy'
+      enabled: false
     };
 
     setPromotions(updatedPromotions);
@@ -174,7 +168,7 @@ export const PromotionsManager = () => {
     });
 
     let updatedAnnouncement = null;
-    let updatedBanner = null;
+    const updatedBanner = { enabled: false };
 
     if (newlyActive) {
       // Auto-sync banners to this newly started promo
@@ -192,16 +186,6 @@ export const PromotionsManager = () => {
         textColor: '#ffffff',
         discountValue: newlyActive.discountPercent,
         discountType: 'percent'
-      };
-
-      updatedBanner = {
-        enabled: true,
-        title: `${newlyActive.name} — ${newlyActive.discountPercent}% OFF`,
-        description: `Enjoy ${newlyActive.discountPercent}% off your order on ${newlyActive.servicesIncluded || 'All Studio Services'}.`,
-        promoCode: newlyActive.promoCode || `SAVE${newlyActive.discountPercent}`,
-        ctaText: 'Claim Discount',
-        buttonText: 'Claim Discount',
-        theme: 'navy'
       };
     } else {
       // If paused and another promo is still active, sync to it, otherwise hide banner
@@ -222,29 +206,12 @@ export const PromotionsManager = () => {
           discountValue: otherActive.discountPercent,
           discountType: 'percent'
         };
-
-        updatedBanner = {
-          enabled: true,
-          title: `${otherActive.name} — ${otherActive.discountPercent}% OFF`,
-          description: `Enjoy ${otherActive.discountPercent}% off your order on ${otherActive.servicesIncluded || 'All Studio Services'}.`,
-          promoCode: otherActive.promoCode || `SAVE${otherActive.discountPercent}`,
-          ctaText: 'Claim Discount',
-          buttonText: 'Claim Discount',
-          theme: 'navy'
-        };
       } else {
         updatedAnnouncement = {
           enabled: false,
           autoSync: true,
           text: '',
           discountValue: 0
-        };
-        updatedBanner = {
-          enabled: false,
-          title: '',
-          description: '',
-          promoCode: '',
-          ctaText: 'Claim Discount'
         };
       }
     }

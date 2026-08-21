@@ -3,7 +3,6 @@
 import React, { Suspense } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { AnnouncementBar } from '../public/AnnouncementBar';
-import { VisitorPromotionBanner } from '../public/VisitorPromotionBanner';
 import { HeaderNav } from '../HeaderNav';
 import { Footer } from '../public/Footer';
 import { ClientLiveChatWidget } from '../customer/ClientLiveChatWidget';
@@ -67,7 +66,6 @@ export const ClientLayoutShell = ({ children }) => {
       <ToastContainer />
       <GlobalUploadModal />
       <MetaPixelTracker />
-      <VisitorPromotionBanner />
       
       {/* PWA Prompt Banner (Visible on mobile website to offer App installation or launch) */}
       {!isAppMode && <PWAInstallBanner />}

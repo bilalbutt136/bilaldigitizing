@@ -997,15 +997,13 @@ export async function fetchCatalogFromSupabase() {
           ...rawSettings,
           promotions: safePromotions,
           announcement: dynamicAnnouncement,
-          promotionalBanner: parsedPromotionalBanner || {
-            enabled: !!currentActivePromo,
-            title: currentActivePromo ? `${currentActivePromo.name} — ${currentActivePromo.discountPercent}% OFF` : '',
-            description: currentActivePromo ? `Enjoy ${currentActivePromo.discountPercent}% off your order on ${currentActivePromo.servicesIncluded || 'All Studio Services'}.` : '',
-            promoCode: currentActivePromo ? (currentActivePromo.promoCode || `SAVE${currentActivePromo.discountPercent}`) : '',
+          promotionalBanner: {
+            enabled: false,
+            title: '',
+            description: '',
+            promoCode: '',
             ctaText: 'Claim Offer',
-            ctaLink: '/order',
-            theme: 'navy',
-            position: 'bottom-right'
+            ctaLink: '/order'
           },
           promoCodes: parsedPromoCodes || []
         };
