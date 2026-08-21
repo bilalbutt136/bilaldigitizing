@@ -810,6 +810,33 @@ export const StateProvider = ({ children }) => {
         const ord = payload.new || payload.record;
         if (!ord) return;
 
+        // If this is a brand-new order (INSERT), push an admin notification immediately
+        if (payload.eventType === 'INSERT' || !payload.eventType) {
+          let currentRole = 'customer';
+          try {
+            const savedUser = localStorage.getItem('bdigi_auth_user');
+            if (savedUser) {
+              const parsed = JSON.parse(savedUser);
+              currentRole = parsed.role || 'customer';
+            }
+          } catch {}
+
+          if (currentRole === 'admin') {
+            addNotification({
+              id: `notif-ord-${ord.id}-admin`,
+              recipient_role: 'admin',
+              title: `🚨 New Order: ${ord.title || 'Order'}`,
+              message: `Received from ${ord.client_name || 'Client'} (${(ord.client_email || '').toLowerCase()}) — ${ord.service_category || 'Digitizing'}. Price: $${parseFloat(ord.price || 15).toFixed(2)}`,
+              type: 'info',
+              link: '/admin-portal',
+              order_id: ord.id,
+              orderId: ord.id,
+              read: false,
+              timestamp: ord.created_at || new Date().toISOString()
+            }, false);
+          }
+        }
+
         try {
           const freshOrders = await fetchOrdersFromSupabase();
           if (freshOrders && Array.isArray(freshOrders)) {
@@ -1193,6 +1220,7 @@ export const StateProvider = ({ children }) => {
         await createOrderInSupabase(fullOrderPayload);
         setOrders(prev => [fullOrderPayload, ...prev]);
         showToast(`Order ${formatOrderId(localId)} created successfully!`, 'success');
+        // Client notification (for customer's own bell)
         addNotification({
           id: `ord-created-${localId}`,
           title: `🎉 Order ${formatOrderId(localId)} Placed!`,
@@ -1200,6 +1228,22 @@ export const StateProvider = ({ children }) => {
           type: 'success',
           link: '/client-portal'
         });
+        // Broadcast admin notification in real-time so admin portal gets it immediately
+        const adminNotif = {
+          id: `notif-ord-${localId}-admin`,
+          recipient_role: 'admin',
+          recipient_email: null,
+          title: `🚨 New Order: ${fullOrderPayload.title || 'Order'}`,
+          message: `Received from ${fullOrderPayload.clientName || 'Client'} (${(fullOrderPayload.clientEmail || '').toLowerCase()}) — ${fullOrderPayload.serviceCategory || 'Embroidery Digitizing'}. Price: $${parseFloat(fullOrderPayload.price || 15).toFixed(2)}`,
+          type: 'info',
+          link: '/admin-portal',
+          order_id: localId,
+          orderId: localId,
+          read: false,
+          timestamp: new Date().toISOString(),
+          created_at: new Date().toISOString()
+        };
+        broadcastLiveNotification(adminNotif);
         triggerEmailNotification('NEW_ORDER', fullOrderPayload);
         return fullOrderPayload;
       } catch (sbErr) {
