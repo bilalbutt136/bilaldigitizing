@@ -280,6 +280,22 @@ export const StateProvider = ({ children }) => {
   });
   const [heroServiceText, setHeroServiceText] = useState({});
   const [siteSettings, setSiteSettings] = useState({
+    promotions: [
+      {
+        id: 'promo-welcome-sale',
+        name: 'Summer sale',
+        type: 'new_buyer',
+        discountPercent: 10,
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+        status: 'active',
+        maxOrdersLimit: 10,
+        ordersCount: 2,
+        servicesIncluded: 'All Studio Services',
+        promoCode: 'WELCOME10',
+        createdAt: new Date().toISOString()
+      }
+    ],
     announcement: {
       enabled: true,
       badge: 'SPECIAL PROMO',
@@ -1766,6 +1782,7 @@ export const StateProvider = ({ children }) => {
       const merged = {
         ...prev,
         ...newSettings,
+        promotions: newSettings?.promotions || prev?.promotions || [],
         announcement: {
           ...(prev?.announcement || {}),
           ...(newSettings?.announcement || {})
@@ -1781,6 +1798,12 @@ export const StateProvider = ({ children }) => {
         try {
           localStorage.setItem('site_settings_live', JSON.stringify(merged));
           window.dispatchEvent(new CustomEvent('site_settings_updated', { detail: merged }));
+          window.dispatchEvent(new CustomEvent('bdigi_promotions_sync', { detail: merged }));
+          if ('BroadcastChannel' in window) {
+            const promoBc = new BroadcastChannel('bdigi_promotions_sync');
+            promoBc.postMessage(merged);
+            promoBc.close();
+          }
         } catch (e) {}
       }
 
@@ -1788,6 +1811,9 @@ export const StateProvider = ({ children }) => {
     });
 
     await saveCmsConfigToSupabase('site_settings', newSettings);
+    if (newSettings.promotions) {
+      await saveCmsConfigToSupabase('promotions', newSettings.promotions);
+    }
     if (newSettings.announcement) {
       await saveCmsConfigToSupabase('announcement', newSettings.announcement);
     }

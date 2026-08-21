@@ -902,6 +902,10 @@ export async function fetchCatalogFromSupabase() {
       ? configMap['promoCodes'] 
       : (Array.isArray(rawSettings?.promoCodes) ? rawSettings.promoCodes : null);
 
+    const parsedPromotions = Array.isArray(configMap['promotions'])
+      ? configMap['promotions']
+      : (Array.isArray(rawSettings?.promotions) ? rawSettings.promotions : null);
+
     return {
       // Original snake_case/raw keys
       services: data.services || [],
@@ -932,6 +936,22 @@ export async function fetchCatalogFromSupabase() {
       heroServiceText: configMap['hero_service_text'] || null,
       siteSettings: {
         ...rawSettings,
+        promotions: parsedPromotions || [
+          {
+            id: 'promo-welcome-sale',
+            name: 'Summer sale',
+            type: 'new_buyer',
+            discountPercent: 10,
+            startDate: new Date().toISOString().split('T')[0],
+            endDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+            status: 'active',
+            maxOrdersLimit: 10,
+            ordersCount: 2,
+            servicesIncluded: 'All Studio Services',
+            promoCode: 'WELCOME10',
+            createdAt: new Date().toISOString()
+          }
+        ],
         announcement: parsedAnnouncement || {
           enabled: true,
           badge: 'SPECIAL PROMO',

@@ -13,7 +13,21 @@ export const VisitorPromotionBanner = () => {
   const [isDismissed, setIsDismissed] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  const banner = siteSettings?.promotionalBanner;
+  const rawBanner = siteSettings?.promotionalBanner;
+  const activePromo = Array.isArray(siteSettings?.promotions) 
+    ? siteSettings.promotions.find(p => p.status === 'active')
+    : null;
+
+  // Active banner data derived from either custom banner or active promotion
+  const banner = activePromo ? {
+    enabled: true,
+    title: activePromo.name ? `${activePromo.name} — ${activePromo.discountPercent}% OFF` : 'Special Welcome Offer',
+    description: `Enjoy ${activePromo.discountPercent}% off your order on ${activePromo.servicesIncluded || 'All Studio Services'}. Valid until ${activePromo.endDate || 'this month'}.`,
+    promoCode: activePromo.promoCode || (activePromo.discountPercent ? `PROMO${activePromo.discountPercent}` : 'WELCOME20'),
+    ctaText: 'Claim Discount',
+    buttonText: 'Claim Discount',
+    theme: 'navy'
+  } : (rawBanner?.enabled ? rawBanner : null);
 
   // Strict check: Never show promotional welcome banner on Admin routes or to Admin users
   const isAdminRoute = 
@@ -39,11 +53,54 @@ export const VisitorPromotionBanner = () => {
         const timer = setTimeout(() => {
           setIsDismissed(false);
           setIsVisible(true);
-        }, 1500);
+        }, 1200);
         return () => clearTimeout(timer);
       }
+    } else {
+      setIsVisible(false);
     }
   }, [banner?.enabled, banner?.title, isAdminRoute, isAdminUser]);
+
+  // Live Multi-tab synchronization for instant pause/start reaction
+  useEffect(() => {
+    const handleLiveSync = (e) => {
+      const updatedSettings = e.detail;
+      const livePromo = Array.isArray(updatedSettings?.promotions)
+        ? updatedSettings.promotions.find(p => p.status === 'active')
+        : null;
+      if (!livePromo && !updatedSettings?.promotionalBanner?.enabled) {
+        setIsVisible(false);
+      }
+    };
+
+    window.addEventListener('bdigi_promotions_sync', handleLiveSync);
+    window.addEventListener('site_settings_updated', handleLiveSync);
+
+    let promoBc;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        promoBc = new BroadcastChannel('bdigi_promotions_sync');
+        promoBc.onmessage = (ev) => {
+          if (ev.data) {
+            const livePromo = Array.isArray(ev.data.promotions)
+              ? ev.data.promotions.find(p => p.status === 'active')
+              : null;
+            if (!livePromo && !ev.data.promotionalBanner?.enabled) {
+              setIsVisible(false);
+            }
+          }
+        };
+      } catch {}
+    }
+
+    return () => {
+      window.removeEventListener('bdigi_promotions_sync', handleLiveSync);
+      window.removeEventListener('site_settings_updated', handleLiveSync);
+      if (promoBc) {
+        try { promoBc.close(); } catch {}
+      }
+    };
+  }, []);
 
   if (isAdminRoute || isAdminUser || isDismissed || !isVisible || !banner?.enabled || !banner?.title) {
     return null;
