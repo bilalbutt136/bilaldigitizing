@@ -163,14 +163,14 @@ export const ClientSidebar = ({
               width: '42px',
               height: '42px',
               borderRadius: '11px',
-              background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
-              color: '#ffffff',
+              background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+              color: 'var(--color-text-on-primary, #ffffff)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 900,
               fontSize: '1.15rem',
-              boxShadow: '0 4px 14px rgba(234, 88, 12, 0.40)',
+              boxShadow: '0 4px 14px var(--color-primary-glow)',
               flexShrink: 0
             }}>
               {userInitial}
@@ -198,7 +198,7 @@ export const ClientSidebar = ({
             fontSize: '0.74rem'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', minWidth: 0 }}>
-              <Wallet size={13} style={{ color: '#38bdf8', flexShrink: 0 }} />
+              <Wallet size={13} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
               <span style={{ color: '#94a3b8', fontSize: '0.7rem', fontWeight: 600 }}>Wallet:</span>
               <strong style={{ 
                 color: '#34d399', 
@@ -219,8 +219,8 @@ export const ClientSidebar = ({
                 type="button"
                 onClick={onOpenDepositModal}
                 style={{
-                  background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
-                  color: '#ffffff',
+                  background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                  color: 'var(--color-text-on-primary, #ffffff)',
                   border: 'none',
                   borderRadius: '5px',
                   padding: '0.2rem 0.45rem',
@@ -231,7 +231,7 @@ export const ClientSidebar = ({
                   alignItems: 'center',
                   gap: '0.2rem',
                   flexShrink: 0,
-                  boxShadow: '0 2px 6px rgba(234, 88, 12, 0.3)',
+                  boxShadow: '0 2px 6px var(--color-primary-glow)',
                   transition: 'all 0.15s ease'
                 }}
                 title="Add Funds"
@@ -248,7 +248,7 @@ export const ClientSidebar = ({
             <div style={{
               fontSize: '0.675rem',
               fontWeight: 800,
-              color: 'var(--orange-600)',
+              color: 'var(--color-primary)',
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
               padding: '0.25rem 0.75rem',
@@ -279,11 +279,11 @@ export const ClientSidebar = ({
                       width: '100%',
                       padding: '0.6rem 0.75rem',
                       borderRadius: 'var(--radius-md)',
-                      border: isActive ? '1.5px solid #ff7a00' : '1px solid transparent',
+                      border: isActive ? '1.5px solid var(--color-primary)' : '1px solid transparent',
                       background: isActive 
-                        ? 'rgba(255, 122, 0, 0.12)' 
+                        ? 'var(--color-primary-light)' 
                         : 'transparent',
-                      color: isActive ? '#ff7a00' : 'var(--text-main)',
+                      color: isActive ? 'var(--color-primary)' : 'var(--color-text-primary)',
                       fontWeight: isActive ? 800 : 600,
                       fontSize: '0.85rem',
                       cursor: 'pointer',
@@ -292,7 +292,7 @@ export const ClientSidebar = ({
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                      <IconComp size={16} style={{ color: isActive ? '#ff7a00' : 'var(--text-muted)', flexShrink: 0 }} />
+                      <IconComp size={16} style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-muted)', flexShrink: 0 }} />
                       <span style={{ lineHeight: 1.2 }}>{item.label}</span>
                     </div>
 
@@ -300,8 +300,8 @@ export const ClientSidebar = ({
                       <span style={{ 
                         fontSize: '0.7rem', 
                         fontWeight: 800, 
-                        background: item.badgeColor || (item.id === 'support' ? '#ef4444' : (isActive ? '#ff7a00' : 'rgba(255, 122, 0, 0.15)')), 
-                        color: (item.badgeColor || item.id === 'support' || isActive) ? '#ffffff' : 'var(--orange-500)', 
+                        background: item.badgeColor || (item.id === 'support' ? '#ef4444' : (isActive ? 'var(--color-primary)' : 'var(--color-primary-light)')), 
+                        color: (item.badgeColor || item.id === 'support' || isActive) ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-primary)', 
                         padding: '0.1rem 0.45rem', 
                         borderRadius: '9999px',
                         flexShrink: 0

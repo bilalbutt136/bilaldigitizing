@@ -10,12 +10,15 @@ import {
   Moon, 
   LogOut, 
   Wallet, 
-  PlusCircle
+  PlusCircle,
+  Palette,
+  Check
 } from 'lucide-react';
 
 export const UserMenuDropdown = () => {
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
+  const [showThemePicker, setShowThemePicker] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -33,7 +36,10 @@ export const UserMenuDropdown = () => {
     showToast,
     protectedNavigate,
     theme = 'light',
-    toggleTheme
+    toggleTheme,
+    colorTheme = 'studio-orange',
+    setColorTheme,
+    availableThemes = []
   } = useAppState();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -272,35 +278,106 @@ export const UserMenuDropdown = () => {
                 textAlign: 'left',
                 fontSize: '0.875rem',
                 fontWeight: 600,
-                color: 'var(--color-text-primary, var(--navy-900))',
+                color: 'var(--color-text-primary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 cursor: 'pointer',
                 transition: 'background 0.15s'
               }}
-              onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-subtle, #f1f5f9)'}
+              onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-subtle)'}
               onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                 {theme === 'dark' ? (
-                  <Moon size={16} style={{ color: '#818cf8' }} />
+                  <Moon size={16} style={{ color: 'var(--color-primary)' }} />
                 ) : (
-                  <Sun size={16} style={{ color: '#f59e0b' }} />
+                  <Sun size={16} style={{ color: 'var(--color-primary)' }} />
                 )}
                 <span>Theme Mood</span>
               </div>
               <span style={{
                 fontSize: '0.725rem',
                 fontWeight: 800,
-                background: theme === 'dark' ? '#312e81' : '#fef3c7',
-                color: theme === 'dark' ? '#c7d2fe' : '#b45309',
+                background: 'var(--color-primary-light)',
+                color: 'var(--color-primary)',
                 padding: '0.15rem 0.55rem',
-                borderRadius: '9999px'
+                borderRadius: '9999px',
+                border: '1px solid var(--color-border)'
               }}>
                 {theme === 'dark' ? 'Darker 🌙' : 'White ☀️'}
               </span>
             </button>
+
+            {/* Quick 5 Themes Palette Selector */}
+            <div style={{ padding: '0.35rem 1rem 0.5rem', borderBottom: '1px solid var(--color-border)' }}>
+              <div 
+                onClick={() => setShowThemePicker(!showThemePicker)}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between', 
+                  fontSize: '0.75rem', 
+                  fontWeight: 700, 
+                  color: 'var(--color-text-secondary)',
+                  cursor: 'pointer',
+                  padding: '0.2rem 0'
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                  <Palette size={14} style={{ color: 'var(--color-primary)' }} /> Palette:
+                </span>
+                <span style={{ color: 'var(--color-primary)', fontWeight: 800 }}>
+                  {availableThemes.find(t => t.id === colorTheme)?.name || 'Executive Studio Pro'}
+                </span>
+              </div>
+
+              {showThemePicker && (
+                <div style={{ marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {availableThemes.slice(0, 5).map((preset) => {
+                    const isSelected = colorTheme === preset.id;
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setColorTheme(preset.id);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0.35rem 0.6rem',
+                          borderRadius: '6px',
+                          border: isSelected ? '1px solid var(--color-primary)' : '1px solid transparent',
+                          background: isSelected ? 'var(--color-primary-light)' : 'transparent',
+                          color: isSelected ? 'var(--color-primary)' : 'var(--color-text-primary)',
+                          fontSize: '0.775rem',
+                          fontWeight: isSelected ? 800 : 600,
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                          <span 
+                            style={{ 
+                              width: '10px', 
+                              height: '10px', 
+                              borderRadius: '50%', 
+                              background: preset.palette?.primary || '#ea580c',
+                              boxShadow: '0 0 4px rgba(0,0,0,0.2)'
+                            }} 
+                          />
+                          <span>{preset.name}</span>
+                        </div>
+                        {isSelected && <Check size={13} style={{ color: 'var(--color-primary)' }} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
             {/* Upload New Order Quick Action */}
             <button

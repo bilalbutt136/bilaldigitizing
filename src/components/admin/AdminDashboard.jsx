@@ -417,20 +417,20 @@ export const AdminDashboard = () => {
                               width: '100%',
                               padding: '0.65rem 0.8rem',
                               borderRadius: '8px',
-                              border: isActive ? '1.5px solid #ff7a00' : '1px solid transparent',
-                              background: isActive ? 'rgba(255, 122, 0, 0.12)' : 'transparent',
-                              color: isActive ? '#ff7a00' : 'var(--navy-800)',
+                              border: isActive ? '1.5px solid var(--color-primary)' : '1px solid transparent',
+                              background: isActive ? 'var(--color-primary-light)' : 'transparent',
+                              color: isActive ? 'var(--color-primary)' : 'var(--color-text-primary)',
                               fontWeight: isActive ? 800 : 600,
                               fontSize: '0.85rem',
                               cursor: 'pointer'
                             }}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                              <IconComp size={16} style={{ color: isActive ? '#ff7a00' : 'var(--navy-600)' }} />
+                              <IconComp size={16} style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-muted)' }} />
                               <span>{item.label}</span>
                             </div>
                             {item.badge !== undefined && item.badge !== null && item.badge > 0 && (
-                              <span style={{ fontSize: '0.725rem', fontWeight: 800, background: item.isUnread ? '#ef4444' : (isActive ? '#ff7a00' : '#e2e8f0'), color: item.isUnread ? '#ffffff' : (isActive ? '#ffffff' : 'var(--navy-800)'), padding: '0.1rem 0.5rem', borderRadius: '12px' }}>
+                              <span style={{ fontSize: '0.725rem', fontWeight: 800, background: item.isUnread ? '#ef4444' : (isActive ? 'var(--color-primary)' : 'var(--color-subtle)'), color: item.isUnread ? '#ffffff' : (isActive ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-text-primary)'), padding: '0.1rem 0.5rem', borderRadius: '12px' }}>
                                 {item.badge}
                               </span>
                             )}
@@ -480,17 +480,17 @@ export const AdminDashboard = () => {
               boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)'
             }}>
               <div style={{
-                background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
-                color: '#ffffff',
+                background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                color: 'var(--color-text-on-primary, #ffffff)',
                 padding: '0.5rem',
                 borderRadius: '9px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(234, 88, 12, 0.4)',
+                boxShadow: '0 4px 12px var(--color-primary-glow)',
                 flexShrink: 0
               }}>
-                <LayoutDashboard size={18} style={{ color: '#ffffff' }} />
+                <LayoutDashboard size={18} style={{ color: 'var(--color-text-on-primary, #ffffff)' }} />
               </div>
               <div>
                 <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#f8fafc', lineHeight: 1.2, letterSpacing: '-0.01em' }}>
@@ -507,7 +507,7 @@ export const AdminDashboard = () => {
               <div style={{
                 fontSize: '0.675rem',
                 fontWeight: 800,
-                color: 'var(--orange-600)',
+                color: 'var(--color-primary)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.1em',
                 padding: '0.25rem 0.75rem',
@@ -540,13 +540,13 @@ export const AdminDashboard = () => {
                         justifyContent: 'space-between',
                         padding: '0.65rem 0.75rem',
                         borderRadius: 'var(--radius-md)',
-                        border: isActive ? '1.5px solid #ff7a00' : '1px solid transparent',
+                        border: isActive ? '1.5px solid var(--color-primary)' : '1px solid transparent',
                         background: isActive 
-                          ? 'rgba(255, 122, 0, 0.12)' 
+                          ? 'var(--color-primary-light)' 
                           : item.danger ? 'rgba(220, 38, 38, 0.08)' : 'transparent',
                         color: isActive 
-                          ? '#ff7a00' 
-                          : item.danger ? '#dc2626' : '#475569',
+                          ? 'var(--color-primary)' 
+                          : item.danger ? '#dc2626' : 'var(--color-text-secondary)',
                         fontWeight: isActive ? 800 : 600,
                         fontSize: '0.85rem',
                         cursor: 'pointer',
@@ -555,7 +555,7 @@ export const AdminDashboard = () => {
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <IconComp size={16} style={{ color: isActive ? '#ff7a00' : item.danger ? '#ef4444' : '#64748b' }} />
+                        <IconComp size={16} style={{ color: isActive ? 'var(--color-primary)' : item.danger ? '#ef4444' : 'var(--color-text-muted)' }} />
                         <span>{item.label}</span>
                       </div>
 
@@ -563,8 +563,8 @@ export const AdminDashboard = () => {
                         <span style={{
                           fontSize: '0.7rem',
                           fontWeight: 800,
-                          background: item.isUnread ? '#ef4444' : (isActive ? '#ff7a00' : '#e2e8f0'),
-                          color: item.isUnread ? '#ffffff' : (isActive ? '#ffffff' : '#334155'),
+                          background: item.isUnread ? '#ef4444' : (isActive ? 'var(--color-primary)' : 'var(--color-subtle)'),
+                          color: item.isUnread ? '#ffffff' : (isActive ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-text-primary)'),
                           padding: '0.1rem 0.45rem',
                           borderRadius: '9999px'
                         }}>
@@ -576,8 +576,8 @@ export const AdminDashboard = () => {
                         <span style={{
                           fontSize: '0.65rem',
                           fontWeight: 800,
-                          background: 'rgba(249, 115, 22, 0.15)',
-                          color: '#f97316',
+                          background: 'var(--color-primary-light)',
+                          color: 'var(--color-primary)',
                           padding: '0.1rem 0.4rem',
                           borderRadius: '4px'
                         }}>

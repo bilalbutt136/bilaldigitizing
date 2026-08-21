@@ -193,7 +193,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const setColorTheme = (presetId, customBrand = null) => {
-    const targetPreset = THEME_PRESETS.find(t => t.id === presetId)?.id || 'executive-navy';
+    const targetPreset = THEME_PRESETS.find(t => t.id === presetId)?.id || 'studio-orange';
     setColorThemeState(targetPreset);
     if (customBrand) {
       setCustomBrandColorsState(customBrand);

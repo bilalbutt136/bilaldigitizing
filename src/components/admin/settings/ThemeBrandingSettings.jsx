@@ -93,7 +93,7 @@ export const ThemeBrandingSettings = () => {
               </h3>
             </div>
             <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: 0 }}>
-              Select from 7+ international studio presets, configure brand color overrides, and set default light/dark moods.
+              Select from the top 5 curated international studio presets, configure brand color overrides, and set default light/dark moods.
             </p>
           </div>
 

@@ -166,7 +166,7 @@ export const OrderManagementTable = () => {
         }}
         title="Payment Unpaid / Pending Checkout"
       >
-        <Clock size={12} style={{ color: '#ea580c' }} /> PENDING
+        <Clock size={12} style={{ color: 'var(--color-warning, #ea580c)' }} /> PENDING
       </span>
     );
   };
@@ -174,19 +174,19 @@ export const OrderManagementTable = () => {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'submitted':
-        return <span className="badge badge-submitted" style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', fontWeight: 700 }}>🔴 New / Pending</span>;
+        return <span className="badge badge-submitted">🔴 New / Pending</span>;
       case 'assigned':
       case 'digitizing':
-        return <span className="badge badge-digitizing" style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', fontWeight: 700 }}>⚡ In Progress</span>;
+        return <span className="badge badge-digitizing">⚡ In Progress</span>;
       case 'revision':
-        return <span className="badge badge-revision" style={{ background: '#f3e8ff', color: '#6b21a8', border: '1px solid #e9d5ff', fontWeight: 700 }}>🔄 In Revision</span>;
+        return <span className="badge badge-revision">🔄 In Revision</span>;
       case 'delivered':
       case 'qc':
-        return <span className="badge badge-qc" style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', fontWeight: 700 }}>📦 Delivered</span>;
+        return <span className="badge badge-qc">📦 Delivered</span>;
       case 'completed':
-        return <span className="badge badge-completed" style={{ background: '#d1fae5', color: '#065f46', border: '1px solid #a7f3d0', fontWeight: 700 }}>✅ Completed</span>;
+        return <span className="badge badge-completed">✅ Completed</span>;
       case 'cancelled':
-        return <span className="badge" style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5', fontWeight: 700 }}>❌ Cancelled</span>;
+        return <span className="badge badge-rush">❌ Cancelled</span>;
       default:
         return <span className="badge">{status}</span>;
     }

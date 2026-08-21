@@ -178,17 +178,17 @@ export const HeaderNav = () => {
           onClick={handleGoHome}
         >
           <div style={{
-            background: 'linear-gradient(135deg, #090d16, #ff7a00)',
-            color: '#ffffff',
+            background: 'linear-gradient(135deg, var(--color-surface-elevated, #090d16), var(--color-primary))',
+            color: 'var(--color-text-on-primary, #ffffff)',
             padding: '0.45rem',
             borderRadius: 'var(--radius-md)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(255, 122, 0, 0.25)',
+            boxShadow: '0 4px 12px var(--color-primary-glow)',
             flexShrink: 0
           }}>
-            <Scissors size={20} style={{ color: 'var(--orange-500)' }} />
+            <Scissors size={20} style={{ color: 'var(--color-primary)' }} />
           </div>
           <div>
             <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', letterSpacing: '-0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
@@ -624,9 +624,9 @@ export const HeaderNav = () => {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.45rem',
-                      background: unreadChatCount > 0 ? '#ff7a00' : 'rgba(255, 122, 0, 0.1)',
-                      border: unreadChatCount > 0 ? '1.5px solid #ff7a00' : '1px solid rgba(255, 122, 0, 0.35)',
-                      color: unreadChatCount > 0 ? '#ffffff' : 'var(--orange-600)',
+                      background: unreadChatCount > 0 ? 'var(--color-primary)' : 'var(--color-primary-light)',
+                      border: unreadChatCount > 0 ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
+                      color: unreadChatCount > 0 ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-primary)',
                       padding: '0.45rem 0.85rem',
                       height: '38px',
                       borderRadius: '9px',
@@ -636,10 +636,10 @@ export const HeaderNav = () => {
                       position: 'relative',
                       transition: 'all 0.15s ease'
                     }}
-                    onMouseOver={(e) => { e.currentTarget.style.background = '#ff7a00'; e.currentTarget.style.color = '#ffffff'; }}
+                    onMouseOver={(e) => { e.currentTarget.style.background = 'var(--color-primary)'; e.currentTarget.style.color = 'var(--color-text-on-primary, #ffffff)'; }}
                     onMouseOut={(e) => { 
-                      e.currentTarget.style.background = unreadChatCount > 0 ? '#ff7a00' : 'rgba(255, 122, 0, 0.1)'; 
-                      e.currentTarget.style.color = unreadChatCount > 0 ? '#ffffff' : 'var(--orange-600)'; 
+                      e.currentTarget.style.background = unreadChatCount > 0 ? 'var(--color-primary)' : 'var(--color-primary-light)'; 
+                      e.currentTarget.style.color = unreadChatCount > 0 ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-primary)'; 
                     }}
                     title={safeAuthUser?.role === 'admin' ? 'Open Admin Chat Inbox' : 'Open Working Chat & Order Discussions'}
                   >
@@ -647,8 +647,8 @@ export const HeaderNav = () => {
                     <span>Inbox</span>
                     {unreadChatCount > 0 && (
                       <span style={{
-                        background: '#ffffff',
-                        color: '#ff7a00',
+                        background: 'var(--color-surface)',
+                        color: 'var(--color-primary)',
                         fontSize: '0.68rem',
                         fontWeight: 900,
                         padding: '0.1rem 0.45rem',

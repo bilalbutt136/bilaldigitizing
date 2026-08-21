@@ -1,14 +1,12 @@
 /**
  * Central Theme Presets & Design Token Configuration System
  * 
- * Supports 6+ international-grade themes in both Light & Dark modes:
- * 1. Executive Navy (Corporate / B2B / Enterprise)
- * 2. Royal Indigo (Modern SaaS / Technology)
- * 3. Emerald Executive (Finance / Healthcare / Business)
- * 4. Luxury Graphite (Luxury / Premium Brands)
- * 5. Ocean Blue (International SaaS / Logistics)
- * 6. Burgundy Prestige (Luxury / Professional Services)
- * 7. Studio Flame (Original Vibrant Creative Studio)
+ * Top 5 International-Grade Themes (Light & Dark Modes):
+ * 1. Executive Studio Pro (Warm Amber / Studio Precision Orange)
+ * 2. Executive Navy (Corporate / Enterprise / B2B)
+ * 3. Royal Indigo (Modern SaaS / Technology / Digital)
+ * 4. Emerald Executive (Finance / Healthcare / Prestige)
+ * 5. Luxury Graphite (Minimalist Luxury / Titanium Monochrome)
  */
 
 export const THEME_PRESETS = [
@@ -32,12 +30,14 @@ export const THEME_PRESETS = [
         '--color-primary-glow': 'rgba(234, 88, 12, 0.28)',
         '--color-primary-text': '#ffffff',
         '--color-secondary': '#f97316',
+        '--color-secondary-hover': '#ea580c',
         '--color-accent': '#fb923c',
         '--color-accent-light': '#fff7ed',
         '--color-background': '#f8fafc',
         '--color-surface': '#ffffff',
         '--color-surface-elevated': '#ffffff',
         '--color-subtle': '#f1f5f9',
+        '--color-input': '#f8f9fa',
         '--color-border': '#e2e8f0',
         '--color-border-hover': '#cbd5e1',
         '--color-border-focus': '#ea580c',
@@ -45,7 +45,7 @@ export const THEME_PRESETS = [
         '--color-text-secondary': '#334155',
         '--color-text-muted': '#64748b',
         '--color-text-on-primary': '#ffffff',
-        '--hero-bg': 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249, 115, 22, 0.07) 0%, rgba(241, 245, 249, 0.8) 50%, #f8fafc 100%)',
+        '--hero-bg': 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249, 115, 22, 0.08) 0%, rgba(241, 245, 249, 0.8) 50%, #f8fafc 100%)',
         '--hero-tabs-bg': '#ffffff',
         '--hero-tabs-border': '#e2e8f0',
         '--hero-text-primary': '#090d16',
@@ -78,12 +78,14 @@ export const THEME_PRESETS = [
         '--color-primary-glow': 'rgba(251, 146, 60, 0.35)',
         '--color-primary-text': '#7c2d12',
         '--color-secondary': '#fdba74',
+        '--color-secondary-hover': '#fb923c',
         '--color-accent': '#f97316',
         '--color-accent-light': 'rgba(251, 146, 60, 0.1)',
         '--color-background': '#0a0e17',
         '--color-surface': '#111827',
         '--color-surface-elevated': '#1a2234',
         '--color-subtle': '#141d2f',
+        '--color-input': '#162035',
         '--color-border': 'rgba(251, 146, 60, 0.18)',
         '--color-border-hover': 'rgba(251, 146, 60, 0.32)',
         '--color-border-focus': '#fb923c',
@@ -127,14 +129,16 @@ export const THEME_PRESETS = [
         '--color-primary-glow': 'rgba(15, 43, 72, 0.25)',
         '--color-primary-text': '#ffffff',
         '--color-secondary': '#1e40af',
+        '--color-secondary-hover': '#1e3a8a',
         '--color-accent': '#0284c7',
         '--color-accent-light': '#f0f9ff',
         '--color-background': '#f8fafc',
         '--color-surface': '#ffffff',
         '--color-surface-elevated': '#ffffff',
         '--color-subtle': '#f1f5f9',
-        '--color-border': 'rgba(15, 43, 72, 0.12)',
-        '--color-border-hover': 'rgba(15, 43, 72, 0.25)',
+        '--color-input': '#f8f9fa',
+        '--color-border': 'rgba(15, 43, 72, 0.14)',
+        '--color-border-hover': 'rgba(15, 43, 72, 0.28)',
         '--color-border-focus': '#0f2b48',
         '--color-text-primary': '#0f172a',
         '--color-text-secondary': '#334155',
@@ -159,14 +163,16 @@ export const THEME_PRESETS = [
         '--color-primary-hover': '#0284c7',
         '--color-primary-light': 'rgba(56, 189, 248, 0.15)',
         '--color-primary-glow': 'rgba(56, 189, 248, 0.35)',
-        '--color-primary-text': '#0f172a',
+        '--color-primary-text': '#070f1a',
         '--color-secondary': '#60a5fa',
+        '--color-secondary-hover': '#3b82f6',
         '--color-accent': '#38bdf8',
         '--color-accent-light': 'rgba(56, 189, 248, 0.1)',
         '--color-background': '#070f1a',
         '--color-surface': '#0c192c',
         '--color-surface-elevated': '#13233c',
         '--color-subtle': '#102038',
+        '--color-input': '#0f223d',
         '--color-border': 'rgba(56, 189, 248, 0.16)',
         '--color-border-hover': 'rgba(56, 189, 248, 0.3)',
         '--color-border-focus': '#38bdf8',
@@ -210,14 +216,16 @@ export const THEME_PRESETS = [
         '--color-primary-glow': 'rgba(67, 56, 202, 0.25)',
         '--color-primary-text': '#ffffff',
         '--color-secondary': '#6366f1',
+        '--color-secondary-hover': '#4f46e5',
         '--color-accent': '#8b5cf6',
         '--color-accent-light': '#ede9fe',
         '--color-background': '#f8fafc',
         '--color-surface': '#ffffff',
         '--color-surface-elevated': '#ffffff',
         '--color-subtle': '#f1f5f9',
-        '--color-border': 'rgba(67, 56, 202, 0.12)',
-        '--color-border-hover': 'rgba(67, 56, 202, 0.25)',
+        '--color-input': '#f8f9fa',
+        '--color-border': 'rgba(67, 56, 202, 0.14)',
+        '--color-border-hover': 'rgba(67, 56, 202, 0.28)',
         '--color-border-focus': '#4338ca',
         '--color-text-primary': '#0f172a',
         '--color-text-secondary': '#334155',
@@ -242,14 +250,16 @@ export const THEME_PRESETS = [
         '--color-primary-hover': '#6366f1',
         '--color-primary-light': 'rgba(129, 140, 248, 0.15)',
         '--color-primary-glow': 'rgba(129, 140, 248, 0.35)',
-        '--color-primary-text': '#0f172a',
+        '--color-primary-text': '#09091b',
         '--color-secondary': '#a78bfa',
+        '--color-secondary-hover': '#8b5cf6',
         '--color-accent': '#c084fc',
         '--color-accent-light': 'rgba(167, 139, 250, 0.1)',
         '--color-background': '#09091b',
         '--color-surface': '#11112b',
         '--color-surface-elevated': '#1a1a3e',
         '--color-subtle': '#151533',
+        '--color-input': '#18183d',
         '--color-border': 'rgba(129, 140, 248, 0.18)',
         '--color-border-hover': 'rgba(129, 140, 248, 0.32)',
         '--color-border-focus': '#818cf8',
@@ -293,14 +303,16 @@ export const THEME_PRESETS = [
         '--color-primary-glow': 'rgba(6, 95, 70, 0.25)',
         '--color-primary-text': '#ffffff',
         '--color-secondary': '#059669',
+        '--color-secondary-hover': '#047857',
         '--color-accent': '#10b981',
         '--color-accent-light': '#d1fae5',
         '--color-background': '#f8fafc',
         '--color-surface': '#ffffff',
         '--color-surface-elevated': '#ffffff',
         '--color-subtle': '#f1f5f9',
-        '--color-border': 'rgba(6, 95, 70, 0.12)',
-        '--color-border-hover': 'rgba(6, 95, 70, 0.25)',
+        '--color-input': '#f8f9fa',
+        '--color-border': 'rgba(6, 95, 70, 0.14)',
+        '--color-border-hover': 'rgba(6, 95, 70, 0.28)',
         '--color-border-focus': '#065f46',
         '--color-text-primary': '#0f172a',
         '--color-text-secondary': '#334155',
@@ -325,14 +337,16 @@ export const THEME_PRESETS = [
         '--color-primary-hover': '#10b981',
         '--color-primary-light': 'rgba(52, 211, 153, 0.15)',
         '--color-primary-glow': 'rgba(52, 211, 153, 0.35)',
-        '--color-primary-text': '#064e3b',
+        '--color-primary-text': '#041611',
         '--color-secondary': '#6ee7b7',
+        '--color-secondary-hover': '#34d399',
         '--color-accent': '#a7f3d0',
         '--color-accent-light': 'rgba(52, 211, 153, 0.1)',
         '--color-background': '#041611',
         '--color-surface': '#0a261f',
         '--color-surface-elevated': '#0f382e',
         '--color-subtle': '#0d2e25',
+        '--color-input': '#0c3027',
         '--color-border': 'rgba(52, 211, 153, 0.18)',
         '--color-border-hover': 'rgba(52, 211, 153, 0.32)',
         '--color-border-focus': '#34d399',
@@ -376,14 +390,16 @@ export const THEME_PRESETS = [
         '--color-primary-glow': 'rgba(24, 24, 27, 0.25)',
         '--color-primary-text': '#ffffff',
         '--color-secondary': '#3f3f46',
+        '--color-secondary-hover': '#27272a',
         '--color-accent': '#71717a',
         '--color-accent-light': '#f4f4f5',
         '--color-background': '#fafafa',
         '--color-surface': '#ffffff',
         '--color-surface-elevated': '#ffffff',
         '--color-subtle': '#f4f4f5',
-        '--color-border': 'rgba(24, 24, 27, 0.12)',
-        '--color-border-hover': 'rgba(24, 24, 27, 0.25)',
+        '--color-input': '#f4f4f5',
+        '--color-border': 'rgba(24, 24, 27, 0.14)',
+        '--color-border-hover': 'rgba(24, 24, 27, 0.28)',
         '--color-border-focus': '#18181b',
         '--color-text-primary': '#09090b',
         '--color-text-secondary': '#27272a',
@@ -410,12 +426,14 @@ export const THEME_PRESETS = [
         '--color-primary-glow': 'rgba(244, 244, 245, 0.3)',
         '--color-primary-text': '#09090b',
         '--color-secondary': '#d4d4d8',
+        '--color-secondary-hover': '#a1a1aa',
         '--color-accent': '#a1a1aa',
         '--color-accent-light': 'rgba(244, 244, 245, 0.1)',
         '--color-background': '#09090b',
         '--color-surface': '#18181b',
         '--color-surface-elevated': '#27272a',
         '--color-subtle': '#1c1c20',
+        '--color-input': '#222226',
         '--color-border': 'rgba(244, 244, 245, 0.15)',
         '--color-border-hover': 'rgba(244, 244, 245, 0.3)',
         '--color-border-focus': '#f4f4f5',
@@ -438,172 +456,6 @@ export const THEME_PRESETS = [
         '--cta-badge-text': '#fafafa'
       }
     }
-  },
-  {
-    id: 'ocean-blue',
-    name: 'Ocean Blue',
-    category: 'International SaaS',
-    description: 'Deep ocean blue, vivid cyan accents, cool neutral backgrounds with sleek clarity.',
-    bestFor: 'Technology / Logistics / B2B',
-    palette: {
-      primary: '#0369a1',
-      secondary: '#0284c7',
-      accent: '#06b6d4',
-      surface: '#ffffff'
-    },
-    tokens: {
-      light: {
-        '--color-primary': '#0369a1',
-        '--color-primary-hover': '#075985',
-        '--color-primary-light': '#e0f2fe',
-        '--color-primary-glow': 'rgba(3, 105, 161, 0.25)',
-        '--color-primary-text': '#ffffff',
-        '--color-secondary': '#0284c7',
-        '--color-accent': '#06b6d4',
-        '--color-accent-light': '#cffafe',
-        '--color-background': '#f8fafc',
-        '--color-surface': '#ffffff',
-        '--color-surface-elevated': '#ffffff',
-        '--color-subtle': '#f1f5f9',
-        '--color-border': 'rgba(3, 105, 161, 0.12)',
-        '--color-border-hover': 'rgba(3, 105, 161, 0.25)',
-        '--color-border-focus': '#0369a1',
-        '--color-text-primary': '#0f172a',
-        '--color-text-secondary': '#334155',
-        '--color-text-muted': '#64748b',
-        '--color-text-on-primary': '#ffffff',
-        '--hero-bg': 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(2, 132, 199, 0.08) 0%, rgba(6, 182, 212, 0.04) 50%, transparent 80%), linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-        '--hero-card-bg': '#ffffff',
-        '--hero-card-border': 'rgba(2, 132, 199, 0.18)',
-        '--hero-card-shadow': '0 20px 50px -15px rgba(2, 132, 199, 0.12), 0 4px 16px rgba(15, 23, 42, 0.04)',
-        '--banner-bg': 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 50%, #f8fafc 100%)',
-        '--banner-border': 'rgba(2, 132, 199, 0.2)',
-        '--stats-bar-bg': 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-        '--stats-card-bg': 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-        '--stats-card-border': 'rgba(2, 132, 199, 0.14)',
-        '--cta-bg': 'radial-gradient(ellipse 90% 70% at 50% 0%, rgba(2, 132, 199, 0.1) 0%, rgba(6, 182, 212, 0.05) 50%, transparent 80%), linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-        '--cta-badge-bg': 'rgba(2, 132, 199, 0.08)',
-        '--cta-badge-border': 'rgba(2, 132, 199, 0.25)',
-        '--cta-badge-text': '#0369a1'
-      },
-      dark: {
-        '--color-primary': '#38bdf8',
-        '--color-primary-hover': '#0ea5e9',
-        '--color-primary-light': 'rgba(56, 189, 248, 0.15)',
-        '--color-primary-glow': 'rgba(56, 189, 248, 0.35)',
-        '--color-primary-text': '#0c4a6e',
-        '--color-secondary': '#7dd3fc',
-        '--color-accent': '#67e8f9',
-        '--color-accent-light': 'rgba(56, 189, 248, 0.1)',
-        '--color-background': '#081320',
-        '--color-surface': '#0e2035',
-        '--color-surface-elevated': '#162e4c',
-        '--color-subtle': '#12263f',
-        '--color-border': 'rgba(56, 189, 248, 0.18)',
-        '--color-border-hover': 'rgba(56, 189, 248, 0.32)',
-        '--color-border-focus': '#38bdf8',
-        '--color-text-primary': '#f8fafc',
-        '--color-text-secondary': '#cbd5e1',
-        '--color-text-muted': '#94a3b8',
-        '--color-text-on-primary': '#081320',
-        '--hero-bg': 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(56, 189, 248, 0.18) 0%, rgba(3, 105, 161, 0.4) 50%, transparent 80%), linear-gradient(180deg, #081320 0%, #0e2035 100%)',
-        '--hero-card-bg': '#0e2035',
-        '--hero-card-border': 'rgba(56, 189, 248, 0.22)',
-        '--hero-card-shadow': '0 20px 50px -15px rgba(0, 0, 0, 0.6)',
-        '--banner-bg': 'linear-gradient(135deg, #0e2035 0%, #162e4c 50%, #081320 100%)',
-        '--banner-border': 'rgba(56, 189, 248, 0.24)',
-        '--stats-bar-bg': '#081320',
-        '--stats-card-bg': '#0e2035',
-        '--stats-card-border': 'rgba(56, 189, 248, 0.18)',
-        '--cta-bg': 'radial-gradient(ellipse 90% 70% at 50% 0%, rgba(56, 189, 248, 0.18) 0%, rgba(3, 105, 161, 0.3) 50%, transparent 80%), linear-gradient(180deg, #081320 0%, #0e2035 100%)',
-        '--cta-badge-bg': 'rgba(56, 189, 248, 0.12)',
-        '--cta-badge-border': 'rgba(56, 189, 248, 0.35)',
-        '--cta-badge-text': '#38bdf8'
-      }
-    }
-  },
-  {
-    id: 'burgundy-prestige',
-    name: 'Burgundy Prestige',
-    category: 'Heritage Luxury',
-    description: 'Deep burgundy, warm rose and amber accents, regal typography and prestige feel.',
-    bestFor: 'Luxury / Professional Services',
-    palette: {
-      primary: '#881337',
-      secondary: '#9f1239',
-      accent: '#f43f5e',
-      surface: '#ffffff'
-    },
-    tokens: {
-      light: {
-        '--color-primary': '#881337',
-        '--color-primary-hover': '#700f2d',
-        '--color-primary-light': '#ffe4e6',
-        '--color-primary-glow': 'rgba(136, 19, 55, 0.25)',
-        '--color-primary-text': '#ffffff',
-        '--color-secondary': '#9f1239',
-        '--color-accent': '#f43f5e',
-        '--color-accent-light': '#fff1f2',
-        '--color-background': '#fdfcfc',
-        '--color-surface': '#ffffff',
-        '--color-surface-elevated': '#ffffff',
-        '--color-subtle': '#f7f4f4',
-        '--color-border': 'rgba(136, 19, 55, 0.12)',
-        '--color-border-hover': 'rgba(136, 19, 55, 0.25)',
-        '--color-border-focus': '#881337',
-        '--color-text-primary': '#1c1917',
-        '--color-text-secondary': '#44403c',
-        '--color-text-muted': '#78716c',
-        '--color-text-on-primary': '#ffffff',
-        '--hero-bg': 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(159, 18, 57, 0.08) 0%, rgba(244, 63, 94, 0.04) 50%, transparent 80%), linear-gradient(180deg, #ffffff 0%, #fdfcfc 100%)',
-        '--hero-card-bg': '#ffffff',
-        '--hero-card-border': 'rgba(159, 18, 57, 0.18)',
-        '--hero-card-shadow': '0 20px 50px -15px rgba(159, 18, 57, 0.12), 0 4px 16px rgba(28, 25, 23, 0.04)',
-        '--banner-bg': 'linear-gradient(135deg, #ffffff 0%, #fff1f2 50%, #fdfcfc 100%)',
-        '--banner-border': 'rgba(159, 18, 57, 0.2)',
-        '--stats-bar-bg': 'linear-gradient(180deg, #ffffff 0%, #fdfcfc 100%)',
-        '--stats-card-bg': 'linear-gradient(135deg, #ffffff 0%, #fdfcfc 100%)',
-        '--stats-card-border': 'rgba(159, 18, 57, 0.14)',
-        '--cta-bg': 'radial-gradient(ellipse 90% 70% at 50% 0%, rgba(159, 18, 57, 0.1) 0%, rgba(244, 63, 94, 0.05) 50%, transparent 80%), linear-gradient(180deg, #ffffff 0%, #fdfcfc 100%)',
-        '--cta-badge-bg': 'rgba(159, 18, 57, 0.08)',
-        '--cta-badge-border': 'rgba(159, 18, 57, 0.25)',
-        '--cta-badge-text': '#881337'
-      },
-      dark: {
-        '--color-primary': '#fb7185',
-        '--color-primary-hover': '#f43f5e',
-        '--color-primary-light': 'rgba(251, 113, 133, 0.15)',
-        '--color-primary-glow': 'rgba(251, 113, 133, 0.35)',
-        '--color-primary-text': '#4c0519',
-        '--color-secondary': '#fda4af',
-        '--color-accent': '#f43f5e',
-        '--color-accent-light': 'rgba(251, 113, 133, 0.1)',
-        '--color-background': '#15060a',
-        '--color-surface': '#230a11',
-        '--color-surface-elevated': '#34101a',
-        '--color-subtle': '#2b0c15',
-        '--color-border': 'rgba(251, 113, 133, 0.18)',
-        '--color-border-hover': 'rgba(251, 113, 133, 0.32)',
-        '--color-border-focus': '#fb7185',
-        '--color-text-primary': '#fdfcfc',
-        '--color-text-secondary': '#e7e5e4',
-        '--color-text-muted': '#a8a29e',
-        '--color-text-on-primary': '#15060a',
-        '--hero-bg': 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(251, 113, 133, 0.18) 0%, rgba(136, 19, 55, 0.4) 50%, transparent 80%), linear-gradient(180deg, #15060a 0%, #230a11 100%)',
-        '--hero-card-bg': '#230a11',
-        '--hero-card-border': 'rgba(251, 113, 133, 0.22)',
-        '--hero-card-shadow': '0 20px 50px -15px rgba(0, 0, 0, 0.6)',
-        '--banner-bg': 'linear-gradient(135deg, #230a11 0%, #34101a 50%, #15060a 100%)',
-        '--banner-border': 'rgba(251, 113, 133, 0.24)',
-        '--stats-bar-bg': '#15060a',
-        '--stats-card-bg': '#230a11',
-        '--stats-card-border': 'rgba(251, 113, 133, 0.18)',
-        '--cta-bg': 'radial-gradient(ellipse 90% 70% at 50% 0%, rgba(251, 113, 133, 0.18) 0%, rgba(136, 19, 55, 0.3) 50%, transparent 80%), linear-gradient(180deg, #15060a 0%, #230a11 100%)',
-        '--cta-badge-bg': 'rgba(251, 113, 133, 0.12)',
-        '--cta-badge-border': 'rgba(251, 113, 133, 0.35)',
-        '--cta-badge-text': '#fb7185'
-      }
-    }
   }
 ];
 
@@ -617,7 +469,7 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
   if (typeof document === 'undefined') return;
 
   const root = document.documentElement;
-  const theme = THEME_PRESETS.find(t => t.id === presetId) || THEME_PRESETS[0]; // default to studio-orange (Executive Studio Pro)
+  const theme = THEME_PRESETS.find(t => t.id === presetId) || THEME_PRESETS[0];
 
   // 1. Set root HTML attributes
   root.setAttribute('data-theme-preset', theme.id);
@@ -632,7 +484,7 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
   // 2. Extract active token set
   const tokenSet = (mode === 'dark' ? theme.tokens.dark : theme.tokens.light) || {};
 
-  // 3. Apply CSS custom properties directly on :root
+  // 3. Apply CSS custom properties directly on :root element
   Object.entries(tokenSet).forEach(([propName, propValue]) => {
     root.style.setProperty(propName, propValue);
   });
@@ -647,11 +499,12 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
   root.style.setProperty('--bg-card', tokenSet['--color-surface'] || (mode === 'dark' ? '#111827' : '#ffffff'));
   root.style.setProperty('--bg-surface', tokenSet['--color-surface-elevated'] || (mode === 'dark' ? '#1a2234' : '#ffffff'));
   root.style.setProperty('--bg-subtle', tokenSet['--color-subtle'] || (mode === 'dark' ? '#141d2f' : '#f1f5f9'));
+  root.style.setProperty('--bg-input', tokenSet['--color-input'] || (mode === 'dark' ? '#162035' : '#f8f9fa'));
   root.style.setProperty('--border-color', tokenSet['--color-border'] || (mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0'));
   root.style.setProperty('--text-main', tokenSet['--color-text-primary'] || (mode === 'dark' ? '#f8fafc' : '#090d16'));
   root.style.setProperty('--text-muted', tokenSet['--color-text-muted'] || (mode === 'dark' ? '#94a3b8' : '#64748b'));
   root.style.setProperty('--text-light', tokenSet['--color-text-muted'] || (mode === 'dark' ? '#94a3b8' : '#94a3b8'));
-  root.style.setProperty('--text-heading', mode === 'dark' ? '#ffffff' : '#090d16');
+  root.style.setProperty('--text-heading', tokenSet['--color-text-primary'] || (mode === 'dark' ? '#ffffff' : '#090d16'));
 
   // Dynamic high-contrast mapping for legacy navy palette tokens
   if (mode === 'dark') {

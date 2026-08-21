@@ -646,14 +646,14 @@ export const CustomerDashboard = () => {
               width: '36px',
               height: '36px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
-              color: '#ffffff',
+              background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+              color: 'var(--color-text-on-primary, #ffffff)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 800,
               fontSize: '0.85rem',
-              boxShadow: '0 2px 8px rgba(249, 115, 22, 0.35)',
+              boxShadow: '0 2px 8px var(--color-primary-glow)',
               flexShrink: 0
             }}>
               {(activeUser?.name?.[0] || 'C').toUpperCase()}
@@ -736,9 +736,9 @@ export const CustomerDashboard = () => {
               }}
               title="Deposit Wallet Funds"
             >
-              <Wallet size={14} style={{ color: '#ea580c' }} />
+              <Wallet size={14} style={{ color: 'var(--color-primary)' }} />
               <span style={{ fontWeight: 900 }}>${walletBalance.toFixed(0)}</span>
-              <span style={{ background: '#ea580c', color: '#fff', width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 900, lineHeight: 1 }}>+</span>
+              <span style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary, #fff)', width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 900, lineHeight: 1 }}>+</span>
             </button>
 
             {/* Menu Trigger */}
@@ -1144,8 +1144,8 @@ export const CustomerDashboard = () => {
                     <div style={{ position: 'relative', zIndex: 2 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.35rem' }}>
                         <span style={{
-                          background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-                          color: '#ffffff',
+                          background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                          color: 'var(--color-text-on-primary, #ffffff)',
                           fontSize: '0.68rem',
                           fontWeight: 900,
                           padding: '0.15rem 0.5rem',
@@ -1156,21 +1156,21 @@ export const CustomerDashboard = () => {
                         }}>
                           <Zap size={11} /> 4-8 HOUR EXPRESS
                         </span>
-                        <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>
                           • 100% Quality Guaranteed
                         </span>
                       </div>
 
-                      <h3 style={{ margin: '0.2rem 0 0.25rem', fontSize: '1.25rem', fontWeight: 900, color: '#ffffff' }}>
+                      <h3 style={{ margin: '0.2rem 0 0.25rem', fontSize: '1.25rem', fontWeight: 900, color: 'var(--color-text-primary)' }}>
                         Place New Order
                       </h3>
-                      <p style={{ margin: '0 0 0.85rem', fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.35 }}>
+                      <p style={{ margin: '0 0 0.85rem', fontSize: '0.78rem', color: 'var(--color-text-muted)', lineHeight: 1.35 }}>
                         Embroidery Digitizing • Vector Art • Custom Patches
                       </p>
 
                       <div style={{
-                        background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-                        color: '#ffffff',
+                        background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                        color: 'var(--color-text-on-primary, #ffffff)',
                         padding: '0.65rem 1.15rem',
                         borderRadius: '12px',
                         fontWeight: 900,
@@ -1212,10 +1212,10 @@ export const CustomerDashboard = () => {
                         cursor: 'pointer'
                       }}
                     >
-                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#ffedd5', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--color-primary-light)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <PlusCircle size={20} />
                       </div>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap' }}>New Order</span>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--color-text-primary)', whiteSpace: 'nowrap' }}>New Order</span>
                     </button>
 
                     {/* 2. My Orders */}
@@ -1349,7 +1349,7 @@ export const CustomerDashboard = () => {
                         <button
                           type="button"
                           onClick={() => setActiveTab('orders')}
-                          style={{ background: 'none', border: 'none', color: '#ea580c', fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer', padding: 0 }}
+                          style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer', padding: 0 }}
                         >
                           View All ({activeOrders.length}) →
                         </button>
@@ -1363,14 +1363,14 @@ export const CustomerDashboard = () => {
                             <img
                               src={primaryImg}
                               alt={topOrd.title}
-                              style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover', border: '1.5px solid #fed7aa', flexShrink: 0 }}
+                              style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover', border: '1.5px solid var(--color-border)', flexShrink: 0 }}
                             />
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#ea580c', background: '#fff7ed', padding: '0.05rem 0.35rem', borderRadius: '4px' }}>
+                                <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--color-primary)', background: 'var(--color-primary-light)', padding: '0.05rem 0.35rem', borderRadius: '4px' }}>
                                   {formatOrderId(topOrd.id)}
                                 </span>
-                                <h5 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <h5 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 800, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                   {topOrd.title}
                                 </h5>
                               </div>
@@ -1401,7 +1401,7 @@ export const CustomerDashboard = () => {
 
                   {/* 3 Core Services Choice */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem' }}>
-                    <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Studio Services
                     </div>
 
@@ -1419,8 +1419,8 @@ export const CustomerDashboard = () => {
                             setIsMobileOrderOpen(true);
                           }}
                           style={{
-                            background: '#ffffff',
-                            border: '1.5px solid #e2e8f0',
+                            background: 'var(--color-surface)',
+                            border: '1.5px solid var(--color-border)',
                             borderRadius: '14px',
                             padding: '0.85rem 1rem',
                             display: 'flex',
@@ -1430,15 +1430,15 @@ export const CustomerDashboard = () => {
                             transition: 'all 0.15s ease'
                           }}
                         >
-                          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#fff7ed', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--color-primary-light)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <IconComp size={20} />
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>{svc.title}</h5>
-                              <span style={{ fontSize: '0.8rem', fontWeight: 900, color: '#ea580c' }}>From {svc.price}</span>
+                              <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: 'var(--color-text-primary)' }}>{svc.title}</h5>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 900, color: 'var(--color-primary)' }}>From {svc.price}</span>
                             </div>
-                            <p style={{ margin: '0.1rem 0 0', fontSize: '0.72rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <p style={{ margin: '0.1rem 0 0', fontSize: '0.72rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {svc.desc}
                             </p>
                           </div>
