@@ -348,7 +348,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
   };
 
   return (
-    <div style={{ background: '#0b1329', minHeight: '100vh', paddingBottom: '5rem', color: '#ffffff' }}>
+    <div style={{ background: 'var(--bg-main, #ffffff)', minHeight: '100vh', paddingBottom: '5rem', color: 'var(--color-text-primary, #0f172a)' }}>
       
       {/* 1. Studio Header Banner */}
       {!hideHero && (

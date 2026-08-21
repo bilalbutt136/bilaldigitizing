@@ -509,10 +509,10 @@ export const ServiceProcessTimelineSection = ({
           <div style={{
             marginTop: '3.5rem',
             padding: '1.5rem 2rem',
-            background: 'linear-gradient(135deg, rgba(255, 122, 0, 0.12) 0%, rgba(255, 122, 0, 0.05) 100%)',
-            border: '1.5px solid rgba(255, 122, 0, 0.3)',
+            background: 'var(--color-primary-light, rgba(255, 122, 0, 0.08))',
+            border: '1.5px solid rgba(255, 122, 0, 0.28)',
             borderRadius: '18px',
-            color: 'var(--color-text-primary)',
+            color: 'var(--navy-950, #0f172a)',
             fontSize: '0.95rem',
             fontWeight: 700,
             display: 'flex',
@@ -520,7 +520,7 @@ export const ServiceProcessTimelineSection = ({
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: '1.25rem',
-            boxShadow: '0 4px 20px rgba(255, 122, 0, 0.08)'
+            boxShadow: '0 4px 20px rgba(255, 122, 0, 0.06)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: 1, minWidth: '280px' }}>
               <div style={{
@@ -533,11 +533,11 @@ export const ServiceProcessTimelineSection = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
-                boxShadow: '0 2px 10px rgba(249, 115, 22, 0.4)'
+                boxShadow: '0 2px 10px rgba(249, 115, 22, 0.35)'
               }}>
                 <Sparkles size={20} />
               </div>
-              <span style={{ lineHeight: 1.5, fontSize: '0.95rem' }}>
+              <span style={{ lineHeight: 1.5, fontSize: '0.95rem', color: 'var(--navy-950, #0f172a)' }}>
                 {calloutText || defaultData.calloutText}
               </span>
             </div>
