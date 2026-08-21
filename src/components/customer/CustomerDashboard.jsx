@@ -73,11 +73,14 @@ export const CustomerDashboard = () => {
     setTheme,
     colorTheme,
     setColorTheme,
-    availableThemes = [],
     activeCustomerTab,
     setActiveCustomerTab,
     unreadNotificationsCount = 0,
-    unreadChatCount = 0
+    markAllNotificationsAsRead,
+    refreshNotifications,
+    unreadChatCount = 0,
+    setUnreadChatCount,
+    refreshUnreadChatCount
   } = useAppState();
 
   const unreadNotifCount = unreadNotificationsCount;
@@ -246,12 +249,16 @@ export const CustomerDashboard = () => {
 
   React.useEffect(() => {
     if (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') {
-      setUnreadChatCount(0);
+      if (typeof setUnreadChatCount === 'function') {
+        setUnreadChatCount(0);
+      }
     }
     if (activeTab === 'notifications') {
-      setUnreadNotifCount(0);
+      if (typeof markAllNotificationsAsRead === 'function') {
+        markAllNotificationsAsRead();
+      }
     }
-  }, [activeTab]);
+  }, [activeTab, setUnreadChatCount, markAllNotificationsAsRead]);
 
   // Live Notifications Count Loader & Real-time Subscription
   React.useEffect(() => {
@@ -260,10 +267,8 @@ export const CustomerDashboard = () => {
 
     const loadNotificationsCount = async () => {
       try {
-        const notifs = await fetchNotificationsFromSupabase();
-        if (isMounted && Array.isArray(notifs)) {
-          const unread = notifs.filter(n => !n.is_read && !n.read).length;
-          setUnreadNotifCount(unread);
+        if (typeof refreshNotifications === 'function') {
+          await refreshNotifications();
         }
       } catch {}
     };
@@ -280,7 +285,7 @@ export const CustomerDashboard = () => {
       isMounted = false;
       if (typeof unsubscribe === 'function') unsubscribe();
     };
-  }, [mounted, userEmail]);
+  }, [mounted, refreshNotifications]);
 
   React.useEffect(() => {
     const handleOpenOrderChat = (e) => {

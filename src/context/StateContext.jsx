@@ -2055,7 +2055,7 @@ export const StateProvider = ({ children }) => {
       colorTheme, setColorTheme, availableThemes: THEME_PRESETS,
       customBrandColors, setCustomBrandColors,
       notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead, unreadNotificationsCount, refreshNotifications,
-      unreadChatCount, refreshUnreadChatCount,
+      unreadChatCount, setUnreadChatCount, refreshUnreadChatCount,
       createOrder, updateOrderStatus, addRevisionRequest, addOrderMessage, cancelOrder,
       completeOrder, deleteOrder, ORDER_STATUSES, assignDigitizer,
       fetchUserWalletBalance, refreshOrders,
