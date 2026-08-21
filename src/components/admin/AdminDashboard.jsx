@@ -399,52 +399,61 @@ export const AdminDashboard = () => {
         </div>
       )}
 
-      <aside className="admin-sidebar-fixed" style={{
-        position: 'fixed',
-        top: '73px',
-        left: 0,
-        bottom: 0,
-        width: '280px',
-        background: 'var(--bg-card)',
-        borderRight: '1px solid var(--border-color)',
-        boxShadow: '4px 0 20px rgba(15, 23, 42, 0.04)',
-        overflowY: 'auto',
-        padding: '1.5rem 1rem',
-        zIndex: 90,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between'
-      }}>
-        <div>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.65rem',
-            padding: '0.5rem 0.75rem 1.25rem',
-            marginBottom: '1.25rem',
-            borderBottom: '1px solid var(--border-color)'
-          }}>
+      <div className="admin-portal-body" style={{ display: 'flex', flex: 1, width: '100%', minHeight: 0, position: 'relative' }}>
+        <aside className="admin-sidebar-fixed desktop-only" style={{
+          position: 'sticky',
+          top: '90px',
+          width: '280px',
+          minWidth: '280px',
+          height: 'calc(100vh - 100px)',
+          maxHeight: 'calc(100vh - 100px)',
+          background: 'var(--bg-card)',
+          borderRight: '1px solid var(--border-color)',
+          boxShadow: '4px 0 20px rgba(15, 23, 42, 0.04)',
+          overflowY: 'auto',
+          padding: '1.25rem 1rem',
+          zIndex: 90,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          flexShrink: 0
+        }}>
+          <div>
+            {/* Professional Operations Desk Brand Card */}
             <div style={{
-              background: 'linear-gradient(135deg, var(--navy-900), #ff7a00)',
-              color: '#ffffff',
-              padding: '0.45rem',
-              borderRadius: 'var(--radius-md)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(255, 122, 0, 0.25)'
+              gap: '0.75rem',
+              padding: '0.75rem 0.85rem',
+              background: 'linear-gradient(135deg, #0d1322 0%, #1a2238 100%)',
+              borderRadius: '12px',
+              color: '#ffffff',
+              marginBottom: '1.25rem',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)'
             }}>
-              <LayoutDashboard size={18} style={{ color: '#ffffff' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--navy-900)', lineHeight: 1.1 }}>
-                Operations Desk
+              <div style={{
+                background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
+                color: '#ffffff',
+                padding: '0.5rem',
+                borderRadius: '9px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(234, 88, 12, 0.4)',
+                flexShrink: 0
+              }}>
+                <LayoutDashboard size={18} style={{ color: '#ffffff' }} />
               </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '0.15rem' }}>
-                Master Control Panel
+              <div>
+                <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#f8fafc', lineHeight: 1.2, letterSpacing: '-0.01em' }}>
+                  Operations Desk
+                </div>
+                <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 600, marginTop: '0.15rem' }}>
+                  Master Control Panel
+                </div>
               </div>
             </div>
-          </div>
 
           {menuSections.map((sec, secIdx) => (
             <div key={secIdx} style={{ marginBottom: secIdx === menuSections.length - 1 ? 0 : '1.25rem' }}>
@@ -556,13 +565,13 @@ export const AdminDashboard = () => {
       </aside>
 
       <main className="admin-main-content" style={{
-        marginLeft: '280px',
-        width: 'calc(100% - 280px)',
+        flex: 1,
+        minWidth: 0,
         padding: activeTab === 'chat' ? '0.35rem 1.25rem 0.5rem' : '2rem 2.5rem 4rem',
         boxSizing: 'border-box',
         height: activeTab === 'chat' ? 'calc(100dvh - 128px)' : 'auto',
         maxHeight: activeTab === 'chat' ? 'calc(100dvh - 128px)' : 'none',
-        minHeight: activeTab === 'chat' ? 'calc(100dvh - 128px)' : 'calc(100vh - 73px)',
+        minHeight: activeTab === 'chat' ? 'calc(100dvh - 128px)' : 'calc(100vh - 100px)',
         overflow: activeTab === 'chat' ? 'hidden' : 'visible',
         display: activeTab === 'chat' ? 'flex' : 'block',
         flexDirection: 'column'
@@ -887,6 +896,7 @@ export const AdminDashboard = () => {
         {activeTab === 'settings-general' && <SystemSettingsManager activeSubTab="general" />}
 
       </main>
+      </div>
 
     </div>
   );
