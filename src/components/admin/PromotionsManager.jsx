@@ -110,7 +110,7 @@ export const PromotionsManager = () => {
       ...promotions.map(p => ({ ...p, status: 'paused' }))
     ];
 
-    // Automatically synchronize the live banner for this promotion percentage
+    // Automatically synchronize the live banner and promotional ad for this promotion percentage
     const syncedAnnouncement = {
       enabled: true,
       autoSync: true,
@@ -121,24 +121,35 @@ export const PromotionsManager = () => {
       promoCode: cleanCode,
       showCountdown: true,
       showCodeBadge: true,
-      theme: 'orange',
+      theme: 'emerald',
       textColor: '#ffffff',
       discountValue: discount,
       discountType: 'percent'
+    };
+
+    const syncedPromotionalBanner = {
+      enabled: true,
+      title: `${cleanName} — ${discount}% OFF`,
+      description: `Enjoy ${discount}% off your order on ${promoForm.servicesIncluded || 'All Studio Services'}.`,
+      promoCode: cleanCode,
+      ctaText: 'Claim Discount',
+      buttonText: 'Claim Discount',
+      theme: 'navy'
     };
 
     setPromotions(updatedPromotions);
     setIsPromoModalOpen(false);
 
     if (showToast) {
-      showToast(`🎉 Promotion "${cleanName}" (${discount}% OFF) activated and saved to database!`, 'success');
+      showToast(`🎉 Promotion "${cleanName}" (${discount}% OFF) activated and live on website!`, 'success');
     }
 
     try {
       if (updateSiteSettings) {
         await updateSiteSettings({
           promotions: updatedPromotions,
-          announcement: syncedAnnouncement
+          announcement: syncedAnnouncement,
+          promotionalBanner: syncedPromotionalBanner
         });
       }
     } catch (err) {
@@ -163,9 +174,10 @@ export const PromotionsManager = () => {
     });
 
     let updatedAnnouncement = null;
+    let updatedBanner = null;
 
     if (newlyActive) {
-      // Auto-sync banner to this newly started promo
+      // Auto-sync banners to this newly started promo
       updatedAnnouncement = {
         enabled: true,
         autoSync: true,
@@ -176,10 +188,20 @@ export const PromotionsManager = () => {
         promoCode: newlyActive.promoCode || `SAVE${newlyActive.discountPercent}`,
         showCountdown: true,
         showCodeBadge: true,
-        theme: 'orange',
+        theme: 'emerald',
         textColor: '#ffffff',
         discountValue: newlyActive.discountPercent,
         discountType: 'percent'
+      };
+
+      updatedBanner = {
+        enabled: true,
+        title: `${newlyActive.name} — ${newlyActive.discountPercent}% OFF`,
+        description: `Enjoy ${newlyActive.discountPercent}% off your order on ${newlyActive.servicesIncluded || 'All Studio Services'}.`,
+        promoCode: newlyActive.promoCode || `SAVE${newlyActive.discountPercent}`,
+        ctaText: 'Claim Discount',
+        buttonText: 'Claim Discount',
+        theme: 'navy'
       };
     } else {
       // If paused and another promo is still active, sync to it, otherwise hide banner
@@ -195,10 +217,20 @@ export const PromotionsManager = () => {
           promoCode: otherActive.promoCode || `SAVE${otherActive.discountPercent}`,
           showCountdown: true,
           showCodeBadge: true,
-          theme: 'orange',
+          theme: 'emerald',
           textColor: '#ffffff',
           discountValue: otherActive.discountPercent,
           discountType: 'percent'
+        };
+
+        updatedBanner = {
+          enabled: true,
+          title: `${otherActive.name} — ${otherActive.discountPercent}% OFF`,
+          description: `Enjoy ${otherActive.discountPercent}% off your order on ${otherActive.servicesIncluded || 'All Studio Services'}.`,
+          promoCode: otherActive.promoCode || `SAVE${otherActive.discountPercent}`,
+          ctaText: 'Claim Discount',
+          buttonText: 'Claim Discount',
+          theme: 'navy'
         };
       } else {
         updatedAnnouncement = {
@@ -206,6 +238,13 @@ export const PromotionsManager = () => {
           autoSync: true,
           text: '',
           discountValue: 0
+        };
+        updatedBanner = {
+          enabled: false,
+          title: '',
+          description: '',
+          promoCode: '',
+          ctaText: 'Claim Discount'
         };
       }
     }
@@ -227,7 +266,8 @@ export const PromotionsManager = () => {
       if (updateSiteSettings) {
         await updateSiteSettings({
           promotions: updatedPromotions,
-          ...(updatedAnnouncement ? { announcement: updatedAnnouncement } : {})
+          ...(updatedAnnouncement ? { announcement: updatedAnnouncement } : {}),
+          ...(updatedBanner ? { promotionalBanner: updatedBanner } : {})
         });
       }
     } catch (err) {
@@ -253,6 +293,16 @@ export const PromotionsManager = () => {
       discountValue: remainingActive.discountPercent
     } : { enabled: false };
 
+    const updatedBanner = remainingActive ? {
+      enabled: true,
+      title: `${remainingActive.name} — ${remainingActive.discountPercent}% OFF`,
+      description: `Enjoy ${remainingActive.discountPercent}% off your order on ${remainingActive.servicesIncluded || 'All Studio Services'}.`,
+      promoCode: remainingActive.promoCode || `SAVE${remainingActive.discountPercent}`,
+      ctaText: 'Claim Discount',
+      buttonText: 'Claim Discount',
+      theme: 'navy'
+    } : { enabled: false };
+
     setPromotions(updatedPromotions);
     if (showToast) showToast('Promotion removed', 'info');
 
@@ -260,11 +310,12 @@ export const PromotionsManager = () => {
       if (updateSiteSettings) {
         await updateSiteSettings({
           promotions: updatedPromotions,
-          announcement: updatedAnnouncement
+          announcement: updatedAnnouncement,
+          promotionalBanner: updatedBanner
         });
       }
     } catch (err) {
-      console.error('Delete promo error:', err);
+      console.error('Database sync error on delete:', err);
     }
   };
 

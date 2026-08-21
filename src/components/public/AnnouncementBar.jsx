@@ -69,10 +69,23 @@ export const AnnouncementBar = () => {
     window.addEventListener('bdigi_promotions_sync', handlePromoSync);
     window.addEventListener('site_settings_updated', handlePromoSync);
 
+    let promoBc;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        promoBc = new BroadcastChannel('bdigi_promotions_sync');
+        promoBc.onmessage = () => {
+          setIsDismissed(false);
+        };
+      } catch {}
+    }
+
     return () => {
       clearInterval(timer);
       window.removeEventListener('bdigi_promotions_sync', handlePromoSync);
       window.removeEventListener('site_settings_updated', handlePromoSync);
+      if (promoBc) {
+        try { promoBc.close(); } catch {}
+      }
     };
   }, [announcement?.text, announcement?.enabled, activePromo?.discountPercent, activePromo?.id]);
 

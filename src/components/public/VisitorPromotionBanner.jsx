@@ -6,11 +6,11 @@ import { useAppState } from '../../context/StateContext';
 import { usePathname } from 'next/navigation';
 
 export const VisitorPromotionBanner = () => {
-  const { siteSettings, openOrderWizard, protectedNavigate, currentView, authUser } = useAppState();
+  const { siteSettings, openOrderWizard, protectedNavigate } = useAppState();
   const pathname = usePathname() || '';
   
   const [isVisible, setIsVisible] = useState(false);
-  const [isDismissed, setIsDismissed] = useState(true);
+  const [isDismissed, setIsDismissed] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const rawBanner = siteSettings?.promotionalBanner;
@@ -18,57 +18,57 @@ export const VisitorPromotionBanner = () => {
     ? siteSettings.promotions.find(p => p.status === 'active')
     : null;
 
-  // Active banner data derived from either custom banner or active promotion
+  // Active banner data derived from active promotion or custom promotional banner
   const banner = activePromo ? {
     enabled: true,
-    title: activePromo.name ? `${activePromo.name} — ${activePromo.discountPercent}% OFF` : 'Special Welcome Offer',
+    title: activePromo.name ? `${activePromo.name} — ${activePromo.discountPercent}% OFF` : `Special ${activePromo.discountPercent}% OFF Offer`,
     description: `Enjoy ${activePromo.discountPercent}% off your order on ${activePromo.servicesIncluded || 'All Studio Services'}. Valid until ${activePromo.endDate || 'this month'}.`,
-    promoCode: activePromo.promoCode || (activePromo.discountPercent ? `PROMO${activePromo.discountPercent}` : 'WELCOME20'),
+    promoCode: activePromo.promoCode || `SAVE${activePromo.discountPercent}`,
     ctaText: 'Claim Discount',
     buttonText: 'Claim Discount',
     theme: 'navy'
-  } : (rawBanner?.enabled ? rawBanner : null);
+  } : (rawBanner?.enabled && rawBanner?.title ? rawBanner : null);
 
-  // Strict check: Never show promotional welcome banner on Admin routes or to Admin users
+  // Hide only when viewing admin portal / management pages
   const isAdminRoute = 
     pathname.startsWith('/admin') || 
     pathname.startsWith('/secure-admin-login') ||
-    pathname.includes('/admin');
-  const isAdminUser = 
-    authUser?.role === 'admin' || 
-    currentView === 'admin' || 
-    (typeof window !== 'undefined' && (window.location.pathname.includes('admin') || window.location.pathname.includes('secure-admin-login')));
+    pathname.startsWith('/admin-portal');
 
   useEffect(() => {
-    if (isAdminRoute || isAdminUser) {
+    if (isAdminRoute) {
       setIsVisible(false);
-      setIsDismissed(true);
       return;
     }
 
     if (banner?.title && banner?.enabled) {
       const dismissKey = 'visitor_promo_dismissed_' + encodeURIComponent(banner.title);
-      const dismissed = sessionStorage.getItem(dismissKey);
+      const dismissed = typeof window !== 'undefined' ? sessionStorage.getItem(dismissKey) : null;
       if (dismissed !== 'true') {
         const timer = setTimeout(() => {
           setIsDismissed(false);
           setIsVisible(true);
-        }, 1200);
+        }, 800);
         return () => clearTimeout(timer);
+      } else {
+        setIsVisible(false);
       }
     } else {
       setIsVisible(false);
     }
-  }, [banner?.enabled, banner?.title, isAdminRoute, isAdminUser]);
+  }, [banner?.enabled, banner?.title, isAdminRoute]);
 
   // Live Multi-tab synchronization for instant pause/start reaction
   useEffect(() => {
     const handleLiveSync = (e) => {
-      const updatedSettings = e.detail;
+      const updatedSettings = e?.detail || {};
       const livePromo = Array.isArray(updatedSettings?.promotions)
         ? updatedSettings.promotions.find(p => p.status === 'active')
         : null;
-      if (!livePromo && !updatedSettings?.promotionalBanner?.enabled) {
+      if (livePromo) {
+        setIsDismissed(false);
+        setIsVisible(true);
+      } else if (!updatedSettings?.promotionalBanner?.enabled) {
         setIsVisible(false);
       }
     };
@@ -85,7 +85,10 @@ export const VisitorPromotionBanner = () => {
             const livePromo = Array.isArray(ev.data.promotions)
               ? ev.data.promotions.find(p => p.status === 'active')
               : null;
-            if (!livePromo && !ev.data.promotionalBanner?.enabled) {
+            if (livePromo) {
+              setIsDismissed(false);
+              setIsVisible(true);
+            } else if (!ev.data.promotionalBanner?.enabled) {
               setIsVisible(false);
             }
           }
@@ -102,7 +105,7 @@ export const VisitorPromotionBanner = () => {
     };
   }, []);
 
-  if (isAdminRoute || isAdminUser || isDismissed || !isVisible || !banner?.enabled || !banner?.title) {
+  if (isAdminRoute || isDismissed || !isVisible || !banner?.enabled || !banner?.title) {
     return null;
   }
 
