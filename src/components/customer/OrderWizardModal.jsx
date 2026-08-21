@@ -244,6 +244,9 @@ export const OrderWizardModal = () => {
   useEffect(() => {
     if (isOrderWizardOpen) {
       setCurrentStep(1);
+      // Always reset payment processing state when wizard opens fresh
+      setIsProcessingPayment(false);
+      setIsSubmittingAuth(false);
 
       // Track InitiateCheckout on Order Wizard open
       import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
@@ -1016,11 +1019,17 @@ export const OrderWizardModal = () => {
 
       let createdOrder = null;
       if (createOrder) {
-        createdOrder = await createOrder(orderData);
+        // Add a 30-second timeout guard so the button never hangs forever
+        const orderPromise = createOrder(orderData);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Order request timed out. Please check your connection and try again.')), 30000)
+        );
+        createdOrder = await Promise.race([orderPromise, timeoutPromise]);
       }
       
       const orderId = createdOrder?.id || `ORDER_${Date.now()}`;
 
+      setIsProcessingPayment(false);
       setCheckoutSession({
         amount: finalPrice,
         orderId: orderId,
@@ -1030,6 +1039,7 @@ export const OrderWizardModal = () => {
     } catch (err) {
       console.error("Order creation error:", err);
       showToast('Error creating order: ' + (err.message || 'Unknown error'), 'error');
+    } finally {
       setIsProcessingPayment(false);
     }
   };
