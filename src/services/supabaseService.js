@@ -1660,63 +1660,47 @@ export async function fetchNotificationsFromSupabase() {
 }
 
 /**
- * Subscribe to live notifications from the Supabase `notifications` table.
- * Calls onNewNotification(payload) whenever a new notification is inserted.
- * Returns an unsubscribe function.
+ * Subscribe to live notifications from the shared Supabase Realtime channel.
+ * Calls onNewNotification(payload) on both INSERT and UPDATE events.
+ * Returns an unsubscribe cleanup function.
  */
-export function subscribeToNotifications({ onNewNotification, userEmail, isAdmin = false } = {}) {
-  if (!isSupabaseConfigured || !supabase) return () => {};
+export function subscribeToNotifications({ onNewNotification, onNotificationUpdate, userEmail, isAdmin = false } = {}) {
+  const handler = (payload) => {
+    if (!payload) return;
+    const notif = payload.new || payload.record || payload;
+    if (!notif) return;
 
-  try {
-    const channelName = `notifications-live-${userEmail || 'guest'}-${Date.now()}`;
-    let filter = '';
-    if (!isAdmin && userEmail) {
-      filter = `recipient_role=eq.client`;
-    } else if (isAdmin) {
-      filter = `recipient_role=eq.admin`;
+    // Verify recipient permissions
+    if (isAdmin) {
+      if (notif.recipient_role !== 'admin' && notif.recipient_role !== 'all' && notif.recipient_role) {
+        return;
+      }
+    } else {
+      const recipientEmail = (notif.recipient_email || '').toLowerCase().trim();
+      const thisEmail = (userEmail || '').toLowerCase().trim();
+      const isForThisUser = !notif.recipient_role || notif.recipient_role === 'all' ||
+        (notif.recipient_role === 'client' && (!recipientEmail || recipientEmail === thisEmail));
+      if (!isForThisUser) return;
     }
 
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          ...(filter ? { filter } : {})
-        },
-        (payload) => {
-          if (typeof onNewNotification === 'function') {
-            const notif = payload.new;
-            // Only surface notification if it belongs to this user
-            if (isAdmin) {
-              if (notif.recipient_role === 'admin' || notif.recipient_role === 'all') {
-                onNewNotification(notif);
-              }
-            } else {
-              const recipientEmail = (notif.recipient_email || '').toLowerCase().trim();
-              const thisEmail = (userEmail || '').toLowerCase().trim();
-              const isForThisUser = notif.recipient_role === 'all' ||
-                (notif.recipient_role === 'client' && (!recipientEmail || recipientEmail === thisEmail));
-              if (isForThisUser) {
-                onNewNotification(notif);
-              }
-            }
-          }
-        }
-      )
-      .subscribe();
+    if (payload.eventType === 'UPDATE') {
+      if (typeof onNotificationUpdate === 'function') {
+        onNotificationUpdate(notif);
+      } else if (typeof onNewNotification === 'function') {
+        onNewNotification(notif);
+      }
+    } else if (typeof onNewNotification === 'function') {
+      onNewNotification(notif);
+    }
+  };
 
-    return () => {
-      try { supabase.removeChannel(channel); } catch {}
-    };
-  } catch (err) {
-    console.warn('[subscribeToNotifications error]:', err);
-    return () => {};
-  }
+  notificationListeners.add(handler);
+  getSharedChatChannel();
+
+  return () => {
+    notificationListeners.delete(handler);
+  };
 }
-
 
 export async function createNotificationInSupabase(notif) {
   try {
@@ -1727,12 +1711,27 @@ export async function createNotificationInSupabase(notif) {
       body: JSON.stringify({ action: 'createNotification', payload: notif })
     });
     const data = await res.json();
-    return data.notification || notif;
-  } catch { return notif; }
+    const result = data.notification || notif;
+    broadcastLiveNotification(result);
+    return result;
+  } catch {
+    broadcastLiveNotification(notif);
+    return notif;
+  }
 }
 
 export async function markNotificationAsReadInSupabase(id) {
   try {
+    if (!id) return false;
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bdigi_notif_read_update', { detail: { id, read: true } }));
+      try {
+        const bc = new BroadcastChannel('bdigi_notifs_sync');
+        bc.postMessage({ type: 'mark_read', id });
+        bc.close();
+      } catch {}
+    }
+
     const headers = await getAuthHeaders();
     await fetch('/api/messages', {
       method: 'POST',
@@ -1745,6 +1744,15 @@ export async function markNotificationAsReadInSupabase(id) {
 
 export async function markAllNotificationsAsReadInSupabase() {
   try {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bdigi_notif_read_update', { detail: { all: true, read: true } }));
+      try {
+        const bc = new BroadcastChannel('bdigi_notifs_sync');
+        bc.postMessage({ type: 'mark_all_read' });
+        bc.close();
+      } catch {}
+    }
+
     const headers = await getAuthHeaders();
     await fetch('/api/messages', {
       method: 'POST',

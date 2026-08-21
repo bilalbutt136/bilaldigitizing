@@ -75,8 +75,12 @@ export const CustomerDashboard = () => {
     setColorTheme,
     availableThemes = [],
     activeCustomerTab,
-    setActiveCustomerTab
+    setActiveCustomerTab,
+    unreadNotificationsCount = 0,
+    unreadChatCount = 0
   } = useAppState();
+
+  const unreadNotifCount = unreadNotificationsCount;
 
   const [activeTab, setActiveTabLocal] = useState(() => activeCustomerTab || 'dashboard');
   const [selectedOrderChatId, setSelectedOrderChatId] = useState(null);
@@ -87,8 +91,6 @@ export const CustomerDashboard = () => {
   const [isServiceSelectorOpen, setIsServiceSelectorOpen] = useState(false);
   const [isMobileOrderOpen, setIsMobileOrderOpen] = useState(false);
   const [mobileOrderDefaultService, setMobileOrderDefaultService] = useState('embroidery');
-  const [unreadChatCount, setUnreadChatCount] = useState(0);
-  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
 
   // Mobile App UI State
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -938,7 +940,7 @@ export const CustomerDashboard = () => {
             patchCount={patchOrders.length}
             storeCount={storeOrders.length}
             unreadChatCount={unreadChatCount}
-            unreadNotifCount={unreadNotifCount}
+            unreadNotifCount={unreadNotificationsCount}
             unpaidCount={unpaidOrders.length}
             onOpenDepositModal={() => setIsDepositModalOpen(true)}
             onOpenLiveSupport={handleOpenLiveSupport}

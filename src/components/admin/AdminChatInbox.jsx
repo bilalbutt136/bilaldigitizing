@@ -358,7 +358,11 @@ export const AdminChatInbox = () => {
           const updated = safePrev.map(conv => {
             if (conv.id === newMsg.conversation_id) {
               const currentMsgs = conv.messages || [];
-              const existsIndex = currentMsgs.findIndex(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(parseMessageTime(m) - parseMessageTime(newMsg)) < 5000));
+              const existsIndex = currentMsgs.findIndex(m => 
+                (m.id && newMsg.id && m.id === newMsg.id) || 
+                (m.id && String(m.id).startsWith('msg-') && m.text === newMsg.text && m.sender === newMsg.sender && Math.abs(parseMessageTime(m) - parseMessageTime(newMsg)) < 15000) ||
+                (m.text && newMsg.text && m.text === newMsg.text && m.sender === newMsg.sender && Math.abs(parseMessageTime(m) - parseMessageTime(newMsg)) < 10000)
+              );
               
               let nextMsgs;
               if (existsIndex >= 0) {

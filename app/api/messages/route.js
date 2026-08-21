@@ -378,7 +378,7 @@ export async function GET(request) {
 
     if (action === 'fetchNotifications') {
       const cleanUserEmail = normalizeEmail(user?.email || emailParam || '');
-      let notifQuery = supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(50);
+      let notifQuery = supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(60);
 
       if (!isAdmin) {
         if (cleanUserEmail) {
@@ -396,7 +396,23 @@ export async function GET(request) {
         return NextResponse.json({ notifications: [] });
       }
 
-      return NextResponse.json({ notifications: notifData || [] });
+      const mappedNotifications = (notifData || []).map(n => ({
+        id: n.id,
+        title: n.title || 'Notification',
+        message: n.message || n.description || '',
+        type: n.type || 'info',
+        link: n.link || null,
+        order_id: n.order_id || n.orderId || null,
+        orderId: n.order_id || n.orderId || null,
+        recipient_role: n.recipient_role || 'client',
+        recipient_email: n.recipient_email || null,
+        read: n.read === true || n.is_read === true,
+        is_read: n.read === true || n.is_read === true,
+        timestamp: n.created_at || n.timestamp || new Date().toISOString(),
+        created_at: n.created_at || n.timestamp || new Date().toISOString()
+      }));
+
+      return NextResponse.json({ notifications: mappedNotifications });
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
@@ -712,31 +728,49 @@ export async function POST(request) {
     }
 
     if (action === 'markNotificationRead') {
-      const { notification_id, id } = payload;
-      const targetId = notification_id || id;
+      const targetId = payload.notification_id || payload.id || payload.notificationId;
       if (targetId) {
-        await supabase
-          .from('notifications')
-          .update({ read: true, updated_at: new Date().toISOString() })
-          .eq('id', targetId);
+        const nowIso = new Date().toISOString();
+        try {
+          await supabase
+            .from('notifications')
+            .update({ read: true, is_read: true, updated_at: nowIso })
+            .eq('id', targetId);
+        } catch {
+          try {
+            await supabase
+              .from('notifications')
+              .update({ read: true, updated_at: nowIso })
+              .eq('id', targetId);
+          } catch {}
+        }
       }
       return NextResponse.json({ success: true });
     }
 
     if (action === 'markAllNotificationsRead') {
-      const cleanUserEmail = (user?.email || payload.clientEmail || '').toLowerCase().trim();
+      const cleanUserEmail = normalizeEmail(user?.email || payload.clientEmail || payload.client_email || '');
       const nowIso = new Date().toISOString();
 
-      if (isAdmin) {
-        await supabase
-          .from('notifications')
-          .update({ read: true, updated_at: nowIso })
-          .or('recipient_role.eq.admin,recipient_role.eq.all');
-      } else if (cleanUserEmail) {
-        await supabase
-          .from('notifications')
-          .update({ read: true, updated_at: nowIso })
-          .or(`recipient_email.ilike.${cleanUserEmail},recipient_role.eq.client,recipient_role.eq.all`);
+      try {
+        if (isAdmin) {
+          await supabase
+            .from('notifications')
+            .update({ read: true, updated_at: nowIso })
+            .or('recipient_role.eq.admin,recipient_role.eq.all');
+        } else if (cleanUserEmail) {
+          await supabase
+            .from('notifications')
+            .update({ read: true, updated_at: nowIso })
+            .or(`recipient_email.ilike.${cleanUserEmail},recipient_role.eq.client,recipient_role.eq.all`);
+        } else {
+          await supabase
+            .from('notifications')
+            .update({ read: true, updated_at: nowIso })
+            .eq('recipient_role', 'client');
+        }
+      } catch (err) {
+        console.warn('markAllNotificationsRead DB notice:', err.message);
       }
       return NextResponse.json({ success: true });
     }

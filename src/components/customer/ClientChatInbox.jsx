@@ -187,10 +187,14 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
       if (isForThisCustomer) {
         setMessages(prev => {
-          if (prev.some(m => m.id === record.id)) {
-            return prev.map(m => m.id === record.id ? { ...m, ...record } : m);
-          }
-          const updated = [...prev, {
+          const safePrev = Array.isArray(prev) ? prev : [];
+          const existingIdx = safePrev.findIndex(m => 
+            (m.id && record.id && m.id === record.id) ||
+            (m.id && String(m.id).startsWith('msg-') && m.text === record.text && m.sender === record.sender && Math.abs(parseMessageTime(m) - parseMessageTime(record)) < 15000) ||
+            (m.text && record.text && m.text === record.text && m.sender === record.sender && Math.abs(parseMessageTime(m) - parseMessageTime(record)) < 10000)
+          );
+
+          const formattedRecord = {
             id: record.id,
             conversation_id: canonicalChatId,
             sender: record.sender,
@@ -207,13 +211,21 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
             offer_data: record.offer_data,
             is_read: record.is_read || false,
             timestamp: record.timestamp || record.created_at || new Date().toISOString()
-          }];
+          };
+
+          let updated;
+          if (existingIdx >= 0) {
+            updated = [...safePrev];
+            updated[existingIdx] = { ...updated[existingIdx], ...formattedRecord };
+          } else {
+            updated = [...safePrev, formattedRecord];
+          }
           updated.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
           return updated;
         });
 
         if (record.sender === 'admin') {
-          playNotificationSound();
+          playNotificationSound('chat');
           if (typeof window !== 'undefined') {
             localStorage.setItem('bdigi_read_client_' + canonicalChatId, String(Date.now()));
           }

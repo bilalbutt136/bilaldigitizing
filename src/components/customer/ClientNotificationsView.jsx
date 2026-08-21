@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { 
   Bell, 
   CheckCheck, 
@@ -20,66 +20,29 @@ import {
   CreditCard,
   Zap
 } from 'lucide-react';
-import { fetchNotificationsFromSupabase, markNotificationAsReadInSupabase, subscribeToNotifications } from '../../services/supabaseService';
-import { formatOrderId } from '../../context/StateContext';
+import { useAppState } from '../../context/StateContext';
 
 export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, userEmail, isAdmin = false }) => {
-  const [notifications, setNotifications] = useState([]);
+  const {
+    notifications = [],
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    unreadNotificationsCount = 0,
+    openOrderTrackerDrawer
+  } = useAppState();
+
   const [filter, setFilter] = useState('all'); // 'all' | 'unread'
-  const [loading, setLoading] = useState(true);
 
-  const loadNotifications = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await fetchNotificationsFromSupabase();
-      if (Array.isArray(data)) {
-        setNotifications(data);
-      }
-    } catch (err) {
-      console.warn('Error loading notifications:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadNotifications();
-
-    // Subscribe to live Supabase notifications table inserts
-    const unsubscribeRealtime = subscribeToNotifications({
-      userEmail,
-      isAdmin,
-      onNewNotification: (newNotif) => {
-        setNotifications(prev => {
-          // Deduplicate by ID
-          if (prev.some(n => n.id === newNotif.id)) return prev;
-          return [{ ...newNotif, is_read: false, read: false }, ...prev];
-        });
-      }
-    });
-
-    return () => {
-      if (typeof unsubscribeRealtime === 'function') unsubscribeRealtime();
-    };
-  }, [userEmail, isAdmin, loadNotifications]);
-
-  const handleMarkAsRead = async (id) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true, read: true } : n));
-    try {
-      await markNotificationAsReadInSupabase(id);
-    } catch {}
+  const handleMarkAsRead = (id) => {
+    if (markNotificationAsRead) markNotificationAsRead(id);
   };
 
-  const handleMarkAllRead = async () => {
-    setNotifications(prev => prev.map(n => ({ ...n, is_read: true, read: true })));
-    try {
-      const unreadIds = notifications.filter(n => !n.is_read && !n.read).map(n => n.id);
-      await Promise.all(unreadIds.map(id => markNotificationAsReadInSupabase(id)));
-    } catch {}
+  const handleMarkAllRead = () => {
+    if (markAllNotificationsAsRead) markAllNotificationsAsRead();
   };
 
   const handleItemClick = (notif) => {
-    handleMarkAsRead(notif.id);
+    if (notif.id) handleMarkAsRead(notif.id);
 
     const orderId = notif.order_id || notif.orderId || notif.metadata?.order_id || notif.metadata?.orderId;
     const conversationId = notif.conversation_id || notif.conversationId || notif.metadata?.conversation_id;
@@ -89,9 +52,13 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
         onNavigateToChat(conversationId || (orderId ? `order-${orderId}` : null));
       }
     } else if (orderId) {
-      if (typeof onNavigateToOrder === 'function') {
+      if (openOrderTrackerDrawer) {
+        openOrderTrackerDrawer(orderId);
+      } else if (typeof onNavigateToOrder === 'function') {
         onNavigateToOrder(orderId);
       }
+    } else if (notif.link && typeof window !== 'undefined') {
+      window.location.href = notif.link;
     }
   };
 
@@ -132,13 +99,11 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
   const getNotifBgColor = (notif) => {
     const type = (notif.type || '').toLowerCase();
     const title = (notif.title || '').toLowerCase();
-    if (type === 'error') return { bg: '#fff1f2', border: '#fecaca', icon: '#fee2e2' };
-    if (type === 'warning' || title.includes('modification') || title.includes('revision')) return { bg: '#fffbeb', border: '#fde68a', icon: '#fef3c7' };
-    if (type === 'success') return { bg: '#f0fdf4', border: '#bbf7d0', icon: '#dcfce7' };
-    if (type === 'message') return { bg: '#fff7ed', border: '#fed7aa', icon: '#ffedd5' };
-    return { bg: '#fffcf6', border: '#fed7aa', icon: '#ffedd5' }; // unread default orange
+    if (type === 'error') return { bg: 'rgba(239, 68, 68, 0.08)', border: 'rgba(239, 68, 68, 0.3)', icon: 'rgba(239, 68, 68, 0.15)' };
+    if (type === 'warning' || title.includes('modification') || title.includes('revision')) return { bg: 'rgba(245, 158, 11, 0.08)', border: 'rgba(245, 158, 11, 0.3)', icon: 'rgba(245, 158, 11, 0.15)' };
+    if (type === 'success') return { bg: 'rgba(16, 185, 129, 0.08)', border: 'rgba(16, 185, 129, 0.3)', icon: 'rgba(16, 185, 129, 0.15)' };
+    return { bg: 'var(--color-primary-light)', border: 'var(--color-primary)', icon: 'var(--color-primary-light)' };
   };
-
 
   const filteredNotifs = notifications.filter(n => {
     const isUnread = !n.is_read && !n.read;
@@ -146,15 +111,15 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
     return true;
   });
 
-  const unreadCount = notifications.filter(n => !n.is_read && !n.read).length;
+  const unreadCount = unreadNotificationsCount;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '800px', margin: '0 auto' }}>
       
       {/* Header & Controls */}
       <div style={{
-        background: '#ffffff',
-        border: '1.5px solid #e2e8f0',
+        background: 'var(--color-surface, #ffffff)',
+        border: '1.5px solid var(--color-border)',
         borderRadius: '16px',
         padding: '1rem 1.25rem',
         display: 'flex',
@@ -162,34 +127,34 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '0.75rem',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+        boxShadow: 'var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.03))'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <div style={{
             width: '38px',
             height: '38px',
             borderRadius: '10px',
-            background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-            color: '#ffffff',
+            background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+            color: 'var(--color-text-on-primary, #ffffff)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(249, 115, 22, 0.25)'
+            boxShadow: '0 4px 12px var(--color-primary-glow)'
           }}>
             <Bell size={18} />
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#0f172a' }}>
+            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
               Notifications
             </h3>
-            <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>
+            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted, #64748b)' }}>
               Live updates on orders, quotes, offers & messages
             </p>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', background: '#f1f5f9', padding: '3px', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', background: 'var(--color-subtle, #f1f5f9)', padding: '3px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
             <button
               type="button"
               onClick={() => setFilter('all')}
@@ -197,8 +162,8 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
                 padding: '0.3rem 0.65rem',
                 borderRadius: '6px',
                 border: 'none',
-                background: filter === 'all' ? '#ffffff' : 'transparent',
-                color: filter === 'all' ? '#0f172a' : '#64748b',
+                background: filter === 'all' ? 'var(--color-surface, #ffffff)' : 'transparent',
+                color: filter === 'all' ? 'var(--color-text-primary, #0f172a)' : 'var(--color-text-muted, #64748b)',
                 fontWeight: filter === 'all' ? 800 : 600,
                 fontSize: '0.75rem',
                 cursor: 'pointer',
@@ -214,8 +179,8 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
                 padding: '0.3rem 0.65rem',
                 borderRadius: '6px',
                 border: 'none',
-                background: filter === 'unread' ? '#ffffff' : 'transparent',
-                color: filter === 'unread' ? '#ea580c' : '#64748b',
+                background: filter === 'unread' ? 'var(--color-surface, #ffffff)' : 'transparent',
+                color: filter === 'unread' ? 'var(--color-primary)' : 'var(--color-text-muted, #64748b)',
                 fontWeight: filter === 'unread' ? 800 : 600,
                 fontSize: '0.75rem',
                 cursor: 'pointer',
@@ -231,13 +196,13 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
               type="button"
               onClick={handleMarkAllRead}
               style={{
-                background: '#f8fafc',
-                border: '1px solid #cbd5e1',
+                background: 'var(--color-subtle, #f8fafc)',
+                border: '1px solid var(--color-border)',
                 borderRadius: '8px',
                 padding: '0.35rem 0.65rem',
                 fontSize: '0.75rem',
                 fontWeight: 700,
-                color: '#334155',
+                color: 'var(--color-text-secondary, #334155)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -254,15 +219,15 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {filteredNotifs.length === 0 ? (
           <div style={{
-            background: '#ffffff',
+            background: 'var(--color-surface, #ffffff)',
             borderRadius: '16px',
-            border: '1.5px solid #e2e8f0',
+            border: '1.5px solid var(--color-border)',
             padding: '3rem 1.5rem',
             textAlign: 'center',
-            color: '#64748b'
+            color: 'var(--color-text-muted, #64748b)'
           }}>
-            <Inbox size={36} style={{ color: '#94a3b8', margin: '0 auto 0.75rem', opacity: 0.5 }} />
-            <h4 style={{ margin: '0 0 0.25rem', fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
+            <Inbox size={36} style={{ color: 'var(--color-text-muted, #94a3b8)', margin: '0 auto 0.75rem', opacity: 0.5 }} />
+            <h4 style={{ margin: '0 0 0.25rem', fontSize: '1rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
               No Notifications
             </h4>
             <p style={{ margin: 0, fontSize: '0.8rem' }}>
@@ -290,8 +255,8 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
                 key={notif.id || Math.random()}
                 onClick={() => handleItemClick(notif)}
                 style={{
-                  background: isUnread ? colors.bg : '#ffffff',
-                  border: isUnread ? `1.5px solid ${colors.border}` : '1px solid #e2e8f0',
+                  background: isUnread ? colors.bg : 'var(--color-surface, #ffffff)',
+                  border: isUnread ? `1.5px solid ${colors.border}` : '1px solid var(--color-border)',
                   borderRadius: '14px',
                   padding: '0.85rem 1rem',
                   display: 'flex',
@@ -299,7 +264,7 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
                   gap: '0.85rem',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
-                  boxShadow: isUnread ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                  boxShadow: isUnread ? 'var(--shadow-sm)' : 'none',
                   position: 'relative'
                 }}
               >
@@ -308,7 +273,7 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
                   width: '38px',
                   height: '38px',
                   borderRadius: '10px',
-                  background: isUnread ? colors.icon : '#f1f5f9',
+                  background: isUnread ? colors.icon : 'var(--color-subtle, #f1f5f9)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -324,14 +289,14 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
                       margin: 0,
                       fontSize: '0.88rem',
                       fontWeight: isUnread ? 900 : 700,
-                      color: isUnread ? '#0f172a' : '#334155',
+                      color: isUnread ? 'var(--color-text-primary, #0f172a)' : 'var(--color-text-secondary, #334155)',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis'
                     }}>
                       {notif.title || 'Studio Notification'}
                     </h5>
-                    <span style={{ fontSize: '0.68rem', color: '#94a3b8', flexShrink: 0, marginLeft: '0.5rem' }}>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--color-text-muted, #94a3b8)', flexShrink: 0, marginLeft: '0.5rem' }}>
                       {timeStr}
                     </span>
                   </div>
@@ -339,7 +304,7 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
                   <p style={{
                     margin: 0,
                     fontSize: '0.78rem',
-                    color: isUnread ? '#334155' : '#64748b',
+                    color: isUnread ? 'var(--color-text-secondary, #334155)' : 'var(--color-text-muted, #64748b)',
                     lineHeight: 1.35,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -352,9 +317,9 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
                 {/* Unread Dot & Arrow */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
                   {isUnread && (
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f97316' }} />
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-primary)' }} />
                   )}
-                  <ChevronRight size={16} style={{ color: '#94a3b8' }} />
+                  <ChevronRight size={16} style={{ color: 'var(--color-text-muted, #94a3b8)' }} />
                 </div>
               </div>
             );

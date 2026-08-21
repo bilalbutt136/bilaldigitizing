@@ -41,6 +41,7 @@ import {
   markNotificationAsReadInSupabase,
   markAllNotificationsAsReadInSupabase,
   broadcastLiveNotification,
+  subscribeToNotifications,
   subscribeToNotificationListeners,
   subscribeToOrders,
   getAuthHeaders,
@@ -344,14 +345,13 @@ export const StateProvider = ({ children }) => {
   const [isPricingSettingsOpen, setIsPricingSettingsOpen] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // Global Order Notification System State with localStorage Persistence (Orders only)
+  // Global Order Notification System State with localStorage Persistence & Live Sync
   const [notifications, setNotifications] = useState(() => {
     try {
       if (typeof window !== 'undefined') {
         const saved = localStorage.getItem('bdigi_notifications');
         if (saved) {
           const parsed = JSON.parse(saved);
-          // Filter out legacy chat message items so notification bell is strictly orders and system updates
           return Array.isArray(parsed) ? parsed.filter(n => !String(n.id || '').startsWith('msg-')) : [];
         }
       }
@@ -362,29 +362,82 @@ export const StateProvider = ({ children }) => {
   const saveNotificationsToStorage = (updatedList) => {
     try {
       if (typeof window !== 'undefined') {
-        localStorage.setItem('bdigi_notifications', JSON.stringify(updatedList.slice(0, 50)));
+        localStorage.setItem('bdigi_notifications', JSON.stringify(updatedList.slice(0, 60)));
       }
     } catch {}
   };
 
+  const refreshNotifications = React.useCallback(async () => {
+    try {
+      const freshNotifs = await fetchNotificationsFromSupabase();
+      if (Array.isArray(freshNotifs)) {
+        setNotifications(prev => {
+          const safePrev = Array.isArray(prev) ? prev : [];
+          const map = new Map();
+          
+          freshNotifs.forEach(n => {
+            if (n && n.id) {
+              map.set(n.id, {
+                id: n.id,
+                title: n.title || 'Notification',
+                message: n.message || n.description || '',
+                type: n.type || 'info',
+                link: n.link || null,
+                order_id: n.order_id || n.orderId || null,
+                orderId: n.order_id || n.orderId || null,
+                recipient_role: n.recipient_role || 'client',
+                recipient_email: n.recipient_email || null,
+                read: n.read === true || n.is_read === true,
+                is_read: n.read === true || n.is_read === true,
+                timestamp: n.created_at || n.timestamp || new Date().toISOString(),
+                created_at: n.created_at || n.timestamp || new Date().toISOString()
+              });
+            }
+          });
+
+          safePrev.forEach(n => {
+            if (n && n.id && !map.has(n.id)) {
+              map.set(n.id, n);
+            }
+          });
+
+          const merged = Array.from(map.values()).sort((a, b) => {
+            const timeA = new Date(a.created_at || a.timestamp || 0).getTime();
+            const timeB = new Date(b.created_at || b.timestamp || 0).getTime();
+            return timeB - timeA;
+          });
+
+          saveNotificationsToStorage(merged);
+          return merged;
+        });
+      }
+    } catch (err) {
+      console.warn('refreshNotifications notice:', err);
+    }
+  }, []);
+
   const addNotification = (notif, syncToBackend = true) => {
     if (!notif) return;
+    const nowIso = new Date().toISOString();
     const newNotif = {
       id: notif.id || `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      timestamp: notif.timestamp || notif.created_at || new Date().toISOString(),
-      created_at: notif.created_at || notif.timestamp || new Date().toISOString(),
-      read: notif.read || false,
+      timestamp: notif.timestamp || notif.created_at || nowIso,
+      created_at: notif.created_at || notif.timestamp || nowIso,
+      read: notif.read || notif.is_read || false,
+      is_read: notif.read || notif.is_read || false,
       title: notif.title || 'Notification',
-      message: notif.message || '',
+      message: notif.message || notif.description || '',
       type: notif.type || 'info',
       link: notif.link || null,
       order_id: notif.order_id || notif.orderId || null,
       orderId: notif.order_id || notif.orderId || null,
+      recipient_role: notif.recipient_role || notif.recipientRole || 'client',
+      recipient_email: notif.recipient_email || notif.recipientEmail || null,
       ...notif
     };
+    
     setNotifications(prev => {
       const safePrev = Array.isArray(prev) ? prev : [];
-      // Deduplicate by ID
       const filtered = safePrev.filter(n => n.id !== newNotif.id);
       const nextList = [newNotif, ...filtered];
       saveNotificationsToStorage(nextList);
@@ -408,7 +461,7 @@ export const StateProvider = ({ children }) => {
   const markNotificationAsRead = (id) => {
     setNotifications(prev => {
       const safePrev = Array.isArray(prev) ? prev : [];
-      const nextList = safePrev.map(n => n.id === id ? { ...n, read: true } : n);
+      const nextList = safePrev.map(n => n.id === id ? { ...n, read: true, is_read: true } : n);
       saveNotificationsToStorage(nextList);
       return nextList;
     });
@@ -420,7 +473,7 @@ export const StateProvider = ({ children }) => {
   const markAllNotificationsAsRead = () => {
     setNotifications(prev => {
       const safePrev = Array.isArray(prev) ? prev : [];
-      const nextList = safePrev.map(n => ({ ...n, read: true }));
+      const nextList = safePrev.map(n => ({ ...n, read: true, is_read: true }));
       saveNotificationsToStorage(nextList);
       return nextList;
     });
@@ -447,14 +500,14 @@ export const StateProvider = ({ children }) => {
     }
   };
 
-  const unreadNotificationsCount = Array.isArray(notifications) ? notifications.filter(n => !n.read).length : 0;
+  const unreadNotificationsCount = Array.isArray(notifications) ? notifications.filter(n => !n.read && !n.is_read).length : 0;
 
   // Global Chat Unread Counter (Synced across customer and admin for Inbox badge)
   const [unreadChatCount, setUnreadChatCount] = useState(0);
 
   const refreshUnreadChatCount = React.useCallback(async () => {
     try {
-      const userEmail = authUser?.email || currentUser?.email;
+      const userEmail = authUser?.email || '';
       const convs = await fetchConversations(userEmail);
       if (Array.isArray(convs)) {
         let currentRole = 'customer';
@@ -474,25 +527,110 @@ export const StateProvider = ({ children }) => {
     } catch (err) {
       console.warn('Refresh unread count notice:', err);
     }
-  }, []);
+  }, [authUser]);
 
+  // Global Realtime Listeners for Notifications & Messages
   useEffect(() => {
     if (!isAuthenticated && !authUser) {
       setUnreadChatCount(0);
       return;
     }
     refreshUnreadChatCount();
+    refreshNotifications();
 
+    const userEmail = authUser?.email || '';
+    const isAdminUser = authUser?.role === 'admin';
+
+    // 1. Cross-tab Notification Read Synchronization
+    const handleNotifReadUpdate = (e) => {
+      const { id, all } = e.detail || {};
+      setNotifications(prev => {
+        const safePrev = Array.isArray(prev) ? prev : [];
+        let updated;
+        if (all) {
+          updated = safePrev.map(n => ({ ...n, read: true, is_read: true }));
+        } else if (id) {
+          updated = safePrev.map(n => n.id === id ? { ...n, read: true, is_read: true } : n);
+        } else {
+          updated = safePrev;
+        }
+        saveNotificationsToStorage(updated);
+        return updated;
+      });
+    };
+
+    window.addEventListener('bdigi_notif_read_update', handleNotifReadUpdate);
+
+    let notifBc = null;
+    try {
+      notifBc = new BroadcastChannel('bdigi_notifs_sync');
+      notifBc.onmessage = (msg) => {
+        if (msg.data?.type === 'mark_all_read') {
+          handleNotifReadUpdate({ detail: { all: true } });
+        } else if (msg.data?.type === 'mark_read') {
+          handleNotifReadUpdate({ detail: { id: msg.data.id } });
+        }
+      };
+    } catch {}
+
+    // 2. Global Live Notifications Listener
+    const unsubNotifs = subscribeToNotifications({
+      userEmail,
+      isAdmin: isAdminUser,
+      onNewNotification: (notif) => {
+        if (!notif) return;
+        setNotifications(prev => {
+          const safePrev = Array.isArray(prev) ? prev : [];
+          if (safePrev.some(n => n.id === notif.id)) return safePrev;
+
+          const item = {
+            id: notif.id || `notif-${Date.now()}`,
+            title: notif.title || 'System Notification',
+            message: notif.message || notif.description || '',
+            type: notif.type || 'info',
+            link: notif.link || null,
+            order_id: notif.order_id || notif.orderId || null,
+            orderId: notif.order_id || notif.orderId || null,
+            read: notif.read === true || notif.is_read === true,
+            is_read: notif.read === true || notif.is_read === true,
+            timestamp: notif.created_at || notif.timestamp || new Date().toISOString(),
+            created_at: notif.created_at || notif.timestamp || new Date().toISOString()
+          };
+
+          const nextList = [item, ...safePrev];
+          saveNotificationsToStorage(nextList);
+          return nextList;
+        });
+
+        try {
+          playNotificationSound('notification');
+        } catch {}
+
+        if (notif.title) {
+          showToast(`${notif.title}${notif.message ? `: ${notif.message}` : ''}`, notif.type || 'info');
+        }
+      },
+      onNotificationUpdate: (notif) => {
+        if (!notif) return;
+        setNotifications(prev => {
+          const safePrev = Array.isArray(prev) ? prev : [];
+          const updated = safePrev.map(n => n.id === notif.id ? { ...n, ...notif, read: notif.read === true || notif.is_read === true, is_read: notif.read === true || notif.is_read === true } : n);
+          saveNotificationsToStorage(updated);
+          return updated;
+        });
+      }
+    });
+
+    // 3. Live Chat Messages & Unread Counter Listener
     const handleReadUpdate = () => {
       refreshUnreadChatCount();
     };
 
     window.addEventListener('bdigi_read_update', handleReadUpdate);
-    const unsubscribe = subscribeToLiveMessages((msgPayload) => {
+    const unsubMessages = subscribeToLiveMessages((msgPayload) => {
       refreshUnreadChatCount();
-      // For chat messages: update Inbox badge, play chat sound, show toast (Do NOT add to Notification Bell list)
-      if (msgPayload && msgPayload.new) {
-        const msg = msgPayload.new;
+      if (msgPayload && (msgPayload.new || msgPayload.record)) {
+        const msg = msgPayload.new || msgPayload.record;
         let currentRole = 'customer';
         try {
           const saved = localStorage.getItem('bdigi_auth_user');
@@ -501,10 +639,10 @@ export const StateProvider = ({ children }) => {
         
         if (msg.sender === 'client' && currentRole === 'admin') {
           playNotificationSound('chat');
-          showToast(`💬 New inbox message from ${msg.sender_name || 'Client'}`, 'info');
+          showToast(`💬 New message from ${msg.sender_name || 'Client'}`, 'info');
         } else if ((msg.sender === 'admin' || msg.sender === 'digitizer') && currentRole !== 'admin') {
           playNotificationSound('chat');
-          showToast(`💬 New inbox message from ${msg.sender_name || 'Studio Support'}`, 'info');
+          showToast(`💬 New message from ${msg.sender_name || 'Studio Support'}`, 'info');
         }
       }
     }, () => {
@@ -512,10 +650,15 @@ export const StateProvider = ({ children }) => {
     });
 
     return () => {
+      window.removeEventListener('bdigi_notif_read_update', handleNotifReadUpdate);
       window.removeEventListener('bdigi_read_update', handleReadUpdate);
-      if (typeof unsubscribe === 'function') unsubscribe();
+      if (notifBc) {
+        try { notifBc.close(); } catch {}
+      }
+      if (typeof unsubNotifs === 'function') unsubNotifs();
+      if (typeof unsubMessages === 'function') unsubMessages();
     };
-  }, [isAuthenticated, authUser, refreshUnreadChatCount]);
+  }, [isAuthenticated, authUser, refreshUnreadChatCount, refreshNotifications]);
 
   const showToast = (message, type = 'info') => {
     setToast({ message, type, id: Date.now() });
@@ -1833,7 +1976,7 @@ export const StateProvider = ({ children }) => {
       theme, toggleTheme, setTheme,
       colorTheme, setColorTheme, availableThemes: THEME_PRESETS,
       customBrandColors, setCustomBrandColors,
-      notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead, unreadNotificationsCount,
+      notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead, unreadNotificationsCount, refreshNotifications,
       unreadChatCount, refreshUnreadChatCount,
       createOrder, updateOrderStatus, addRevisionRequest, addOrderMessage, cancelOrder,
       completeOrder, deleteOrder, ORDER_STATUSES, assignDigitizer,

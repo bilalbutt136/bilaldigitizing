@@ -696,8 +696,8 @@ export const HeaderNav = () => {
                           position: 'absolute',
                           top: '2px',
                           right: '2px',
-                          background: 'var(--orange-500)',
-                          color: '#ffffff',
+                          background: 'var(--color-primary)',
+                          color: 'var(--color-text-on-primary, #ffffff)',
                           fontSize: '0.62rem',
                           fontWeight: 900,
                           width: '16px',
@@ -706,7 +706,7 @@ export const HeaderNav = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          border: '1.5px solid #ffffff'
+                          border: '1.5px solid var(--color-surface, #ffffff)'
                         }}>
                           {unreadNotificationsCount}
                         </span>
