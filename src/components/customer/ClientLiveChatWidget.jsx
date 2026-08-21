@@ -536,12 +536,13 @@ export const ClientLiveChatWidget = () => {
     const convId = clientThread.id || targetConvId;
     const nowIso = new Date().toISOString();
 
-    // Track Meta Pixel Contact Event
+    // Track Meta Pixel Contact Event with Customer Identity
     import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
+      const custRole = clientEmail ? `${cleanName || 'Customer'} (${clientEmail})` : null;
       trackMetaEvent('Contact', {
         content_name: 'Client Live Chat',
         category: 'Customer Support Inquiry'
-      });
+      }, custRole);
     }).catch(() => {});
 
     const newMsg = {

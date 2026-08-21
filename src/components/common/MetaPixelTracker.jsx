@@ -53,6 +53,44 @@ export const injectMetaPixel = (pixelId) => {
   }
 };
 
+// Helper to resolve accurate user identity (e.g. "Haji Ramzan (haji.ramzan@gmail.com)" or "Platform Admin")
+export const resolveUserIdentity = (userObj = null, customRole = null) => {
+  if (customRole) return customRole;
+
+  if (userObj && typeof userObj === 'object') {
+    if (userObj.role === 'admin') {
+      return userObj.email ? `Platform Admin (${userObj.email})` : 'Platform Admin';
+    }
+    const name = userObj.name || userObj.fullName || userObj.user_metadata?.full_name || 'Customer';
+    if (userObj.email) {
+      return `${name} (${userObj.email})`;
+    }
+    return name;
+  }
+
+  // Check localStorage for logged-in user details
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('auth_user') || localStorage.getItem('bdigi_auth_user');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed === 'object') {
+          if (parsed.role === 'admin') {
+            return parsed.email ? `Platform Admin (${parsed.email})` : 'Platform Admin';
+          }
+          const name = parsed.name || parsed.fullName || 'Customer';
+          if (parsed.email) {
+            return `${name} (${parsed.email})`;
+          }
+          return name;
+        }
+      }
+    } catch {}
+  }
+
+  return 'Guest Visitor';
+};
+
 export const MetaPixelTracker = () => {
   const { siteSettings, authUser } = useAppState();
   const location = useLocation();
@@ -111,8 +149,7 @@ export const MetaPixelTracker = () => {
 
     // Log to Supabase Tracking Events Table
     import('../../services/supabaseService').then(({ logTrackingEventToSupabase }) => {
-      const role = authUser?.role === 'admin' ? 'Platform Admin' :
-                   (authUser ? 'Authenticated User' : 'Guest Visitor');
+      const role = resolveUserIdentity(authUser);
       logTrackingEventToSupabase({
         eventName: viewContentData ? 'ViewContent' : 'PageView',
         userRole: role,
@@ -174,22 +211,7 @@ export const trackMetaEvent = (eventName, data = {}, customUserRole = null) => {
 
   // Persist to Supabase tracking_events table for Admin Analytics
   import('../../services/supabaseService').then(({ logTrackingEventToSupabase }) => {
-    let role = customUserRole;
-    if (!role) {
-      try {
-        const storedUser = localStorage.getItem('auth_user') || localStorage.getItem('supabase.auth.token');
-        if (storedUser && (storedUser.includes('"role":"admin"') || storedUser.includes('"admin"'))) {
-          role = 'Platform Admin';
-        } else if (storedUser) {
-          role = 'Authenticated User';
-        } else {
-          role = 'Guest Visitor';
-        }
-      } catch {
-        role = 'Guest Visitor';
-      }
-    }
-
+    const role = resolveUserIdentity(null, customUserRole);
     const valueStr = data?.value !== undefined ? (typeof data.value === 'number' ? `$${data.value.toFixed(2)}` : String(data.value)) : '—';
 
     logTrackingEventToSupabase({

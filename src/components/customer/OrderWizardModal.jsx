@@ -264,12 +264,15 @@ export const OrderWizardModal = () => {
 
       // Track InitiateCheckout on Order Wizard open
       import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
+        const userIdentity = authUser?.email
+          ? `${authUser.name || 'Customer'} (${authUser.email})`
+          : null;
         trackMetaEvent('InitiateCheckout', {
           content_name: orderWizardInitialData?.title || 'Order Wizard Configurator',
           content_category: orderWizardInitialData?.type || 'Custom Digitizing',
           value: 10.00,
           currency: 'USD'
-        });
+        }, userIdentity);
       }).catch(() => {});
 
       const code = orderWizardInitialData?.promoCode || siteSettings?.announcement?.promoCode || 'SAVE20';

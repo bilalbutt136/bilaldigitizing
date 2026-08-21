@@ -1416,6 +1416,25 @@ export const StateProvider = ({ children }) => {
         };
         broadcastLiveNotification(adminNotif);
         triggerEmailNotification('NEW_ORDER', fullOrderPayload);
+
+        // Log Purchase Tracking Event with exact customer name and email
+        try {
+          const custIdentity = fullOrderPayload.clientEmail
+            ? `${fullOrderPayload.clientName || 'Customer'} (${fullOrderPayload.clientEmail})`
+            : (authUser?.email ? `${authUser.name || 'Customer'} (${authUser.email})` : 'Customer');
+          
+          const orderAmount = parseFloat(fullOrderPayload.price || 15);
+          const { logTrackingEventToSupabase } = await import('../services/supabaseService');
+          logTrackingEventToSupabase({
+            eventName: 'Purchase',
+            userRole: custIdentity,
+            source: 'Visitor browser',
+            trafficSource: (typeof window !== 'undefined' ? window.location.hostname : 'Direct') || 'Direct',
+            value: `$${orderAmount.toFixed(2)}`,
+            pagePath: '/order'
+          });
+        } catch {}
+
         return fullOrderPayload;
       } catch (sbErr) {
         console.warn('Supabase create order notice:', sbErr);

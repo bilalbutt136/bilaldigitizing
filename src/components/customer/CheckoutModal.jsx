@@ -215,18 +215,24 @@ export const CheckoutModal = () => {
   useEffect(() => {
     if (isCheckoutModalOpen && checkoutSession?.amount) {
       import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
+        const custRole = authUser?.email
+          ? `${authUser.name || 'Customer'} (${authUser.email})`
+          : null;
         trackMetaEvent('InitiateCheckout', {
           value: Number(checkoutSession.amount) || 0,
           currency: 'USD',
           order_id: checkoutSession?.orderId || null,
           num_items: 1
-        });
+        }, custRole);
       }).catch(() => {});
     }
-  }, [isCheckoutModalOpen, checkoutSession?.amount]);
+  }, [isCheckoutModalOpen, checkoutSession?.amount, authUser]);
 
   const handleSelectMethod = async (methodId) => {
     const amount = parseFloat(checkoutSession?.amount || 0);
+    const custRole = authUser?.email
+      ? `${authUser.name || 'Customer'} (${authUser.email})`
+      : null;
 
     // Track AddPaymentInfo
     import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
@@ -235,7 +241,7 @@ export const CheckoutModal = () => {
         value: amount,
         currency: 'USD',
         order_id: checkoutSession?.orderId || null
-      });
+      }, custRole);
     }).catch(() => {});
 
     // 1. Handle Studio Wallet payment directly
@@ -267,7 +273,7 @@ export const CheckoutModal = () => {
               content_name: 'Studio Wallet Payment',
               content_type: 'product',
               num_items: 1
-            });
+            }, custRole);
           }).catch(() => {});
           
           if (checkoutSession?.offerId) {

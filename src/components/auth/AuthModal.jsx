@@ -124,7 +124,10 @@ export const AuthModal = () => {
       
       // Track Login Event
       import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
-        trackMetaEvent('Login', { method: 'email', status: 'success' });
+        const userRole = result?.role === 'admin'
+          ? (result?.email ? `Platform Admin (${result.email})` : 'Platform Admin')
+          : (result?.email ? `${result.name || 'Customer'} (${result.email})` : (emailInput.trim() ? `Customer (${emailInput.trim()})` : null));
+        trackMetaEvent('Login', { method: 'email', status: 'success' }, userRole);
       }).catch(() => {});
 
       if (result?.role === 'admin') {
@@ -174,7 +177,8 @@ export const AuthModal = () => {
 
       // Track CompleteRegistration Event
       import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
-        trackMetaEvent('CompleteRegistration', { method: 'email', status: 'success' });
+        const userRole = `${signupName.trim() || 'Customer'} (${signupEmail.trim()})`;
+        trackMetaEvent('CompleteRegistration', { method: 'email', status: 'success' }, userRole);
       }).catch(() => {});
 
       navigate('/client-portal');
