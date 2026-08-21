@@ -56,6 +56,40 @@ export const MetaSeoTrackingSettings = () => {
     }
   }, [siteSettings]);
 
+  const formatEventTime = (timeStr) => {
+    if (!timeStr) return new Date().toLocaleString('en-US');
+    const d = new Date(timeStr);
+    if (isNaN(d.getTime())) return String(timeStr);
+    return d.toLocaleString('en-US', {
+      month: 'numeric',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+  };
+
+  const handleSimulatePageVisit = async () => {
+    try {
+      const { logTrackingEventToSupabase } = await import('../../../services/supabaseService');
+      const testEvent = {
+        eventName: 'PageView',
+        userRole: 'Platform Admin',
+        source: 'Visitor browser',
+        trafficSource: 'www.google.com',
+        value: '—',
+        pagePath: '/admin/meta-pixel'
+      };
+      await logTrackingEventToSupabase(testEvent);
+      if (showToast) showToast('Test PageView event simulated and recorded in database!', 'success');
+      loadEvents();
+    } catch (err) {
+      console.error('Simulate event error:', err);
+    }
+  };
+
   const loadEvents = async () => {
     setLoadingEvents(true);
     try {
@@ -446,56 +480,186 @@ export const MetaSeoTrackingSettings = () => {
         </form>
       )}
 
-      {/* TAB 3: Real-time Event Stream Log */}
+      {/* TAB 3: Real-time Event Stream Log (Matches media_1787330161134.png) */}
       {activeSubTab === 'logs' && (
-        <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <div>
-              <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: '0 0 0.25rem' }}>
-                Live Analytics & Tracking Event Stream
-              </h4>
-              <p style={{ fontSize: '0.825rem', color: 'var(--color-text-muted)', margin: 0 }}>
-                Recent client order and checkout events transmitted to configured tracking pixels.
-              </p>
+        <div className="card" style={{ padding: '2rem', background: 'var(--bg-card, #ffffff)', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
+          
+          {/* Top Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <div style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '12px',
+                background: 'rgba(99, 102, 241, 0.12)',
+                color: '#6366f1',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <Activity size={22} />
+              </div>
+              <div>
+                <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', margin: 0 }}>
+                  Activity log
+                </h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted, #64748b)', margin: '0.2rem 0 0 0' }}>
+                  Raw list of tracking events recorded on your site.
+                </p>
+              </div>
             </div>
-            <button type="button" onClick={loadEvents} disabled={loadingEvents} className="btn btn-outline btn-sm">
-              <RefreshCw size={14} className={loadingEvents ? 'spin-icon' : ''} /> Refresh Stream
-            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={handleSimulatePageVisit}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.5rem 0.9rem',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color, #cbd5e1)',
+                  background: 'var(--color-surface, #ffffff)',
+                  color: 'var(--color-text-primary, #0f172a)',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                <Radio size={14} style={{ color: '#6366f1' }} /> Simulate page visit
+              </button>
+
+              <button
+                type="button"
+                onClick={loadEvents}
+                disabled={loadingEvents}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.5rem 0.9rem',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color, #cbd5e1)',
+                  background: 'var(--color-surface, #ffffff)',
+                  color: 'var(--color-text-primary, #0f172a)',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: loadingEvents ? 'wait' : 'pointer'
+                }}
+              >
+                <RefreshCw size={14} className={loadingEvents ? 'spin-icon' : ''} /> Refresh Stream
+              </button>
+            </div>
           </div>
 
+          {/* Two Info Cards (Exact replica of Reference Image 2) */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '1rem',
+            marginBottom: '1.75rem'
+          }}>
+            <div style={{
+              background: 'var(--color-subtle, #f8fafc)',
+              border: '1px solid var(--border-color, #e2e8f0)',
+              borderRadius: '14px',
+              padding: '1.25rem'
+            }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.45rem' }}>
+                WHAT THIS DOES
+              </div>
+              <div style={{ fontSize: '0.88rem', color: 'var(--color-text-secondary, #334155)', lineHeight: 1.45 }}>
+                Use this to debug setup issues — e.g. confirm a test event arrived after clicking &quot;Simulate page visit&quot;.
+              </div>
+            </div>
+
+            <div style={{
+              background: 'var(--color-subtle, #f8fafc)',
+              border: '1px solid var(--border-color, #e2e8f0)',
+              borderRadius: '14px',
+              padding: '1.25rem'
+            }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.45rem' }}>
+                WHEN TO USE IT
+              </div>
+              <div style={{ fontSize: '0.88rem', color: 'var(--color-text-secondary, #334155)', lineHeight: 1.45 }}>
+                Not for ad reporting. Meta Ads Manager has official spend and conversion reports.
+              </div>
+            </div>
+          </div>
+
+          {/* Full Detailed Table (Exact match of Reference Image 2) */}
           {loadingEvents ? (
             <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-muted)' }}>
               Loading tracking events from Supabase...
             </div>
           ) : events.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '3rem 1.5rem', background: 'var(--color-subtle)', borderRadius: '12px', border: '1px dashed var(--border-color)' }}>
-              <Activity size={32} style={{ color: 'var(--color-text-muted)', marginBottom: '0.5rem' }} />
-              <div style={{ fontWeight: 700, color: 'var(--color-text-primary)', fontSize: '0.95rem' }}>
+            <div style={{ textAlign: 'center', padding: '3rem 1.5rem', background: 'var(--color-subtle, #f8fafc)', borderRadius: '12px', border: '1px dashed var(--border-color)' }}>
+              <Activity size={36} style={{ color: '#6366f1', opacity: 0.5, margin: '0 auto 0.5rem' }} />
+              <div style={{ fontWeight: 800, color: 'var(--color-text-primary)', fontSize: '1rem' }}>
                 No tracking events registered yet
               </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.2rem' }}>
-                When customers visit public pages or initiate orders, live events appear here automatically.
+              <div style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+                Click &quot;Simulate page visit&quot; above or visit public pages to test event transmission.
               </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              {events.slice(0, 15).map((ev, idx) => (
-                <div key={ev.id || idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'var(--color-subtle)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800, background: 'rgba(59, 130, 246, 0.15)', color: '#38bdf8', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
-                      {ev.event_name || 'PageView'}
-                    </span>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                      {ev.page_url || '/'}
-                    </span>
-                  </div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                    {ev.created_at ? new Date(ev.created_at).toLocaleTimeString() : 'Just now'}
-                  </span>
-                </div>
-              ))}
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '850px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1.5px solid var(--border-color, #e2e8f0)' }}>
+                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>WHEN</th>
+                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>WHO</th>
+                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>WHAT HAPPENED</th>
+                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>SOURCE</th>
+                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>TRAFFIC SOURCE</th>
+                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>VALUE</th>
+                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>PAGE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {events.map((ev, idx) => {
+                    const timeDisplay = formatEventTime(ev.event_time || ev.created_at);
+                    const whoDisplay = ev.user_role || (ev.user_email ? `Client (${ev.user_email})` : 'Platform Admin');
+                    const whatDisplay = ev.event_name || 'PageView';
+                    const sourceDisplay = ev.source || 'Visitor browser';
+                    const trafficDisplay = ev.traffic_source || 'www.google.com';
+                    const valueDisplay = ev.value !== undefined && ev.value !== null && ev.value !== '' ? ev.value : '—';
+                    const pageDisplay = ev.page_path || ev.page_url || '/';
+
+                    return (
+                      <tr key={ev.id || idx} style={{ borderBottom: '1px solid var(--border-color, #e2e8f0)', background: 'transparent' }}>
+                        <td style={{ padding: '1rem', fontSize: '0.84rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                          {timeDisplay}
+                        </td>
+                        <td style={{ padding: '1rem', fontSize: '0.84rem', color: '#64748b' }}>
+                          {whoDisplay}
+                        </td>
+                        <td style={{ padding: '1rem', fontSize: '0.88rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
+                          {whatDisplay}
+                        </td>
+                        <td style={{ padding: '1rem', fontSize: '0.84rem', color: '#64748b' }}>
+                          {sourceDisplay}
+                        </td>
+                        <td style={{ padding: '1rem', fontSize: '0.84rem', color: '#64748b' }}>
+                          {trafficDisplay}
+                        </td>
+                        <td style={{ padding: '1rem', fontSize: '0.84rem', color: '#64748b' }}>
+                          {valueDisplay}
+                        </td>
+                        <td style={{ padding: '1rem', fontSize: '0.84rem', color: '#64748b', fontFamily: 'monospace' }}>
+                          {pageDisplay}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
+
         </div>
       )}
 
