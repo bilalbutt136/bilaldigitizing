@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Tag, Plus, Trash2, CheckCircle2, Clock, Zap, Percent,
   Sliders, Save, Flame, Gift, ArrowRight, X, Play, Pause,
-  Calendar, Users, Info, Sparkles, Send
+  Calendar, Users, Info, Sparkles, Send, RefreshCw
 } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 
@@ -60,17 +60,29 @@ export const PromotionsManager = () => {
     promotions: [],
     announcement: {
       enabled: true,
-      badge: 'LIMITED TIME DEAL',
-      text: 'Get 20% OFF on your first Embroidery Digitizing or Vector Art order!',
-      linkText: 'Claim 20% Off',
+      autoSync: true,
+      badge: 'SPECIAL PROMO',
+      text: 'Get 10% OFF on All Custom Embroidery Digitizing & Vector Art Orders!',
+      linkText: 'Claim 10% Off',
       linkUrl: '/order',
-      promoCode: 'WELCOME20',
+      promoCode: 'SAVE10',
       showCountdown: true,
       showCodeBadge: true,
       theme: 'orange',
-      textColor: '#ffffff'
+      textColor: '#ffffff',
+      discountValue: 10,
+      discountType: 'percent'
     },
     promoCodes: [
+      {
+        code: 'SAVE10',
+        discountType: 'percent',
+        discountValue: 10,
+        minOrder: 0,
+        serviceScope: 'all',
+        description: '10% off introductory discount for new embroidery & vector orders',
+        isActive: true
+      },
       {
         code: 'WELCOME20',
         discountType: 'percent',
@@ -88,15 +100,6 @@ export const PromotionsManager = () => {
         serviceScope: 'embroidery',
         description: '15% off embroidery digitizing on orders over $40',
         isActive: true
-      },
-      {
-        code: 'VECTOR10',
-        discountType: 'fixed',
-        discountValue: 10,
-        minOrder: 30,
-        serviceScope: 'vector',
-        description: '$10 off vector conversion and line art recreation',
-        isActive: true
       }
     ],
     volumeDiscounts: {
@@ -113,21 +116,72 @@ export const PromotionsManager = () => {
   const [calcQty, setCalcQty] = useState(5);
   const [calcBaseRate, setCalcBaseRate] = useState(20);
 
+  // Derive active promo
+  const activePromo = Array.isArray(formData.promotions)
+    ? formData.promotions.find(p => p.status === 'active')
+    : null;
+
   // Sync state from siteSettings on load
   useEffect(() => {
     if (siteSettings) {
-      setFormData(prev => ({
-        ...prev,
-        promotions: Array.isArray(siteSettings.promotions) ? siteSettings.promotions : (prev.promotions || []),
-        announcement: siteSettings.announcement ? { ...prev.announcement, ...siteSettings.announcement } : prev.announcement,
-        promoCodes: Array.isArray(siteSettings.promoCodes) && siteSettings.promoCodes.length > 0 ? siteSettings.promoCodes : prev.promoCodes,
-        volumeDiscounts: siteSettings.volumeDiscounts ? { ...prev.volumeDiscounts, ...siteSettings.volumeDiscounts } : prev.volumeDiscounts
-      }));
+      const incomingPromos = Array.isArray(siteSettings.promotions) ? siteSettings.promotions : [];
+      const currentActive = incomingPromos.find(p => p.status === 'active');
+
+      setFormData(prev => {
+        let finalAnnouncement = siteSettings.announcement ? { ...prev.announcement, ...siteSettings.announcement } : prev.announcement;
+        
+        // If active promo exists and announcement text still contains legacy hardcoded 20% or autoSync is active, automatically adapt to active promo
+        if (currentActive && (finalAnnouncement.autoSync !== false || finalAnnouncement.text?.includes('20%'))) {
+          finalAnnouncement = {
+            ...finalAnnouncement,
+            enabled: true,
+            badge: currentActive.name ? currentActive.name.toUpperCase() : 'SPECIAL PROMO',
+            text: `Get ${currentActive.discountPercent}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`,
+            linkText: `Claim ${currentActive.discountPercent}% Off`,
+            promoCode: currentActive.promoCode || `SAVE${currentActive.discountPercent}`,
+            discountValue: currentActive.discountPercent,
+            discountType: 'percent'
+          };
+        }
+
+        return {
+          ...prev,
+          promotions: incomingPromos.length > 0 ? incomingPromos : prev.promotions,
+          announcement: finalAnnouncement,
+          promoCodes: Array.isArray(siteSettings.promoCodes) && siteSettings.promoCodes.length > 0 ? siteSettings.promoCodes : prev.promoCodes,
+          volumeDiscounts: siteSettings.volumeDiscounts ? { ...prev.volumeDiscounts, ...siteSettings.volumeDiscounts } : prev.volumeDiscounts
+        };
+      });
     }
   }, [siteSettings]);
 
   // ---------------------------------------------------------------------------
-  // PROMOTIONS ACTIONS (100% Instant Live Connection)
+  // HELPER: Auto-Format Announcement from Promotion
+  // ---------------------------------------------------------------------------
+  const buildAnnouncementFromPromo = (promo, existingAnnouncement = {}) => {
+    const pct = Number(promo.discountPercent) || 10;
+    const name = (promo.name || '').trim();
+    const code = promo.promoCode || `SAVE${pct}`;
+    return {
+      ...existingAnnouncement,
+      enabled: true,
+      autoSync: true,
+      badge: name ? name.toUpperCase() : 'SPECIAL PROMO',
+      text: `Get ${pct}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`,
+      linkText: `Claim ${pct}% Off`,
+      linkUrl: existingAnnouncement.linkUrl || '/order',
+      promoCode: code,
+      showCountdown: existingAnnouncement.showCountdown !== false,
+      showCodeBadge: true,
+      theme: existingAnnouncement.theme || 'orange',
+      textColor: existingAnnouncement.textColor || '#ffffff',
+      discountValue: pct,
+      discountType: 'percent'
+    };
+  };
+
+  // ---------------------------------------------------------------------------
+  // PROMOTIONS ACTIONS (100% Instant Live Connection & Dynamic Auto-Sync)
   // ---------------------------------------------------------------------------
   const handleOpenCreatePromoModal = () => {
     setPromoForm({
@@ -153,31 +207,68 @@ export const PromotionsManager = () => {
 
   const handleConfirmPromotion = async () => {
     const promoId = `promo_${Date.now()}`;
-    const codeGen = `PROMO${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const discount = Number(promoForm.discountPercent) || 10;
+    const cleanName = promoForm.name.trim();
+    const cleanCode = `SAVE${discount}`;
+
     const newPromo = {
       id: promoId,
-      name: promoForm.name.trim(),
+      name: cleanName,
       type: 'new_buyer',
-      discountPercent: Number(promoForm.discountPercent) || 10,
+      discountPercent: discount,
       startDate: promoForm.startDate,
       endDate: promoForm.endDate,
-      status: 'active',
+      status: 'active', // starts active
       maxOrdersLimit: Number(promoForm.maxOrdersLimit) || 10,
       ordersCount: 0,
       servicesIncluded: promoForm.servicesIncluded || 'All Studio Services',
-      promoCode: codeGen,
+      promoCode: cleanCode,
       createdAt: new Date().toISOString()
     };
 
-    const updatedPromotions = [newPromo, ...formData.promotions];
-    setFormData(prev => ({ ...prev, promotions: updatedPromotions }));
+    // Auto-pause any previous active promo to ensure only 1 active at a time or set priority
+    const updatedPromotions = [
+      newPromo,
+      ...formData.promotions.map(p => ({ ...p, status: 'paused' }))
+    ];
+
+    // AUTOMATICALLY SYNCHRONIZE ANNOUNCEMENT BANNER WITH NEW PROMOTION PERCENTAGE
+    const autoSyncedAnnouncement = buildAnnouncementFromPromo(newPromo, formData.announcement);
+
+    // Also auto-add or update corresponding promo code in coupons list
+    const updatedPromoCodes = [
+      {
+        code: cleanCode,
+        discountType: 'percent',
+        discountValue: discount,
+        minOrder: 0,
+        serviceScope: 'all',
+        description: `${cleanName} - ${discount}% OFF First-time buyer promotion`,
+        isActive: true
+      },
+      ...formData.promoCodes.filter(c => c.code !== cleanCode)
+    ];
+
+    setFormData(prev => ({
+      ...prev,
+      promotions: updatedPromotions,
+      announcement: autoSyncedAnnouncement,
+      promoCodes: updatedPromoCodes
+    }));
+
     setIsPromoModalOpen(false);
 
-    if (showToast) showToast(`Promotion "${newPromo.name}" created and activated!`, 'success');
+    if (showToast) {
+      showToast(`🎉 Promotion "${cleanName}" created! Live banner automatically updated to ${discount}% OFF.`, 'success');
+    }
 
     try {
       if (updateSiteSettings) {
-        await updateSiteSettings({ promotions: updatedPromotions });
+        await updateSiteSettings({
+          promotions: updatedPromotions,
+          announcement: autoSyncedAnnouncement,
+          promoCodes: updatedPromoCodes
+        });
       }
     } catch (err) {
       console.error('Error saving new promotion:', err);
@@ -185,27 +276,58 @@ export const PromotionsManager = () => {
   };
 
   const handleTogglePromoStatus = async (promoId) => {
+    let newlyActivatedPromo = null;
+
     const updatedPromotions = formData.promotions.map(p => {
       if (p.id === promoId) {
         const nextStatus = p.status === 'active' ? 'paused' : 'active';
-        return { ...p, status: nextStatus };
+        const updated = { ...p, status: nextStatus };
+        if (nextStatus === 'active') newlyActivatedPromo = updated;
+        return updated;
       }
       return p;
     });
 
+    let updatedAnnouncement = { ...formData.announcement };
+
+    if (newlyActivatedPromo) {
+      // Auto-sync announcement to this newly active promo
+      updatedAnnouncement = buildAnnouncementFromPromo(newlyActivatedPromo, formData.announcement);
+    } else {
+      // Check if any other promo is still active
+      const remainingActive = updatedPromotions.find(p => p.status === 'active');
+      if (remainingActive) {
+        updatedAnnouncement = buildAnnouncementFromPromo(remainingActive, formData.announcement);
+      } else {
+        // No promotions active, hide announcement ribbon
+        updatedAnnouncement = { ...formData.announcement, enabled: false };
+      }
+    }
+
     // 100% Instant optimistic local state update
-    setFormData(prev => ({ ...prev, promotions: updatedPromotions }));
+    setFormData(prev => ({
+      ...prev,
+      promotions: updatedPromotions,
+      announcement: updatedAnnouncement
+    }));
+
     const targetPromo = updatedPromotions.find(p => p.id === promoId);
     const isNowActive = targetPromo?.status === 'active';
 
     if (showToast) {
-      showToast(`Promotion "${targetPromo?.name || 'Campaign'}" is now ${isNowActive ? 'ACTIVE (Live on website)' : 'PAUSED (Hidden)'}`, isNowActive ? 'success' : 'info');
+      showToast(
+        `Promotion "${targetPromo?.name || 'Campaign'}" is now ${isNowActive ? `ACTIVE (Banner set to ${targetPromo.discountPercent}% OFF)` : 'PAUSED (Banner hidden)'}`,
+        isNowActive ? 'success' : 'info'
+      );
     }
 
     // Instant save to Supabase live database
     try {
       if (updateSiteSettings) {
-        await updateSiteSettings({ promotions: updatedPromotions });
+        await updateSiteSettings({
+          promotions: updatedPromotions,
+          announcement: updatedAnnouncement
+        });
       }
     } catch (err) {
       console.error('Error toggling promotion status in Supabase:', err);
@@ -216,15 +338,51 @@ export const PromotionsManager = () => {
   const handleDeletePromotion = async (promoId) => {
     if (!confirm('Are you sure you want to delete this promotion?')) return;
     const updatedPromotions = formData.promotions.filter(p => p.id !== promoId);
-    setFormData(prev => ({ ...prev, promotions: updatedPromotions }));
+    
+    // Check remaining active promo
+    const remainingActive = updatedPromotions.find(p => p.status === 'active');
+    const updatedAnnouncement = remainingActive 
+      ? buildAnnouncementFromPromo(remainingActive, formData.announcement)
+      : { ...formData.announcement, enabled: false };
+
+    setFormData(prev => ({
+      ...prev,
+      promotions: updatedPromotions,
+      announcement: updatedAnnouncement
+    }));
+
     if (showToast) showToast('Promotion removed', 'info');
 
     try {
       if (updateSiteSettings) {
-        await updateSiteSettings({ promotions: updatedPromotions });
+        await updateSiteSettings({
+          promotions: updatedPromotions,
+          announcement: updatedAnnouncement
+        });
       }
     } catch (err) {
       console.error('Delete promo error:', err);
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // 1-CLICK AUTO-SYNC HANDLER FOR ANNOUNCEMENT TAB
+  // ---------------------------------------------------------------------------
+  const handleAutoSyncFromActivePromo = async () => {
+    if (!activePromo) {
+      if (showToast) showToast('No active promotion currently running. Create or start a promotion first.', 'info');
+      return;
+    }
+    const synced = buildAnnouncementFromPromo(activePromo, formData.announcement);
+    setFormData(prev => ({ ...prev, announcement: synced }));
+    if (showToast) showToast(`Banner auto-synced to "${activePromo.name}" (${activePromo.discountPercent}% OFF)!`, 'success');
+
+    try {
+      if (updateSiteSettings) {
+        await updateSiteSettings({ announcement: synced });
+      }
+    } catch (err) {
+      console.error('Auto sync error:', err);
     }
   };
 
@@ -375,7 +533,7 @@ export const PromotionsManager = () => {
             Promotions, Coupons & Commercial Volume Tiers
           </h2>
           <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted, #64748b)', margin: '0.25rem 0 0 0' }}>
-            Control buyer promotions, coupons with instant Start/Pause buttons, and flash banners.
+            Control buyer promotions with automatic percentage syncing and instant Start/Pause buttons.
           </p>
         </div>
 
@@ -503,11 +661,57 @@ export const PromotionsManager = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* TAB 1: PROMOTIONS & BUYER DEALS (EXACT REPLICA OF USER SCREENSHOTS) */}
+      {/* TAB 1: PROMOTIONS & BUYER DEALS */}
       {/* ========================================================================= */}
       {activeTab === 'promotions' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
+          {/* Active Auto-Sync Notification */}
+          {activePromo && (
+            <div style={{
+              background: '#ecfdf5',
+              border: '1.5px solid #a7f3d0',
+              borderRadius: '14px',
+              padding: '0.9rem 1.25rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '0.75rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <Sparkles size={18} style={{ color: '#059669' }} />
+                <div>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#065f46' }}>
+                    Active Promotion Running: "{activePromo.name}" ({activePromo.discountPercent}% OFF)
+                  </span>
+                  <p style={{ fontSize: '0.78rem', color: '#047857', margin: '0.1rem 0 0 0' }}>
+                    Public visitor banner and header announcement ribbon are dynamically broadcasting {activePromo.discountPercent}% OFF with promo code <strong>{activePromo.promoCode}</strong>.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('announcement')}
+                style={{
+                  background: '#059669',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.45rem 0.9rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
+                }}
+              >
+                View Header Banner <ArrowRight size={13} />
+              </button>
+            </div>
+          )}
+
           {/* DUAL LAUNCH CARDS (media_1787326604604.png) */}
           <div style={{
             display: 'grid',
@@ -676,7 +880,7 @@ export const PromotionsManager = () => {
                   Live Active Promotions & Buyer Campaigns
                 </h3>
                 <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #64748b)', margin: 0 }}>
-                  Click Start or Pause to toggle promotion status with 100% instant sync on the live website.
+                  Click Start or Pause to toggle promotion status. Banners automatically adapt to the active promotion's discount percentage.
                 </p>
               </div>
 
@@ -1030,12 +1234,64 @@ export const PromotionsManager = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 3: HEADER ANNOUNCEMENT RIBBON */}
+      {/* TAB 3: HEADER ANNOUNCEMENT RIBBON (MATCHES media_1787328726734.png WITH DYNAMIC SYNC) */}
       {/* ========================================================================= */}
       {activeTab === 'announcement' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
-          {/* Live Preview Box */}
+          {/* Dynamic Sync Status Callout */}
+          <div style={{
+            background: activePromo ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.03) 100%)' : 'var(--color-surface, #ffffff)',
+            border: `1.5px solid ${activePromo ? '#a7f3d0' : 'var(--color-border)'}`,
+            borderRadius: '16px',
+            padding: '1.25rem 1.5rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem',
+            boxShadow: 'var(--shadow-sm)'
+          }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                <Sparkles size={18} style={{ color: activePromo ? '#059669' : 'var(--color-primary)' }} />
+                <span style={{ fontSize: '0.95rem', fontWeight: 800, color: activePromo ? '#065f46' : 'var(--color-text-primary, #0f172a)' }}>
+                  {activePromo ? `🟢 Linked to Active Promotion: "${activePromo.name}" (${activePromo.discountPercent}% OFF)` : '⚪ No Active Promotion Currently Selected'}
+                </span>
+              </div>
+              <p style={{ fontSize: '0.82rem', color: activePromo ? '#047857' : 'var(--color-text-muted, #64748b)', margin: 0 }}>
+                {activePromo 
+                  ? `Banner text and coupon automatically display ${activePromo.discountPercent}% OFF with code "${activePromo.promoCode}".` 
+                  : 'Create or start a promotion in the first tab to automatically broadcast discounts.'}
+              </p>
+            </div>
+
+            {activePromo && (
+              <button
+                type="button"
+                onClick={handleAutoSyncFromActivePromo}
+                style={{
+                  background: '#059669',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.55rem 1.15rem',
+                  fontSize: '0.85rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  boxShadow: '0 2px 8px rgba(5, 150, 105, 0.3)'
+                }}
+              >
+                <RefreshCw size={14} />
+                <span>Auto-Format to {activePromo.discountPercent}% OFF</span>
+              </button>
+            )}
+          </div>
+
+          {/* Live Visitor Announcement Banner Preview (Matches media_1787328726734.png) */}
           <div style={{
             background: 'var(--color-surface, #ffffff)',
             border: '1.5px solid var(--color-border)',
@@ -1044,10 +1300,10 @@ export const PromotionsManager = () => {
             boxShadow: 'var(--shadow-sm)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                 Live Visitor Announcement Banner Preview:
               </span>
-              <span style={{ fontSize: '0.75rem', color: formData.announcement.enabled ? '#059669' : '#ef4444', fontWeight: 800 }}>
+              <span style={{ fontSize: '0.78rem', color: formData.announcement.enabled ? '#059669' : '#ef4444', fontWeight: 800 }}>
                 {formData.announcement.enabled ? '● Currently Active on Website' : '○ Currently Hidden'}
               </span>
             </div>
@@ -1088,7 +1344,7 @@ export const PromotionsManager = () => {
               )}
 
               {formData.announcement.linkText && (
-                <div style={{ background: '#ffffff', color: activeTheme.id === 'orange' ? '#ea580c' : '#0f172a', padding: '0.2rem 0.75rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <div style={{ background: '#ffffff', color: activeTheme.id === 'orange' ? '#ea580c' : activeTheme.id === 'emerald' ? '#065f46' : '#0f172a', padding: '0.2rem 0.75rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                   <span>{formData.announcement.linkText}</span>
                   <ArrowRight size={12} />
                 </div>
@@ -1096,7 +1352,7 @@ export const PromotionsManager = () => {
             </div>
           </div>
 
-          {/* Banner Settings Form */}
+          {/* Banner Settings Form (Matches media_1787328726734.png) */}
           <div style={{
             background: 'var(--color-surface, #ffffff)',
             border: '1.5px solid var(--color-border)',
@@ -1121,7 +1377,7 @@ export const PromotionsManager = () => {
                     style={{ width: '18px', height: '18px', accentColor: 'var(--color-primary)', cursor: 'pointer' }}
                   />
                   <span style={{ fontSize: '0.9rem', fontWeight: 800, color: formData.announcement.enabled ? '#059669' : 'var(--color-text-muted)' }}>
-                    {formData.announcement.enabled ? 'Banner Active (Live)' : 'Banner Hidden'}
+                    {formData.announcement.enabled ? 'Banner Active (Live on Website)' : 'Banner Hidden'}
                   </span>
                 </label>
               </div>
@@ -1132,7 +1388,7 @@ export const PromotionsManager = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. FLASH SALE"
+                  placeholder="e.g. SPECIAL PROMO"
                   value={formData.announcement.badge}
                   onChange={(e) => setFormData(prev => ({
                     ...prev,
@@ -1145,7 +1401,8 @@ export const PromotionsManager = () => {
                     border: '1.5px solid var(--color-border)',
                     background: 'var(--color-surface, #ffffff)',
                     color: 'var(--color-text-primary, #0f172a)',
-                    fontSize: '0.88rem'
+                    fontSize: '0.88rem',
+                    fontWeight: 700
                   }}
                 />
               </div>
@@ -1156,7 +1413,7 @@ export const PromotionsManager = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. SAVE20"
+                  placeholder="e.g. SAVE10"
                   value={formData.announcement.promoCode}
                   onChange={(e) => setFormData(prev => ({
                     ...prev,
@@ -1170,7 +1427,8 @@ export const PromotionsManager = () => {
                     background: 'var(--color-surface, #ffffff)',
                     color: 'var(--color-text-primary, #0f172a)',
                     fontSize: '0.88rem',
-                    fontWeight: 800
+                    fontWeight: 800,
+                    fontFamily: 'monospace'
                   }}
                 />
               </div>
@@ -1193,7 +1451,8 @@ export const PromotionsManager = () => {
                     border: '1.5px solid var(--color-border)',
                     background: 'var(--color-surface, #ffffff)',
                     color: 'var(--color-text-primary, #0f172a)',
-                    fontSize: '0.88rem'
+                    fontSize: '0.88rem',
+                    fontWeight: 600
                   }}
                 />
               </div>
@@ -1242,7 +1501,8 @@ export const PromotionsManager = () => {
                     border: '1.5px solid var(--color-border)',
                     background: 'var(--color-surface, #ffffff)',
                     color: 'var(--color-text-primary, #0f172a)',
-                    fontSize: '0.88rem'
+                    fontSize: '0.88rem',
+                    fontWeight: 700
                   }}
                 />
               </div>
@@ -1428,7 +1688,7 @@ export const PromotionsManager = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 2-STEP MODAL: CREATE PROMOTION (media_1787326924982.png & media_1787326990955.png) */}
+      {/* 2-STEP MODAL: CREATE PROMOTION */}
       {/* ========================================================================= */}
       {isPromoModalOpen && (
         <div style={{

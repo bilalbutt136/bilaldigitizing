@@ -21,9 +21,27 @@ export const AnnouncementBar = () => {
   const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ hours: 14, minutes: 35, seconds: 48 });
 
-  const announcement = siteSettings?.announcement;
+  const rawAnnouncement = siteSettings?.announcement;
+  const activePromo = Array.isArray(siteSettings?.promotions) 
+    ? siteSettings.promotions.find(p => p.status === 'active')
+    : null;
 
-  // Real-time Countdown Timer calculation
+  // Dynamically derive announcement details from active promotion if present or use manual config
+  const announcement = activePromo ? {
+    enabled: rawAnnouncement?.enabled !== false,
+    text: `Get ${activePromo.discountPercent}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`,
+    badge: activePromo.name ? activePromo.name.toUpperCase() : (rawAnnouncement?.badge || 'SPECIAL PROMO'),
+    promoCode: activePromo.promoCode || (rawAnnouncement?.promoCode || `PROMO${activePromo.discountPercent}`),
+    linkText: `Claim ${activePromo.discountPercent}% Off`,
+    linkUrl: rawAnnouncement?.linkUrl || '/order',
+    showCountdown: rawAnnouncement?.showCountdown !== false,
+    showCodeBadge: rawAnnouncement?.showCodeBadge !== false,
+    theme: rawAnnouncement?.theme || 'orange',
+    textColor: rawAnnouncement?.textColor || '#ffffff',
+    discountValue: activePromo.discountPercent
+  } : (rawAnnouncement?.enabled && rawAnnouncement?.text ? rawAnnouncement : null);
+
+  // Real-time Countdown Timer calculation & Live promotions listener
   useEffect(() => {
     setMounted(true);
     if (announcement?.text) {
@@ -44,8 +62,19 @@ export const AnnouncementBar = () => {
       });
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [announcement?.text, announcement?.enabled]);
+    const handlePromoSync = () => {
+      setIsDismissed(false); // reset dismiss on new promotion update
+    };
+
+    window.addEventListener('bdigi_promotions_sync', handlePromoSync);
+    window.addEventListener('site_settings_updated', handlePromoSync);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('bdigi_promotions_sync', handlePromoSync);
+      window.removeEventListener('site_settings_updated', handlePromoSync);
+    };
+  }, [announcement?.text, announcement?.enabled, activePromo?.discountPercent, activePromo?.id]);
 
   if (!mounted || isDismissed || !announcement?.enabled || !announcement?.text) {
     return null;

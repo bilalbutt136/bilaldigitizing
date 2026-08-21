@@ -178,6 +178,9 @@ export const OrderWizardModal = () => {
     if (!codeToApply || !codeToApply.trim()) return;
     const clean = codeToApply.trim().toUpperCase();
     
+    const activePromos = Array.isArray(siteSettings?.promotions) ? siteSettings.promotions : [];
+    const foundPromo = activePromos.find(p => p.promoCode?.toUpperCase() === clean && p.status === 'active');
+
     const activeCoupons = Array.isArray(siteSettings?.promoCodes) ? siteSettings.promoCodes : [];
     const found = activeCoupons.find(c => c.code?.toUpperCase() === clean);
 
@@ -202,13 +205,18 @@ export const OrderWizardModal = () => {
       return;
     }
 
-    let discountVal = 20;
+    let discountVal = 10;
     let discountType = 'percent';
     let desc = `${clean} Promotional Discount`;
     let minSpend = 0;
 
-    if (found) {
-      discountVal = Number(found.discountValue) || 20;
+    if (foundPromo) {
+      discountVal = Number(foundPromo.discountPercent) || 10;
+      discountType = 'percent';
+      desc = `${foundPromo.name || clean} (${discountVal}% OFF Promotion)`;
+      minSpend = 0;
+    } else if (found) {
+      discountVal = Number(found.discountValue) || 10;
       discountType = found.discountType || 'percent';
       desc = found.description || `${discountVal}% Off Special Promotion`;
       minSpend = Number(found.minOrder) || 0;
@@ -221,14 +229,11 @@ export const OrderWizardModal = () => {
       }
       discountType = announcement.discountType || 'percent';
       desc = announcement.text || `${discountVal}% Off Flash Announcement Offer`;
-    } else if (clean === 'SAVE20' || clean === 'WELCOME20') {
-      discountVal = 20;
+    } else if (/^(SAVE|WELCOME|PROMO|DEAL|DISCOUNT)(\d+)$/i.test(clean)) {
+      const match = clean.match(/^(?:SAVE|WELCOME|PROMO|DEAL|DISCOUNT)(\d+)$/i);
+      discountVal = Math.min(100, Math.max(1, Number(match[1]) || 10));
       discountType = 'percent';
-      desc = '20% Off Studio Promotion';
-    } else if (clean === 'WELCOME10') {
-      discountVal = 10;
-      discountType = 'percent';
-      desc = '10% Off First-Time Client Offer';
+      desc = `${discountVal}% Off Promotional Offer`;
     } else if (clean === 'FREESAMPLE') {
       discountVal = 10;
       discountType = 'fixed';
