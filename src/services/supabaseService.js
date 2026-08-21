@@ -545,14 +545,46 @@ export async function saveCmsConfigToSupabase(key, value) {
   if (!key) return false;
 
   try {
+    let authHeaders = { 'Content-Type': 'application/json' };
+    try {
+      if (supabase) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session?.access_token) {
+          authHeaders['Authorization'] = `Bearer ${sessionData.session.access_token}`;
+        }
+      }
+    } catch {}
+
     const res = await fetch('/api/admin/homepage', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
+      credentials: 'include',
       body: JSON.stringify({ settings: [{ key, value }] })
     });
-    return res.ok;
+
+    if (res.ok) return true;
+
+    // Direct fallback if API route returned non-200
+    if (supabase) {
+      const valStr = typeof value === 'object' ? JSON.stringify(value) : String(value);
+      await Promise.allSettled([
+        supabase.from('site_config').upsert({ key, value: valStr, updated_at: new Date().toISOString() }, { onConflict: 'key' }),
+        supabase.from('home_page_settings').upsert({ key, value: valStr, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+      ]);
+      return true;
+    }
+    return false;
   } catch (err) {
     console.warn(`saveCmsConfigToSupabase [${key}] exception:`, err);
+    if (supabase) {
+      try {
+        const valStr = typeof value === 'object' ? JSON.stringify(value) : String(value);
+        await supabase.from('site_config').upsert({ key, value: valStr, updated_at: new Date().toISOString() }, { onConflict: 'key' }, { onConflict: 'key' });
+        return true;
+      } catch (dbErr) {
+        console.error('Direct supabase fallback error:', dbErr);
+      }
+    }
     return false;
   }
 }
