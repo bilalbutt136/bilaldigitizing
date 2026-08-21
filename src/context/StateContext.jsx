@@ -279,57 +279,71 @@ export const StateProvider = ({ children }) => {
     rotatingTexts: 'Commercial Embroidery, Scalable Vector Art, Custom Physical Patches'
   });
   const [heroServiceText, setHeroServiceText] = useState({});
-  const [siteSettings, setSiteSettings] = useState({
-    promotions: [
-      {
-        id: 'promo-welcome-sale',
-        name: 'Summer sale',
-        type: 'new_buyer',
-        discountPercent: 10,
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
-        status: 'active',
-        maxOrdersLimit: 10,
-        ordersCount: 2,
-        servicesIncluded: 'All Studio Services',
-        promoCode: 'WELCOME10',
-        createdAt: new Date().toISOString()
-      }
-    ],
-    announcement: {
-      enabled: true,
-      badge: 'SPECIAL PROMO',
-      text: 'Get 20% OFF on All Custom Embroidery Digitizing & Vector Art Orders!',
-      promoCode: 'SAVE20',
-      linkText: 'Claim 20% Off',
-      linkUrl: '/order',
-      theme: 'emerald',
-      bgColor: 'linear-gradient(90deg, #065f46 0%, #059669 50%, #065f46 100%)',
-      textColor: '#ffffff',
-      showCodeBadge: true,
-      showCountdown: true,
-      countdownHours: 24
-    },
-    promotionalBanner: {
-      enabled: true,
-      title: 'First-Time Client Welcome Offer',
-      description: 'Enjoy 20% off your first digitizing file or vector redraw with guaranteed zero thread breaks and free unlimited revisions.',
-      promoCode: 'WELCOME20',
-      ctaText: 'Start Your Order',
-      ctaLink: '/order',
-      theme: 'navy',
-      position: 'bottom-right'
-    },
-    promoCodes: [
-      {
-        code: 'SAVE20',
-        discountType: 'percent',
-        discountValue: 20,
-        minOrder: 10,
-        description: '20% off all embroidery digitizing and vector conversion services',
-        isActive: true
-      }
-    ]
+  const [siteSettings, setSiteSettings] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('site_settings_live');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed === 'object') {
+            return parsed;
+          }
+        }
+      } catch {}
+    }
+    return {
+      promotions: [
+        {
+          id: 'promo-welcome-sale',
+          name: 'Summer sale',
+          type: 'new_buyer',
+          discountPercent: 10,
+          startDate: new Date().toISOString().split('T')[0],
+          endDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+          status: 'active',
+          maxOrdersLimit: 10,
+          ordersCount: 2,
+          servicesIncluded: 'All Studio Services',
+          promoCode: 'SAVE10',
+          createdAt: new Date().toISOString()
+        }
+      ],
+      announcement: {
+        enabled: true,
+        badge: 'SUMMER SALE',
+        text: 'Get 10% OFF on All Custom Embroidery Digitizing & Vector Art Orders!',
+        promoCode: 'SAVE10',
+        linkText: 'Claim 10% Off',
+        linkUrl: '/order',
+        theme: 'emerald',
+        bgColor: 'linear-gradient(90deg, #065f46 0%, #059669 50%, #065f46 100%)',
+        textColor: '#ffffff',
+        showCodeBadge: true,
+        showCountdown: true,
+        countdownHours: 24,
+        discountValue: 10
+      },
+      promotionalBanner: {
+        enabled: true,
+        title: 'Summer sale — 10% OFF',
+        description: 'Enjoy 10% off your order on All Studio Services.',
+        promoCode: 'SAVE10',
+        ctaText: 'Start Your Order',
+        ctaLink: '/order',
+        theme: 'navy',
+        position: 'bottom-right'
+      },
+      promoCodes: [
+        {
+          code: 'SAVE10',
+          discountType: 'percent',
+          discountValue: 10,
+          minOrder: 0,
+          description: '10% off all embroidery digitizing and vector conversion services',
+          isActive: true
+        }
+      ]
+    };
   });
   const [digitizers, setDigitizers] = useState([]);
 

@@ -966,59 +966,50 @@ export async function fetchCatalogFromSupabase() {
       pricingCards: data.pricing_cards || [],
       heroGlobalSettings: configMap['hero_global_settings'] || null,
       heroServiceText: configMap['hero_service_text'] || null,
-      siteSettings: {
-        ...rawSettings,
-        promotions: parsedPromotions || [
-          {
-            id: 'promo-welcome-sale',
-            name: 'Summer sale',
-            type: 'new_buyer',
-            discountPercent: 10,
-            startDate: new Date().toISOString().split('T')[0],
-            endDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
-            status: 'active',
-            maxOrdersLimit: 10,
-            ordersCount: 2,
-            servicesIncluded: 'All Studio Services',
-            promoCode: 'WELCOME10',
-            createdAt: new Date().toISOString()
-          }
-        ],
-        announcement: parsedAnnouncement || {
-          enabled: true,
-          badge: 'SPECIAL PROMO',
-          text: 'Get 20% OFF on All Custom Embroidery Digitizing & Vector Art Orders!',
-          promoCode: 'SAVE20',
-          linkText: 'Claim 20% Off',
-          linkUrl: '/order',
-          theme: 'emerald',
-          bgColor: 'linear-gradient(90deg, #065f46 0%, #059669 50%, #065f46 100%)',
+      siteSettings: (() => {
+        const safePromotions = parsedPromotions || [];
+        const currentActivePromo = safePromotions.find(p => p.status === 'active');
+
+        const dynamicAnnouncement = currentActivePromo ? {
+          enabled: parsedAnnouncement?.enabled !== false,
+          badge: (currentActivePromo.name || 'SPECIAL PROMO').toUpperCase(),
+          text: `Get ${currentActivePromo.discountPercent}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`,
+          linkText: `Claim ${currentActivePromo.discountPercent}% Off`,
+          linkUrl: parsedAnnouncement?.linkUrl || '/order',
+          promoCode: currentActivePromo.promoCode || `SAVE${currentActivePromo.discountPercent}`,
+          theme: parsedAnnouncement?.theme || 'emerald',
+          bgColor: parsedAnnouncement?.bgColor || 'linear-gradient(90deg, #065f46 0%, #059669 50%, #065f46 100%)',
           textColor: '#ffffff',
           showCodeBadge: true,
           showCountdown: true,
-          countdownHours: 24
-        },
-        promotionalBanner: parsedPromotionalBanner || {
-          enabled: true,
-          title: 'First-Time Client Welcome Offer',
-          description: 'Enjoy 20% off your first digitizing file or vector redraw with guaranteed zero thread breaks and free unlimited revisions.',
-          promoCode: 'WELCOME20',
-          ctaText: 'Start Your Order',
-          ctaLink: '/order',
-          theme: 'navy',
-          position: 'bottom-right'
-        },
-        promoCodes: parsedPromoCodes || [
-          {
-            code: 'SAVE20',
-            discountType: 'percent',
-            discountValue: 20,
-            minOrder: 10,
-            description: '20% off all embroidery digitizing and vector conversion services',
-            isActive: true
-          }
-        ]
-      },
+          countdownHours: 24,
+          discountValue: currentActivePromo.discountPercent
+        } : (parsedAnnouncement || {
+          enabled: false,
+          badge: '',
+          text: '',
+          promoCode: '',
+          linkText: '',
+          linkUrl: '/order'
+        });
+
+        return {
+          ...rawSettings,
+          promotions: safePromotions,
+          announcement: dynamicAnnouncement,
+          promotionalBanner: parsedPromotionalBanner || {
+            enabled: !!currentActivePromo,
+            title: currentActivePromo ? `${currentActivePromo.name} — ${currentActivePromo.discountPercent}% OFF` : '',
+            description: currentActivePromo ? `Enjoy ${currentActivePromo.discountPercent}% off your order on ${currentActivePromo.servicesIncluded || 'All Studio Services'}.` : '',
+            promoCode: currentActivePromo ? (currentActivePromo.promoCode || `SAVE${currentActivePromo.discountPercent}`) : '',
+            ctaText: 'Claim Offer',
+            ctaLink: '/order',
+            theme: 'navy',
+            position: 'bottom-right'
+          },
+          promoCodes: parsedPromoCodes || []
+        };
+      })(),
       pricing: configMap['pricing'] || null,
       serviceCms: {
         trust_features: configMap['trust_features'] || [],

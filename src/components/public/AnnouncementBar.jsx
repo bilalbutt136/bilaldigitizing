@@ -90,7 +90,7 @@ export const AnnouncementBar = () => {
 
   const handleCopyAndApply = (e) => {
     e.stopPropagation();
-    const promoCode = announcement.promoCode || 'SAVE20';
+    const promoCode = announcement?.promoCode || (activePromo ? `SAVE${activePromo.discountPercent}` : 'SAVE10');
     try {
       navigator.clipboard.writeText(promoCode);
       setCopied(true);
@@ -105,8 +105,8 @@ export const AnnouncementBar = () => {
   };
 
   const handleActionClick = () => {
-    const target = announcement.linkUrl || '/order';
-    const promoCode = announcement.promoCode || 'SAVE20';
+    const target = announcement?.linkUrl || '/order';
+    const promoCode = announcement?.promoCode || (activePromo ? `SAVE${activePromo.discountPercent}` : 'SAVE10');
     if (target.startsWith('#')) {
       const el = document.getElementById(target.substring(1));
       if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -123,8 +123,8 @@ export const AnnouncementBar = () => {
   };
 
   // Determine dynamic background and text color
-  const themeObj = THEMES[announcement.theme] || THEMES.orange;
-  const backgroundStyle = announcement.bgColor && announcement.bgColor.length > 3
+  const themeObj = THEMES[announcement?.theme] || THEMES.emerald;
+  const backgroundStyle = announcement?.bgColor && announcement.bgColor.length > 3
     ? announcement.bgColor
     : themeObj.bg;
   const textStyle = announcement.textColor || themeObj.text || '#ffffff';
