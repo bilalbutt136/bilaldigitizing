@@ -485,7 +485,7 @@ export const AuthModal = () => {
                 <button
                   type="button"
                   onClick={() => { setAuthModalMode('login'); setAuthError(''); }}
-                  style={{ background: 'none', border: 'none', color: '#ff7a00', fontWeight: 800, cursor: 'pointer', textDecoration: 'underline' }}
+                  style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontWeight: 800, cursor: 'pointer', textDecoration: 'underline' }}
                 >
                   Sign in
                 </button>
@@ -498,7 +498,7 @@ export const AuthModal = () => {
                 <button
                   type="button"
                   onClick={() => { setAuthModalMode('signup'); setAuthError(''); }}
-                  style={{ background: 'none', border: 'none', color: '#ff7a00', fontWeight: 800, cursor: 'pointer', textDecoration: 'underline' }}
+                  style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontWeight: 800, cursor: 'pointer', textDecoration: 'underline' }}
                 >
                   Register free
                 </button>
@@ -695,7 +695,7 @@ export const AuthModal = () => {
                 <button 
                   type="button" 
                   onClick={() => setLegalModalType('terms')} 
-                  style={{ background: 'none', border: 'none', padding: 0, color: '#ff7a00', textDecoration: 'underline', cursor: 'pointer', fontWeight: 700, fontSize: '0.7rem' }}
+                  style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-primary)', textDecoration: 'underline', cursor: 'pointer', fontWeight: 700, fontSize: '0.7rem' }}
                 >
                   Terms of Service
                 </button>{' '}
@@ -703,7 +703,7 @@ export const AuthModal = () => {
                 <button 
                   type="button" 
                   onClick={() => setLegalModalType('privacy')} 
-                  style={{ background: 'none', border: 'none', padding: 0, color: '#ff7a00', textDecoration: 'underline', cursor: 'pointer', fontWeight: 700, fontSize: '0.7rem' }}
+                  style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-primary)', textDecoration: 'underline', cursor: 'pointer', fontWeight: 700, fontSize: '0.7rem' }}
                 >
                   Privacy Policy
                 </button>.
@@ -772,7 +772,7 @@ export const AuthModal = () => {
                     type="checkbox" 
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    style={{ accentColor: '#ff7a00' }}
+                    style={{ accentColor: 'var(--color-primary)' }}
                   />
                   Remember me
                 </label>

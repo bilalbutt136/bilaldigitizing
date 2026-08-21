@@ -23,12 +23,12 @@ const WalletBrandIcon = () => (
     width: '42px',
     height: '42px',
     borderRadius: '12px',
-    background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+    background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 4px 12px rgba(249, 115, 22, 0.35)',
-    color: '#ffffff',
+    boxShadow: '0 4px 12px var(--color-primary-glow)',
+    color: 'var(--color-text-on-primary, #ffffff)',
     flexShrink: 0
   }}>
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -590,7 +590,7 @@ export const CheckoutModal = () => {
         </div>
 
         {/* Content */}
-        <div style={{ position: 'relative', width: '100%', minHeight: '440px', display: 'flex', flexDirection: 'column', background: '#f8fafc', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
+        <div style={{ position: 'relative', width: '100%', minHeight: '440px', display: 'flex', flexDirection: 'column', background: 'var(--color-background)', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
           
           {isPaid ? (
             /* Success View */

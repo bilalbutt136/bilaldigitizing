@@ -348,8 +348,8 @@ export const ServiceProcessTimelineSection = ({
                 {steps.map((p, pIdx) => (
                   <div key={pIdx} style={{ display: 'flex', gap: '1.15rem', alignItems: 'flex-start' }}>
                     <div style={{
-                      background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
-                      color: '#ffffff',
+                      background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                      color: 'var(--color-text-on-primary, #ffffff)',
                       fontWeight: 900,
                       fontSize: '0.85rem',
                       width: '34px',
@@ -359,7 +359,7 @@ export const ServiceProcessTimelineSection = ({
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
-                      boxShadow: '0 4px 12px rgba(249, 115, 22, 0.35)',
+                      boxShadow: '0 4px 12px var(--color-primary-glow)',
                       marginTop: '2px'
                     }}>
                       {p.step || String(pIdx + 1).padStart(2, '0')}

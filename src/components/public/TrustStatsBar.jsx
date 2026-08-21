@@ -5,7 +5,7 @@ import { FileCheck, Users, Globe, Zap, ShieldCheck, Headphones, Award } from 'lu
 import { useAppState } from '../../context/StateContext';
 
 // Icon mapper for dynamic string icon names from DB
-const IconRenderer = ({ iconName, size = 24, color = "var(--orange-500, #ff7a00)" }) => {
+const IconRenderer = ({ iconName, size = 24, color = "var(--color-primary)" }) => {
   switch (iconName?.toLowerCase()) {
     case 'filecheck': return <FileCheck size={size} color={color} />;
     case 'users': return <Users size={size} color={color} />;
@@ -81,7 +81,7 @@ const AnimatedNumber = ({ end, duration = 2000, suffix = '', isStatic = false, s
   return (
     <span ref={ref} style={{ fontWeight: '800', fontSize: '2.15rem', color: 'var(--stats-number-color, var(--navy-950))', fontFamily: 'var(--font-heading)' }}>
       {formatNumber(count)}
-      <span style={{ color: 'var(--orange-500, #ff7a00)' }}>{suffix}</span>
+      <span style={{ color: 'var(--color-primary)' }}>{suffix}</span>
     </span>
   );
 };
@@ -93,7 +93,7 @@ export const TrustStatsBar = () => {
   // Fallback defaults if DB is empty
   let displayStats = dbStats.filter(s => s.is_active !== false).map(s => ({
     id: s.id,
-    icon: <IconRenderer iconName={s.icon} size={24} color="var(--orange-500)" />,
+    icon: <IconRenderer iconName={s.icon} size={24} color="var(--color-primary)" />,
     value: s.value,
     suffix: s.suffix || (isNaN(parseInt(s.value)) ? '' : '+'),
     label: s.label,

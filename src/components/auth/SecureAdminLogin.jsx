@@ -66,8 +66,8 @@ export const SecureAdminLogin = () => {
         
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{
-            background: 'linear-gradient(135deg, var(--navy-900), #ff7a00)',
-            color: '#ffffff',
+            background: 'linear-gradient(135deg, var(--color-surface-elevated, var(--navy-900)), var(--color-primary))',
+            color: 'var(--color-text-on-primary, #ffffff)',
             width: '60px',
             height: '60px',
             borderRadius: '50%',
@@ -75,7 +75,7 @@ export const SecureAdminLogin = () => {
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: '0.85rem',
-            boxShadow: '0 6px 18px rgba(255,122,0,0.35)'
+            boxShadow: '0 6px 18px var(--color-primary-glow)'
           }}>
             <ShieldCheck size={32} />
           </div>

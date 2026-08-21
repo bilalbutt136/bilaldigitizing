@@ -412,13 +412,13 @@ export const OrderTrackerDrawer = () => {
               width: '44px',
               height: '44px',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, #ff7a00 0%, #ff5500 100%)',
-              color: '#ffffff',
+              background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+              color: 'var(--color-text-on-primary, #ffffff)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
-              boxShadow: '0 4px 14px rgba(255, 122, 0, 0.4)'
+              boxShadow: '0 4px 14px var(--color-primary-glow)'
             }}>
               <Layers size={22} />
             </div>

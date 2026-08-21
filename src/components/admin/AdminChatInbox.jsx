@@ -869,8 +869,8 @@ export const AdminChatInbox = () => {
                   padding: '0.45rem 0.5rem',
                   borderRadius: '7px',
                   border: 'none',
-                  background: activeSection === 'inbox' ? '#ffffff' : 'transparent',
-                  color: activeSection === 'inbox' ? '#ea580c' : 'var(--navy-700)',
+                  background: activeSection === 'inbox' ? 'var(--color-surface)' : 'transparent',
+                  color: activeSection === 'inbox' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
                   boxShadow: activeSection === 'inbox' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
                   fontWeight: activeSection === 'inbox' ? 900 : 700,
                   fontSize: '0.75rem',
@@ -905,8 +905,8 @@ export const AdminChatInbox = () => {
                   padding: '0.45rem 0.5rem',
                   borderRadius: '7px',
                   border: 'none',
-                  background: activeSection === 'support' ? '#ffffff' : 'transparent',
-                  color: activeSection === 'support' ? '#ea580c' : 'var(--navy-700)',
+                  background: activeSection === 'support' ? 'var(--color-surface)' : 'transparent',
+                  color: activeSection === 'support' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
                   boxShadow: activeSection === 'support' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
                   fontWeight: activeSection === 'support' ? 900 : 700,
                   fontSize: '0.75rem',
@@ -1398,16 +1398,16 @@ export const AdminChatInbox = () => {
             {replyingTo && (
               <div style={{
                 padding: '0.5rem 1.5rem',
-                background: '#fff7ed',
-                borderTop: '1px solid #fed7aa',
+                background: 'var(--color-primary-light)',
+                borderTop: '1px solid var(--color-border)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: '0.75rem',
                 animation: 'fadeIn 0.15s ease-out'
               }}>
-                <div style={{ borderLeft: '3.5px solid var(--color-primary, #ff7a00)', paddingLeft: '0.6rem', minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--color-primary, #ea580c)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <div style={{ borderLeft: '3.5px solid var(--color-primary)', paddingLeft: '0.6rem', minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                     <Reply size={12} /> Replying to {replyingTo.senderName || replyingTo.sender_name || (activeInfo.customerName || 'Customer')}
                   </div>
                   <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -1417,7 +1417,7 @@ export const AdminChatInbox = () => {
                 <button
                   type="button"
                   onClick={() => setReplyingTo(null)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary, #ea580c)', padding: '4px' }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', padding: '4px' }}
                   title="Cancel reply"
                 >
                   <X size={15} />

@@ -679,10 +679,10 @@ export const AdminDashboard = () => {
               gap: '1.25rem',
               marginBottom: '1.75rem'
             }}>
-              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #ff7a00', background: 'var(--bg-card)' }}>
+              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid var(--color-primary)', background: 'var(--bg-card)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Revenue</span>
-                  <div style={{ background: 'rgba(255, 122, 0, 0.12)', color: '#ff7a00', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
+                  <div style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
                     <TrendingUp size={18} />
                   </div>
                 </div>

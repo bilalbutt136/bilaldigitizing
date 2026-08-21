@@ -982,7 +982,7 @@ export const CustomerDashboard = () => {
                       <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                         Dashboard
                       </h1>
-                      <span className="badge badge-assigned" style={{ fontSize: '0.725rem', background: 'rgba(255, 122, 0, 0.12)', color: '#ff7a00', border: '1px solid rgba(255, 122, 0, 0.3)' }}>CLIENT ACCOUNT</span>
+                      <span className="badge badge-assigned" style={{ fontSize: '0.725rem', background: 'var(--color-primary-light)', color: 'var(--color-primary)', border: '1px solid var(--color-border)' }}>CLIENT ACCOUNT</span>
                     </div>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.2rem 0 0' }}>
                       Welcome back, <strong>{activeUser?.name || 'Client'}</strong>{activeUser?.company ? ` (${activeUser.company})` : ''}
@@ -1005,7 +1005,7 @@ export const CustomerDashboard = () => {
                         cursor: 'pointer'
                       }}
                     >
-                      <Wallet size={16} style={{ color: 'var(--orange-500)' }} /> Top-Up Wallet
+                      <Wallet size={16} style={{ color: 'var(--color-primary)' }} /> Top-Up Wallet
                     </button>
 
                     <button 
@@ -1020,7 +1020,7 @@ export const CustomerDashboard = () => {
                         fontSize: '0.9rem',
                         fontWeight: 800,
                         borderRadius: 'var(--radius-md)',
-                        boxShadow: '0 4px 14px rgba(255, 122, 0, 0.35)',
+                        boxShadow: '0 4px 14px var(--color-primary-glow)',
                         cursor: 'pointer'
                       }}
                     >
@@ -1029,7 +1029,7 @@ export const CustomerDashboard = () => {
                   </div>
                 </div>
 
-                {/* Summary Stat Cards - Styled with Admin Operations Desk Border-Left Accents */}
+                {/* Summary Stat Cards - Styled with Operations Desk Border-Left Accents */}
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
@@ -1037,10 +1037,10 @@ export const CustomerDashboard = () => {
                   marginBottom: '1.75rem'
                 }}>
                   {/* Card 1: Wallet Balance */}
-                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #ff7a00', background: 'var(--bg-card)' }}>
+                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid var(--color-primary)', background: 'var(--bg-card)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Studio Wallet Credit</span>
-                      <div style={{ background: 'rgba(255, 122, 0, 0.12)', color: '#ff7a00', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
+                      <div style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
                         <Wallet size={18} />
                       </div>
                     </div>
@@ -1466,16 +1466,16 @@ export const CustomerDashboard = () => {
                         type="button"
                         onClick={() => setFilterStatus('all')}
                         style={{
-                          background: filterStatus === 'all' ? '#ff7a00' : '#f8fafc',
-                          backgroundColor: filterStatus === 'all' ? '#ff7a00' : '#f8fafc',
-                          color: filterStatus === 'all' ? '#ffffff' : 'var(--navy-800)',
-                          border: filterStatus === 'all' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
+                          background: filterStatus === 'all' ? 'var(--color-primary)' : 'var(--color-surface)',
+                          backgroundColor: filterStatus === 'all' ? 'var(--color-primary)' : 'var(--color-surface)',
+                          color: filterStatus === 'all' ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-text-primary)',
+                          border: filterStatus === 'all' ? '1.5px solid var(--color-primary)' : '1.5px solid var(--color-border)',
                           fontWeight: 800,
                           fontSize: '0.825rem',
                           padding: '0.45rem 0.85rem',
                           borderRadius: '8px',
                           cursor: 'pointer',
-                          boxShadow: filterStatus === 'all' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
+                          boxShadow: filterStatus === 'all' ? '0 4px 14px var(--color-primary-glow)' : 'none',
                           transition: 'all 0.18s ease'
                         }}
                       >
@@ -1486,16 +1486,16 @@ export const CustomerDashboard = () => {
                         type="button"
                         onClick={() => setFilterStatus('active')}
                         style={{
-                          background: filterStatus === 'active' ? '#ff7a00' : '#f8fafc',
-                          backgroundColor: filterStatus === 'active' ? '#ff7a00' : '#f8fafc',
-                          color: filterStatus === 'active' ? '#ffffff' : 'var(--navy-800)',
-                          border: filterStatus === 'active' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
+                          background: filterStatus === 'active' ? 'var(--color-primary)' : 'var(--color-surface)',
+                          backgroundColor: filterStatus === 'active' ? 'var(--color-primary)' : 'var(--color-surface)',
+                          color: filterStatus === 'active' ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-text-primary)',
+                          border: filterStatus === 'active' ? '1.5px solid var(--color-primary)' : '1.5px solid var(--color-border)',
                           fontWeight: 800,
                           fontSize: '0.825rem',
                           padding: '0.45rem 0.85rem',
                           borderRadius: '8px',
                           cursor: 'pointer',
-                          boxShadow: filterStatus === 'active' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
+                          boxShadow: filterStatus === 'active' ? '0 4px 14px var(--color-primary-glow)' : 'none',
                           transition: 'all 0.18s ease'
                         }}
                       >
@@ -1506,10 +1506,10 @@ export const CustomerDashboard = () => {
                         type="button"
                         onClick={() => setFilterStatus('delivered')}
                         style={{
-                          background: filterStatus === 'delivered' ? '#10b981' : '#f8fafc',
-                          backgroundColor: filterStatus === 'delivered' ? '#10b981' : '#f8fafc',
-                          color: filterStatus === 'delivered' ? '#ffffff' : '#047857',
-                          border: filterStatus === 'delivered' ? '1.5px solid #10b981' : '1.5px solid #a7f3d0',
+                          background: filterStatus === 'delivered' ? 'var(--color-success)' : 'var(--color-surface)',
+                          backgroundColor: filterStatus === 'delivered' ? 'var(--color-success)' : 'var(--color-surface)',
+                          color: filterStatus === 'delivered' ? '#ffffff' : 'var(--color-success-text)',
+                          border: filterStatus === 'delivered' ? '1.5px solid var(--color-success)' : '1.5px solid var(--color-border)',
                           fontWeight: 800,
                           fontSize: '0.825rem',
                           padding: '0.45rem 0.85rem',
@@ -1526,16 +1526,16 @@ export const CustomerDashboard = () => {
                         type="button"
                         onClick={() => setFilterStatus('revision')}
                         style={{
-                          background: filterStatus === 'revision' ? '#ff7a00' : '#f8fafc',
-                          backgroundColor: filterStatus === 'revision' ? '#ff7a00' : '#f8fafc',
-                          color: filterStatus === 'revision' ? '#ffffff' : 'var(--navy-800)',
-                          border: filterStatus === 'revision' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
+                          background: filterStatus === 'revision' ? 'var(--color-primary)' : 'var(--color-surface)',
+                          backgroundColor: filterStatus === 'revision' ? 'var(--color-primary)' : 'var(--color-surface)',
+                          color: filterStatus === 'revision' ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-text-primary)',
+                          border: filterStatus === 'revision' ? '1.5px solid var(--color-primary)' : '1.5px solid var(--color-border)',
                           fontWeight: 800,
                           fontSize: '0.825rem',
                           padding: '0.45rem 0.85rem',
                           borderRadius: '8px',
                           cursor: 'pointer',
-                          boxShadow: filterStatus === 'revision' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
+                          boxShadow: filterStatus === 'revision' ? '0 4px 14px var(--color-primary-glow)' : 'none',
                           transition: 'all 0.18s ease'
                         }}
                       >
@@ -1546,20 +1546,20 @@ export const CustomerDashboard = () => {
                         type="button"
                         onClick={() => setFilterStatus('completed')}
                         style={{
-                          background: filterStatus === 'completed' ? '#ff7a00' : '#f8fafc',
-                          backgroundColor: filterStatus === 'completed' ? '#ff7a00' : '#f8fafc',
-                          color: filterStatus === 'completed' ? '#ffffff' : 'var(--navy-800)',
-                          border: filterStatus === 'completed' ? '1.5px solid #ff7a00' : '1.5px solid var(--border-color)',
+                          background: filterStatus === 'completed' ? 'var(--color-primary)' : 'var(--color-surface)',
+                          backgroundColor: filterStatus === 'completed' ? 'var(--color-primary)' : 'var(--color-surface)',
+                          color: filterStatus === 'completed' ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-text-primary)',
+                          border: filterStatus === 'completed' ? '1.5px solid var(--color-primary)' : '1.5px solid var(--color-border)',
                           fontWeight: 800,
                           fontSize: '0.825rem',
                           padding: '0.45rem 0.85rem',
                           borderRadius: '8px',
                           cursor: 'pointer',
-                          boxShadow: filterStatus === 'completed' ? '0 4px 14px rgba(255, 122, 0, 0.35)' : 'none',
+                          boxShadow: filterStatus === 'completed' ? '0 4px 14px var(--color-primary-glow)' : 'none',
                           transition: 'all 0.18s ease'
                         }}
                       >
-                        Completed ({completedOrders.length})
+                        ✅ Completed ({completedOrders.length})
                       </button>
                     </div>
 

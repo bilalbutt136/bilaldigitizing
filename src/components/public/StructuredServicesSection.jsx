@@ -171,7 +171,7 @@ export const StructuredServicesSection = () => {
                   <div style={{ fontSize: '0.85rem', fontWeight: 800 }}>Golden Eagle Polo Crest</div>
                   <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>12,450 Stitches • 5 Madeira Colors</div>
                 </div>
-                <span style={{ fontSize: '0.725rem', background: '#ff7a00', color: '#fff', fontWeight: 800, padding: '0.2rem 0.55rem', borderRadius: '4px' }}>
+                <span style={{ fontSize: '0.725rem', background: 'var(--color-primary)', color: 'var(--color-text-on-primary, #ffffff)', fontWeight: 800, padding: '0.2rem 0.55rem', borderRadius: '4px' }}>
                   DST / PES / EMB
                 </span>
               </div>
@@ -183,7 +183,7 @@ export const StructuredServicesSection = () => {
              ================================================================== */}
           <div className="card" style={{
             padding: '2.75rem',
-            background: '#ffffff',
+            background: 'var(--color-surface)',
             border: '1.5px solid var(--border-color)',
             borderRadius: '20px',
             boxShadow: 'var(--shadow-md)',
@@ -295,7 +295,7 @@ export const StructuredServicesSection = () => {
              ================================================================== */}
           <div className="card" style={{
             padding: '2.75rem',
-            background: '#ffffff',
+            background: 'var(--color-surface)',
             border: '1.5px solid var(--border-color)',
             borderRadius: '20px',
             boxShadow: 'var(--shadow-md)',

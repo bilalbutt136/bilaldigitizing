@@ -2404,8 +2404,8 @@ export const OrderWizardModal = () => {
               className="wizard-bottom-bar"
               style={{
                 padding: '1rem 1.5rem',
-                borderTop: '1px solid #e2e8f0',
-                background: '#ffffff',
+                borderTop: '1px solid var(--color-border)',
+                background: 'var(--color-surface)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -2418,9 +2418,9 @@ export const OrderWizardModal = () => {
                     type="button"
                     onClick={handlePrevStep}
                     style={{
-                      background: '#f1f5f9',
-                      border: '1.5px solid #cbd5e1',
-                      color: 'var(--navy-900)',
+                      background: 'var(--color-subtle)',
+                      border: '1.5px solid var(--color-border)',
+                      color: 'var(--color-text-primary)',
                       padding: '0.65rem 1.25rem',
                       borderRadius: '10px',
                       fontSize: '0.88rem',
@@ -2438,9 +2438,9 @@ export const OrderWizardModal = () => {
                     type="button"
                     onClick={() => setIsOrderWizardOpen(false)}
                     style={{
-                      background: '#f1f5f9',
-                      border: '1px solid #cbd5e1',
-                      color: 'var(--navy-700)',
+                      background: 'var(--color-subtle)',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-text-secondary)',
                       padding: '0.65rem 1.15rem',
                       borderRadius: '10px',
                       fontSize: '0.85rem',
@@ -2456,7 +2456,7 @@ export const OrderWizardModal = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700 }}>Total Price</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: type === 'vector' ? '#2563eb' : type === 'patch' ? '#059669' : 'var(--orange-600)', lineHeight: 1 }}>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: type === 'vector' ? '#2563eb' : type === 'patch' ? '#059669' : 'var(--color-primary)', lineHeight: 1 }}>
                     ${pricingDetails.finalPrice.toFixed(2)}
                   </div>
                 </div>
@@ -2471,7 +2471,7 @@ export const OrderWizardModal = () => {
                       fontSize: '0.9rem',
                       fontWeight: 900,
                       borderRadius: '10px',
-                      background: type === 'vector' ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : type === 'patch' ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)',
+                      background: type === 'vector' ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : type === 'patch' ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.4rem',
@@ -2491,7 +2491,7 @@ export const OrderWizardModal = () => {
                       fontSize: '0.9rem',
                       fontWeight: 900,
                       borderRadius: '10px',
-                      background: type === 'vector' ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : type === 'patch' ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : 'linear-gradient(135deg, #ff7a00 0%, #e66e00 100%)',
+                      background: type === 'vector' ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : type === 'patch' ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.4rem',

@@ -364,9 +364,9 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               padding: '0.45rem 0.75rem',
               borderRadius: '8px 8px 0 0',
               border: '1px solid var(--color-border)',
-              borderBottom: activeChannel === 'inbox' ? '2px solid #ea580c' : '1px solid transparent',
-              background: activeChannel === 'inbox' ? '#ffffff' : 'transparent',
-              color: activeChannel === 'inbox' ? '#ea580c' : 'var(--navy-700)',
+              borderBottom: activeChannel === 'inbox' ? '2px solid var(--color-primary)' : '1px solid transparent',
+              background: activeChannel === 'inbox' ? 'var(--color-surface)' : 'transparent',
+              color: activeChannel === 'inbox' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
               fontWeight: activeChannel === 'inbox' ? 900 : 700,
               fontSize: '0.8rem',
               cursor: 'pointer',
@@ -388,9 +388,9 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               padding: '0.45rem 0.75rem',
               borderRadius: '8px 8px 0 0',
               border: '1px solid var(--color-border)',
-              borderBottom: activeChannel === 'support' ? '2px solid #ea580c' : '1px solid transparent',
-              background: activeChannel === 'support' ? '#ffffff' : 'transparent',
-              color: activeChannel === 'support' ? '#ea580c' : 'var(--navy-700)',
+              borderBottom: activeChannel === 'support' ? '2px solid var(--color-primary)' : '1px solid transparent',
+              background: activeChannel === 'support' ? 'var(--color-surface)' : 'transparent',
+              color: activeChannel === 'support' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
               fontWeight: activeChannel === 'support' ? 900 : 700,
               fontSize: '0.8rem',
               cursor: 'pointer',
@@ -449,7 +449,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               justifyContent: 'center',
               fontWeight: 900,
               fontSize: '0.9rem',
-              border: activeChannel === 'inbox' ? '2px solid #ea580c' : '2px solid #10b981'
+              border: activeChannel === 'inbox' ? '2px solid var(--color-primary)' : '2px solid var(--color-success)'
             }}>
               {activeChannel === 'inbox' ? 'BD' : <Headphones size={18} />}
             </div>
@@ -461,20 +461,20 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               height: '10px',
               borderRadius: '50%',
               background: '#10b981',
-              border: '2px solid #ffffff'
+              border: '2px solid var(--color-surface)'
             }} />
           </div>
 
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+              <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: 'var(--color-text-primary)' }}>
                 {activeChannel === 'inbox' ? 'Studio Management & Digitizing Team' : '24/7 Live Customer Support'}
               </h3>
               <span style={{
                 fontSize: '0.65rem',
-                background: activeChannel === 'inbox' ? '#fff7ed' : '#ecfdf5',
-                color: activeChannel === 'inbox' ? '#ea580c' : '#059669',
-                border: `1px solid ${activeChannel === 'inbox' ? '#fed7aa' : '#a7f3d0'}`,
+                background: activeChannel === 'inbox' ? 'var(--color-primary-light)' : 'var(--color-success-light, #ecfdf5)',
+                color: activeChannel === 'inbox' ? 'var(--color-primary)' : 'var(--color-success-text, #059669)',
+                border: `1px solid ${activeChannel === 'inbox' ? 'var(--color-border)' : 'var(--color-border)'}`,
                 padding: '0.05rem 0.4rem',
                 borderRadius: '9999px',
                 fontWeight: 800
@@ -664,19 +664,19 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
             alignItems: 'center',
             gap: '0.5rem',
             padding: '0.45rem 0.85rem',
-            background: '#ffffff',
+            background: 'var(--color-surface)',
             borderRadius: '16px',
             width: 'fit-content',
             boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
             margin: '0.25rem 0'
           }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#ea580c' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-primary)' }}>
               Studio Support is typing
             </span>
             <span style={{ display: 'inline-flex', gap: '3px' }}>
-              <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ea580c' }} />
-              <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ea580c' }} />
-              <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ea580c' }} />
+              <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-primary)' }} />
+              <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-primary)' }} />
+              <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-primary)' }} />
             </span>
           </div>
         )}
@@ -687,16 +687,16 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       {replyingTo && (
         <div style={{
           padding: '0.5rem 1.25rem',
-          background: '#fff7ed',
-          borderTop: '1px solid #fed7aa',
+          background: 'var(--color-primary-light)',
+          borderTop: '1px solid var(--color-border)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '0.75rem',
           flexShrink: 0
         }}>
-          <div style={{ borderLeft: '3.5px solid #ea580c', paddingLeft: '0.6rem', minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#ea580c', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          <div style={{ borderLeft: '3.5px solid var(--color-primary)', paddingLeft: '0.6rem', minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <Reply size={12} /> Replying to {replyingTo.senderName || replyingTo.sender_name || 'Support'}
             </div>
             <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -706,7 +706,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           <button
             type="button"
             onClick={() => setReplyingTo(null)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ea580c', padding: '4px' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', padding: '4px' }}
           >
             <X size={15} />
           </button>

@@ -244,25 +244,23 @@ export default function WhatsAppChatMessage({
           padding: (fileCategory === 'image' && fileUrl && !message.text) ? '0.35rem' : '0.75rem 1rem',
           borderRadius: resolvedIsMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
           background: resolvedIsMe 
-            ? (isMessageRead
-                ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' 
-                : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)')
+            ? 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)' 
             : (!isMessageRead 
-                ? '#fffbf5' 
-                : 'var(--color-surface, #ffffff)'),
-          color: resolvedIsMe ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-text-primary, #0f172a)',
+                ? 'var(--color-primary-light)' 
+                : 'var(--color-surface)'),
+          color: resolvedIsMe ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-text-primary)',
           border: resolvedIsMe 
             ? 'none' 
             : (!isMessageRead 
-                ? '1.5px solid #fed7aa' 
-                : '1.5px solid var(--color-border, #e2e8f0)'),
+                ? '1.5px solid var(--color-border)' 
+                : '1.5px solid var(--color-border)'),
           borderLeft: (!resolvedIsMe && !isMessageRead)
-            ? '4.5px solid #ea580c'
-            : (resolvedIsMe ? 'none' : '1.5px solid var(--color-border, #e2e8f0)'),
+            ? '4.5px solid var(--color-primary)'
+            : (resolvedIsMe ? 'none' : '1.5px solid var(--color-border)'),
           boxShadow: resolvedIsMe
-            ? '0 3px 10px rgba(234, 88, 12, 0.22)'
+            ? '0 3px 10px var(--color-primary-glow)'
             : (!isMessageRead 
-                ? '0 4px 14px rgba(234, 88, 12, 0.12)' 
+                ? '0 4px 14px var(--color-primary-glow)' 
                 : 'var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.04))'),
           fontSize: '0.88rem',
           lineHeight: 1.5,
@@ -275,8 +273,8 @@ export default function WhatsAppChatMessage({
         {replyTo && (
           <div
             style={{
-              background: resolvedIsMe ? 'rgba(0, 0, 0, 0.15)' : 'var(--bg-subtle, #f1f5f9)',
-              borderLeft: `4px solid ${resolvedIsMe ? '#ffffff' : 'var(--color-primary, #ff7a00)'}`,
+              background: resolvedIsMe ? 'rgba(0, 0, 0, 0.15)' : 'var(--color-primary-light)',
+              borderLeft: `4px solid ${resolvedIsMe ? '#ffffff' : 'var(--color-primary)'}`,
               borderRadius: '8px',
               padding: '0.4rem 0.65rem',
               marginBottom: '0.55rem',
@@ -287,7 +285,7 @@ export default function WhatsAppChatMessage({
             <div style={{
               fontWeight: 800,
               fontSize: '0.72rem',
-              color: resolvedIsMe ? '#ffffff' : 'var(--color-primary, #ea580c)',
+              color: resolvedIsMe ? '#ffffff' : 'var(--color-primary)',
               marginBottom: '0.15rem'
             }}>
               {replyTo.sender_name || 'Original Message'}
