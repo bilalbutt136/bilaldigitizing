@@ -179,22 +179,39 @@ export const OrderWizardModal = () => {
     const clean = codeToApply.trim().toUpperCase();
     
     const activeCoupons = Array.isArray(siteSettings?.promoCodes) ? siteSettings.promoCodes : [];
-    const found = activeCoupons.find(c => c.code?.toUpperCase() === clean && c.isActive !== false);
+    const found = activeCoupons.find(c => c.code?.toUpperCase() === clean);
 
     const announcement = siteSettings?.announcement;
     const isAnnouncementCode = announcement?.promoCode && announcement.promoCode.toUpperCase() === clean;
 
-    const banner = siteSettings?.promotionalBanner;
-    const isBannerCode = banner?.promoCode && banner.promoCode.toUpperCase() === clean;
+    if (found && found.isActive === false) {
+      if (showToast) showToast(`Coupon code ${clean} is currently paused or inactive.`, 'warning');
+      return;
+    }
+
+    if (found?.expiresAt && new Date(found.expiresAt) < new Date()) {
+      if (showToast) showToast(`Coupon code ${clean} has expired.`, 'warning');
+      return;
+    }
+
+    // Check service scope restriction
+    const currentServiceType = type === 'vector' ? 'vector' : type === 'patch' ? 'patch' : 'embroidery';
+    if (found?.serviceScope && found.serviceScope !== 'all' && found.serviceScope !== currentServiceType) {
+      const scopeLabel = found.serviceScope === 'vector' ? 'Vector Art only' : found.serviceScope === 'patch' ? 'Custom Patches only' : 'Embroidery Digitizing only';
+      if (showToast) showToast(`Coupon code ${clean} is valid for ${scopeLabel}.`, 'warning');
+      return;
+    }
 
     let discountVal = 20;
     let discountType = 'percent';
     let desc = `${clean} Promotional Discount`;
+    let minSpend = 0;
 
     if (found) {
       discountVal = Number(found.discountValue) || 20;
       discountType = found.discountType || 'percent';
       desc = found.description || `${discountVal}% Off Special Promotion`;
+      minSpend = Number(found.minOrder) || 0;
     } else if (isAnnouncementCode) {
       if (announcement.discountValue !== undefined && announcement.discountValue !== null) {
         discountVal = Number(announcement.discountValue);
@@ -203,20 +220,11 @@ export const OrderWizardModal = () => {
         if (match) discountVal = Number(match[1]);
       }
       discountType = announcement.discountType || 'percent';
-      desc = announcement.text || `${discountVal}% Off Announcement Offer`;
-    } else if (isBannerCode) {
-      if (banner.discountValue !== undefined && banner.discountValue !== null) {
-        discountVal = Number(banner.discountValue);
-      } else if (banner.description || banner.title) {
-        const match = `${banner.title} ${banner.description}`.match(/(\d+)%/);
-        if (match) discountVal = Number(match[1]);
-      }
-      discountType = 'percent';
-      desc = banner.title || `${discountVal}% Off Welcome Offer`;
+      desc = announcement.text || `${discountVal}% Off Flash Announcement Offer`;
     } else if (clean === 'SAVE20' || clean === 'WELCOME20') {
       discountVal = 20;
       discountType = 'percent';
-      desc = '20% Off Special Promotion';
+      desc = '20% Off Studio Promotion';
     } else if (clean === 'WELCOME10') {
       discountVal = 10;
       discountType = 'percent';
@@ -226,7 +234,7 @@ export const OrderWizardModal = () => {
       discountType = 'fixed';
       desc = '$10 Credit Towards Order';
     } else {
-      if (showToast) showToast(`Promo code ${clean} is invalid or expired`, 'error');
+      if (showToast) showToast(`Promo code ${clean} is invalid or not found.`, 'error');
       return;
     }
 
@@ -234,11 +242,12 @@ export const OrderWizardModal = () => {
       code: clean,
       discountType,
       discountValue: discountVal,
-      description: desc
+      description: desc,
+      minOrder: minSpend
     });
 
     const discountLabel = discountType === 'percent' ? `${discountVal}% OFF` : `$${discountVal.toFixed(2)} OFF`;
-    if (showToast) showToast(`🎉 Promo code ${clean} applied (${discountLabel})!`, 'success');
+    if (showToast) showToast(`🎉 Coupon ${clean} applied (${discountLabel})!`, 'success');
   };
 
   useEffect(() => {
@@ -589,25 +598,39 @@ export const OrderWizardModal = () => {
       });
 
       const totalQty = safeVectorItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
-      const allowRush = totalQty === 1;
-      const rushSurcharge = (isRush && allowRush) ? 10.00 : 0;
       
+      let volumeDiscountPercent = 0;
+      if (totalQty >= 25) volumeDiscountPercent = 25;
+      else if (totalQty >= 10) volumeDiscountPercent = 15;
+      else if (totalQty >= 5) volumeDiscountPercent = 10;
+      else if (totalQty >= 3) volumeDiscountPercent = 5;
+
+      const volumeDiscountAmount = parseFloat(((baseSubtotal * volumeDiscountPercent) / 100).toFixed(2));
+      const discountedSubtotal = baseSubtotal - volumeDiscountAmount;
+
       let promoDiscountAmount = 0;
       if (appliedPromo) {
-        if (appliedPromo.discountType === 'percent') {
-          promoDiscountAmount = parseFloat(((baseSubtotal * appliedPromo.discountValue) / 100).toFixed(2));
+        if (appliedPromo.minOrder && baseSubtotal < appliedPromo.minOrder) {
+          promoDiscountAmount = 0;
+        } else if (appliedPromo.discountType === 'percent') {
+          promoDiscountAmount = parseFloat(((discountedSubtotal * appliedPromo.discountValue) / 100).toFixed(2));
         } else {
-          promoDiscountAmount = parseFloat(Math.min(baseSubtotal, appliedPromo.discountValue).toFixed(2));
+          promoDiscountAmount = parseFloat(Math.min(discountedSubtotal, appliedPromo.discountValue).toFixed(2));
         }
       }
 
-      const finalPrice = Math.max(0, parseFloat((baseSubtotal - promoDiscountAmount + rushSurcharge).toFixed(2)));
+      const allowRush = totalQty === 1;
+      const rushSurcharge = (isRush && allowRush) ? 10.00 : 0;
+      const finalPrice = Math.max(0, parseFloat((discountedSubtotal - promoDiscountAmount + rushSurcharge).toFixed(2)));
 
       return {
         serviceTitle: 'Vector Art & Color Separation',
         currentTier: 'mixed',
         baseTierRate: 0,
         baseSubtotal,
+        volumeDiscountPercent,
+        volumeDiscountAmount,
+        discountedSubtotal,
         promoDiscountAmount,
         appliedPromo,
         totalPlacementQuantity: totalQty,
@@ -741,13 +764,16 @@ export const OrderWizardModal = () => {
       else if (totalPlacementQuantity >= 15) discountPercent = 20;
       else if (totalPlacementQuantity >= 10) discountPercent = 15;
       else if (totalPlacementQuantity >= 5) discountPercent = 10;
+      else if (totalPlacementQuantity >= 3) discountPercent = 5;
 
-      const discountAmount = (baseSubtotal * discountPercent) / 100;
+      const discountAmount = parseFloat(((baseSubtotal * discountPercent) / 100).toFixed(2));
       const discountedSubtotal = baseSubtotal - discountAmount;
 
       let promoDiscountAmount = 0;
       if (appliedPromo) {
-        if (appliedPromo.discountType === 'percent') {
+        if (appliedPromo.minOrder && baseSubtotal < appliedPromo.minOrder) {
+          promoDiscountAmount = 0;
+        } else if (appliedPromo.discountType === 'percent') {
           promoDiscountAmount = parseFloat(((discountedSubtotal * appliedPromo.discountValue) / 100).toFixed(2));
         } else {
           promoDiscountAmount = parseFloat(Math.min(discountedSubtotal, appliedPromo.discountValue).toFixed(2));
@@ -2271,6 +2297,13 @@ export const OrderWizardModal = () => {
                           <span style={{ color: type === 'vector' ? '#2563eb' : type === 'patch' ? '#059669' : 'var(--orange-600)' }}>${pricingDetails.baseSubtotal.toFixed(2)}</span>
                         </div>
 
+                        {pricingDetails.volumeDiscountAmount > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', fontWeight: 800, color: '#059669', background: '#ecfdf5', padding: '0.25rem 0.5rem', borderRadius: '6px', border: '1px solid #a7f3d0' }}>
+                            <span>✨ Bulk Multi-Design Savings ({pricingDetails.volumeDiscountPercent || pricingDetails.discountPercent}% OFF):</span>
+                            <span>-${pricingDetails.volumeDiscountAmount.toFixed(2)}</span>
+                          </div>
+                        )}
+
                         {pricingDetails.rushSurcharge > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', fontWeight: 800, color: 'var(--orange-600)' }}>
                             <span>⚡ Super Rush Surcharge:</span>
@@ -2279,8 +2312,8 @@ export const OrderWizardModal = () => {
                         )}
 
                         {pricingDetails.promoDiscountAmount > 0 && (
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', fontWeight: 800, color: '#16a34a' }}>
-                            <span>Promo Discount ({appliedPromo?.code}):</span>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', fontWeight: 800, color: '#16a34a', background: '#f0fdf4', padding: '0.25rem 0.5rem', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
+                            <span>🏷️ Coupon Discount ({appliedPromo?.code}):</span>
                             <span>-${pricingDetails.promoDiscountAmount.toFixed(2)}</span>
                           </div>
                         )}

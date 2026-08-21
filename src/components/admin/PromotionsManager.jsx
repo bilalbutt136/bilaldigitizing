@@ -22,25 +22,33 @@ import {
   Gift, 
   Percent, 
   DollarSign,
-  X
+  X,
+  Layers,
+  PenTool,
+  FileCheck,
+  ShieldCheck,
+  Zap,
+  Sliders,
+  Check
 } from 'lucide-react';
 
 const PRESET_THEMES = [
-  { id: 'orange', name: 'Brand Orange', bg: 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)', text: '#ffffff', border: '#fb923c' },
-  { id: 'navy', name: 'Studio Indigo', bg: 'linear-gradient(90deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)', text: '#ffffff', border: '#6366f1' },
-  { id: 'emerald', name: 'Emerald Green', bg: 'linear-gradient(90deg, #065f46 0%, #059669 50%, #065f46 100%)', text: '#ffffff', border: '#34d399' },
-  { id: 'crimson', name: 'Crimson Red', bg: 'linear-gradient(90deg, #991b1b 0%, #dc2626 50%, #991b1b 100%)', text: '#ffffff', border: '#f87171' }
+  { id: 'orange', name: 'Brand Flame Orange', bg: 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)', text: '#ffffff', border: '#fb923c', badgeBg: 'rgba(255,255,255,0.22)' },
+  { id: 'navy', name: 'Midnight Studio Navy', bg: 'linear-gradient(90deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)', text: '#ffffff', border: '#6366f1', badgeBg: 'rgba(249, 115, 22, 0.25)' },
+  { id: 'emerald', name: 'Emerald Production Pro', bg: 'linear-gradient(90deg, #065f46 0%, #059669 50%, #065f46 100%)', text: '#ffffff', border: '#34d399', badgeBg: 'rgba(255,255,255,0.22)' },
+  { id: 'crimson', name: 'Crimson Rush Express', bg: 'linear-gradient(90deg, #991b1b 0%, #dc2626 50%, #991b1b 100%)', text: '#ffffff', border: '#f87171', badgeBg: 'rgba(255,255,255,0.22)' },
+  { id: 'royal', name: 'Royal Indigo Velvet', bg: 'linear-gradient(90deg, #312e81 0%, #4338ca 50%, #312e81 100%)', text: '#ffffff', border: '#818cf8', badgeBg: 'rgba(255,255,255,0.22)' }
 ];
 
 export const PromotionsManager = () => {
-  const { siteSettings, updateSiteSettings, showToast } = useAppState();
+  const { siteSettings, updateSiteSettings, showToast, openOrderWizard } = useAppState();
   const [loading, setLoading] = useState(false);
   const [copiedPreview, setCopiedPreview] = useState(false);
-  const [activeTab, setActiveTab] = useState('announcement'); // 'announcement' | 'coupons' | 'visitor_banner'
+  const [activeTab, setActiveTab] = useState('announcement'); // 'announcement' | 'coupons' | 'volume_tiers'
 
   const [formData, setFormData] = useState({
     announcement: {
-      enabled: false,
+      enabled: true,
       badge: 'SPECIAL PROMO',
       text: 'Get 20% OFF on All Custom Embroidery Digitizing & Vector Art Orders!',
       promoCode: 'SAVE20',
@@ -49,21 +57,11 @@ export const PromotionsManager = () => {
       linkText: 'Claim 20% Off',
       linkUrl: '/order',
       theme: 'orange',
-      bgColor: '#ea580c',
+      bgColor: '',
       textColor: '#ffffff',
       showCodeBadge: true,
       showCountdown: true,
       countdownHours: 24
-    },
-    promotionalBanner: {
-      enabled: false,
-      title: 'First-Time Client Welcome Offer',
-      description: 'Enjoy 20% off your first digitizing file or vector redraw with guaranteed zero thread breaks and free unlimited revisions.',
-      promoCode: 'WELCOME20',
-      ctaText: 'Start Your Order',
-      ctaLink: '/order',
-      theme: 'navy',
-      position: 'bottom-right'
     },
     promoCodes: [
       {
@@ -71,6 +69,7 @@ export const PromotionsManager = () => {
         discountType: 'percent',
         discountValue: 20,
         minOrder: 10,
+        serviceScope: 'all',
         description: '20% off all embroidery digitizing and vector conversion services',
         isActive: true
       },
@@ -79,19 +78,59 @@ export const PromotionsManager = () => {
         discountType: 'percent',
         discountValue: 10,
         minOrder: 10,
-        description: '10% off for first-time studio clients',
+        serviceScope: 'all',
+        description: '10% off for first-time apparel decorator clients',
+        isActive: true
+      },
+      {
+        code: 'VECTORDEAL',
+        discountType: 'percent',
+        discountValue: 15,
+        minOrder: 15,
+        serviceScope: 'vector',
+        description: '15% off manual vector redraws and color separations',
         isActive: true
       },
       {
         code: 'FREESAMPLE',
         discountType: 'fixed',
         discountValue: 10,
-        minOrder: 10,
-        description: '$10 credit towards free digitizing stitch proof',
+        minOrder: 20,
+        serviceScope: 'embroidery',
+        description: '$10 credit towards stitch proof sampling',
         isActive: true
       }
-    ]
+    ],
+    volumeDiscounts: {
+      enabled: true,
+      tier1Min: 3,
+      tier1Percent: 5,
+      tier2Min: 5,
+      tier2Percent: 10,
+      tier3Min: 10,
+      tier3Percent: 15,
+      tier4Min: 25,
+      tier4Percent: 25,
+      tier5Min: 50,
+      tier5Percent: 35
+    }
   });
+
+  // New Coupon Creator State
+  const [newCoupon, setNewCoupon] = useState({
+    code: '',
+    discountType: 'percent',
+    discountValue: 15,
+    minOrder: 10,
+    serviceScope: 'all',
+    description: '',
+    isActive: true
+  });
+  const [showAddCoupon, setShowAddCoupon] = useState(false);
+
+  // Volume calculator simulator state
+  const [calcQty, setCalcQty] = useState(5);
+  const [calcBaseRate, setCalcBaseRate] = useState(20);
 
   useEffect(() => {
     if (siteSettings) {
@@ -113,19 +152,13 @@ export const PromotionsManager = () => {
           showCodeBadge: siteSettings.announcement?.showCodeBadge !== false,
           showCountdown: siteSettings.announcement?.showCountdown !== false
         },
-        promotionalBanner: {
-          ...prev.promotionalBanner,
-          ...(siteSettings.promotionalBanner || {}),
-          enabled: siteSettings.promotionalBanner?.enabled !== undefined ? siteSettings.promotionalBanner.enabled : prev.promotionalBanner.enabled,
-          title: siteSettings.promotionalBanner?.title || prev.promotionalBanner.title,
-          description: siteSettings.promotionalBanner?.description || prev.promotionalBanner.description,
-          promoCode: siteSettings.promotionalBanner?.promoCode || prev.promotionalBanner.promoCode,
-          ctaText: siteSettings.promotionalBanner?.ctaText || prev.promotionalBanner.ctaText,
-          ctaLink: siteSettings.promotionalBanner?.ctaLink || prev.promotionalBanner.ctaLink
-        },
         promoCodes: Array.isArray(siteSettings.promoCodes) && siteSettings.promoCodes.length > 0
           ? siteSettings.promoCodes
-          : prev.promoCodes
+          : prev.promoCodes,
+        volumeDiscounts: {
+          ...prev.volumeDiscounts,
+          ...(siteSettings.volumeDiscounts || {})
+        }
       }));
     }
   }, [siteSettings]);
@@ -144,7 +177,6 @@ export const PromotionsManager = () => {
     const numericVal = Math.max(1, Math.min(100, Number(newVal) || 0));
     setFormData(prev => {
       const currentCode = prev.announcement.promoCode || 'SAVE20';
-      // Sync matching coupon in promoCodes list
       const updatedPromoCodes = prev.promoCodes.map(c => {
         if (c.code?.toUpperCase() === currentCode.toUpperCase()) {
           return { ...c, discountValue: numericVal, description: `${numericVal}% off promotion` };
@@ -152,902 +184,907 @@ export const PromotionsManager = () => {
         return c;
       });
 
-      // Update text if it had percentage mention
-      const updatedText = prev.announcement.text.replace(/\d+%/g, `${numericVal}%`);
-      const updatedLinkText = prev.announcement.linkText.replace(/\d+%/g, `${numericVal}%`);
-
       return {
         ...prev,
         announcement: {
           ...prev.announcement,
           discountValue: numericVal,
-          discountType: 'percent',
-          text: updatedText,
-          linkText: updatedLinkText
+          text: prev.announcement.text.replace(/\d+%/g, `${numericVal}%`)
         },
         promoCodes: updatedPromoCodes
       };
     });
   };
 
-  const handleBannerChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      promotionalBanner: {
-        ...prev.promotionalBanner,
-        [field]: value
-      }
-    }));
-  };
-
-  // Promo Codes management
-  const [newCoupon, setNewCoupon] = useState({
-    code: '',
-    discountType: 'percent',
-    discountValue: 20,
-    minOrder: 10,
-    description: '',
-    isActive: true
-  });
-
+  // Add Coupon
   const handleAddCoupon = () => {
-    if (!newCoupon.code.trim()) {
-      showToast('Please enter a coupon code', 'error');
+    const cleanCode = newCoupon.code.trim().toUpperCase();
+    if (!cleanCode) {
+      if (showToast) showToast('Please enter a valid coupon code.', 'warning');
       return;
     }
-    const cleanCode = newCoupon.code.trim().toUpperCase();
+
     const existing = formData.promoCodes.find(c => c.code.toUpperCase() === cleanCode);
     if (existing) {
-      showToast(`Coupon code ${cleanCode} already exists`, 'error');
+      if (showToast) showToast(`Coupon code ${cleanCode} already exists.`, 'warning');
       return;
     }
 
+    const couponObj = {
+      code: cleanCode,
+      discountType: newCoupon.discountType || 'percent',
+      discountValue: Math.max(1, Number(newCoupon.discountValue) || 10),
+      minOrder: Math.max(0, Number(newCoupon.minOrder) || 0),
+      serviceScope: newCoupon.serviceScope || 'all',
+      description: newCoupon.description.trim() || `${cleanCode} promotional discount`,
+      isActive: newCoupon.isActive !== false
+    };
+
     setFormData(prev => ({
       ...prev,
-      promoCodes: [
-        ...prev.promoCodes,
-        {
-          code: cleanCode,
-          discountType: newCoupon.discountType,
-          discountValue: Number(newCoupon.discountValue) || 10,
-          minOrder: Number(newCoupon.minOrder) || 0,
-          description: newCoupon.description.trim() || `${newCoupon.discountValue}${newCoupon.discountType === 'percent' ? '%' : '$'} discount`,
-          isActive: true
-        }
-      ]
+      promoCodes: [couponObj, ...prev.promoCodes]
     }));
 
     setNewCoupon({
       code: '',
       discountType: 'percent',
-      discountValue: 20,
+      discountValue: 15,
       minOrder: 10,
+      serviceScope: 'all',
       description: '',
       isActive: true
     });
-    showToast(`Promo code ${cleanCode} added!`, 'success');
+    setShowAddCoupon(false);
+
+    if (showToast) showToast(`Created coupon ${cleanCode}! Remember to click "Save to Database".`, 'info');
   };
 
-  const persistSettings = async (updatedSettings, successMsg) => {
+  const handleToggleCoupon = (codeToToggle) => {
+    setFormData(prev => ({
+      ...prev,
+      promoCodes: prev.promoCodes.map(c => c.code === codeToToggle ? { ...c, isActive: !c.isActive } : c)
+    }));
+  };
+
+  const handleDeleteCoupon = (codeToDelete) => {
+    if (confirm(`Are you sure you want to permanently delete coupon ${codeToDelete}?`)) {
+      setFormData(prev => ({
+        ...prev,
+        promoCodes: prev.promoCodes.filter(c => c.code !== codeToDelete)
+      }));
+      if (showToast) showToast(`Deleted coupon ${codeToDelete}. Click "Save to Database" to publish.`, 'info');
+    }
+  };
+
+  // Save Settings to Supabase
+  const handleSaveAll = async () => {
     setLoading(true);
     try {
-      await updateSiteSettings(updatedSettings);
+      const payload = {
+        announcement: formData.announcement,
+        promoCodes: formData.promoCodes,
+        volumeDiscounts: formData.volumeDiscounts
+      };
 
-      await fetch('/api/admin/homepage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          settings: [
-            { key: 'site_settings', value: updatedSettings },
-            { key: 'announcement', value: updatedSettings.announcement },
-            { key: 'promotionalBanner', value: updatedSettings.promotionalBanner },
-            { key: 'promoCodes', value: updatedSettings.promoCodes }
-          ]
-        })
-      });
-
-      if (successMsg) {
-        showToast(successMsg, 'success');
+      if (updateSiteSettings) {
+        await updateSiteSettings(payload);
+        if (showToast) showToast('Promotions & Discounts successfully updated in live database!', 'success');
       }
-    } catch (error) {
-      console.error('Error saving promotions:', error);
-      showToast('Failed to save promotions settings. Please try again.', 'error');
+    } catch (err) {
+      console.error('Save promotions error:', err);
+      if (showToast) showToast('Failed to save promotions: ' + err.message, 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleToggleMaster = async () => {
-    const isCurrentlyAnyEnabled = formData.announcement.enabled || formData.promotionalBanner.enabled;
-    const nextState = !isCurrentlyAnyEnabled;
-    const updated = {
-      ...formData,
-      announcement: { ...formData.announcement, enabled: nextState },
-      promotionalBanner: { ...formData.promotionalBanner, enabled: nextState }
-    };
-    setFormData(updated);
-    await persistSettings(updated, nextState ? 'Promotions turned ON (Live on website)' : 'Promotions turned OFF (Hidden from website)');
-  };
-
-  const handleToggleAnnouncement = async () => {
-    const nextState = !formData.announcement.enabled;
-    const updated = {
-      ...formData,
-      announcement: { ...formData.announcement, enabled: nextState }
-    };
-    setFormData(updated);
-    await persistSettings(updated, nextState ? 'Top Announcement Ribbon is now LIVE' : 'Top Announcement Ribbon is now HIDDEN');
-  };
-
-  const handleToggleBanner = async () => {
-    const nextState = !formData.promotionalBanner.enabled;
-    const updated = {
-      ...formData,
-      promotionalBanner: { ...formData.promotionalBanner, enabled: nextState }
-    };
-    setFormData(updated);
-    await persistSettings(updated, nextState ? 'Visitor Welcome Offer is now LIVE' : 'Visitor Welcome Offer is now HIDDEN');
-  };
-
-  const handleToggleCoupon = async (codeToToggle) => {
-    const updatedCodes = formData.promoCodes.map(c => c.code === codeToToggle ? { ...c, isActive: !c.isActive } : c);
-    const updated = {
-      ...formData,
-      promoCodes: updatedCodes
-    };
-    setFormData(updated);
-    const toggledItem = updatedCodes.find(c => c.code === codeToToggle);
-    await persistSettings(updated, `Promo code ${codeToToggle} is now ${toggledItem?.isActive ? 'Active' : 'Disabled'}`);
-  };
-
-  const handleDeleteCoupon = async (codeToDelete) => {
-    const updatedCodes = formData.promoCodes.filter(c => c.code !== codeToDelete);
-    const updated = {
-      ...formData,
-      promoCodes: updatedCodes
-    };
-    setFormData(updated);
-    await persistSettings(updated, `Promo code ${codeToDelete} removed`);
-  };
-
-  const handleSave = async () => {
-    await persistSettings(formData, 'Promotions and coupons saved successfully to live website!');
-  };
-
-  const currentTheme = PRESET_THEMES.find(t => t.id === formData.announcement.theme) || PRESET_THEMES[0];
+  // Active theme details
+  const activeTheme = PRESET_THEMES.find(t => t.id === formData.announcement.theme) || PRESET_THEMES[0];
+  const bgToUse = formData.announcement.bgColor || activeTheme.bg;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       
-      {/* 1. Header & Primary Save Action */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      {/* Top Header Card */}
+      <div style={{
+        background: 'var(--bg-card, #ffffff)',
+        border: '1.5px solid var(--border-color)',
+        borderRadius: '16px',
+        padding: '1.5rem',
+        boxShadow: 'var(--shadow-sm)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '1rem'
+      }}>
         <div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Sparkles size={22} style={{ color: 'var(--orange-500)' }} /> Promotions & Announcement Manager
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Revenue & Conversion Suite
+            </span>
+            <span style={{ fontSize: '0.65rem', background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', padding: '0.1rem 0.45rem', borderRadius: '9999px', fontWeight: 800 }}>
+              Live Production Synced
+            </span>
+          </div>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0 }}>
+            Promotions, Coupons & Commercial Volume Tiers
           </h2>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
-            Control top announcement ribbons, 1-click coupon codes, and visitor welcome discount offers.
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.25rem 0 0 0' }}>
+            Control top flash deal ribbons, enterprise coupon codes, and automated multi-design bulk discounts.
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
-          {/* Master Promotion System Switch */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.65rem',
-            background: '#ffffff',
-            padding: '0.35rem 0.85rem',
-            borderRadius: '9999px',
-            border: '1.5px solid var(--border-color)',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
-          }}>
-            <span style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>
-              Master Status:
-            </span>
-            <button
-              type="button"
-              onClick={handleToggleMaster}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                background: (formData.announcement.enabled || formData.promotionalBanner.enabled) ? '#22c55e' : '#94a3b8',
-                color: '#ffffff',
-                border: 'none',
-                padding: '0.35rem 0.95rem',
-                borderRadius: '9999px',
-                fontWeight: 800,
-                fontSize: '0.78rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#ffffff' }}></span>
-              {(formData.announcement.enabled || formData.promotionalBanner.enabled) ? 'PROMOTIONS ON' : 'PROMOTIONS OFF'}
-            </button>
-          </div>
-
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <button
             type="button"
-            onClick={handleSave}
+            onClick={handleSaveAll}
             disabled={loading}
-            className="btn btn-primary-orange btn-md"
-            style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: '150px' }}
+            className="btn btn-primary-orange"
+            style={{
+              fontWeight: 800,
+              padding: '0.65rem 1.5rem',
+              fontSize: '0.9rem',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              boxShadow: '0 4px 14px rgba(249, 115, 22, 0.35)',
+              cursor: loading ? 'wait' : 'pointer'
+            }}
           >
-            {loading ? <RefreshCw size={16} className="spin-icon" /> : <Save size={16} />}
-            <span>{loading ? 'Saving...' : 'Save Changes'}</span>
+            <Save size={16} />
+            <span>{loading ? 'Saving to Database...' : 'Save Changes to Live Website'}</span>
           </button>
         </div>
       </div>
 
-      {/* 2. LIVE INTERACTIVE WEBSITE PREVIEW BOX */}
-      <div className="card" style={{ padding: '1.5rem', background: '#090d16', borderRadius: '18px', border: '1.5px solid rgba(255, 255, 255, 0.12)', color: '#ffffff' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--orange-400)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <Eye size={14} /> Real-Time Website Visitor Preview
-          </span>
-          <span style={{ fontSize: '0.78rem', color: formData.announcement.enabled ? '#22c55e' : '#94a3b8', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: formData.announcement.enabled ? '#22c55e' : '#64748b' }}></span>
-            {formData.announcement.enabled ? 'Live on Website' : 'Currently Hidden'}
-          </span>
-        </div>
-
-        {/* Render Live Top Bar Preview */}
-        {formData.announcement.enabled ? (
-          <div style={{
-            background: currentTheme.bg,
-            color: currentTheme.text,
+      {/* Tabs Navigation */}
+      <div style={{
+        display: 'flex',
+        gap: '0.75rem',
+        borderBottom: '1.5px solid var(--border-color)',
+        paddingBottom: '0.5rem',
+        flexWrap: 'wrap'
+      }}>
+        <button
+          type="button"
+          onClick={() => setActiveTab('announcement')}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'announcement' ? '3px solid var(--orange-500)' : '3px solid transparent',
             padding: '0.65rem 1.25rem',
-            borderRadius: '12px',
+            fontWeight: 800,
+            fontSize: '0.95rem',
+            color: activeTab === 'announcement' ? 'var(--orange-500)' : 'var(--navy-600)',
+            cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: '1rem',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-            flexWrap: 'wrap',
-            position: 'relative'
-          }}>
-            {/* Sparkle Badge */}
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.2)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              padding: '0.2rem 0.6rem',
-              borderRadius: '9999px',
-              fontSize: '0.72rem',
-              fontWeight: 900,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.3rem',
-              letterSpacing: '0.04em'
-            }}>
-              <Flame size={12} style={{ color: '#fef08a' }} />
-              {formData.announcement.badge || 'PROMOTION'}
-            </div>
+            gap: '0.5rem'
+          }}
+        >
+          <Flame size={18} />
+          <span>Top Announcement Ribbon & Flash Sale</span>
+        </button>
 
-            {/* Announcement Text */}
-            <span style={{ fontSize: '0.875rem', fontWeight: 700, textAlign: 'center' }}>
-              {formData.announcement.text || 'Special studio offer active today!'}
-            </span>
+        <button
+          type="button"
+          onClick={() => setActiveTab('coupons')}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'coupons' ? '3px solid var(--orange-500)' : '3px solid transparent',
+            padding: '0.65rem 1.25rem',
+            fontWeight: 800,
+            fontSize: '0.95rem',
+            color: activeTab === 'coupons' ? 'var(--orange-500)' : 'var(--navy-600)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}
+        >
+          <Tag size={18} />
+          <span>Master Coupon Codes Hub ({formData.promoCodes.length})</span>
+        </button>
 
-            {/* Promo Code Pill with Copy */}
-            {formData.announcement.showCodeBadge && formData.announcement.promoCode && (
-              <div
-                onClick={() => {
-                  setCopiedPreview(true);
-                  setTimeout(() => setCopiedPreview(false), 2000);
-                }}
-                style={{
-                  background: 'rgba(0, 0, 0, 0.35)',
-                  border: '1px dashed rgba(255, 255, 255, 0.6)',
-                  padding: '0.25rem 0.75rem',
-                  borderRadius: '8px',
-                  fontSize: '0.78rem',
-                  fontWeight: 900,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  transition: 'all 0.2s'
-                }}
-                title="Click to copy promo code"
-              >
-                <Tag size={12} />
-                <span>{formData.announcement.promoCode}</span>
-                <span style={{ fontSize: '0.68rem', color: copiedPreview ? '#86efac' : 'rgba(255,255,255,0.75)', fontWeight: 800 }}>
-                  {copiedPreview ? '✓ Copied!' : 'Copy'}
-                </span>
-              </div>
-            )}
-
-            {/* Action CTA Button */}
-            {formData.announcement.linkText && (
-              <span style={{
-                background: '#ffffff',
-                color: '#0f172a',
-                padding: '0.3rem 0.85rem',
-                borderRadius: '9999px',
-                fontSize: '0.78rem',
-                fontWeight: 900,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.3rem',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-              }}>
-                {formData.announcement.linkText} <ArrowRight size={12} />
-              </span>
-            )}
-          </div>
-        ) : (
-          <div style={{ padding: '1.25rem', textAlign: 'center', color: '#64748b', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-            Top Announcement Bar is currently disabled. Toggle it on below to publish to website visitors.
-          </div>
-        )}
+        <button
+          type="button"
+          onClick={() => setActiveTab('volume_tiers')}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'volume_tiers' ? '3px solid var(--orange-500)' : '3px solid transparent',
+            padding: '0.65rem 1.25rem',
+            fontWeight: 800,
+            fontSize: '0.95rem',
+            color: activeTab === 'volume_tiers' ? 'var(--orange-500)' : 'var(--navy-600)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}
+        >
+          <Sliders size={18} />
+          <span>Multi-Design Volume Tiers (B2B Discounts)</span>
+        </button>
       </div>
 
-      {/* 3. Tab Switcher */}
-      <div style={{ display: 'flex', gap: '0.5rem', background: '#f1f5f9', padding: '0.35rem', borderRadius: '12px', width: 'fit-content' }}>
-        {[
-          { id: 'announcement', label: 'Top Announcement Bar', icon: Layout },
-          { id: 'coupons', label: 'Discount Promo Codes', icon: Tag },
-          { id: 'visitor_banner', label: 'Visitor Welcome Card', icon: Gift }
-        ].map(tab => {
-          const IconComp = tab.icon;
-          const isSelected = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.6rem 1.25rem',
-                borderRadius: '8px',
-                border: 'none',
-                background: isSelected ? '#ffffff' : 'transparent',
-                color: isSelected ? 'var(--orange-600)' : 'var(--navy-700)',
-                fontWeight: isSelected ? 800 : 600,
-                fontSize: '0.875rem',
-                cursor: 'pointer',
-                boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
-                transition: 'all 0.2s'
-              }}
-            >
-              <IconComp size={15} />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 4. TAB 1: TOP ANNOUNCEMENT BAR SETTINGS */}
+      {/* TAB 1: TOP ANNOUNCEMENT RIBBON */}
       {activeTab === 'announcement' && (
-        <div className="card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', borderRadius: '16px' }}>
-          
-          {/* Enable / Disable Toggle */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '1.25rem', borderBottom: '1px solid var(--border-color)' }}>
-            <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-950)', margin: 0 }}>
-                Top Announcement Bar Visibility
-              </h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
-                When active, displays a sleek promotional ribbon across the top of all pages.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleToggleAnnouncement}
-              style={{
-                background: formData.announcement.enabled ? 'var(--orange-500)' : '#cbd5e1',
-                color: '#ffffff',
-                border: 'none',
-                padding: '0.55rem 1.25rem',
-                borderRadius: '9999px',
-                fontWeight: 800,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                transition: 'all 0.2s'
-              }}
-            >
-              {formData.announcement.enabled ? <Eye size={15} /> : <EyeOff size={15} />}
-              <span>{formData.announcement.enabled ? 'Visible to Visitors' : 'Disabled / Hidden'}</span>
-            </button>
-          </div>
-
-          {/* Form Fields */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-            
-            {/* Badge */}
-            <div className="form-group">
-              <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', display: 'block', marginBottom: '0.35rem' }}>
-                Badge Text
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                value={formData.announcement.badge}
-                onChange={(e) => handleAnnouncementChange('badge', e.target.value)}
-                placeholder="e.g. SPECIAL PROMO, FLASH SALE"
-              />
-            </div>
-
-            {/* Promo Code */}
-            <div className="form-group">
-              <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', display: 'block', marginBottom: '0.35rem' }}>
-                Promo Coupon Code
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                value={formData.announcement.promoCode}
-                onChange={(e) => handleAnnouncementChange('promoCode', e.target.value.toUpperCase())}
-                placeholder="e.g. SAVE20"
-              />
-            </div>
-          </div>
-
-          {/* Discount Percentage Selector & Presets */}
-          <div className="form-group" style={{ background: '#f8fafc', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <label style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--navy-950)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Percent size={15} style={{ color: 'var(--orange-500)' }} /> Promotional Discount Rate (% OFF)
-              </label>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                Auto-applies to Order Wizard & Checkout
-              </span>
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-              {[10, 15, 20, 25, 30, 40, 50].map((pct) => {
-                const isSelected = Number(formData.announcement.discountValue) === pct;
-                return (
-                  <button
-                    key={pct}
-                    type="button"
-                    onClick={() => handleAnnouncementDiscountChange(pct)}
-                    style={{
-                      padding: '0.35rem 0.85rem',
-                      borderRadius: '8px',
-                      border: isSelected ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
-                      background: isSelected ? 'var(--orange-500)' : '#ffffff',
-                      color: isSelected ? '#ffffff' : 'var(--navy-800)',
-                      fontWeight: isSelected ? 800 : 600,
-                      fontSize: '0.85rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    {pct}% OFF
-                  </button>
-                );
-              })}
-
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginLeft: 'auto' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--navy-800)' }}>Custom:</span>
-                <input
-                  type="number"
-                  min="1"
-                  max="100"
-                  className="form-control"
-                  style={{ width: '75px', padding: '0.3rem 0.5rem', textAlign: 'center', fontWeight: 800 }}
-                  value={formData.announcement.discountValue || 20}
-                  onChange={(e) => handleAnnouncementDiscountChange(e.target.value)}
-                />
-                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>%</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Announcement Main Headline Text */}
-          <div className="form-group">
-            <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', display: 'block', marginBottom: '0.35rem' }}>
-              Announcement Headline Message *
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              value={formData.announcement.text}
-              onChange={(e) => handleAnnouncementChange('text', e.target.value)}
-              placeholder="e.g. Get 20% OFF on All Custom Embroidery Digitizing & Vector Art Orders!"
-              required
-            />
-          </div>
-
-          {/* CTA Link & Text */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-            <div className="form-group">
-              <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', display: 'block', marginBottom: '0.35rem' }}>
-                Button Text
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                value={formData.announcement.linkText}
-                onChange={(e) => handleAnnouncementChange('linkText', e.target.value)}
-                placeholder="e.g. Claim 20% Off, Order Now"
-              />
-            </div>
-
-            <div className="form-group">
-              <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', display: 'block', marginBottom: '0.35rem' }}>
-                Target URL / Action
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                value={formData.announcement.linkUrl}
-                onChange={(e) => handleAnnouncementChange('linkUrl', e.target.value)}
-                placeholder="e.g. /order, #pricing, /pricing"
-              />
-            </div>
-          </div>
-
-          {/* Theme Selector */}
-          <div>
-            <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', display: 'block', marginBottom: '0.65rem' }}>
-              Visual Gradient Themes
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem', marginBottom: '1.25rem' }}>
-              {PRESET_THEMES.map(theme => {
-                const isSelected = formData.announcement.theme === theme.id;
-                return (
-                  <button
-                    key={theme.id}
-                    type="button"
-                    onClick={() => {
-                      setFormData(prev => ({
-                        ...prev,
-                        announcement: {
-                          ...prev.announcement,
-                          theme: theme.id,
-                          bgColor: theme.bg,
-                          textColor: theme.text
-                        }
-                      }));
-                    }}
-                    style={{
-                      background: theme.bg,
-                      color: theme.text,
-                      padding: '0.75rem 1rem',
-                      borderRadius: '10px',
-                      border: isSelected ? '3px solid #ffffff' : '1px solid rgba(0,0,0,0.1)',
-                      boxShadow: isSelected ? '0 0 0 2px var(--orange-500), 0 4px 12px rgba(0,0,0,0.15)' : 'none',
-                      fontWeight: 800,
-                      fontSize: '0.85rem',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {theme.name} {isSelected && '✓'}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Custom Background and Text Color */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1rem', background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-900)', display: 'block', marginBottom: '0.3rem' }}>
-                  Custom Background (HEX or CSS Gradient)
-                </label>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <input
-                    type="color"
-                    value={formData.announcement.bgColor?.startsWith('#') ? formData.announcement.bgColor : '#ea580c'}
-                    onChange={(e) => {
-                      handleAnnouncementChange('bgColor', e.target.value);
-                      handleAnnouncementChange('theme', 'custom');
-                    }}
-                    style={{ width: '36px', height: '36px', border: 'none', borderRadius: '6px', cursor: 'pointer', padding: 0 }}
-                  />
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="e.g. #ea580c or linear-gradient(...)"
-                    value={formData.announcement.bgColor || ''}
-                    onChange={(e) => {
-                      handleAnnouncementChange('bgColor', e.target.value);
-                      handleAnnouncementChange('theme', 'custom');
-                    }}
-                    style={{ fontSize: '0.85rem' }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-900)', display: 'block', marginBottom: '0.3rem' }}>
-                  Text Color
-                </label>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <input
-                    type="color"
-                    value={formData.announcement.textColor?.startsWith('#') ? formData.announcement.textColor : '#ffffff'}
-                    onChange={(e) => handleAnnouncementChange('textColor', e.target.value)}
-                    style={{ width: '36px', height: '36px', border: 'none', borderRadius: '6px', cursor: 'pointer', padding: 0 }}
-                  />
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="#ffffff"
-                    value={formData.announcement.textColor || '#ffffff'}
-                    onChange={(e) => handleAnnouncementChange('textColor', e.target.value)}
-                    style={{ fontSize: '0.85rem' }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Additional Toggles */}
-          <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, color: 'var(--navy-900)' }}>
-              <input
-                type="checkbox"
-                checked={formData.announcement.showCodeBadge}
-                onChange={(e) => handleAnnouncementChange('showCodeBadge', e.target.checked)}
-                style={{ width: '16px', height: '16px', accentColor: 'var(--orange-500)' }}
-              />
-              <span>Show 1-Click Copy Promo Code Badge</span>
-            </label>
-          </div>
-
-        </div>
-      )}
-
-      {/* 5. TAB 2: DISCOUNT PROMO CODES MANAGER */}
-      {activeTab === 'coupons' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
-          {/* Add New Coupon Card */}
-          <div className="card" style={{ padding: '1.75rem', borderRadius: '16px' }}>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <Plus size={18} style={{ color: 'var(--orange-500)' }} /> Create New Discount Promo Code
-            </h3>
+          {/* Live Preview Box */}
+          <div style={{
+            background: '#090d16',
+            borderRadius: '16px',
+            padding: '1.25rem',
+            border: '1.5px solid rgba(255, 122, 0, 0.4)',
+            color: '#ffffff',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.3)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--orange-400)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <Eye size={15} /> Top Header Announcement Live Emulation
+              </span>
+              <span style={{ fontSize: '0.72rem', background: formData.announcement.enabled ? '#059669' : '#ef4444', color: '#ffffff', padding: '0.15rem 0.5rem', borderRadius: '9999px', fontWeight: 800 }}>
+                {formData.announcement.enabled ? 'ACTIVE ON WEBSITE' : 'CURRENTLY PAUSED'}
+              </span>
+            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', alignItems: 'flex-end' }}>
+            {/* Render Actual Component Emulation */}
+            <div style={{
+              background: bgToUse,
+              color: formData.announcement.textColor || '#ffffff',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.65rem',
+              flexWrap: 'wrap',
+              fontSize: '0.84rem',
+              fontWeight: 600,
+              boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
+            }}>
+              {formData.announcement.badge && (
+                <div style={{ background: activeTheme.badgeBg || 'rgba(255,255,255,0.25)', padding: '0.15rem 0.5rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <Flame size={12} style={{ color: '#fef08a' }} />
+                  <span>{formData.announcement.badge}</span>
+                </div>
+              )}
+              <span style={{ fontWeight: 700 }}>{formData.announcement.text}</span>
+              
+              {formData.announcement.showCountdown && (
+                <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.15rem 0.5rem', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#fef08a' }}>
+                  <Clock size={11} /> Ends in: 14h 35m 48s
+                </div>
+              )}
+
+              {formData.announcement.showCodeBadge && formData.announcement.promoCode && (
+                <div style={{ background: 'rgba(0,0,0,0.35)', border: '1px dashed rgba(255,255,255,0.8)', padding: '0.15rem 0.55rem', borderRadius: '6px', fontSize: '0.76rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.3rem', fontFamily: 'monospace' }}>
+                  <Tag size={12} style={{ color: '#fbbf24' }} />
+                  <span>{formData.announcement.promoCode}</span>
+                  <span style={{ fontSize: '0.68rem', color: '#86efac', marginLeft: '2px' }}>Apply</span>
+                </div>
+              )}
+
+              {formData.announcement.linkText && (
+                <div style={{ background: '#ffffff', color: activeTheme.id === 'orange' ? '#ea580c' : '#0f172a', padding: '0.2rem 0.75rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <span>{formData.announcement.linkText}</span>
+                  <ArrowRight size={12} />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Settings Card */}
+          <div style={{
+            background: 'var(--bg-card, #ffffff)',
+            border: '1.5px solid var(--border-color)',
+            borderRadius: '16px',
+            padding: '1.5rem',
+            boxShadow: 'var(--shadow-sm)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.25rem'
+          }}>
+            {/* Status Switch */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)' }}>
               <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-900)', display: 'block', marginBottom: '0.3rem' }}>
-                  Coupon Code *
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--navy-950)', margin: 0 }}>
+                  Top Announcement Ribbon Status
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                  When enabled, this bar renders at the very top of all public visitor pages.
+                </p>
+              </div>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={formData.announcement.enabled}
+                  onChange={(e) => handleAnnouncementChange('enabled', e.target.checked)}
+                  style={{ width: '20px', height: '20px', accentColor: 'var(--orange-500)', cursor: 'pointer' }}
+                />
+                <span style={{ fontWeight: 800, fontSize: '0.9rem', color: formData.announcement.enabled ? '#059669' : 'var(--text-muted)' }}>
+                  {formData.announcement.enabled ? 'Enabled (Live)' : 'Disabled (Hidden)'}
+                </span>
+              </label>
+            </div>
+
+            {/* Campaign Inputs */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>
+                  Campaign Badge Tag:
                 </label>
                 <input
                   type="text"
-                  className="form-control"
-                  placeholder="e.g. FLASH25"
-                  value={newCoupon.code}
-                  onChange={(e) => setNewCoupon(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
+                  placeholder="e.g. FLASH SALE, WEEKEND DEAL"
+                  value={formData.announcement.badge}
+                  onChange={(e) => handleAnnouncementChange('badge', e.target.value)}
+                  style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1.5px solid var(--border-color)', fontSize: '0.88rem', fontWeight: 700, background: 'var(--bg-surface)' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-900)', display: 'block', marginBottom: '0.3rem' }}>
-                  Discount Type
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>
+                  Linked Promo Code:
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. SAVE20"
+                  value={formData.announcement.promoCode}
+                  onChange={(e) => handleAnnouncementChange('promoCode', e.target.value.toUpperCase())}
+                  style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1.5px solid var(--border-color)', fontSize: '0.88rem', fontWeight: 800, color: 'var(--orange-600)', background: 'var(--bg-surface)' }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>
+                Main Announcement Headline:
+              </label>
+              <input
+                type="text"
+                value={formData.announcement.text}
+                onChange={(e) => handleAnnouncementChange('text', e.target.value)}
+                style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1.5px solid var(--border-color)', fontSize: '0.9rem', fontWeight: 700, background: 'var(--bg-surface)' }}
+              />
+            </div>
+
+            {/* Themes & Toggles */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', paddingTop: '0.5rem' }}>
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>
+                  Preset Studio Theme:
                 </label>
                 <select
-                  className="form-control"
-                  value={newCoupon.discountType}
-                  onChange={(e) => setNewCoupon(prev => ({ ...prev, discountType: e.target.value }))}
-                  style={{ fontWeight: 700 }}
+                  value={formData.announcement.theme}
+                  onChange={(e) => handleAnnouncementChange('theme', e.target.value)}
+                  style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1.5px solid var(--border-color)', fontSize: '0.88rem', fontWeight: 700, background: 'var(--bg-surface)' }}
                 >
-                  <option value="percent">Percentage (%)</option>
-                  <option value="fixed">Fixed Amount ($)</option>
+                  {PRESET_THEMES.map(th => (
+                    <option key={th.id} value={th.id}>{th.name}</option>
+                  ))}
                 </select>
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-900)', display: 'block', marginBottom: '0.3rem' }}>
-                  Discount Value
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>
+                  Action Button Label:
                 </label>
                 <input
-                  type="number"
-                  className="form-control"
-                  placeholder="20"
-                  value={newCoupon.discountValue}
-                  onChange={(e) => setNewCoupon(prev => ({ ...prev, discountValue: e.target.value }))}
+                  type="text"
+                  placeholder="e.g. Claim 20% Off"
+                  value={formData.announcement.linkText}
+                  onChange={(e) => handleAnnouncementChange('linkText', e.target.value)}
+                  style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1.5px solid var(--border-color)', fontSize: '0.88rem', fontWeight: 700, background: 'var(--bg-surface)' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-900)', display: 'block', marginBottom: '0.3rem' }}>
-                  Min. Order ($)
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>
+                  Destination Link:
                 </label>
                 <input
-                  type="number"
-                  className="form-control"
-                  placeholder="10"
-                  value={newCoupon.minOrder}
-                  onChange={(e) => setNewCoupon(prev => ({ ...prev, minOrder: e.target.value }))}
+                  type="text"
+                  placeholder="e.g. /order or /services/embroidery-digitizing"
+                  value={formData.announcement.linkUrl}
+                  onChange={(e) => handleAnnouncementChange('linkUrl', e.target.value)}
+                  style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1.5px solid var(--border-color)', fontSize: '0.88rem', background: 'var(--bg-surface)' }}
                 />
+              </div>
+            </div>
+
+            {/* Checkbox Features */}
+            <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', paddingTop: '0.5rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={formData.announcement.showCountdown}
+                  onChange={(e) => handleAnnouncementChange('showCountdown', e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: 'var(--orange-500)' }}
+                />
+                <span>Display Urgency Countdown Timer (Ends in Xh Xm)</span>
+              </label>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={formData.announcement.showCodeBadge}
+                  onChange={(e) => handleAnnouncementChange('showCodeBadge', e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: 'var(--orange-500)' }}
+                />
+                <span>Display 1-Click "Copy & Auto-Apply" Promo Badge</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: MASTER COUPON CODES HUB */}
+      {activeTab === 'coupons' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          
+          {/* Coupon Stats Bar */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            <div style={{ background: 'var(--bg-card, #ffffff)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Active Coupons</div>
+              <div style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--navy-950)', marginTop: '0.25rem' }}>
+                {formData.promoCodes.filter(c => c.isActive !== false).length} / {formData.promoCodes.length}
+              </div>
+            </div>
+
+            <div style={{ background: 'var(--bg-card, #ffffff)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Max Studio Discount</div>
+              <div style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--orange-600)', marginTop: '0.25rem' }}>
+                {Math.max(...formData.promoCodes.map(c => c.discountType === 'percent' ? c.discountValue : 0), 0)}% OFF
+              </div>
+            </div>
+
+            <div style={{ background: 'var(--bg-card, #ffffff)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Need New Campaign?</div>
+                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-950)', marginTop: '0.25rem' }}>Create Promo Code</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddCoupon(!showAddCoupon)}
+                className="btn btn-primary-orange"
+                style={{ padding: '0.5rem 1rem', fontSize: '0.82rem', fontWeight: 800, borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+              >
+                <Plus size={15} />
+                <span>{showAddCoupon ? 'Close' : 'Add Coupon'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* New Coupon Creation Form */}
+          {showAddCoupon && (
+            <div style={{
+              background: 'var(--color-subtle, #f8fafc)',
+              border: '2px solid var(--orange-500)',
+              borderRadius: '16px',
+              padding: '1.5rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+              boxShadow: '0 8px 24px rgba(249, 115, 22, 0.15)'
+            }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-950)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <Tag size={18} style={{ color: 'var(--orange-500)' }} />
+                Create New Studio Promo Code
+              </h3>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                    Coupon Code (Uppercase) *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. VIP25"
+                    value={newCoupon.code}
+                    onChange={(e) => setNewCoupon(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1.5px solid var(--border-color)', fontSize: '0.9rem', fontWeight: 800, color: 'var(--navy-950)', background: '#ffffff' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                    Discount Type *
+                  </label>
+                  <select
+                    value={newCoupon.discountType}
+                    onChange={(e) => setNewCoupon(prev => ({ ...prev, discountType: e.target.value }))}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1.5px solid var(--border-color)', fontSize: '0.85rem', fontWeight: 700, background: '#ffffff' }}
+                  >
+                    <option value="percent">Percentage (%) Off</option>
+                    <option value="fixed">Fixed Dollar ($) Amount</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                    Discount Value ({newCoupon.discountType === 'percent' ? '%' : '$'}) *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max={newCoupon.discountType === 'percent' ? 100 : 500}
+                    value={newCoupon.discountValue}
+                    onChange={(e) => setNewCoupon(prev => ({ ...prev, discountValue: e.target.value }))}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1.5px solid var(--border-color)', fontSize: '0.9rem', fontWeight: 800, color: 'var(--orange-600)', background: '#ffffff' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                    Minimum Spend ($)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 20"
+                    value={newCoupon.minOrder}
+                    onChange={(e) => setNewCoupon(prev => ({ ...prev, minOrder: e.target.value }))}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1.5px solid var(--border-color)', fontSize: '0.9rem', fontWeight: 700, background: '#ffffff' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                    Applicable Service Scope
+                  </label>
+                  <select
+                    value={newCoupon.serviceScope}
+                    onChange={(e) => setNewCoupon(prev => ({ ...prev, serviceScope: e.target.value }))}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1.5px solid var(--border-color)', fontSize: '0.85rem', fontWeight: 700, background: '#ffffff' }}
+                  >
+                    <option value="all">All Studio Services</option>
+                    <option value="embroidery">Embroidery Digitizing Only</option>
+                    <option value="vector">Vector Art & Tracing Only</option>
+                    <option value="patch">Custom Patches Only</option>
+                  </select>
+                </div>
               </div>
 
               <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                  Description / Note (Customer facing summary)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 25% off embroidery digitizing for orders over $20"
+                  value={newCoupon.description}
+                  onChange={(e) => setNewCoupon(prev => ({ ...prev, description: e.target.value }))}
+                  style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1.5px solid var(--border-color)', fontSize: '0.85rem', background: '#ffffff' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAddCoupon(false)}
+                  style={{ padding: '0.55rem 1.15rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: '#ffffff', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
                 <button
                   type="button"
                   onClick={handleAddCoupon}
                   className="btn btn-primary-orange"
-                  style={{ width: '100%', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', height: '42px' }}
+                  style={{ padding: '0.55rem 1.35rem', borderRadius: '8px', fontWeight: 800, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                 >
-                  <Plus size={16} /> Add Promo Code
+                  <Plus size={15} />
+                  <span>Create Coupon</span>
                 </button>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Active Promo Codes List */}
-          <div className="card" style={{ padding: '1.75rem', borderRadius: '16px' }}>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 1rem' }}>
-              Active Promo Codes ({formData.promoCodes.length})
-            </h3>
+          {/* Coupon Cards Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
+            {formData.promoCodes.map((coupon, idx) => {
+              const isPercent = coupon.discountType === 'percent';
+              const discountDisplay = isPercent ? `${coupon.discountValue}% OFF` : `$${Number(coupon.discountValue).toFixed(2)} OFF`;
+              const isActive = coupon.isActive !== false;
+              const scopeLabel = coupon.serviceScope === 'vector' ? 'Vector Art' : coupon.serviceScope === 'patch' ? 'Custom Patches' : coupon.serviceScope === 'embroidery' ? 'Embroidery' : 'All Services';
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
-              {formData.promoCodes.map((coupon, idx) => (
+              return (
                 <div
                   key={coupon.code || idx}
                   style={{
-                    background: coupon.isActive !== false ? '#ffffff' : '#f8fafc',
-                    border: coupon.isActive !== false ? '1.5px solid var(--border-color)' : '1.5px dashed #cbd5e1',
-                    padding: '1.25rem',
+                    background: 'var(--bg-card, #ffffff)',
+                    border: isActive ? '1.5px solid var(--border-color)' : '1.5px dashed #cbd5e1',
                     borderRadius: '14px',
+                    padding: '1.25rem',
+                    boxShadow: 'var(--shadow-sm)',
+                    opacity: isActive ? 1 : 0.65,
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    gap: '0.75rem',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                    gap: '1rem',
+                    transition: 'all 0.18s ease'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem' }}>
-                        <Tag size={15} style={{ color: 'var(--orange-500)' }} />
-                        <strong style={{ fontSize: '1.1rem', color: 'var(--navy-950)', letterSpacing: '0.04em' }}>{coupon.code}</strong>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.65rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontFamily: 'monospace', fontWeight: 900, fontSize: '1.1rem', color: 'var(--navy-950)', background: 'var(--color-subtle, #f1f5f9)', padding: '0.2rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                          {coupon.code}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-600)', background: 'rgba(255, 122, 0, 0.12)', padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>
+                          {discountDisplay}
+                        </span>
                       </div>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--orange-600)' }}>
-                        {coupon.discountType === 'percent' ? `${coupon.discountValue}% OFF` : `$${coupon.discountValue} OFF`}
-                      </span>
+
+                      {/* Active Toggle Switch */}
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={isActive}
+                          onChange={() => handleToggleCoupon(coupon.code)}
+                          style={{ width: '16px', height: '16px', accentColor: 'var(--orange-500)', cursor: 'pointer' }}
+                        />
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: isActive ? '#059669' : '#ef4444' }}>
+                          {isActive ? 'Active' : 'Paused'}
+                        </span>
+                      </label>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleToggleCoupon(coupon.code)}
-                      style={{
-                        background: coupon.isActive !== false ? '#ecfdf5' : '#f1f5f9',
-                        color: coupon.isActive !== false ? '#059669' : '#64748b',
-                        border: 'none',
-                        padding: '0.25rem 0.6rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.72rem',
-                        fontWeight: 800,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {coupon.isActive !== false ? 'Active' : 'Disabled'}
-                    </button>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-main)', margin: '0 0 0.65rem 0', lineHeight: 1.45 }}>
+                      {coupon.description || 'Promotional coupon code'}
+                    </p>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.72rem', fontWeight: 700 }}>
+                      <span style={{ background: '#eff6ff', color: '#2563eb', padding: '0.15rem 0.45rem', borderRadius: '4px', border: '1px solid #bfdbfe' }}>
+                        Scope: {scopeLabel}
+                      </span>
+                      {coupon.minOrder > 0 && (
+                        <span style={{ background: '#fef3c7', color: '#b45309', padding: '0.15rem 0.45rem', borderRadius: '4px', border: '1px solid #fde68a' }}>
+                          Min Spend: ${coupon.minOrder}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
-                    {coupon.description || `Min. order $${coupon.minOrder || 0}`}
-                  </p>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.6rem', borderTop: '1px solid #f1f5f9' }}>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                      Min: ${coupon.minOrder || 0}
-                    </span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (openOrderWizard) {
+                          openOrderWizard({ promoCode: coupon.code, type: coupon.serviceScope || 'all' });
+                        }
+                      }}
+                      style={{ background: 'none', border: 'none', color: 'var(--orange-600)', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                    >
+                      <Sparkles size={13} />
+                      <span>Test in Wizard</span>
+                    </button>
 
                     <button
                       type="button"
                       onClick={() => handleDeleteCoupon(coupon.code)}
-                      style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', padding: '0.2rem' }}
-                      title="Delete code"
+                      style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={13} />
+                      <span>Delete</span>
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
 
         </div>
       )}
 
-      {/* 6. TAB 3: VISITOR WELCOME CARD */}
-      {activeTab === 'visitor_banner' && (
-        <div className="card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', borderRadius: '16px' }}>
+      {/* TAB 3: AUTOMATIC MULTI-DESIGN VOLUME DISCOUNTS */}
+      {activeTab === 'volume_tiers' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '1.25rem', borderBottom: '1px solid var(--border-color)' }}>
-            <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-950)', margin: 0 }}>
-                Visitor Welcome Discount Card
+          {/* Explanation Banner */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(255, 122, 0, 0.08) 0%, rgba(255, 122, 0, 0.02) 100%)',
+            border: '1.5px solid rgba(255, 122, 0, 0.3)',
+            borderRadius: '16px',
+            padding: '1.5rem',
+            boxShadow: 'var(--shadow-sm)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.45rem' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--orange-500)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Sliders size={18} />
+              </div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0 }}>
+                Automated Multi-Design Bulk Tiers (Commercial B2B Standard)
               </h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
-                Floating card in the bottom corner of the website welcoming new visitors with a discount coupon.
-              </p>
+            </div>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', margin: '0.35rem 0 0 0', lineHeight: 1.55 }}>
+              Commercial apparel decorators, uniform contractors, and screen printing shops frequently order multiple logos in a single order. These volume tiers automatically reward multi-design batch orders without requiring manual discount codes.
+            </p>
+          </div>
+
+          {/* Volume Tiers Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1rem' }}>
+            
+            {/* Tier 1 */}
+            <div style={{ background: 'var(--bg-card, #ffffff)', border: '1.5px solid var(--border-color)', borderRadius: '14px', padding: '1.25rem', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-950)' }}>Tier 1: Starter Batch</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--orange-600)', background: 'rgba(255, 122, 0, 0.12)', padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>5% OFF</span>
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                <strong>3 – 4 Designs</strong> in same order
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '0.5rem', fontWeight: 700 }}>
+                ✓ Perfect for small uniform bundles (Chest + Cap + Sleeve)
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleToggleBanner}
-              style={{
-                background: formData.promotionalBanner.enabled ? 'var(--orange-500)' : '#cbd5e1',
-                color: '#ffffff',
-                border: 'none',
-                padding: '0.55rem 1.25rem',
-                borderRadius: '9999px',
-                fontWeight: 800,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem'
-              }}
-            >
-              {formData.promotionalBanner.enabled ? <Eye size={15} /> : <EyeOff size={15} />}
-              <span>{formData.promotionalBanner.enabled ? 'Visible to Visitors' : 'Disabled / Hidden'}</span>
-            </button>
-          </div>
-
-          <div className="form-group">
-            <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', display: 'block', marginBottom: '0.35rem' }}>
-              Card Title
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              value={formData.promotionalBanner.title}
-              onChange={(e) => handleBannerChange('title', e.target.value)}
-              placeholder="e.g. First-Time Client Welcome Offer"
-            />
-          </div>
-
-          <div className="form-group">
-            <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', display: 'block', marginBottom: '0.35rem' }}>
-              Offer Description
-            </label>
-            <textarea
-              className="form-control"
-              rows={2}
-              value={formData.promotionalBanner.description}
-              onChange={(e) => handleBannerChange('description', e.target.value)}
-              placeholder="e.g. Enjoy 20% off your first digitizing file or vector redraw with free unlimited revisions."
-            />
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-            <div className="form-group">
-              <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', display: 'block', marginBottom: '0.35rem' }}>
-                Promo Code
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                value={formData.promotionalBanner.promoCode}
-                onChange={(e) => handleBannerChange('promoCode', e.target.value.toUpperCase())}
-                placeholder="e.g. WELCOME20"
-              />
+            {/* Tier 2 */}
+            <div style={{ background: 'var(--bg-card, #ffffff)', border: '1.5px solid var(--border-color)', borderRadius: '14px', padding: '1.25rem', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-950)' }}>Tier 2: Team Catalog</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--orange-600)', background: 'rgba(255, 122, 0, 0.12)', padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>10% OFF</span>
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                <strong>5 – 9 Designs</strong> in same order
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '0.5rem', fontWeight: 700 }}>
+                ✓ Ideal for sports leagues & multi-location franchises
+              </div>
             </div>
 
-            <div className="form-group">
-              <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', display: 'block', marginBottom: '0.35rem' }}>
-                Button Text
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                value={formData.promotionalBanner.ctaText}
-                onChange={(e) => handleBannerChange('ctaText', e.target.value)}
-                placeholder="e.g. Start Your Order"
-              />
+            {/* Tier 3 */}
+            <div style={{ background: 'var(--bg-card, #ffffff)', border: '1.5px solid var(--border-color)', borderRadius: '14px', padding: '1.25rem', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-950)' }}>Tier 3: Commercial Program</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--orange-600)', background: 'rgba(255, 122, 0, 0.12)', padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>15% OFF</span>
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                <strong>10 – 24 Designs</strong> in same order
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '0.5rem', fontWeight: 700 }}>
+                ✓ For high-volume print shops & apparel brands
+              </div>
+            </div>
+
+            {/* Tier 4 */}
+            <div style={{ background: 'var(--bg-card, #ffffff)', border: '1.5px solid var(--border-color)', borderRadius: '14px', padding: '1.25rem', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-950)' }}>Tier 4: Enterprise Wholesale</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--orange-600)', background: 'rgba(255, 122, 0, 0.12)', padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>25% OFF</span>
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                <strong>25 – 49 Designs</strong> in same order
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '0.5rem', fontWeight: 700 }}>
+                ✓ Dedicated digitizer assignment & priority queue
+              </div>
+            </div>
+
+            {/* Tier 5 */}
+            <div style={{ background: 'var(--bg-card, #ffffff)', border: '1.5px solid var(--border-color)', borderRadius: '14px', padding: '1.25rem', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-950)' }}>Tier 5: Master Factory</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--orange-600)', background: 'rgba(255, 122, 0, 0.12)', padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>35% OFF</span>
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                <strong>50+ Designs</strong> in same order
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '0.5rem', fontWeight: 700 }}>
+                ✓ Full seasonal corporate catalog digitizing
+              </div>
+            </div>
+
+          </div>
+
+          {/* Interactive Calculator Simulator */}
+          <div style={{
+            background: 'var(--bg-card, #ffffff)',
+            border: '1.5px solid var(--border-color)',
+            borderRadius: '16px',
+            padding: '1.5rem',
+            boxShadow: 'var(--shadow-sm)'
+          }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--navy-950)', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <Zap size={18} style={{ color: 'var(--orange-500)' }} />
+              Live Multi-Design Volume Calculator Simulator
+            </h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                  Simulated Design Quantity:
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={calcQty}
+                  onChange={(e) => setCalcQty(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                  style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1.5px solid var(--border-color)', fontSize: '0.9rem', fontWeight: 800, background: 'var(--bg-surface)' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                  Base Rate Per Design ($):
+                </label>
+                <input
+                  type="number"
+                  min="5"
+                  max="100"
+                  value={calcBaseRate}
+                  onChange={(e) => setCalcBaseRate(Math.max(5, parseFloat(e.target.value) || 20))}
+                  style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1.5px solid var(--border-color)', fontSize: '0.9rem', fontWeight: 800, background: 'var(--bg-surface)' }}
+                />
+              </div>
+
+              {/* Calculated Result */}
+              {(() => {
+                const subtotal = calcQty * calcBaseRate;
+                let discountPct = 0;
+                if (calcQty >= 50) discountPct = 35;
+                else if (calcQty >= 25) discountPct = 25;
+                else if (calcQty >= 10) discountPct = 15;
+                else if (calcQty >= 5) discountPct = 10;
+                else if (calcQty >= 3) discountPct = 5;
+
+                const discountAmt = (subtotal * discountPct) / 100;
+                const finalAmt = subtotal - discountAmt;
+
+                return (
+                  <div style={{ background: 'var(--color-subtle, #f8fafc)', border: '1.5px solid var(--border-color)', borderRadius: '10px', padding: '0.75rem 1rem' }}>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)' }}>Automated Pricing Output:</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '0.25rem' }}>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textDecoration: discountPct > 0 ? 'line-through' : 'none' }}>
+                        ${subtotal.toFixed(2)}
+                      </span>
+                      <span style={{ fontSize: '1.35rem', fontWeight: 900, color: '#059669' }}>
+                        ${finalAmt.toFixed(2)}
+                      </span>
+                    </div>
+                    {discountPct > 0 && (
+                      <div style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 800, marginTop: '0.15rem' }}>
+                        ✓ Client Saves ${discountAmt.toFixed(2)} ({discountPct}% Volume Tier)
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
         </div>
       )}
+
+      {/* Save Bottom Bar */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+        <button
+          type="button"
+          onClick={handleSaveAll}
+          disabled={loading}
+          className="btn btn-primary-orange"
+          style={{
+            fontWeight: 800,
+            padding: '0.75rem 2.25rem',
+            fontSize: '0.95rem',
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            boxShadow: '0 6px 20px rgba(249, 115, 22, 0.4)'
+          }}
+        >
+          <Save size={18} />
+          <span>{loading ? 'Saving Changes...' : 'Save All Promotions to Live Website'}</span>
+        </button>
+      </div>
 
     </div>
   );

@@ -5,7 +5,6 @@ import { useAppState } from '../../context/StateContext';
 import { AnnouncementBar } from '../public/AnnouncementBar';
 import { HeaderNav } from '../HeaderNav';
 import { Footer } from '../public/Footer';
-import { VisitorPromotionBanner } from '../public/VisitorPromotionBanner';
 import { ClientLiveChatWidget } from '../customer/ClientLiveChatWidget';
 import { AuthModal } from '../auth/AuthModal';
 import { OrderWizardModal } from '../customer/OrderWizardModal';
@@ -51,7 +50,6 @@ export const ClientLayoutShell = ({ children }) => {
       {!isAppMode && (
         <div className="website-footer-zone">
           <Footer />
-          <VisitorPromotionBanner />
           <div className="desktop-chat-container">
             <ClientLiveChatWidget />
           </div>

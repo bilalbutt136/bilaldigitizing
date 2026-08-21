@@ -1,32 +1,50 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Flame, Tag, ArrowRight, Check } from 'lucide-react';
+import { X, Flame, Tag, ArrowRight, Check, Clock, Sparkles } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
 
 const THEMES = {
-  orange: { bg: 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)', text: '#ffffff' },
-  navy: { bg: 'linear-gradient(90deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)', text: '#ffffff' },
-  emerald: { bg: 'linear-gradient(90deg, #065f46 0%, #059669 50%, #065f46 100%)', text: '#ffffff' },
-  crimson: { bg: 'linear-gradient(90deg, #991b1b 0%, #dc2626 50%, #991b1b 100%)', text: '#ffffff' }
+  orange: { bg: 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.22)', btnBg: '#ffffff', btnColor: '#ea580c' },
+  navy: { bg: 'linear-gradient(90deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)', text: '#ffffff', badgeBg: 'rgba(249, 115, 22, 0.25)', btnBg: '#f97316', btnColor: '#ffffff' },
+  emerald: { bg: 'linear-gradient(90deg, #065f46 0%, #059669 50%, #065f46 100%)', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.22)', btnBg: '#ffffff', btnColor: '#065f46' },
+  crimson: { bg: 'linear-gradient(90deg, #991b1b 0%, #dc2626 50%, #991b1b 100%)', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.22)', btnBg: '#ffffff', btnColor: '#991b1b' },
+  royal: { bg: 'linear-gradient(90deg, #312e81 0%, #4338ca 50%, #312e81 100%)', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.22)', btnBg: '#ffffff', btnColor: '#312e81' }
 };
 
 export const AnnouncementBar = () => {
-  const { siteSettings, openOrderWizard, protectedNavigate } = useAppState();
+  const { siteSettings, openOrderWizard, protectedNavigate, showToast } = useAppState();
   const navigate = useNavigate();
   const [isDismissed, setIsDismissed] = useState(false);
   const [copied, setCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [timeLeft, setTimeLeft] = useState({ hours: 14, minutes: 35, seconds: 48 });
 
   const announcement = siteSettings?.announcement;
 
+  // Real-time Countdown Timer calculation
   useEffect(() => {
     setMounted(true);
     if (announcement?.text) {
       const dismissKey = 'announcement_dismissed_' + encodeURIComponent(announcement.text);
       setIsDismissed(sessionStorage.getItem(dismissKey) === 'true');
     }
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev.seconds > 0) {
+          return { ...prev, seconds: prev.seconds - 1 };
+        } else if (prev.minutes > 0) {
+          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
+        } else if (prev.hours > 0) {
+          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
+        }
+        return { hours: 23, minutes: 59, seconds: 59 }; // loop daily
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, [announcement?.text, announcement?.enabled]);
 
   if (!mounted || isDismissed || !announcement?.enabled || !announcement?.text) {
@@ -41,14 +59,20 @@ export const AnnouncementBar = () => {
     }
   };
 
-  const handleCopyCode = (e) => {
+  const handleCopyAndApply = (e) => {
     e.stopPropagation();
-    if (!announcement.promoCode) return;
+    const promoCode = announcement.promoCode || 'SAVE20';
     try {
-      navigator.clipboard.writeText(announcement.promoCode);
+      navigator.clipboard.writeText(promoCode);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2200);
+      if (showToast) showToast(`Coupon ${promoCode} copied & activated!`, 'success');
+      setTimeout(() => setCopied(false), 2400);
     } catch {}
+
+    // Auto trigger order wizard with promo pre-filled
+    if (openOrderWizard) {
+      openOrderWizard({ promoCode, type: 'all' });
+    }
   };
 
   const handleActionClick = () => {
@@ -70,10 +94,11 @@ export const AnnouncementBar = () => {
   };
 
   // Determine dynamic background and text color
+  const themeObj = THEMES[announcement.theme] || THEMES.orange;
   const backgroundStyle = announcement.bgColor && announcement.bgColor.length > 3
     ? announcement.bgColor
-    : (THEMES[announcement.theme]?.bg || THEMES.orange.bg);
-  const textStyle = announcement.textColor || THEMES[announcement.theme]?.text || '#ffffff';
+    : themeObj.bg;
+  const textStyle = announcement.textColor || themeObj.text || '#ffffff';
 
   return (
     <aside 
@@ -81,16 +106,16 @@ export const AnnouncementBar = () => {
       style={{
         background: backgroundStyle,
         color: textStyle,
-        padding: '0.5rem 1rem',
+        padding: '0.45rem 1rem',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
         zIndex: 100,
-        fontSize: '0.85rem',
+        fontSize: '0.84rem',
         fontWeight: 600,
         letterSpacing: '0.01em',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
         borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
         transition: 'background 0.3s ease, color 0.3s ease'
       }}
@@ -99,26 +124,26 @@ export const AnnouncementBar = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '0.75rem',
+        gap: '0.65rem',
         flexWrap: 'wrap',
         textAlign: 'center',
         paddingRight: '2rem',
-        maxWidth: '1200px',
+        maxWidth: '1280px',
         margin: '0 auto'
       }}>
         
         {/* Flash Badge */}
         {announcement.badge && (
           <div style={{
-            background: 'rgba(255, 255, 255, 0.22)',
-            border: '1px solid rgba(255, 255, 255, 0.35)',
-            padding: '0.2rem 0.6rem',
+            background: themeObj.badgeBg || 'rgba(255, 255, 255, 0.22)',
+            border: '1px solid rgba(255, 255, 255, 0.4)',
+            padding: '0.15rem 0.55rem',
             borderRadius: '9999px',
-            fontSize: '0.72rem',
+            fontSize: '0.7rem',
             fontWeight: 900,
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '0.3rem',
+            gap: '0.25rem',
             letterSpacing: '0.04em',
             textTransform: 'uppercase'
           }}>
@@ -132,55 +157,74 @@ export const AnnouncementBar = () => {
           {announcement.text}
         </span>
 
-        {/* 1-Click Copy Promo Code Badge */}
+        {/* Live Urgency Countdown Timer */}
+        {announcement.showCountdown && (
+          <div style={{
+            background: 'rgba(0, 0, 0, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.25)',
+            padding: '0.15rem 0.55rem',
+            borderRadius: '6px',
+            fontSize: '0.74rem',
+            fontWeight: 800,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.3rem',
+            color: '#fef08a'
+          }}>
+            <Clock size={11} />
+            <span>Ends in: {String(timeLeft.hours).padStart(2, '0')}h {String(timeLeft.minutes).padStart(2, '0')}m {String(timeLeft.seconds).padStart(2, '0')}s</span>
+          </div>
+        )}
+
+        {/* 1-Click Copy & Apply Promo Code Badge */}
         {announcement.showCodeBadge && announcement.promoCode && (
           <button
             type="button"
-            onClick={handleCopyCode}
+            onClick={handleCopyAndApply}
             style={{
-              background: 'rgba(0, 0, 0, 0.3)',
-              border: '1px dashed rgba(255, 255, 255, 0.7)',
+              background: 'rgba(0, 0, 0, 0.35)',
+              border: '1px dashed rgba(255, 255, 255, 0.8)',
               color: '#ffffff',
               padding: '0.2rem 0.65rem',
               borderRadius: '6px',
-              fontSize: '0.78rem',
+              fontSize: '0.76rem',
               fontWeight: 900,
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.35rem',
-              transition: 'all 0.2s',
+              transition: 'all 0.18s',
               fontFamily: 'monospace'
             }}
-            title="Click to copy coupon code"
+            title="Click to copy & apply coupon code"
           >
-            <Tag size={12} />
+            <Tag size={12} style={{ color: '#fbbf24' }} />
             <span>{announcement.promoCode}</span>
-            <span style={{ fontSize: '0.7rem', color: copied ? '#86efac' : 'rgba(255,255,255,0.85)', fontWeight: 800, marginLeft: '2px' }}>
-              {copied ? '✓ Copied!' : 'Copy'}
+            <span style={{ fontSize: '0.68rem', color: copied ? '#86efac' : 'rgba(255,255,255,0.85)', fontWeight: 800, marginLeft: '2px' }}>
+              {copied ? '✓ Applied!' : 'Apply'}
             </span>
           </button>
         )}
 
-        {/* Action Button */}
+        {/* Action CTA Button */}
         {announcement.linkText && (
           <button
             type="button"
             onClick={handleActionClick}
             style={{
-              background: '#ffffff',
-              color: '#0f172a',
+              background: themeObj.btnBg || '#ffffff',
+              color: themeObj.btnColor || '#ea580c',
               border: 'none',
-              padding: '0.25rem 0.8rem',
+              padding: '0.25rem 0.85rem',
               borderRadius: '9999px',
-              fontSize: '0.75rem',
+              fontSize: '0.76rem',
               fontWeight: 900,
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.3rem',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-              transition: 'transform 0.2s'
+              boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
+              transition: 'transform 0.15s ease'
             }}
             onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.04)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
