@@ -246,13 +246,12 @@ export const OrderManagementTable = () => {
       {/* Controls & Lifecycle Filter Tabs */}
       <div style={{
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '1.5rem',
-        flexWrap: 'wrap',
-        gap: '1rem'
+        flexDirection: 'column',
+        gap: '0.85rem',
+        marginBottom: '1.25rem'
       }}>
-        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+        {/* Status Lifecycle Buttons */}
+        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <button 
             className={`btn btn-sm ${filterStatus === 'all' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('all')}
@@ -310,14 +309,31 @@ export const OrderManagementTable = () => {
           </button>
         </div>
 
-        {/* Category, Payment & Search Controls */}
-        <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap', width: '100%', maxWidth: '650px' }}>
+        {/* Category, Payment & Search Controls (Strict Single Row) */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '0.65rem', 
+          alignItems: 'center', 
+          width: '100%', 
+          flexWrap: 'nowrap'
+        }}>
           {/* Category Dropdown Filter */}
           <select
             className="form-control"
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            style={{ minWidth: '140px', flex: '1 1 auto', fontWeight: 800, fontSize: '0.825rem', background: 'var(--bg-surface)', color: 'var(--text-main)' }}
+            style={{ 
+              minWidth: '150px', 
+              maxWidth: '180px',
+              flex: '0 0 auto', 
+              fontWeight: 800, 
+              fontSize: '0.825rem', 
+              background: 'var(--bg-surface)', 
+              color: 'var(--text-main)',
+              height: '38px',
+              padding: '0 0.75rem',
+              borderRadius: '8px'
+            }}
           >
             <option value="all">📂 All Categories</option>
             <option value="embroidery">🧵 Embroidery</option>
@@ -330,7 +346,18 @@ export const OrderManagementTable = () => {
             className="form-control"
             value={filterPayment}
             onChange={(e) => setFilterPayment(e.target.value)}
-            style={{ minWidth: '130px', flex: '1 1 auto', fontWeight: 800, fontSize: '0.825rem', background: 'var(--bg-surface)', color: 'var(--text-main)' }}
+            style={{ 
+              minWidth: '140px', 
+              maxWidth: '160px',
+              flex: '0 0 auto', 
+              fontWeight: 800, 
+              fontSize: '0.825rem', 
+              background: 'var(--bg-surface)', 
+              color: 'var(--text-main)',
+              height: '38px',
+              padding: '0 0.75rem',
+              borderRadius: '8px'
+            }}
           >
             <option value="all">💳 All Payments</option>
             <option value="paid">✅ Paid Only</option>
@@ -338,15 +365,21 @@ export const OrderManagementTable = () => {
           </select>
 
           {/* Search Input */}
-          <div style={{ position: 'relative', minWidth: '180px', flex: '1 1 auto' }}>
-            <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
+          <div style={{ position: 'relative', flex: '1 1 auto', minWidth: 0 }}>
+            <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)', pointerEvents: 'none' }} />
             <input 
               type="text" 
               className="form-control"
-              placeholder="Search order, account..."
+              placeholder="Search order ID, customer name, email, service..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ paddingLeft: '2.1rem', fontSize: '0.825rem', width: '100%' }}
+              style={{ 
+                paddingLeft: '2.1rem', 
+                fontSize: '0.825rem', 
+                width: '100%', 
+                height: '38px',
+                borderRadius: '8px'
+              }}
             />
           </div>
         </div>
