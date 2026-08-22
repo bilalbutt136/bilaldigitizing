@@ -249,8 +249,64 @@ export const AdminDashboard = () => {
   ];
 
   return (
-    <div className="admin-portal-wrapper" style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 73px)', background: 'var(--bg-main)', position: 'relative', width: '100%' }}>
+    <div className="admin-portal-wrapper" style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 65px)', background: 'var(--bg-main)', position: 'relative', width: '100%' }}>
       
+      {/* Desktop Independent Layout Styles */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @media (min-width: 1025px) {
+          .admin-portal-wrapper {
+            height: calc(100vh - 65px) !important;
+            max-height: calc(100vh - 65px) !important;
+            overflow: hidden !important;
+          }
+          .admin-portal-body {
+            height: 100% !important;
+            max-height: 100% !important;
+            overflow: hidden !important;
+          }
+          .admin-sidebar-fixed {
+            height: 100% !important;
+            max-height: 100% !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+          }
+          .admin-main-content {
+            height: 100% !important;
+            max-height: 100% !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            scroll-behavior: smooth;
+          }
+        }
+        /* Custom scrollbar for sidebar & main content */
+        .admin-sidebar-fixed::-webkit-scrollbar {
+          width: 5px;
+        }
+        .admin-sidebar-fixed::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .admin-sidebar-fixed::-webkit-scrollbar-thumb {
+          background: var(--color-border, rgba(0,0,0,0.1));
+          border-radius: 4px;
+        }
+        .admin-sidebar-fixed::-webkit-scrollbar-thumb:hover {
+          background: var(--color-primary, var(--orange-500));
+        }
+        .admin-main-content::-webkit-scrollbar {
+          width: 7px;
+        }
+        .admin-main-content::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .admin-main-content::-webkit-scrollbar-thumb {
+          background: var(--color-border, rgba(0,0,0,0.15));
+          border-radius: 6px;
+        }
+        .admin-main-content::-webkit-scrollbar-thumb:hover {
+          background: var(--color-primary, var(--orange-500));
+        }
+      `}} />
+
       {/* MOBILE STICKY HEADER BAR FOR ADMIN PORTAL */}
       <div 
         className="mobile-only"
@@ -446,24 +502,26 @@ export const AdminDashboard = () => {
         </div>
       )}
 
-      <div className="admin-portal-body" style={{ display: 'flex', flex: 1, width: '100%', minHeight: 0, position: 'relative' }}>
+      <div className="admin-portal-body" style={{ display: 'flex', flex: 1, width: '100%', minHeight: 0, height: '100%', position: 'relative', overflow: 'hidden' }}>
         <aside className="admin-sidebar-fixed desktop-only" style={{
-          position: 'sticky',
-          top: '90px',
+          position: 'relative',
           width: '280px',
           minWidth: '280px',
-          height: 'calc(100vh - 100px)',
-          maxHeight: 'calc(100vh - 100px)',
+          maxWidth: '280px',
+          height: '100%',
+          maxHeight: '100%',
           background: 'var(--bg-card)',
           borderRight: '1px solid var(--border-color)',
           boxShadow: '4px 0 20px rgba(15, 23, 42, 0.04)',
           overflowY: 'auto',
+          overflowX: 'hidden',
           padding: '1.25rem 1rem',
           zIndex: 90,
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          flexShrink: 0
+          flexShrink: 0,
+          boxSizing: 'border-box'
         }}>
           <div>
             {/* Professional Operations Desk Brand Card */}
@@ -614,12 +672,13 @@ export const AdminDashboard = () => {
       <main className="admin-main-content" style={{
         flex: 1,
         minWidth: 0,
+        width: '100%',
         padding: activeTab === 'chat' ? '0.35rem 1.25rem 0.5rem' : '2rem 2.5rem 4rem',
         boxSizing: 'border-box',
-        height: activeTab === 'chat' ? 'calc(100dvh - 128px)' : 'auto',
-        maxHeight: activeTab === 'chat' ? 'calc(100dvh - 128px)' : 'none',
-        minHeight: activeTab === 'chat' ? 'calc(100dvh - 128px)' : 'calc(100vh - 100px)',
-        overflow: activeTab === 'chat' ? 'hidden' : 'visible',
+        height: '100%',
+        maxHeight: '100%',
+        overflowY: activeTab === 'chat' ? 'hidden' : 'auto',
+        overflowX: 'hidden',
         display: activeTab === 'chat' ? 'flex' : 'block',
         flexDirection: 'column'
       }}>
