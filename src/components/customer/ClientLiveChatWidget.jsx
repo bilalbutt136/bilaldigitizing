@@ -536,6 +536,13 @@ export const ClientLiveChatWidget = () => {
     return null;
   }
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(e);
+    }
+  };
+
   const handleSendMessage = async (e) => {
     e?.preventDefault();
     if (!messageInput.trim() && !attachedFile) return;
@@ -1083,13 +1090,26 @@ export const ClientLiveChatWidget = () => {
                     <Paperclip size={16} />
                   </button>
 
-                  <input
-                    type="text"
+                  <textarea
+                    rows={1}
                     className="form-control"
-                    placeholder={replyingTo ? `Reply to ${replyingTo.senderName || 'Support'}...` : 'Type message...'}
+                    placeholder={replyingTo ? `Reply to ${replyingTo.senderName || 'Support'}... (Shift+Enter for new line)` : 'Type message... (Shift+Enter for new line)'}
                     value={messageInput}
                     onChange={handleInputChange}
-                    style={{ flex: 1, height: '36px', fontSize: '0.85rem' }}
+                    onKeyDown={handleKeyDown}
+                    style={{
+                      flex: 1,
+                      minHeight: '36px',
+                      maxHeight: '100px',
+                      fontSize: '0.85rem',
+                      padding: '0.45rem 0.75rem',
+                      borderRadius: 'var(--radius-sm)',
+                      resize: 'none',
+                      lineHeight: 1.4,
+                      overflowY: 'auto',
+                      fontFamily: 'inherit',
+                      boxSizing: 'border-box'
+                    }}
                   />
 
                   <button

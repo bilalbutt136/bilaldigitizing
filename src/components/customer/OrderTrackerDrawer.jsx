@@ -193,12 +193,19 @@ export const OrderTrackerDrawer = () => {
     showToast('Modification request sent to master digitizer desk.', 'success');
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(e);
+    }
+  };
+
   const handleSendMessage = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     if (!chatMessageText.trim()) return;
     const senderRole = isAdmin ? 'admin' : 'client';
     const senderName = isAdmin ? (authUser?.name || 'Master Admin Desk') : (ord.clientName || 'Client');
-    await addOrderMessage(ord.id, chatMessageText, senderName, senderRole);
+    await addOrderMessage(ord.id, chatMessageText.trim(), senderName, senderRole);
     setChatMessageText('');
     showToast('Message sent', 'success');
   };
@@ -1310,16 +1317,28 @@ export const OrderTrackerDrawer = () => {
             </div>
 
             {/* Message Composer */}
-            <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '0.5rem' }}>
-              <input 
-                type="text" 
+            <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+              <textarea 
+                rows={1}
                 className="form-control" 
-                placeholder="Type a message or question..." 
+                placeholder="Type a message or question... (Shift+Enter for new line)" 
                 value={chatMessageText} 
                 onChange={e => setChatMessageText(e.target.value)} 
-                style={{ fontSize: '0.85rem' }}
+                onKeyDown={handleKeyDown}
+                style={{
+                  flex: 1,
+                  minHeight: '36px',
+                  maxHeight: '100px',
+                  fontSize: '0.85rem',
+                  padding: '0.45rem 0.75rem',
+                  resize: 'none',
+                  lineHeight: 1.4,
+                  overflowY: 'auto',
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box'
+                }}
               />
-              <button type="submit" className="btn btn-primary-orange btn-sm" disabled={!chatMessageText.trim()} style={{ fontWeight: 800, gap: '0.3rem', whiteSpace: 'nowrap' }}>
+              <button type="submit" className="btn btn-primary-orange btn-sm" disabled={!chatMessageText.trim()} style={{ height: '36px', fontWeight: 800, gap: '0.3rem', whiteSpace: 'nowrap', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
                 <Send size={14} /> Send
               </button>
             </form>

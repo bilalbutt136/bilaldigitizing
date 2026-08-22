@@ -710,6 +710,13 @@ export const AdminChatInbox = () => {
     });
   }, [conversations, activeSection, subFilter, searchTerm, orders, activeChatId, currentActiveChatId]);
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(e);
+    }
+  };
+
   const handleSendMessage = async (e) => {
     e?.preventDefault();
     if (!replyInput.trim() && !attachedFile) return;
@@ -1540,17 +1547,31 @@ export const AdminChatInbox = () => {
                   </button>
                 )}
 
-                <input
-                  type="text"
+                <textarea
                   className="form-control"
+                  rows={1}
                   placeholder={
                     replyingTo 
-                      ? `Reply to ${replyingTo.senderName || 'Customer'}...` 
-                      : 'Type a message...'
+                      ? `Reply to ${replyingTo.senderName || 'Customer'}... (Shift+Enter for new line)` 
+                      : 'Type a message... (Shift+Enter for new line)'
                   }
                   value={replyInput}
                   onChange={handleInputChange}
-                  style={{ flex: 1, minWidth: 0, height: '36px', fontSize: '0.85rem', padding: '0 0.75rem', borderRadius: '8px', boxSizing: 'border-box' }}
+                  onKeyDown={handleKeyDown}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    minHeight: '36px',
+                    maxHeight: '120px',
+                    fontSize: '0.85rem',
+                    padding: '0.45rem 0.75rem',
+                    borderRadius: '8px',
+                    boxSizing: 'border-box',
+                    resize: 'none',
+                    lineHeight: 1.4,
+                    overflowY: 'auto',
+                    fontFamily: 'inherit'
+                  }}
                 />
 
                 <button

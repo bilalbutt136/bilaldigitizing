@@ -267,6 +267,13 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     }, 2500);
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(e);
+    }
+  };
+
   const handleSendMessage = async (e) => {
     e?.preventDefault();
     if (!messageInput.trim() && !attachedFile) return;
@@ -801,23 +808,29 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           {isUploadingAttachment ? <Loader2 size={16} className="animate-spin text-orange-500" /> : <Paperclip size={16} />}
         </button>
 
-        <input
-          type="text"
+        <textarea
+          rows={1}
           value={messageInput}
           onChange={handleInputChange}
-          placeholder={activeChannel === 'inbox' ? 'Type a message to Studio Digitizers...' : 'Type a question to 24/7 Support...'}
+          onKeyDown={handleKeyDown}
+          placeholder={activeChannel === 'inbox' ? 'Type a message to Studio Digitizers... (Shift+Enter for new line)' : 'Type a question to 24/7 Support... (Shift+Enter for new line)'}
           style={{
             flex: 1,
             minWidth: 0,
-            height: '36px',
+            minHeight: '36px',
+            maxHeight: '120px',
             borderRadius: '8px',
             border: '1.5px solid var(--color-border)',
-            padding: '0 0.85rem',
+            padding: '0.45rem 0.85rem',
             fontSize: '0.85rem',
             color: 'var(--color-text-primary, var(--navy-950))',
             background: 'var(--color-subtle, #f8fafc)',
             outline: 'none',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            resize: 'none',
+            lineHeight: 1.4,
+            overflowY: 'auto',
+            fontFamily: 'inherit'
           }}
         />
 
