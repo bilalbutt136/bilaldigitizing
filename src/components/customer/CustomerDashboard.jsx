@@ -49,6 +49,7 @@ import { EmbroideryDigitizingPage } from '../public/EmbroideryDigitizingPage';
 import { VectorArtPage } from '../public/VectorArtPage';
 import { CustomPatchesSection } from '../public/CustomPatchesSection';
 import ThemePreviewCard from '../common/ThemePreviewCard';
+import { THEME_PRESETS } from '../../utils/themePresets';
 import { fetchConversations, fetchNotificationsFromSupabase, subscribeToLiveMessages } from '../../services/supabaseService';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
 
@@ -73,6 +74,7 @@ export const CustomerDashboard = () => {
     setTheme,
     colorTheme,
     setColorTheme,
+    availableThemes = THEME_PRESETS,
     activeCustomerTab,
     setActiveCustomerTab,
     unreadNotificationsCount = 0,
