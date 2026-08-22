@@ -412,9 +412,10 @@ export const HeroSection = () => {
     <section className="theme-hero-section" style={{
       background: 'var(--hero-bg)',
       color: 'var(--hero-text-primary)',
-      padding: 'clamp(0.85rem, 1.8vw, 1.35rem) 0 clamp(1rem, 2vw, 1.65rem)',
+      padding: 'clamp(1rem, 2.5vh, 2.25rem) 0',
       position: 'relative',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      boxSizing: 'border-box'
     }}>
       {/* Ambient Glows */}
       <div style={{
@@ -439,6 +440,19 @@ export const HeroSection = () => {
       }} />
 
       <style dangerouslySetInnerHTML={{__html: `
+        @media (min-width: 1025px) {
+          .theme-hero-section {
+            min-height: calc(100vh - 72px) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+          }
+        }
+        @media (max-width: 1024px) {
+          .theme-hero-section {
+            min-height: auto !important;
+          }
+        }
         .blinking-green-dot {
           width: 8px;
           height: 8px;
