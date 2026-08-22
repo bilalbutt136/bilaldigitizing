@@ -170,7 +170,16 @@ export const HeaderNav = () => {
     <header style={{ position: 'sticky', top: 0, zIndex: 1000, background: 'var(--bg-card)', backdropFilter: isScrolled ? 'blur(12px)' : 'none', borderBottom: '1px solid var(--border-color)', transition: 'all 0.3s ease', boxShadow: isScrolled ? 'var(--shadow-sm)' : 'none' }}>
       {/* Main Brand Navbar */}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1.5rem', width: '100%', maxWidth: '1280px', margin: '0 auto' }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        padding: '0.75rem clamp(1rem, 2vw, 1.75rem)', 
+        width: '100%', 
+        maxWidth: '100%', 
+        margin: '0 auto',
+        boxSizing: 'border-box'
+      }}>
         {/* Brand Logo */}
         <div 
           style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', flexShrink: 0 }}
@@ -551,14 +560,13 @@ export const HeaderNav = () => {
             {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
 
-          {/* Theme Toggle Button (Desktop) */}
-          <div className="desktop-only" style={{ display: 'flex', alignItems: 'center' }}>
+          {/* Dynamic Header Controls (Desktop) */}
+          <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            
+            {/* 1. Theme Mood Toggle */}
             <ThemeToggle />
-          </div>
 
-          {/* Dynamic Authentication Controls (Desktop) */}
-          {!safeIsAuthenticated ? (
-            <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {!safeIsAuthenticated ? (
               <button 
                 className="btn btn-outline btn-sm"
                 style={{
@@ -581,42 +589,38 @@ export const HeaderNav = () => {
               >
                 <User size={14} /> Client Login
               </button>
-            </div>
-          ) : (
-            <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {safeCurrentView === 'public' && (
-                <button 
-                  className="btn btn-outline btn-sm"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    fontWeight: 800,
-                    borderColor: 'var(--orange-500)',
-                    color: 'var(--orange-500)',
-                    background: 'var(--bg-card)',
-                    borderRadius: '8px',
-                    padding: '0.35rem 0.85rem'
-                  }}
-                  onClick={() => {
-                    if (safeAuthUser?.role === 'admin') {
-                      protectedNavigate('admin', false);
-                      navigate('/admin-portal');
-                    } else {
-                      protectedNavigate('customer', false);
-                      navigate('/client-portal');
-                    }
-                  }}
-                >
-                  <User size={14} style={{ color: 'var(--orange-500)' }} /> Dashboard
-                </button>
-              )}
-              
-              {/* TOP HEADER CHAT & NOTIFICATIONS FOR ALL AUTHENTICATED USERS */}
-              {safeIsAuthenticated && (
-                <>
-                  {/* TOP HEADER CHAT / INBOX BUTTON */}
-                  <button
+            ) : (
+              <>
+                {safeCurrentView === 'public' && (
+                  <button 
+                    className="btn btn-outline btn-sm"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      fontWeight: 800,
+                      borderColor: 'var(--orange-500)',
+                      color: 'var(--orange-500)',
+                      background: 'var(--bg-card)',
+                      borderRadius: '8px',
+                      padding: '0.35rem 0.85rem'
+                    }}
+                    onClick={() => {
+                      if (safeAuthUser?.role === 'admin') {
+                        protectedNavigate('admin', false);
+                        navigate('/admin-portal');
+                      } else {
+                        protectedNavigate('customer', false);
+                        navigate('/client-portal');
+                      }
+                    }}
+                  >
+                    <User size={14} style={{ color: 'var(--orange-500)' }} /> Dashboard
+                  </button>
+                )}
+                
+                {/* TOP HEADER CHAT / INBOX BUTTON */}
+                <button
                     type="button"
                     onClick={handleOpenInbox}
                     style={{
@@ -873,14 +877,14 @@ export const HeaderNav = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* User Menu / Admin Profile Dropdown */}
+                  <UserMenuDropdown />
                 </>
               )}
-
-              <UserMenuDropdown />
             </div>
-          )}
+          </div>
         </div>
-      </div>
 
       {/* Mobile Slide-Down / Overlay Navigation Drawer */}
       {isMobileMenuOpen && (
