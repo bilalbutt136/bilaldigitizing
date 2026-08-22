@@ -476,6 +476,13 @@ export const HeroSection = () => {
           .hero-cta-buttons-row {
             justify-content: center !important;
           }
+        .hero-nav-tab-btn:not([data-active="true"]):hover {
+          background: rgba(15, 23, 42, 0.06) !important;
+          color: var(--color-primary) !important;
+        }
+        .dark-mode .hero-nav-tab-btn:not([data-active="true"]):hover {
+          background: rgba(255, 255, 255, 0.08) !important;
+          color: #ffffff !important;
         }
         @media (max-width: 768px) {
           .hero-nav-tabs-wrapper {
@@ -537,6 +544,8 @@ export const HeroSection = () => {
               display: 'inline-flex',
               background: 'var(--hero-tabs-bg, var(--color-surface))',
               border: '1px solid var(--hero-tabs-border, var(--color-border))',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
               padding: '0.35rem',
               borderRadius: '9999px',
               boxShadow: 'var(--shadow-sm)',
@@ -555,6 +564,7 @@ export const HeroSection = () => {
                   key={tab.id}
                   type="button"
                   className="hero-nav-tab-btn"
+                  data-active={isSelected ? 'true' : 'false'}
                   onClick={() => handleTabClick(tab.id)}
                   style={{
                     display: 'flex',
@@ -566,15 +576,15 @@ export const HeroSection = () => {
                     background: isSelected 
                       ? 'linear-gradient(135deg, var(--color-secondary), var(--color-primary))' 
                       : 'transparent',
-                    color: isSelected ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-text-secondary)',
-                    fontWeight: isSelected ? 800 : 600,
+                    color: isSelected ? 'var(--color-text-on-primary, #ffffff)' : 'var(--hero-tabs-text, var(--color-text-primary))',
+                    fontWeight: isSelected ? 800 : 700,
                     fontSize: '0.875rem',
                     cursor: 'pointer',
                     transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                     boxShadow: isSelected ? '0 4px 14px var(--color-primary-glow)' : 'none'
                   }}
                 >
-                  <Icon size={15} style={{ color: isSelected ? 'inherit' : 'var(--color-text-muted)' }} />
+                  <Icon size={15} style={{ color: isSelected ? 'inherit' : 'var(--hero-tabs-icon, var(--color-primary))', opacity: isSelected ? 1 : 0.9 }} />
                   <span>{tab.label}</span>
                 </button>
               );

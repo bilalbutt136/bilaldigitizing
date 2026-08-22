@@ -178,20 +178,40 @@ export const StateProvider = ({ children }) => {
   const toggleTheme = () => {
     const nextTheme = theme === 'light' ? 'dark' : 'light';
     setThemeState(nextTheme);
+
+    let nextPreset = colorTheme;
+    if (nextTheme === 'dark' && (colorTheme === 'studio-orange' || !colorTheme)) {
+      nextPreset = 'executive-navy';
+      setColorThemeState('executive-navy');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('bdigi_color_theme', 'executive-navy');
+      }
+    }
+
     if (typeof window !== 'undefined') {
       localStorage.setItem('bdigi_theme', nextTheme);
     }
-    applyThemePresetToDOM(colorTheme, nextTheme, customBrandColors);
-    showToast(nextTheme === 'dark' ? 'Dark mode enabled 🌙' : 'Light mode enabled ☀️', 'info');
+    applyThemePresetToDOM(nextPreset, nextTheme, customBrandColors);
+    showToast(nextTheme === 'dark' ? 'Executive Navy Dark Mode enabled 🌙' : 'Light mode enabled ☀️', 'info');
   };
 
   const setTheme = (newTheme) => {
     const validTheme = newTheme === 'dark' ? 'dark' : 'light';
     setThemeState(validTheme);
+
+    let nextPreset = colorTheme;
+    if (validTheme === 'dark' && (colorTheme === 'studio-orange' || !colorTheme)) {
+      nextPreset = 'executive-navy';
+      setColorThemeState('executive-navy');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('bdigi_color_theme', 'executive-navy');
+      }
+    }
+
     if (typeof window !== 'undefined') {
       localStorage.setItem('bdigi_theme', validTheme);
     }
-    applyThemePresetToDOM(colorTheme, validTheme, customBrandColors);
+    applyThemePresetToDOM(nextPreset, validTheme, customBrandColors);
   };
 
   const setColorTheme = (presetId, customBrand = null) => {

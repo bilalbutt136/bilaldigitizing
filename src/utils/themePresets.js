@@ -506,7 +506,7 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
   root.style.setProperty('--text-light', tokenSet['--color-text-muted'] || (mode === 'dark' ? '#94a3b8' : '#94a3b8'));
   root.style.setProperty('--text-heading', tokenSet['--color-text-primary'] || (mode === 'dark' ? '#ffffff' : '#090d16'));
 
-  // Dynamic high-contrast mapping for legacy navy palette tokens
+  // Dynamic high-contrast mapping for legacy navy palette tokens & hero navigation tabs
   if (mode === 'dark') {
     root.style.setProperty('--navy-950', '#ffffff');
     root.style.setProperty('--navy-900', '#f8fafc');
@@ -514,6 +514,10 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
     root.style.setProperty('--navy-700', '#e2e8f0');
     root.style.setProperty('--navy-600', '#cbd5e1');
     root.style.setProperty('--navy-100', tokenSet['--color-subtle'] || '#141d2f');
+    root.style.setProperty('--hero-tabs-bg', tokenSet['--hero-tabs-bg'] || tokenSet['--color-surface'] || '#0c192c');
+    root.style.setProperty('--hero-tabs-border', tokenSet['--hero-tabs-border'] || tokenSet['--color-border'] || 'rgba(56, 189, 248, 0.22)');
+    root.style.setProperty('--hero-tabs-text', '#f8fafc');
+    root.style.setProperty('--hero-tabs-icon', tokenSet['--color-primary'] || '#38bdf8');
   } else {
     root.style.setProperty('--navy-950', '#090d16');
     root.style.setProperty('--navy-900', '#0f172a');
@@ -521,6 +525,10 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
     root.style.setProperty('--navy-700', '#334155');
     root.style.setProperty('--navy-600', '#475569');
     root.style.setProperty('--navy-100', '#f1f5f9');
+    root.style.setProperty('--hero-tabs-bg', tokenSet['--hero-tabs-bg'] || '#ffffff');
+    root.style.setProperty('--hero-tabs-border', tokenSet['--hero-tabs-border'] || 'rgba(15, 23, 42, 0.12)');
+    root.style.setProperty('--hero-tabs-text', '#0f172a');
+    root.style.setProperty('--hero-tabs-icon', tokenSet['--color-secondary'] || '#1e40af');
   }
 
   // 5. Handle optional custom brand overrides (Admin Branding Manager)
