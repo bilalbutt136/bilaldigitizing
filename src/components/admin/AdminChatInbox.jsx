@@ -715,10 +715,13 @@ export const AdminChatInbox = () => {
     if (!replyInput.trim() && !attachedFile) return;
     if (!currentActiveChatId) return;
 
+    const targetCustomerEmail = (activeInfo?.customerEmail || activeConv?.clientEmail || (currentActiveChatId ? currentActiveChatId.replace('support-', '').replace('inbox-', '').replace('direct-', '').replace('chat-', '') : '')).toLowerCase().trim();
+
     const nowIso = new Date().toISOString();
     const newMsg = {
-      id: 'msg-' + Date.now(),
+      id: 'msg-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
       conversation_id: currentActiveChatId,
+      client_email: targetCustomerEmail || null,
       sender: 'admin',
       senderName: 'Support',
       sender_name: 'Support',
@@ -735,6 +738,7 @@ export const AdminChatInbox = () => {
         attachment: replyingTo.attachment_name || replyingTo.attachment,
         attachment_url: replyingTo.attachment_url
       } : null,
+      isSupport: activeSection === 'support' || isSupportThread(activeConv),
       timestamp: nowIso,
       created_at: nowIso
     };

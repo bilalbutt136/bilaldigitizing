@@ -175,15 +175,15 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       const record = payload.new || payload.record || payload;
       if (!record) return;
 
-      const recordConvId = String(record.conversation_id || '').toLowerCase();
-      const isSupportRecord = recordConvId.startsWith('support-') || recordConvId === 'general-support' || recordConvId === 'support-guest' || record.isSupport === true;
+      const recordConvId = String(record.conversation_id || '').toLowerCase().trim();
+      const recordEmail = String(record.client_email || '').toLowerCase().trim();
+      const cleanCustomerEmail = (clientEmail || '').toLowerCase().trim();
 
-      if (activeChannel === 'support' && !isSupportRecord) return;
-      if (activeChannel === 'inbox' && isSupportRecord) return;
-
-      const isForThisCustomer = recordConvId === canonicalChatId ||
-        (activeChannel === 'inbox' && !isSupportRecord && (recordConvId === `inbox-${clientEmail}` || recordConvId === `direct-${clientEmail}` || (record.client_email && record.client_email.toLowerCase().trim() === clientEmail))) ||
-        (activeChannel === 'support' && isSupportRecord && (recordConvId === `support-${clientEmail}` || recordConvId === 'general-support' || (record.client_email && record.client_email.toLowerCase().trim() === clientEmail)));
+      const isForThisCustomer = 
+        (cleanCustomerEmail && recordEmail && recordEmail === cleanCustomerEmail) ||
+        (cleanCustomerEmail && recordConvId.includes(cleanCustomerEmail)) ||
+        (recordConvId === String(canonicalChatId || '').toLowerCase().trim()) ||
+        (!cleanCustomerEmail && (recordConvId === 'general-support' || recordConvId === 'support-guest' || recordConvId === 'inbox-client'));
 
       if (isForThisCustomer) {
         setMessages(prev => {

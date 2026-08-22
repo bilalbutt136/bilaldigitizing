@@ -210,9 +210,16 @@ export const ClientLiveChatWidget = () => {
         const record = msgPayload.new || msgPayload.record;
         if (!record) return;
 
-        // Strictly ignore non-support messages (such as Custom Offers and Digitizer Inboxes) in the 24/7 Support Widget
         const recordConvId = String(record.conversation_id || '').toLowerCase();
-        if (!isSupportId(recordConvId)) {
+        const recordEmail = String(record.client_email || '').toLowerCase().trim();
+        const cleanCustomerEmail = (clientEmail || '').toLowerCase().trim();
+
+        const isForThisUser = (cleanCustomerEmail && recordEmail && recordEmail === cleanCustomerEmail) ||
+          (cleanCustomerEmail && recordConvId.includes(cleanCustomerEmail)) ||
+          (recordConvId === String(targetConvId || '').toLowerCase()) ||
+          isSupportId(recordConvId);
+
+        if (!isForThisUser) {
           return;
         }
 

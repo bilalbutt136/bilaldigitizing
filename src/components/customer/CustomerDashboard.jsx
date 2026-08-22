@@ -225,8 +225,10 @@ export const CustomerDashboard = () => {
       (msgPayload) => {
         if (!isMounted) return;
         const record = msgPayload.new || msgPayload.record;
-        if (record && (record.sender === 'admin' || record.sender === 'support') && activeTab !== 'support') {
-          setUnreadChatCount(prev => prev + 1);
+        if (record && (record.sender === 'admin' || record.sender === 'support') && activeTab !== 'support' && activeTab !== 'inbox' && activeTab !== 'help-support') {
+          if (typeof setUnreadChatCount === 'function') {
+            setUnreadChatCount(prev => prev + 1);
+          }
         }
       },
       (convPayload) => {

@@ -305,56 +305,47 @@ export async function GET(request) {
       else if (cId.startsWith('direct-')) targetEmail = normalizeEmail(cId.replace('direct-', ''));
       else if (cId.startsWith('chat-')) targetEmail = normalizeEmail(cId.replace('chat-', ''));
 
-      let targetIds = [];
-
-      if (isSupport) {
-        // STRICT SUPPORT CHANNEL
-        targetIds = Array.from(new Set([
-          chatId,
-          targetEmail ? `support-${targetEmail}` : '',
-          'general-support',
-          'support-guest'
-        ].filter(Boolean)));
-      } else {
-        // STRICT INBOX CHANNEL (Include normal inbox and order discussions for this customer)
-        let orderIds = [];
-        if (targetEmail) {
-          try {
-            const { data: customerOrders } = await supabase.from('orders').select('id').ilike('client_email', targetEmail);
-            if (Array.isArray(customerOrders)) {
-              orderIds = customerOrders.map(o => `order-${o.id}`);
-            }
-          } catch {}
-        }
-
-        targetIds = Array.from(new Set([
-          chatId,
-          targetEmail ? `inbox-${targetEmail}` : '',
-          targetEmail ? `direct-${targetEmail}` : '',
-          targetEmail ? `chat-${targetEmail}` : '',
-          ...orderIds
-        ].filter(Boolean)));
+      let orderIds = [];
+      if (targetEmail) {
+        try {
+          const { data: customerOrders } = await supabase.from('orders').select('id').ilike('client_email', targetEmail);
+          if (Array.isArray(customerOrders)) {
+            orderIds = customerOrders.map(o => `order-${o.id}`);
+          }
+        } catch {}
       }
 
-      const { data } = await supabase
+      // Query all related conversation IDs for this customer
+      const targetIds = Array.from(new Set([
+        chatId,
+        targetEmail ? `support-${targetEmail}` : '',
+        targetEmail ? `inbox-${targetEmail}` : '',
+        targetEmail ? `direct-${targetEmail}` : '',
+        targetEmail ? `chat-${targetEmail}` : '',
+        'general-support',
+        'support-guest',
+        'inbox-guest',
+        'inbox-client',
+        ...orderIds
+      ].filter(Boolean)));
+
+      let msgQuery = supabase
         .from('messages')
         .select('*')
-        .in('conversation_id', targetIds)
         .order('created_at', { ascending: true });
-        
-      // Ensure strict boundary: filter out any misplaced records
-      const filteredData = (data || []).filter(m => {
-        const msgConvId = String(m.conversation_id || '').toLowerCase();
-        if (isSupport) {
-          return isSupportConversation(msgConvId);
-        } else {
-          return !isSupportConversation(msgConvId);
-        }
-      });
 
-      const mappedMessages = filteredData.map(m => ({
+      if (targetEmail) {
+        msgQuery = msgQuery.or(`conversation_id.in.(${targetIds.map(id => `"${id}"`).join(',')}),client_email.ilike.${targetEmail}`);
+      } else {
+        msgQuery = msgQuery.in('conversation_id', targetIds);
+      }
+
+      const { data } = await msgQuery;
+
+      const mappedMessages = (data || []).map(m => ({
         id: m.id,
-        conversation_id: isSupport ? (targetEmail ? `support-${targetEmail}` : 'support-guest') : (targetEmail ? `inbox-${targetEmail}` : (m.conversation_id || 'inbox-client')),
+        conversation_id: m.conversation_id || (isSupport ? (targetEmail ? `support-${targetEmail}` : 'support-guest') : (targetEmail ? `inbox-${targetEmail}` : 'inbox-client')),
+        client_email: m.client_email || targetEmail || null,
         sender: m.sender,
         senderName: m.sender_name || (m.sender === 'admin' ? 'Support' : 'Client'),
         sender_name: m.sender_name,
