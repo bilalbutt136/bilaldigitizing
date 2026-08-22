@@ -412,7 +412,7 @@ export const HeroSection = () => {
     <section className="theme-hero-section" style={{
       background: 'var(--hero-bg)',
       color: 'var(--hero-text-primary)',
-      padding: '2rem 0 3.25rem',
+      padding: 'clamp(0.85rem, 1.8vw, 1.35rem) 0 clamp(1rem, 2vw, 1.65rem)',
       position: 'relative',
       overflow: 'hidden'
     }}>
@@ -461,7 +461,7 @@ export const HeroSection = () => {
         @media (max-width: 1024px) {
           .hero-grid-layout {
             grid-template-columns: 1fr !important;
-            gap: 2.25rem !important;
+            gap: 2rem !important;
             width: 100% !important;
             max-width: 100% !important;
           }
@@ -476,6 +476,7 @@ export const HeroSection = () => {
           .hero-cta-buttons-row {
             justify-content: center !important;
           }
+        }
         .hero-nav-tab-btn:not([data-active="true"]):hover {
           background: rgba(15, 23, 42, 0.06) !important;
           color: var(--color-primary) !important;
@@ -487,57 +488,57 @@ export const HeroSection = () => {
         @media (max-width: 768px) {
           .hero-nav-tabs-wrapper {
             border-radius: 14px !important;
-            padding: 0.35rem !important;
-            gap: 0.35rem !important;
+            padding: 0.3rem !important;
+            gap: 0.3rem !important;
             width: 100% !important;
             max-width: 100% !important;
           }
           .hero-nav-tab-btn {
-            padding: 0.45rem 0.75rem !important;
-            font-size: 0.8rem !important;
+            padding: 0.4rem 0.7rem !important;
+            font-size: 0.78rem !important;
             flex: 1 1 calc(50% - 0.4rem) !important;
             justify-content: center !important;
           }
           .hero-cta-buttons-row {
             flex-direction: column !important;
             width: 100% !important;
-            gap: 0.75rem !important;
+            gap: 0.65rem !important;
           }
           .hero-cta-buttons-row button {
             width: 100% !important;
             justify-content: center !important;
             white-space: normal !important;
-            min-height: 48px !important;
+            min-height: 44px !important;
           }
           .hero-trust-badges-row {
             display: grid !important;
             grid-template-columns: repeat(2, 1fr) !important;
-            gap: 0.75rem 0.5rem !important;
+            gap: 0.65rem 0.5rem !important;
             width: 100% !important;
             justify-items: center !important;
           }
           .hero-trust-badges-row > div {
             justify-content: center !important;
-            font-size: 0.78rem !important;
+            font-size: 0.75rem !important;
           }
           .hero-showcase-card {
-            padding: 0.85rem !important;
-            border-radius: 18px !important;
+            padding: 0.8rem !important;
+            border-radius: 16px !important;
             width: 100% !important;
             max-width: 100% !important;
           }
           .hero-showcase-image-box {
             min-height: 180px !important;
-            max-height: 300px !important;
+            max-height: 280px !important;
             aspect-ratio: 16/10 !important;
           }
         }
       `}} />
 
-      <div className="container" style={{ position: 'relative', zIndex: 1, maxWidth: '1360px', width: '100%', boxSizing: 'border-box' }}>
+      <div className="container" style={{ position: 'relative', zIndex: 1, maxWidth: '1380px', width: '100%', boxSizing: 'border-box' }}>
         
         {/* Top 4 Navigation Tabs Switcher */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2.25rem', width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'clamp(0.85rem, 1.8vw, 1.25rem)', width: '100%' }}>
           <div 
             className="hero-nav-tabs-wrapper"
             style={{
@@ -546,7 +547,7 @@ export const HeroSection = () => {
               border: '1px solid var(--hero-tabs-border, var(--color-border))',
               backdropFilter: 'blur(16px)',
               WebkitBackdropFilter: 'blur(16px)',
-              padding: '0.35rem',
+              padding: '0.28rem',
               borderRadius: '9999px',
               boxShadow: 'var(--shadow-sm)',
               flexWrap: 'wrap',
@@ -569,8 +570,8 @@ export const HeroSection = () => {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.55rem 1.35rem',
+                    gap: '0.45rem',
+                    padding: '0.48rem 1.2rem',
                     borderRadius: '9999px',
                     border: 'none',
                     background: isSelected 
@@ -578,13 +579,13 @@ export const HeroSection = () => {
                       : 'transparent',
                     color: isSelected ? 'var(--color-text-on-primary, #ffffff)' : 'var(--hero-tabs-text, var(--color-text-primary))',
                     fontWeight: isSelected ? 800 : 700,
-                    fontSize: '0.875rem',
+                    fontSize: '0.84rem',
                     cursor: 'pointer',
                     transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                     boxShadow: isSelected ? '0 4px 14px var(--color-primary-glow)' : 'none'
                   }}
                 >
-                  <Icon size={15} style={{ color: isSelected ? 'inherit' : 'var(--hero-tabs-icon, var(--color-primary))', opacity: isSelected ? 1 : 0.9 }} />
+                  <Icon size={14} style={{ color: isSelected ? 'inherit' : 'var(--hero-tabs-icon, var(--color-primary))', opacity: isSelected ? 1 : 0.9 }} />
                   <span>{tab.label}</span>
                 </button>
               );
@@ -592,12 +593,12 @@ export const HeroSection = () => {
           </div>
         </div>
 
-        {/* 2-Column Hero Dynamic Presentation (Balanced 50/50 Grid - Aligned to Top) */}
+        {/* 2-Column Hero Dynamic Presentation (Balanced 50/50 Grid - Aligned to Center) */}
         <div className="hero-grid-layout" style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '2.5rem',
-          alignItems: 'flex-start',
+          gridTemplateColumns: 'minmax(0, 1.05fr) minmax(0, 0.95fr)',
+          gap: 'clamp(1.25rem, 2.5vw, 2.25rem)',
+          alignItems: 'center',
           width: '100%',
           boxSizing: 'border-box'
         }}>
@@ -607,24 +608,26 @@ export const HeroSection = () => {
             
             {/* Dynamic Badge */}
             <div className="badge-pill-glow" style={{ 
-              marginBottom: '1rem',
+              marginBottom: '0.55rem',
               background: 'var(--color-primary-light)',
               border: '1px solid var(--color-border)',
               color: 'var(--color-primary)',
               fontWeight: 800,
+              fontSize: '0.78rem',
+              padding: '0.25rem 0.75rem',
               boxShadow: '0 2px 8px var(--color-primary-glow)'
             }}>
-              <Sparkles size={14} style={{ color: 'var(--color-primary)' }} />
+              <Sparkles size={13} style={{ color: 'var(--color-primary)' }} />
               <span>{badge}</span>
             </div>
 
             {/* Dynamic Main Title */}
             <h1 style={{
-              fontSize: 'clamp(1.75rem, 5vw, 2.9rem)',
+              fontSize: 'clamp(1.5rem, 2.7vw, 2.35rem)',
               fontWeight: 900,
-              lineHeight: 1.15,
+              lineHeight: 1.16,
               color: 'var(--color-text-primary)',
-              marginBottom: '0.85rem',
+              marginBottom: '0.45rem',
               letterSpacing: '-0.025em',
               fontFamily: 'var(--font-heading)',
               wordBreak: 'break-word',
@@ -645,11 +648,11 @@ export const HeroSection = () => {
 
             {/* Dynamic Highlight / Subheading */}
             <div style={{
-              fontSize: 'clamp(0.95rem, 2.8vw, 1.15rem)',
+              fontSize: 'clamp(0.88rem, 1.55vw, 1.05rem)',
               fontWeight: 800,
               color: 'var(--color-primary)',
-              marginBottom: '0.85rem',
-              lineHeight: 1.35,
+              marginBottom: '0.45rem',
+              lineHeight: 1.3,
               wordBreak: 'break-word',
               overflowWrap: 'break-word',
               display: 'flex',
@@ -661,10 +664,10 @@ export const HeroSection = () => {
 
             {/* Dynamic Description */}
             <p style={{
-              fontSize: 'clamp(0.88rem, 2.6vw, 1rem)',
-              lineHeight: 1.6,
+              fontSize: 'clamp(0.82rem, 1.3vw, 0.92rem)',
+              lineHeight: 1.5,
               color: 'var(--color-text-secondary)',
-              marginBottom: '1.35rem',
+              marginBottom: '0.75rem',
               maxWidth: '100%',
               wordBreak: 'break-word',
               overflowWrap: 'break-word'
@@ -676,23 +679,23 @@ export const HeroSection = () => {
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.65rem',
-              marginBottom: '1.75rem',
+              gap: '0.4rem',
+              marginBottom: '0.85rem',
               background: 'var(--color-surface, var(--bg-card))',
               border: '1px solid var(--color-border)',
-              padding: 'clamp(0.95rem, 2vw, 1.25rem) clamp(1rem, 2vw, 1.35rem)',
-              borderRadius: '16px',
+              padding: 'clamp(0.65rem, 1.5vw, 0.85rem) clamp(0.85rem, 1.5vw, 1.15rem)',
+              borderRadius: '14px',
               textAlign: 'left',
               width: '100%',
               boxSizing: 'border-box',
               boxShadow: 'var(--shadow-sm)'
             }}>
               {featuresList.slice(0, 3).map((featText, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', fontSize: '0.875rem', color: 'var(--color-text-primary)', fontWeight: 600, wordBreak: 'break-word' }}>
-                  <div style={{ background: 'var(--color-primary-light)', border: '1px solid var(--color-border)', padding: '3px', borderRadius: '50%', display: 'flex', flexShrink: 0, marginTop: '1px' }}>
-                    <CheckCircle2 size={15} style={{ color: 'var(--color-primary)' }} />
+                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.55rem', fontSize: '0.82rem', color: 'var(--color-text-primary)', fontWeight: 600, wordBreak: 'break-word' }}>
+                  <div style={{ background: 'var(--color-primary-light)', border: '1px solid var(--color-border)', padding: '2px', borderRadius: '50%', display: 'flex', flexShrink: 0, marginTop: '2px' }}>
+                    <CheckCircle2 size={13} style={{ color: 'var(--color-primary)' }} />
                   </div>
-                  <span style={{ lineHeight: 1.5 }}>{featText}</span>
+                  <span style={{ lineHeight: 1.42 }}>{featText}</span>
                 </div>
               ))}
             </div>
@@ -701,8 +704,8 @@ export const HeroSection = () => {
             <div className="hero-cta-buttons-row" style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '0.85rem',
-              marginBottom: '1.75rem'
+              gap: '0.75rem',
+              marginBottom: '0.85rem'
             }}>
               <button 
                 type="button"
@@ -712,20 +715,20 @@ export const HeroSection = () => {
                   background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
                   color: 'var(--color-text-on-primary, #ffffff)',
                   border: 'none',
-                  padding: '0.9rem 1.85rem',
-                  fontSize: '0.98rem',
+                  padding: '0.72rem 1.45rem',
+                  fontSize: '0.92rem',
                   fontWeight: 800,
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.5rem',
-                  borderRadius: '14px',
-                  boxShadow: '0 8px 24px var(--color-primary-glow)',
+                  gap: '0.45rem',
+                  borderRadius: '12px',
+                  boxShadow: '0 6px 20px var(--color-primary-glow)',
                   cursor: 'pointer'
                 }}
               >
-                <Upload size={17} />
+                <Upload size={16} />
                 <span>{primaryCtaText}</span>
-                <ArrowRight size={17} />
+                <ArrowRight size={16} />
               </button>
 
               <button 
@@ -736,13 +739,13 @@ export const HeroSection = () => {
                   background: 'var(--color-surface, transparent)',
                   color: 'var(--color-text-primary)', 
                   border: '1.5px solid var(--color-border)',
-                  padding: '0.9rem 1.5rem', 
-                  fontSize: '0.98rem',
+                  padding: '0.72rem 1.25rem', 
+                  fontSize: '0.92rem',
                   fontWeight: 700,
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  borderRadius: '14px',
+                  borderRadius: '12px',
                   boxShadow: 'var(--shadow-sm)',
                   cursor: 'pointer'
                 }}
@@ -755,16 +758,16 @@ export const HeroSection = () => {
             <div className="hero-trust-badges-row" style={{
               display: 'flex',
               flexWrap: 'wrap',
-              gap: '1.25rem'
+              gap: '1rem'
             }}>
               {statsList.map((stat, i) => {
                 const IconComp = ICON_MAP[stat.icon] || Star;
                 return (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <div style={{ background: 'var(--color-primary-light)', padding: '4px', borderRadius: '8px', display: 'flex' }}>
-                      <IconComp size={15} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <div style={{ background: 'var(--color-primary-light)', padding: '3px', borderRadius: '6px', display: 'flex' }}>
+                      <IconComp size={13} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                     </div>
-                    <span style={{ fontSize: '0.835rem', fontWeight: 700, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
                       <strong style={{ color: 'var(--color-primary)', marginRight: '3px' }}>{stat.value}</strong>
                       {stat.label}
                     </span>
@@ -786,34 +789,34 @@ export const HeroSection = () => {
               style={{
                 background: 'var(--hero-card-bg, var(--color-surface))',
                 border: '1px solid var(--hero-card-border, var(--color-border))',
-                borderRadius: '24px',
-                padding: '1.35rem',
+                borderRadius: '20px',
+                padding: '0.95rem 1.1rem',
                 boxShadow: 'var(--hero-card-shadow, var(--shadow-xl))',
                 width: '100%',
-                maxWidth: '680px',
+                maxWidth: '590px',
                 position: 'relative',
                 boxSizing: 'border-box'
               }}
             >
               
               {/* Header Title & Slide Index Counter */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.55rem', gap: '0.5rem' }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem', letterSpacing: '0.06em' }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.35rem', letterSpacing: '0.06em' }}>
                     <span className="blinking-green-dot" /> LIVE SHOWCASE
                   </div>
-                  <div style={{ fontSize: '0.98rem', fontWeight: 800, color: 'var(--color-text-primary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--color-text-primary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {(currentImage?.title || previewTitle || '').replace(/Emrboidery/gi, 'Embroidery')}
                   </div>
                 </div>
 
                 {hasMultipleImages && (
                   <span style={{
-                    fontSize: '0.75rem',
+                    fontSize: '0.72rem',
                     fontWeight: 800,
                     background: 'var(--color-primary-light)',
                     border: '1px solid var(--color-border)',
-                    padding: '0.25rem 0.65rem',
+                    padding: '0.2rem 0.55rem',
                     borderRadius: '9999px',
                     color: 'var(--color-primary)',
                     flexShrink: 0
@@ -830,9 +833,9 @@ export const HeroSection = () => {
                   position: 'relative',
                   width: '100%',
                   aspectRatio: '16/10',
-                  minHeight: '220px',
-                  maxHeight: '430px',
-                  borderRadius: '16px',
+                  minHeight: '200px',
+                  maxHeight: '345px',
+                  borderRadius: '14px',
                   overflow: 'hidden',
                   background: 'radial-gradient(circle at center, #1e293b 0%, #090d16 100%)',
                   opacity: isFading ? 0.35 : 1,
@@ -930,7 +933,7 @@ export const HeroSection = () => {
                   justifyContent: 'center',
                   alignItems: 'center',
                   gap: '0.45rem',
-                  marginTop: '0.9rem'
+                  marginTop: '0.55rem'
                 }}>
                   {activeShowcaseImages.map((imgItem, idx) => {
                     const isActive = idx === currentSlideIdx;
