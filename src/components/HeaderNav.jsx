@@ -5,7 +5,6 @@ import { useNavigate, useLocation } from '../utils/navigation';
 import { useAppState } from '../context/StateContext';
 import { 
   Scissors, 
-  Globe, 
   User, 
   ChevronDown, 
   Menu, 
@@ -879,15 +878,6 @@ export const HeaderNav = () => {
 
               <UserMenuDropdown />
             </div>
-          )}
-
-          {safeCurrentView !== 'public' && (
-            <button 
-              className="btn btn-outline btn-sm"
-              onClick={handleGoHome}
-            >
-              <Globe size={14} /> Public Website
-            </button>
           )}
         </div>
       </div>
