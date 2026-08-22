@@ -354,9 +354,8 @@ export const VectorArtPage = ({ hideHero = false }) => {
       {!hideHero && (
         <section style={{
           background: 'var(--hero-bg, linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%))',
-          color: '#ffffff',
           padding: 'clamp(2.5rem, 5vh, 3.5rem) 0',
-          borderBottom: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
+          borderBottom: '1px solid var(--border-color)',
           position: 'relative',
           overflow: 'hidden'
         }}>
@@ -377,9 +376,9 @@ export const VectorArtPage = ({ hideHero = false }) => {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.4rem',
-              background: 'rgba(255, 122, 0, 0.15)',
-              border: '1.5px solid var(--orange-500)',
-              color: 'var(--orange-400)',
+              background: 'var(--color-primary-light, rgba(255, 122, 0, 0.15))',
+              border: '1px solid var(--border-color)',
+              color: 'var(--color-primary, #ea580c)',
               fontWeight: 800,
               fontSize: '0.825rem',
               textTransform: 'uppercase',
@@ -391,11 +390,11 @@ export const VectorArtPage = ({ hideHero = false }) => {
               <Zap size={16} /> {dbSettings.vector_hero_badge || 'Dedicated Vector Redraw Studio'}
             </div>
 
-            <h1 style={{ fontSize: 'clamp(2.2rem, 3.5vw, 2.85rem)', fontWeight: 800, color: '#ffffff', marginBottom: '0.85rem', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+            <h1 style={{ fontSize: 'clamp(2.2rem, 3.5vw, 2.85rem)', fontWeight: 800, color: 'var(--hero-text-primary, var(--color-text-primary))', marginBottom: '0.85rem', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
               {dbSettings.vector_hero_title || 'Custom Vector Art Conversion & Redraws'}
             </h1>
 
-            <p style={{ fontSize: '1.05rem', color: '#94a3b8', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+            <p style={{ fontSize: '1.05rem', color: 'var(--hero-text-secondary, var(--color-text-secondary))', lineHeight: 1.6, marginBottom: '1.5rem' }}>
               {dbSettings.vector_hero_sub || 'Transform low-resolution JPEGs, PNGs, hand-drawn sketches, or pixelated logos into 100% hand-drawn, razor-sharp scalable vector graphics (.AI, .EPS, .SVG, .PDF, .CDR).'}
             </p>
 
@@ -407,7 +406,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
               gap: '1.25rem',
               fontSize: '0.875rem',
               fontWeight: 700,
-              color: '#e2e8f0'
+              color: 'var(--hero-text-primary, var(--color-text-primary))'
             }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <CheckCircle2 size={16} style={{ color: 'var(--orange-500)' }} /> {dbSettings.vector_hero_value_1 || 'Hand-Drawn Clean Paths'}
@@ -441,7 +440,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
                 className="btn btn-outline btn-lg"
-                style={{ fontWeight: 700, padding: '0.85rem 1.75rem', color: '#ffffff', borderColor: 'rgba(255,255,255,0.2)' }}
+                style={{ fontWeight: 700, padding: '0.85rem 1.75rem', color: 'var(--hero-text-primary, var(--color-text-primary))', borderColor: 'var(--border-color)' }}
               >
                 {dbSettings.vector_hero_btn_secondary || 'View Pricing Tiers'}
               </button>

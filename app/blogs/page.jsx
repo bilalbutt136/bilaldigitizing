@@ -147,11 +147,11 @@ export default function BlogsPage() {
     <div style={{ background: 'var(--bg-main)', color: 'var(--color-text-primary)', minHeight: '100vh', paddingBottom: '6rem' }}>
       
       {/* Blog Header Hero */}
-      <div style={{ background: 'var(--hero-bg, var(--bg-surface, #0f172a))', padding: 'clamp(2.5rem, 5vh, 4rem) 1.25rem', textAlign: 'center', color: '#ffffff', borderBottom: '1px solid var(--border-color)' }}>
-        <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 900, marginBottom: '1.25rem', letterSpacing: '-0.02em' }}>
-          Industry <span style={{ color: 'var(--orange-500)' }}>Insights</span>
+      <div style={{ background: 'var(--hero-bg, var(--bg-surface, #0f172a))', padding: 'clamp(2.5rem, 5vh, 4rem) 1.25rem', textAlign: 'center', color: 'var(--hero-text-primary, var(--color-text-primary))', borderBottom: '1px solid var(--border-color)' }}>
+        <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 900, marginBottom: '1.25rem', letterSpacing: '-0.02em', color: 'var(--hero-text-primary, var(--color-text-primary))' }}>
+          Industry <span style={{ color: 'var(--color-primary, #ea580c)' }}>Insights</span>
         </h1>
-        <p style={{ fontSize: '1.05rem', color: '#cbd5e1', maxWidth: '650px', margin: '0 auto', lineHeight: 1.6 }}>
+        <p style={{ fontSize: '1.05rem', color: 'var(--hero-text-secondary, var(--color-text-secondary))', maxWidth: '650px', margin: '0 auto', lineHeight: 1.6 }}>
           Expert guides, technical deep-dives, and creative inspiration covering everything from commercial embroidery digitizing to scalable vector art and custom patch manufacturing.
         </p>
       </div>

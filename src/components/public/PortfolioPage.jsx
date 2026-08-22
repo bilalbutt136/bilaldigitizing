@@ -89,9 +89,8 @@ export const PortfolioPage = () => {
       {/* 1. Page Header Banner */}
       <section style={{
         background: 'var(--hero-bg, linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%))',
-        color: '#ffffff',
         padding: 'clamp(2.5rem, 5vh, 3.5rem) 0',
-        borderBottom: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
+        borderBottom: '1px solid var(--border-color)',
         position: 'relative',
         overflow: 'hidden'
       }}>
@@ -113,17 +112,17 @@ export const PortfolioPage = () => {
             alignItems: 'center', 
             gap: '0.5rem', 
             fontSize: '0.85rem', 
-            color: '#cbd5e1', 
+            color: 'var(--hero-text-secondary, var(--color-text-secondary))', 
             marginBottom: '1.25rem' 
           }}>
             <button 
               onClick={() => navigate('/')} 
-              style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', padding: 0, fontWeight: 600 }}
+              style={{ background: 'none', border: 'none', color: 'var(--hero-text-secondary, var(--color-text-secondary))', cursor: 'pointer', padding: 0, fontWeight: 600 }}
             >
               Home
             </button>
             <ChevronRight size={14} />
-            <span style={{ color: 'var(--orange-400)', fontWeight: 700 }}>Portfolio Showcase</span>
+            <span style={{ color: 'var(--color-primary, #ea580c)', fontWeight: 700 }}>Portfolio Showcase</span>
           </div>
 
           <div style={{ maxWidth: '820px' }}>
@@ -131,9 +130,9 @@ export const PortfolioPage = () => {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.4rem',
-              background: 'rgba(249, 115, 22, 0.15)',
-              border: '1px solid rgba(249, 115, 22, 0.35)',
-              color: 'var(--orange-400)',
+              background: 'var(--color-primary-light, rgba(249, 115, 22, 0.15))',
+              border: '1px solid var(--border-color)',
+              color: 'var(--color-primary, #ea580c)',
               fontWeight: 800,
               fontSize: '0.825rem',
               textTransform: 'uppercase',
@@ -148,7 +147,7 @@ export const PortfolioPage = () => {
             <h1 style={{
               fontSize: 'clamp(2.2rem, 3.5vw, 3rem)',
               fontWeight: 900,
-              color: '#ffffff',
+              color: 'var(--hero-text-primary, var(--color-text-primary))',
               lineHeight: 1.15,
               marginBottom: '0.85rem',
               letterSpacing: '-0.02em',
@@ -159,7 +158,7 @@ export const PortfolioPage = () => {
 
             <p style={{
               fontSize: '1.1rem',
-              color: '#cbd5e1',
+              color: 'var(--hero-text-secondary, var(--color-text-secondary))',
               lineHeight: 1.6,
               margin: 0
             }}>

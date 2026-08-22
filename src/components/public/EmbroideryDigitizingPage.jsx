@@ -149,7 +149,7 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
         <section style={{ 
           padding: 'clamp(2.5rem, 5vh, 3.5rem) 0', 
           background: 'var(--hero-bg, linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%))', 
-          borderBottom: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
+          borderBottom: '1px solid var(--border-color)',
           position: 'relative',
           overflow: 'hidden'
         }}>
@@ -181,9 +181,9 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.4rem',
-            background: 'rgba(255, 122, 0, 0.15)',
-            border: '1px solid rgba(255, 122, 0, 0.4)',
-            color: 'var(--orange-400)',
+            background: 'var(--color-primary-light, rgba(255, 122, 0, 0.15))',
+            border: '1px solid var(--border-color)',
+            color: 'var(--color-primary, #ea580c)',
             fontWeight: 800,
             fontSize: '0.85rem',
             textTransform: 'uppercase',
@@ -195,11 +195,11 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
             <Layers size={16} /> {dbSettings.emb_hero_badge || 'DEDICATED EMBROIDERY DIGITIZING STUDIO'}
           </div>
 
-          <h1 style={{ fontSize: 'clamp(2.2rem, 3.5vw, 2.85rem)', color: '#ffffff', fontWeight: 900, marginBottom: '0.85rem', lineHeight: 1.15 }}>
+          <h1 style={{ fontSize: 'clamp(2.2rem, 3.5vw, 2.85rem)', color: 'var(--hero-text-primary, var(--color-text-primary))', fontWeight: 900, marginBottom: '0.85rem', lineHeight: 1.15 }}>
             {dbSettings.emb_hero_title || 'Custom Embroidery Digitizing Services'}
           </h1>
 
-          <p style={{ color: '#94a3b8', fontSize: '1.05rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+          <p style={{ color: 'var(--hero-text-secondary, var(--color-text-secondary))', fontSize: '1.05rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
             {dbSettings.emb_hero_sub || 'Turn your logo artwork into precise embroidery files ready for commercial production. Every design is hand-digitized with exact stitch counts, underlay pathing, and zero needle breaks.'}
           </p>
 
@@ -212,7 +212,7 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
             gap: '1.5rem',
             fontSize: '0.95rem',
             fontWeight: 700,
-            color: '#e2e8f0',
+            color: 'var(--hero-text-primary, var(--color-text-primary))',
             marginBottom: '2.5rem'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
@@ -238,7 +238,7 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
             <a 
               href="#pricing-tiers" 
               className="btn btn-outline btn-lg"
-              style={{ fontWeight: 700, padding: '0.85rem 1.75rem', color: '#ffffff', borderColor: 'rgba(255,255,255,0.2)' }}
+              style={{ fontWeight: 700, padding: '0.85rem 1.75rem', color: 'var(--hero-text-primary, var(--color-text-primary))', borderColor: 'var(--border-color)' }}
             >
               {dbSettings.emb_hero_btn_secondary || 'View Pricing Tiers'}
             </a>
