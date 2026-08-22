@@ -192,11 +192,22 @@ export const OrderManagementTable = () => {
     }
   };
 
+  const [now, setNow] = useState(() => Date.now());
+
+  // Real-time ticking interval for live countdowns
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
   const getDeliveryCountdown = (ord) => {
-    if (ord.status === 'cancelled') {
-      return <span style={{ color: '#dc2626', fontWeight: 700, fontSize: '0.725rem' }}>Order Cancelled</span>;
+    const status = String(ord?.status || '').toLowerCase();
+    if (status === 'cancelled') {
+      return <span style={{ color: '#dc2626', fontWeight: 700, fontSize: '0.725rem' }}>❌ Cancelled</span>;
     }
-    if (ord.status === 'completed' || ord.status === 'delivered') {
+    if (status === 'completed' || status === 'delivered' || status === 'qc') {
       return (
         <span style={{ color: '#10b981', fontWeight: 700, fontSize: '0.725rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
           <CheckCircle size={12} /> Delivered
@@ -204,10 +215,22 @@ export const OrderManagementTable = () => {
       );
     }
 
-    const createdTime = ord.createdAt ? new Date(ord.createdAt).getTime() : Date.now() - 3600000 * 2;
-    const turnaroundHours = ord.turnaroundHours || (ord.isRush ? 4 : 12);
+    const rawCreated = ord?.createdAt || ord?.created_at || ord?.timestamp || ord?.order_date || ord?.date;
+    const createdTime = rawCreated ? new Date(rawCreated).getTime() : 0;
+
+    const isRush = Boolean(ord?.isRush || ord?.is_rush);
+    const turnaroundHours = Number(ord?.turnaroundHours || ord?.turnaround_hours) || (isRush ? 4 : (ord?.serviceCategory === 'patch' || ord?.service_category === 'patch' ? 168 : 12));
+
+    if (!createdTime || isNaN(createdTime)) {
+      return (
+        <span style={{ color: 'var(--orange-600)', fontWeight: 800, fontSize: '0.725rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+          <Clock size={12} /> {isRush ? '⚡ Rush (2–4h)' : '⏱️ Standard (8–12h)'}
+        </span>
+      );
+    }
+
     const deadlineTime = createdTime + (turnaroundHours * 3600 * 1000);
-    const diffMs = deadlineTime - Date.now();
+    const diffMs = deadlineTime - now;
 
     if (diffMs <= 0) {
       const overdueMins = Math.abs(Math.floor(diffMs / 60000));
@@ -224,19 +247,32 @@ export const OrderManagementTable = () => {
     const hrs = Math.floor(totalMins / 60);
     const mins = totalMins % 60;
     return (
-      <span style={{ color: 'var(--orange-600)', fontWeight: 800, fontSize: '0.725rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-        <Clock size={12} /> {ord.isRush ? '⚡ Rush ' : ''}{hrs}h {mins}m
+      <span style={{ color: isRush ? '#ea580c' : '#2563eb', fontWeight: 800, fontSize: '0.725rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+        <Clock size={12} /> {isRush ? '⚡ Rush ' : ''}{hrs}h {mins}m left
       </span>
     );
   };
 
-  const formatPlacementTime = (isoString) => {
-    if (!isoString) return 'Just now';
+  const formatPlacementTime = (raw) => {
+    if (!raw) return 'Recently placed';
     try {
-      const d = new Date(isoString);
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' • ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) return 'Recently placed';
+      const today = new Date();
+      const isToday = today.toDateString() === d.toDateString();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const isYesterday = yesterday.toDateString() === d.toDateString();
+
+      const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      if (isToday) {
+        return `Today, ${timeStr}`;
+      } else if (isYesterday) {
+        return `Yesterday, ${timeStr}`;
+      }
+      return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: d.getFullYear() !== today.getFullYear() ? 'numeric' : undefined })}, ${timeStr}`;
     } catch {
-      return 'Recent';
+      return 'Recently placed';
     }
   };
 
@@ -460,7 +496,7 @@ export const OrderManagementTable = () => {
                           {formatOrderId(ord.id)}
                         </span>
                         <span>•</span>
-                        <span>📅 {formatPlacementTime(ord.createdAt)}</span>
+                        <span>📅 {formatPlacementTime(ord.createdAt || ord.created_at || ord.timestamp || ord.order_date)}</span>
                       </div>
                       <div style={{ marginTop: '0.2rem' }}>
                         {getDeliveryCountdown(ord)}

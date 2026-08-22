@@ -1702,8 +1702,13 @@ export const CustomerDashboard = () => {
                                   </td>
 
                                   {/* Date Submitted */}
-                                  <td style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                                    {ord?.createdAt || ord?.created_at ? new Date(ord.createdAt || ord.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
+                                  <td style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.825rem' }}>
+                                    <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>
+                                      {ord?.createdAt || ord?.created_at ? new Date(ord.createdAt || ord.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
+                                    </div>
+                                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                      {ord?.createdAt || ord?.created_at ? new Date(ord.createdAt || ord.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : ''}
+                                    </div>
                                   </td>
 
                                   {/* Delivery & Order Status (NEW) */}
@@ -1902,7 +1907,7 @@ export const CustomerDashboard = () => {
                                   <div style={{ fontSize: '0.73rem', color: '#64748b', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
                                     <span>{ord?.type === 'vector' ? '✒️ Vector Art' : (ord?.type === 'patch' ? '🏷️ Custom Patches' : '🧵 Embroidery')}</span>
                                     <span>•</span>
-                                    <span>{ord?.createdAt || ord?.created_at ? new Date(ord.createdAt || ord.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'}</span>
+                                    <span>{ord?.createdAt || ord?.created_at ? `${new Date(ord.createdAt || ord.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • ${new Date(ord.createdAt || ord.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}` : 'Recent'}</span>
                                   </div>
 
                                   <div style={{ marginTop: '0.4rem' }}>

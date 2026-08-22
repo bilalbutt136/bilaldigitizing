@@ -324,6 +324,9 @@ export async function fetchOrdersFromSupabase() {
 
       return {
         ...order,
+        createdAt: order.created_at || order.createdAt || order.timestamp || order.order_date || new Date().toISOString(),
+        created_at: order.created_at || order.createdAt || order.timestamp || order.order_date || new Date().toISOString(),
+        turnaroundHours: Number(order.turnaround_hours || order.turnaroundHours) || (order.is_rush || order.isRush ? 4 : (order.service_category === 'patch' || order.serviceCategory === 'patch' ? 168 : 12)),
         clientName: order.client_name,
         clientEmail: order.client_email,
         serviceCategory: order.service_category,
