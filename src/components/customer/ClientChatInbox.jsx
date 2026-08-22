@@ -352,14 +352,16 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      height: 'calc(100vh - 120px)',
-      minHeight: '520px',
-      maxHeight: '880px',
+      height: '100%',
+      minHeight: 0,
+      maxHeight: '100%',
+      flex: 1,
       background: 'var(--color-surface, #ffffff)',
       borderRadius: '16px',
       border: '1.5px solid var(--color-border)',
-      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.04)',
-      overflow: 'hidden'
+      boxShadow: 'var(--shadow-sm, 0 4px 16px rgba(0, 0, 0, 0.04))',
+      overflow: 'hidden',
+      boxSizing: 'border-box'
     }}>
       <div style={{
         padding: '0.65rem 1.25rem 0',
@@ -756,14 +758,16 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       <form 
         onSubmit={handleSendMessage}
         style={{
-          padding: '0.85rem 1.25rem',
-          background: '#ffffff',
+          padding: '0.65rem 0.85rem',
+          background: 'var(--color-surface, #ffffff)',
           borderTop: '1.5px solid var(--color-border)',
           display: 'flex',
           alignItems: 'center',
-          gap: '0.75rem',
+          gap: '0.45rem',
           flexShrink: 0,
-          boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.03)'
+          boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.03)',
+          boxSizing: 'border-box',
+          width: '100%'
         }}
       >
         <input 
@@ -779,12 +783,12 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploadingAttachment}
           style={{
-            background: '#f1f5f9',
+            background: 'var(--color-subtle, #f1f5f9)',
             border: '1.5px solid var(--color-border)',
-            color: 'var(--navy-700)',
-            width: '42px',
-            height: '42px',
-            borderRadius: '12px',
+            color: 'var(--color-text-secondary, var(--navy-700))',
+            width: '36px',
+            height: '36px',
+            borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -794,7 +798,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           }}
           title="Attach Image, PDF, Vector or Machine File"
         >
-          {isUploadingAttachment ? <Loader2 size={18} className="animate-spin text-orange-500" /> : <Paperclip size={18} />}
+          {isUploadingAttachment ? <Loader2 size={16} className="animate-spin text-orange-500" /> : <Paperclip size={16} />}
         </button>
 
         <input
@@ -804,41 +808,44 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           placeholder={activeChannel === 'inbox' ? 'Type a message to Studio Digitizers...' : 'Type a question to 24/7 Support...'}
           style={{
             flex: 1,
-            height: '42px',
-            borderRadius: '12px',
+            minWidth: 0,
+            height: '36px',
+            borderRadius: '8px',
             border: '1.5px solid var(--color-border)',
-            padding: '0 1.15rem',
-            fontSize: '0.88rem',
-            color: 'var(--navy-950)',
-            background: '#f8fafc',
-            outline: 'none'
+            padding: '0 0.85rem',
+            fontSize: '0.85rem',
+            color: 'var(--color-text-primary, var(--navy-950))',
+            background: 'var(--color-subtle, #f8fafc)',
+            outline: 'none',
+            boxSizing: 'border-box'
           }}
         />
 
         <button
           type="submit"
-          disabled={!messageInput.trim() && !attachedFile}
+          disabled={(!messageInput.trim() && !attachedFile) || isUploadingAttachment}
           style={{
-            height: '42px',
-            padding: '0 1.25rem',
-            borderRadius: '12px',
+            height: '36px',
+            padding: '0 0.85rem',
+            borderRadius: '8px',
             background: (messageInput.trim() || attachedFile) ? 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)' : '#cbd5e1',
             border: 'none',
             color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.45rem',
+            gap: '0.35rem',
             fontWeight: 800,
-            fontSize: '0.85rem',
+            fontSize: '0.82rem',
             cursor: (messageInput.trim() || attachedFile) ? 'pointer' : 'not-allowed',
             flexShrink: 0,
             boxShadow: (messageInput.trim() || attachedFile) ? '0 4px 14px rgba(234, 88, 12, 0.35)' : 'none',
-            transition: 'all 0.2s ease'
+            transition: 'all 0.2s ease',
+            opacity: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 0.5 : 1
           }}
           title="Send message"
         >
           <span>Send</span>
-          <Send size={15} />
+          <Send size={14} />
         </button>
       </form>
     </div>

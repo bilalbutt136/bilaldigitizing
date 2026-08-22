@@ -611,11 +611,11 @@ export const CustomerDashboard = () => {
     <div 
       className="dashboard-main-container" 
       style={{ 
-        padding: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? '0.5rem 0 0.5rem' : '1.5rem 0 8rem', 
+        padding: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? '0.65rem 0' : '1.5rem 0 8rem', 
         background: 'var(--bg-main)', 
-        minHeight: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'calc(100dvh - 125px)' : 'calc(100vh - 80px)',
-        height: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'calc(100dvh - 125px)' : 'auto',
-        maxHeight: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'calc(100dvh - 125px)' : 'none',
+        minHeight: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'calc(100vh - 130px)' : 'calc(100vh - 80px)',
+        height: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'calc(100vh - 130px)' : 'auto',
+        maxHeight: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'calc(100vh - 130px)' : 'none',
         overflow: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'hidden' : 'visible',
         boxSizing: 'border-box'
       }}
@@ -927,7 +927,7 @@ export const CustomerDashboard = () => {
             display: 'grid',
             gridTemplateColumns: '280px 1fr',
             gap: '1.5rem',
-            alignItems: 'start',
+            alignItems: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'stretch' : 'start',
             flex: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 1 : 'none',
             height: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? '100%' : 'auto',
             maxHeight: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? '100%' : 'none',
