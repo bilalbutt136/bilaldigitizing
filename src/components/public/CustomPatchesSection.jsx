@@ -236,9 +236,9 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
       {/* SECTION 1: High-Impact Hero & Overview Banner */}
       {!hideHero && (
         <section style={{ 
-          padding: '3rem 0 2.5rem', 
-          background: 'linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%)', 
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          padding: 'clamp(2.5rem, 5vh, 3.5rem) 0', 
+          background: 'var(--hero-bg, linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%))', 
+          borderBottom: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
           position: 'relative',
           overflow: 'hidden'
         }}>

@@ -179,7 +179,7 @@ export default function FAQsPage() {
   } : null;
 
   return (
-    <div style={{ background: 'var(--bg-main)', color: 'var(--color-text-primary)', minHeight: '100vh', paddingTop: 'clamp(3rem, 6vw, 4.5rem)', paddingBottom: '6rem' }}>
+    <div style={{ background: 'var(--bg-main)', color: 'var(--color-text-primary)', minHeight: '100vh', paddingTop: 'clamp(2.5rem, 5vh, 4rem)', paddingBottom: '6rem' }}>
       {schemaData && (
         <script
           type="application/ld+json"

@@ -364,7 +364,7 @@ export default function PricingPage() {
 
 
   return (
-    <main style={{ padding: 'clamp(5rem, 8vw, 8rem) clamp(1rem, 3vw, 2rem) 5rem', background: 'var(--bg-main)', minHeight: '100vh', color: 'var(--color-text-primary)', fontFamily: 'var(--font-body, "Inter", sans-serif)' }}>
+    <main style={{ padding: 'clamp(2.5rem, 5vh, 4rem) clamp(1rem, 3vw, 2rem) 5rem', background: 'var(--bg-main)', minHeight: '100vh', color: 'var(--color-text-primary)', fontFamily: 'var(--font-body, "Inter", sans-serif)' }}>
       <div className="container" style={{ maxWidth: '1240px', margin: '0 auto', overflow: 'visible' }}>
         
         {/* Header Hero */}

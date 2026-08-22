@@ -88,10 +88,10 @@ export const PortfolioPage = () => {
       
       {/* 1. Page Header Banner */}
       <section style={{
-        background: 'linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%)',
+        background: 'var(--hero-bg, linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%))',
         color: '#ffffff',
-        padding: '3.5rem 0 3rem',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        padding: 'clamp(2.5rem, 5vh, 3.5rem) 0',
+        borderBottom: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
         position: 'relative',
         overflow: 'hidden'
       }}>

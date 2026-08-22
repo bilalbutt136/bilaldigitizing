@@ -147,7 +147,7 @@ export default function BlogsPage() {
     <div style={{ background: 'var(--bg-main)', color: 'var(--color-text-primary)', minHeight: '100vh', paddingBottom: '6rem' }}>
       
       {/* Blog Header Hero */}
-      <div style={{ background: 'var(--bg-surface, #0f172a)', padding: 'clamp(4rem, 6vw, 6rem) 1.25rem', textAlign: 'center', color: '#ffffff' }}>
+      <div style={{ background: 'var(--hero-bg, var(--bg-surface, #0f172a))', padding: 'clamp(2.5rem, 5vh, 4rem) 1.25rem', textAlign: 'center', color: '#ffffff', borderBottom: '1px solid var(--border-color)' }}>
         <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 900, marginBottom: '1.25rem', letterSpacing: '-0.02em' }}>
           Industry <span style={{ color: 'var(--orange-500)' }}>Insights</span>
         </h1>
