@@ -329,18 +329,50 @@ export async function GET(request) {
         ...orderIds
       ].filter(Boolean)));
 
-      let msgQuery = supabase
-        .from('messages')
-        .select('*')
-        .order('created_at', { ascending: true });
+      let rawMessages = [];
+      try {
+        if (targetEmail) {
+          // 1. Fetch by target conversation IDs
+          const { data: convMsgs, error: convErr } = await supabase
+            .from('messages')
+            .select('*')
+            .in('conversation_id', targetIds)
+            .order('created_at', { ascending: true });
+          if (convErr) console.warn('[fetchMessages convMsgs notice]:', convErr.message);
 
-      if (targetEmail) {
-        msgQuery = msgQuery.or(`conversation_id.in.(${targetIds.map(id => `"${id}"`).join(',')}),client_email.ilike.${targetEmail}`);
-      } else {
-        msgQuery = msgQuery.in('conversation_id', targetIds);
+          // 2. Fetch by client_email
+          const { data: emailMsgs, error: emailErr } = await supabase
+            .from('messages')
+            .select('*')
+            .ilike('client_email', targetEmail)
+            .order('created_at', { ascending: true });
+          if (emailErr) console.warn('[fetchMessages emailMsgs notice]:', emailErr.message);
+
+          // Merge & deduplicate by message ID or (text + sender + created_at)
+          const seen = new Set();
+          const combined = [];
+          for (const m of [...(convMsgs || []), ...(emailMsgs || [])]) {
+            const key = m.id || `${m.text}_${m.sender}_${m.created_at || m.timestamp}`;
+            if (!seen.has(key)) {
+              seen.add(key);
+              combined.push(m);
+            }
+          }
+          rawMessages = combined;
+        } else {
+          const { data, error } = await supabase
+            .from('messages')
+            .select('*')
+            .in('conversation_id', targetIds)
+            .order('created_at', { ascending: true });
+          if (error) console.warn('[fetchMessages targetIds error]:', error.message);
+          rawMessages = data || [];
+        }
+      } catch (err) {
+        console.error('[fetchMessages query error]:', err);
       }
 
-      const { data } = await msgQuery;
+      const data = rawMessages;
 
       const mappedMessages = (data || []).map(m => ({
         id: m.id,

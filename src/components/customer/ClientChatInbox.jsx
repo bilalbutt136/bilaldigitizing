@@ -126,15 +126,18 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
   // 1. Initial load of channel chat history from Supabase
   const loadChatHistory = async () => {
-    if (!clientEmail) return;
     setLoading(true);
     try {
-      const directMsgs = await fetchChatMessages(canonicalChatId, clientEmail);
-      if (Array.isArray(directMsgs)) {
+      const email = clientEmail && clientEmail !== 'client@studio.com' ? clientEmail : '';
+      const directMsgs = await fetchChatMessages(canonicalChatId, email);
+      if (Array.isArray(directMsgs) && directMsgs.length > 0) {
         const sorted = [...directMsgs].sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
         setMessages(sorted);
+      } else if (!email) {
+        const guestMsgs = await fetchChatMessages('general-support', '');
+        setMessages(Array.isArray(guestMsgs) ? guestMsgs : []);
       } else {
-        setMessages([]);
+        setMessages(Array.isArray(directMsgs) ? directMsgs : []);
       }
     } catch (err) {
       console.warn('Load chat history notice:', err);
@@ -166,7 +169,6 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
   const handleChannelSwitch = (channel) => {
     setActiveChannel(channel);
-    setMessages([]);
   };
 
   useEffect(() => {
