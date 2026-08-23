@@ -1136,8 +1136,7 @@ export const CustomerDashboard = () => {
                   {/* Hero Place New Order CTA */}
                   <div 
                     onClick={() => {
-                      setMobileOrderDefaultService('embroidery');
-                      setIsMobileOrderOpen(true);
+                      setIsServiceSelectorOpen(true);
                     }}
                     style={{
                       background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
@@ -1207,8 +1206,7 @@ export const CustomerDashboard = () => {
                     <button
                       type="button"
                       onClick={() => {
-                        setMobileOrderDefaultService('embroidery');
-                        setIsMobileOrderOpen(true);
+                        setIsServiceSelectorOpen(true);
                       }}
                       style={{
                         background: '#ffffff',
@@ -2242,8 +2240,7 @@ export const CustomerDashboard = () => {
                     <button
                       type="button"
                       onClick={() => {
-                        setMobileOrderDefaultService('embroidery');
-                        setIsMobileOrderOpen(true);
+                        setIsServiceSelectorOpen(true);
                       }}
                       className="btn btn-primary-orange"
                       style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', fontWeight: 800, borderRadius: '10px' }}
@@ -2266,24 +2263,23 @@ export const CustomerDashboard = () => {
                   if (filtered.length === 0) {
                     return (
                       <div style={{
-                        background: '#ffffff',
+                        background: 'var(--color-surface, #ffffff)',
                         border: '1.5px solid var(--border-color)',
                         borderRadius: '16px',
                         padding: '3rem 1.5rem',
                         textAlign: 'center'
                       }}>
                         <Package size={40} style={{ color: '#94a3b8', margin: '0 auto 0.75rem', opacity: 0.5 }} />
-                        <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-950)' }}>
+                        <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                           No Orders Found
                         </h3>
-                        <p style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                        <p style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', color: 'var(--color-text-secondary, #64748b)' }}>
                           {orderFilterTab === 'active' ? 'You have no active orders in production right now.' : 'No completed orders found in your account history.'}
                         </p>
                         <button
                           type="button"
                           onClick={() => {
-                            setMobileOrderDefaultService('embroidery');
-                            setIsMobileOrderOpen(true);
+                            setIsServiceSelectorOpen(true);
                           }}
                           className="btn btn-primary-orange"
                           style={{ padding: '0.65rem 1.25rem', fontSize: '0.88rem', fontWeight: 800, borderRadius: '10px' }}
@@ -2653,8 +2649,7 @@ export const CustomerDashboard = () => {
         <button
           type="button"
           onClick={() => {
-            setMobileOrderDefaultService('embroidery');
-            setIsMobileOrderOpen(true);
+            setIsServiceSelectorOpen(true);
           }}
           style={{
             display: 'flex',
@@ -2826,26 +2821,26 @@ export const CustomerDashboard = () => {
         >
           <div 
             style={{
-              background: '#ffffff',
+              background: 'var(--color-surface, #ffffff)',
               borderRadius: '20px',
               maxWidth: '560px',
               width: '100%',
               padding: '2rem',
               boxShadow: '0 20px 50px rgba(15, 23, 42, 0.25)',
-              border: '1.5px solid var(--border-color)'
+              border: '1.5px solid var(--border-color, #e2e8f0)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
               <div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.25rem' }}>
-                  New Project Request
+                <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem' }}>
+                  NEW PROJECT REQUEST
                 </div>
-                <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0 }}>
+                <h2 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', margin: 0 }}>
                   Select Desired Service
                 </h2>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                <p style={{ color: 'var(--color-text-secondary, #64748b)', fontSize: '0.88rem', marginTop: '0.35rem' }}>
                   Choose a service category to launch the custom order configurator
                 </p>
               </div>
@@ -2853,17 +2848,20 @@ export const CustomerDashboard = () => {
                 type="button"
                 onClick={() => setIsServiceSelectorOpen(false)}
                 style={{
-                  background: '#f1f5f9',
+                  background: 'var(--bg-subtle, #f1f5f9)',
                   border: 'none',
                   borderRadius: '50%',
-                  width: '32px',
-                  height: '32px',
+                  width: '36px',
+                  height: '36px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  color: 'var(--navy-700)'
+                  color: 'var(--color-text-primary, #0f172a)',
+                  transition: 'opacity 0.15s'
                 }}
+                onMouseOver={(e) => { e.currentTarget.style.opacity = '0.8'; }}
+                onMouseOut={(e) => { e.currentTarget.style.opacity = '1'; }}
               >
                 <X size={18} />
               </button>
@@ -2885,35 +2883,35 @@ export const CustomerDashboard = () => {
                   alignItems: 'center',
                   gap: '1rem',
                   padding: '1.15rem 1.25rem',
-                  background: '#ffffff',
-                  border: '1.5px solid var(--border-color)',
-                  borderRadius: '14px',
+                  background: 'var(--color-surface, #ffffff)',
+                  border: '1.5px solid #ea580c',
+                  borderRadius: '16px',
                   textAlign: 'left',
                   cursor: 'pointer',
                   transition: 'all 0.18s ease',
                   boxShadow: '0 2px 8px rgba(15, 23, 42, 0.03)'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#ff7a00';
-                  e.currentTarget.style.background = 'rgba(255, 122, 0, 0.03)';
+                  e.currentTarget.style.borderColor = '#ea580c';
+                  e.currentTarget.style.background = 'rgba(234, 88, 12, 0.04)';
                   e.currentTarget.style.transform = 'translateY(-2px)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-color)';
-                  e.currentTarget.style.background = '#ffffff';
+                  e.currentTarget.style.borderColor = '#ea580c';
+                  e.currentTarget.style.background = 'var(--color-surface, #ffffff)';
                   e.currentTarget.style.transform = 'none';
                 }}
               >
                 <div style={{
-                  width: '46px',
-                  height: '46px',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, var(--orange-500), #e66e00)',
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #c2410c 0%, #ea580c 100%)',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 4px 12px rgba(255, 122, 0, 0.25)',
+                  boxShadow: '0 4px 12px rgba(234, 88, 12, 0.25)',
                   flexShrink: 0
                 }}>
                   <Layers size={24} />
@@ -2921,19 +2919,19 @@ export const CustomerDashboard = () => {
 
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ fontSize: '1.025rem', fontWeight: 800, color: 'var(--navy-950)' }}>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                       Embroidery Digitizing
                     </div>
-                    <ChevronRight size={18} style={{ color: 'var(--orange-500)' }} />
+                    <ChevronRight size={18} style={{ color: 'var(--color-text-primary, #0f172a)' }} />
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem', lineHeight: 1.35 }}>
+                  <div style={{ fontSize: '0.825rem', color: 'var(--color-text-secondary, #64748b)', marginTop: '0.2rem', lineHeight: 1.35 }}>
                     DST, PES, EMB stitch pathing for commercial embroidery machines
                   </div>
-                  <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem' }}>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#fff7ed', color: 'var(--orange-700)', padding: '0.12rem 0.45rem', borderRadius: '4px', border: '1px solid rgba(255, 122, 0, 0.2)' }}>
+                  <div style={{ display: 'flex', gap: '0.45rem', marginTop: '0.45rem' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, background: '#fff7ed', color: '#9a3412', padding: '0.15rem 0.55rem', borderRadius: '5px', border: '1px solid rgba(234, 88, 12, 0.2)' }}>
                       4-12 Hr Delivery
                     </span>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#f1f5f9', color: 'var(--navy-700)', padding: '0.12rem 0.45rem', borderRadius: '4px' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, background: 'var(--bg-subtle, #f1f5f9)', color: 'var(--color-text-primary, #0f172a)', padding: '0.15rem 0.55rem', borderRadius: '5px' }}>
                       Starts $10.00
                     </span>
                   </div>
@@ -2953,30 +2951,30 @@ export const CustomerDashboard = () => {
                   alignItems: 'center',
                   gap: '1rem',
                   padding: '1.15rem 1.25rem',
-                  background: '#ffffff',
-                  border: '1.5px solid var(--border-color)',
-                  borderRadius: '14px',
+                  background: 'var(--color-surface, #ffffff)',
+                  border: '1.5px solid var(--border-color, #e2e8f0)',
+                  borderRadius: '16px',
                   textAlign: 'left',
                   cursor: 'pointer',
                   transition: 'all 0.18s ease',
                   boxShadow: '0 2px 8px rgba(15, 23, 42, 0.03)'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#ff7a00';
-                  e.currentTarget.style.background = 'rgba(255, 122, 0, 0.03)';
+                  e.currentTarget.style.borderColor = '#0284c7';
+                  e.currentTarget.style.background = 'rgba(2, 132, 199, 0.04)';
                   e.currentTarget.style.transform = 'translateY(-2px)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-color)';
-                  e.currentTarget.style.background = '#ffffff';
+                  e.currentTarget.style.borderColor = 'var(--border-color, #e2e8f0)';
+                  e.currentTarget.style.background = 'var(--color-surface, #ffffff)';
                   e.currentTarget.style.transform = 'none';
                 }}
               >
                 <div style={{
-                  width: '46px',
-                  height: '46px',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #0284c7, #0369a1)',
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
@@ -2989,19 +2987,19 @@ export const CustomerDashboard = () => {
 
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ fontSize: '1.025rem', fontWeight: 800, color: 'var(--navy-950)' }}>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                       Vector Art Conversion
                     </div>
                     <ChevronRight size={18} style={{ color: '#0284c7' }} />
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem', lineHeight: 1.35 }}>
+                  <div style={{ fontSize: '0.825rem', color: 'var(--color-text-secondary, #64748b)', marginTop: '0.2rem', lineHeight: 1.35 }}>
                     Hand-traced AI, EPS, SVG vector redraw & Pantone spot color separation
                   </div>
-                  <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem' }}>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#e0f2fe', color: '#0369a1', padding: '0.12rem 0.45rem', borderRadius: '4px', border: '1px solid rgba(2, 132, 199, 0.2)' }}>
+                  <div style={{ display: 'flex', gap: '0.45rem', marginTop: '0.45rem' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, background: '#e0f2fe', color: '#0369a1', padding: '0.15rem 0.55rem', borderRadius: '5px', border: '1px solid rgba(2, 132, 199, 0.2)' }}>
                       Screen Print Ready
                     </span>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#f1f5f9', color: 'var(--navy-700)', padding: '0.12rem 0.45rem', borderRadius: '4px' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, background: 'var(--bg-subtle, #f1f5f9)', color: 'var(--color-text-primary, #0f172a)', padding: '0.15rem 0.55rem', borderRadius: '5px' }}>
                       Starts $15.00
                     </span>
                   </div>
@@ -3021,30 +3019,30 @@ export const CustomerDashboard = () => {
                   alignItems: 'center',
                   gap: '1rem',
                   padding: '1.15rem 1.25rem',
-                  background: '#ffffff',
-                  border: '1.5px solid var(--border-color)',
-                  borderRadius: '14px',
+                  background: 'var(--color-surface, #ffffff)',
+                  border: '1.5px solid var(--border-color, #e2e8f0)',
+                  borderRadius: '16px',
                   textAlign: 'left',
                   cursor: 'pointer',
                   transition: 'all 0.18s ease',
                   boxShadow: '0 2px 8px rgba(15, 23, 42, 0.03)'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#ff7a00';
-                  e.currentTarget.style.background = 'rgba(255, 122, 0, 0.03)';
+                  e.currentTarget.style.borderColor = '#16a34a';
+                  e.currentTarget.style.background = 'rgba(22, 163, 74, 0.04)';
                   e.currentTarget.style.transform = 'translateY(-2px)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-color)';
-                  e.currentTarget.style.background = '#ffffff';
+                  e.currentTarget.style.borderColor = 'var(--border-color, #e2e8f0)';
+                  e.currentTarget.style.background = 'var(--color-surface, #ffffff)';
                   e.currentTarget.style.transform = 'none';
                 }}
               >
                 <div style={{
-                  width: '46px',
-                  height: '46px',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #16a34a, #15803d)',
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
@@ -3057,19 +3055,19 @@ export const CustomerDashboard = () => {
 
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ fontSize: '1.025rem', fontWeight: 800, color: 'var(--navy-950)' }}>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                       Custom Patches & Goods
                     </div>
                     <ChevronRight size={18} style={{ color: '#16a34a' }} />
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem', lineHeight: 1.35 }}>
+                  <div style={{ fontSize: '0.825rem', color: 'var(--color-text-secondary, #64748b)', marginTop: '0.2rem', lineHeight: 1.35 }}>
                     Custom embroidered, woven, 3D molded PVC rubber & leather patches
                   </div>
-                  <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem' }}>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#dcfce7', color: '#15803d', padding: '0.12rem 0.45rem', borderRadius: '4px', border: '1px solid rgba(22, 163, 74, 0.2)' }}>
+                  <div style={{ display: 'flex', gap: '0.45rem', marginTop: '0.45rem' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, background: '#dcfce7', color: '#15803d', padding: '0.15rem 0.55rem', borderRadius: '5px', border: '1px solid rgba(22, 163, 74, 0.2)' }}>
                       Physical Shipping
                     </span>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#f1f5f9', color: 'var(--navy-700)', padding: '0.12rem 0.45rem', borderRadius: '4px' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, background: 'var(--bg-subtle, #f1f5f9)', color: 'var(--color-text-primary, #0f172a)', padding: '0.15rem 0.55rem', borderRadius: '5px' }}>
                       Starts $1.50 / pc
                     </span>
                   </div>
