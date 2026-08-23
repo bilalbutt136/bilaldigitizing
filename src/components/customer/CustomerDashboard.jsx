@@ -656,24 +656,29 @@ export const CustomerDashboard = () => {
             position: relative !important;
             top: 0 !important;
             overflow: hidden !important;
-            overflow-y: hidden !important;
             flex-shrink: 0 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justifyContent: space-between !important;
+          }
+          .client-sidebar-scrollable-content {
+            height: 100% !important;
+            max-height: 100% !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            overscroll-behavior: contain !important;
+            scroll-behavior: smooth !important;
           }
           .client-main-content {
             height: 100% !important;
             max-height: 100% !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
+            overscroll-behavior: contain !important;
             scroll-behavior: smooth !important;
             padding-bottom: 3.5rem !important;
             padding-right: 0.35rem !important;
           }
         }
 
-        /* Custom smooth scrollbar for Client Portal main content only */
+        /* Custom smooth scrollbar for Client Portal main content */
         .client-main-content::-webkit-scrollbar {
           width: 7px;
         }
@@ -688,17 +693,19 @@ export const CustomerDashboard = () => {
           background: var(--color-primary, var(--orange-500));
         }
 
-        /* Ensure client sidebar NEVER has a scrollbar and NEVER scrolls */
-        .client-sidebar-saas,
-        .client-sidebar-saas * {
-          scrollbar-width: none !important;
-          -ms-overflow-style: none !important;
+        /* Sleek scrollbar for sidebar menu when content is taller than viewport */
+        .client-sidebar-scrollable-content::-webkit-scrollbar {
+          width: 5px;
         }
-        .client-sidebar-saas::-webkit-scrollbar,
-        .client-sidebar-saas *::-webkit-scrollbar {
-          display: none !important;
-          width: 0 !important;
-          height: 0 !important;
+        .client-sidebar-scrollable-content::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .client-sidebar-scrollable-content::-webkit-scrollbar-thumb {
+          background: var(--color-border, rgba(0,0,0,0.12));
+          border-radius: 4px;
+        }
+        .client-sidebar-scrollable-content::-webkit-scrollbar-thumb:hover {
+          background: var(--color-primary, var(--orange-500));
         }
       `}} />
 

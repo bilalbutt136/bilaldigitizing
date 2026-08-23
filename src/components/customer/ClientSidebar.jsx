@@ -120,7 +120,6 @@ export const ClientSidebar = ({
         background: 'var(--bg-card)',
         border: '1px solid var(--border-color)',
         borderRadius: '16px',
-        padding: '0.85rem 0.75rem',
         boxShadow: 'var(--shadow-sm)',
         position: 'relative',
         top: 0,
@@ -131,23 +130,24 @@ export const ClientSidebar = ({
         maxHeight: '100%',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
         boxSizing: 'border-box',
         overflow: 'hidden',
-        overflowY: 'hidden',
         flexShrink: 0,
         zIndex: 10
       }}
     >
       <div 
+        className="client-sidebar-scrollable-content"
         style={{ 
           flex: 1, 
+          height: '100%',
+          maxHeight: '100%',
           display: 'flex', 
           flexDirection: 'column', 
-          overflow: 'hidden',
-          overflowY: 'hidden',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none'
+          overflowY: 'auto', 
+          overflowX: 'hidden',
+          padding: '0.85rem 0.75rem 1.5rem',
+          boxSizing: 'border-box'
         }}
       >
         {/* User Header Profile Card */}
@@ -331,33 +331,33 @@ export const ClientSidebar = ({
             </div>
           </div>
         ))}
-      </div>
 
-      {/* Footer Sign Out Action */}
-      <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border-color)', flexShrink: 0 }}>
-        <button
-          type="button"
-          onClick={onLogout}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.45rem',
-            width: '100%',
-            padding: '0.48rem 0.65rem',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid rgba(220, 38, 38, 0.2)',
-            background: 'rgba(220, 38, 38, 0.06)',
-            color: '#dc2626',
-            fontWeight: 700,
-            fontSize: '0.8rem',
-            cursor: 'pointer',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          <LogOut size={15} style={{ flexShrink: 0 }} />
-          <span>Sign Out Account</span>
-        </button>
+        {/* Footer Sign Out Action (Inside scrollable sidebar container) */}
+        <div style={{ marginTop: '0.85rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-color)', flexShrink: 0, paddingBottom: '0.5rem' }}>
+          <button
+            type="button"
+            onClick={onLogout}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.45rem',
+              width: '100%',
+              padding: '0.52rem 0.65rem',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid rgba(220, 38, 38, 0.2)',
+              background: 'rgba(220, 38, 38, 0.06)',
+              color: '#dc2626',
+              fontWeight: 700,
+              fontSize: '0.825rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <LogOut size={15} style={{ flexShrink: 0 }} />
+            <span>Sign Out Account</span>
+          </button>
+        </div>
       </div>
     </aside>
   );

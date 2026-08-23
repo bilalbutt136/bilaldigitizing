@@ -778,7 +778,7 @@ body.dark-mode aside {
   color: var(--color-text-primary) !important;
 }
 
-/* Customer Portal Fixed Sidebar - Stationary & Non-Scrolling */
+/* Customer Portal Fixed Sidebar Outer Container */
 .client-sidebar-saas {
   position: relative !important;
   top: 0 !important;
@@ -786,17 +786,31 @@ body.dark-mode aside {
   height: 100% !important;
   max-height: 100% !important;
   overflow: hidden !important;
-  overflow-y: hidden !important;
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
   flex-shrink: 0 !important;
 }
 
-.client-sidebar-saas::-webkit-scrollbar,
-.client-sidebar-saas *::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+/* Inner Scrollable Sidebar Content */
+.client-sidebar-scrollable-content {
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
+  scroll-behavior: smooth !important;
+}
+
+.client-sidebar-scrollable-content::-webkit-scrollbar {
+  width: 5px;
+}
+.client-sidebar-scrollable-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.client-sidebar-scrollable-content::-webkit-scrollbar-thumb {
+  background: var(--color-border, rgba(0,0,0,0.12));
+  border-radius: 4px;
+}
+.client-sidebar-scrollable-content::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary, var(--orange-500));
 }
 
 /* Dropdown Menus & Popups */
