@@ -1108,14 +1108,14 @@ export const OrderWizardModal = () => {
         className="modal-dialog order-wizard-dialog"
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: '#ffffff',
-          border: '1px solid #cbd5e1',
+          background: 'var(--bg-card, #ffffff)',
+          border: '1px solid var(--border-color, #cbd5e1)',
           borderRadius: '24px',
           width: '100%',
           maxWidth: '1100px',
           maxHeight: '94dvh',
           height: 'auto',
-          boxShadow: '0 25px 60px -15px rgba(15, 23, 42, 0.25)',
+          boxShadow: 'var(--shadow-xl, 0 25px 60px -15px rgba(15, 23, 42, 0.25))',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
@@ -1279,63 +1279,353 @@ export const OrderWizardModal = () => {
 
         {/* SERVICE SELECTOR MODAL (WHEN TYPE === 'ALL') */}
         {type === 'all' ? (
-          <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem) clamp(1rem, 2vw, 1.5rem)', textAlign: 'center', background: '#f8fafc', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
-            <div style={{ maxWidth: '600px', margin: '0 auto 1.5rem auto' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quick Order Launcher</span>
-              <h2 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--navy-950)', marginTop: '0.2rem' }}>Select Service Category</h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.25rem' }}>Configure specs, upload artwork, and receive verified production files with instant pricing</p>
+          <div style={{ 
+            padding: 'clamp(1.5rem, 3vw, 2.5rem) clamp(1rem, 2vw, 1.5rem)', 
+            textAlign: 'center', 
+            background: 'var(--bg-main, #f8fafc)', 
+            overflowY: 'auto', 
+            flex: '1 1 auto', 
+            minHeight: 0, 
+            WebkitOverflowScrolling: 'touch' 
+          }}>
+            <div style={{ maxWidth: '640px', margin: '0 auto 2rem auto' }}>
+              <span style={{ 
+                fontSize: '0.8rem', 
+                fontWeight: 800, 
+                color: 'var(--color-primary, #ea580c)', 
+                textTransform: 'uppercase', 
+                letterSpacing: '0.08em',
+                background: 'var(--color-primary-light, rgba(234, 88, 12, 0.1))',
+                padding: '0.25rem 0.85rem',
+                borderRadius: '9999px',
+                border: '1px solid var(--border-color)',
+                display: 'inline-block',
+                marginBottom: '0.5rem'
+              }}>
+                ⚡ Quick Order Launcher
+              </span>
+              <h2 style={{ fontSize: 'clamp(1.5rem, 2.5vw, 1.85rem)', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', margin: '0.25rem 0 0.4rem', letterSpacing: '-0.02em' }}>
+                Select Your Service Category
+              </h2>
+              <p style={{ color: 'var(--color-text-secondary, #475569)', fontSize: '0.92rem', margin: 0, lineHeight: 1.5 }}>
+                Configure specifications, upload artwork, and receive verified production files with instant transparent pricing.
+              </p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '1.25rem', maxWidth: '980px', margin: '0 auto' }}>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', 
+              gap: '1.35rem', 
+              maxWidth: '1020px', 
+              margin: '0 auto' 
+            }}>
               
               {/* Choice 1: Embroidery Digitizing */}
               <div 
                 onClick={() => { setType('embroidery'); setCurrentStep(1); }} 
-                style={{ background: '#ffffff', border: '2px solid #e2e8f0', borderRadius: '20px', padding: '2rem 1.5rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.04)' }} 
-                onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--orange-500)'; e.currentTarget.style.transform = 'translateY(-4px)'; }} 
-                onMouseOut={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.transform = 'none'; }}
+                style={{ 
+                  background: 'var(--color-surface, #ffffff)', 
+                  border: '1.5px solid var(--border-color, #e2e8f0)', 
+                  borderRadius: '20px', 
+                  padding: '1.85rem 1.4rem 1.5rem', 
+                  cursor: 'pointer', 
+                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  textAlign: 'center',
+                  boxShadow: 'var(--shadow-sm, 0 4px 15px rgba(0,0,0,0.04))',
+                  position: 'relative'
+                }} 
+                onMouseOver={e => { 
+                  e.currentTarget.style.borderColor = '#ea580c'; 
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = '0 12px 28px rgba(234, 88, 12, 0.16)';
+                }} 
+                onMouseOut={e => { 
+                  e.currentTarget.style.borderColor = 'var(--border-color, #e2e8f0)'; 
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-sm, 0 4px 15px rgba(0,0,0,0.04))';
+                }}
               >
-                <div style={{ color: 'var(--orange-500)', marginBottom: '1rem', background: 'var(--orange-50)', padding: '1rem', borderRadius: '50%', border: '1px solid var(--orange-200)' }}>
-                  <Sparkles size={32} />
+                <span style={{
+                  background: 'rgba(234, 88, 12, 0.12)',
+                  color: '#ea580c',
+                  border: '1px solid rgba(234, 88, 12, 0.3)',
+                  padding: '0.2rem 0.65rem',
+                  borderRadius: '999px',
+                  fontSize: '0.68rem',
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  marginBottom: '1.15rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem'
+                }}>
+                  <Sparkles size={11} /> High Density Stitches
+                </span>
+
+                <div style={{ 
+                  color: '#ea580c', 
+                  marginBottom: '1rem', 
+                  background: 'linear-gradient(135deg, rgba(234, 88, 12, 0.15) 0%, rgba(249, 115, 22, 0.08) 100%)', 
+                  width: '58px',
+                  height: '58px',
+                  borderRadius: '16px', 
+                  border: '1.5px solid rgba(234, 88, 12, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(234, 88, 12, 0.15)'
+                }}>
+                  <Sparkles size={28} />
                 </div>
-                <h3 style={{ color: 'var(--navy-950)', fontSize: '1.25rem', fontWeight: 900, marginBottom: '0.4rem' }}>Embroidery Digitizing</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0, lineHeight: 1.5 }}>Machine-ready files (.DST, .PES, .EMB) with stitch density optimization. Starting at $10.00.</p>
-                <div style={{ marginTop: '1.25rem', color: 'var(--orange-600)', fontWeight: 800, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  Configure Order <ArrowRight size={15} />
+
+                <h3 style={{ color: 'var(--color-text-primary, #0f172a)', fontSize: '1.2rem', fontWeight: 900, marginBottom: '0.45rem', letterSpacing: '-0.01em' }}>
+                  Embroidery Digitizing
+                </h3>
+
+                <p style={{ color: 'var(--color-text-secondary, #475569)', fontSize: '0.84rem', margin: '0 0 1.15rem 0', lineHeight: 1.5, flex: 1 }}>
+                  Machine-ready stitch files (.DST, .PES, .EMB) calibrated with exact density, trims & zero needle breaks.
+                </p>
+
+                <div style={{
+                  background: 'var(--color-subtle, rgba(234, 88, 12, 0.06))',
+                  border: '1px solid var(--border-color, rgba(234, 88, 12, 0.2))',
+                  padding: '0.35rem 0.85rem',
+                  borderRadius: '999px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  marginBottom: '1.25rem'
+                }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-secondary, #64748b)' }}>From</span>
+                  <strong style={{ color: '#ea580c', fontWeight: 900, fontSize: '0.92rem' }}>$10.00</strong>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary, #64748b)' }}>/ design</span>
+                </div>
+
+                <div style={{ 
+                  width: '100%', 
+                  padding: '0.65rem 1rem', 
+                  background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)', 
+                  color: '#ffffff', 
+                  borderRadius: '10px', 
+                  fontWeight: 800, 
+                  fontSize: '0.84rem', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '0.4rem', 
+                  boxShadow: '0 4px 14px rgba(234, 88, 12, 0.28)'
+                }}>
+                  <span>Configure Order</span> <ArrowRight size={15} />
                 </div>
               </div>
 
               {/* Choice 2: Vector Art Redraw */}
               <div 
                 onClick={() => { setType('vector'); setCurrentStep(1); }} 
-                style={{ background: '#ffffff', border: '2px solid #e2e8f0', borderRadius: '20px', padding: '2rem 1.5rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.04)' }} 
-                onMouseOver={e => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.transform = 'translateY(-4px)'; }} 
-                onMouseOut={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.transform = 'none'; }}
+                style={{ 
+                  background: 'var(--color-surface, #ffffff)', 
+                  border: '1.5px solid var(--border-color, #e2e8f0)', 
+                  borderRadius: '20px', 
+                  padding: '1.85rem 1.4rem 1.5rem', 
+                  cursor: 'pointer', 
+                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  textAlign: 'center',
+                  boxShadow: 'var(--shadow-sm, 0 4px 15px rgba(0,0,0,0.04))',
+                  position: 'relative'
+                }} 
+                onMouseOver={e => { 
+                  e.currentTarget.style.borderColor = '#2563eb'; 
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = '0 12px 28px rgba(37, 99, 235, 0.16)';
+                }} 
+                onMouseOut={e => { 
+                  e.currentTarget.style.borderColor = 'var(--border-color, #e2e8f0)'; 
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-sm, 0 4px 15px rgba(0,0,0,0.04))';
+                }}
               >
-                <div style={{ color: '#2563eb', marginBottom: '1rem', background: '#eff6ff', padding: '1rem', borderRadius: '50%', border: '1px solid #bfdbfe' }}>
-                  <FileCode size={32} />
+                <span style={{
+                  background: 'rgba(37, 99, 235, 0.12)',
+                  color: '#2563eb',
+                  border: '1px solid rgba(37, 99, 235, 0.3)',
+                  padding: '0.2rem 0.65rem',
+                  borderRadius: '999px',
+                  fontSize: '0.68rem',
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  marginBottom: '1.15rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem'
+                }}>
+                  <FileCode size={11} /> 100% Scalable Vector
+                </span>
+
+                <div style={{ 
+                  color: '#2563eb', 
+                  marginBottom: '1rem', 
+                  background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(59, 130, 246, 0.08) 100%)', 
+                  width: '58px',
+                  height: '58px',
+                  borderRadius: '16px', 
+                  border: '1.5px solid rgba(37, 99, 235, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.15)'
+                }}>
+                  <FileCode size={28} />
                 </div>
-                <h3 style={{ color: 'var(--navy-950)', fontSize: '1.25rem', fontWeight: 900, marginBottom: '0.4rem' }}>Vector Art Redraw</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0, lineHeight: 1.5 }}>Clean vector paths (.AI, .EPS, .SVG, .PDF) ready for screen printing & laser. Starting at $15.00.</p>
-                <div style={{ marginTop: '1.25rem', color: '#2563eb', fontWeight: 800, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  Configure Order <ArrowRight size={15} />
+
+                <h3 style={{ color: 'var(--color-text-primary, #0f172a)', fontSize: '1.2rem', fontWeight: 900, marginBottom: '0.45rem', letterSpacing: '-0.01em' }}>
+                  Vector Art Redraw
+                </h3>
+
+                <p style={{ color: 'var(--color-text-secondary, #475569)', fontSize: '0.84rem', margin: '0 0 1.15rem 0', lineHeight: 1.5, flex: 1 }}>
+                  Clean vector paths (.AI, .EPS, .SVG, .PDF) with Pantone PMS separation, ready for print & vinyl cutting.
+                </p>
+
+                <div style={{
+                  background: 'var(--color-subtle, rgba(37, 99, 235, 0.06))',
+                  border: '1px solid var(--border-color, rgba(37, 99, 235, 0.2))',
+                  padding: '0.35rem 0.85rem',
+                  borderRadius: '999px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  marginBottom: '1.25rem'
+                }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-secondary, #64748b)' }}>From</span>
+                  <strong style={{ color: '#2563eb', fontWeight: 900, fontSize: '0.92rem' }}>$15.00</strong>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary, #64748b)' }}>/ design</span>
+                </div>
+
+                <div style={{ 
+                  width: '100%', 
+                  padding: '0.65rem 1rem', 
+                  background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)', 
+                  color: '#ffffff', 
+                  borderRadius: '10px', 
+                  fontWeight: 800, 
+                  fontSize: '0.84rem', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '0.4rem', 
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.28)'
+                }}>
+                  <span>Configure Order</span> <ArrowRight size={15} />
                 </div>
               </div>
 
               {/* Choice 3: Custom Physical Patches */}
               <div 
                 onClick={() => { setType('patch'); setCurrentStep(1); }} 
-                style={{ background: '#ffffff', border: '2px solid #e2e8f0', borderRadius: '20px', padding: '2rem 1.5rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.04)' }} 
-                onMouseOver={e => { e.currentTarget.style.borderColor = '#10b981'; e.currentTarget.style.transform = 'translateY(-4px)'; }} 
-                onMouseOut={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.transform = 'none'; }}
+                style={{ 
+                  background: 'var(--color-surface, #ffffff)', 
+                  border: '1.5px solid var(--border-color, #e2e8f0)', 
+                  borderRadius: '20px', 
+                  padding: '1.85rem 1.4rem 1.5rem', 
+                  cursor: 'pointer', 
+                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  textAlign: 'center',
+                  boxShadow: 'var(--shadow-sm, 0 4px 15px rgba(0,0,0,0.04))',
+                  position: 'relative'
+                }} 
+                onMouseOver={e => { 
+                  e.currentTarget.style.borderColor = '#059669'; 
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = '0 12px 28px rgba(5, 150, 105, 0.16)';
+                }} 
+                onMouseOut={e => { 
+                  e.currentTarget.style.borderColor = 'var(--border-color, #e2e8f0)'; 
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-sm, 0 4px 15px rgba(0,0,0,0.04))';
+                }}
               >
-                <div style={{ color: '#059669', marginBottom: '1rem', background: '#ecfdf5', padding: '1rem', borderRadius: '50%', border: '1px solid #a7f3d0' }}>
-                  <FileCheck size={32} />
+                <span style={{
+                  background: 'rgba(16, 185, 129, 0.12)',
+                  color: '#059669',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  padding: '0.2rem 0.65rem',
+                  borderRadius: '999px',
+                  fontSize: '0.68rem',
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  marginBottom: '1.15rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem'
+                }}>
+                  <FileCheck size={11} /> Physical Emblems
+                </span>
+
+                <div style={{ 
+                  color: '#059669', 
+                  marginBottom: '1rem', 
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.08) 100%)', 
+                  width: '58px',
+                  height: '58px',
+                  borderRadius: '16px', 
+                  border: '1.5px solid rgba(16, 185, 129, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.15)'
+                }}>
+                  <FileCheck size={28} />
                 </div>
-                <h3 style={{ color: 'var(--navy-950)', fontSize: '1.25rem', fontWeight: 900, marginBottom: '0.4rem' }}>Custom Physical Patches</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0, lineHeight: 1.5 }}>Embroidered, Woven, PVC rubber, and Leather emblems with backings. Starting at $1.50/pc.</p>
-                <div style={{ marginTop: '1.25rem', color: '#059669', fontWeight: 800, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  Configure Order <ArrowRight size={15} />
+
+                <h3 style={{ color: 'var(--color-text-primary, #0f172a)', fontSize: '1.2rem', fontWeight: 900, marginBottom: '0.45rem', letterSpacing: '-0.01em' }}>
+                  Custom Physical Patches
+                </h3>
+
+                <p style={{ color: 'var(--color-text-secondary, #475569)', fontSize: '0.84rem', margin: '0 0 1.15rem 0', lineHeight: 1.5, flex: 1 }}>
+                  Embroidered, Woven, PVC rubber & Leather emblems with Velcro or Iron-On backings shipped worldwide.
+                </p>
+
+                <div style={{
+                  background: 'var(--color-subtle, rgba(16, 185, 129, 0.06))',
+                  border: '1px solid var(--border-color, rgba(16, 185, 129, 0.2))',
+                  padding: '0.35rem 0.85rem',
+                  borderRadius: '999px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  marginBottom: '1.25rem'
+                }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-secondary, #64748b)' }}>From</span>
+                  <strong style={{ color: '#059669', fontWeight: 900, fontSize: '0.92rem' }}>$1.50</strong>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary, #64748b)' }}>/ piece</span>
+                </div>
+
+                <div style={{ 
+                  width: '100%', 
+                  padding: '0.65rem 1rem', 
+                  background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', 
+                  color: '#ffffff', 
+                  borderRadius: '10px', 
+                  fontWeight: 800, 
+                  fontSize: '0.84rem', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '0.4rem', 
+                  boxShadow: '0 4px 14px rgba(5, 150, 105, 0.28)'
+                }}>
+                  <span>Configure Order</span> <ArrowRight size={15} />
                 </div>
               </div>
 
@@ -1348,7 +1638,7 @@ export const OrderWizardModal = () => {
             flexDirection: 'column', 
             flex: '1 1 auto', 
             minHeight: 0, 
-            background: '#f8fafc',
+            background: 'var(--bg-main, #f8fafc)',
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch'
           }}>
@@ -1360,13 +1650,13 @@ export const OrderWizardModal = () => {
                   
                   {/* ==================== 1. VECTOR ART CONFIGURATION ==================== */}
                   {type === 'vector' && (
-                    <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ background: 'var(--color-surface, #ffffff)', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--border-color, #e2e8f0)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                         <div>
-                          <h4 style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0 }}>
+                          <h4 style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', margin: 0 }}>
                             🎨 Vector Design Items ({vectorItems.length})
                           </h4>
-                          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                          <p style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary, #64748b)', margin: '0.15rem 0 0 0' }}>
                             Configure complexity tiers and attach reference artwork for each vector redraw
                           </p>
                         </div>
@@ -1393,13 +1683,13 @@ export const OrderWizardModal = () => {
                       </div>
 
                       {vectorItems.map((item, index) => (
-                        <div key={item.id} style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '1.15rem', marginBottom: '1rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>
+                        <div key={item.id} style={{ background: 'var(--bg-subtle, #f8fafc)', border: '1.5px solid var(--border-color, #e2e8f0)', borderRadius: '14px', padding: '1.15rem', marginBottom: '1rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid var(--border-color, #e2e8f0)', paddingBottom: '0.5rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                               <span style={{ background: '#2563eb', color: '#ffffff', fontSize: '0.75rem', fontWeight: 900, padding: '0.2rem 0.6rem', borderRadius: '999px' }}>
                                 #{index + 1}
                               </span>
-                              <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--navy-950)' }}>
+                              <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                                 Vector Design #{index + 1}
                               </span>
                             </div>
@@ -1417,13 +1707,13 @@ export const OrderWizardModal = () => {
 
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '0.85rem' }}>
                             <div>
-                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                                 Vector Complexity Tier *
                               </label>
                               <select 
                                 value={item.packageTier || 'standard'} 
                                 onChange={(e) => updateVectorItem(item.id, 'packageTier', e.target.value)} 
-                                style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
+                                style={{ width: '100%', background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)', border: '1.5px solid var(--border-color, #cbd5e1)', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
                               >
                                 <option value="basic">⚡ Simple Vector ($15.00) — Typography & basic outlines</option>
                                 <option value="standard">⭐ Medium Detail ($25.00) — Multi-color logos & graphics</option>
@@ -1432,7 +1722,7 @@ export const OrderWizardModal = () => {
                             </div>
 
                             <div>
-                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                                 Design Label / Name
                               </label>
                               <input 
@@ -1440,26 +1730,26 @@ export const OrderWizardModal = () => {
                                 value={item.designName || ''} 
                                 onChange={(e) => updateVectorItem(item.id, 'designName', e.target.value)} 
                                 placeholder="e.g. Front Chest Vector Logo" 
-                                style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }} 
+                                style={{ width: '100%', background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)', border: '1.5px solid var(--border-color, #cbd5e1)', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }} 
                               />
                             </div>
 
                             <div>
-                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                                 Quantity of Variations
                               </label>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                <button type="button" onClick={() => updateVectorItem(item.id, 'quantity', Math.max(1, item.quantity - 1))} style={{ width: '34px', height: '36px', background: '#ffffff', border: '1.5px solid #cbd5e1', color: 'var(--navy-900)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>-</button>
-                                <input type="text" value={item.quantityInput} onChange={(e) => updateVectorItem(item.id, 'quantityInput', e.target.value)} style={{ textAlign: 'center', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontWeight: 800, padding: '0.35rem', borderRadius: '8px', width: '60px' }} />
-                                <button type="button" onClick={() => updateVectorItem(item.id, 'quantity', item.quantity + 1)} style={{ width: '34px', height: '36px', background: '#ffffff', border: '1.5px solid #cbd5e1', color: 'var(--navy-900)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>+</button>
+                                <button type="button" onClick={() => updateVectorItem(item.id, 'quantity', Math.max(1, item.quantity - 1))} style={{ width: '34px', height: '36px', background: 'var(--color-surface, #ffffff)', border: '1.5px solid var(--border-color, #cbd5e1)', color: 'var(--color-text-primary, #0f172a)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>-</button>
+                                <input type="text" value={item.quantityInput} onChange={(e) => updateVectorItem(item.id, 'quantityInput', e.target.value)} style={{ textAlign: 'center', background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)', border: '1.5px solid var(--border-color, #cbd5e1)', fontWeight: 800, padding: '0.35rem', borderRadius: '8px', width: '60px' }} />
+                                <button type="button" onClick={() => updateVectorItem(item.id, 'quantity', item.quantity + 1)} style={{ width: '34px', height: '36px', background: 'var(--color-surface, #ffffff)', border: '1.5px solid var(--border-color, #cbd5e1)', color: 'var(--color-text-primary, #0f172a)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>+</button>
                               </div>
                             </div>
                           </div>
 
                           {/* Drag and Drop Artwork Upload Zone */}
-                          <div style={{ background: '#ffffff', padding: '0.9rem', borderRadius: '12px', border: '1.5px dashed #cbd5e1', marginTop: '0.85rem' }}>
+                          <div style={{ background: 'var(--color-surface, #ffffff)', padding: '0.9rem', borderRadius: '12px', border: '1.5px dashed var(--border-color, #cbd5e1)', marginTop: '0.85rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                              <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-950)', margin: 0 }}>
+                              <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', margin: 0 }}>
                                 📎 Reference Image / Logo to Convert (Required) *
                               </label>
                               {item.files && item.files.length > 0 && (
@@ -1472,8 +1762,8 @@ export const OrderWizardModal = () => {
                             <div 
                               onClick={() => document.getElementById(`vector-file-${item.id}`).click()}
                               style={{
-                                background: '#f8fafc',
-                                border: '1px dashed #cbd5e1',
+                                background: 'var(--bg-subtle, #f8fafc)',
+                                border: '1px dashed var(--border-color, #cbd5e1)',
                                 borderRadius: '10px',
                                 padding: '1rem',
                                 textAlign: 'center',
@@ -1481,13 +1771,13 @@ export const OrderWizardModal = () => {
                                 transition: 'all 0.15s'
                               }}
                               onMouseOver={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.background = '#eff6ff'; }}
-                              onMouseOut={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.background = '#f8fafc'; }}
+                              onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border-color, #cbd5e1)'; e.currentTarget.style.background = 'var(--bg-subtle, #f8fafc)'; }}
                             >
                               <Upload size={20} style={{ color: '#2563eb', margin: '0 auto 0.35rem auto' }} />
-                              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+                              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                                 Click to browse or drag & drop reference image
                               </div>
-                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary, #64748b)', marginTop: '0.15rem' }}>
                                 Supports .PNG, .JPG, .PDF, .PSD, .BMP, .TIFF
                               </div>
                               <input 
@@ -1503,15 +1793,15 @@ export const OrderWizardModal = () => {
                             {item.files && item.files.length > 0 && (
                               <div style={{ marginTop: '0.65rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                 {item.files.map(f => (
-                                  <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.45rem 0.65rem', background: '#f1f5f9', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.8rem' }}>
+                                  <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.45rem 0.65rem', background: 'var(--bg-subtle, #f1f5f9)', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)', fontSize: '0.8rem' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                       {f.previewUrl ? (
                                         <img src={f.previewUrl} alt="preview" style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'cover' }} />
                                       ) : (
                                         <FileCode size={16} style={{ color: '#2563eb' }} />
                                       )}
-                                      <span style={{ color: 'var(--navy-950)', fontWeight: 800 }}>{f.name}</span>
-                                      {f.size && <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>({f.size})</span>}
+                                      <span style={{ color: 'var(--color-text-primary, #0f172a)', fontWeight: 800 }}>{f.name}</span>
+                                      {f.size && <span style={{ color: 'var(--color-text-secondary, #64748b)', fontSize: '0.72rem' }}>({f.size})</span>}
                                     </div>
                                     <button 
                                       type="button" 
@@ -1530,15 +1820,15 @@ export const OrderWizardModal = () => {
                       ))}
 
                       {/* Vector Application & Color Mode Specs */}
-                      <div style={{ marginTop: '1rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: '1rem' }}>
+                      <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border-color, #e2e8f0)', paddingTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: '1rem' }}>
                         <div>
-                          <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.4rem' }}>
+                          <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.4rem' }}>
                             Intended Output / Printing Process *
                           </label>
                           <select 
                             value={vectorApplication} 
                             onChange={(e) => setVectorApplication(e.target.value)} 
-                            style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.55rem' }}
+                            style={{ width: '100%', background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)', border: '1.5px solid var(--border-color, #cbd5e1)', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.55rem' }}
                           >
                             <option value="Screen Printing (Color Separated)">Screen Printing (Spot Color Separated Layers)</option>
                             <option value="Vinyl Cutting / Plotter (Clean Paths)">Vinyl Cutting / Plotter (Single Clean Vector Contours)</option>
@@ -1550,13 +1840,13 @@ export const OrderWizardModal = () => {
                         </div>
 
                         <div>
-                          <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.4rem' }}>
+                          <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.4rem' }}>
                             Color Separation Preference *
                           </label>
                           <select 
                             value={vectorColorMode} 
                             onChange={(e) => setVectorColorMode(e.target.value)} 
-                            style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.55rem' }}
+                            style={{ width: '100%', background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)', border: '1.5px solid var(--border-color, #cbd5e1)', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.55rem' }}
                           >
                             <option value="Full Color (CMYK / RGB)">Full Color (CMYK / RGB Vector Graphic)</option>
                             <option value="Pantone (PMS) Color Matched">Pantone (PMS) Solid Color Matched</option>
@@ -1570,13 +1860,13 @@ export const OrderWizardModal = () => {
 
                   {/* ==================== 2. EMBROIDERY DIGITIZING CONFIGURATION ==================== */}
                   {type === 'embroidery' && (
-                    <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ background: 'var(--color-surface, #ffffff)', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--border-color, #e2e8f0)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                         <div>
-                          <h4 style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0 }}>
+                          <h4 style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', margin: 0 }}>
                             📍 Placement Items & Artwork Files ({placementItems.length})
                           </h4>
-                          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                          <p style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary, #64748b)', margin: '0.15rem 0 0 0' }}>
                             Configure sizes and upload your logo for each embroidery placement
                           </p>
                         </div>
@@ -1603,13 +1893,13 @@ export const OrderWizardModal = () => {
                       </div>
 
                       {placementItems.map((item, index) => (
-                        <div key={item.id} style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '1.15rem', marginBottom: '1rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>
+                        <div key={item.id} style={{ background: 'var(--bg-subtle, #f8fafc)', border: '1.5px solid var(--border-color, #e2e8f0)', borderRadius: '14px', padding: '1.15rem', marginBottom: '1rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid var(--border-color, #e2e8f0)', paddingBottom: '0.5rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                               <span style={{ background: 'var(--orange-500)', color: '#ffffff', fontSize: '0.75rem', fontWeight: 900, padding: '0.2rem 0.6rem', borderRadius: '999px' }}>
                                 #{index + 1}
                               </span>
-                              <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--navy-950)' }}>
+                              <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                                 Placement Item #{index + 1}
                               </span>
                             </div>
@@ -1627,13 +1917,13 @@ export const OrderWizardModal = () => {
 
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '0.85rem' }}>
                             <div>
-                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                                 Complexity / Package Tier *
                               </label>
                               <select 
                                 value={item.packageTier || 'standard'} 
                                 onChange={(e) => updatePlacementItem(item.id, 'packageTier', e.target.value)} 
-                                style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
+                                style={{ width: '100%', background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)', border: '1.5px solid var(--border-color, #cbd5e1)', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
                               >
                                 <option value="basic">⚡ Left Chest & Cap ($10.00 Flat)</option>
                                 <option value="standard">⭐ Mid-Size Jacket ($20.00 Flat)</option>
@@ -1642,13 +1932,13 @@ export const OrderWizardModal = () => {
                             </div>
 
                             <div>
-                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                                 Placement Location
                               </label>
                               <select 
                                 value={item.placementType} 
                                 onChange={(e) => updatePlacementItem(item.id, 'placementType', e.target.value)} 
-                                style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
+                                style={{ width: '100%', background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)', border: '1.5px solid var(--border-color, #cbd5e1)', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
                               >
                                 {PLACEMENT_OPTIONS.map(plc => (
                                   <option key={plc.id} value={plc.id}>{plc.label}</option>
@@ -1657,21 +1947,21 @@ export const OrderWizardModal = () => {
                             </div>
 
                             <div>
-                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                                 Quantity
                               </label>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                <button type="button" onClick={() => updatePlacementItem(item.id, 'quantity', Math.max(1, item.quantity - 1))} style={{ width: '34px', height: '36px', background: '#ffffff', border: '1.5px solid #cbd5e1', color: 'var(--navy-900)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>-</button>
-                                <input type="text" value={item.quantityInput} onChange={(e) => updatePlacementItem(item.id, 'quantityInput', e.target.value)} style={{ textAlign: 'center', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontWeight: 800, padding: '0.35rem', borderRadius: '8px', width: '60px' }} />
-                                <button type="button" onClick={() => updatePlacementItem(item.id, 'quantity', item.quantity + 1)} style={{ width: '34px', height: '36px', background: '#ffffff', border: '1.5px solid #cbd5e1', color: 'var(--navy-900)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>+</button>
+                                <button type="button" onClick={() => updatePlacementItem(item.id, 'quantity', Math.max(1, item.quantity - 1))} style={{ width: '34px', height: '36px', background: 'var(--color-surface, #ffffff)', border: '1.5px solid var(--border-color, #cbd5e1)', color: 'var(--color-text-primary, #0f172a)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>-</button>
+                                <input type="text" value={item.quantityInput} onChange={(e) => updatePlacementItem(item.id, 'quantityInput', e.target.value)} style={{ textAlign: 'center', background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)', border: '1.5px solid var(--border-color, #cbd5e1)', fontWeight: 800, padding: '0.35rem', borderRadius: '8px', width: '60px' }} />
+                                <button type="button" onClick={() => updatePlacementItem(item.id, 'quantity', item.quantity + 1)} style={{ width: '34px', height: '36px', background: 'var(--color-surface, #ffffff)', border: '1.5px solid var(--border-color, #cbd5e1)', color: 'var(--color-text-primary, #0f172a)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>+</button>
                               </div>
                             </div>
                           </div>
 
                           {/* Drag and Drop Artwork Upload Zone */}
-                          <div style={{ background: '#ffffff', padding: '0.9rem', borderRadius: '12px', border: '1.5px dashed #cbd5e1', marginTop: '0.85rem' }}>
+                          <div style={{ background: 'var(--color-surface, #ffffff)', padding: '0.9rem', borderRadius: '12px', border: '1.5px dashed var(--border-color, #cbd5e1)', marginTop: '0.85rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                              <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-950)', margin: 0 }}>
+                              <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', margin: 0 }}>
                                 📎 Reference Artwork File (Required) *
                               </label>
                               {item.files && item.files.length > 0 && (
@@ -1684,8 +1974,8 @@ export const OrderWizardModal = () => {
                             <div 
                               onClick={() => document.getElementById(`placement-file-${item.id}`).click()}
                               style={{
-                                background: '#f8fafc',
-                                border: '1px dashed #cbd5e1',
+                                background: 'var(--bg-subtle, #f8fafc)',
+                                border: '1px dashed var(--border-color, #cbd5e1)',
                                 borderRadius: '10px',
                                 padding: '1rem',
                                 textAlign: 'center',
@@ -1693,13 +1983,13 @@ export const OrderWizardModal = () => {
                                 transition: 'all 0.15s'
                               }}
                               onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--orange-500)'; e.currentTarget.style.background = 'var(--orange-50)'; }}
-                              onMouseOut={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.background = '#f8fafc'; }}
+                              onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border-color, #cbd5e1)'; e.currentTarget.style.background = 'var(--bg-subtle, #f8fafc)'; }}
                             >
                               <Upload size={20} style={{ color: 'var(--orange-500)', margin: '0 auto 0.35rem auto' }} />
-                              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+                              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                                 Click to browse or drag & drop artwork
                               </div>
-                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary, #64748b)', marginTop: '0.15rem' }}>
                                 Supports .PNG, .JPG, .AI, .PDF, .EPS, .PSD
                               </div>
                               <input 
@@ -1715,15 +2005,15 @@ export const OrderWizardModal = () => {
                             {item.files && item.files.length > 0 && (
                               <div style={{ marginTop: '0.65rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                 {item.files.map(f => (
-                                  <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.45rem 0.65rem', background: '#f1f5f9', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.8rem' }}>
+                                  <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.45rem 0.65rem', background: 'var(--bg-subtle, #f1f5f9)', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)', fontSize: '0.8rem' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                       {f.previewUrl ? (
                                         <img src={f.previewUrl} alt="preview" style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'cover' }} />
                                       ) : (
                                         <FileCheck size={16} style={{ color: 'var(--orange-500)' }} />
                                       )}
-                                      <span style={{ color: 'var(--navy-950)', fontWeight: 800 }}>{f.name}</span>
-                                      {f.size && <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>({f.size})</span>}
+                                      <span style={{ color: 'var(--color-text-primary, #0f172a)', fontWeight: 800 }}>{f.name}</span>
+                                      {f.size && <span style={{ color: 'var(--color-text-secondary, #64748b)', fontSize: '0.72rem' }}>({f.size})</span>}
                                     </div>
                                     <button 
                                       type="button" 
@@ -1742,14 +2032,14 @@ export const OrderWizardModal = () => {
                       ))}
 
                       {/* Fabric / Target Garment Selection for Embroidery */}
-                      <div style={{ marginTop: '1rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem' }}>
-                        <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.4rem' }}>
+                      <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border-color, #e2e8f0)', paddingTop: '1rem' }}>
+                        <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.4rem' }}>
                           Target Garment / Fabric Type *
                         </label>
                         <select 
                           value={fabricType} 
                           onChange={(e) => setFabricType(e.target.value)} 
-                          style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.875rem', fontWeight: 700, borderRadius: '8px', padding: '0.6rem' }}
+                          style={{ width: '100%', background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)', border: '1.5px solid var(--border-color, #cbd5e1)', fontSize: '0.875rem', fontWeight: 700, borderRadius: '8px', padding: '0.6rem' }}
                         >
                           <option value="Pique Cotton Polo">Pique Cotton Polo (Standard Underlay)</option>
                           <option value="Structured Twill Cap">Structured Twill Cap / Snapback (Center-Out Pathing)</option>
@@ -1765,13 +2055,13 @@ export const OrderWizardModal = () => {
 
                   {/* ==================== 3. CUSTOM PATCHES CONFIGURATION ==================== */}
                   {type === 'patch' && (
-                    <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ background: 'var(--color-surface, #ffffff)', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--border-color, #e2e8f0)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                         <div>
-                          <h4 style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0 }}>
+                          <h4 style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', margin: 0 }}>
                             🧵 Patch Specifications & Artwork ({patchItems.length})
                           </h4>
-                          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                          <p style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary, #64748b)', margin: '0.15rem 0 0 0' }}>
                             Select package batch tier, patch craft style, backing, and quantity
                           </p>
                         </div>
@@ -1804,13 +2094,13 @@ export const OrderWizardModal = () => {
                         const premiumRate = (patchTiers[2] && !isNaN(parseFloat(patchTiers[2].price))) ? parseFloat(patchTiers[2].price) : 1.50;
 
                         return (
-                          <div key={item.id} style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '1.15rem', marginBottom: '1rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>
+                          <div key={item.id} style={{ background: 'var(--bg-subtle, #f8fafc)', border: '1.5px solid var(--border-color, #e2e8f0)', borderRadius: '14px', padding: '1.15rem', marginBottom: '1rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid var(--border-color, #e2e8f0)', paddingBottom: '0.5rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <span style={{ background: '#059669', color: '#ffffff', fontSize: '0.75rem', fontWeight: 900, padding: '0.2rem 0.6rem', borderRadius: '999px' }}>
                                   #{index + 1}
                                 </span>
-                                <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--navy-950)' }}>
+                                <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                                   Custom Patch Item #{index + 1}
                                 </span>
                               </div>
@@ -1828,13 +2118,13 @@ export const OrderWizardModal = () => {
 
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '0.85rem' }}>
                               <div>
-                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                                   Package / Batch Tier *
                                 </label>
                                 <select 
                                   value={item.packageTier || 'standard'} 
                                   onChange={(e) => updatePatchItem(item.id, 'packageTier', e.target.value)} 
-                                  style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
+                                  style={{ width: '100%', background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)', border: '1.5px solid var(--border-color, #cbd5e1)', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
                                 >
                                   <option value="basic">⚡ Sample Batch (10–50 Pcs) — ${basicRate.toFixed(2)}/pc</option>
                                   <option value="standard">⭐ Production Batch (100–500 Pcs) — ${standardRate.toFixed(2)}/pc</option>
@@ -1843,13 +2133,13 @@ export const OrderWizardModal = () => {
                               </div>
 
                               <div>
-                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                                   Patch Style *
                                 </label>
                                 <select 
                                   value={item.patchStyle || 'Embroidered'} 
                                   onChange={(e) => updatePatchItem(item.id, 'patchStyle', e.target.value)} 
-                                  style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
+                                  style={{ width: '100%', background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)', border: '1.5px solid var(--border-color, #cbd5e1)', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
                                 >
                                   {PATCH_STYLES.map(st => (
                                     <option key={st.id} value={st.id}>{st.label}</option>
@@ -1858,13 +2148,13 @@ export const OrderWizardModal = () => {
                               </div>
 
                               <div>
-                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                                   Backing Type *
                                 </label>
                                 <select 
                                   value={item.patchBacking || 'Iron-On'} 
                                   onChange={(e) => updatePatchItem(item.id, 'patchBacking', e.target.value)} 
-                                  style={{ width: '100%', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
+                                  style={{ width: '100%', background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)', border: '1.5px solid var(--border-color, #cbd5e1)', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
                                 >
                                   {PATCH_BACKINGS.map(bk => (
                                     <option key={bk.id} value={bk.id}>{bk.label}</option>
@@ -1873,24 +2163,24 @@ export const OrderWizardModal = () => {
                               </div>
 
                               <div>
-                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.35rem' }}>
+                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                                   Quantity (Pcs) *
                                 </label>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                  <button type="button" onClick={() => updatePatchItem(item.id, 'quantity', Math.max(10, (item.quantity || 50) - 10))} style={{ width: '34px', height: '36px', background: '#ffffff', border: '1.5px solid #cbd5e1', color: 'var(--navy-900)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>-</button>
-                                  <input type="text" value={item.quantityInput} onChange={(e) => updatePatchItem(item.id, 'quantityInput', e.target.value)} style={{ textAlign: 'center', background: '#ffffff', color: 'var(--navy-950)', border: '1.5px solid #cbd5e1', fontWeight: 800, padding: '0.35rem', borderRadius: '8px', width: '65px' }} />
-                                  <button type="button" onClick={() => updatePatchItem(item.id, 'quantity', (item.quantity || 50) + 10)} style={{ width: '34px', height: '36px', background: '#ffffff', border: '1.5px solid #cbd5e1', color: 'var(--navy-900)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>+</button>
+                                  <button type="button" onClick={() => updatePatchItem(item.id, 'quantity', Math.max(10, (item.quantity || 50) - 10))} style={{ width: '34px', height: '36px', background: 'var(--color-surface, #ffffff)', border: '1.5px solid var(--border-color, #cbd5e1)', color: 'var(--color-text-primary, #0f172a)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>-</button>
+                                  <input type="text" value={item.quantityInput} onChange={(e) => updatePatchItem(item.id, 'quantityInput', e.target.value)} style={{ textAlign: 'center', background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)', border: '1.5px solid var(--border-color, #cbd5e1)', fontWeight: 800, padding: '0.35rem', borderRadius: '8px', width: '65px' }} />
+                                  <button type="button" onClick={() => updatePatchItem(item.id, 'quantity', (item.quantity || 50) + 10)} style={{ width: '34px', height: '36px', background: 'var(--color-surface, #ffffff)', border: '1.5px solid var(--border-color, #cbd5e1)', color: 'var(--color-text-primary, #0f172a)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>+</button>
                                 </div>
                               </div>
                             </div>
 
                             {/* Patch File Dropzone */}
-                            <div style={{ background: '#ffffff', padding: '0.9rem', borderRadius: '12px', border: '1.5px dashed #cbd5e1', marginTop: '0.85rem' }}>
+                            <div style={{ background: 'var(--color-surface, #ffffff)', padding: '0.9rem', borderRadius: '12px', border: '1.5px dashed var(--border-color, #cbd5e1)', marginTop: '0.85rem' }}>
                               <div 
                                 onClick={() => document.getElementById(`patch-file-${item.id}`).click()}
                                 style={{
-                                  background: '#f8fafc',
-                                  border: '1px dashed #cbd5e1',
+                                  background: 'var(--bg-subtle, #f8fafc)',
+                                  border: '1px dashed var(--border-color, #cbd5e1)',
                                   borderRadius: '10px',
                                   padding: '1rem',
                                   textAlign: 'center',
@@ -1898,7 +2188,7 @@ export const OrderWizardModal = () => {
                                 }}
                               >
                                 <Upload size={20} style={{ color: '#059669', margin: '0 auto 0.35rem auto' }} />
-                                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+                                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                                   Click or drag artwork file (.PNG, .JPG, .AI, .PDF)
                                 </div>
                                 <input 
@@ -1913,10 +2203,10 @@ export const OrderWizardModal = () => {
                               {item.files && item.files.length > 0 && (
                                 <div style={{ marginTop: '0.65rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                   {item.files.map(f => (
-                                    <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.45rem 0.65rem', background: '#f1f5f9', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.8rem' }}>
+                                    <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.45rem 0.65rem', background: 'var(--bg-subtle, #f1f5f9)', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)', fontSize: '0.8rem' }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                         {f.previewUrl ? <img src={f.previewUrl} alt="preview" style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'cover' }} /> : <FileCheck size={16} style={{ color: '#059669' }} />}
-                                        <span style={{ color: 'var(--navy-950)', fontWeight: 800 }}>{f.name}</span>
+                                        <span style={{ color: 'var(--color-text-primary, #0f172a)', fontWeight: 800 }}>{f.name}</span>
                                       </div>
                                       <button type="button" onClick={() => removePatchItemFile(item.id, f.id)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 900 }}>✕</button>
                                     </div>
@@ -1942,8 +2232,8 @@ export const OrderWizardModal = () => {
                     <div 
                       onClick={() => setIsRush(!isRush)}
                       style={{
-                        background: isRush ? 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)' : '#ffffff',
-                        border: isRush ? '2px solid var(--orange-500)' : '1.5px solid #cbd5e1',
+                        background: isRush ? 'linear-gradient(135deg, rgba(234, 88, 12, 0.12) 0%, rgba(249, 115, 22, 0.06) 100%)' : 'var(--color-surface, #ffffff)',
+                        border: isRush ? '2px solid var(--orange-500)' : '1.5px solid var(--border-color, #cbd5e1)',
                         padding: '1.15rem 1.35rem',
                         borderRadius: '16px',
                         display: 'flex',
@@ -1959,7 +2249,7 @@ export const OrderWizardModal = () => {
                           width: '42px',
                           height: '42px',
                           borderRadius: '10px',
-                          background: isRush ? 'var(--orange-500)' : 'var(--orange-50)',
+                          background: isRush ? 'var(--orange-500)' : 'rgba(234, 88, 12, 0.12)',
                           color: isRush ? '#ffffff' : 'var(--orange-600)',
                           display: 'flex',
                           alignItems: 'center',
@@ -1969,10 +2259,10 @@ export const OrderWizardModal = () => {
                           <Zap size={22} />
                         </div>
                         <div>
-                          <span style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--navy-950)', display: 'block' }}>
+                          <span style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', display: 'block' }}>
                             ⚡ Super Rush (2–4 Hrs / Express) Turnaround
                           </span>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary, #64748b)' }}>
                             Need urgent delivery? Get your completed file in 2–4 hours (+$10.00)
                           </span>
                         </div>
@@ -1988,11 +2278,11 @@ export const OrderWizardModal = () => {
 
                   {/* Required Output Formats Selection (Isolated for Vector vs Embroidery) */}
                   {type !== 'patch' && (
-                    <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '0.35rem' }}>
+                    <div style={{ background: 'var(--color-surface, #ffffff)', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--border-color, #e2e8f0)' }}>
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                         {type === 'vector' ? 'Required Vector Output Formats *' : 'Required Machine Embroidery Formats *'}
                       </label>
-                      <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.85rem' }}>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary, #64748b)', marginBottom: '0.85rem' }}>
                         {type === 'vector' 
                           ? 'Select all vector and graphic formats you need delivered in your download pack:' 
                           : 'Select all embroidery machine formats you need delivered in your download bundle:'}
@@ -2009,11 +2299,11 @@ export const OrderWizardModal = () => {
                               style={{
                                 background: isSelected 
                                   ? (type === 'vector' ? '#2563eb' : 'var(--orange-500)') 
-                                  : '#f8fafc',
+                                  : 'var(--bg-subtle, #f8fafc)',
                                 border: isSelected 
                                   ? (type === 'vector' ? '1.5px solid #1d4ed8' : '1.5px solid var(--orange-600)') 
-                                  : '1.5px solid #e2e8f0',
-                                color: isSelected ? '#ffffff' : 'var(--navy-900)',
+                                  : '1.5px solid var(--border-color, #e2e8f0)',
+                                color: isSelected ? '#ffffff' : 'var(--color-text-primary, #0f172a)',
                                 padding: '0.65rem 0.75rem',
                                 borderRadius: '10px',
                                 fontSize: '0.8rem',
@@ -2036,8 +2326,8 @@ export const OrderWizardModal = () => {
                   )}
 
                   {/* Special Instructions / Notes (Customized per service) */}
-                  <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '0.35rem' }}>
+                  <div style={{ background: 'var(--color-surface, #ffffff)', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--border-color, #e2e8f0)' }}>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                       {type === 'vector' 
                         ? 'Special Vectorization & Redraw Instructions (Optional)' 
                         : type === 'patch'
@@ -2059,10 +2349,10 @@ export const OrderWizardModal = () => {
                         width: '100%', 
                         padding: '0.75rem', 
                         borderRadius: '10px', 
-                        border: '1.5px solid #cbd5e1', 
+                        border: '1.5px solid var(--border-color, #cbd5e1)', 
                         fontSize: '0.85rem', 
-                        color: 'var(--navy-950)', 
-                        background: '#ffffff',
+                        color: 'var(--color-text-primary, #0f172a)', 
+                        background: 'var(--color-surface, #ffffff)',
                         lineHeight: 1.5 
                       }} 
                     />
@@ -2080,39 +2370,39 @@ export const OrderWizardModal = () => {
                     
                     {isAuthenticated && authUser ? (
                       /* Authenticated User Status Card */
-                      <div style={{ background: '#ffffff', padding: '1.35rem', borderRadius: '18px', border: '1.5px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+                      <div style={{ background: 'var(--color-surface, #ffffff)', padding: '1.35rem', borderRadius: '18px', border: '1.5px solid var(--border-color, #e2e8f0)', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
                           <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <CheckCircle2 size={24} />
                           </div>
                           <div>
                             <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#10b981', textTransform: 'uppercase' }}>Verified Client Profile</span>
-                            <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                            <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
                               {authUser.company || authUser.name || 'Valued Client'}
                             </h4>
                           </div>
                         </div>
-                        <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', fontSize: '0.825rem', color: 'var(--navy-800)' }}>
+                        <div style={{ background: 'var(--bg-subtle, #f8fafc)', padding: '0.75rem', borderRadius: '10px', fontSize: '0.825rem', color: 'var(--color-text-primary, #0f172a)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem' }}>
                             <Mail size={14} style={{ color: 'var(--orange-500)' }} />
                             <span><strong>Delivery Email:</strong> {authUser.email}</span>
                           </div>
-                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-secondary, #64748b)' }}>
                             Your order and finished files will appear in your Client Portal.
                           </p>
                         </div>
                       </div>
                     ) : (
                       /* Guest Quick Account Setup Card */
-                      <div style={{ background: '#ffffff', padding: '1.35rem', borderRadius: '18px', border: '1.5px solid var(--orange-300)', boxShadow: '0 4px 15px rgba(249, 115, 22, 0.08)' }}>
+                      <div style={{ background: 'var(--color-surface, #ffffff)', padding: '1.35rem', borderRadius: '18px', border: '1.5px solid var(--orange-300)', boxShadow: '0 4px 15px rgba(249, 115, 22, 0.08)' }}>
                         <div style={{ marginBottom: '0.85rem' }}>
                           <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--orange-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                             ⚡ Instant Account & File Delivery
                           </span>
-                          <h4 style={{ margin: '0.15rem 0 0 0', fontSize: '1.15rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                          <h4 style={{ margin: '0.15rem 0 0 0', fontSize: '1.15rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
                             Where should we send your files?
                           </h4>
-                          <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                          <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78rem', color: 'var(--color-text-secondary, #64748b)' }}>
                             Sign in with 1-click Google or enter your email to receive and track your finished files
                           </p>
                         </div>
@@ -2197,16 +2487,16 @@ export const OrderWizardModal = () => {
                           textTransform: 'uppercase',
                           letterSpacing: '0.05em'
                         }}>
-                          <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+                          <div style={{ flex: 1, height: '1px', background: 'var(--border-color, #e2e8f0)' }} />
                           <span style={{ padding: '0 0.6rem' }}>Or with Email</span>
-                          <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+                          <div style={{ flex: 1, height: '1px', background: 'var(--border-color, #e2e8f0)' }} />
                         </div>
 
                         {/* 2. Fast Minimal Email Form */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                           {guestAuthMode === 'signup' && (
                             <div>
-                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.25rem' }}>
+                              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.25rem' }}>
                                 Full Name *
                               </label>
                               <div style={{ position: 'relative' }}>
@@ -2216,14 +2506,14 @@ export const OrderWizardModal = () => {
                                   value={guestName} 
                                   onChange={(e) => setGuestName(e.target.value)} 
                                   placeholder="John Doe" 
-                                  style={{ width: '100%', padding: '0.55rem 0.75rem 0.55rem 2.2rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, background: '#ffffff' }} 
+                                  style={{ width: '100%', padding: '0.55rem 0.75rem 0.55rem 2.2rem', borderRadius: '8px', border: '1.5px solid var(--border-color, #cbd5e1)', fontSize: '0.85rem', fontWeight: 700, background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)' }} 
                                 />
                               </div>
                             </div>
                           )}
 
                           <div>
-                            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.25rem' }}>
+                            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.25rem' }}>
                               Email Address (For File Delivery) *
                             </label>
                             <div style={{ position: 'relative' }}>
@@ -2233,13 +2523,13 @@ export const OrderWizardModal = () => {
                                 value={guestEmail} 
                                 onChange={(e) => setGuestEmail(e.target.value)} 
                                 placeholder="name@company.com" 
-                                style={{ width: '100%', padding: '0.55rem 0.75rem 0.55rem 2.2rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, background: '#ffffff' }} 
+                                style={{ width: '100%', padding: '0.55rem 0.75rem 0.55rem 2.2rem', borderRadius: '8px', border: '1.5px solid var(--border-color, #cbd5e1)', fontSize: '0.85rem', fontWeight: 700, background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)' }} 
                               />
                             </div>
                           </div>
 
                           <div>
-                            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.25rem' }}>
+                            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.25rem' }}>
                               Password (To access your tracker) *
                             </label>
                             <div style={{ position: 'relative' }}>
@@ -2249,7 +2539,7 @@ export const OrderWizardModal = () => {
                                 value={guestPassword} 
                                 onChange={(e) => setGuestPassword(e.target.value)} 
                                 placeholder="••••••••" 
-                                style={{ width: '100%', padding: '0.55rem 0.75rem 0.55rem 2.2rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700, background: '#ffffff' }} 
+                                style={{ width: '100%', padding: '0.55rem 0.75rem 0.55rem 2.2rem', borderRadius: '8px', border: '1.5px solid var(--border-color, #cbd5e1)', fontSize: '0.85rem', fontWeight: 700, background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)' }} 
                               />
                             </div>
                           </div>
@@ -2268,11 +2558,11 @@ export const OrderWizardModal = () => {
                     )}
 
                     {/* Order Specs Summary Card */}
-                    <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                      <h4 style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '0.65rem' }}>
+                    <div style={{ background: 'var(--color-surface, #ffffff)', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--border-color, #e2e8f0)' }}>
+                      <h4 style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.65rem' }}>
                         📋 Production Specifications
                       </h4>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.825rem', color: 'var(--navy-800)' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.825rem', color: 'var(--color-text-primary, #0f172a)' }}>
                         <div><strong>Service:</strong> {pricingDetails.serviceTitle}</div>
                         {type === 'vector' && <div><strong>Application:</strong> {vectorApplication}</div>}
                         {type === 'vector' && <div><strong>Color Mode:</strong> {vectorColorMode}</div>}
@@ -2287,20 +2577,20 @@ export const OrderWizardModal = () => {
 
                   {/* Right Column: Live Price Breakdown & Promo Box */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                    <div style={{ background: '#ffffff', padding: '1.5rem', borderRadius: '18px', border: '1.5px solid #e2e8f0', boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)' }}>
-                      <h4 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--navy-950)', marginBottom: '1rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.65rem' }}>
+                    <div style={{ background: 'var(--color-surface, #ffffff)', padding: '1.5rem', borderRadius: '18px', border: '1.5px solid var(--border-color, #e2e8f0)', boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)' }}>
+                      <h4 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', marginBottom: '1rem', borderBottom: '1px solid var(--border-color, #f1f5f9)', paddingBottom: '0.65rem' }}>
                         Price Summary
                       </h4>
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.25rem' }}>
                         {pricingDetails.placementBreakdown.map((item, idx) => (
-                          <div key={item.id || idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--navy-900)' }}>
+                          <div key={item.id || idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--color-text-primary, #0f172a)' }}>
                             <span>#{item.index} {item.label} (x{item.quantity}):</span>
                             <strong>${item.subtotal.toFixed(2)}</strong>
                           </div>
                         ))}
 
-                        <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 800, color: 'var(--navy-950)' }}>
+                        <div style={{ borderTop: '1px dashed var(--border-color, #cbd5e1)', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                           <span>Subtotal:</span>
                           <span style={{ color: type === 'vector' ? '#2563eb' : type === 'patch' ? '#059669' : 'var(--orange-600)' }}>${pricingDetails.baseSubtotal.toFixed(2)}</span>
                         </div>
@@ -2328,7 +2618,7 @@ export const OrderWizardModal = () => {
                       </div>
 
                       {/* Promo Code Input Box */}
-                      <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '0.85rem', border: '1px solid #e2e8f0', marginBottom: '1.25rem' }}>
+                      <div style={{ background: 'var(--bg-subtle, #f8fafc)', borderRadius: '12px', padding: '0.85rem', border: '1px solid var(--border-color, #e2e8f0)', marginBottom: '1.25rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
                           <span style={{ fontSize: '0.78rem', fontWeight: 900, color: 'var(--orange-700)', display: 'flex', alignItems: 'center', gap: '0.35rem', textTransform: 'uppercase' }}>
                             <Tag size={13} /> Coupon Code
@@ -2346,7 +2636,7 @@ export const OrderWizardModal = () => {
                             placeholder="e.g. SAVE20" 
                             value={promoCodeInput} 
                             onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())} 
-                            style={{ flex: 1, background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '8px', padding: '0.45rem 0.65rem', color: 'var(--navy-950)', fontSize: '0.85rem', fontWeight: 900 }} 
+                            style={{ flex: 1, background: 'var(--color-surface, #ffffff)', border: '1.5px solid var(--border-color, #cbd5e1)', borderRadius: '8px', padding: '0.45rem 0.65rem', color: 'var(--color-text-primary, #0f172a)', fontSize: '0.85rem', fontWeight: 900 }} 
                           />
                           <button 
                             type="button" 
@@ -2359,9 +2649,9 @@ export const OrderWizardModal = () => {
                       </div>
 
                       {/* Total Price */}
-                      <div style={{ borderTop: '2px solid #f1f5f9', paddingTop: '1rem' }}>
+                      <div style={{ borderTop: '2px solid var(--border-color, #f1f5f9)', paddingTop: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
-                          <span style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--navy-950)' }}>Total Price:</span>
+                          <span style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>Total Price:</span>
                           <span style={{ fontSize: '2.2rem', fontWeight: 900, color: type === 'vector' ? '#2563eb' : type === 'patch' ? '#059669' : 'var(--orange-600)', fontFamily: 'var(--font-heading)' }}>
                             ${pricingDetails.finalPrice.toFixed(2)}
                           </span>
@@ -2394,7 +2684,7 @@ export const OrderWizardModal = () => {
                           )}
                         </button>
 
-                        <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.85rem', fontWeight: 600 }}>
+                        <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-secondary, #64748b)', marginTop: '0.85rem', fontWeight: 600 }}>
                           ✓ 100% Quality Guaranteed • Free Unlimited Revisions • 256-Bit SSL Encrypted
                         </div>
                       </div>
@@ -2463,7 +2753,7 @@ export const OrderWizardModal = () => {
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700 }}>Total Price</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary, #64748b)', fontWeight: 700 }}>Total Price</div>
                   <div style={{ fontSize: '1.25rem', fontWeight: 900, color: type === 'vector' ? '#2563eb' : type === 'patch' ? '#059669' : 'var(--color-primary)', lineHeight: 1 }}>
                     ${pricingDetails.finalPrice.toFixed(2)}
                   </div>
