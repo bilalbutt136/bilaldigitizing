@@ -60,7 +60,7 @@ export const ClientSidebar = ({
           badge: (digitizingCount + vectorCount + patchCount) > 0 ? (digitizingCount + vectorCount + patchCount) : null
         },
         { 
-          id: 'support', 
+          id: 'inbox', 
           label: 'Inbox', 
           icon: MessageSquare, 
           badge: unreadChatCount > 0 ? unreadChatCount : null,
@@ -265,16 +265,15 @@ export const ClientSidebar = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.12rem' }}>
               {sec.items.map(item => {
                 const IconComp = item.icon;
-                const isActive = activeTab === item.id;
+                const isActive = (activeTab === item.id) || (item.id === 'inbox' && activeTab === 'support');
 
                 return (
                   <button
                     key={item.id}
                     type="button"
                     onClick={() => {
-                      setActiveTab(item.id);
-                      if (item.id === 'support' && onOpenLiveSupport) {
-                        onOpenLiveSupport();
+                      if (typeof setActiveTab === 'function') {
+                        setActiveTab(item.id);
                       }
                     }}
                     style={{
@@ -305,8 +304,8 @@ export const ClientSidebar = ({
                       <span style={{ 
                         fontSize: '0.68rem', 
                         fontWeight: 800, 
-                        background: item.badgeColor || (item.id === 'support' ? '#ef4444' : (isActive ? 'var(--color-primary)' : 'var(--color-primary-light)')), 
-                        color: (item.badgeColor || item.id === 'support' || isActive) ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-primary)', 
+                        background: item.badgeColor || (item.id === 'inbox' || item.id === 'support' ? '#ef4444' : (isActive ? 'var(--color-primary)' : 'var(--color-primary-light)')), 
+                        color: (item.badgeColor || item.id === 'inbox' || item.id === 'support' || isActive) ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-primary)', 
                         padding: '0.08rem 0.4rem', 
                         borderRadius: '9999px',
                         flexShrink: 0

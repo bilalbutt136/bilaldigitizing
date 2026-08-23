@@ -87,7 +87,16 @@ export const CustomerDashboard = () => {
 
   const unreadNotifCount = unreadNotificationsCount;
 
-  const [activeTab, setActiveTabLocal] = useState(() => activeCustomerTab || 'dashboard');
+  const [activeTab, setActiveTabLocal] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab');
+      if (tabParam) {
+        return tabParam === 'support' ? 'inbox' : tabParam;
+      }
+    }
+    return activeCustomerTab || 'dashboard';
+  });
   const [selectedOrderChatId, setSelectedOrderChatId] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [orderFilterTab, setOrderFilterTab] = useState('active'); // 'active' | 'completed' | 'all'
@@ -104,10 +113,38 @@ export const CustomerDashboard = () => {
   const [mounted, setMounted] = React.useState(false);
 
   const setActiveTab = React.useCallback((tab) => {
-    setActiveTabLocal(tab);
+    if (!tab) return;
+    const normalizedTab = (tab === 'support') ? 'inbox' : tab;
+    setActiveTabLocal(normalizedTab);
     if (setActiveCustomerTab) {
-      setActiveCustomerTab(tab);
+      setActiveCustomerTab(normalizedTab);
     }
+    if (typeof window !== 'undefined') {
+      const currentUrl = new URL(window.location.href);
+      if (normalizedTab === 'dashboard') {
+        currentUrl.searchParams.delete('tab');
+      } else {
+        currentUrl.searchParams.set('tab', normalizedTab);
+      }
+      window.history.pushState({ tab: normalizedTab }, '', currentUrl.toString());
+    }
+  }, [setActiveCustomerTab]);
+
+  // Handle browser Back / Forward navigation
+  React.useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab') || 'dashboard';
+        const normalized = tabParam === 'support' ? 'inbox' : tabParam;
+        setActiveTabLocal(normalized);
+        if (setActiveCustomerTab) {
+          setActiveCustomerTab(normalized);
+        }
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, [setActiveCustomerTab]);
 
   // Sync with global activeCustomerTab changes (e.g. from top header navigation)
@@ -295,14 +332,14 @@ export const CustomerDashboard = () => {
     const handleOpenOrderChat = (e) => {
       if (e.detail?.orderId) {
         setSelectedOrderChatId(e.detail.orderId);
-        setActiveTab('support');
+        setActiveTab('inbox');
       }
     };
     window.addEventListener('bdigi_open_order_chat', handleOpenOrderChat);
     return () => {
       window.removeEventListener('bdigi_open_order_chat', handleOpenOrderChat);
     };
-  }, []);
+  }, [setActiveTab]);
 
   // Strict Category Helper Functions
   const isStoreOrder = (o) => {
@@ -604,7 +641,7 @@ export const CustomerDashboard = () => {
     if (orderId) {
       setSelectedOrderChatId(orderId);
     }
-    setActiveTab('support');
+    setActiveTab('inbox');
   };
 
   return (
@@ -1352,7 +1389,7 @@ export const CustomerDashboard = () => {
                     {/* 3. Messages */}
                     <button
                       type="button"
-                      onClick={() => setActiveTab('support')}
+                      onClick={() => setActiveTab('inbox')}
                       style={{
                         background: '#ffffff',
                         border: '1.5px solid #e2e8f0',
@@ -2473,16 +2510,23 @@ export const CustomerDashboard = () => {
                 }}
                 onNavigateToChat={(chatId) => {
                   setSelectedOrderChatId(chatId);
-                  setActiveTab('support');
+                  setActiveTab('inbox');
                 }}
                 userEmail={userEmail}
               />
             )}
 
-            {/* TAB: WORKING CHAT & HELP / SUPPORT INBOX */}
-            {(activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') && (
+            {/* TAB: CUSTOMER INBOX (MESSAGES & OFFERS) */}
+            {(activeTab === 'inbox' || activeTab === 'support') && (
               <div style={{ flex: 1, height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                <ClientChatInbox initialOrderId={activeTab === 'help-support' ? 'help-support' : 'inbox'} />
+                <ClientChatInbox initialOrderId="inbox" />
+              </div>
+            )}
+
+            {/* TAB: 24/7 LIVE CUSTOMER SUPPORT HELPDESK */}
+            {activeTab === 'help-support' && (
+              <div style={{ flex: 1, height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <ClientChatInbox initialOrderId="help-support" />
               </div>
             )}
 

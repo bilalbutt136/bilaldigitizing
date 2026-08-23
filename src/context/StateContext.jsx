@@ -132,6 +132,11 @@ export const StateProvider = ({ children }) => {
   
   const [activeCustomerTabState, setActiveCustomerTabState] = useState(() => {
     if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab');
+      if (tabParam) {
+        return tabParam === 'support' ? 'inbox' : tabParam;
+      }
       return localStorage.getItem('bdigi_customer_tab') || 'dashboard';
     }
     return 'dashboard';
