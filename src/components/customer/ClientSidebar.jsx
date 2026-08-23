@@ -120,12 +120,12 @@ export const ClientSidebar = ({
         background: 'var(--bg-card)',
         border: '1px solid var(--border-color)',
         borderRadius: '16px',
-        padding: '1.15rem 0.85rem',
+        padding: '0.85rem 0.75rem',
         boxShadow: 'var(--shadow-sm)',
         position: 'sticky',
-        top: '90px',
-        height: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? '100%' : 'calc(100vh - 110px)',
-        maxHeight: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? '100%' : 'calc(100vh - 110px)',
+        top: '80px',
+        alignSelf: 'start',
+        maxHeight: 'calc(100vh - 95px)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -140,47 +140,47 @@ export const ClientSidebar = ({
           display: 'flex', 
           flexDirection: 'column', 
           overflowY: 'auto', 
-          scrollbarWidth: 'thin',
-          WebkitOverflowScrolling: 'touch',
-          paddingRight: '0.15rem'
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          WebkitOverflowScrolling: 'touch'
         }}
       >
         {/* User Header Profile Card */}
         <div
           style={{
-            padding: '1rem 0.9rem',
+            padding: '0.75rem 0.75rem',
             background: 'linear-gradient(135deg, #0d1322 0%, #1a2238 100%)',
-            borderRadius: '14px',
+            borderRadius: '12px',
             color: '#ffffff',
-            marginBottom: '1.15rem',
+            marginBottom: '0.65rem',
             border: '1px solid rgba(255, 255, 255, 0.12)',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.28)',
+            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
             flexShrink: 0
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.55rem' }}>
             <div style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '11px',
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
               background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
               color: 'var(--color-text-on-primary, #ffffff)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 900,
-              fontSize: '1.15rem',
-              boxShadow: '0 4px 14px var(--color-primary-glow)',
+              fontSize: '1.05rem',
+              boxShadow: '0 3px 10px var(--color-primary-glow)',
               flexShrink: 0
             }}>
               {userInitial}
             </div>
 
             <div style={{ overflow: 'hidden' }}>
-              <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>
+              <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>
                 {userName}
               </div>
-              <div style={{ fontSize: '0.72rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ fontSize: '0.7rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {userCompany}
               </div>
             </div>
@@ -192,21 +192,21 @@ export const ClientSidebar = ({
             justifyContent: 'space-between', 
             alignItems: 'center', 
             background: 'rgba(255, 255, 255, 0.07)', 
-            padding: '0.4rem 0.55rem', 
-            borderRadius: '9px', 
+            padding: '0.35rem 0.5rem', 
+            borderRadius: '8px', 
             border: '1px solid rgba(255, 255, 255, 0.12)',
-            fontSize: '0.74rem'
+            fontSize: '0.72rem'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', minWidth: 0 }}>
-              <Wallet size={13} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-              <span style={{ color: '#94a3b8', fontSize: '0.7rem', fontWeight: 600 }}>Wallet:</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minWidth: 0 }}>
+              <Wallet size={12} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
+              <span style={{ color: '#94a3b8', fontSize: '0.68rem', fontWeight: 600 }}>Wallet:</span>
               <strong style={{ 
                 color: '#34d399', 
                 fontWeight: 900, 
-                fontSize: '0.82rem',
+                fontSize: '0.8rem',
                 letterSpacing: '-0.01em',
                 background: 'rgba(52, 211, 153, 0.14)',
-                padding: '0.1rem 0.35rem',
+                padding: '0.08rem 0.3rem',
                 borderRadius: '4px',
                 border: '1px solid rgba(52, 211, 153, 0.3)'
               }}>
@@ -223,20 +223,20 @@ export const ClientSidebar = ({
                   color: 'var(--color-text-on-primary, #ffffff)',
                   border: 'none',
                   borderRadius: '5px',
-                  padding: '0.2rem 0.45rem',
-                  fontSize: '0.65rem',
+                  padding: '0.18rem 0.4rem',
+                  fontSize: '0.62rem',
                   fontWeight: 800,
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.2rem',
+                  gap: '0.15rem',
                   flexShrink: 0,
                   boxShadow: '0 2px 6px var(--color-primary-glow)',
                   transition: 'all 0.15s ease'
                 }}
                 title="Add Funds"
               >
-                <PlusCircle size={10} style={{ flexShrink: 0 }} /> Add
+                <PlusCircle size={9} style={{ flexShrink: 0 }} /> Add
               </button>
             )}
           </div>
@@ -244,20 +244,20 @@ export const ClientSidebar = ({
 
         {/* Navigation Sections */}
         {sections.map((sec, secIdx) => (
-          <div key={secIdx} style={{ marginBottom: secIdx === sections.length - 1 ? 0 : '1.15rem' }}>
+          <div key={secIdx} style={{ marginBottom: secIdx === sections.length - 1 ? 0 : '0.55rem' }}>
             <div style={{
-              fontSize: '0.675rem',
+              fontSize: '0.625rem',
               fontWeight: 800,
               color: 'var(--color-primary)',
               textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-              padding: '0.25rem 0.75rem',
-              marginBottom: '0.35rem'
+              letterSpacing: '0.08em',
+              padding: '0.15rem 0.5rem',
+              marginBottom: '0.18rem'
             }}>
               {sec.title}
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.12rem' }}>
               {sec.items.map(item => {
                 const IconComp = item.icon;
                 const isActive = activeTab === item.id;
@@ -277,7 +277,7 @@ export const ClientSidebar = ({
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       width: '100%',
-                      padding: '0.6rem 0.75rem',
+                      padding: '0.45rem 0.65rem',
                       borderRadius: 'var(--radius-md)',
                       border: isActive ? '1.5px solid var(--color-primary)' : '1px solid transparent',
                       background: isActive 
@@ -285,24 +285,24 @@ export const ClientSidebar = ({
                         : 'transparent',
                       color: isActive ? 'var(--color-primary)' : 'var(--color-text-primary)',
                       fontWeight: isActive ? 800 : 600,
-                      fontSize: '0.85rem',
+                      fontSize: '0.825rem',
                       cursor: 'pointer',
                       textAlign: 'left',
-                      transition: 'all 0.18s ease'
+                      transition: 'all 0.15s ease'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                      <IconComp size={16} style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-muted)', flexShrink: 0 }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                      <IconComp size={15} style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-muted)', flexShrink: 0 }} />
                       <span style={{ lineHeight: 1.2 }}>{item.label}</span>
                     </div>
 
                     {item.badge !== undefined && item.badge !== null && item.badge !== 0 && item.badge !== '0' && (
                       <span style={{ 
-                        fontSize: '0.7rem', 
+                        fontSize: '0.68rem', 
                         fontWeight: 800, 
                         background: item.badgeColor || (item.id === 'support' ? '#ef4444' : (isActive ? 'var(--color-primary)' : 'var(--color-primary-light)')), 
                         color: (item.badgeColor || item.id === 'support' || isActive) ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-primary)', 
-                        padding: '0.1rem 0.45rem', 
+                        padding: '0.08rem 0.4rem', 
                         borderRadius: '9999px',
                         flexShrink: 0
                       }}>
@@ -312,8 +312,8 @@ export const ClientSidebar = ({
 
                     {item.liveDot && (!item.badge || item.badge <= 0) && (
                       <span style={{ 
-                        width: '8px', 
-                        height: '8px', 
+                        width: '7px', 
+                        height: '7px', 
                         borderRadius: '50%', 
                         background: '#10b981',
                         boxShadow: '0 0 8px rgba(16, 185, 129, 0.6)',
@@ -329,7 +329,7 @@ export const ClientSidebar = ({
       </div>
 
       {/* Footer Sign Out Action */}
-      <div style={{ marginTop: '1rem', paddingTop: '0.85rem', borderTop: '1px solid var(--border-color)', flexShrink: 0 }}>
+      <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border-color)', flexShrink: 0 }}>
         <button
           type="button"
           onClick={onLogout}
@@ -337,20 +337,20 @@ export const ClientSidebar = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.5rem',
+            gap: '0.45rem',
             width: '100%',
-            padding: '0.6rem 0.75rem',
+            padding: '0.48rem 0.65rem',
             borderRadius: 'var(--radius-md)',
             border: '1px solid rgba(220, 38, 38, 0.2)',
             background: 'rgba(220, 38, 38, 0.06)',
             color: '#dc2626',
             fontWeight: 700,
-            fontSize: '0.825rem',
+            fontSize: '0.8rem',
             cursor: 'pointer',
-            transition: 'all 0.18s ease'
+            transition: 'all 0.15s ease'
           }}
         >
-          <LogOut size={16} style={{ flexShrink: 0 }} />
+          <LogOut size={15} style={{ flexShrink: 0 }} />
           <span>Sign Out Account</span>
         </button>
       </div>

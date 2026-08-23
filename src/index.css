@@ -778,6 +778,24 @@ body.dark-mode aside {
   color: var(--color-text-primary) !important;
 }
 
+/* Customer Portal Sticky Sidebar - Independent fixed display without scrolling distortion */
+.client-sidebar-saas {
+  position: sticky !important;
+  top: 85px !important;
+  align-self: start !important;
+  max-height: calc(100vh - 100px) !important;
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.client-sidebar-saas::-webkit-scrollbar,
+.client-sidebar-saas *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 /* Dropdown Menus & Popups */
 [data-theme="dark"] .dropdown-menu,
 [data-theme="dark"] [role="menu"],
