@@ -609,17 +609,99 @@ export const CustomerDashboard = () => {
 
   return (
     <div 
-      className="dashboard-main-container" 
+      className="dashboard-main-container client-portal-wrapper" 
       style={{ 
-        padding: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? '0.65rem 0' : '1.5rem 0 8rem', 
         background: 'var(--bg-main)', 
-        minHeight: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'calc(100vh - 130px)' : 'calc(100vh - 80px)',
-        height: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'calc(100vh - 130px)' : 'auto',
-        maxHeight: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'calc(100vh - 130px)' : 'none',
-        overflow: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'hidden' : 'visible',
+        position: 'relative', 
+        width: '100%',
+        minHeight: 'calc(100vh - 65px)',
+        display: 'flex',
+        flexDirection: 'column',
         boxSizing: 'border-box'
       }}
     >
+      {/* Desktop Independent Layout Styles matching Admin Portal */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @media (min-width: 1025px) {
+          .client-portal-wrapper {
+            height: calc(100vh - 65px) !important;
+            max-height: calc(100vh - 65px) !important;
+            overflow: hidden !important;
+            padding: 1rem 0 0 !important;
+          }
+          .client-portal-fluid-container {
+            height: 100% !important;
+            max-height: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            flex: 1 !important;
+            min-height: 0 !important;
+          }
+          .dashboard-layout-grid {
+            height: 100% !important;
+            max-height: 100% !important;
+            overflow: hidden !important;
+            display: grid !important;
+            grid-template-columns: 280px 1fr !important;
+            gap: 1.5rem !important;
+            align-items: stretch !important;
+            flex: 1 !important;
+            min-height: 0 !important;
+            padding-bottom: 0.75rem !important;
+          }
+          .client-sidebar-saas {
+            height: 100% !important;
+            max-height: 100% !important;
+            position: relative !important;
+            top: 0 !important;
+            overflow: hidden !important;
+            overflow-y: hidden !important;
+            flex-shrink: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justifyContent: space-between !important;
+          }
+          .client-main-content {
+            height: 100% !important;
+            max-height: 100% !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            scroll-behavior: smooth !important;
+            padding-bottom: 3.5rem !important;
+            padding-right: 0.35rem !important;
+          }
+        }
+
+        /* Custom smooth scrollbar for Client Portal main content only */
+        .client-main-content::-webkit-scrollbar {
+          width: 7px;
+        }
+        .client-main-content::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .client-main-content::-webkit-scrollbar-thumb {
+          background: var(--color-border, rgba(0,0,0,0.15));
+          border-radius: 6px;
+        }
+        .client-main-content::-webkit-scrollbar-thumb:hover {
+          background: var(--color-primary, var(--orange-500));
+        }
+
+        /* Ensure client sidebar NEVER has a scrollbar and NEVER scrolls */
+        .client-sidebar-saas,
+        .client-sidebar-saas * {
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+        .client-sidebar-saas::-webkit-scrollbar,
+        .client-sidebar-saas *::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+      `}} />
+
       <div 
         className="client-portal-fluid-container" 
         style={{ 
@@ -628,8 +710,8 @@ export const CustomerDashboard = () => {
           padding: '0 2.25rem', 
           margin: '0 auto', 
           boxSizing: 'border-box',
-          height: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? '100%' : 'auto',
-          display: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'flex' : 'block',
+          height: '100%',
+          display: 'flex',
           flexDirection: 'column'
         }}
       >
@@ -927,17 +1009,17 @@ export const CustomerDashboard = () => {
             display: 'grid',
             gridTemplateColumns: '280px 1fr',
             gap: '1.5rem',
-            alignItems: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'stretch' : 'start',
-            flex: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 1 : 'none',
-            height: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? '100%' : 'auto',
-            maxHeight: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? '100%' : 'none',
+            alignItems: 'stretch',
+            flex: 1,
+            height: '100%',
+            maxHeight: '100%',
             minHeight: 0,
-            overflow: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'hidden' : 'visible'
+            overflow: 'hidden'
           }}
         >
 
           {/* ==================================================================
-              LEFT VERTICAL SIDEBAR NAVIGATION MENU (INDEPENDENT SCROLLABLE SAAS PANEL)
+              LEFT VERTICAL SIDEBAR NAVIGATION MENU (STATIONARY SAAS PANEL)
              ================================================================== */}
           <ClientSidebar 
             activeTab={activeTab}
@@ -960,16 +1042,20 @@ export const CustomerDashboard = () => {
           />
 
           {/* ==================================================================
-              RIGHT CONTENT WORKSPACE PANE
+              RIGHT CONTENT WORKSPACE PANE (INDEPENDENTLY SCROLLABLE)
              ================================================================== */}
-          <main style={{ 
-            minWidth: 0,
-            height: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? '100%' : 'auto',
-            minHeight: 0,
-            display: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'flex' : 'block',
-            flexDirection: 'column',
-            overflow: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'hidden' : 'visible'
-          }}>
+          <main 
+            className="client-main-content"
+            style={{ 
+              minWidth: 0,
+              height: '100%',
+              maxHeight: '100%',
+              display: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'flex' : 'block',
+              flexDirection: 'column',
+              overflowY: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'hidden' : 'auto',
+              overflowX: 'hidden'
+            }}
+          >
             
             {/* TAB 0: MAIN CLIENT DASHBOARD */}
             {activeTab === 'dashboard' && (

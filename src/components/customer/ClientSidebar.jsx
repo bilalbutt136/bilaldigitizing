@@ -115,22 +115,27 @@ export const ClientSidebar = ({
 
   return (
     <aside
-      className="client-sidebar-saas"
+      className="client-sidebar-saas desktop-only"
       style={{
         background: 'var(--bg-card)',
         border: '1px solid var(--border-color)',
         borderRadius: '16px',
         padding: '0.85rem 0.75rem',
         boxShadow: 'var(--shadow-sm)',
-        position: 'sticky',
-        top: '80px',
-        alignSelf: 'start',
-        maxHeight: 'calc(100vh - 95px)',
+        position: 'relative',
+        top: 0,
+        width: '280px',
+        minWidth: '280px',
+        maxWidth: '280px',
+        height: '100%',
+        maxHeight: '100%',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
         boxSizing: 'border-box',
         overflow: 'hidden',
+        overflowY: 'hidden',
+        flexShrink: 0,
         zIndex: 10
       }}
     >
@@ -139,10 +144,10 @@ export const ClientSidebar = ({
           flex: 1, 
           display: 'flex', 
           flexDirection: 'column', 
-          overflowY: 'auto', 
+          overflow: 'hidden',
+          overflowY: 'hidden',
           scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch'
+          msOverflowStyle: 'none'
         }}
       >
         {/* User Header Profile Card */}
