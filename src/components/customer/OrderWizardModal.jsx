@@ -1107,11 +1107,11 @@ export const OrderWizardModal = () => {
       }}
     >
       <div 
-        className="modal-dialog order-wizard-dialog"
+        className="modal-dialog order-wizard-dialog theme-light-enforced"
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'var(--bg-card, #ffffff)',
-          border: '1px solid var(--border-color, #cbd5e1)',
+          border: '1.5px solid var(--border-color, #cbd5e1)',
           borderRadius: '24px',
           width: '100%',
           maxWidth: '1100px',

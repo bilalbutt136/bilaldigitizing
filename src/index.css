@@ -928,6 +928,77 @@ body.dark-mode th {
   color: var(--color-primary-hover) !important;
 }
 
+/* ==========================================================================
+   THEME-LIGHT-ENFORCED: 100% Guaranteed High-Contrast Modals & Cards
+   ========================================================================== */
+.theme-light-enforced,
+[data-theme="dark"] .theme-light-enforced,
+body.dark-mode .theme-light-enforced {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+.theme-light-enforced h1,
+.theme-light-enforced h2,
+.theme-light-enforced h3,
+.theme-light-enforced h4,
+.theme-light-enforced h5,
+.theme-light-enforced h6,
+[data-theme="dark"] .theme-light-enforced h1,
+[data-theme="dark"] .theme-light-enforced h2,
+[data-theme="dark"] .theme-light-enforced h3,
+[data-theme="dark"] .theme-light-enforced h4,
+[data-theme="dark"] .theme-light-enforced h5,
+[data-theme="dark"] .theme-light-enforced h6,
+body.dark-mode .theme-light-enforced h1,
+body.dark-mode .theme-light-enforced h2,
+body.dark-mode .theme-light-enforced h3,
+body.dark-mode .theme-light-enforced h4,
+body.dark-mode .theme-light-enforced h5,
+body.dark-mode .theme-light-enforced h6 {
+  color: #0f172a !important;
+}
+
+.theme-light-enforced p,
+[data-theme="dark"] .theme-light-enforced p,
+body.dark-mode .theme-light-enforced p {
+  color: #475569 !important;
+}
+
+.theme-light-enforced span.text-muted,
+.theme-light-enforced .text-muted,
+[data-theme="dark"] .theme-light-enforced span.text-muted,
+body.dark-mode .theme-light-enforced span.text-muted {
+  color: #64748b !important;
+}
+
+.theme-light-enforced input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+.theme-light-enforced textarea,
+.theme-light-enforced select,
+[data-theme="dark"] .theme-light-enforced input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+[data-theme="dark"] .theme-light-enforced textarea,
+[data-theme="dark"] .theme-light-enforced select,
+body.dark-mode .theme-light-enforced input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+body.dark-mode .theme-light-enforced textarea,
+body.dark-mode .theme-light-enforced select {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1.5px solid #cbd5e1 !important;
+}
+
+.theme-light-enforced input::placeholder,
+.theme-light-enforced textarea::placeholder,
+[data-theme="dark"] .theme-light-enforced input::placeholder,
+[data-theme="dark"] .theme-light-enforced textarea::placeholder,
+body.dark-mode .theme-light-enforced input::placeholder,
+body.dark-mode .theme-light-enforced textarea::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+
 /* Mobile App Navigation & Headers */
 [data-theme="dark"] .mobile-bottom-nav, body.dark-mode .mobile-bottom-nav {
   background: var(--color-surface) !important;
