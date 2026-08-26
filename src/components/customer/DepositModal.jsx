@@ -130,6 +130,7 @@ export const DepositModal = () => {
     setWalletBalance,
     fetchUserWalletBalance,
     authUser,
+    currentUser,
     showToast
   } = useAppState();
 
@@ -272,7 +273,8 @@ export const DepositModal = () => {
         headers,
         body: JSON.stringify({
           amount: amount,
-          method: methodId
+          method: methodId,
+          clientEmail: authUser?.email || currentUser?.email
         })
       });
 

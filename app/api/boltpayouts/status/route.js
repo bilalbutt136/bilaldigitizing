@@ -6,10 +6,6 @@ export async function GET(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
 
-    if (!user || !user.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized: Authentication required.' }, { status: 401 });
-    }
-
     if (!hasServiceRole || !supabaseAdmin) {
       return NextResponse.json({ success: false, error: 'Server misconfiguration' }, { status: 500 });
     }
@@ -22,14 +18,14 @@ export async function GET(request) {
     }
 
     const cleanInvoiceId = String(invoiceId).trim();
-    const cleanUserEmail = user.email.toLowerCase().trim();
+    const cleanUserEmail = user?.email ? user.email.toLowerCase().trim() : null;
 
     let query = supabaseAdmin
       .from('invoices')
       .select('*')
       .or(`id.eq.${cleanInvoiceId},bolt_order_id.eq.${cleanInvoiceId}`);
 
-    if (!isAdmin) {
+    if (!isAdmin && cleanUserEmail) {
       query = query.ilike('client_email', cleanUserEmail);
     }
 

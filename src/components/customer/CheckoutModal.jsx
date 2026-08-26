@@ -156,6 +156,7 @@ export const CheckoutModal = () => {
     deductWalletBalance,
     fetchUserWalletBalance,
     authUser,
+    currentUser,
     protectedNavigate
   } = useAppState();
 
@@ -317,7 +318,8 @@ export const CheckoutModal = () => {
         body: JSON.stringify({
           amount: checkoutSession.amount,
           method: methodId,
-          orderId: checkoutSession?.orderId
+          orderId: checkoutSession?.orderId,
+          clientEmail: checkoutSession?.clientEmail || authUser?.email || currentUser?.email
         })
       });
 

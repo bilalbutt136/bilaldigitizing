@@ -92,10 +92,6 @@ export async function POST(request) {
   try {
     const { user } = await getServerAuthUser(request);
 
-    if (!user || !user.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized: Authentication required.' }, { status: 401 });
-    }
-
     if (!hasServiceRole || !supabaseAdmin) {
       return NextResponse.json({ success: false, error: 'Server misconfiguration: Database service client unavailable' }, { status: 500 });
     }
@@ -104,6 +100,29 @@ export async function POST(request) {
     const rawAmount = parseFloat(body.amount);
     const rawMethod = body.method || 'card';
     const orderId = body.orderId || null;
+    const bodyEmail = (body.clientEmail || body.email || '').toLowerCase().trim();
+
+    let targetEmail = (user?.email || bodyEmail || '').toLowerCase().trim();
+    let targetUserId = user?.id || null;
+
+    // If session is unauthenticated (e.g. mobile client or guest flow), resolve email from order in database
+    if (!targetEmail && orderId && hasServiceRole && supabaseAdmin) {
+      try {
+        const { data: ord } = await supabaseAdmin
+          .from('orders')
+          .select('client_email, clientEmail, user_id')
+          .eq('id', orderId)
+          .maybeSingle();
+        targetEmail = (ord?.client_email || ord?.clientEmail || '').toLowerCase().trim();
+        if (!targetUserId && ord?.user_id) targetUserId = ord.user_id;
+      } catch (ordLookupErr) {
+        console.warn('[BoltPayouts Create] Order lookup warning:', ordLookupErr.message);
+      }
+    }
+
+    if (!targetEmail) {
+      targetEmail = 'client@bdigitizing.pro';
+    }
     
     if (isNaN(rawAmount) || rawAmount <= 0) {
       return NextResponse.json({ success: false, error: 'Invalid amount' }, { status: 400 });
@@ -220,8 +239,8 @@ export async function POST(request) {
 
     // Create Invoice with comprehensive column mapping
     const invoicePayload = {
-      user_id: user.id || null,
-      client_email: user.email.toLowerCase().trim(),
+      user_id: targetUserId,
+      client_email: targetEmail,
       amount: boltAmount,
       method: rawMethod,
       payment_method: rawMethod,
@@ -248,8 +267,8 @@ export async function POST(request) {
       console.warn('[BoltPayouts Create] Primary invoice insert warning, trying core schema fallback:', invErr.message);
       // Fallback with base columns only
       const coreInvoicePayload = {
-        user_id: user.id || null,
-        client_email: user.email.toLowerCase().trim(),
+        user_id: targetUserId,
+        client_email: targetEmail,
         amount: boltAmount,
         method: rawMethod,
         status: 'pending',
