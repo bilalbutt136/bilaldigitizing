@@ -184,7 +184,7 @@ export async function POST(request) {
       },
       body: JSON.stringify({
         amount: boltAmount,
-        username: user.email,
+        username: targetEmail,
         method: gatewayMethod
       })
     });
@@ -202,7 +202,7 @@ export async function POST(request) {
         },
         body: JSON.stringify({
           amount: boltAmount,
-          username: user.email,
+          username: targetEmail,
           method: fallbackMethod
         })
       });
