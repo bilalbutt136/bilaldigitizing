@@ -20,44 +20,218 @@ import {
   Loader2, 
   Image as ImageIcon,
   ShieldCheck,
-  Tag
+  Tag,
+  Sliders,
+  DollarSign,
+  ChevronRight,
+  Info
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
+import { matchCategory } from '../../utils/categoryUtils';
 
-const SERVICES = [
-  {
-    id: 'embroidery',
-    title: 'Embroidery Digitizing',
-    desc: 'DST, PES, EMB files for Tajima, Brother, Barudan & all machines.',
-    icon: Layers,
-    basePrice: 15,
-    formats: ['DST', 'PES', 'EMB', 'EXP', 'JEF', 'PDF Worksheet'],
-    defaultFormat: 'DST',
-    etaStandard: '12-24 Hours',
-    etaRush: '4-8 Hours Express'
-  },
-  {
-    id: 'vector',
-    title: 'Vector Art Tracing',
-    desc: 'High-res vector conversion for screen printing, vinyl & engraving.',
-    icon: PenTool,
-    basePrice: 12,
-    formats: ['AI', 'EPS', 'PDF', 'SVG', 'CDR', 'High-Res PNG'],
-    defaultFormat: 'AI',
-    etaStandard: '12-24 Hours',
-    etaRush: '4-8 Hours Express'
-  },
-  {
-    id: 'patch',
-    title: 'Custom Physical Patches',
-    desc: 'Embroidered, PVC, Woven & Leather patches with velcro or iron-on.',
-    icon: Package,
-    basePrice: 45,
-    formats: ['Pre-production Proof', 'DST', 'High-Res Preview'],
-    defaultFormat: 'Pre-production Proof',
-    etaStandard: '5-7 Business Days',
-    etaRush: '3-4 Days Express'
-  }
+// Standard fallback package tiers matching website /app/pricing/page.jsx
+const CORE_PACKAGES = {
+  embroidery: [
+    {
+      id: 'emb-basic',
+      service_type: 'embroidery',
+      badge: 'BASIC',
+      is_popular: false,
+      title: 'Left Chest & Cap Small Logo',
+      subtitle: 'Commercial stitch files for caps, polos & shirts (.DST, .PES, .EMB)',
+      price: 10,
+      original_price: 15,
+      turnaround: '4–12 Hours',
+      features: [
+        'Up to 4" x 4" Dimensions',
+        '100% Manual Hand-Mapped Pathing',
+        'Cap Curved Optimization & Zero Thread Breaks',
+        'Tajima .DST, Wilcom .EMB, Brother .PES + PDF Sheet'
+      ],
+      defaultFormats: ['DST', 'PES', 'EMB', 'PDF'],
+      defaultWidth: '3.5',
+      defaultHeight: '3.5',
+      defaultPlacement: 'Left Chest / Polo (up to 4.0")'
+    },
+    {
+      id: 'emb-popular',
+      service_type: 'embroidery',
+      badge: 'MOST POPULAR',
+      is_popular: true,
+      title: 'Mid-Size Jacket & Sleeve Design',
+      subtitle: 'Medium complexity artwork up to 7" x 7" with push-pull compensation.',
+      price: 20,
+      original_price: 30,
+      turnaround: '6–12 Hours',
+      features: [
+        'Up to 7" x 7" Medium Artwork Area',
+        'Complex Multi-Color Layering & Pathing',
+        'Underlay Pull & Push Compensation',
+        'Free Unlimited Production Revisions'
+      ],
+      defaultFormats: ['DST', 'PES', 'EMB', 'EXP', 'PDF'],
+      defaultWidth: '6.0',
+      defaultHeight: '6.0',
+      defaultPlacement: 'Jacket Front / Sleeve (up to 7.0")'
+    },
+    {
+      id: 'emb-pro',
+      service_type: 'embroidery',
+      badge: 'PRO / 3D PUFF',
+      is_popular: false,
+      title: 'Full Back & 3D Puff Foam',
+      subtitle: 'High stitch count jacket back designs up to 12" x 12" and 3D puff foam.',
+      price: 35,
+      original_price: 50,
+      turnaround: '8–12 Hours',
+      features: [
+        'Up to 12" x 12" Full Back Area',
+        'High Density 3D Puff Foam Layering',
+        'Heavy Fabric Calibration & Zero Distortion',
+        '24/7 Priority Master Digitizer Support'
+      ],
+      defaultFormats: ['DST', 'PES', 'EMB', 'EXP', 'JEF', 'PDF'],
+      defaultWidth: '10.5',
+      defaultHeight: '10.5',
+      defaultPlacement: 'Full Jacket Back (up to 12.0")'
+    }
+  ],
+  vector: [
+    {
+      id: 'vec-basic',
+      service_type: 'vector',
+      badge: 'BASIC',
+      is_popular: false,
+      title: 'Simple Logo & Typography Redraw',
+      subtitle: 'Clean typographic logos, line work & basic shapes converted to vector.',
+      price: 15,
+      original_price: 25,
+      turnaround: '6–12 Hours',
+      features: [
+        'Clean Bézier Curves & Anchor Nodes',
+        'Sharp 100% Scalable Vector Paths',
+        'Master Suite: .AI, .EPS, .SVG, .PDF',
+        'Infinite Scale Without Pixelation'
+      ],
+      defaultFormats: ['AI', 'EPS', 'SVG', 'PDF'],
+      defaultWidth: '8.0',
+      defaultHeight: '8.0',
+      defaultPlacement: 'Print / Vector Scalable'
+    },
+    {
+      id: 'vec-popular',
+      service_type: 'vector',
+      badge: 'BEST VALUE',
+      is_popular: true,
+      title: 'Medium Detail Artwork with Colors',
+      subtitle: 'Multi-color badges, crests & illustrations with Pantone color separation.',
+      price: 25,
+      original_price: 35,
+      turnaround: '6–12 Hours',
+      features: [
+        'Pantone (PMS) Spot Color Matching',
+        'Separated Layers for Screen Printing',
+        'Vinyl Cutting Smooth Cut-Paths',
+        'High-Res 300+ DPI PDF Master'
+      ],
+      defaultFormats: ['AI', 'EPS', 'SVG', 'PDF', 'High-Res PNG'],
+      defaultWidth: '10.0',
+      defaultHeight: '10.0',
+      defaultPlacement: 'Screen Print / Apparel'
+    },
+    {
+      id: 'vec-pro',
+      service_type: 'vector',
+      badge: 'MASTER DETAIL',
+      is_popular: false,
+      title: 'Complex Intricate Mascot & Illustration',
+      subtitle: 'Highly intricate artwork, photographic traces & heraldic crests.',
+      price: 45,
+      original_price: 65,
+      turnaround: '12–24 Hours',
+      features: [
+        'Ultra-Intricate Fine Vector Details',
+        'Complete Multi-Layer Organization',
+        'Print-Ready Color Separations Suite',
+        'Unlimited Revisions Until Press-Ready'
+      ],
+      defaultFormats: ['AI', 'EPS', 'SVG', 'PDF', 'CDR', 'PNG'],
+      defaultWidth: '12.0',
+      defaultHeight: '12.0',
+      defaultPlacement: 'Master Artwork / Large Print'
+    }
+  ],
+  patch: [
+    {
+      id: 'patch-sample',
+      service_type: 'patch',
+      badge: 'SAMPLE RUN',
+      is_popular: false,
+      title: 'Sample Batch (10–50 Pcs)',
+      subtitle: 'Low-minimum run perfect for small brands, clubs, prototypes & events.',
+      price: 4.50,
+      original_price: 6.50,
+      turnaround: '3–5 Days',
+      features: [
+        'Ultra-Low 10 Pieces Minimum Order',
+        '12-Hour Free Digital Production Proof',
+        'Velcro Hook & Loop or Iron-On Backings',
+        'Custom Embroidered, Woven or 3D PVC'
+      ],
+      defaultFormats: ['DST', 'PDF Proof', 'Physical Patch Shipment'],
+      defaultWidth: '3.0',
+      defaultHeight: '3.0',
+      defaultPlacement: 'Custom Shape Cut'
+    },
+    {
+      id: 'patch-popular',
+      service_type: 'patch',
+      badge: 'POPULAR',
+      is_popular: true,
+      title: 'Production Batch (100–500 Pcs)',
+      subtitle: 'Ideal for uniform programs, merchandise drops & motorcycle clubs.',
+      price: 2.50,
+      original_price: 4.00,
+      turnaround: '5–7 Days',
+      features: [
+        'Precision Laser-Cut or Merrowed Border',
+        'Metallic Gold/Silver & Glow-in-Dark Threads',
+        'Pre-Production Physical Sew-Out Sample',
+        'Free Shipping Included'
+      ],
+      defaultFormats: ['DST', 'PDF Proof', 'Physical Patch Shipment'],
+      defaultWidth: '3.5',
+      defaultHeight: '3.5',
+      defaultPlacement: 'Custom Shape Cut'
+    },
+    {
+      id: 'patch-bulk',
+      service_type: 'patch',
+      badge: 'WHOLESALE BULK',
+      is_popular: false,
+      title: 'Wholesale Bulk (500+ Pcs)',
+      subtitle: 'Maximum volume discount for apparel brands, military & distributors.',
+      price: 1.50,
+      original_price: 2.50,
+      turnaround: '7–10 Days',
+      features: [
+        'Maximum Factory Direct Wholesale Savings',
+        'Individual Poly-Bag Packaging',
+        'Custom Backing Paper & Barcodes',
+        'Dedicated Master Account Manager'
+      ],
+      defaultFormats: ['DST', 'PDF Proof', 'Physical Patch Shipment'],
+      defaultWidth: '3.5',
+      defaultHeight: '3.5',
+      defaultPlacement: 'Custom Shape Cut'
+    }
+  ]
+};
+
+const SERVICE_TABS = [
+  { id: 'embroidery', label: 'Embroidery', icon: Layers, color: '#059669', defaultCategory: 'embroidery' },
+  { id: 'vector', label: 'Vector Art', icon: PenTool, color: '#ea580c', defaultCategory: 'vector' },
+  { id: 'patch', label: 'Patches', icon: Package, color: '#0284c7', defaultCategory: 'patch' }
 ];
 
 export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embroidery', onOrderCreated }) => {
@@ -68,21 +242,24 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
     showToast, 
     setSelectedOrderForDrawer,
     setIsCheckoutModalOpen,
-    setCheckoutSession
+    setCheckoutSession,
+    dynamicPricingTiers = []
   } = useAppState();
 
-  const [step, setStep] = useState(1); // 1: Service, 2: Upload, 3: Requirements, 4: Review, 5: Confirmation
-  const [selectedService, setSelectedService] = useState(defaultService);
+  const [step, setStep] = useState(1); // 1: Package Selection, 2: Upload Artwork, 3: Specifications, 4: Review, 5: Confirmation
+  const [selectedService, setSelectedService] = useState('embroidery');
+  const [selectedPackage, setSelectedPackage] = useState(null);
   const [orderTitle, setOrderTitle] = useState('');
   const [isRush, setIsRush] = useState(false);
-  const [selectedFormats, setSelectedFormats] = useState(['DST', 'PES']);
+  const [selectedFormats, setSelectedFormats] = useState(['DST', 'PES', 'EMB']);
   const [placement, setPlacement] = useState('Left Chest / Polo (up to 4.0")');
   const [widthInches, setWidthInches] = useState('3.5');
   const [heightInches, setHeightInches] = useState('3.5');
+  const [fabricType, setFabricType] = useState('Cotton / Pique Knit');
   const [notes, setNotes] = useState('');
   
   // File Upload State
-  const [uploadedArtwork, setUploadedArtwork] = useState(null); // { url, name, size, public_id }
+  const [uploadedArtwork, setUploadedArtwork] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState(null);
@@ -93,47 +270,105 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
   const fileInputRef = useRef(null);
 
-  const activeServiceObj = SERVICES.find(s => s.id === selectedService) || SERVICES[0];
-
-  useEffect(() => {
-    if (defaultService) {
-      setSelectedService(defaultService);
-      const svc = SERVICES.find(s => s.id === defaultService);
-      if (svc) {
-        setSelectedFormats(svc.id === 'vector' ? ['AI', 'PDF', 'SVG'] : ['DST', 'PES', 'EMB']);
-      }
+  // Merge dynamic database pricing tiers with core packages
+  const getPackagesForCategory = (catKey) => {
+    const coreList = CORE_PACKAGES[catKey] || CORE_PACKAGES.embroidery;
+    const dbTiers = (dynamicPricingTiers || []).filter(t => matchCategory(t.service_type, catKey));
+    if (dbTiers && dbTiers.length > 0) {
+      return dbTiers.map(t => ({
+        id: t.id || `db-${t.service_type}-${t.display_order}`,
+        service_type: catKey,
+        badge: t.badge_text || (t.is_popular ? 'MOST POPULAR' : 'STANDARD'),
+        is_popular: Boolean(t.is_popular),
+        title: t.title,
+        subtitle: t.subtitle || '',
+        price: Number(t.price),
+        original_price: t.original_price ? Number(t.original_price) : null,
+        turnaround: t.turnaround_time || (catKey === 'patch' ? '5–7 Days' : '6–12 Hours'),
+        features: Array.isArray(t.features) ? t.features : [],
+        defaultFormats: catKey === 'vector' ? ['AI', 'EPS', 'SVG', 'PDF'] : catKey === 'patch' ? ['DST', 'PDF Proof'] : ['DST', 'PES', 'EMB', 'PDF'],
+        defaultWidth: '3.5',
+        defaultHeight: '3.5',
+        defaultPlacement: catKey === 'vector' ? 'Vector Art Tracing' : catKey === 'patch' ? 'Custom Patch' : 'Left Chest / Polo'
+      }));
     }
-  }, [defaultService]);
+    return coreList;
+  };
+
+  // Sync initial service on open
+  useEffect(() => {
+    if (isOpen) {
+      const normService = defaultService === 'patch' || defaultService === 'patches' 
+        ? 'patch' 
+        : (defaultService === 'vector' || defaultService === 'vector-art' || defaultService === 'vector_art') 
+          ? 'vector' 
+          : 'embroidery';
+      setSelectedService(normService);
+      const pkgs = getPackagesForCategory(normService);
+      const initialPkg = pkgs.find(p => p.is_popular) || pkgs[0];
+      setSelectedPackage(initialPkg);
+      if (initialPkg) {
+        setSelectedFormats(initialPkg.defaultFormats || (normService === 'vector' ? ['AI', 'EPS', 'SVG', 'PDF'] : ['DST', 'PES', 'EMB']));
+        setWidthInches(initialPkg.defaultWidth || '3.5');
+        setHeightInches(initialPkg.defaultHeight || '3.5');
+        setPlacement(initialPkg.defaultPlacement || 'Left Chest / Polo (up to 4.0")');
+      }
+      setStep(1);
+      setUploadError(null);
+    }
+  }, [isOpen, defaultService]);
 
   if (!isOpen) return null;
 
-  // Calculate Price
-  const basePrice = activeServiceObj.basePrice;
+  const currentPackages = getPackagesForCategory(selectedService);
+  const activePkg = selectedPackage || currentPackages[0];
+
+  // Price calculations
+  const basePrice = Number(activePkg?.price || 15);
   const rushFee = isRush ? 10 : 0;
   const totalPrice = basePrice + rushFee;
+
+  const handleSelectService = (serviceId) => {
+    setSelectedService(serviceId);
+    const pkgs = getPackagesForCategory(serviceId);
+    const popularOrFirst = pkgs.find(p => p.is_popular) || pkgs[0];
+    setSelectedPackage(popularOrFirst);
+    if (popularOrFirst) {
+      setSelectedFormats(popularOrFirst.defaultFormats || (serviceId === 'vector' ? ['AI', 'EPS', 'SVG', 'PDF'] : ['DST', 'PES', 'EMB']));
+      setWidthInches(popularOrFirst.defaultWidth || '3.5');
+      setHeightInches(popularOrFirst.defaultHeight || '3.5');
+      setPlacement(popularOrFirst.defaultPlacement || 'Left Chest / Polo (up to 4.0")');
+    }
+  };
+
+  const handleSelectPackage = (pkg) => {
+    setSelectedPackage(pkg);
+    if (pkg.defaultFormats) setSelectedFormats(pkg.defaultFormats);
+    if (pkg.defaultWidth) setWidthInches(pkg.defaultWidth);
+    if (pkg.defaultHeight) setHeightInches(pkg.defaultHeight);
+    if (pkg.defaultPlacement) setPlacement(pkg.defaultPlacement);
+  };
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate size (max 50MB)
     if (file.size > 50 * 1024 * 1024) {
-      setUploadError('File size exceeds 50MB. Please choose a smaller image or compressed archive.');
+      setUploadError('File exceeds 50MB. Please select a smaller file.');
       return;
     }
 
     setUploadError(null);
     setIsUploading(true);
-    setUploadProgress(15);
+    setUploadProgress(20);
 
     try {
-      // Auto-set title from filename if empty
       if (!orderTitle) {
         const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
         setOrderTitle(cleanName.charAt(0).toUpperCase() + cleanName.slice(1));
       }
 
-      setUploadProgress(45);
+      setUploadProgress(50);
       const result = await uploadFileToCloudinaryFull(file);
       setUploadProgress(100);
 
@@ -146,11 +381,11 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
           public_id: result.public_id || null
         });
       } else {
-        throw new Error('Upload server did not return a valid URL.');
+        throw new Error('Upload completed without a valid URL.');
       }
     } catch (err) {
-      console.error('File upload failed:', err);
-      setUploadError(err.message || 'Upload failed. Please check your connection and try again.');
+      console.error('Upload failed:', err);
+      setUploadError(err.message || 'File upload failed. Please try again.');
     } finally {
       setIsUploading(false);
     }
@@ -168,19 +403,21 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
   const handleSubmitOrder = async () => {
     if (!orderTitle.trim()) {
-      setOrderTitle(uploadedArtwork?.name?.replace(/\.[^/.]+$/, '') || `${activeServiceObj.title} Job`);
+      setOrderTitle(uploadedArtwork?.name?.replace(/\.[^/.]+$/, '') || `${activePkg?.title || 'Custom'} Order`);
     }
 
     setIsSubmitting(true);
     try {
-      const finalTitle = orderTitle.trim() || `${activeServiceObj.title} #${Math.floor(1000 + Math.random() * 9000)}`;
-      const clientEmail = authUser?.email || currentUser?.email || 'client@studio.com';
-      const clientName = authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || 'Customer';
+      const finalTitle = orderTitle.trim() || `${activePkg?.title || 'Design'} #${Math.floor(1000 + Math.random() * 9000)}`;
+      const clientEmail = authUser?.email || currentUser?.email || 'guest@bdigitizing.pro';
+      const clientName = authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || 'Studio Client';
 
       const orderPayload = {
         title: finalTitle,
         type: selectedService,
-        serviceCategory: activeServiceObj.title,
+        serviceCategory: activePkg?.title || (selectedService === 'vector' ? 'Vector Art Tracing' : selectedService === 'patch' ? 'Custom Patches' : 'Embroidery Digitizing'),
+        package_name: activePkg?.title,
+        package_tier: activePkg?.badge || 'STANDARD',
         price: totalPrice,
         totalPrice: totalPrice,
         isRush: isRush,
@@ -188,6 +425,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         placement: placement,
         width: widthInches,
         height: heightInches,
+        fabricType: fabricType,
         targetFormats: selectedFormats,
         image_url: uploadedArtwork?.url || null,
         artworkUrl: uploadedArtwork?.url || null,
@@ -198,6 +436,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
             placementType: placement,
             dimensions: `${widthInches}" x ${heightInches}"`,
             formats: selectedFormats,
+            fabric: fabricType,
             files: uploadedArtwork ? [uploadedArtwork] : []
           }
         ],
@@ -215,13 +454,14 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
       };
 
       setCreatedOrderObj(resultingOrder);
-      setStep(5); // Jump to confirmation step
+      setStep(5); // Confirmation screen
+      showToast('Order created successfully! 🎉', 'success');
       if (typeof onOrderCreated === 'function') {
         onOrderCreated(resultingOrder);
       }
     } catch (err) {
-      console.error('Order submission error:', err);
-      showToast('Error placing order: ' + (err.message || 'Please try again'), 'error');
+      console.error('Order creation failed:', err);
+      showToast('Could not submit order: ' + (err.message || 'Please try again'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -262,18 +502,20 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         style={{
           background: '#ffffff',
           width: '100%',
-          maxWidth: '540px',
+          maxWidth: '560px',
           maxHeight: '92vh',
           borderRadius: '24px 24px 0 0',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.25)',
           overflow: 'hidden',
-          animation: 'slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+          animation: 'slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+          fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* MODAL HEADER */}
+        
+        {/* TOP MODAL HEADER */}
         <div style={{
           padding: '1rem 1.25rem',
           borderBottom: '1px solid #e2e8f0',
@@ -283,31 +525,32 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
           background: '#ffffff'
         }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
               <span style={{
-                background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
                 color: '#ffffff',
-                fontSize: '0.68rem',
+                fontSize: '0.65rem',
                 fontWeight: 900,
-                padding: '0.15rem 0.45rem',
-                borderRadius: '6px'
+                padding: '0.18rem 0.5rem',
+                borderRadius: '6px',
+                letterSpacing: '0.05em'
               }}>
                 STEP {step} OF 4
               </span>
               <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#0f172a' }}>
-                {step === 1 && 'Choose Service'}
-                {step === 2 && 'Upload Your Design'}
-                {step === 3 && 'Order Requirements'}
-                {step === 4 && 'Review & Instant Quote'}
-                {step === 5 && 'Order Confirmed! 🎉'}
+                {step === 1 && 'Choose Service Package'}
+                {step === 2 && 'Upload Artwork & Details'}
+                {step === 3 && 'Technical Specifications'}
+                {step === 4 && 'Review & Confirm Order'}
+                {step === 5 && 'Order Ready!'}
               </h3>
             </div>
-            <p style={{ margin: '0.15rem 0 0', fontSize: '0.75rem', color: '#64748b' }}>
-              {step === 1 && 'Select embroidery digitizing, vector art, or custom patches.'}
-              {step === 2 && 'Upload your artwork or logo from phone gallery or camera.'}
-              {step === 3 && 'Specify dimensions, formats, and express turnaround.'}
-              {step === 4 && 'Check your specifications and instant studio pricing.'}
-              {step === 5 && 'Your production order has been received by our master team.'}
+            <p style={{ margin: '0.15rem 0 0', fontSize: '0.74rem', color: '#64748b' }}>
+              {step === 1 && 'Select from real studio tiers with transparent pricing.'}
+              {step === 2 && 'Upload your design image, vector, or mockup.'}
+              {step === 3 && 'Configure dimensions, formats, placement & speed.'}
+              {step === 4 && 'Verify specs before dispatching to digitizers.'}
+              {step === 5 && 'Your order has been recorded into the live system.'}
             </p>
           </div>
 
@@ -323,8 +566,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              cursor: 'pointer',
-              color: '#64748b'
+              color: '#64748b',
+              cursor: 'pointer'
             }}
           >
             <X size={18} />
@@ -332,293 +575,479 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         </div>
 
         {/* STEP PROGRESS BAR */}
-        {step < 5 && (
-          <div style={{ height: '4px', background: '#f1f5f9', width: '100%' }}>
-            <div style={{
-              height: '100%',
-              background: 'linear-gradient(90deg, #f97316, #ea580c)',
-              width: `${(step / 4) * 100}%`,
-              transition: 'width 0.25s ease'
-            }} />
-          </div>
-        )}
+        <div style={{ width: '100%', height: '4px', background: '#f1f5f9' }}>
+          <div style={{
+            height: '100%',
+            width: `${(step / 4) * 100}%`,
+            background: 'linear-gradient(90deg, #059669 0%, #10b981 100%)',
+            transition: 'width 0.3s ease'
+          }} />
+        </div>
 
-        {/* MODAL BODY */}
-        <div style={{ padding: '1.25rem', overflowY: 'auto', flex: 1 }}>
+        {/* BODY CONTENT AREA */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '1.15rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           
-          {/* STEP 1: CHOOSE SERVICE */}
+          {/* =========================================================================
+              STEP 1: SELECT SERVICE & PACKAGE TIER
+              ========================================================================= */}
           {step === 1 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {SERVICES.map(svc => {
-                const isSelected = selectedService === svc.id;
-                const IconComp = svc.icon;
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              
+              {/* Category Switcher Tabs */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', background: '#f8fafc', padding: '0.35rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                {SERVICE_TABS.map(tab => {
+                  const Icon = tab.icon;
+                  const isSelected = selectedService === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => handleSelectService(tab.id)}
+                      style={{
+                        padding: '0.55rem 0.35rem',
+                        borderRadius: '9px',
+                        border: isSelected ? '1.5px solid #059669' : '1px solid transparent',
+                        background: isSelected ? '#ffffff' : 'transparent',
+                        color: isSelected ? '#0f172a' : '#64748b',
+                        fontWeight: isSelected ? 900 : 600,
+                        fontSize: '0.78rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        cursor: 'pointer',
+                        boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <Icon size={16} style={{ color: isSelected ? '#059669' : '#64748b' }} />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
 
-                return (
-                  <div
-                    key={svc.id}
-                    onClick={() => {
-                      setSelectedService(svc.id);
-                      setSelectedFormats(svc.id === 'vector' ? ['AI', 'PDF', 'SVG'] : ['DST', 'PES', 'EMB']);
-                    }}
-                    style={{
-                      padding: '1rem',
-                      borderRadius: '16px',
-                      border: isSelected ? '2px solid #f97316' : '1.5px solid #e2e8f0',
-                      background: isSelected ? '#fff7ed' : '#ffffff',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.85rem',
-                      transition: 'all 0.15s ease',
-                      boxShadow: isSelected ? '0 4px 14px rgba(249, 115, 22, 0.15)' : 'none'
-                    }}
-                  >
-                    <div style={{
-                      width: '44px',
-                      height: '44px',
-                      borderRadius: '12px',
-                      background: isSelected ? '#f97316' : '#f1f5f9',
-                      color: isSelected ? '#ffffff' : '#0f172a',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}>
-                      <IconComp size={22} />
-                    </div>
+              {/* Package Tier Cards List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Available Packages ({currentPackages.length})
+                  </span>
+                  <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700 }}>
+                    ⚡ Express Turnaround Available
+                  </span>
+                </div>
 
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>
-                          {svc.title}
-                        </h4>
-                        <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#ea580c' }}>
-                          From ${svc.basePrice}
-                        </span>
+                {currentPackages.map((pkg, idx) => {
+                  const isSelected = selectedPackage?.id === pkg.id || (!selectedPackage && idx === 0);
+                  return (
+                    <div
+                      key={pkg.id || idx}
+                      onClick={() => handleSelectPackage(pkg)}
+                      style={{
+                        border: isSelected ? '2px solid #059669' : '1.5px solid #e2e8f0',
+                        background: isSelected ? '#f0fdf4' : '#ffffff',
+                        borderRadius: '16px',
+                        padding: '1rem',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        boxShadow: isSelected ? '0 4px 16px rgba(5, 150, 105, 0.12)' : '0 2px 6px rgba(0,0,0,0.02)',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {/* Popular / Badge Tag */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <div style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            border: isSelected ? '5px solid #059669' : '2px solid #cbd5e1',
+                            background: '#ffffff',
+                            flexShrink: 0
+                          }} />
+                          <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: '#0f172a' }}>
+                            {pkg.title}
+                          </h4>
+                        </div>
+
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', justifyContent: 'flex-end' }}>
+                            {pkg.original_price && (
+                              <span style={{ fontSize: '0.78rem', color: '#94a3b8', textDecoration: 'line-through' }}>
+                                ${Number(pkg.original_price).toFixed(2)}
+                              </span>
+                            )}
+                            <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#047857' }}>
+                              ${Number(pkg.price).toFixed(pkg.price % 1 === 0 ? 0 : 2)}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', display: 'block' }}>
+                            {selectedService === 'patch' ? '/ piece' : 'flat rate'}
+                          </span>
+                        </div>
                       </div>
-                      <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: '#64748b', lineHeight: 1.3 }}>
-                        {svc.desc}
+
+                      {pkg.badge && (
+                        <div style={{ marginTop: '0.4rem', display: 'flex', gap: '0.4rem' }}>
+                          <span style={{
+                            fontSize: '0.65rem',
+                            fontWeight: 900,
+                            padding: '0.12rem 0.45rem',
+                            borderRadius: '4px',
+                            background: pkg.is_popular ? '#fef3c7' : '#ecfdf5',
+                            color: pkg.is_popular ? '#b45309' : '#047857',
+                            border: pkg.is_popular ? '1px solid #fde68a' : '1px solid #a7f3d0'
+                          }}>
+                            {pkg.badge}
+                          </span>
+                          <span style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                            <Clock size={11} /> {pkg.turnaround}
+                          </span>
+                        </div>
+                      )}
+
+                      <p style={{ margin: '0.45rem 0 0.5rem', fontSize: '0.78rem', color: '#475569', lineHeight: 1.35 }}>
+                        {pkg.subtitle}
                       </p>
+
+                      {/* Feature Bullet Points */}
+                      {Array.isArray(pkg.features) && pkg.features.length > 0 && (
+                        <div style={{ borderTop: '1px dashed #e2e8f0', paddingTop: '0.5rem', display: 'grid', gridTemplateColumns: '1fr', gap: '0.25rem' }}>
+                          {pkg.features.slice(0, 3).map((feat, fIdx) => (
+                            <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: '#334155' }}>
+                              <CheckCircle2 size={13} style={{ color: '#059669', flexShrink: 0 }} />
+                              <span>{feat}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+
             </div>
           )}
 
-          {/* STEP 2: UPLOAD DESIGN */}
+          {/* =========================================================================
+              STEP 2: UPLOAD ARTWORK & TITLE
+              ========================================================================= */}
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileUpload}
-                style={{ display: 'none' }}
-                accept="image/*,.pdf,.ai,.eps,.dst,.pes,.emb,.zip,.rar"
-              />
-
-              {/* Upload Dropzone */}
-              {!uploadedArtwork ? (
-                <div
-                  onClick={() => !isUploading && fileInputRef.current?.click()}
-                  style={{
-                    border: '2px dashed #cbd5e1',
-                    borderRadius: '16px',
-                    padding: '2rem 1.5rem',
-                    textAlign: 'center',
-                    background: '#f8fafc',
-                    cursor: isUploading ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  {isUploading ? (
-                    <div>
-                      <Loader2 size={36} style={{ color: '#f97316', animation: 'spin 1s linear infinite', margin: '0 auto 0.75rem' }} />
-                      <h4 style={{ margin: '0 0 0.25rem', fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>
-                        Uploading Design ({uploadProgress}%)...
-                      </h4>
-                      <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>
-                        Securing artwork to high-speed studio storage...
-                      </p>
-                      <div style={{ height: '6px', background: '#e2e8f0', borderRadius: '999px', marginTop: '1rem', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', background: '#f97316', width: `${uploadProgress}%`, transition: 'width 0.2s ease' }} />
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <div style={{
-                        width: '56px',
-                        height: '56px',
-                        borderRadius: '50%',
-                        background: '#ffedd5',
-                        color: '#ea580c',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 0.75rem'
-                      }}>
-                        <Upload size={26} />
-                      </div>
-                      <h4 style={{ margin: '0 0 0.25rem', fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
-                        Tap to Upload Design
-                      </h4>
-                      <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>
-                        From Gallery, Camera or Phone Files
-                      </p>
-                      <span style={{ display: 'inline-block', marginTop: '0.75rem', fontSize: '0.7rem', color: '#94a3b8', background: '#ffffff', padding: '0.2rem 0.6rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                        PNG, JPG, PDF, AI, EPS, DST (Max 50MB)
-                      </span>
-                    </div>
-                  )}
+              
+              {/* Selected Package Mini-Summary */}
+              <div style={{ background: '#f0fdf4', border: '1px solid #a7f3d0', borderRadius: '12px', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#047857', textTransform: 'uppercase' }}>
+                    Selected Package
+                  </span>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f172a' }}>
+                    {activePkg?.title}
+                  </div>
                 </div>
-              ) : (
-                /* Uploaded Preview Card */
-                <div style={{
-                  padding: '1rem',
-                  borderRadius: '16px',
-                  border: '1.5px solid #86efac',
-                  background: '#f0fdf4',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.85rem'
-                }}>
-                  <img
-                    src={uploadedArtwork.url}
-                    alt={uploadedArtwork.name}
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
-                    }}
+                <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#047857' }}>
+                  ${Number(activePkg?.price || 15).toFixed(activePkg?.price % 1 === 0 ? 0 : 2)}
+                </div>
+              </div>
+
+              {/* Artwork Upload Area */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.35rem' }}>
+                  Upload Artwork / Logo File <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  onChange={handleFileUpload}
+                  accept="image/*,.pdf,.ai,.eps,.svg,.cdr,.dst,.pes,.emb"
+                />
+
+                {!uploadedArtwork ? (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
                     style={{
-                      width: '64px',
-                      height: '64px',
-                      borderRadius: '10px',
-                      objectFit: 'cover',
-                      border: '2px solid #16a34a',
-                      flexShrink: 0
+                      border: '2px dashed #cbd5e1',
+                      borderRadius: '16px',
+                      padding: '1.75rem 1rem',
+                      textAlign: 'center',
+                      background: '#f8fafc',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      transition: 'border-color 0.2s ease'
                     }}
-                  />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <CheckCircle2 size={15} style={{ color: '#16a34a', flexShrink: 0 }} />
-                      <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 size={32} className="animate-spin" style={{ color: '#059669' }} />
+                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>
+                          Uploading to Studio Cloud ({uploadProgress}%)
+                        </span>
+                        <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                          Processing high-resolution preview...
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{
+                          width: '48px',
+                          height: '48px',
+                          borderRadius: '50%',
+                          background: '#ecfdf5',
+                          color: '#059669',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <Upload size={22} />
+                        </div>
+                        <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>
+                          Tap to select image or document
+                        </span>
+                        <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                          Supports JPG, PNG, PDF, AI, EPS, SVG, DST, EMB (up to 50MB)
+                        </span>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{
+                    border: '1.5px solid #10b981',
+                    background: '#ffffff',
+                    borderRadius: '14px',
+                    padding: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.85rem',
+                    position: 'relative'
+                  }}>
+                    {uploadedArtwork.url && (
+                      <img
+                        src={uploadedArtwork.url}
+                        alt="Preview"
+                        style={{ width: '54px', height: '54px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {uploadedArtwork.name}
-                      </h5>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.15rem' }}>
+                        <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#ecfdf5', color: '#047857', padding: '0.08rem 0.35rem', borderRadius: '4px' }}>
+                          {uploadedArtwork.format}
+                        </span>
+                        <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                          {uploadedArtwork.size}
+                        </span>
+                      </div>
                     </div>
-                    <p style={{ margin: '0.15rem 0 0', fontSize: '0.72rem', color: '#16a34a', fontWeight: 700 }}>
-                      Ready for production • {uploadedArtwork.size}
-                    </p>
+
                     <button
                       type="button"
                       onClick={() => setUploadedArtwork(null)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#ef4444',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        padding: 0,
-                        marginTop: '0.35rem',
-                        textDecoration: 'underline'
-                      }}
+                      style={{ background: '#fee2e2', border: 'none', borderRadius: '50%', width: '28px', height: '28px', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                     >
-                      Change Artwork
+                      <X size={14} />
                     </button>
                   </div>
-                </div>
-              )}
+                )}
 
-              {uploadError && (
-                <div style={{ padding: '0.75rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', color: '#dc2626', fontSize: '0.78rem' }}>
-                  {uploadError}
-                </div>
-              )}
+                {uploadError && (
+                  <div style={{ marginTop: '0.45rem', fontSize: '0.75rem', color: '#dc2626', fontWeight: 700 }}>
+                    ⚠️ {uploadError}
+                  </div>
+                )}
+              </div>
 
-              {/* Order Title Input */}
+              {/* Design Name / Title Input */}
               <div>
-                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>
-                  Order / Design Name (Optional)
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.35rem' }}>
+                  Design / Job Name
                 </label>
                 <input
                   type="text"
                   value={orderTitle}
                   onChange={(e) => setOrderTitle(e.target.value)}
-                  placeholder="e.g. Front Logo DST, Company Cap Embroidery"
+                  placeholder="e.g. Apex Racing Left Chest Logo"
                   style={{
                     width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    fontSize: '0.85rem',
-                    borderRadius: '10px',
+                    padding: '0.75rem 0.95rem',
+                    borderRadius: '12px',
                     border: '1.5px solid #cbd5e1',
+                    fontSize: '0.88rem',
+                    color: '#0f172a',
+                    background: '#f8fafc',
                     outline: 'none',
-                    background: '#ffffff',
                     boxSizing: 'border-box'
                   }}
                 />
               </div>
+
             </div>
           )}
 
-          {/* STEP 3: ADD REQUIREMENTS */}
+          {/* =========================================================================
+              STEP 3: SPECIFICATIONS & FORMATS
+              ========================================================================= */}
           {step === 3 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               
-              {/* Delivery Speed Selector */}
+              {/* Dimensions: Width & Height */}
               <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', display: 'block', marginBottom: '0.45rem' }}>
-                  Delivery Turnaround Speed
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.35rem' }}>
+                  Target Dimensions (Inches)
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => setIsRush(false)}
-                    style={{
-                      padding: '0.75rem',
-                      borderRadius: '12px',
-                      border: !isRush ? '2px solid #f97316' : '1.5px solid #e2e8f0',
-                      background: !isRush ? '#fff7ed' : '#ffffff',
-                      cursor: 'pointer',
-                      textAlign: 'left'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: !isRush ? '#ea580c' : '#0f172a', fontWeight: 800, fontSize: '0.82rem' }}>
-                      <Clock size={14} /> Standard (12-24h)
-                    </div>
-                    <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', marginTop: '0.2rem' }}>
-                      Included in rate
-                    </span>
-                  </button>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+                  <div>
+                    <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>Width</span>
+                    <input
+                      type="text"
+                      value={widthInches}
+                      onChange={(e) => setWidthInches(e.target.value)}
+                      placeholder='3.5"'
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '10px',
+                        border: '1.5px solid #cbd5e1',
+                        fontSize: '0.85rem',
+                        fontWeight: 700,
+                        color: '#0f172a',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>Height</span>
+                    <input
+                      type="text"
+                      value={heightInches}
+                      onChange={(e) => setHeightInches(e.target.value)}
+                      placeholder='3.5"'
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '10px',
+                        border: '1.5px solid #cbd5e1',
+                        fontSize: '0.85rem',
+                        fontWeight: 700,
+                        color: '#0f172a',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setIsRush(true)}
-                    style={{
-                      padding: '0.75rem',
-                      borderRadius: '12px',
-                      border: isRush ? '2px solid #f97316' : '1.5px solid #e2e8f0',
-                      background: isRush ? '#fff7ed' : '#ffffff',
-                      cursor: 'pointer',
-                      textAlign: 'left'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: isRush ? '#ea580c' : '#0f172a', fontWeight: 800, fontSize: '0.82rem' }}>
-                      <Zap size={14} style={{ color: '#ea580c' }} /> Rush (4-8h Express)
-                    </div>
-                    <span style={{ fontSize: '0.7rem', color: '#ea580c', fontWeight: 800, display: 'block', marginTop: '0.2rem' }}>
-                      +$10 Express fee
-                    </span>
-                  </button>
+                {/* Quick Presets */}
+                <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.4rem', flexWrap: 'wrap' }}>
+                  {[
+                    { label: 'Left Chest (3.5")', w: '3.5', h: '3.5', p: 'Left Chest / Polo (up to 4.0")' },
+                    { label: 'Cap (2.25")', w: '4.5', h: '2.25', p: 'Cap Front (Low Profile)' },
+                    { label: 'Sleeve (5.0")', w: '3.0', h: '5.0', p: 'Sleeve / Side Panel' },
+                    { label: 'Full Back (10.5")', w: '10.5', h: '10.5', p: 'Full Jacket Back (up to 12.0")' }
+                  ].map(pre => (
+                    <button
+                      key={pre.label}
+                      type="button"
+                      onClick={() => {
+                        setWidthInches(pre.w);
+                        setHeightInches(pre.h);
+                        setPlacement(pre.p);
+                      }}
+                      style={{
+                        padding: '0.2rem 0.55rem',
+                        borderRadius: '14px',
+                        background: '#f1f5f9',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        color: '#334155',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {pre.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Format Checkboxes */}
+              {/* Placement Selector */}
               <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', display: 'block', marginBottom: '0.45rem' }}>
-                  Target Machine Formats Needed
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.35rem' }}>
+                  Placement Type
                 </label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                  {activeServiceObj.formats.map(fmt => {
+                <select
+                  value={placement}
+                  onChange={(e) => setPlacement(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.7rem 0.85rem',
+                    borderRadius: '10px',
+                    border: '1.5px solid #cbd5e1',
+                    fontSize: '0.85rem',
+                    color: '#0f172a',
+                    background: '#ffffff',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value='Left Chest / Polo (up to 4.0")'>Left Chest / Polo (up to 4.0")</option>
+                  <option value='Cap Front (Low Profile)'>Cap Front (Low Profile / Structured)</option>
+                  <option value='Full Jacket Back (up to 12.0")'>Full Jacket Back (up to 12.0")</option>
+                  <option value='Sleeve / Side Panel'>Sleeve / Side Panel</option>
+                  <option value='3D Puff Foam Hat'>3D Puff Foam Hat (Raised 3D)</option>
+                  <option value='Custom Patch Merrowed'>Custom Patch Merrowed</option>
+                  <option value='Screen Print / Vinyl Cut'>Screen Print / Vinyl Cut (Vector)</option>
+                </select>
+              </div>
+
+              {/* Fabric Type (for Embroidery) */}
+              {selectedService === 'embroidery' && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.35rem' }}>
+                    Garment / Fabric Type
+                  </label>
+                  <select
+                    value={fabricType}
+                    onChange={(e) => setFabricType(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.7rem 0.85rem',
+                      borderRadius: '10px',
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: '0.85rem',
+                      color: '#0f172a',
+                      background: '#ffffff',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value='Cotton / Pique Knit'>Cotton / Pique Polo Knit</option>
+                    <option value='Structured Twill Cap'>Structured Twill / Trucker Cap</option>
+                    <option value='Heavy Hoodie / Fleece'>Heavy Hoodie / Sweatshirt Fleece</option>
+                    <option value='Nylon / Performance Polyester'>Nylon / Dri-Fit Polyester</option>
+                    <option value='Leather / Heavy Canvas'>Leather / Heavy Canvas</option>
+                    <option value='Beanies / Ribbed Knit'>Beanies / Ribbed Knit</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Target File Formats */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.35rem' }}>
+                  Target Deliverable Formats
+                </label>
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                  {(selectedService === 'vector' 
+                    ? ['AI', 'EPS', 'SVG', 'PDF', 'CDR', 'PNG'] 
+                    : selectedService === 'patch'
+                      ? ['DST', 'PDF Proof', 'Physical Patch Shipment']
+                      : ['DST', 'PES', 'EMB', 'EXP', 'JEF', 'VP3', 'PDF Worksheet']
+                  ).map(fmt => {
                     const isChecked = selectedFormats.includes(fmt);
                     return (
                       <button
@@ -626,292 +1055,271 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         type="button"
                         onClick={() => handleToggleFormat(fmt)}
                         style={{
-                          padding: '0.35rem 0.75rem',
+                          padding: '0.35rem 0.65rem',
                           borderRadius: '8px',
-                          border: isChecked ? '1.5px solid #ea580c' : '1px solid #cbd5e1',
-                          background: isChecked ? '#fff7ed' : '#ffffff',
-                          color: isChecked ? '#ea580c' : '#334155',
-                          fontWeight: isChecked ? 800 : 600,
-                          fontSize: '0.78rem',
-                          cursor: 'pointer',
+                          border: isChecked ? '1.5px solid #059669' : '1px solid #cbd5e1',
+                          background: isChecked ? '#ecfdf5' : '#ffffff',
+                          color: isChecked ? '#047857' : '#475569',
+                          fontWeight: 800,
+                          fontSize: '0.75rem',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '0.3rem'
+                          gap: '0.25rem',
+                          cursor: 'pointer'
                         }}
                       >
-                        {isChecked && <Check size={12} />} {fmt}
+                        {isChecked ? <Check size={12} strokeWidth={3} /> : null}
+                        <span>{fmt}</span>
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Placement & Dimensions */}
-              {selectedService === 'embroidery' && (
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', display: 'block', marginBottom: '0.45rem' }}>
-                    Placement & Sizing
-                  </label>
-                  <select
-                    value={placement}
-                    onChange={(e) => setPlacement(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 0.75rem',
-                      borderRadius: '10px',
-                      border: '1.5px solid #cbd5e1',
-                      fontSize: '0.85rem',
-                      background: '#ffffff',
-                      marginBottom: '0.5rem',
-                      outline: 'none'
-                    }}
-                  >
-                    <option value='Left Chest / Polo (up to 4.0")'>Left Chest / Polo (up to 4.0")</option>
-                    <option value='Cap / Hat Front (up to 2.25")'>Cap / Hat Front (up to 2.25")</option>
-                    <option value='Full Back / Jacket Crest (9"-12"+)'>Full Back / Jacket Crest (9"-12"+)</option>
-                    <option value='Sleeve / Visor Emblem'>Sleeve / Visor Emblem</option>
-                    <option value='Custom Sizing'>Custom Dimensions</option>
-                  </select>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                    <div>
-                      <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginBottom: '0.2rem' }}>Width (Inches)</span>
-                      <input
-                        type="text"
-                        value={widthInches}
-                        onChange={(e) => setWidthInches(e.target.value)}
-                        placeholder="3.5"
-                        style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.82rem', boxSizing: 'border-box' }}
-                      />
+              {/* Express Rush 4-8h Toggle */}
+              <div 
+                onClick={() => setIsRush(!isRush)}
+                style={{
+                  border: isRush ? '1.5px solid #f59e0b' : '1px solid #e2e8f0',
+                  background: isRush ? '#fffbeb' : '#ffffff',
+                  borderRadius: '12px',
+                  padding: '0.75rem 1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <div style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '8px',
+                    background: isRush ? '#fef3c7' : '#f1f5f9',
+                    color: isRush ? '#d97706' : '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Zap size={18} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#0f172a' }}>
+                      4–8 Hour Express Rush
                     </div>
-                    <div>
-                      <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginBottom: '0.2rem' }}>Height (Inches)</span>
-                      <input
-                        type="text"
-                        value={heightInches}
-                        onChange={(e) => setHeightInches(e.target.value)}
-                        placeholder="3.5"
-                        style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.82rem', boxSizing: 'border-box' }}
-                      />
+                    <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                      Guaranteed same-day prioritized queue
                     </div>
                   </div>
                 </div>
-              )}
 
-              {/* Special Instructions */}
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', display: 'block', marginBottom: '0.35rem' }}>
-                  Specific Instructions / Thread Notes
-                </label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="e.g. Please use 3D puff on text, keep background transparent, preserve tiny details..."
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    fontSize: '0.82rem',
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#d97706' }}>
+                    +$10.00
+                  </span>
+                  <div style={{
+                    width: '36px',
+                    height: '20px',
                     borderRadius: '10px',
-                    border: '1.5px solid #cbd5e1',
-                    outline: 'none',
-                    background: '#ffffff',
+                    background: isRush ? '#d97706' : '#cbd5e1',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: isRush ? 'flex-end' : 'flex-start',
+                    padding: '2px',
                     boxSizing: 'border-box',
-                    resize: 'none'
-                  }}
-                />
+                    marginTop: '2px'
+                  }}>
+                    <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#ffffff' }} />
+                  </div>
+                </div>
               </div>
 
             </div>
           )}
 
-          {/* STEP 4: REVIEW & INSTANT QUOTE */}
+          {/* =========================================================================
+              STEP 4: ORDER REVIEW & CONFIRMATION
+              ========================================================================= */}
           {step === 4 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               
-              {/* Summary Card */}
-              <div style={{
-                background: '#f8fafc',
-                border: '1.5px solid #e2e8f0',
-                borderRadius: '16px',
-                padding: '1.15rem'
-              }}>
-                <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem' }}>
-                  {uploadedArtwork ? (
+              {/* Review Card */}
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1rem', background: '#f8fafc' }}>
+                <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
+                  {uploadedArtwork?.url ? (
                     <img
                       src={uploadedArtwork.url}
-                      alt={orderTitle}
-                      style={{ width: '58px', height: '58px', borderRadius: '10px', objectFit: 'cover', border: '2px solid #f97316' }}
+                      alt="Artwork"
+                      style={{ width: '56px', height: '56px', borderRadius: '10px', objectFit: 'cover', border: '1px solid #cbd5e1' }}
                     />
                   ) : (
-                    <div style={{ width: '58px', height: '58px', borderRadius: '10px', background: '#ffedd5', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: '56px', height: '56px', borderRadius: '10px', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
                       <ImageIcon size={24} />
                     </div>
                   )}
 
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase' }}>
-                      {activeServiceObj.title}
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase' }}>
+                      {activePkg?.title}
                     </span>
-                    <h4 style={{ margin: '0.15rem 0 0', fontSize: '0.95rem', fontWeight: 900, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {orderTitle || 'Production Artwork Job'}
+                    <h4 style={{ margin: '0.1rem 0 0', fontSize: '0.95rem', fontWeight: 900, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {orderTitle || 'Custom Design Order'}
                     </h4>
                     <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                      {isRush ? '⚡ 4-8hr Express Turnaround' : '⏱️ 12-24hr Standard Turnaround'}
+                      {widthInches}" x {heightInches}" • {placement}
                     </span>
                   </div>
                 </div>
 
                 {/* Specs List */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.78rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.78rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#64748b' }}>Formats:</span>
+                    <span style={{ color: '#64748b' }}>Service Tier:</span>
+                    <strong style={{ color: '#0f172a' }}>{activePkg?.badge || 'STANDARD'}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#64748b' }}>Target Formats:</span>
                     <strong style={{ color: '#0f172a' }}>{selectedFormats.join(', ')}</strong>
                   </div>
-                  {selectedService === 'embroidery' && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#64748b' }}>Placement:</span>
-                      <strong style={{ color: '#0f172a' }}>{placement}</strong>
-                    </div>
-                  )}
-                  {notes && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#64748b' }}>Instructions:</span>
-                      <span style={{ color: '#0f172a', fontWeight: 600, maxWidth: '60%', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {notes}
-                      </span>
-                    </div>
-                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#64748b' }}>Turnaround ETA:</span>
+                    <strong style={{ color: isRush ? '#d97706' : '#047857' }}>
+                      {isRush ? '⚡ 4–8 Hours Express' : activePkg?.turnaround || '12–24 Hours'}
+                    </strong>
+                  </div>
                 </div>
               </div>
 
-              {/* Price Calculation Card */}
-              <div style={{
-                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                color: '#ffffff',
-                borderRadius: '16px',
-                padding: '1.15rem'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.8rem', color: '#94a3b8' }}>
-                  <span>Base Studio Rate ({activeServiceObj.title})</span>
-                  <span style={{ color: '#ffffff', fontWeight: 700 }}>${basePrice.toFixed(2)}</span>
+              {/* Special Instructions Notes */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.35rem' }}>
+                  Digitizer Instructions / Thread Notes (Optional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="e.g. Please use matte white thread on navy fabric, keep lettering sharp and underlay stable..."
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '10px',
+                    border: '1.5px solid #cbd5e1',
+                    fontSize: '0.82rem',
+                    color: '#0f172a',
+                    background: '#ffffff',
+                    resize: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              {/* Price Breakdown */}
+              <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '14px', padding: '0.85rem 1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#334155', marginBottom: '0.25rem' }}>
+                  <span>Package Base Price:</span>
+                  <span>${basePrice.toFixed(2)}</span>
                 </div>
                 {isRush && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.8rem', color: '#fbbf24' }}>
-                    <span>⚡ Rush Turnaround Fee (4-8 Hours)</span>
-                    <span style={{ fontWeight: 800 }}>+$10.00</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#d97706', marginBottom: '0.25rem' }}>
+                    <span>4–8h Express Rush Fee:</span>
+                    <span>+$10.00</span>
                   </div>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255, 255, 255, 0.15)', paddingTop: '0.65rem', marginTop: '0.5rem' }}>
-                  <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>Total Price Quote</span>
-                  <span style={{ fontSize: '1.45rem', fontWeight: 900, color: '#f97316' }}>${totalPrice.toFixed(2)}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #a7f3d0', paddingTop: '0.45rem', marginTop: '0.25rem' }}>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#0f172a' }}>Total Due:</span>
+                  <span style={{ fontSize: '1.35rem', fontWeight: 900, color: '#047857' }}>
+                    ${totalPrice.toFixed(2)}
+                  </span>
                 </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.72rem', color: '#64748b' }}>
-                <ShieldCheck size={14} style={{ color: '#16a34a', flexShrink: 0 }} />
-                <span>100% Quality Guaranteed • Free Unlimited Minor Revisions</span>
               </div>
 
             </div>
           )}
 
-          {/* STEP 5: ORDER CONFIRMATION CELEBRATION */}
-          {step === 5 && createdOrderObj && (
-            <div style={{ textAlign: 'center', padding: '1rem 0.5rem' }}>
+          {/* =========================================================================
+              STEP 5: CONFIRMATION & NEXT STEPS
+              ========================================================================= */}
+          {step === 5 && (
+            <div style={{ textAlign: 'center', padding: '1rem 0.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
               <div style={{
                 width: '64px',
                 height: '64px',
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                color: '#ffffff',
+                background: '#ecfdf5',
+                color: '#059669',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                margin: '0 auto 1rem',
-                boxShadow: '0 8px 24px rgba(16, 185, 129, 0.35)'
+                margin: '0 auto'
               }}>
-                <Check size={32} strokeWidth={3} />
+                <CheckCircle2 size={36} />
               </div>
 
-              <h3 style={{ margin: '0 0 0.35rem', fontSize: '1.25rem', fontWeight: 900, color: '#0f172a' }}>
-                Order Placed Successfully!
+              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: '#0f172a' }}>
+                Order Successfully Placed!
               </h3>
-              <p style={{ margin: '0 0 1.25rem', fontSize: '0.82rem', color: '#64748b', lineHeight: 1.4 }}>
-                Our digitizing team has received your artwork and is preparing the machine production files.
+              
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.65rem 1rem', display: 'inline-block' }}>
+                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Order Identifier: </span>
+                <strong style={{ fontSize: '0.85rem', color: '#059669' }}>
+                  {formatOrderId(createdOrderObj?.id)}
+                </strong>
+              </div>
+
+              <p style={{ margin: 0, fontSize: '0.8rem', color: '#475569', lineHeight: 1.4, maxWidth: '380px' }}>
+                Our master digitizers are reviewing your artwork specifications. You will receive production stitch test updates straight to your dashboard.
               </p>
 
-              <div style={{
-                background: '#f8fafc',
-                border: '1.5px solid #e2e8f0',
-                borderRadius: '16px',
-                padding: '1rem',
-                marginBottom: '1.5rem',
-                textAlign: 'left'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Order Number:</span>
-                  <span style={{
-                    fontSize: '0.82rem',
-                    fontWeight: 900,
-                    color: '#ea580c',
-                    background: '#fff7ed',
-                    padding: '0.15rem 0.5rem',
-                    borderRadius: '6px'
-                  }}>
-                    {formatOrderId(createdOrderObj.id)}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.78rem' }}>
-                  <span style={{ color: '#64748b' }}>Service:</span>
-                  <strong style={{ color: '#0f172a' }}>{createdOrderObj.serviceCategory || activeServiceObj.title}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem' }}>
-                  <span style={{ color: '#64748b' }}>Estimated Delivery:</span>
-                  <strong style={{ color: '#16a34a' }}>{isRush ? '4-8 Hours (Express)' : '12-24 Hours'}</strong>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%', maxWidth: '340px', marginTop: '0.5rem' }}>
                 <button
                   type="button"
                   onClick={handlePayNow}
-                  className="btn btn-primary-orange"
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', fontWeight: 800, fontSize: '0.9rem' }}
+                  style={{
+                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '0.85rem',
+                    fontWeight: 900,
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(5, 150, 105, 0.3)'
+                  }}
                 >
-                  <Zap size={16} /> Pay ${totalPrice.toFixed(2)} via Wallet / Card
+                  Pay & Instant Dispatch (${totalPrice.toFixed(2)})
                 </button>
 
                 <button
                   type="button"
                   onClick={() => {
-                    setSelectedOrderForDrawer(createdOrderObj);
+                    if (createdOrderObj) setSelectedOrderForDrawer(createdOrderObj);
                     onClose();
                   }}
                   style={{
-                    width: '100%',
-                    padding: '0.65rem',
-                    borderRadius: '12px',
-                    border: '1.5px solid #cbd5e1',
-                    background: '#ffffff',
+                    background: '#f8fafc',
                     color: '#0f172a',
+                    border: '1.5px solid #cbd5e1',
+                    borderRadius: '12px',
+                    padding: '0.75rem',
                     fontWeight: 800,
                     fontSize: '0.85rem',
                     cursor: 'pointer'
                   }}
                 >
-                  View Order Live Tracker
+                  Track Order in Dashboard
                 </button>
               </div>
+
             </div>
           )}
 
         </div>
 
-        {/* MODAL FOOTER CONTROLS (Steps 1 - 4) */}
+        {/* BOTTOM NAVIGATION CONTROLS */}
         {step < 5 && (
           <div style={{
-            padding: '1rem 1.25rem',
+            padding: '0.85rem 1.25rem',
             borderTop: '1px solid #e2e8f0',
             background: '#ffffff',
             display: 'flex',
@@ -922,22 +1330,22 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
             {step > 1 ? (
               <button
                 type="button"
-                onClick={() => setStep(s => s - 1)}
+                onClick={() => setStep(step - 1)}
                 style={{
-                  padding: '0.65rem 1rem',
+                  background: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
                   borderRadius: '10px',
-                  border: '1.5px solid #cbd5e1',
-                  background: '#ffffff',
-                  color: '#334155',
+                  padding: '0.65rem 1rem',
+                  fontSize: '0.82rem',
                   fontWeight: 800,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
+                  color: '#334155',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.35rem'
+                  gap: '0.35rem',
+                  cursor: 'pointer'
                 }}
               >
-                <ArrowLeft size={16} /> Back
+                <ArrowLeft size={15} /> Back
               </button>
             ) : (
               <div />
@@ -946,51 +1354,55 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
             {step < 4 ? (
               <button
                 type="button"
-                onClick={() => {
-                  if (step === 2 && !uploadedArtwork) {
-                    showToast('Please upload an artwork image or logo to continue', 'info');
-                    return;
-                  }
-                  setStep(s => s + 1);
-                }}
-                className="btn btn-primary-orange"
+                onClick={() => setStep(step + 1)}
                 style={{
-                  padding: '0.65rem 1.25rem',
+                  background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                  border: 'none',
                   borderRadius: '10px',
-                  fontWeight: 800,
+                  padding: '0.65rem 1.35rem',
                   fontSize: '0.85rem',
+                  fontWeight: 900,
+                  color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.4rem'
+                  gap: '0.4rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 3px 10px rgba(5, 150, 105, 0.25)'
                 }}
               >
-                Next Step <ArrowRight size={16} />
+                <span>Continue</span>
+                <ArrowRight size={15} />
               </button>
             ) : (
               <button
                 type="button"
                 onClick={handleSubmitOrder}
                 disabled={isSubmitting}
-                className="btn btn-primary-orange"
                 style={{
-                  padding: '0.75rem 1.5rem',
+                  background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                  border: 'none',
                   borderRadius: '10px',
+                  padding: '0.65rem 1.35rem',
+                  fontSize: '0.88rem',
                   fontWeight: 900,
-                  fontSize: '0.9rem',
+                  color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.45rem',
-                  opacity: isSubmitting ? 0.6 : 1,
-                  cursor: isSubmitting ? 'not-allowed' : 'pointer'
+                  gap: '0.4rem',
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 14px rgba(5, 150, 105, 0.35)',
+                  opacity: isSubmitting ? 0.7 : 1
                 }}
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Submitting Order...
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Placing Order...</span>
                   </>
                 ) : (
                   <>
-                    Submit Order • ${totalPrice.toFixed(2)} <ArrowRight size={16} />
+                    <span>Place Order (${totalPrice.toFixed(2)})</span>
+                    <Check size={16} strokeWidth={3} />
                   </>
                 )}
               </button>

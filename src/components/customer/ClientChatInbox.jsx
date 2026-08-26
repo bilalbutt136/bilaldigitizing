@@ -31,7 +31,10 @@ import {
   Sparkles,
   ChevronDown,
   ExternalLink,
-  Inbox
+  Inbox,
+  User,
+  ShieldCheck,
+  Zap
 } from 'lucide-react';
 
 const parseMessageTime = (msg) => {
@@ -62,31 +65,28 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   const { 
     authUser, 
     currentUser, 
+    isAuthenticated,
     orders = [], 
     setSelectedOrderForDrawer, 
     showToast,
+    setIsAuthModalOpen,
+    setAuthModalMode,
     formatOrderId = (id) => `#${String(id || '').substring(0, 6).toUpperCase()}`
   } = useAppState();
 
-  const activeUser = authUser || currentUser || {
-    name: 'Client',
-    email: 'client@studio.com',
-    company: 'Studio Account'
-  };
-
-  const clientEmail = (activeUser.email || '').toLowerCase().trim();
-  const clientName = activeUser.name || 'Client';
+  const clientEmail = (authUser?.email || currentUser?.email || '').toLowerCase().trim();
+  const clientName = authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || (clientEmail ? clientEmail.split('@')[0] : 'Guest Visitor');
 
   const isInitialSupport = initialOrderId === 'help-support' || initialOrderId === 'support' || initialOrderId === 'general-support' || (initialOrderId && String(initialOrderId).startsWith('support-'));
   const [activeChannel, setActiveChannel] = useState(isInitialSupport ? 'support' : 'inbox');
 
   const canonicalChatId = useMemo(() => {
     if (activeChannel === 'support') {
-      return clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')
+      return clientEmail && !clientEmail.includes('guest@bdigitizing.pro')
         ? `support-${clientEmail}`
         : 'general-support';
     }
-    return clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')
+    return clientEmail && !clientEmail.includes('guest@bdigitizing.pro')
       ? `inbox-${clientEmail}`
       : 'inbox-client';
   }, [clientEmail, activeChannel]);
@@ -128,7 +128,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   const loadChatHistory = async () => {
     setLoading(true);
     try {
-      const email = clientEmail && clientEmail !== 'client@studio.com' ? clientEmail : '';
+      const email = clientEmail || '';
       const directMsgs = await fetchChatMessages(canonicalChatId, email);
       if (Array.isArray(directMsgs) && directMsgs.length > 0) {
         const sorted = [...directMsgs].sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
@@ -158,7 +158,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     }
   }, [canonicalChatId, clientEmail]);
 
-  // Sync if initialOrderId prop changes (e.g. clicking sidebar Customer Support vs Inbox)
+  // Sync if initialOrderId prop changes
   useEffect(() => {
     if (initialOrderId === 'help-support' || initialOrderId === 'support' || initialOrderId === 'general-support' || (initialOrderId && String(initialOrderId).startsWith('support-'))) {
       setActiveChannel('support');
@@ -285,7 +285,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     const newMsg = {
       id: tempMsgId,
       conversation_id: canonicalChatId,
-      client_email: clientEmail,
+      client_email: clientEmail || 'guest@bdigitizing.pro',
       sender: 'client',
       senderName: clientName,
       sender_name: clientName,
@@ -315,7 +315,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     broadcastTypingStatus(canonicalChatId, clientName, 'client', false);
 
     try {
-      await addChatMessage(canonicalChatId, newMsg, activeUser);
+      await addChatMessage(canonicalChatId, newMsg, authUser || currentUser || { name: clientName, email: clientEmail });
     } catch (err) {
       console.error('Send message error:', err);
       if (showToast) showToast('Failed to deliver message. Retrying...', 'error');
@@ -334,10 +334,10 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     setIsUploadingAttachment(true);
     try {
       const uploadRes = await uploadFileToCloudinaryFull(file);
-      if (uploadRes && uploadRes.url) {
+      if (uploadRes && (uploadRes.url || uploadRes.secure_url)) {
         setAttachedFile({
           name: file.name,
-          url: uploadRes.url,
+          url: uploadRes.secure_url || uploadRes.url,
           size: file.size,
           format: file.name.split('.').pop().toLowerCase()
         });
@@ -363,33 +363,33 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       minHeight: 0,
       maxHeight: '100%',
       flex: 1,
-      background: 'var(--color-surface, #ffffff)',
-      borderRadius: '16px',
-      border: '1.5px solid var(--color-border)',
-      boxShadow: 'var(--shadow-sm, 0 4px 16px rgba(0, 0, 0, 0.04))',
+      background: '#ffffff',
+      fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
       overflow: 'hidden',
       boxSizing: 'border-box'
     }}>
+      
+      {/* 1. TOP CHANNEL SELECTOR HEADER */}
       <div style={{
-        padding: '0.65rem 1.25rem 0',
-        background: '#f8fafc',
-        borderBottom: '1px solid var(--color-border)',
+        padding: '0.65rem 1rem 0',
+        background: '#ffffff',
+        borderBottom: '1px solid #e2e8f0',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexShrink: 0
       }}>
-        <div style={{ display: 'flex', gap: '6px' }}>
+        <div style={{ display: 'flex', gap: '4px' }}>
           <button
             type="button"
             onClick={() => handleChannelSwitch('inbox')}
             style={{
-              padding: '0.45rem 0.75rem',
-              borderRadius: '8px 8px 0 0',
-              border: '1px solid var(--color-border)',
-              borderBottom: activeChannel === 'inbox' ? '2px solid var(--color-primary)' : '1px solid transparent',
-              background: activeChannel === 'inbox' ? 'var(--color-surface)' : 'transparent',
-              color: activeChannel === 'inbox' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+              padding: '0.55rem 0.85rem',
+              borderRadius: '10px 10px 0 0',
+              border: '1px solid #e2e8f0',
+              borderBottom: activeChannel === 'inbox' ? '2.5px solid #059669' : '1px solid transparent',
+              background: activeChannel === 'inbox' ? '#f0fdf4' : 'transparent',
+              color: activeChannel === 'inbox' ? '#047857' : '#64748b',
               fontWeight: activeChannel === 'inbox' ? 900 : 700,
               fontSize: '0.8rem',
               cursor: 'pointer',
@@ -400,20 +400,20 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               transition: 'all 0.15s ease'
             }}
           >
-            <Inbox size={14} />
-            <span>Customer Inbox</span>
+            <MessageSquare size={14} style={{ color: activeChannel === 'inbox' ? '#059669' : '#64748b' }} />
+            <span>Studio Digitizers</span>
           </button>
 
           <button
             type="button"
             onClick={() => handleChannelSwitch('support')}
             style={{
-              padding: '0.45rem 0.75rem',
-              borderRadius: '8px 8px 0 0',
-              border: '1px solid var(--color-border)',
-              borderBottom: activeChannel === 'support' ? '2px solid var(--color-primary)' : '1px solid transparent',
-              background: activeChannel === 'support' ? 'var(--color-surface)' : 'transparent',
-              color: activeChannel === 'support' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+              padding: '0.55rem 0.85rem',
+              borderRadius: '10px 10px 0 0',
+              border: '1px solid #e2e8f0',
+              borderBottom: activeChannel === 'support' ? '2.5px solid #059669' : '1px solid transparent',
+              background: activeChannel === 'support' ? '#f0fdf4' : 'transparent',
+              color: activeChannel === 'support' ? '#047857' : '#64748b',
               fontWeight: activeChannel === 'support' ? 900 : 700,
               fontSize: '0.8rem',
               cursor: 'pointer',
@@ -424,210 +424,89 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
               transition: 'all 0.15s ease'
             }}
           >
-            <Headphones size={14} />
-            <span>24/7 Support</span>
+            <Headphones size={14} style={{ color: activeChannel === 'support' ? '#059669' : '#64748b' }} />
+            <span>24/7 Help Desk</span>
           </button>
         </div>
 
-        <button
-          type="button"
-          onClick={loadChatHistory}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-muted)',
-            cursor: 'pointer',
-            fontSize: '0.75rem',
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.25rem',
-            padding: '0.25rem 0.5rem'
-          }}
-          title="Refresh messages"
-        >
-          <RotateCcw size={12} /> Sync
-        </button>
-      </div>
-
-      <div style={{
-        padding: '0.75rem 1.25rem',
-        borderBottom: '1px solid var(--color-border)',
-        background: '#ffffff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexShrink: 0
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ position: 'relative' }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              background: activeChannel === 'inbox' ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' : '#ecfdf5',
-              color: activeChannel === 'inbox' ? '#ffffff' : '#059669',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 900,
-              fontSize: '0.9rem',
-              border: activeChannel === 'inbox' ? '2px solid var(--color-primary)' : '2px solid var(--color-success)'
-            }}>
-              {activeChannel === 'inbox' ? 'BD' : <Headphones size={18} />}
-            </div>
-            <span style={{
-              position: 'absolute',
-              bottom: 0,
-              right: 0,
-              width: '10px',
-              height: '10px',
-              borderRadius: '50%',
-              background: '#10b981',
-              border: '2px solid var(--color-surface)'
-            }} />
-          </div>
-
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: 'var(--color-text-primary)' }}>
-                {activeChannel === 'inbox' ? 'Studio Management & Digitizing Team' : '24/7 Live Customer Support'}
-              </h3>
-              <span style={{
-                fontSize: '0.65rem',
-                background: activeChannel === 'inbox' ? 'var(--color-primary-light)' : 'var(--color-success-light, #ecfdf5)',
-                color: activeChannel === 'inbox' ? 'var(--color-primary)' : 'var(--color-success-text, #059669)',
-                border: `1px solid ${activeChannel === 'inbox' ? 'var(--color-border)' : 'var(--color-border)'}`,
-                padding: '0.05rem 0.4rem',
-                borderRadius: '9999px',
-                fontWeight: 800
-              }}>
-                {activeChannel === 'inbox' ? 'Private Studio Inbox' : 'Support Helpdesk'}
-              </span>
-            </div>
-            <div style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 700, marginTop: '0.1rem' }}>
-              ● Online • Instant Replies
-            </div>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', paddingBottom: '0.35rem' }}>
+          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981' }} />
+          <span style={{ fontSize: '0.7rem', color: '#047857', fontWeight: 800 }}>
+            Online
+          </span>
         </div>
-
-        {activeChannel === 'inbox' && orders && orders.length > 0 && (
-          <div style={{ position: 'relative' }}>
-            <button
-              type="button"
-              onClick={() => setIsOrdersMenuOpen(prev => !prev)}
-              style={{
-                background: '#f8fafc',
-                border: '1.5px solid var(--color-border)',
-                color: 'var(--navy-800)',
-                padding: '0.35rem 0.7rem',
-                borderRadius: '8px',
-                fontSize: '0.78rem',
-                fontWeight: 800,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                cursor: 'pointer'
-              }}
-            >
-              <ShoppingBag size={14} className="text-orange-500" />
-              <span>Reference Order ({orders.length})</span>
-              <ChevronDown size={13} />
-            </button>
-
-            {isOrdersMenuOpen && (
-              <div style={{
-                position: 'absolute',
-                top: '110%',
-                right: 0,
-                width: '280px',
-                background: '#ffffff',
-                borderRadius: '12px',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-                border: '1.5px solid var(--color-border)',
-                padding: '0.5rem',
-                zIndex: 50,
-                maxHeight: '300px',
-                overflowY: 'auto'
-              }}>
-                <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', padding: '0.35rem 0.5rem', borderBottom: '1px solid #f1f5f9' }}>
-                  Click an order to reference in chat:
-                </div>
-                {orders.map(ord => {
-                  const ordNum = formatOrderId(ord.id);
-                  return (
-                    <div
-                      key={ord.id}
-                      onClick={() => {
-                        const tag = `[Regarding Order ${ordNum} - ${ord.title || ord.service_category || 'Digitizing'}] `;
-                        setMessageInput(prev => prev.includes(tag) ? prev : `${tag}${prev}`);
-                        setIsOrdersMenuOpen(false);
-                      }}
-                      style={{
-                        padding: '0.5rem 0.6rem',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        marginBottom: '2px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        fontSize: '0.78rem'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                    >
-                      <div>
-                        <strong style={{ color: 'var(--navy-900)' }}>{ordNum}</strong>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{ord.title || ord.service_category || 'Embroidery'}</div>
-                      </div>
-                      <span style={{ fontSize: '0.65rem', background: '#fff7ed', color: '#ea580c', fontWeight: 800, padding: '0.1rem 0.35rem', borderRadius: '4px' }}>
-                        Add Tag
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
+      {/* GUEST SIGN-IN BANNER (If not authenticated) */}
+      {!isAuthenticated && !clientEmail && (
+        <div style={{
+          background: '#ecfdf5',
+          borderBottom: '1px solid #a7f3d0',
+          padding: '0.5rem 1rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: '0.75rem',
+          color: '#065f46',
+          flexShrink: 0
+        }}>
+          <span>👋 Chatting as Guest. Sign in to save history across devices.</span>
+          <button
+            type="button"
+            onClick={() => {
+              setAuthModalMode('login');
+              setIsAuthModalOpen(true);
+            }}
+            style={{
+              background: '#047857',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '0.2rem 0.55rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              fontSize: '0.7rem'
+            }}
+          >
+            Sign In
+          </button>
+        </div>
+      )}
+
+      {/* 2. CHAT FEED CONTAINER */}
       <div 
         ref={chatFeedRef}
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '1.25rem 1.5rem',
-          background: '#efeae2',
-          backgroundImage: 'radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 0)',
-          backgroundSize: '20px 20px',
+          padding: '1rem 1.15rem',
+          background: '#f8fafc',
           display: 'flex',
           flexDirection: 'column',
-          gap: '0.75rem'
+          gap: '0.65rem'
         }}
       >
         <div style={{
-          margin: '0.25rem auto 0.75rem auto',
-          padding: '0.35rem 0.9rem',
-          borderRadius: '8px',
-          background: 'rgba(255, 255, 255, 0.85)',
-          border: '1px solid rgba(0, 0, 0, 0.08)',
-          fontSize: '0.72rem',
-          color: 'var(--navy-800)',
+          margin: '0 auto 0.5rem auto',
+          padding: '0.35rem 0.85rem',
+          borderRadius: '20px',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          fontSize: '0.7rem',
+          color: '#64748b',
           fontWeight: 700,
           textAlign: 'center',
-          maxWidth: '420px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)'
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)'
         }}>
           {activeChannel === 'inbox' 
-            ? '🔒 Private Customer Inbox with Studio Digitizers & Management.'
-            : '🎧 24/7 Live Support Helpdesk for inquiries & technical assistance.'}
+            ? '🔒 Private Studio Chat with Master Digitizers & Technical Team.'
+            : '🎧 24/7 Live Customer Helpdesk for questions & order assistance.'}
         </div>
 
         {loading ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '0.5rem', color: 'var(--text-muted)' }}>
-            <Loader2 size={20} className="animate-spin text-orange-500" />
-            <span>Loading conversation...</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '0.5rem', color: '#64748b' }}>
+            <Loader2 size={20} className="animate-spin" style={{ color: '#059669' }} />
+            <span style={{ fontSize: '0.85rem' }}>Loading conversation history...</span>
           </div>
         ) : messages.length === 0 ? (
           <div style={{
@@ -635,29 +514,29 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
             textAlign: 'center',
             padding: '2.5rem 1.5rem',
             background: '#ffffff',
-            borderRadius: '16px',
-            border: '1.5px solid var(--color-border)',
-            maxWidth: '380px',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.05)'
+            borderRadius: '18px',
+            border: '1.5px solid #e2e8f0',
+            maxWidth: '340px',
+            boxShadow: '0 4px 14px rgba(0,0,0,0.03)'
           }}>
             {activeChannel === 'inbox' ? (
               <>
-                <MessageSquare size={36} className="text-orange-500" style={{ margin: '0 auto 0.75rem' }} />
-                <h4 style={{ margin: '0 0 0.4rem', fontSize: '1rem', fontWeight: 900, color: 'var(--navy-950)' }}>
-                  Start Studio Conversation
+                <MessageSquare size={36} style={{ color: '#059669', margin: '0 auto 0.75rem' }} />
+                <h4 style={{ margin: '0 0 0.35rem', fontSize: '1rem', fontWeight: 900, color: '#0f172a' }}>
+                  Direct Studio Messaging
                 </h4>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                  Ask questions, request custom quotes, or discuss artwork revisions with our master digitizing team.
+                <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', lineHeight: 1.45 }}>
+                  Ask questions, request custom quotes, or discuss artwork modifications directly with our digitizing engineers.
                 </p>
               </>
             ) : (
               <>
-                <Headphones size={36} className="text-emerald-500" style={{ margin: '0 auto 0.75rem' }} />
-                <h4 style={{ margin: '0 0 0.4rem', fontSize: '1rem', fontWeight: 900, color: 'var(--navy-950)' }}>
-                  Customer Support Helpdesk
+                <Headphones size={36} style={{ color: '#059669', margin: '0 auto 0.75rem' }} />
+                <h4 style={{ margin: '0 0 0.35rem', fontSize: '1rem', fontWeight: 900, color: '#0f172a' }}>
+                  24/7 Studio Support
                 </h4>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                  How can our support team assist you today? Leave your question below.
+                <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', lineHeight: 1.45 }}>
+                  How can our support team help you today? Send any inquiry below.
                 </p>
               </>
             )}
@@ -671,11 +550,17 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
                 message={msg}
                 isMe={isClient}
                 isClient={isClient}
-                senderDisplayName={isClient ? 'You' : 'Studio Support'}
+                senderDisplayName={isClient ? 'You' : 'Studio Digitizer'}
                 clientName={clientName}
                 onReply={(m) => setReplyingTo(m)}
                 formatTime={formatChatTime}
                 themePreset="client"
+                onOrderClick={(ordId) => {
+                  if (orders && orders.length > 0) {
+                    const found = orders.find(o => String(o.id) === String(ordId));
+                    if (found) setSelectedOrderForDrawer(found);
+                  }
+                }}
               />
             );
           })
@@ -687,19 +572,20 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
             alignItems: 'center',
             gap: '0.5rem',
             padding: '0.45rem 0.85rem',
-            background: 'var(--color-surface)',
+            background: '#ffffff',
             borderRadius: '16px',
             width: 'fit-content',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
             margin: '0.25rem 0'
           }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-primary)' }}>
-              Studio Support is typing
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#059669' }}>
+              Studio Digitizer is typing
             </span>
             <span style={{ display: 'inline-flex', gap: '3px' }}>
-              <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-primary)' }} />
-              <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-primary)' }} />
-              <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-primary)' }} />
+              <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#059669' }} />
+              <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#059669' }} />
+              <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#059669' }} />
             </span>
           </div>
         )}
@@ -707,67 +593,73 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* 3. QUOTED REPLY BAR */}
       {replyingTo && (
         <div style={{
-          padding: '0.5rem 1.25rem',
-          background: 'var(--color-primary-light)',
-          borderTop: '1px solid var(--color-border)',
+          padding: '0.5rem 1rem',
+          background: '#f0fdf4',
+          borderTop: '1px solid #a7f3d0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '0.75rem',
           flexShrink: 0
         }}>
-          <div style={{ borderLeft: '3.5px solid var(--color-primary)', paddingLeft: '0.6rem', minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <Reply size={12} /> Replying to {replyingTo.senderName || replyingTo.sender_name || 'Support'}
+          <div style={{ borderLeft: '3.5px solid #059669', paddingLeft: '0.6rem', minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#047857', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Reply size={12} /> Replying to {replyingTo.senderName || replyingTo.sender_name || 'Studio Support'}
             </div>
-            <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {replyingTo.text || (replyingTo.attachment ? `📎 ${replyingTo.attachment}` : 'Attachment')}
+            <div style={{ fontSize: '0.75rem', color: '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {replyingTo.text || (replyingTo.attachment ? `📎 ${replyingTo.attachment}` : 'Message')}
             </div>
           </div>
           <button
             type="button"
             onClick={() => setReplyingTo(null)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', padding: '4px' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#047857', padding: '4px' }}
           >
             <X size={15} />
           </button>
         </div>
       )}
 
+      {/* 4. ATTACHED FILE PREVIEW CHIP */}
       {attachedFile && (
         <div style={{
-          padding: '0.5rem 1.25rem',
-          background: '#f8fafc',
-          borderTop: '1px solid var(--color-border)',
+          padding: '0.5rem 1rem',
+          background: '#ffffff',
+          borderTop: '1px solid #e2e8f0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <FileText size={16} className="text-orange-500" />
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--navy-900)' }}>
+            <FileText size={16} style={{ color: '#059669' }} />
+            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>
               {attachedFile.name}
+            </span>
+            <span style={{ fontSize: '0.68rem', background: '#ecfdf5', color: '#047857', fontWeight: 800, padding: '0.08rem 0.35rem', borderRadius: '4px' }}>
+              {attachedFile.format?.toUpperCase()}
             </span>
           </div>
           <button
             type="button"
             onClick={() => setAttachedFile(null)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+            style={{ background: '#fee2e2', border: 'none', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#dc2626' }}
           >
-            <X size={15} />
+            <X size={13} />
           </button>
         </div>
       )}
 
+      {/* 5. PROFESSIONAL WRITING & INPUT BAR */}
       <form 
         onSubmit={handleSendMessage}
         style={{
           padding: '0.65rem 0.85rem',
-          background: 'var(--color-surface, #ffffff)',
-          borderTop: '1.5px solid var(--color-border)',
+          background: '#ffffff',
+          borderTop: '1.5px solid #e2e8f0',
           display: 'flex',
           alignItems: 'center',
           gap: '0.45rem',
@@ -785,17 +677,18 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           accept="image/*,.pdf,.dst,.pes,.emb,.exp,.jef,.ai,.eps,.svg,.cdr"
         />
 
+        {/* Attachment Button */}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploadingAttachment}
           style={{
-            background: 'var(--color-subtle, #f1f5f9)',
-            border: '1.5px solid var(--color-border)',
-            color: 'var(--color-text-secondary, var(--navy-700))',
-            width: '36px',
-            height: '36px',
-            borderRadius: '8px',
+            background: '#f8fafc',
+            border: '1.5px solid #cbd5e1',
+            color: '#475569',
+            width: '38px',
+            height: '38px',
+            borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -805,26 +698,27 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           }}
           title="Attach Image, PDF, Vector or Machine File"
         >
-          {isUploadingAttachment ? <Loader2 size={16} className="animate-spin text-orange-500" /> : <Paperclip size={16} />}
+          {isUploadingAttachment ? <Loader2 size={16} className="animate-spin" style={{ color: '#059669' }} /> : <Paperclip size={18} />}
         </button>
 
+        {/* Textarea Input */}
         <textarea
           rows={1}
           value={messageInput}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          placeholder={activeChannel === 'inbox' ? 'Type a message to Studio Digitizers... (Shift+Enter for new line)' : 'Type a question to 24/7 Support... (Shift+Enter for new line)'}
+          placeholder={activeChannel === 'inbox' ? 'Type a message to Studio Digitizers...' : 'Type a question to 24/7 Support...'}
           style={{
             flex: 1,
             minWidth: 0,
-            minHeight: '36px',
-            maxHeight: '120px',
-            borderRadius: '8px',
-            border: '1.5px solid var(--color-border)',
-            padding: '0.45rem 0.85rem',
-            fontSize: '0.85rem',
-            color: 'var(--color-text-primary, var(--navy-950))',
-            background: 'var(--color-subtle, #f8fafc)',
+            minHeight: '38px',
+            maxHeight: '110px',
+            borderRadius: '10px',
+            border: '1.5px solid #cbd5e1',
+            padding: '0.55rem 0.85rem',
+            fontSize: '0.88rem',
+            color: '#0f172a',
+            background: '#f8fafc',
             outline: 'none',
             boxSizing: 'border-box',
             resize: 'none',
@@ -834,26 +728,27 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           }}
         />
 
+        {/* Send Button */}
         <button
           type="submit"
           disabled={(!messageInput.trim() && !attachedFile) || isUploadingAttachment}
           style={{
-            height: '36px',
-            padding: '0 0.85rem',
-            borderRadius: '8px',
-            background: (messageInput.trim() || attachedFile) ? 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)' : '#cbd5e1',
+            height: '38px',
+            padding: '0 0.95rem',
+            borderRadius: '10px',
+            background: (messageInput.trim() || attachedFile) ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : '#cbd5e1',
             border: 'none',
             color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             gap: '0.35rem',
             fontWeight: 800,
-            fontSize: '0.82rem',
+            fontSize: '0.85rem',
             cursor: (messageInput.trim() || attachedFile) ? 'pointer' : 'not-allowed',
             flexShrink: 0,
-            boxShadow: (messageInput.trim() || attachedFile) ? '0 4px 14px rgba(234, 88, 12, 0.35)' : 'none',
+            boxShadow: (messageInput.trim() || attachedFile) ? '0 3px 12px rgba(5, 150, 105, 0.3)' : 'none',
             transition: 'all 0.2s ease',
-            opacity: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 0.5 : 1
+            opacity: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 0.6 : 1
           }}
           title="Send message"
         >
@@ -861,6 +756,9 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           <Send size={14} />
         </button>
       </form>
+
     </div>
   );
 };
+
+export default ClientChatInbox;
