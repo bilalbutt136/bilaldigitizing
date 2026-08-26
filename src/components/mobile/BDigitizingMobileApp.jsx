@@ -445,7 +445,7 @@ export const BDigitizingMobileApp = () => {
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
-        paddingBottom: '70px',
+        paddingBottom: mobileTab === 'inbox' ? '0px' : '70px',
         overflowX: 'hidden',
         boxSizing: 'border-box',
         fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
@@ -861,49 +861,16 @@ export const BDigitizingMobileApp = () => {
           SCREEN 2: INBOX / MESSAGES
           ========================================================================= */}
       {mobileTab === 'inbox' && (
-        <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 70px)', overflow: 'hidden' }}>
-          
-          {/* Chat Top Bar */}
-          <div style={{
-            padding: '0.85rem 1.25rem',
-            borderBottom: '1px solid #f1f5f9',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: '#ffffff'
-          }}>
-            <div>
-              <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: '#0f172a' }}>
-                Studio Messages
-              </h2>
-              <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                Direct real-time communication with digitizers
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsSupportModalOpen(true)}
-              style={{
-                background: '#f0fdf4',
-                border: '1px solid #a7f3d0',
-                borderRadius: '10px',
-                padding: '0.45rem 0.75rem',
-                color: '#047857',
-                fontSize: '0.75rem',
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem'
-              }}
-            >
-              <HelpCircle size={15} /> Help
-            </button>
-          </div>
-
-          {/* Render Full Client Chat Inbox */}
-          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: 'calc(100dvh - 66px - env(safe-area-inset-bottom, 0px))',
+          maxHeight: 'calc(100dvh - 66px - env(safe-area-inset-bottom, 0px))',
+          overflow: 'hidden',
+          position: 'relative'
+        }}>
+          {/* Render Full Client Chat Inbox with built-in channels and complete scrolling */}
+          <div style={{ flex: 1, minHeight: 0, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <ClientChatInbox initialOrderId={selectedChatOrderId} />
           </div>
         </div>

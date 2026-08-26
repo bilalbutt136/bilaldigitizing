@@ -512,7 +512,7 @@ export async function POST(request) {
       let passedId = payload.conversation_id || '';
       const isSupport = isSupportConversation(passedId) || payload.isSupport === true || payload.channel === 'support';
       
-      let targetEmail = normalizeEmail(payload.client_email || payload.clientEmail || cleanUserEmail);
+      let targetEmail = normalizeEmail(payload.client_email || payload.clientEmail || (!isAdmin ? cleanUserEmail : ''));
       
       if (!targetEmail) {
         const idLower = String(passedId).toLowerCase();
@@ -520,9 +520,19 @@ export async function POST(request) {
         else if (idLower.startsWith('inbox-')) targetEmail = normalizeEmail(idLower.replace('inbox-', ''));
         else if (idLower.startsWith('direct-')) targetEmail = normalizeEmail(idLower.replace('direct-', ''));
         else if (idLower.startsWith('chat-')) targetEmail = normalizeEmail(idLower.replace('chat-', ''));
+        else if (idLower.startsWith('order-') || idLower.startsWith('ord-')) {
+          const cleanOrdId = passedId.replace(/^order-/, '').replace(/^#+/, '').trim();
+          try {
+            const { data: matchedOrd } = await supabase.from('orders').select('client_email').or(`id.eq.${cleanOrdId},id.eq.#${cleanOrdId}`).maybeSingle();
+            if (matchedOrd?.client_email) targetEmail = normalizeEmail(matchedOrd.client_email);
+          } catch {}
+        }
       }
 
-      const canonicalConvId = isSupport ? getCanonicalSupportId(targetEmail) : getCanonicalInboxId(targetEmail);
+      let canonicalConvId = passedId;
+      if (!canonicalConvId || canonicalConvId === 'inbox' || canonicalConvId === 'help-support' || canonicalConvId === 'support' || canonicalConvId === 'general-support') {
+        canonicalConvId = isSupport ? getCanonicalSupportId(targetEmail) : getCanonicalInboxId(targetEmail);
+      }
 
       const fallbackName = user?.user_metadata?.full_name || (targetEmail ? targetEmail.split('@')[0] : 'Client');
       const finalClientName = isAdmin ? (payload.client_name || payload.clientName || 'Customer') : (payload.sender_name || payload.senderName || fallbackName);

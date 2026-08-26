@@ -275,7 +275,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   };
 
   const handleSendMessage = async (e) => {
-    e?.preventDefault();
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
     if (!messageInput.trim() && !attachedFile) return;
 
     const nowIso = new Date().toISOString();
@@ -315,7 +315,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     broadcastTypingStatus(canonicalChatId, clientName, 'client', false);
 
     try {
-      await addChatMessage(canonicalChatId, newMsg, authUser || currentUser || { name: clientName, email: clientEmail });
+      await addChatMessage(canonicalChatId, newMsg);
     } catch (err) {
       console.error('Send message error:', err);
       if (showToast) showToast('Failed to deliver message. Retrying...', 'error');

@@ -718,11 +718,11 @@ export const AdminChatInbox = () => {
   };
 
   const handleSendMessage = async (e) => {
-    e?.preventDefault();
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
     if (!replyInput.trim() && !attachedFile) return;
     if (!currentActiveChatId) return;
 
-    const targetCustomerEmail = (activeInfo?.customerEmail || activeConv?.clientEmail || (currentActiveChatId ? currentActiveChatId.replace('support-', '').replace('inbox-', '').replace('direct-', '').replace('chat-', '') : '')).toLowerCase().trim();
+    const targetCustomerEmail = (activeInfo?.customerEmail || activeChat?.clientEmail || (currentActiveChatId ? currentActiveChatId.replace('support-', '').replace('inbox-', '').replace('direct-', '').replace('chat-', '') : '')).toLowerCase().trim();
 
     const nowIso = new Date().toISOString();
     const newMsg = {
@@ -740,12 +740,12 @@ export const AdminChatInbox = () => {
       attachment_type: attachedFile ? attachedFile.format : null,
       reply_to: replyingTo ? {
         id: replyingTo.id,
-        sender_name: replyingTo.senderName || replyingTo.sender_name || (activeInfo.customerName || 'Customer'),
+        sender_name: replyingTo.senderName || replyingTo.sender_name || (activeInfo?.customerName || 'Customer'),
         text: replyingTo.text,
         attachment: replyingTo.attachment_name || replyingTo.attachment,
         attachment_url: replyingTo.attachment_url
       } : null,
-      isSupport: activeSection === 'support' || isSupportThread(activeConv),
+      isSupport: activeSection === 'support' || isSupportThread(activeChat),
       timestamp: nowIso,
       created_at: nowIso
     };
