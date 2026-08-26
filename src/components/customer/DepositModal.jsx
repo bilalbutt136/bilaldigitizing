@@ -15,7 +15,8 @@ import {
   Lock,
   Zap,
   Coins,
-  ArrowLeft
+  ArrowLeft,
+  ChevronRight
 } from 'lucide-react';
 
 // Authentic Branded Payment Method SVG Components (matching CheckoutModal)

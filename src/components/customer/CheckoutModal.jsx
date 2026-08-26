@@ -13,7 +13,8 @@ import {
   Zap, 
   Coins,
   ArrowLeft,
-  ArrowRight
+  ArrowRight,
+  ChevronRight
 } from 'lucide-react';
 import { getAuthHeaders, acceptCustomOffer } from '../../services/supabaseService';
 
