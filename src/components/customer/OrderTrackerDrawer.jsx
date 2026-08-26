@@ -371,6 +371,28 @@ export const OrderTrackerDrawer = () => {
 
   const getStatusBadge = () => {
     const s = String(ord.status || 'submitted').toLowerCase();
+    const pStatus = String(ord.payment_status || ord.paymentStatus || '').toLowerCase();
+    const isUnpaid = s === 'awaiting_payment' || s === 'pending_payment' || pStatus === 'unpaid' || (!isPaid && (s === 'awaiting_payment' || s === 'pending_payment' || s === 'submitted'));
+
+    if (isUnpaid && !isPaid) {
+      return (
+        <span style={{
+          background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+          color: '#ffffff',
+          border: '1px solid #fdba74',
+          padding: '0.25rem 0.75rem',
+          borderRadius: '9999px',
+          fontSize: '0.75rem',
+          fontWeight: 900,
+          boxShadow: '0 2px 8px rgba(234, 88, 12, 0.35)',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.35rem'
+        }}>
+          ⏳ Waiting for Payment to Start
+        </span>
+      );
+    }
     if (s === 'completed') return <span style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>✅ Completed</span>;
     if (s === 'delivered') return <span style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>📦 Delivered</span>;
     if (s === 'revision' || s === 'revision_requested') return <span style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>🔄 Modification Requested</span>;
@@ -559,6 +581,69 @@ export const OrderTrackerDrawer = () => {
             3. MAIN SCROLLABLE CONTENT BODY (SINGLE PAGE)
            ================================================================== */}
         <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1, background: 'var(--bg-main)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+          {/* Unpaid / Waiting for Payment Urgent Banner */}
+          {!isPaid && !isAdmin && (
+            <div style={{
+              background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+              border: '2px solid #f59e0b',
+              borderRadius: '16px',
+              padding: '1.25rem 1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem',
+              boxShadow: '0 4px 18px rgba(245, 158, 11, 0.18)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: '260px' }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 4px 12px rgba(234, 88, 12, 0.35)'
+                }}>
+                  <CreditCard size={24} />
+                </div>
+                <div>
+                  <h4 style={{ margin: '0 0 0.2rem', fontSize: '1.05rem', fontWeight: 900, color: '#92400e' }}>
+                    ⏳ Waiting for Payment to Start Production
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '0.82rem', color: '#78350f', lineHeight: 1.4 }}>
+                    Your order requirements and specifications are safely saved. Complete payment of <strong>${Number(ord.totalPrice || ord.price || 15).toFixed(2)}</strong> to dispatch this design to our master digitizing desk immediately.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleLaunchPayment}
+                style={{
+                  background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '0.92rem',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(234, 88, 12, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                <Zap size={18} /> Complete Payment Now →
+              </button>
+            </div>
+          )}
 
           {/* STEPPER PROGRESS TRACKER */}
           <div style={{

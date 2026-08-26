@@ -435,12 +435,16 @@ export const CustomerDashboard = () => {
     setCustomerPage(1);
   }, [filterStatus, searchTerm, activeTab]);
 
+  const unpaidCount = currentTabOrders.filter(o => !isOrderPaid(o)).length;
+
   const filteredDigitizingOrders = currentTabOrders.filter(o => {
     const titleMatch = (o?.title || '').toLowerCase().includes(searchTerm.toLowerCase());
     const idMatch = (o?.id || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSearch = titleMatch || idMatch;
+    const isPaid = isOrderPaid(o);
     
-    if (filterStatus === 'active') return matchesSearch && o?.status !== 'completed' && o?.status !== 'cancelled';
+    if (filterStatus === 'unpaid' || filterStatus === 'awaiting_payment') return matchesSearch && !isPaid;
+    if (filterStatus === 'active') return matchesSearch && isPaid && o?.status !== 'completed' && o?.status !== 'cancelled';
     if (filterStatus === 'delivered') return matchesSearch && (o?.status === 'delivered' || (Array.isArray(o?.uploadedMachineFiles) && o.uploadedMachineFiles.length > 0 && o?.status !== 'completed'));
     if (filterStatus === 'revision') return matchesSearch && (o?.status === 'revision' || o?.status === 'revision_requested');
     if (filterStatus === 'completed') return matchesSearch && o?.status === 'completed';
@@ -485,27 +489,52 @@ export const CustomerDashboard = () => {
       <span 
         className="badge" 
         style={{ 
-          background: '#fff7ed', 
+          background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)', 
           color: '#c2410c', 
-          border: '1px solid #ffedd5', 
-          fontWeight: 800,
+          border: '1.5px solid #fdba74', 
+          fontWeight: 900,
           fontSize: '0.725rem',
-          padding: '0.2rem 0.55rem',
+          padding: '0.2rem 0.6rem',
           borderRadius: '9999px',
           display: 'inline-flex',
           alignItems: 'center',
           gap: '0.25rem',
-          whiteSpace: 'nowrap'
+          whiteSpace: 'nowrap',
+          boxShadow: '0 2px 6px rgba(234, 88, 12, 0.12)'
         }}
       >
-        <Clock size={11} style={{ color: '#ea580c' }} /> PENDING
+        <Clock size={11} style={{ color: '#ea580c' }} /> WAITING FOR PAYMENT
       </span>
     );
   };
 
   const getOrderDeliveryStatusBadge = (ord) => {
     if (!ord) return null;
+    const isPaid = isOrderPaid(ord);
     const s = String(ord?.status || 'submitted').toLowerCase().trim();
+    const pStatus = String(ord?.payment_status || ord?.paymentStatus || '').toLowerCase().trim();
+    const isUnpaid = s === 'awaiting_payment' || s === 'pending_payment' || pStatus === 'unpaid' || (!isPaid && (s === 'awaiting_payment' || s === 'pending_payment' || s === 'submitted'));
+
+    if (isUnpaid && !isPaid) {
+      return (
+        <span style={{
+          background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+          color: '#c2410c',
+          border: '1.5px solid #fdba74',
+          padding: '0.25rem 0.7rem',
+          borderRadius: '9999px',
+          fontSize: '0.74rem',
+          fontWeight: 900,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.3rem',
+          boxShadow: '0 2px 6px rgba(234, 88, 12, 0.15)',
+          whiteSpace: 'nowrap'
+        }}>
+          ⏳ Waiting for Payment to Start
+        </span>
+      );
+    }
     const hasFiles = Array.isArray(ord?.uploadedMachineFiles) && ord.uploadedMachineFiles.length > 0;
     const isDelivered = s === 'delivered' || (hasFiles && s !== 'completed');
     const isCompleted = s === 'completed';
@@ -1620,6 +1649,30 @@ export const CustomerDashboard = () => {
                       >
                         All Orders ({currentTabOrders.length})
                       </button>
+
+                      {unpaidCount > 0 && (
+                        <button 
+                          type="button"
+                          onClick={() => setFilterStatus('unpaid')}
+                          style={{
+                            background: filterStatus === 'unpaid' ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : '#fff7ed',
+                            color: filterStatus === 'unpaid' ? '#ffffff' : '#c2410c',
+                            border: filterStatus === 'unpaid' ? '1.5px solid #ea580c' : '1.5px solid #fdba74',
+                            fontWeight: 900,
+                            fontSize: '0.825rem',
+                            padding: '0.45rem 0.85rem',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            boxShadow: filterStatus === 'unpaid' ? '0 4px 14px rgba(234, 88, 12, 0.35)' : 'none',
+                            transition: 'all 0.18s ease',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem'
+                          }}
+                        >
+                          ⏳ Waiting for Payment ({unpaidCount})
+                        </button>
+                      )}
 
                       <button 
                         type="button"
