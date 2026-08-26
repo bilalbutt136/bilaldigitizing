@@ -275,7 +275,7 @@ export const OrderWizardModal = () => {
         }, userIdentity);
       }).catch(() => {});
 
-      const code = orderWizardInitialData?.promoCode || siteSettings?.announcement?.promoCode || 'SAVE20';
+      const code = orderWizardInitialData?.promoCode || siteSettings?.announcement?.promoCode || 'SAVE15';
       if (code) {
         setPromoCodeInput(code);
         applyPromoCode(code);
@@ -2635,7 +2635,7 @@ export const OrderWizardModal = () => {
                         <div style={{ display: 'flex', gap: '0.4rem' }}>
                           <input 
                             type="text" 
-                            placeholder="e.g. SAVE20" 
+                            placeholder="e.g. SAVE15" 
                             value={promoCodeInput} 
                             onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())} 
                             style={{ flex: 1, background: 'var(--color-surface, #ffffff)', border: '1.5px solid var(--border-color, #cbd5e1)', borderRadius: '8px', padding: '0.45rem 0.65rem', color: 'var(--color-text-primary, #0f172a)', fontSize: '0.85rem', fontWeight: 900 }} 

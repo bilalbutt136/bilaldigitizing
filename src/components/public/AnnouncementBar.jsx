@@ -30,16 +30,19 @@ export const AnnouncementBar = () => {
   const announcement = activePromo ? {
     enabled: rawAnnouncement?.enabled !== false,
     text: `Get ${activePromo.discountPercent}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`,
-    badge: activePromo.name ? activePromo.name.toUpperCase() : (rawAnnouncement?.badge || 'SPECIAL PROMO'),
+    badge: activePromo.name ? activePromo.name.toUpperCase() : (rawAnnouncement?.badge || 'SALE'),
     promoCode: activePromo.promoCode || (rawAnnouncement?.promoCode || `PROMO${activePromo.discountPercent}`),
     linkText: `Claim ${activePromo.discountPercent}% Off`,
     linkUrl: rawAnnouncement?.linkUrl || '/order',
     showCountdown: rawAnnouncement?.showCountdown !== false,
     showCodeBadge: rawAnnouncement?.showCodeBadge !== false,
-    theme: rawAnnouncement?.theme || 'orange',
+    theme: (rawAnnouncement?.theme === 'emerald' ? 'orange' : rawAnnouncement?.theme) || 'orange',
     textColor: rawAnnouncement?.textColor || '#ffffff',
     discountValue: activePromo.discountPercent
-  } : (rawAnnouncement?.enabled && rawAnnouncement?.text ? rawAnnouncement : null);
+  } : (rawAnnouncement?.enabled && rawAnnouncement?.text ? {
+    ...rawAnnouncement,
+    theme: (rawAnnouncement.theme === 'emerald' ? 'orange' : rawAnnouncement.theme) || 'orange'
+  } : null);
 
   // Real-time Countdown Timer calculation & Live promotions listener
   useEffect(() => {
@@ -103,7 +106,7 @@ export const AnnouncementBar = () => {
 
   const handleCopyAndApply = (e) => {
     e.stopPropagation();
-    const promoCode = announcement?.promoCode || (activePromo ? `SAVE${activePromo.discountPercent}` : 'SAVE10');
+    const promoCode = announcement?.promoCode || (activePromo ? `SAVE${activePromo.discountPercent}` : 'SAVE15');
     try {
       navigator.clipboard.writeText(promoCode);
       setCopied(true);
@@ -119,7 +122,7 @@ export const AnnouncementBar = () => {
 
   const handleActionClick = () => {
     const target = announcement?.linkUrl || '/order';
-    const promoCode = announcement?.promoCode || (activePromo ? `SAVE${activePromo.discountPercent}` : 'SAVE10');
+    const promoCode = announcement?.promoCode || (activePromo ? `SAVE${activePromo.discountPercent}` : 'SAVE15');
     if (target.startsWith('#')) {
       const el = document.getElementById(target.substring(1));
       if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -136,8 +139,9 @@ export const AnnouncementBar = () => {
   };
 
   // Determine dynamic background and text color
-  const themeObj = THEMES[announcement?.theme] || THEMES.emerald;
-  const backgroundStyle = announcement?.bgColor && announcement.bgColor.length > 3
+  const safeThemeKey = (announcement?.theme === 'emerald' ? 'orange' : announcement?.theme) || 'orange';
+  const themeObj = THEMES[safeThemeKey] || THEMES.orange;
+  const backgroundStyle = (announcement?.bgColor && announcement.bgColor.length > 3 && !announcement.bgColor.includes('065f46'))
     ? announcement.bgColor
     : themeObj.bg;
   const textStyle = announcement.textColor || themeObj.text || '#ffffff';

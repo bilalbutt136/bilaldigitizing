@@ -357,7 +357,16 @@ export const StateProvider = ({ children }) => {
         if (saved) {
           const parsed = JSON.parse(saved);
           if (parsed && typeof parsed === 'object') {
-            return parsed;
+            // Sanitize: eliminate any obsolete emerald/green gradient or 20% cached announcement
+            if (parsed.announcement) {
+              if (parsed.announcement.theme === 'emerald' || (parsed.announcement.bgColor && parsed.announcement.bgColor.includes('065f46'))) {
+                parsed.announcement.theme = 'orange';
+                parsed.announcement.bgColor = 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)';
+              }
+            }
+            if (Array.isArray(parsed.promotions) && parsed.promotions.length > 0) {
+              return parsed;
+            }
           }
         }
       } catch {}
@@ -365,34 +374,34 @@ export const StateProvider = ({ children }) => {
     return {
       promotions: [
         {
-          id: 'promo-welcome-sale',
-          name: 'Summer sale',
-          type: 'new_buyer',
-          discountPercent: 10,
+          id: 'promo-sale-15',
+          name: 'SALE',
+          type: 'all_orders',
+          discountPercent: 15,
           startDate: new Date().toISOString().split('T')[0],
           endDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
           status: 'active',
-          maxOrdersLimit: 10,
-          ordersCount: 2,
+          maxOrdersLimit: 500,
+          ordersCount: 0,
           servicesIncluded: 'All Studio Services',
-          promoCode: 'SAVE10',
+          promoCode: 'SAVE15',
           createdAt: new Date().toISOString()
         }
       ],
       announcement: {
         enabled: true,
-        badge: 'SUMMER SALE',
-        text: 'Get 10% OFF on All Custom Embroidery Digitizing & Vector Art Orders!',
-        promoCode: 'SAVE10',
-        linkText: 'Claim 10% Off',
+        badge: 'SALE',
+        text: 'Get 15% OFF on All Custom Embroidery Digitizing & Vector Art Orders!',
+        promoCode: 'SAVE15',
+        linkText: 'Claim 15% Off',
         linkUrl: '/order',
-        theme: 'emerald',
-        bgColor: 'linear-gradient(90deg, #065f46 0%, #059669 50%, #065f46 100%)',
+        theme: 'orange',
+        bgColor: 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)',
         textColor: '#ffffff',
         showCodeBadge: true,
         showCountdown: true,
         countdownHours: 24,
-        discountValue: 10
+        discountValue: 15
       },
       promotionalBanner: {
         enabled: false,
@@ -404,11 +413,11 @@ export const StateProvider = ({ children }) => {
       },
       promoCodes: [
         {
-          code: 'SAVE10',
+          code: 'SAVE15',
           discountType: 'percent',
-          discountValue: 10,
+          discountValue: 15,
           minOrder: 0,
-          description: '10% off all embroidery digitizing and vector conversion services',
+          description: '15% off all embroidery digitizing and vector conversion services',
           isActive: true
         }
       ]

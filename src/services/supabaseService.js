@@ -975,19 +975,27 @@ export async function fetchCatalogFromSupabase() {
 
         const dynamicAnnouncement = currentActivePromo ? {
           enabled: parsedAnnouncement?.enabled !== false,
-          badge: (currentActivePromo.name || 'SPECIAL PROMO').toUpperCase(),
+          badge: (currentActivePromo.name || 'SALE').toUpperCase(),
           text: `Get ${currentActivePromo.discountPercent}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`,
           linkText: `Claim ${currentActivePromo.discountPercent}% Off`,
           linkUrl: parsedAnnouncement?.linkUrl || '/order',
           promoCode: currentActivePromo.promoCode || `SAVE${currentActivePromo.discountPercent}`,
-          theme: parsedAnnouncement?.theme || 'emerald',
-          bgColor: parsedAnnouncement?.bgColor || 'linear-gradient(90deg, #065f46 0%, #059669 50%, #065f46 100%)',
+          theme: (parsedAnnouncement?.theme === 'emerald' ? 'orange' : parsedAnnouncement?.theme) || 'orange',
+          bgColor: (parsedAnnouncement?.bgColor && !parsedAnnouncement.bgColor.includes('065f46'))
+            ? parsedAnnouncement.bgColor 
+            : 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)',
           textColor: '#ffffff',
           showCodeBadge: true,
           showCountdown: true,
           countdownHours: 24,
           discountValue: currentActivePromo.discountPercent
-        } : (parsedAnnouncement || {
+        } : (parsedAnnouncement ? {
+          ...parsedAnnouncement,
+          theme: (parsedAnnouncement.theme === 'emerald' ? 'orange' : parsedAnnouncement.theme) || 'orange',
+          bgColor: (parsedAnnouncement.bgColor && !parsedAnnouncement.bgColor.includes('065f46'))
+            ? parsedAnnouncement.bgColor 
+            : 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)'
+        } : {
           enabled: false,
           badge: '',
           text: '',
