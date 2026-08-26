@@ -316,6 +316,8 @@ export const OrderWizardModal = () => {
           setPatchItems(prev => prev.map((item, idx) => idx === 0 ? { ...item, quantity: q, quantityInput: String(q) } : item));
         }
         if (orderWizardInitialData.title) setOrderTitle(orderWizardInitialData.title);
+      } else {
+        setType('all');
       }
     }
   }, [isOrderWizardOpen, orderWizardInitialData]);

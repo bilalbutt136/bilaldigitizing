@@ -44,13 +44,24 @@ export async function GET(request) {
     // If still pending, actively check BoltPayouts live status API for instant settlement
     if ((currentStatus === 'pending' || currentStatus === 'unpaid') && invoice.bolt_order_id) {
       try {
-        const { data: configRow } = await supabaseAdmin
-          .from('site_config')
-          .select('value')
-          .eq('key', 'boltpayouts_config')
-          .maybeSingle();
+        let apiKey = process.env.BOLTPAYOUTS_API_KEY || process.env.BOLT_API_KEY || null;
+        if (!apiKey) {
+          const { data: configRow } = await supabaseAdmin
+            .from('site_config')
+            .select('value')
+            .eq('key', 'boltpayouts_config')
+            .maybeSingle();
 
-        const apiKey = configRow?.value?.apiKey;
+          let boltConfig = configRow?.value || {};
+          if (typeof boltConfig === 'string') {
+            try {
+              boltConfig = JSON.parse(boltConfig);
+            } catch {
+              boltConfig = { apiKey: boltConfig };
+            }
+          }
+          apiKey = boltConfig?.apiKey || boltConfig?.api_key || boltConfig?.key || (typeof boltConfig === 'string' ? boltConfig : null);
+        }
         if (apiKey) {
           const boltCheckRes = await fetch(`https://www.boltpayouts.xyz/api/check-status?orderId=${invoice.bolt_order_id}`, {
             headers: { 'x-api-key': apiKey }

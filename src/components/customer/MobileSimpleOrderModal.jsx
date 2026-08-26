@@ -535,22 +535,24 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 borderRadius: '6px',
                 letterSpacing: '0.05em'
               }}>
-                STEP {step} OF 4
+                STEP {step} OF 5
               </span>
               <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#0f172a' }}>
-                {step === 1 && 'Choose Service Package'}
-                {step === 2 && 'Upload Artwork & Details'}
-                {step === 3 && 'Technical Specifications'}
-                {step === 4 && 'Review & Confirm Order'}
-                {step === 5 && 'Order Ready!'}
+                {step === 1 && 'Choose Studio Service'}
+                {step === 2 && 'Select Package Tier'}
+                {step === 3 && 'Upload Artwork & Details'}
+                {step === 4 && 'Technical Specifications'}
+                {step === 5 && 'Review & Confirm Order'}
+                {step === 6 && 'Order Successfully Placed!'}
               </h3>
             </div>
             <p style={{ margin: '0.15rem 0 0', fontSize: '0.74rem', color: '#64748b' }}>
-              {step === 1 && 'Select from real studio tiers with transparent pricing.'}
-              {step === 2 && 'Upload your design image, vector, or mockup.'}
-              {step === 3 && 'Configure dimensions, formats, placement & speed.'}
-              {step === 4 && 'Verify specs before dispatching to digitizers.'}
-              {step === 5 && 'Your order has been recorded into the live system.'}
+              {step === 1 && 'Select from our 3 primary professional digitizing services.'}
+              {step === 2 && 'Select from real studio tiers with transparent pricing.'}
+              {step === 3 && 'Upload your design image, vector, or mockup.'}
+              {step === 4 && 'Configure dimensions, formats, placement & speed.'}
+              {step === 5 && 'Verify specs before dispatching to master digitizers.'}
+              {step === 6 && 'Your order has been recorded into the live system.'}
             </p>
           </div>
 
@@ -578,7 +580,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         <div style={{ width: '100%', height: '4px', background: '#f1f5f9' }}>
           <div style={{
             height: '100%',
-            width: `${(step / 4) * 100}%`,
+            width: `${Math.min(100, (step / 5) * 100)}%`,
             background: 'linear-gradient(90deg, #059669 0%, #10b981 100%)',
             transition: 'width 0.3s ease'
           }} />
@@ -588,13 +590,214 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         <div style={{ flex: 1, overflowY: 'auto', padding: '1.15rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           
           {/* =========================================================================
-              STEP 1: SELECT SERVICE & PACKAGE TIER
+              STEP 1: SELECT 1 OF 3 CORE SERVICES
               ========================================================================= */}
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ textAlign: 'center', marginBottom: '0.2rem' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 900, color: '#047857', background: '#ecfdf5', padding: '0.2rem 0.65rem', borderRadius: '999px', border: '1px solid #a7f3d0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Step 1: Choose Service
+                </span>
+                <h3 style={{ margin: '0.45rem 0 0.15rem', fontSize: '1.25rem', fontWeight: 900, color: '#0f172a' }}>
+                  What would you like created?
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>
+                  Tap any service below to configure packages and instant turnaround
+                </p>
+              </div>
+
+              {/* The 3 Core Services Cards */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                
+                {/* 1. Embroidery Digitizing */}
+                <div
+                  onClick={() => {
+                    handleSelectService('embroidery');
+                    setStep(2);
+                  }}
+                  style={{
+                    border: selectedService === 'embroidery' ? '2px solid #059669' : '1.5px solid #cbd5e1',
+                    background: selectedService === 'embroidery' ? '#f0fdf4' : '#ffffff',
+                    borderRadius: '16px',
+                    padding: '1.15rem',
+                    cursor: 'pointer',
+                    boxShadow: selectedService === 'embroidery' ? '0 4px 18px rgba(5, 150, 105, 0.15)' : '0 2px 8px rgba(0,0,0,0.03)',
+                    display: 'flex',
+                    gap: '0.9rem',
+                    alignItems: 'center',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{
+                    width: '54px',
+                    height: '54px',
+                    borderRadius: '14px',
+                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)'
+                  }}>
+                    <Layers size={28} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h4 style={{ margin: 0, fontSize: '1.02rem', fontWeight: 900, color: '#0f172a' }}>
+                        Embroidery Digitizing
+                      </h4>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#047857' }}>
+                        From $10.00
+                      </span>
+                    </div>
+                    <p style={{ margin: '0.2rem 0 0', fontSize: '0.78rem', color: '#475569', lineHeight: 1.35 }}>
+                      Commercial stitch files for Left Chest, Caps, 3D Puff Foam & Jacket Backs (.DST, .PES, .EMB)
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#047857', background: '#ecfdf5', padding: '0.1rem 0.4rem', borderRadius: '4px', border: '1px solid #a7f3d0' }}>
+                        4–12H Delivery
+                      </span>
+                      <span style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 700 }}>
+                        Machine Sew-Out Tested
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+                        Select <ArrowRight size={13} />
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Vector Art Tracing */}
+                <div
+                  onClick={() => {
+                    handleSelectService('vector');
+                    setStep(2);
+                  }}
+                  style={{
+                    border: selectedService === 'vector' ? '2px solid #ea580c' : '1.5px solid #cbd5e1',
+                    background: selectedService === 'vector' ? '#fff7ed' : '#ffffff',
+                    borderRadius: '16px',
+                    padding: '1.15rem',
+                    cursor: 'pointer',
+                    boxShadow: selectedService === 'vector' ? '0 4px 18px rgba(234, 88, 12, 0.15)' : '0 2px 8px rgba(0,0,0,0.03)',
+                    display: 'flex',
+                    gap: '0.9rem',
+                    alignItems: 'center',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{
+                    width: '54px',
+                    height: '54px',
+                    borderRadius: '14px',
+                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    boxShadow: '0 4px 12px rgba(234, 88, 12, 0.25)'
+                  }}>
+                    <PenTool size={28} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h4 style={{ margin: 0, fontSize: '1.02rem', fontWeight: 900, color: '#0f172a' }}>
+                        Vector Art Tracing
+                      </h4>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#ea580c' }}>
+                        From $15.00
+                      </span>
+                    </div>
+                    <p style={{ margin: '0.2rem 0 0', fontSize: '0.78rem', color: '#475569', lineHeight: 1.35 }}>
+                      Logo Redraw, Screen Print Color Separation & Raster-to-Vector (.AI, .EPS, .SVG, .PDF)
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#c2410c', background: '#fff7ed', padding: '0.1rem 0.4rem', borderRadius: '4px', border: '1px solid #fed7aa' }}>
+                        6–12H Delivery
+                      </span>
+                      <span style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 700 }}>
+                        Pantone PMS Match
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: '#ea580c', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+                        Select <ArrowRight size={13} />
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Custom Physical Patches */}
+                <div
+                  onClick={() => {
+                    handleSelectService('patch');
+                    setStep(2);
+                  }}
+                  style={{
+                    border: selectedService === 'patch' ? '2px solid #0284c7' : '1.5px solid #cbd5e1',
+                    background: selectedService === 'patch' ? '#f0f9ff' : '#ffffff',
+                    borderRadius: '16px',
+                    padding: '1.15rem',
+                    cursor: 'pointer',
+                    boxShadow: selectedService === 'patch' ? '0 4px 18px rgba(2, 132, 199, 0.15)' : '0 2px 8px rgba(0,0,0,0.03)',
+                    display: 'flex',
+                    gap: '0.9rem',
+                    alignItems: 'center',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{
+                    width: '54px',
+                    height: '54px',
+                    borderRadius: '14px',
+                    background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)'
+                  }}>
+                    <Package size={28} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h4 style={{ margin: 0, fontSize: '1.02rem', fontWeight: 900, color: '#0f172a' }}>
+                        Custom Patches
+                      </h4>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0284c7' }}>
+                        From $1.50 / pc
+                      </span>
+                    </div>
+                    <p style={{ margin: '0.2rem 0 0', fontSize: '0.78rem', color: '#475569', lineHeight: 1.35 }}>
+                      Embroidered, 3D Molded PVC Rubber, Woven & Leather Patches with physical shipment
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0369a1', background: '#f0f9ff', padding: '0.1rem 0.4rem', borderRadius: '4px', border: '1px solid #bae6fd' }}>
+                        3–7 Days Delivery
+                      </span>
+                      <span style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 700 }}>
+                        10 Pcs Low Minimum
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: '#0284c7', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+                        Select <ArrowRight size={13} />
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* =========================================================================
+              STEP 2: SELECT PACKAGE TIER FOR CHOSEN SERVICE
+              ========================================================================= */}
+          {step === 2 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               
               {/* Category Switcher Tabs */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', background: '#f8fafc', padding: '0.35rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', background: '#f8fafc', padding: '0.35rem', borderRadius: '12px', border: '1.5px solid #cbd5e1' }}>
                 {SERVICE_TABS.map(tab => {
                   const Icon = tab.icon;
                   const isSelected = selectedService === tab.id;
@@ -645,7 +848,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                       key={pkg.id || idx}
                       onClick={() => handleSelectPackage(pkg)}
                       style={{
-                        border: isSelected ? '2px solid #059669' : '1.5px solid #e2e8f0',
+                        border: isSelected ? '2px solid #059669' : '1.5px solid #cbd5e1',
                         background: isSelected ? '#f0fdf4' : '#ffffff',
                         borderRadius: '16px',
                         padding: '1rem',
@@ -713,7 +916,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
                       {/* Feature Bullet Points */}
                       {Array.isArray(pkg.features) && pkg.features.length > 0 && (
-                        <div style={{ borderTop: '1px dashed #e2e8f0', paddingTop: '0.5rem', display: 'grid', gridTemplateColumns: '1fr', gap: '0.25rem' }}>
+                        <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '0.5rem', display: 'grid', gridTemplateColumns: '1fr', gap: '0.25rem' }}>
                           {pkg.features.slice(0, 3).map((feat, fIdx) => (
                             <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: '#334155' }}>
                               <CheckCircle2 size={13} style={{ color: '#059669', flexShrink: 0 }} />
@@ -731,13 +934,13 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
           )}
 
           {/* =========================================================================
-              STEP 2: UPLOAD ARTWORK & TITLE
+              STEP 3: UPLOAD ARTWORK & TITLE
               ========================================================================= */}
-          {step === 2 && (
+          {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               
               {/* Selected Package Mini-Summary */}
-              <div style={{ background: '#f0fdf4', border: '1px solid #a7f3d0', borderRadius: '12px', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ background: '#f0fdf4', border: '1.5px solid #a7f3d0', borderRadius: '12px', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#047857', textTransform: 'uppercase' }}>
                     Selected Package
@@ -771,80 +974,57 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                     style={{
                       border: '2px dashed #cbd5e1',
                       borderRadius: '16px',
-                      padding: '1.75rem 1rem',
+                      padding: '1.5rem 1rem',
                       textAlign: 'center',
                       background: '#f8fafc',
                       cursor: 'pointer',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '0.5rem',
-                      transition: 'border-color 0.2s ease'
+                      gap: '0.5rem'
                     }}
                   >
-                    {isUploading ? (
-                      <>
-                        <Loader2 size={32} className="animate-spin" style={{ color: '#059669' }} />
-                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>
-                          Uploading to Studio Cloud ({uploadProgress}%)
-                        </span>
-                        <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                          Processing high-resolution preview...
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <div style={{
-                          width: '48px',
-                          height: '48px',
-                          borderRadius: '50%',
-                          background: '#ecfdf5',
-                          color: '#059669',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          <Upload size={22} />
-                        </div>
-                        <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>
-                          Tap to select image or document
-                        </span>
-                        <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                          Supports JPG, PNG, PDF, AI, EPS, SVG, DST, EMB (up to 50MB)
-                        </span>
-                      </>
-                    )}
+                    <div style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '50%',
+                      background: '#ecfdf5',
+                      color: '#059669',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Upload size={20} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f172a' }}>
+                        {isUploading ? 'Uploading Artwork...' : 'Tap to Browse or Drop File'}
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.15rem' }}>
+                        PNG, JPG, PDF, AI, EPS, SVG, CDR up to 50MB
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div style={{
-                    border: '1.5px solid #10b981',
-                    background: '#ffffff',
-                    borderRadius: '14px',
-                    padding: '0.85rem',
+                    border: '1.5px solid #a7f3d0',
+                    background: '#f0fdf4',
+                    borderRadius: '12px',
+                    padding: '0.75rem 1rem',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.85rem',
-                    position: 'relative'
+                    justifyContent: 'space-between',
+                    gap: '0.75rem'
                   }}>
-                    {uploadedArtwork.url && (
-                      <img
-                        src={uploadedArtwork.url}
-                        alt="Preview"
-                        style={{ width: '54px', height: '54px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #e2e8f0' }}
-                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                      />
-                    )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {uploadedArtwork.name}
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.15rem' }}>
-                        <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#ecfdf5', color: '#047857', padding: '0.08rem 0.35rem', borderRadius: '4px' }}>
-                          {uploadedArtwork.format}
-                        </span>
-                        <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                          {uploadedArtwork.size}
-                        </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', overflow: 'hidden' }}>
+                      <FileCheck size={20} style={{ color: '#059669', flexShrink: 0 }} />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                          {uploadedArtwork.name}
+                        </div>
+                        <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 700 }}>
+                          ✓ Cloudinary Verified Ready
+                        </div>
                       </div>
                     </div>
 
@@ -882,9 +1062,34 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                     border: '1.5px solid #cbd5e1',
                     fontSize: '0.88rem',
                     color: '#0f172a',
-                    background: '#f8fafc',
+                    background: '#ffffff',
                     outline: 'none',
                     boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              {/* Notes Input */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.35rem' }}>
+                  Special Instructions / Notes
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Any specific colors, thread densities, or backing instructions..."
+                  rows={2}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 0.95rem',
+                    borderRadius: '12px',
+                    border: '1.5px solid #cbd5e1',
+                    fontSize: '0.85rem',
+                    color: '#0f172a',
+                    background: '#ffffff',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    resize: 'none'
                   }}
                 />
               </div>
@@ -893,9 +1098,9 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
           )}
 
           {/* =========================================================================
-              STEP 3: SPECIFICATIONS & FORMATS
+              STEP 4: SPECIFICATIONS & FORMATS
               ========================================================================= */}
-          {step === 3 && (
+          {step === 4 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               
               {/* Dimensions: Width & Height */}
@@ -943,38 +1148,6 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                     />
                   </div>
                 </div>
-
-                {/* Quick Presets */}
-                <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.4rem', flexWrap: 'wrap' }}>
-                  {[
-                    { label: 'Left Chest (3.5")', w: '3.5', h: '3.5', p: 'Left Chest / Polo (up to 4.0")' },
-                    { label: 'Cap (2.25")', w: '4.5', h: '2.25', p: 'Cap Front (Low Profile)' },
-                    { label: 'Sleeve (5.0")', w: '3.0', h: '5.0', p: 'Sleeve / Side Panel' },
-                    { label: 'Full Back (10.5")', w: '10.5', h: '10.5', p: 'Full Jacket Back (up to 12.0")' }
-                  ].map(pre => (
-                    <button
-                      key={pre.label}
-                      type="button"
-                      onClick={() => {
-                        setWidthInches(pre.w);
-                        setHeightInches(pre.h);
-                        setPlacement(pre.p);
-                      }}
-                      style={{
-                        padding: '0.2rem 0.55rem',
-                        borderRadius: '14px',
-                        background: '#f1f5f9',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '0.68rem',
-                        fontWeight: 700,
-                        color: '#334155',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {pre.label}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Placement Selector */}
@@ -1005,36 +1178,6 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                   <option value='Screen Print / Vinyl Cut'>Screen Print / Vinyl Cut (Vector)</option>
                 </select>
               </div>
-
-              {/* Fabric Type (for Embroidery) */}
-              {selectedService === 'embroidery' && (
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.35rem' }}>
-                    Garment / Fabric Type
-                  </label>
-                  <select
-                    value={fabricType}
-                    onChange={(e) => setFabricType(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.7rem 0.85rem',
-                      borderRadius: '10px',
-                      border: '1.5px solid #cbd5e1',
-                      fontSize: '0.85rem',
-                      color: '#0f172a',
-                      background: '#ffffff',
-                      boxSizing: 'border-box'
-                    }}
-                  >
-                    <option value='Cotton / Pique Knit'>Cotton / Pique Polo Knit</option>
-                    <option value='Structured Twill Cap'>Structured Twill / Trucker Cap</option>
-                    <option value='Heavy Hoodie / Fleece'>Heavy Hoodie / Sweatshirt Fleece</option>
-                    <option value='Nylon / Performance Polyester'>Nylon / Dri-Fit Polyester</option>
-                    <option value='Leather / Heavy Canvas'>Leather / Heavy Canvas</option>
-                    <option value='Beanies / Ribbed Knit'>Beanies / Ribbed Knit</option>
-                  </select>
-                </div>
-              )}
 
               {/* Target File Formats */}
               <div>
@@ -1080,7 +1223,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               <div 
                 onClick={() => setIsRush(!isRush)}
                 style={{
-                  border: isRush ? '1.5px solid #f59e0b' : '1px solid #e2e8f0',
+                  border: isRush ? '1.5px solid #f59e0b' : '1px solid #cbd5e1',
                   background: isRush ? '#fffbeb' : '#ffffff',
                   borderRadius: '12px',
                   padding: '0.75rem 1rem',
@@ -1105,31 +1248,17 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                   </div>
                   <div>
                     <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#0f172a' }}>
-                      4–8 Hour Express Rush
+                      Express Rush Delivery
                     </div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                      Guaranteed same-day prioritized queue
+                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                      Jump directly to front of queue (2–6 Hours)
                     </div>
                   </div>
                 </div>
-
                 <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#d97706' }}>
-                    +$10.00
-                  </span>
-                  <div style={{
-                    width: '36px',
-                    height: '20px',
-                    borderRadius: '10px',
-                    background: isRush ? '#d97706' : '#cbd5e1',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: isRush ? 'flex-end' : 'flex-start',
-                    padding: '2px',
-                    boxSizing: 'border-box',
-                    marginTop: '2px'
-                  }}>
-                    <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#ffffff' }} />
+                  <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#d97706' }}>+$10.00</div>
+                  <div style={{ fontSize: '0.65rem', color: isRush ? '#059669' : '#94a3b8', fontWeight: 800 }}>
+                    {isRush ? 'ACTIVE' : 'OFF'}
                   </div>
                 </div>
               </div>
@@ -1138,97 +1267,61 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
           )}
 
           {/* =========================================================================
-              STEP 4: ORDER REVIEW & CONFIRMATION
+              STEP 5: REVIEW & PLACE ORDER
               ========================================================================= */}
-          {step === 4 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {step === 5 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               
-              {/* Review Card */}
-              <div style={{ border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1rem', background: '#f8fafc' }}>
-                <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
-                  {uploadedArtwork?.url ? (
-                    <img
-                      src={uploadedArtwork.url}
-                      alt="Artwork"
-                      style={{ width: '56px', height: '56px', borderRadius: '10px', objectFit: 'cover', border: '1px solid #cbd5e1' }}
-                    />
-                  ) : (
-                    <div style={{ width: '56px', height: '56px', borderRadius: '10px', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
-                      <ImageIcon size={24} />
-                    </div>
-                  )}
-
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase' }}>
-                      {activePkg?.title}
-                    </span>
-                    <h4 style={{ margin: '0.1rem 0 0', fontSize: '0.95rem', fontWeight: 900, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {orderTitle || 'Custom Design Order'}
-                    </h4>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                      {widthInches}" x {heightInches}" • {placement}
-                    </span>
+              {/* Order Summary Card */}
+              <div style={{ background: '#f8fafc', border: '1.5px solid #cbd5e1', borderRadius: '16px', padding: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.65rem', marginBottom: '0.65rem' }}>
+                  <div>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Service & Tier</span>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#0f172a' }}>{activePkg?.title}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Category</span>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#059669', textTransform: 'capitalize' }}>{selectedService}</div>
                   </div>
                 </div>
 
-                {/* Specs List */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.78rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#64748b' }}>Service Tier:</span>
-                    <strong style={{ color: '#0f172a' }}>{activePkg?.badge || 'STANDARD'}</strong>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.78rem' }}>
+                  <div>
+                    <span style={{ color: '#64748b' }}>Artwork File: </span>
+                    <strong style={{ color: '#0f172a' }}>{uploadedArtwork?.name || 'Attached'}</strong>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#64748b' }}>Target Formats:</span>
-                    <strong style={{ color: '#0f172a' }}>{selectedFormats.join(', ')}</strong>
+                  <div>
+                    <span style={{ color: '#64748b' }}>Dimensions: </span>
+                    <strong style={{ color: '#0f172a' }}>{widthInches}" × {heightInches}"</strong>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#64748b' }}>Turnaround ETA:</span>
-                    <strong style={{ color: isRush ? '#d97706' : '#047857' }}>
-                      {isRush ? '⚡ 4–8 Hours Express' : activePkg?.turnaround || '12–24 Hours'}
-                    </strong>
+                  <div>
+                    <span style={{ color: '#64748b' }}>Placement: </span>
+                    <strong style={{ color: '#0f172a' }}>{placement}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748b' }}>Speed: </span>
+                    <strong style={{ color: isRush ? '#d97706' : '#059669' }}>{isRush ? '⚡ Express 2-6H' : 'Standard 12-24H'}</strong>
                   </div>
                 </div>
               </div>
 
-              {/* Special Instructions Notes */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.35rem' }}>
-                  Digitizer Instructions / Thread Notes (Optional)
-                </label>
-                <textarea
-                  rows={2}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="e.g. Please use matte white thread on navy fabric, keep lettering sharp and underlay stable..."
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '10px',
-                    border: '1.5px solid #cbd5e1',
-                    fontSize: '0.82rem',
-                    color: '#0f172a',
-                    background: '#ffffff',
-                    resize: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-
-              {/* Price Breakdown */}
-              <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '14px', padding: '0.85rem 1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#334155', marginBottom: '0.25rem' }}>
-                  <span>Package Base Price:</span>
+              {/* Price Calculation Box */}
+              <div style={{ background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '16px', padding: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '0.35rem', color: '#475569' }}>
+                  <span>Base Package ({activePkg?.title})</span>
                   <span>${basePrice.toFixed(2)}</span>
                 </div>
+
                 {isRush && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#d97706', marginBottom: '0.25rem' }}>
-                    <span>4–8h Express Rush Fee:</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '0.35rem', color: '#d97706' }}>
+                    <span>Express Rush Queue</span>
                     <span>+$10.00</span>
                   </div>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #a7f3d0', paddingTop: '0.45rem', marginTop: '0.25rem' }}>
-                  <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#0f172a' }}>Total Due:</span>
-                  <span style={{ fontSize: '1.35rem', fontWeight: 900, color: '#047857' }}>
+
+                <div style={{ borderTop: '1px dashed #cbd5e1', marginTop: '0.5rem', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#0f172a' }}>Total Amount</span>
+                  <span style={{ fontSize: '1.4rem', fontWeight: 900, color: '#047857' }}>
                     ${totalPrice.toFixed(2)}
                   </span>
                 </div>
@@ -1238,10 +1331,11 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
           )}
 
           {/* =========================================================================
-              STEP 5: CONFIRMATION & NEXT STEPS
+              STEP 6: CONFIRMATION VIEW
               ========================================================================= */}
-          {step === 5 && (
-            <div style={{ textAlign: 'center', padding: '1rem 0.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+          {step === 6 && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '1.5rem 0.5rem', gap: '0.85rem' }}>
+              
               <div style={{
                 width: '64px',
                 height: '64px',
@@ -1260,7 +1354,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 Order Successfully Placed!
               </h3>
               
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.65rem 1rem', display: 'inline-block' }}>
+              <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '0.65rem 1rem', display: 'inline-block' }}>
                 <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Order Identifier: </span>
                 <strong style={{ fontSize: '0.85rem', color: '#059669' }}>
                   {formatOrderId(createdOrderObj?.id)}
@@ -1317,7 +1411,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         </div>
 
         {/* BOTTOM NAVIGATION CONTROLS */}
-        {step < 5 && (
+        {step <= 5 && (
           <div style={{
             padding: '0.85rem 1.25rem',
             borderTop: '1px solid #e2e8f0',
@@ -1333,7 +1427,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 onClick={() => setStep(step - 1)}
                 style={{
                   background: '#f1f5f9',
-                  border: '1px solid #cbd5e1',
+                  border: '1.5px solid #cbd5e1',
                   borderRadius: '10px',
                   padding: '0.65rem 1rem',
                   fontSize: '0.82rem',
@@ -1351,10 +1445,17 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               <div />
             )}
 
-            {step < 4 ? (
+            {step < 5 ? (
               <button
                 type="button"
-                onClick={() => setStep(step + 1)}
+                onClick={() => {
+                  if (step === 3 && !uploadedArtwork) {
+                    setUploadError('Please upload an artwork image or logo to continue.');
+                    return;
+                  }
+                  setUploadError(null);
+                  setStep(step + 1);
+                }}
                 style={{
                   background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
                   border: 'none',

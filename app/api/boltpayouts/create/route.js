@@ -132,18 +132,29 @@ export async function POST(request) {
       gatewayMethod = 'card';
     }
 
-    // Fetch Bolt config from site_config
-    const { data: configRow } = await supabaseAdmin
-      .from('site_config')
-      .select('value')
-      .eq('key', 'boltpayouts_config')
-      .maybeSingle();
-
-    const boltConfig = configRow?.value || {};
-    const apiKey = boltConfig.apiKey;
+    // Fetch Bolt config from site_config with robust string-or-object parsing
+    let apiKey = process.env.BOLTPAYOUTS_API_KEY || process.env.BOLT_API_KEY || null;
 
     if (!apiKey) {
-      return NextResponse.json({ success: false, error: 'Payment gateway not configured by administrator.' }, { status: 503 });
+      const { data: configRow } = await supabaseAdmin
+        .from('site_config')
+        .select('value')
+        .eq('key', 'boltpayouts_config')
+        .maybeSingle();
+
+      let boltConfig = configRow?.value || {};
+      if (typeof boltConfig === 'string') {
+        try {
+          boltConfig = JSON.parse(boltConfig);
+        } catch {
+          boltConfig = { apiKey: boltConfig };
+        }
+      }
+      apiKey = boltConfig?.apiKey || boltConfig?.api_key || boltConfig?.key || (typeof boltConfig === 'string' ? boltConfig : null);
+    }
+
+    if (!apiKey) {
+      return NextResponse.json({ success: false, error: 'Payment gateway configuration pending. Please use Studio Wallet or contact support.' }, { status: 503 });
     }
 
     let boltResponse = await fetch('https://www.boltpayouts.xyz/api/create-payment', {

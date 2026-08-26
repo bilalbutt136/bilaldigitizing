@@ -479,67 +479,48 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '1rem 1.15rem',
+          padding: '0.85rem 1rem',
           background: '#f8fafc',
           display: 'flex',
           flexDirection: 'column',
           gap: '0.65rem'
         }}
       >
-        <div style={{
-          margin: '0 auto 0.5rem auto',
-          padding: '0.35rem 0.85rem',
-          borderRadius: '20px',
-          background: '#ffffff',
-          border: '1px solid #e2e8f0',
-          fontSize: '0.7rem',
-          color: '#64748b',
-          fontWeight: 700,
-          textAlign: 'center',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)'
-        }}>
-          {activeChannel === 'inbox' 
-            ? '🔒 Private Studio Chat with Master Digitizers & Technical Team.'
-            : '🎧 24/7 Live Customer Helpdesk for questions & order assistance.'}
-        </div>
-
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '0.5rem', color: '#64748b' }}>
             <Loader2 size={20} className="animate-spin" style={{ color: '#059669' }} />
-            <span style={{ fontSize: '0.85rem' }}>Loading conversation history...</span>
+            <span style={{ fontSize: '0.85rem' }}>Loading messages...</span>
           </div>
         ) : messages.length === 0 ? (
           <div style={{
             margin: 'auto',
             textAlign: 'center',
-            padding: '2.5rem 1.5rem',
+            padding: '2rem 1.25rem',
             background: '#ffffff',
-            borderRadius: '18px',
-            border: '1.5px solid #e2e8f0',
-            maxWidth: '340px',
-            boxShadow: '0 4px 14px rgba(0,0,0,0.03)'
+            borderRadius: '16px',
+            border: '1.5px solid #cbd5e1',
+            maxWidth: '320px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
           }}>
-            {activeChannel === 'inbox' ? (
-              <>
-                <MessageSquare size={36} style={{ color: '#059669', margin: '0 auto 0.75rem' }} />
-                <h4 style={{ margin: '0 0 0.35rem', fontSize: '1rem', fontWeight: 900, color: '#0f172a' }}>
-                  Direct Studio Messaging
-                </h4>
-                <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', lineHeight: 1.45 }}>
-                  Ask questions, request custom quotes, or discuss artwork modifications directly with our digitizing engineers.
-                </p>
-              </>
-            ) : (
-              <>
-                <Headphones size={36} style={{ color: '#059669', margin: '0 auto 0.75rem' }} />
-                <h4 style={{ margin: '0 0 0.35rem', fontSize: '1rem', fontWeight: 900, color: '#0f172a' }}>
-                  24/7 Studio Support
-                </h4>
-                <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', lineHeight: 1.45 }}>
-                  How can our support team help you today? Send any inquiry below.
-                </p>
-              </>
-            )}
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              background: '#ecfdf5',
+              color: '#059669',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 0.75rem auto'
+            }}>
+              {activeChannel === 'inbox' ? <MessageSquare size={24} /> : <Headphones size={24} />}
+            </div>
+            <h4 style={{ margin: '0 0 0.25rem', fontSize: '0.98rem', fontWeight: 900, color: '#0f172a' }}>
+              {activeChannel === 'inbox' ? 'Studio Digitizer Chat' : 'Customer Support'}
+            </h4>
+            <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', lineHeight: 1.4 }}>
+              {activeChannel === 'inbox' ? 'Send an artwork file, request a quote, or ask our digitizers a question.' : 'How can we help you today? Send a message below.'}
+            </p>
           </div>
         ) : (
           messages.map((msg, index) => {

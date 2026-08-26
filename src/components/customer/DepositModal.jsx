@@ -463,91 +463,110 @@ export const DepositModal = () => {
               <X size={16} />
             </button>
           </div>
-        </div>
-
-        {/* Content Body */}
-        <div style={{ position: 'relative', width: '100%', minHeight: '440px', display: 'flex', flexDirection: 'column', background: '#f8fafc', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
+        </div>        {/* Content */}
+        <div style={{ 
+          position: 'relative', 
+          width: '100%', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          background: '#f8fafc', 
+          overflowY: 'auto', 
+          flex: '1 1 auto', 
+          minHeight: 0, 
+          WebkitOverflowScrolling: 'touch',
+          color: '#0f172a'
+        }}>
           
           {isPaid ? (
             /* Success View */
             <div style={{ 
               flex: 1, display: 'flex', flexDirection: 'column', 
-              alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem', textAlign: 'center' 
+              alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem', textAlign: 'center',
+              background: '#ffffff'
             }}>
-              <CheckCircle size={64} style={{ color: '#16a34a', marginBottom: '1.5rem' }} />
-              <h2 style={{ color: 'var(--navy-950)', fontSize: '1.6rem', fontWeight: 900, marginBottom: '0.5rem' }}>Deposit Successful!</h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem', marginBottom: '2rem', maxWidth: '340px' }}>
-                Your Studio Wallet has been credited with <strong>${parseFloat(depositAmount || 0).toFixed(2)}</strong>. You can now place instant orders without checkout delay.
+              <CheckCircle size={64} style={{ color: '#059669', marginBottom: '1.5rem' }} />
+              <h2 style={{ color: '#0f172a', fontSize: '1.6rem', fontWeight: 900, marginBottom: '0.5rem' }}>Deposit Confirmed!</h2>
+              <p style={{ color: '#475569', fontSize: '0.925rem', marginBottom: '2rem', maxWidth: '340px' }}>
+                Your funds have been deposited to your Studio Wallet balance.
               </p>
               <button 
                 onClick={handleClose}
                 style={{ 
-                  background: 'var(--orange-500)', color: '#fff', border: 'none', 
-                  padding: '0.85rem 2rem', borderRadius: '12px', fontSize: '0.95rem', 
-                  fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 15px rgba(255, 122, 0, 0.35)' 
+                  background: 'linear-gradient(135deg, #059669 0%, #047857 100%)', 
+                  color: '#ffffff', 
+                  border: 'none', 
+                  padding: '0.95rem 2.25rem', 
+                  borderRadius: '12px', 
+                  fontSize: '1rem', 
+                  fontWeight: 900, 
+                  cursor: 'pointer', 
+                  boxShadow: '0 8px 24px rgba(5, 150, 105, 0.35)',
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem'
                 }}
               >
-                Return to Studio
+                Done
               </button>
             </div>
 
           ) : activeView === 'card' ? (
             /* 1. CREDIT / DEBIT CARD ONLY: 2-Step Solana Address Instruction Modal */
-            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1, background: '#f8fafc' }}>
               <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
                 <div style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.35rem',
                   background: '#ecfdf5',
-                  color: '#059669',
+                  color: '#047857',
                   fontSize: '0.75rem',
                   fontWeight: 800,
                   padding: '0.25rem 0.75rem',
                   borderRadius: '999px',
-                  border: '1px solid #a7f3d0',
+                  border: '1.5px solid #a7f3d0',
                   marginBottom: '0.5rem'
                 }}>
                   <ShieldCheck size={14} /> Deposit Gateway Initialized
                 </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 0.2rem' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', margin: '0 0 0.2rem' }}>
                   Complete in 2 Easy Steps
                 </h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
-                  Deposit Amount: <strong style={{ color: 'var(--orange-600)' }}>${parseFloat(depositAmount || 0).toFixed(2)}</strong>
+                <p style={{ fontSize: '0.85rem', color: '#475569', margin: 0 }}>
+                  Deposit Amount: <strong style={{ color: '#047857', fontSize: '1.1rem' }}>${parseFloat(depositAmount || 0).toFixed(2)}</strong>
                 </p>
               </div>
 
               {/* Step 1 */}
               <div style={{
                 background: '#ffffff',
-                border: '1.5px solid #e2e8f0',
+                border: '1.5px solid #cbd5e1',
                 borderRadius: '14px',
                 padding: '1rem',
                 marginBottom: '0.85rem',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.5rem' }}>
                   <span style={{
-                    width: '22px',
-                    height: '22px',
+                    width: '24px',
+                    height: '24px',
                     borderRadius: '50%',
-                    background: 'var(--orange-500)',
+                    background: '#059669',
                     color: '#ffffff',
-                    fontSize: '0.75rem',
+                    fontSize: '0.78rem',
                     fontWeight: 900,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}>1</span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f172a' }}>
                     Copy Your Receiving Address:
                   </span>
                 </div>
 
                 <div style={{
-                  background: '#f8fafc',
-                  border: '1px solid #cbd5e1',
+                  background: '#f1f5f9',
+                  border: '1.5px solid #cbd5e1',
                   borderRadius: '10px',
                   padding: '0.65rem 0.85rem',
                   display: 'flex',
@@ -557,9 +576,9 @@ export const DepositModal = () => {
                 }}>
                   <code style={{
                     fontFamily: 'monospace',
-                    fontSize: '0.78rem',
+                    fontSize: '0.8rem',
                     fontWeight: 800,
-                    color: 'var(--navy-900)',
+                    color: '#0f172a',
                     wordBreak: 'break-all',
                     lineHeight: 1.3
                   }}>
@@ -569,11 +588,11 @@ export const DepositModal = () => {
                     type="button"
                     onClick={() => copyToClipboard(solanaAddress || boltPaymentUrl, 'Address')}
                     style={{
-                      background: hasCopied ? '#16a34a' : 'var(--orange-500)',
+                      background: hasCopied ? '#059669' : '#0f172a',
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '8px',
-                      padding: '0.45rem 0.75rem',
+                      padding: '0.45rem 0.85rem',
                       fontSize: '0.78rem',
                       fontWeight: 800,
                       cursor: 'pointer',
@@ -584,7 +603,7 @@ export const DepositModal = () => {
                       transition: 'all 0.15s ease'
                     }}
                   >
-                    {hasCopied ? <><Check size={13} /> Copied!</> : <><Copy size={13} /> Copy Address</>}
+                    {hasCopied ? <><Check size={14} /> Copied!</> : <><Copy size={14} /> Copy Address</>}
                   </button>
                 </div>
               </div>
@@ -592,32 +611,32 @@ export const DepositModal = () => {
               {/* Step 2 */}
               <div style={{
                 background: '#ffffff',
-                border: '1.5px solid #e2e8f0',
+                border: '1.5px solid #cbd5e1',
                 borderRadius: '14px',
                 padding: '1rem',
                 marginBottom: '1rem',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.5rem' }}>
                   <span style={{
-                    width: '22px',
-                    height: '22px',
+                    width: '24px',
+                    height: '24px',
                     borderRadius: '50%',
-                    background: 'var(--navy-900)',
+                    background: '#0f172a',
                     color: '#ffffff',
-                    fontSize: '0.75rem',
+                    fontSize: '0.78rem',
                     fontWeight: 900,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}>2</span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f172a' }}>
                     Paste on Checkout Portal:
                   </span>
                 </div>
-                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                  <li>Tap <strong>Proceed to Payment</strong> below to open the deposit portal.</li>
-                  <li>Paste this address when the system asks for the address to complete your deposit.</li>
+                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.82rem', color: '#334155', lineHeight: 1.6 }}>
+                  <li>Tap <strong style={{ color: '#0f172a' }}>Proceed to Payment</strong> below to open the deposit portal.</li>
+                  <li>Paste this address when asked to complete your deposit.</li>
                 </ul>
               </div>
 
@@ -626,18 +645,19 @@ export const DepositModal = () => {
                   href={boltPaymentUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn btn-primary-orange"
                   style={{
                     width: '100%',
-                    padding: '0.85rem',
-                    fontSize: '0.95rem',
+                    padding: '0.9rem',
+                    fontSize: '1rem',
                     fontWeight: 900,
                     borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    color: '#ffffff',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.5rem',
-                    boxShadow: '0 4px 15px rgba(249, 115, 22, 0.35)',
+                    boxShadow: '0 4px 15px rgba(5, 150, 105, 0.35)',
                     textDecoration: 'none'
                   }}
                 >
@@ -651,7 +671,7 @@ export const DepositModal = () => {
                     width: '100%',
                     padding: '0.75rem',
                     background: '#ffffff',
-                    color: 'var(--navy-800)',
+                    color: '#0f172a',
                     border: '1.5px solid #cbd5e1',
                     borderRadius: '12px',
                     fontSize: '0.88rem',
@@ -664,23 +684,21 @@ export const DepositModal = () => {
                     transition: 'all 0.15s ease',
                     boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
                   }}
-                  onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--orange-500)'; e.currentTarget.style.color = 'var(--orange-600)'; }}
-                  onMouseOut={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.color = 'var(--navy-800)'; }}
                 >
                   <ArrowLeft size={16} />
                   <span>Choose Different Method or Amount</span>
                 </button>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                <span className="spinner-border spinner-border-sm" style={{ width: '12px', height: '12px' }}></span>
-                Listening for deposit confirmation...
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.78rem', color: '#64748b' }}>
+                <Loader2 size={14} className="animate-spin" style={{ color: '#059669' }} />
+                Awaiting deposit confirmation...
               </div>
             </div>
 
           ) : activeView === 'cashapp' ? (
             /* 2. CASH APP ONLY: Lightning Deep-Linking & Instant Invoice */
-            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1, background: '#f8fafc' }}>
               <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
                 <div style={{
                   display: 'inline-flex',
@@ -692,39 +710,39 @@ export const DepositModal = () => {
                   fontWeight: 800,
                   padding: '0.25rem 0.75rem',
                   borderRadius: '999px',
-                  border: '1px solid #bbf7d0',
+                  border: '1.5px solid #bbf7d0',
                   marginBottom: '0.5rem'
                 }}>
                   <Zap size={14} /> Bitcoin Lightning Enabled
                 </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 0.2rem' }}>
-                  Top-Up with Cash App
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', margin: '0 0 0.2rem' }}>
+                  Deposit with Cash App
                 </h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
-                  Deposit Amount: <strong style={{ color: '#16a34a' }}>${parseFloat(depositAmount || 0).toFixed(2)}</strong>
+                <p style={{ fontSize: '0.85rem', color: '#475569', margin: 0 }}>
+                  Deposit Amount: <strong style={{ color: '#16a34a', fontSize: '1.1rem' }}>${parseFloat(depositAmount || 0).toFixed(2)}</strong>
                 </p>
               </div>
 
               {/* Instructions */}
               <div style={{
                 background: '#ffffff',
-                border: '1.5px solid #e2e8f0',
+                border: '1.5px solid #cbd5e1',
                 borderRadius: '14px',
                 padding: '1.15rem',
                 marginBottom: '1rem',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
               }}>
-                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.825rem', color: 'var(--navy-900)', lineHeight: 1.65 }}>
-                  <li>Tap <strong>Launch Cash App ⚡</strong> below to open Cash App via instant Bitcoin Lightning.</li>
-                  <li>Confirm the transfer in Cash App to top up your Studio Wallet immediately.</li>
+                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.85rem', color: '#1e293b', lineHeight: 1.65 }}>
+                  <li>Tap <strong style={{ color: '#00D632' }}>Launch Cash App ⚡</strong> below to open Cash App via instant Bitcoin Lightning.</li>
+                  <li>Confirm the transaction in Cash App to credit your Studio Wallet instantly.</li>
                 </ul>
               </div>
 
               {/* Lightning Invoice (Copy backup) */}
               {lightningInvoice && (
                 <div style={{
-                  background: '#f8fafc',
-                  border: '1px solid #cbd5e1',
+                  background: '#f1f5f9',
+                  border: '1.5px solid #cbd5e1',
                   borderRadius: '10px',
                   padding: '0.65rem 0.85rem',
                   marginBottom: '1rem',
@@ -734,8 +752,8 @@ export const DepositModal = () => {
                   gap: '0.5rem'
                 }}>
                   <div style={{ overflow: 'hidden' }}>
-                    <div style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Lightning Invoice</div>
-                    <code style={{ fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 800, color: 'var(--navy-900)', wordBreak: 'break-all', lineHeight: 1.2 }}>
+                    <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Lightning Invoice</div>
+                    <code style={{ fontFamily: 'monospace', fontSize: '0.78rem', fontWeight: 800, color: '#0f172a', wordBreak: 'break-all', lineHeight: 1.2 }}>
                       {lightningInvoice.slice(0, 28)}...
                     </code>
                   </div>
@@ -748,7 +766,7 @@ export const DepositModal = () => {
                       border: 'none',
                       borderRadius: '8px',
                       padding: '0.45rem 0.75rem',
-                      fontSize: '0.75rem',
+                      fontSize: '0.78rem',
                       fontWeight: 800,
                       cursor: 'pointer',
                       flexShrink: 0,
@@ -794,7 +812,7 @@ export const DepositModal = () => {
                     width: '100%',
                     padding: '0.75rem',
                     background: '#ffffff',
-                    color: 'var(--navy-800)',
+                    color: '#0f172a',
                     border: '1.5px solid #cbd5e1',
                     borderRadius: '12px',
                     fontSize: '0.88rem',
@@ -807,23 +825,21 @@ export const DepositModal = () => {
                     transition: 'all 0.15s ease',
                     boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
                   }}
-                  onMouseOver={(e) => { e.currentTarget.style.borderColor = '#16a34a'; e.currentTarget.style.color = '#16a34a'; }}
-                  onMouseOut={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.color = 'var(--navy-800)'; }}
                 >
                   <ArrowLeft size={16} />
                   <span>Choose Different Method or Amount</span>
                 </button>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                <span className="spinner-border spinner-border-sm" style={{ width: '12px', height: '12px' }}></span>
-                Listening for Cash App Lightning deposit...
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.78rem', color: '#64748b' }}>
+                <Loader2 size={14} className="animate-spin" style={{ color: '#00D632' }} />
+                Listening for Cash App Lightning confirmation...
               </div>
             </div>
 
           ) : activeView === 'paypal' ? (
-            /* 3. PAYPAL ONLY: PYUSD / Crypto Instructions Modal */
-            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+            /* 3. PAYPAL ONLY: PYUSD Instructions View */
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1, background: '#f8fafc' }}>
               <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
                 <div style={{
                   display: 'inline-flex',
@@ -835,49 +851,49 @@ export const DepositModal = () => {
                   fontWeight: 800,
                   padding: '0.25rem 0.75rem',
                   borderRadius: '999px',
-                  border: '1px solid #bfdbfe',
+                  border: '1.5px solid #bfdbfe',
                   marginBottom: '0.5rem'
                 }}>
                   <Coins size={14} /> PayPal PYUSD Gateway
                 </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 0.2rem' }}>
-                  Top-Up with PayPal PYUSD
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', margin: '0 0 0.2rem' }}>
+                  Deposit with PayPal PYUSD
                 </h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
-                  Deposit Amount: <strong style={{ color: '#003087' }}>${parseFloat(depositAmount || 0).toFixed(2)}</strong>
+                <p style={{ fontSize: '0.85rem', color: '#475569', margin: 0 }}>
+                  Deposit Amount: <strong style={{ color: '#003087', fontSize: '1.1rem' }}>${parseFloat(depositAmount || 0).toFixed(2)}</strong>
                 </p>
               </div>
 
               {/* Step 1 */}
               <div style={{
                 background: '#ffffff',
-                border: '1.5px solid #e2e8f0',
+                border: '1.5px solid #cbd5e1',
                 borderRadius: '14px',
                 padding: '1rem',
                 marginBottom: '0.85rem',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.5rem' }}>
                   <span style={{
-                    width: '22px',
-                    height: '22px',
+                    width: '24px',
+                    height: '24px',
                     borderRadius: '50%',
                     background: '#003087',
                     color: '#ffffff',
-                    fontSize: '0.75rem',
+                    fontSize: '0.78rem',
                     fontWeight: 900,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}>1</span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f172a' }}>
                     Copy Receiving Address:
                   </span>
                 </div>
 
                 <div style={{
-                  background: '#f8fafc',
-                  border: '1px solid #cbd5e1',
+                  background: '#f1f5f9',
+                  border: '1.5px solid #cbd5e1',
                   borderRadius: '10px',
                   padding: '0.65rem 0.85rem',
                   display: 'flex',
@@ -887,9 +903,9 @@ export const DepositModal = () => {
                 }}>
                   <code style={{
                     fontFamily: 'monospace',
-                    fontSize: '0.78rem',
+                    fontSize: '0.8rem',
                     fontWeight: 800,
-                    color: 'var(--navy-900)',
+                    color: '#0f172a',
                     wordBreak: 'break-all',
                     lineHeight: 1.3
                   }}>
@@ -899,11 +915,11 @@ export const DepositModal = () => {
                     type="button"
                     onClick={() => copyToClipboard(solanaAddress || boltPaymentUrl, 'PYUSD Address')}
                     style={{
-                      background: hasCopied ? '#16a34a' : '#003087',
+                      background: hasCopied ? '#059669' : '#003087',
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '8px',
-                      padding: '0.45rem 0.75rem',
+                      padding: '0.45rem 0.85rem',
                       fontSize: '0.78rem',
                       fontWeight: 800,
                       cursor: 'pointer',
@@ -921,32 +937,32 @@ export const DepositModal = () => {
               {/* Step 2 */}
               <div style={{
                 background: '#ffffff',
-                border: '1.5px solid #e2e8f0',
+                border: '1.5px solid #cbd5e1',
                 borderRadius: '14px',
                 padding: '1rem',
                 marginBottom: '1rem',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.5rem' }}>
                   <span style={{
-                    width: '22px',
-                    height: '22px',
+                    width: '24px',
+                    height: '24px',
                     borderRadius: '50%',
-                    background: 'var(--navy-900)',
+                    background: '#0f172a',
                     color: '#ffffff',
-                    fontSize: '0.75rem',
+                    fontSize: '0.78rem',
                     fontWeight: 900,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}>2</span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f172a' }}>
                     Send from PayPal App:
                   </span>
                 </div>
-                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                  <li>Open your <strong>PayPal App</strong> and navigate to <strong>Crypto</strong>.</li>
-                  <li>Select <strong>PYUSD</strong> (or Solana), tap <strong>Send</strong>, and paste this address.</li>
+                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.82rem', color: '#334155', lineHeight: 1.6 }}>
+                  <li>Open your <strong style={{ color: '#003087' }}>PayPal App</strong> and navigate to <strong style={{ color: '#003087' }}>Crypto</strong>.</li>
+                  <li>Select <strong style={{ color: '#003087' }}>PYUSD</strong> (or Solana), tap <strong style={{ color: '#003087' }}>Send</strong>, and paste this address.</li>
                 </ul>
               </div>
 
@@ -957,8 +973,8 @@ export const DepositModal = () => {
                   rel="noopener noreferrer"
                   style={{
                     width: '100%',
-                    padding: '0.85rem',
-                    fontSize: '0.95rem',
+                    padding: '0.9rem',
+                    fontSize: '1rem',
                     fontWeight: 900,
                     borderRadius: '12px',
                     background: 'linear-gradient(135deg, #003087 0%, #0079C1 100%)',
@@ -981,7 +997,7 @@ export const DepositModal = () => {
                     width: '100%',
                     padding: '0.75rem',
                     background: '#ffffff',
-                    color: 'var(--navy-800)',
+                    color: '#0f172a',
                     border: '1.5px solid #cbd5e1',
                     borderRadius: '12px',
                     fontSize: '0.88rem',
@@ -994,23 +1010,21 @@ export const DepositModal = () => {
                     transition: 'all 0.15s ease',
                     boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
                   }}
-                  onMouseOver={(e) => { e.currentTarget.style.borderColor = '#003087'; e.currentTarget.style.color = '#003087'; }}
-                  onMouseOut={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.color = 'var(--navy-800)'; }}
                 >
                   <ArrowLeft size={16} />
                   <span>Choose Different Method or Amount</span>
                 </button>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                <span className="spinner-border spinner-border-sm" style={{ width: '12px', height: '12px' }}></span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.78rem', color: '#64748b' }}>
+                <Loader2 size={14} className="animate-spin" style={{ color: '#003087' }} />
                 Awaiting PayPal PYUSD transfer confirmation...
               </div>
             </div>
 
           ) : activeView === 'browser_waiting' ? (
-            /* 4. APPLE PAY & GOOGLE PAY: Direct User-Initiated Launch View */
-            <div style={{ padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+            /* 4. APPLE PAY & GOOGLE PAY View */
+            <div style={{ padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center', justifyContent: 'center', textAlign: 'center', background: '#f8fafc' }}>
               <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -1021,18 +1035,18 @@ export const DepositModal = () => {
                 fontWeight: 800,
                 padding: '0.25rem 0.75rem',
                 borderRadius: '999px',
-                border: '1px solid #cbd5e1',
+                border: '1.5px solid #cbd5e1',
                 marginBottom: '0.85rem'
               }}>
                 {selectedMethod === 'apple_pay' ? '🍎 Apple Pay Ready' : '🌐 Google Pay Ready'}
               </div>
 
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--navy-950)', margin: '0 0 0.35rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', margin: '0 0 0.35rem' }}>
                 {selectedMethod === 'apple_pay' ? 'Deposit with Apple Pay' : 'Deposit with Google Pay'}
               </h3>
               
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 1.5rem', maxWidth: '320px' }}>
-                Total: <strong style={{ color: 'var(--orange-600)' }}>${parseFloat(depositAmount || 0).toFixed(2)}</strong>. Tap the button below to authorize deposit.
+              <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 1.5rem', maxWidth: '320px' }}>
+                Total: <strong style={{ color: '#047857', fontSize: '1.1rem' }}>${parseFloat(depositAmount || 0).toFixed(2)}</strong>. Tap the button below to authorize deposit.
               </p>
 
               <div style={{ width: '100%', maxWidth: '320px', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -1071,7 +1085,7 @@ export const DepositModal = () => {
                     width: '100%',
                     padding: '0.75rem',
                     background: '#ffffff',
-                    color: 'var(--navy-800)',
+                    color: '#0f172a',
                     border: '1.5px solid #cbd5e1',
                     borderRadius: '12px',
                     fontSize: '0.88rem',
@@ -1084,27 +1098,25 @@ export const DepositModal = () => {
                     transition: 'all 0.15s ease',
                     boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
                   }}
-                  onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--orange-500)'; e.currentTarget.style.color = 'var(--orange-600)'; }}
-                  onMouseOut={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.color = 'var(--navy-800)'; }}
                 >
                   <ArrowLeft size={16} />
                   <span>Choose Different Method or Amount</span>
                 </button>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '1.25rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                <span className="spinner-border spinner-border-sm" style={{ width: '12px', height: '12px' }}></span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '1.25rem', fontSize: '0.78rem', color: '#64748b' }}>
+                <Loader2 size={14} className="animate-spin" style={{ color: '#059669' }} />
                 Listening for deposit confirmation...
               </div>
             </div>
 
           ) : (
             /* 5. AMOUNT & METHOD SELECTION VIEW */
-            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
+            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch', background: '#f8fafc' }}>
               
               {/* Amount Selection Card */}
-              <div style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '1.25rem', textAlign: 'center', marginBottom: '1.25rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>SELECT TOP-UP AMOUNT</div>
+              <div style={{ background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '16px', padding: '1.25rem', textAlign: 'center', marginBottom: '1.25rem', boxShadow: '0 4px 14px rgba(0,0,0,0.04)' }}>
+                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>SELECT TOP-UP AMOUNT</div>
                 
                 {/* Preset Chips */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.4rem', margin: '0.75rem 0' }}>
@@ -1114,15 +1126,16 @@ export const DepositModal = () => {
                       type="button"
                       onClick={() => setDepositAmount(preset.toString())}
                       style={{
-                        padding: '0.55rem 0.2rem',
+                        padding: '0.65rem 0.2rem',
                         borderRadius: '10px',
-                        border: `1.5px solid ${depositAmount === preset.toString() ? 'var(--orange-500)' : '#e2e8f0'}`,
-                        background: depositAmount === preset.toString() ? 'rgba(249, 115, 22, 0.08)' : '#f8fafc',
-                        color: depositAmount === preset.toString() ? 'var(--orange-600)' : 'var(--navy-900)',
+                        border: `1.5px solid ${depositAmount === preset.toString() ? '#059669' : '#cbd5e1'}`,
+                        background: depositAmount === preset.toString() ? '#ecfdf5' : '#ffffff',
+                        color: depositAmount === preset.toString() ? '#047857' : '#0f172a',
                         fontWeight: 900,
-                        fontSize: '0.88rem',
+                        fontSize: '0.92rem',
                         cursor: 'pointer',
-                        transition: 'all 0.15s ease'
+                        transition: 'all 0.15s ease',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
                       }}
                     >
                       ${preset}
@@ -1132,7 +1145,7 @@ export const DepositModal = () => {
 
                 {/* Custom Amount Field */}
                 <div style={{ position: 'relative', marginTop: '0.5rem' }}>
-                  <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 900, color: 'var(--orange-600)', fontSize: '1.1rem' }}>$</span>
+                  <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 900, color: '#047857', fontSize: '1.2rem' }}>$</span>
                   <input
                     type="number"
                     min="5"
@@ -1145,9 +1158,10 @@ export const DepositModal = () => {
                       padding: '0.65rem 1rem 0.65rem 2.2rem',
                       borderRadius: '10px',
                       border: '1.5px solid #cbd5e1',
-                      fontSize: '1.15rem',
+                      fontSize: '1.2rem',
                       fontWeight: 900,
-                      color: 'var(--navy-950)',
+                      color: '#0f172a',
+                      background: '#ffffff',
                       outline: 'none',
                       textAlign: 'center'
                     }}
@@ -1155,7 +1169,7 @@ export const DepositModal = () => {
                 </div>
               </div>
               
-              <p style={{ color: 'var(--navy-900)', fontSize: '0.88rem', fontWeight: 800, marginBottom: '0.85rem', textAlign: 'center' }}>
+              <p style={{ color: '#0f172a', fontSize: '0.9rem', fontWeight: 900, marginBottom: '0.85rem', textAlign: 'center' }}>
                 Select deposit payment method:
               </p>
               
@@ -1168,46 +1182,34 @@ export const DepositModal = () => {
                     disabled={isInitializing}
                     style={{
                       background: '#ffffff',
-                      border: '1.5px solid #e2e8f0',
+                      border: '1.5px solid #cbd5e1',
                       borderRadius: '14px',
-                      padding: '0.85rem 1.15rem',
+                      padding: '0.95rem 1.15rem',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.85rem',
                       cursor: isInitializing ? 'not-allowed' : 'pointer',
                       transition: 'all 0.2s ease',
                       opacity: isInitializing && selectedMethod !== method.id ? 0.5 : 1,
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
-                      textAlign: 'left'
-                    }}
-                    onMouseOver={(e) => {
-                      if (!isInitializing) {
-                        e.currentTarget.style.background = '#fff7ed';
-                        e.currentTarget.style.borderColor = 'var(--orange-500)';
-                        e.currentTarget.style.transform = 'translateY(-1px)';
-                      }
-                    }}
-                    onMouseOut={(e) => {
-                      if (!isInitializing) {
-                        e.currentTarget.style.background = '#ffffff';
-                        e.currentTarget.style.borderColor = '#e2e8f0';
-                        e.currentTarget.style.transform = 'none';
-                      }
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                      textAlign: 'left',
+                      color: '#0f172a'
                     }}
                   >
                     {method.icon}
                     
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                        <span style={{ color: 'var(--navy-950)', fontWeight: 800, fontSize: '0.92rem' }}>
+                        <span style={{ color: '#0f172a', fontWeight: 900, fontSize: '0.95rem' }}>
                           {method.name}
                         </span>
                         {method.badge && (
                           <span style={{
                             background: '#f1f5f9',
-                            color: 'var(--navy-700)',
+                            color: '#334155',
+                            border: '1px solid #cbd5e1',
                             fontSize: '0.65rem',
-                            fontWeight: 800,
+                            fontWeight: 900,
                             padding: '0.15rem 0.45rem',
                             borderRadius: '6px',
                             letterSpacing: '0.03em'
@@ -1216,19 +1218,21 @@ export const DepositModal = () => {
                           </span>
                         )}
                       </div>
-                      <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 600, marginTop: '0.15rem' }}>
+                      <div style={{ color: '#64748b', fontSize: '0.78rem', fontWeight: 600, marginTop: '0.18rem' }}>
                         {method.subtext}
                       </div>
                     </div>
 
-                    {isInitializing && selectedMethod === method.id && (
-                      <Loader2 size={18} style={{ animation: 'spin 1s linear infinite', color: 'var(--orange-500)', marginLeft: 'auto' }} />
+                    {isInitializing && selectedMethod === method.id ? (
+                      <Loader2 size={20} className="animate-spin" style={{ color: '#059669', marginLeft: 'auto' }} />
+                    ) : (
+                      <ChevronRight size={18} style={{ color: '#94a3b8', marginLeft: 'auto' }} />
                     )}
                   </button>
                 ))}
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', marginTop: '1.25rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', marginTop: '1.25rem', fontSize: '0.75rem', color: '#64748b' }}>
                 <Lock size={12} /> 256-Bit SSL Encrypted Instant Deposit Gateway
               </div>
 

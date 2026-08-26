@@ -8,15 +8,25 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Server misconfiguration' }, { status: 500 });
     }
 
-    // Fetch webhook secret from site_config
-    const { data: configRow } = await supabaseAdmin
-      .from('site_config')
-      .select('value')
-      .eq('key', 'boltpayouts_config')
-      .maybeSingle();
+    // Fetch webhook secret from env or site_config
+    let webhookSecret = process.env.BOLTPAYOUTS_WEBHOOK_SECRET || process.env.BOLT_WEBHOOK_SECRET || null;
+    if (!webhookSecret) {
+      const { data: configRow } = await supabaseAdmin
+        .from('site_config')
+        .select('value')
+        .eq('key', 'boltpayouts_config')
+        .maybeSingle();
 
-    const boltConfig = configRow?.value || {};
-    const webhookSecret = boltConfig.webhookSecret;
+      let boltConfig = configRow?.value || {};
+      if (typeof boltConfig === 'string') {
+        try {
+          boltConfig = JSON.parse(boltConfig);
+        } catch {
+          boltConfig = { webhookSecret: boltConfig };
+        }
+      }
+      webhookSecret = boltConfig?.webhookSecret || boltConfig?.webhook_secret || boltConfig?.secret || null;
+    }
 
     if (!webhookSecret) {
       return NextResponse.json({ success: false, error: 'Webhook secret not configured' }, { status: 503 });

@@ -412,11 +412,11 @@ export const BDigitizingMobileApp = () => {
           SCREEN 1: HOME TAB
           ========================================================================= */}
       {mobileTab === 'home' && (
-        <div style={{ padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div style={{ padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', background: '#f8fafc' }}>
           
           {/* Top Brand Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff', padding: '0.75rem 1rem', borderRadius: '16px', border: '1.5px solid #cbd5e1', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
               <span style={{ fontSize: '1.45rem', fontWeight: 900, color: '#047857', letterSpacing: '-0.03em' }}>
                 bdigitizing<span style={{ color: '#10b981' }}>.</span>
               </span>
@@ -426,7 +426,7 @@ export const BDigitizingMobileApp = () => {
                   color: '#ffffff',
                   fontSize: '0.62rem',
                   fontWeight: 900,
-                  padding: '0.12rem 0.45rem',
+                  padding: '0.15rem 0.45rem',
                   borderRadius: '6px',
                   letterSpacing: '0.04em'
                 }}>
@@ -441,10 +441,10 @@ export const BDigitizingMobileApp = () => {
                 onClick={() => setIsNotifDrawerOpen(true)}
                 style={{
                   background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
+                  border: '1.5px solid #cbd5e1',
                   borderRadius: '10px',
-                  padding: '0.45rem',
-                  color: '#334155',
+                  padding: '0.5rem',
+                  color: '#0f172a',
                   cursor: 'pointer',
                   position: 'relative',
                   display: 'flex',
@@ -452,7 +452,7 @@ export const BDigitizingMobileApp = () => {
                   justifyContent: 'center'
                 }}
               >
-                <Bell size={20} />
+                <Bell size={19} />
                 {unreadNotifCount > 0 && (
                   <span style={{
                     position: 'absolute',
@@ -471,48 +471,49 @@ export const BDigitizingMobileApp = () => {
                 onClick={() => setMobileTab('categories')}
                 style={{
                   background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
+                  border: '1.5px solid #cbd5e1',
                   borderRadius: '10px',
-                  padding: '0.45rem',
-                  color: '#334155',
+                  padding: '0.5rem',
+                  color: '#0f172a',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}
               >
-                <LayoutGrid size={20} />
+                <LayoutGrid size={19} />
               </button>
             </div>
           </div>
 
-          {/* Search Input Bar (Tapping jumps to Categories & Search) */}
+          {/* Search Input Bar */}
           <div 
             onClick={() => setMobileTab('categories')}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.65rem',
-              background: '#f8fafc',
-              border: '1.5px solid #e2e8f0',
-              borderRadius: '12px',
+              background: '#ffffff',
+              border: '1.5px solid #cbd5e1',
+              borderRadius: '14px',
               padding: '0.75rem 1rem',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
             }}
           >
-            <Search size={18} style={{ color: '#64748b' }} />
-            <span style={{ fontSize: '0.88rem', color: '#64748b', fontWeight: 500 }}>
-              Search services (e.g. Embroidery, Vector, Patches...)
+            <Search size={18} style={{ color: '#047857' }} />
+            <span style={{ fontSize: '0.88rem', color: '#64748b', fontWeight: 600 }}>
+              Search services (Embroidery, Vector, Patches...)
             </span>
           </div>
 
-          {/* Active Orders Widget (If user has running orders) */}
+          {/* Active Orders Widget */}
           {activeOrders.length > 0 && (
             <div style={{
               background: '#f0fdf4',
               border: '1.5px solid #86efac',
               borderRadius: '16px',
-              padding: '0.85rem 1rem',
+              padding: '0.9rem 1rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -532,10 +533,10 @@ export const BDigitizingMobileApp = () => {
                   <Zap size={20} />
                 </div>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#0f172a' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: '#0f172a' }}>
                     {activeOrders.length} Order{activeOrders.length > 1 ? 's' : ''} in Production
                   </h4>
-                  <span style={{ fontSize: '0.72rem', color: '#047857', fontWeight: 700 }}>
+                  <span style={{ fontSize: '0.74rem', color: '#047857', fontWeight: 700 }}>
                     Master digitizers are testing stitch pathing
                   </span>
                 </div>
@@ -546,10 +547,10 @@ export const BDigitizingMobileApp = () => {
                 onClick={() => setMobileTab('orders')}
                 style={{
                   background: '#ffffff',
-                  border: '1px solid #86efac',
+                  border: '1.5px solid #86efac',
                   borderRadius: '8px',
-                  padding: '0.4rem 0.75rem',
-                  fontSize: '0.75rem',
+                  padding: '0.45rem 0.85rem',
+                  fontSize: '0.78rem',
                   fontWeight: 800,
                   color: '#047857',
                   cursor: 'pointer'
@@ -563,15 +564,15 @@ export const BDigitizingMobileApp = () => {
           {/* Popular Services Section (Horizontal Slider) */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
-                Popular Services
+              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#0f172a' }}>
+                Our 3 Core Services
               </h3>
               <button
                 type="button"
                 onClick={() => setMobileTab('categories')}
-                style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                style={{ background: 'none', border: 'none', color: '#047857', fontSize: '0.82rem', fontWeight: 800, cursor: 'pointer' }}
               >
-                See All
+                View All →
               </button>
             </div>
 
@@ -587,32 +588,32 @@ export const BDigitizingMobileApp = () => {
               <div
                 onClick={() => handleOpenOrderConfigurator('embroidery')}
                 style={{
-                  minWidth: '150px',
-                  width: '150px',
+                  minWidth: '155px',
+                  width: '155px',
                   background: '#ffffff',
-                  borderRadius: '14px',
-                  border: '1px solid #e2e8f0',
+                  borderRadius: '16px',
+                  border: '1.5px solid #cbd5e1',
                   overflow: 'hidden',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
                   flexShrink: 0
                 }}
               >
                 <div style={{
                   height: '110px',
-                  background: 'linear-gradient(135deg, #15803d 0%, #166534 100%)',
+                  background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: '#ffffff'
                 }}>
-                  <Layers size={42} strokeWidth={1.75} />
+                  <Layers size={42} strokeWidth={2} />
                 </div>
-                <div style={{ padding: '0.65rem' }}>
-                  <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.25 }}>
+                <div style={{ padding: '0.75rem' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
                     Embroidery Digitizing
                   </h4>
-                  <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 800, display: 'block', marginTop: '0.25rem' }}>
+                  <span style={{ fontSize: '0.78rem', color: '#047857', fontWeight: 900, display: 'block', marginTop: '0.25rem' }}>
                     From $10.00
                   </span>
                 </div>
@@ -622,14 +623,14 @@ export const BDigitizingMobileApp = () => {
               <div
                 onClick={() => handleOpenOrderConfigurator('vector')}
                 style={{
-                  minWidth: '150px',
-                  width: '150px',
+                  minWidth: '155px',
+                  width: '155px',
                   background: '#ffffff',
-                  borderRadius: '14px',
-                  border: '1px solid #e2e8f0',
+                  borderRadius: '16px',
+                  border: '1.5px solid #cbd5e1',
                   overflow: 'hidden',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
                   flexShrink: 0
                 }}
               >
@@ -641,13 +642,13 @@ export const BDigitizingMobileApp = () => {
                   justifyContent: 'center',
                   color: '#ffffff'
                 }}>
-                  <PenTool size={42} strokeWidth={1.75} />
+                  <PenTool size={42} strokeWidth={2} />
                 </div>
-                <div style={{ padding: '0.65rem' }}>
-                  <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.25 }}>
+                <div style={{ padding: '0.75rem' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
                     Vector Art Tracing
                   </h4>
-                  <span style={{ fontSize: '0.72rem', color: '#ea580c', fontWeight: 800, display: 'block', marginTop: '0.25rem' }}>
+                  <span style={{ fontSize: '0.78rem', color: '#ea580c', fontWeight: 900, display: 'block', marginTop: '0.25rem' }}>
                     From $15.00
                   </span>
                 </div>
@@ -657,14 +658,14 @@ export const BDigitizingMobileApp = () => {
               <div
                 onClick={() => handleOpenOrderConfigurator('patch')}
                 style={{
-                  minWidth: '150px',
-                  width: '150px',
+                  minWidth: '155px',
+                  width: '155px',
                   background: '#ffffff',
-                  borderRadius: '14px',
-                  border: '1px solid #e2e8f0',
+                  borderRadius: '16px',
+                  border: '1.5px solid #cbd5e1',
                   overflow: 'hidden',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
                   flexShrink: 0
                 }}
               >
@@ -676,13 +677,13 @@ export const BDigitizingMobileApp = () => {
                   justifyContent: 'center',
                   color: '#ffffff'
                 }}>
-                  <Package size={42} strokeWidth={1.75} />
+                  <Package size={42} strokeWidth={2} />
                 </div>
-                <div style={{ padding: '0.65rem' }}>
-                  <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.25 }}>
+                <div style={{ padding: '0.75rem' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
                     Custom Patches
                   </h4>
-                  <span style={{ fontSize: '0.72rem', color: '#0284c7', fontWeight: 800, display: 'block', marginTop: '0.25rem' }}>
+                  <span style={{ fontSize: '0.78rem', color: '#0284c7', fontWeight: 900, display: 'block', marginTop: '0.25rem' }}>
                     From $1.50 / pc
                   </span>
                 </div>
@@ -692,14 +693,14 @@ export const BDigitizingMobileApp = () => {
               <div
                 onClick={() => handleOpenOrderConfigurator('embroidery')}
                 style={{
-                  minWidth: '150px',
-                  width: '150px',
+                  minWidth: '155px',
+                  width: '155px',
                   background: '#ffffff',
-                  borderRadius: '14px',
-                  border: '1px solid #e2e8f0',
+                  borderRadius: '16px',
+                  border: '1.5px solid #cbd5e1',
                   overflow: 'hidden',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
                   flexShrink: 0
                 }}
               >
@@ -711,103 +712,15 @@ export const BDigitizingMobileApp = () => {
                   justifyContent: 'center',
                   color: '#ffffff'
                 }}>
-                  <Zap size={42} strokeWidth={1.75} />
+                  <Zap size={42} strokeWidth={2} />
                 </div>
-                <div style={{ padding: '0.65rem' }}>
-                  <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.25 }}>
-                    Express 4–8h Rush
+                <div style={{ padding: '0.75rem' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
+                    Express 2–6h Rush
                   </h4>
-                  <span style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 800, display: 'block', marginTop: '0.25rem' }}>
+                  <span style={{ fontSize: '0.78rem', color: '#d97706', fontWeight: 900, display: 'block', marginTop: '0.25rem' }}>
                     +$10 Speed Fee
                   </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* What's new on BDigitizing Feature Banners */}
-          <div>
-            <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
-              What's new on BDigitizing?
-            </h3>
-
-            <div style={{
-              display: 'flex',
-              gap: '0.85rem',
-              overflowX: 'auto',
-              paddingBottom: '0.35rem',
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none'
-            }}>
-              {/* Feature Banner 1 */}
-              <div 
-                onClick={() => handleOpenOrderConfigurator('embroidery')}
-                style={{
-                  minWidth: '280px',
-                  width: '280px',
-                  height: '160px',
-                  borderRadius: '18px',
-                  background: 'linear-gradient(135deg, #064e3b 0%, #065f46 100%)',
-                  color: '#ffffff',
-                  padding: '1.15rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer',
-                  boxShadow: '0 6px 20px rgba(6, 78, 59, 0.25)',
-                  flexShrink: 0
-                }}
-              >
-                <div>
-                  <span style={{ fontSize: '0.65rem', fontWeight: 900, background: 'rgba(255,255,255,0.2)', padding: '0.15rem 0.45rem', borderRadius: '4px', textTransform: 'uppercase' }}>
-                    100% Quality Guaranteed
-                  </span>
-                  <h4 style={{ margin: '0.35rem 0 0', fontSize: '1.1rem', fontWeight: 900, color: '#ffffff', lineHeight: 1.25 }}>
-                    Free Unlimited Revisions
-                  </h4>
-                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.74rem', color: '#a7f3d0', lineHeight: 1.3 }}>
-                    Native Wilcom stitch pathing with zero thread breaks.
-                  </p>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem', fontWeight: 800, color: '#ffffff' }}>
-                  <span>Configure Embroidery</span> <ChevronRight size={14} />
-                </div>
-              </div>
-
-              {/* Feature Banner 2 */}
-              <div 
-                onClick={() => handleOpenOrderConfigurator('vector')}
-                style={{
-                  minWidth: '280px',
-                  width: '280px',
-                  height: '160px',
-                  borderRadius: '18px',
-                  background: 'linear-gradient(135deg, #4a044e 0%, #701a75 100%)',
-                  color: '#ffffff',
-                  padding: '1.15rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer',
-                  boxShadow: '0 6px 20px rgba(74, 4, 78, 0.25)',
-                  flexShrink: 0
-                }}
-              >
-                <div>
-                  <span style={{ fontSize: '0.65rem', fontWeight: 900, background: 'rgba(255,255,255,0.2)', padding: '0.15rem 0.45rem', borderRadius: '4px', textTransform: 'uppercase' }}>
-                    Press-Ready Vector
-                  </span>
-                  <h4 style={{ margin: '0.35rem 0 0', fontSize: '1.1rem', fontWeight: 900, color: '#ffffff', lineHeight: 1.25 }}>
-                    Pantone Spot Separations
-                  </h4>
-                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.74rem', color: '#f5d0fe', lineHeight: 1.3 }}>
-                    Master .AI, .EPS, .SVG and 300 DPI print files.
-                  </p>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem', fontWeight: 800, color: '#ffffff' }}>
-                  <span>Upload Vector Art</span> <ChevronRight size={14} />
                 </div>
               </div>
             </div>
@@ -821,20 +734,20 @@ export const BDigitizingMobileApp = () => {
               background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
               color: '#ffffff',
               border: 'none',
-              borderRadius: '14px',
-              padding: '0.95rem',
+              borderRadius: '16px',
+              padding: '1.05rem',
               fontWeight: 900,
-              fontSize: '0.95rem',
+              fontSize: '1rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '0.5rem',
-              boxShadow: '0 6px 20px rgba(5, 150, 105, 0.35)',
+              boxShadow: '0 6px 22px rgba(5, 150, 105, 0.35)',
               cursor: 'pointer',
               marginTop: '0.25rem'
             }}
           >
-            <Plus size={20} strokeWidth={3} /> Place New Order
+            <Plus size={22} strokeWidth={3} /> Place New Order
           </button>
 
         </div>
@@ -1862,15 +1775,15 @@ export const BDigitizingMobileApp = () => {
           left: 0,
           right: 0,
           width: '100%',
-          height: '62px',
+          height: '66px',
           background: '#ffffff',
-          borderTop: '1px solid #e2e8f0',
+          borderTop: '1.5px solid #cbd5e1',
           display: 'grid',
           gridTemplateColumns: 'repeat(5, 1fr)',
           alignItems: 'center',
           zIndex: 99999,
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          boxShadow: '0 -2px 10px rgba(0,0,0,0.04)'
+          boxShadow: '0 -4px 16px rgba(0,0,0,0.06)'
         }}
       >
         {/* Tab 1: Home */}
@@ -1888,11 +1801,23 @@ export const BDigitizingMobileApp = () => {
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            padding: '0.35rem 0',
-            color: mobileTab === 'home' ? '#059669' : '#94a3b8'
+            padding: '0.25rem 0',
+            color: mobileTab === 'home' ? '#047857' : '#64748b',
+            gap: '0.18rem'
           }}
         >
-          <Home size={22} strokeWidth={mobileTab === 'home' ? 2.5 : 1.75} />
+          <div style={{
+            background: mobileTab === 'home' ? '#ecfdf5' : 'transparent',
+            borderRadius: '12px',
+            padding: '0.25rem 0.65rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s ease'
+          }}>
+            <Home size={20} strokeWidth={mobileTab === 'home' ? 2.5 : 1.75} />
+          </div>
+          <span style={{ fontSize: '0.68rem', fontWeight: mobileTab === 'home' ? 900 : 600 }}>Home</span>
         </button>
 
         {/* Tab 2: Messages / Inbox */}
@@ -1910,23 +1835,36 @@ export const BDigitizingMobileApp = () => {
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            padding: '0.35rem 0',
+            padding: '0.25rem 0',
             position: 'relative',
-            color: mobileTab === 'inbox' ? '#059669' : '#94a3b8'
+            color: mobileTab === 'inbox' ? '#047857' : '#64748b',
+            gap: '0.18rem'
           }}
         >
-          <Mail size={22} strokeWidth={mobileTab === 'inbox' ? 2.5 : 1.75} />
-          {unreadChatCount > 0 && (
-            <span style={{
-              position: 'absolute',
-              top: '4px',
-              right: '22px',
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: '#ef4444'
-            }} />
-          )}
+          <div style={{
+            background: mobileTab === 'inbox' ? '#ecfdf5' : 'transparent',
+            borderRadius: '12px',
+            padding: '0.25rem 0.65rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+            transition: 'all 0.2s ease'
+          }}>
+            <Mail size={20} strokeWidth={mobileTab === 'inbox' ? 2.5 : 1.75} />
+            {unreadChatCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '2px',
+                right: '4px',
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: '#ef4444'
+              }} />
+            )}
+          </div>
+          <span style={{ fontSize: '0.68rem', fontWeight: mobileTab === 'inbox' ? 900 : 600 }}>Inbox</span>
         </button>
 
         {/* Tab 3: Search / Categories */}
@@ -1944,11 +1882,23 @@ export const BDigitizingMobileApp = () => {
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            padding: '0.35rem 0',
-            color: mobileTab === 'categories' ? '#059669' : '#94a3b8'
+            padding: '0.25rem 0',
+            color: mobileTab === 'categories' ? '#047857' : '#64748b',
+            gap: '0.18rem'
           }}
         >
-          <Search size={22} strokeWidth={mobileTab === 'categories' ? 2.5 : 1.75} />
+          <div style={{
+            background: mobileTab === 'categories' ? '#ecfdf5' : 'transparent',
+            borderRadius: '12px',
+            padding: '0.25rem 0.65rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s ease'
+          }}>
+            <Search size={20} strokeWidth={mobileTab === 'categories' ? 2.5 : 1.75} />
+          </div>
+          <span style={{ fontSize: '0.68rem', fontWeight: mobileTab === 'categories' ? 900 : 600 }}>Explore</span>
         </button>
 
         {/* Tab 4: Manage Orders */}
@@ -1966,31 +1916,44 @@ export const BDigitizingMobileApp = () => {
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            padding: '0.35rem 0',
+            padding: '0.25rem 0',
             position: 'relative',
-            color: mobileTab === 'orders' ? '#059669' : '#94a3b8'
+            color: mobileTab === 'orders' ? '#047857' : '#64748b',
+            gap: '0.18rem'
           }}
         >
-          <ClipboardList size={22} strokeWidth={mobileTab === 'orders' ? 2.5 : 1.75} />
-          {activeOrders.length > 0 && (
-            <span style={{
-              position: 'absolute',
-              top: '4px',
-              right: '20px',
-              background: '#059669',
-              color: '#ffffff',
-              fontSize: '0.55rem',
-              fontWeight: 900,
-              width: '14px',
-              height: '14px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              {activeOrders.length}
-            </span>
-          )}
+          <div style={{
+            background: mobileTab === 'orders' ? '#ecfdf5' : 'transparent',
+            borderRadius: '12px',
+            padding: '0.25rem 0.65rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+            transition: 'all 0.2s ease'
+          }}>
+            <ClipboardList size={20} strokeWidth={mobileTab === 'orders' ? 2.5 : 1.75} />
+            {activeOrders.length > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '-1px',
+                right: '-1px',
+                background: '#047857',
+                color: '#ffffff',
+                fontSize: '0.55rem',
+                fontWeight: 900,
+                width: '15px',
+                height: '15px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                {activeOrders.length}
+              </span>
+            )}
+          </div>
+          <span style={{ fontSize: '0.68rem', fontWeight: mobileTab === 'orders' ? 900 : 600 }}>Orders</span>
         </button>
 
         {/* Tab 5: Profile & Account */}
@@ -2008,11 +1971,23 @@ export const BDigitizingMobileApp = () => {
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            padding: '0.35rem 0',
-            color: mobileTab === 'profile' ? '#059669' : '#94a3b8'
+            padding: '0.25rem 0',
+            color: mobileTab === 'profile' ? '#047857' : '#64748b',
+            gap: '0.18rem'
           }}
         >
-          <User size={22} strokeWidth={mobileTab === 'profile' ? 2.5 : 1.75} />
+          <div style={{
+            background: mobileTab === 'profile' ? '#ecfdf5' : 'transparent',
+            borderRadius: '12px',
+            padding: '0.25rem 0.65rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s ease'
+          }}>
+            <User size={20} strokeWidth={mobileTab === 'profile' ? 2.5 : 1.75} />
+          </div>
+          <span style={{ fontSize: '0.68rem', fontWeight: mobileTab === 'profile' ? 900 : 600 }}>Account</span>
         </button>
       </nav>
 
