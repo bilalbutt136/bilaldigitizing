@@ -235,9 +235,35 @@ export const StateProvider = ({ children }) => {
     showToast(`Theme updated to ${THEME_PRESETS.find(t => t.id === targetPreset)?.name || 'New Theme'} ✨`, 'success');
   };
 
-  // Mobile View Mode: 'website' (default for mobile browser) | 'app' (default when launched as standalone PWA or selected)
-  const [mobileMode, setMobileModeState] = useState('website');
-  const [isStandaloneApp, setIsStandaloneApp] = useState(false);
+  // Mobile View Mode: 'app' (default on mobile devices, standalone PWA, installed app) | 'website' (for desktop browsers or explicit web mode)
+  const [mobileMode, setMobileModeState] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                             window.navigator.standalone === true;
+        const isMobileScreen = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlApp = urlParams.get('app') === 'true' || urlParams.get('mode') === 'app';
+        const urlWeb = urlParams.get('web') === 'true' || urlParams.get('mode') === 'web';
+        const savedMode = localStorage.getItem('bdigi_mobile_mode');
+
+        if (urlWeb) return 'website';
+        if (urlApp || isStandalone) return 'app';
+        if (savedMode === 'app' || savedMode === 'website') return savedMode;
+        if (isMobileScreen) return 'app';
+      } catch {}
+    }
+    return 'website';
+  });
+
+  const [isStandaloneApp, setIsStandaloneApp] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      } catch {}
+    }
+    return false;
+  });
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -250,14 +276,26 @@ export const StateProvider = ({ children }) => {
       const urlWeb = urlParams.get('web') === 'true' || urlParams.get('mode') === 'web';
       
       const savedMode = localStorage.getItem('bdigi_mobile_mode');
-      if (urlApp || isStandalone) {
-        setMobileModeState('app');
-      } else if (urlWeb) {
-        setMobileModeState('website');
+      const isMobileScreen = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+      let targetMode = 'website';
+      if (urlWeb) {
+        targetMode = 'website';
+      } else if (urlApp || isStandalone) {
+        targetMode = 'app';
       } else if (savedMode === 'app' || savedMode === 'website') {
-        setMobileModeState(savedMode);
+        targetMode = savedMode;
+      } else if (isMobileScreen) {
+        targetMode = 'app';
+      }
+
+      setMobileModeState(targetMode);
+      if (targetMode === 'app') {
+        document.documentElement.classList.add('mobile-app-active');
+        document.documentElement.setAttribute('data-mobile-mode', 'app');
       } else {
-        setMobileModeState('website');
+        document.documentElement.classList.remove('mobile-app-active');
+        document.documentElement.removeAttribute('data-mobile-mode');
       }
     }
   }, []);
@@ -267,6 +305,13 @@ export const StateProvider = ({ children }) => {
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('bdigi_mobile_mode', mode);
+        if (mode === 'app') {
+          document.documentElement.classList.add('mobile-app-active');
+          document.documentElement.setAttribute('data-mobile-mode', 'app');
+        } else {
+          document.documentElement.classList.remove('mobile-app-active');
+          document.documentElement.removeAttribute('data-mobile-mode');
+        }
       } catch {}
     }
   };

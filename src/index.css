@@ -1452,4 +1452,21 @@ button, input, select, textarea, a {
   justify-content: center !important;
 }
 
+/* =========================================================================
+   ZERO-FLICKER INSTANT MOBILE APP DISPLAY RULES
+   ========================================================================= */
+html.mobile-app-active .website-header-zone,
+html.mobile-app-active .website-footer-zone,
+html.mobile-app-active .website-page-wrapper,
+html[data-mobile-mode="app"] .website-header-zone,
+html[data-mobile-mode="app"] .website-footer-zone,
+html[data-mobile-mode="app"] .website-page-wrapper {
+  display: none !important;
+}
 
+html.mobile-app-active .mobile-app-wrapper,
+html[data-mobile-mode="app"] .mobile-app-wrapper {
+  display: block !important;
+  width: 100% !important;
+  min-height: 100vh !important;
+}
