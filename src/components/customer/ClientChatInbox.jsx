@@ -356,18 +356,21 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   if (!mounted) return null;
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      minHeight: 0,
-      maxHeight: '100%',
-      flex: 1,
-      background: '#ffffff',
-      fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-      overflow: 'hidden',
-      boxSizing: 'border-box'
-    }}>
+    <div 
+      className="client-chat-inbox theme-light-enforced"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        minHeight: 0,
+        maxHeight: '100%',
+        flex: 1,
+        background: '#ffffff',
+        fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+        overflow: 'hidden',
+        boxSizing: 'border-box'
+      }}
+    >
       
       {/* 1. TOP CHANNEL SELECTOR HEADER */}
       <div style={{
@@ -689,17 +692,20 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           placeholder={activeChannel === 'inbox' ? 'Type a message to Studio Digitizers...' : 'Type a question to 24/7 Support...'}
+          className="chat-message-input"
           style={{
             flex: 1,
             minWidth: 0,
-            minHeight: '38px',
+            minHeight: '40px',
             maxHeight: '110px',
             borderRadius: '10px',
             border: '1.5px solid #cbd5e1',
-            padding: '0.55rem 0.85rem',
-            fontSize: '0.88rem',
+            padding: '0.6rem 0.85rem',
+            fontSize: '0.9rem',
+            fontWeight: 500,
             color: '#0f172a',
-            background: '#f8fafc',
+            background: '#ffffff',
+            backgroundColor: '#ffffff',
             outline: 'none',
             boxSizing: 'border-box',
             resize: 'none',

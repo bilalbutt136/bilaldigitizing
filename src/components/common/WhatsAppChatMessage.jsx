@@ -244,24 +244,20 @@ export default function WhatsAppChatMessage({
           padding: (fileCategory === 'image' && fileUrl && !message.text) ? '0.35rem' : '0.75rem 1rem',
           borderRadius: resolvedIsMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
           background: resolvedIsMe 
-            ? 'linear-gradient(135deg, var(--color-primary, #059669) 0%, var(--color-primary-dark, #047857) 100%)' 
-            : (!isMessageRead 
-                ? 'var(--color-primary-light, #f0fdf4)' 
-                : 'var(--color-surface, #ffffff)'),
-          color: resolvedIsMe ? '#ffffff' : 'var(--color-text-primary, #0f172a)',
+            ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' 
+            : '#ffffff',
+          color: resolvedIsMe ? '#ffffff' : '#0f172a',
           border: resolvedIsMe 
             ? 'none' 
             : (!isMessageRead 
-                ? '1.5px solid var(--color-border, #a7f3d0)' 
-                : '1.5px solid var(--color-border, #e2e8f0)'),
+                ? '1.5px solid #86efac' 
+                : '1.5px solid #e2e8f0'),
           borderLeft: (!resolvedIsMe && !isMessageRead)
-            ? '4.5px solid var(--color-primary, #059669)'
-            : (resolvedIsMe ? 'none' : '1.5px solid var(--color-border, #e2e8f0)'),
+            ? '4.5px solid #059669'
+            : (resolvedIsMe ? 'none' : '1.5px solid #e2e8f0'),
           boxShadow: resolvedIsMe
             ? '0 3px 10px rgba(5, 150, 105, 0.25)'
-            : (!isMessageRead 
-                ? '0 4px 14px rgba(5, 150, 105, 0.1)' 
-                : 'var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.04))'),
+            : '0 2px 8px rgba(0, 0, 0, 0.05)',
           fontSize: '0.88rem',
           lineHeight: 1.5,
           wordBreak: 'break-word',

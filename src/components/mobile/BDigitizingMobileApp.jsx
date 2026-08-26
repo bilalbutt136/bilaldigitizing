@@ -393,7 +393,7 @@ export const BDigitizingMobileApp = () => {
 
   return (
     <div 
-      className="mobile-app-root"
+      className="mobile-app-root theme-light-enforced"
       style={{
         background: '#ffffff',
         minHeight: '100vh',
@@ -609,11 +609,11 @@ export const BDigitizingMobileApp = () => {
                 }}>
                   <Layers size={42} strokeWidth={2} />
                 </div>
-                <div style={{ padding: '0.75rem' }}>
-                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
+                <div style={{ padding: '0.75rem 0.85rem' }}>
+                  <div style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
                     Embroidery Digitizing
-                  </h4>
-                  <span style={{ fontSize: '0.78rem', color: '#047857', fontWeight: 900, display: 'block', marginTop: '0.25rem' }}>
+                  </div>
+                  <span style={{ fontSize: '0.8rem', color: '#047857', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
                     From $10.00
                   </span>
                 </div>
@@ -644,11 +644,11 @@ export const BDigitizingMobileApp = () => {
                 }}>
                   <PenTool size={42} strokeWidth={2} />
                 </div>
-                <div style={{ padding: '0.75rem' }}>
-                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
+                <div style={{ padding: '0.75rem 0.85rem' }}>
+                  <div style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
                     Vector Art Tracing
-                  </h4>
-                  <span style={{ fontSize: '0.78rem', color: '#ea580c', fontWeight: 900, display: 'block', marginTop: '0.25rem' }}>
+                  </div>
+                  <span style={{ fontSize: '0.8rem', color: '#ea580c', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
                     From $15.00
                   </span>
                 </div>
@@ -679,11 +679,11 @@ export const BDigitizingMobileApp = () => {
                 }}>
                   <Package size={42} strokeWidth={2} />
                 </div>
-                <div style={{ padding: '0.75rem' }}>
-                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
+                <div style={{ padding: '0.75rem 0.85rem' }}>
+                  <div style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
                     Custom Patches
-                  </h4>
-                  <span style={{ fontSize: '0.78rem', color: '#0284c7', fontWeight: 900, display: 'block', marginTop: '0.25rem' }}>
+                  </div>
+                  <span style={{ fontSize: '0.8rem', color: '#0284c7', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
                     From $1.50 / pc
                   </span>
                 </div>
@@ -714,11 +714,11 @@ export const BDigitizingMobileApp = () => {
                 }}>
                   <Zap size={42} strokeWidth={2} />
                 </div>
-                <div style={{ padding: '0.75rem' }}>
-                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
+                <div style={{ padding: '0.75rem 0.85rem' }}>
+                  <div style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
                     Express 2–6h Rush
-                  </h4>
-                  <span style={{ fontSize: '0.78rem', color: '#d97706', fontWeight: 900, display: 'block', marginTop: '0.25rem' }}>
+                  </div>
+                  <span style={{ fontSize: '0.8rem', color: '#d97706', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
                     +$10 Speed Fee
                   </span>
                 </div>
@@ -960,9 +960,9 @@ export const BDigitizingMobileApp = () => {
 
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: '#0f172a' }}>
+                        <div style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: '#0f172a' }}>
                           {svc.title}
-                        </h4>
+                        </div>
                         <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#047857' }}>
                           {svc.startingPrice}
                         </span>
