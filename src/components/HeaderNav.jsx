@@ -36,6 +36,7 @@ export const HeaderNav = () => {
   }, []);
 
   const { 
+    theme,
     currentView, 
     setCurrentView,
     isAuthenticated,
@@ -56,6 +57,7 @@ export const HeaderNav = () => {
     setMobileMode
   } = useAppState();
 
+  const isDark = theme === 'dark';
   const safeCurrentView = mounted ? currentView : 'public';
   const safeIsAuthenticated = mounted ? isAuthenticated : false;
   const safeAuthUser = mounted ? authUser : null;
@@ -65,6 +67,17 @@ export const HeaderNav = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
   const [isSupportDropdownOpen, setIsSupportDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
 
   const servicesDropdownRef = useRef(null);
   const notificationDropdownRef = useRef(null);
@@ -889,158 +902,287 @@ export const HeaderNav = () => {
       {/* Mobile Slide-Down / Overlay Navigation Drawer */}
       {isMobileMenuOpen && (
         <div 
-          className="mobile-only"
+          className="mobile-navigation-drawer"
           style={{
             position: 'fixed',
-            top: '0',
-            left: '0',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             width: '100vw',
             height: '100dvh',
-            background: 'var(--bg-card)',
-            backdropFilter: 'blur(20px)',
-            zIndex: 9999,
+            background: isDark ? '#0b1120' : '#ffffff',
+            color: isDark ? '#f8fafc' : '#0f172a',
+            zIndex: 999999,
             display: 'flex',
             flexDirection: 'column',
-            padding: '4.5rem 1.25rem 2rem 1.25rem',
-            gap: '0.75rem',
+            justifyContent: 'space-between',
+            padding: '1.15rem 1.25rem',
+            boxSizing: 'border-box',
             animation: 'fadeIn 0.2s ease-out',
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch'
           }}
         >
-          {/* Close button inside mobile menu */}
-          <button
-            onClick={() => setIsMobileMenuOpen(false)}
-            style={{
-              position: 'absolute',
-              top: '1rem',
-              right: '1.25rem',
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '50%',
-              width: '40px',
-              height: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'var(--text-main)'
-            }}
-            aria-label="Close menu"
-          >
-            <X size={22} />
-          </button>
-
-          {/* Theme Mood Selector (Mobile) */}
+          {/* Top Bar: Brand + Theme Toggle + Close Button */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '0.65rem 0',
-            borderBottom: '1px solid var(--border-color)',
-            marginTop: '0.5rem'
+            paddingBottom: '0.65rem',
+            borderBottom: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
+            flexShrink: 0
           }}>
-            <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-main)' }}>
-              Theme Mood
-            </span>
-            <ThemeToggle variant="pill" />
+            <div 
+              onClick={() => { handleGoHome(); setIsMobileMenuOpen(false); }}
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+            >
+              <span style={{ fontSize: '1.35rem', fontWeight: 900, color: '#047857', letterSpacing: '-0.03em' }}>
+                bdigitizing<span style={{ color: '#10b981' }}>.</span>
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <ThemeToggle variant="pill" />
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen(false)}
+                style={{
+                  background: isDark ? '#1e293b' : '#f1f5f9',
+                  border: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid #cbd5e1',
+                  borderRadius: '50%',
+                  width: '38px',
+                  height: '38px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: isDark ? '#f8fafc' : '#0f172a'
+                }}
+                aria-label="Close menu"
+              >
+                <X size={20} />
+              </button>
+            </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              handleGoHome();
-              setIsMobileMenuOpen(false);
-            }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.2rem', color: 'var(--text-main)', padding: '0.65rem 0', borderBottom: '1px solid var(--border-color)' }}
-          >
-            Home
-          </button>
+          {/* Navigation Links Area */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem',
+            paddingTop: '0.5rem',
+            flex: 1
+          }}>
+            {/* Home */}
+            <button
+              type="button"
+              onClick={() => {
+                handleGoHome();
+                setIsMobileMenuOpen(false);
+              }}
+              style={{
+                textAlign: 'left',
+                background: 'none',
+                border: 'none',
+                fontWeight: 800,
+                fontSize: '1.05rem',
+                color: isDark ? '#ffffff' : '#0f172a',
+                padding: '0.25rem 0',
+                cursor: 'pointer'
+              }}
+            >
+              Home
+            </button>
 
-          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-500)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.5rem' }}>
-            Services
+            {/* Services Section as Compact 3-Column Grid */}
+            <div style={{ marginTop: '0.1rem' }}>
+              <span style={{
+                fontSize: '0.7rem',
+                fontWeight: 800,
+                color: '#f97316',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                display: 'block',
+                marginBottom: '0.35rem'
+              }}>
+                Services
+              </span>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.45rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/services/embroidery-digitizing');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  style={{
+                    background: isDark ? '#1e293b' : '#f8fafc',
+                    border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
+                    borderRadius: '10px',
+                    padding: '0.5rem 0.3rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.3rem',
+                    cursor: 'pointer',
+                    color: isDark ? '#f8fafc' : '#0f172a'
+                  }}
+                >
+                  <PenTool size={16} style={{ color: '#f97316' }} />
+                  <span style={{ fontSize: '0.68rem', fontWeight: 800, textAlign: 'center', lineHeight: 1.2 }}>
+                    Embroidery Digitizing
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/services/vector-tracing');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  style={{
+                    background: isDark ? '#1e293b' : '#f8fafc',
+                    border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
+                    borderRadius: '10px',
+                    padding: '0.5rem 0.3rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.3rem',
+                    cursor: 'pointer',
+                    color: isDark ? '#f8fafc' : '#0f172a'
+                  }}
+                >
+                  <ImageIcon size={16} style={{ color: '#3b82f6' }} />
+                  <span style={{ fontSize: '0.68rem', fontWeight: 800, textAlign: 'center', lineHeight: 1.2 }}>
+                    Vector Art Tracing
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/custom-patches');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  style={{
+                    background: isDark ? '#1e293b' : '#f8fafc',
+                    border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
+                    borderRadius: '10px',
+                    padding: '0.5rem 0.3rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.3rem',
+                    cursor: 'pointer',
+                    color: isDark ? '#f8fafc' : '#0f172a'
+                  }}
+                >
+                  <Award size={16} style={{ color: '#10b981' }} />
+                  <span style={{ fontSize: '0.68rem', fontWeight: 800, textAlign: 'center', lineHeight: 1.2 }}>
+                    Custom Patches
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Links 2x2 Grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '0.45rem',
+              marginTop: '0.25rem',
+              paddingTop: '0.35rem',
+              borderTop: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f1f5f9'
+            }}>
+              <button
+                type="button"
+                onClick={() => { navigate('/portfolio'); setIsMobileMenuOpen(false); }}
+                style={{
+                  textAlign: 'left',
+                  background: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+                  border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  color: isDark ? '#f1f5f9' : '#1e293b',
+                  padding: '0.45rem 0.6rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Portfolio Gallery
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { navigate('/pricing'); setIsMobileMenuOpen(false); }}
+                style={{
+                  textAlign: 'left',
+                  background: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+                  border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  color: isDark ? '#f1f5f9' : '#1e293b',
+                  padding: '0.45rem 0.6rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Pricing & Rates
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { navigate('/faqs'); setIsMobileMenuOpen(false); }}
+                style={{
+                  textAlign: 'left',
+                  background: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+                  border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  color: isDark ? '#f1f5f9' : '#1e293b',
+                  padding: '0.45rem 0.6rem',
+                  cursor: 'pointer'
+                }}
+              >
+                FAQs & Formats
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { navigate('/blogs'); setIsMobileMenuOpen(false); }}
+                style={{
+                  textAlign: 'left',
+                  background: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+                  border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  color: isDark ? '#f1f5f9' : '#1e293b',
+                  padding: '0.45rem 0.6rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Blogs & Guides
+              </button>
+            </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              navigate('/services/embroidery-digitizing');
-              setIsMobileMenuOpen(false);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-main)', padding: '0.5rem 0' }}
-          >
-            <PenTool size={18} style={{ color: 'var(--orange-500)' }} /> Embroidery Digitizing
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              navigate('/services/vector-tracing');
-              setIsMobileMenuOpen(false);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-main)', padding: '0.5rem 0' }}
-          >
-            <ImageIcon size={18} style={{ color: '#2563eb' }} /> Vector Art
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              navigate('/custom-patches');
-              setIsMobileMenuOpen(false);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', background: 'none', border: 'none', fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-main)', padding: '0.5rem 0' }}
-          >
-            <Award size={18} style={{ color: '#10b981' }} /> Custom Patches
-          </button>
-          
-          <div style={{ height: '1px', background: 'var(--border-color)', margin: '0.35rem 0' }}></div>
-
-          <button
-            type="button"
-            onClick={() => {
-              navigate('/portfolio');
-              setIsMobileMenuOpen(false);
-            }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', padding: '0.5rem 0' }}
-          >
-            Portfolio
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => {
-              navigate('/pricing');
-              setIsMobileMenuOpen(false);
-            }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', padding: '0.5rem 0' }}
-          >
-            Pricing
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              navigate('/faqs');
-              setIsMobileMenuOpen(false);
-            }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', padding: '0.5rem 0' }}
-          >
-            FAQs
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => {
-              navigate('/blogs');
-              setIsMobileMenuOpen(false);
-            }}
-            style={{ textAlign: 'left', background: 'none', border: 'none', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', padding: '0.5rem 0' }}
-          >
-            Blogs & Guides
-          </button>
-
-          <div style={{ marginTop: 'auto', paddingTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {/* Bottom Action Area (Compact & Fits Screen with No Bottom Scrolling) */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.4rem',
+            paddingTop: '0.55rem',
+            borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
+            flexShrink: 0
+          }}>
+            {/* Switch to BDigitizing App Mode CTA */}
             <button
               type="button"
               onClick={() => {
@@ -1048,95 +1190,171 @@ export const HeaderNav = () => {
                 setIsMobileMenuOpen(false);
               }}
               style={{
-                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
                 color: '#ffffff',
                 border: 'none',
-                borderRadius: '12px',
-                padding: '0.75rem 1rem',
-                fontWeight: 800,
-                fontSize: '0.9rem',
+                borderRadius: '10px',
+                padding: '0.65rem 0.85rem',
+                fontWeight: 900,
+                fontSize: '0.85rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.5rem',
+                gap: '0.45rem',
                 cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                boxShadow: '0 3px 12px rgba(5, 150, 105, 0.3)'
               }}
             >
-              <Sparkles size={16} style={{ color: '#f59e0b' }} />
+              <Sparkles size={15} style={{ color: '#fef08a' }} />
               <span>📱 Open BDigitizing App Mode</span>
             </button>
+
             {!safeIsAuthenticated ? (
-              <>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '0.35rem' }}>
                 <button
-                  className="btn btn-primary-orange btn-lg"
+                  type="button"
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    if (openOrderWizard) {
-                      openOrderWizard({ type: 'all' });
-                    } else {
-                      protectedNavigate('customer', true, { type: 'all' });
-                    }
+                    if (openOrderWizard) openOrderWizard({ type: 'all' });
+                    else protectedNavigate('customer', true, { type: 'all' });
                   }}
-                  style={{ fontWeight: 800, justifyContent: 'center', width: '100%' }}
+                  style={{
+                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.55rem 0.35rem',
+                    fontWeight: 900,
+                    fontSize: '0.78rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.25rem',
+                    cursor: 'pointer'
+                  }}
                 >
-                  Get Started <ArrowRight size={16} style={{marginLeft: '0.25rem'}}/>
+                  Order <ArrowRight size={13} />
                 </button>
                 <button
-                  className="btn btn-outline btn-lg"
+                  type="button"
                   onClick={() => {
                     setAuthModalMode('login');
                     setIsAuthModalOpen(true);
                     setIsMobileMenuOpen(false);
                     navigate('/login');
                   }}
-                  style={{ fontWeight: 700, justifyContent: 'center', width: '100%', borderColor: 'var(--border-color)', color: 'var(--text-main)' }}
+                  style={{
+                    background: isDark ? '#1e293b' : '#f8fafc',
+                    border: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid #cbd5e1',
+                    color: isDark ? '#f8fafc' : '#0f172a',
+                    borderRadius: '8px',
+                    padding: '0.55rem 0.35rem',
+                    fontWeight: 800,
+                    fontSize: '0.78rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.25rem',
+                    cursor: 'pointer'
+                  }}
                 >
-                  <User size={16} /> Client Login
+                  <User size={13} /> Login
                 </button>
                 <button
-                  className="btn btn-outline btn-lg"
+                  type="button"
                   onClick={() => {
                     setIsMobileMenuOpen(false);
                     handleOpenLiveSupport();
                   }}
-                  style={{ fontWeight: 700, justifyContent: 'center', width: '100%', borderColor: 'var(--border-color)', color: 'var(--orange-500)', background: 'rgba(255, 122, 0, 0.05)' }}
+                  style={{
+                    background: isDark ? 'rgba(59, 130, 246, 0.15)' : '#eff6ff',
+                    border: isDark ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid #bfdbfe',
+                    color: isDark ? '#93c5fd' : '#1d4ed8',
+                    borderRadius: '8px',
+                    padding: '0.55rem 0.35rem',
+                    fontWeight: 800,
+                    fontSize: '0.78rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.25rem',
+                    cursor: 'pointer'
+                  }}
                 >
-                  <Headphones size={16} /> 🎧 Live Support Chat
+                  <Headphones size={13} /> Support
                 </button>
-              </>
+              </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', width: '100%' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '0.35rem' }}>
                 <button
-                  className="btn btn-primary-orange btn-lg"
+                  type="button"
                   onClick={() => {
                     setIsMobileMenuOpen(false);
                     handleOpenInbox();
                   }}
-                  style={{ fontWeight: 800, justifyContent: 'center', width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                  style={{
+                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.55rem 0.35rem',
+                    fontWeight: 900,
+                    fontSize: '0.78rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.25rem',
+                    cursor: 'pointer'
+                  }}
                 >
-                  <MessageSquare size={16} /> 💬 Open Inbox {unreadChatCount > 0 && `(${unreadChatCount})`}
+                  <MessageSquare size={13} /> Inbox {unreadChatCount > 0 && `(${unreadChatCount})`}
                 </button>
                 <button
-                  className="btn btn-outline btn-lg"
+                  type="button"
                   onClick={() => {
                     setIsMobileMenuOpen(false);
                     handleOpenLiveSupport();
                   }}
-                  style={{ fontWeight: 700, justifyContent: 'center', width: '100%', borderColor: 'var(--border-color)', color: 'var(--text-main)' }}
+                  style={{
+                    background: isDark ? 'rgba(59, 130, 246, 0.15)' : '#eff6ff',
+                    border: isDark ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid #bfdbfe',
+                    color: isDark ? '#93c5fd' : '#1d4ed8',
+                    borderRadius: '8px',
+                    padding: '0.55rem 0.35rem',
+                    fontWeight: 800,
+                    fontSize: '0.78rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.25rem',
+                    cursor: 'pointer'
+                  }}
                 >
-                  <Headphones size={16} /> 🎧 Customer Support & Help
+                  <Headphones size={13} /> Help
                 </button>
                 <button
-                  className="btn btn-outline btn-lg"
+                  type="button"
                   onClick={() => {
                     protectedNavigate('customer', false);
                     setIsMobileMenuOpen(false);
                     navigate('/client-portal');
                   }}
-                  style={{ fontWeight: 700, justifyContent: 'center', width: '100%', borderColor: 'var(--border-color)', color: 'var(--text-main)' }}
+                  style={{
+                    background: isDark ? '#1e293b' : '#f8fafc',
+                    border: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid #cbd5e1',
+                    color: isDark ? '#f8fafc' : '#0f172a',
+                    borderRadius: '8px',
+                    padding: '0.55rem 0.35rem',
+                    fontWeight: 800,
+                    fontSize: '0.78rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.25rem',
+                    cursor: 'pointer'
+                  }}
                 >
-                  <User size={16} /> Go to Dashboard
+                  <User size={13} /> Portal
                 </button>
               </div>
             )}

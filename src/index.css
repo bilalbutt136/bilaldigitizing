@@ -1048,10 +1048,6 @@ body.dark-mode .chat-message-input::placeholder {
   border-bottom: 1.5px solid #cbd5e1 !important;
   color: #0f172a !important;
 }
-[data-theme="dark"] .mobile-only, body.dark-mode .mobile-only {
-  background: #ffffff !important;
-  color: #0f172a !important;
-}
 
 /* Scrollbar in dark mode */
 [data-theme="dark"] ::-webkit-scrollbar-track,
