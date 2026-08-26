@@ -1717,10 +1717,12 @@ export function subscribeToOrders(onOrderChange) {
   };
 }
 
-export async function fetchNotificationsFromSupabase() {
+export async function fetchNotificationsFromSupabase(userEmail = '') {
   try {
     const headers = await getAuthHeaders();
-    const res = await fetch('/api/messages?action=fetchNotifications', {
+    const cleanEmail = (userEmail || '').toLowerCase().trim();
+    const url = `/api/messages?action=fetchNotifications${cleanEmail ? `&email=${encodeURIComponent(cleanEmail)}` : ''}`;
+    const res = await fetch(url, {
       headers,
       cache: 'no-store'
     });

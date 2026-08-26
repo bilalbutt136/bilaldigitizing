@@ -1471,13 +1471,19 @@ export const StateProvider = ({ children }) => {
         await createOrderInSupabase(fullOrderPayload);
         setOrders(prev => [fullOrderPayload, ...prev]);
         showToast(`Order ${formatOrderId(localId)} created successfully!`, 'success');
-        // Client notification (for customer's own bell)
+        // Client notification (for customer's own bell & mobile notification drawer)
         addNotification({
           id: `ord-created-${localId}`,
           title: `🎉 Order ${formatOrderId(localId)} Placed!`,
-          message: `Your digitizing order has been created and pathing has started.`,
-          type: 'success',
-          link: '/client-portal'
+          message: isAlreadyPaid 
+            ? `Your digitizing order has been created and production has started.`
+            : `Order created. Waiting for payment of $${parseFloat(fullOrderPayload.totalPrice || fullOrderPayload.price || 15).toFixed(2)} to start production.`,
+          type: isAlreadyPaid ? 'success' : 'warning',
+          link: '/client-portal',
+          order_id: localId,
+          orderId: localId,
+          recipient_role: 'client',
+          recipient_email: (fullOrderPayload.clientEmail || '').toLowerCase().trim()
         });
         // Broadcast admin notification in real-time so admin portal gets it immediately
         const adminNotif = {
@@ -1526,9 +1532,15 @@ export const StateProvider = ({ children }) => {
     addNotification({
       id: `ord-created-${localId}`,
       title: `🎉 Order ${formatOrderId(localId)} Placed!`,
-      message: `Your digitizing order has been created and pathing has started.`,
-      type: 'success',
-      link: '/client-portal'
+      message: isAlreadyPaid 
+        ? `Your digitizing order has been created and production has started.`
+        : `Order created. Waiting for payment of $${parseFloat(fullOrderPayload.totalPrice || fullOrderPayload.price || 15).toFixed(2)} to start production.`,
+      type: isAlreadyPaid ? 'success' : 'warning',
+      link: '/client-portal',
+      order_id: localId,
+      orderId: localId,
+      recipient_role: 'client',
+      recipient_email: (fullOrderPayload.clientEmail || '').toLowerCase().trim()
     });
     triggerEmailNotification('NEW_ORDER', fullOrderPayload);
     return fullOrderPayload;

@@ -1065,6 +1065,16 @@ export const OrderWizardModal = () => {
       
       const orderId = createdOrder?.id || `ORDER_${Date.now()}`;
 
+      if (typeof window !== 'undefined' && orderId) {
+        try {
+          const prevIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
+          const cleanId = String(orderId).trim();
+          if (!prevIds.includes(cleanId)) {
+            localStorage.setItem('bdigi_my_order_ids', JSON.stringify([cleanId, ...prevIds].slice(0, 50)));
+          }
+        } catch {}
+      }
+
       setIsProcessingPayment(false);
       setCheckoutSession({
         amount: finalPrice,

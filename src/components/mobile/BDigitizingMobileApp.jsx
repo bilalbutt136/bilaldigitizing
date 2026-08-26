@@ -82,7 +82,10 @@ export const BDigitizingMobileApp = () => {
     colorTheme,
     setColorTheme,
     setMobileMode,
-    dynamicPricingTiers = []
+    dynamicPricingTiers = [],
+    notifications: globalNotifications = [],
+    markNotificationAsRead: markGlobalNotificationAsRead,
+    refreshOrders
   } = useAppState();
 
   // Active Tab: 'home' | 'inbox' | 'categories' | 'orders' | 'profile'
@@ -103,7 +106,6 @@ export const BDigitizingMobileApp = () => {
   
   // Real-time unread counts
   const [unreadChatCount, setUnreadChatCount] = useState(0);
-  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [isNotifDrawerOpen, setIsNotifDrawerOpen] = useState(false);
 
@@ -182,8 +184,18 @@ export const BDigitizingMobileApp = () => {
     return s === 'awaiting_payment' || s === 'pending_payment' || pStatus === 'unpaid' || (!o?.isPaid && !o?.paid_at && (s === 'awaiting_payment' || s === 'pending_payment' || s === 'submitted'));
   };
 
-  // Filter Orders for Customer strictly
+  // Filter Orders for Customer strictly (including locally created orders before auth sync)
   const myOrders = orders.filter(o => {
+    let localOrderIds = [];
+    if (typeof window !== 'undefined') {
+      try {
+        localOrderIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
+      } catch {}
+    }
+    const cleanId = String(o?.id || '').trim().replace(/^#+/, '');
+    const isLocalMatch = localOrderIds.some(lid => String(lid).trim().replace(/^#+/, '') === cleanId);
+    if (isLocalMatch) return true;
+
     if (userEmail) {
       const clientEmail = (o.client_email || o.clientEmail || '').toLowerCase().trim();
       return clientEmail === userEmail;
@@ -222,17 +234,24 @@ export const BDigitizingMobileApp = () => {
     setIsCheckoutModalOpen(true);
   };
 
+  // Combine global in-memory notifications with Supabase live notifications
+  const combinedNotifications = [
+    ...(Array.isArray(notifications) ? notifications : []),
+    ...(Array.isArray(globalNotifications) ? globalNotifications : [])
+  ].filter((n, idx, arr) => arr.findIndex(item => String(item.id) === String(n.id)) === idx)
+   .sort((a, b) => new Date(b.created_at || b.timestamp || 0) - new Date(a.created_at || a.timestamp || 0));
+
+  const unreadNotifCount = combinedNotifications.filter(n => !n.is_read && !n.read).length;
+
   // Load Real-time Notifications & Messages
   useEffect(() => {
     let isMounted = true;
 
     const loadData = async () => {
       try {
-        const notifs = await fetchNotificationsFromSupabase();
+        const notifs = await fetchNotificationsFromSupabase(userEmail);
         if (isMounted && Array.isArray(notifs)) {
           setNotifications(notifs);
-          const unread = notifs.filter(n => !n.is_read && !n.read).length;
-          setUnreadNotifCount(unread);
         }
 
         if (userEmail) {
@@ -3033,21 +3052,28 @@ export const BDigitizingMobileApp = () => {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              {notifications.length === 0 ? (
+              {combinedNotifications.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#94a3b8' }}>
                   <Bell size={32} style={{ margin: '0 auto 0.5rem', opacity: 0.4 }} />
                   <p style={{ margin: 0, fontSize: '0.85rem' }}>No new notifications</p>
                 </div>
               ) : (
-                notifications.map(n => (
+                combinedNotifications.map(n => (
                   <div
                     key={n.id || Math.random()}
                     onClick={() => {
+                      if (markGlobalNotificationAsRead) markGlobalNotificationAsRead(n.id);
                       markNotificationAsReadInSupabase(n.id);
                       setIsNotifDrawerOpen(false);
-                      if (n.order_id) {
-                        const found = myOrders.find(o => String(o.id) === String(n.order_id));
-                        if (found) setSelectedOrderForDrawer(found);
+                      const targetOrderId = n.order_id || n.orderId;
+                      if (targetOrderId) {
+                        const cleanTarget = String(targetOrderId).trim().replace(/^#+/, '');
+                        const found = orders.find(o => String(o.id).trim().replace(/^#+/, '') === cleanTarget);
+                        if (found) {
+                          setSelectedOrderForDrawer(found);
+                        } else {
+                          setMobileTab('orders');
+                        }
                       } else {
                         setMobileTab('inbox');
                       }
@@ -3055,9 +3081,10 @@ export const BDigitizingMobileApp = () => {
                     style={{
                       padding: '0.85rem',
                       borderRadius: '12px',
-                      background: n.is_read ? '#f8fafc' : '#ecfdf5',
-                      border: n.is_read ? '1px solid #e2e8f0' : '1px solid #a7f3d0',
-                      cursor: 'pointer'
+                      background: (n.is_read || n.read) ? '#f8fafc' : '#fff7ed',
+                      border: (n.is_read || n.read) ? '1px solid #e2e8f0' : '1.5px solid #fdba74',
+                      cursor: 'pointer',
+                      boxShadow: (n.is_read || n.read) ? 'none' : '0 2px 8px rgba(234, 88, 12, 0.12)'
                     }}
                   >
                     <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>

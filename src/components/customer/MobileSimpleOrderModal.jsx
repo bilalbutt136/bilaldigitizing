@@ -533,6 +533,16 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         ...orderPayload
       };
 
+      if (typeof window !== 'undefined' && resultingOrder?.id) {
+        try {
+          const prevIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
+          const cleanId = String(resultingOrder.id).trim();
+          if (!prevIds.includes(cleanId)) {
+            localStorage.setItem('bdigi_my_order_ids', JSON.stringify([cleanId, ...prevIds].slice(0, 50)));
+          }
+        } catch {}
+      }
+
       setCreatedOrderObj(resultingOrder);
       setStep(6);
       if (showToast) showToast('Order successfully generated! Complete payment to start production.', 'success');
