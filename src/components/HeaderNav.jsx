@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { UserMenuDropdown } from './common/UserMenuDropdown';
 import { ThemeToggle } from './common/ThemeToggle';
+import { handleNotificationClick } from '../utils/notificationRouter';
 
 export const HeaderNav = () => {
   const navigate = useNavigate();
@@ -46,15 +47,18 @@ export const HeaderNav = () => {
     setAuthModalMode,
     openOrderWizard,
     openOrderTrackerDrawer,
+    setSelectedOrderForDrawer,
     setActiveAdminTab,
     setActiveCustomerTab,
     setActiveHomeServiceTab,
+    orders = [],
     notifications = [],
     markNotificationAsRead,
     markAllNotificationsAsRead,
     unreadNotificationsCount = 0,
     unreadChatCount = 0,
-    setMobileMode
+    setMobileMode,
+    mobileMode
   } = useAppState();
 
   const isDark = theme === 'dark';
@@ -772,18 +776,24 @@ export const HeaderNav = () => {
                               <div 
                                 key={item.id} 
                                 onClick={() => {
-                                  if (markNotificationAsRead) markNotificationAsRead(item.id);
                                   setIsNotificationDropdownOpen(false);
-                                  
-                                  const targetOrderId = item.order_id || item.orderId;
-                                  if (targetOrderId && openOrderTrackerDrawer) {
-                                    openOrderTrackerDrawer(targetOrderId);
-                                  }
-
-                                  if (item.link) {
-                                    protectedNavigate(safeCurrentView === 'admin' ? 'admin' : 'customer');
-                                    navigate(item.link);
-                                  }
+                                  handleNotificationClick(item, {
+                                    markNotificationAsRead,
+                                    markGlobalNotificationAsRead: markNotificationAsRead,
+                                    authUser: safeAuthUser,
+                                    isAuthenticated: safeIsAuthenticated,
+                                    setIsAuthModalOpen,
+                                    setAuthModalMode,
+                                    orders,
+                                    openOrderTrackerDrawer,
+                                    setSelectedOrderForDrawer,
+                                    setActiveAdminTab,
+                                    setActiveCustomerTab,
+                                    navigate,
+                                    protectedNavigate,
+                                    currentView: safeCurrentView,
+                                    mobileMode
+                                  });
                                 }}
                                 style={{ 
                                   padding: '0.65rem 0.75rem', 

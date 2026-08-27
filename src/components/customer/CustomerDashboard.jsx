@@ -154,29 +154,51 @@ export const CustomerDashboard = () => {
     }
   }, [activeCustomerTab, activeTab]);
 
-  // Listen for direct tab switch events (e.g. from HeaderNav Inbox or Live Support buttons)
+  // Listen for direct tab switch events (e.g. from HeaderNav Inbox, Notifications, or Live Support buttons)
   React.useEffect(() => {
     const handleTabSwitch = (e) => {
       if (e.detail?.tab) {
         setActiveTab(e.detail.tab);
-        if (e.detail.orderId) {
-          setSelectedOrderChatId(e.detail.orderId);
+      }
+      if (e.detail?.orderId) {
+        if (e.detail?.tab === 'inbox' || e.detail?.tab === 'support') {
+          setSelectedOrderChatId(e.detail.conversationId || `order-${e.detail.orderId}`);
+        } else {
+          const cleanId = String(e.detail.orderId).trim().replace(/^#+/, '');
+          const found = (orders || []).find(o => {
+            const oClean = String(o?.id || '').trim().replace(/^#+/, '');
+            return oClean === cleanId || o?.id === e.detail.orderId || formatOrderId(o?.id) === String(e.detail.orderId);
+          });
+          if (setSelectedOrderForDrawer) {
+            setSelectedOrderForDrawer(found || { id: `#${cleanId}`, title: `Order #${cleanId}`, status: 'in_progress' });
+          }
         }
+      } else if (e.detail?.conversationId) {
+        setSelectedOrderChatId(e.detail.conversationId);
       }
     };
     window.addEventListener('bdigi_switch_tab', handleTabSwitch);
 
-    // Sync tab from URL query params on mount/refresh
+    // Sync tab and trackOrder from URL query params on mount/refresh
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
+      const trackId = urlParams.get('trackOrder') || urlParams.get('orderId');
       if (tabParam) {
         setActiveTab(tabParam);
+      }
+      if (trackId && setSelectedOrderForDrawer) {
+        const cleanTrackId = String(trackId).trim().replace(/^#+/, '');
+        const found = (orders || []).find(o => {
+          const oClean = String(o?.id || '').trim().replace(/^#+/, '');
+          return oClean === cleanTrackId || String(o?.id) === String(trackId) || formatOrderId(o?.id) === trackId;
+        });
+        setSelectedOrderForDrawer(found || { id: `#${cleanTrackId}`, title: `Order #${cleanTrackId}`, status: 'in_progress' });
       }
     }
 
     return () => window.removeEventListener('bdigi_switch_tab', handleTabSwitch);
-  }, [setActiveTab]);
+  }, [setActiveTab, orders, setSelectedOrderForDrawer]);
 
   React.useEffect(() => {
     setMounted(true);
@@ -184,29 +206,6 @@ export const CustomerDashboard = () => {
       navigate('/login');
     }
   }, [isAuthInitialized, authUser, currentUser, navigate]);
-
-  // Auto-open order tracker drawer only ONCE if explicitly navigated via URL param, then clean URL
-  const initialTrackHandledRef = React.useRef(false);
-  React.useEffect(() => {
-    if (!mounted || initialTrackHandledRef.current) return;
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const trackId = urlParams.get('trackOrder') || urlParams.get('orderId');
-      if (trackId && orders && orders.length > 0) {
-        const cleanTrackId = String(trackId).trim().replace(/^#+/, '');
-        const found = orders.find(o => {
-          const oClean = String(o?.id || '').trim().replace(/^#+/, '');
-          return oClean === cleanTrackId || String(o.id) === String(trackId) || formatOrderId(o.id) === trackId;
-        });
-        if (found && setSelectedOrderForDrawer) {
-          initialTrackHandledRef.current = true;
-          setSelectedOrderForDrawer(found);
-          const newUrl = window.location.pathname;
-          window.history.replaceState({}, document.title, newUrl);
-        }
-      }
-    }
-  }, [mounted, orders, setSelectedOrderForDrawer]);
 
   // Safe User Resolution
   const activeUser = authUser || currentUser || {
@@ -2565,10 +2564,19 @@ export const CustomerDashboard = () => {
             {/* TAB: NOTIFICATIONS VIEW */}
             {activeTab === 'notifications' && (
               <ClientNotificationsView
-                onNavigateToOrder={(ordId) => {
-                  const found = myOrders.find(o => String(o.id) === String(ordId) || formatOrderId(o.id) === String(ordId));
-                  if (found && setSelectedOrderForDrawer) {
-                    setSelectedOrderForDrawer(found);
+                onNavigateToOrder={(ordOrId) => {
+                  setActiveTab('orders');
+                  if (typeof ordOrId === 'object' && ordOrId?.id) {
+                    if (setSelectedOrderForDrawer) setSelectedOrderForDrawer(ordOrId);
+                  } else {
+                    const cleanId = String(ordOrId).trim().replace(/^#+/, '');
+                    const found = (orders || myOrders || []).find(o => {
+                      const oClean = String(o?.id || '').trim().replace(/^#+/, '');
+                      return oClean === cleanId || o?.id === ordOrId || formatOrderId(o?.id) === String(ordOrId);
+                    });
+                    if (setSelectedOrderForDrawer) {
+                      setSelectedOrderForDrawer(found || { id: `#${cleanId}`, title: `Order #${cleanId}`, status: 'in_progress' });
+                    }
                   }
                 }}
                 onNavigateToChat={(chatId) => {

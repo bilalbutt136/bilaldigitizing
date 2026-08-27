@@ -52,6 +52,8 @@ export const AdminDashboard = () => {
     siteSettings = {},
     activeAdminTab = 'dashboard',
     setActiveAdminTab,
+    openOrderTrackerDrawer,
+    setSelectedOrderForDrawer,
     showToast
   } = useAppState();
 
@@ -79,11 +81,24 @@ export const AdminDashboard = () => {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
+      const trackId = urlParams.get('trackOrder') || urlParams.get('orderId');
       if (tabParam) {
-        setActiveTab(tabParam);
+        setActiveTab(tabParam === 'inbox' ? 'chat' : tabParam);
+      }
+      if (trackId) {
+        if (openOrderTrackerDrawer) {
+          openOrderTrackerDrawer(trackId);
+        } else if (setSelectedOrderForDrawer) {
+          const cleanTrackId = String(trackId).trim().replace(/^#+/, '');
+          const found = (orders || []).find(o => {
+            const oClean = String(o?.id || '').trim().replace(/^#+/, '');
+            return oClean === cleanTrackId || String(o?.id) === String(trackId);
+          });
+          setSelectedOrderForDrawer(found || { id: `#${cleanTrackId}`, title: `Order #${cleanTrackId}`, status: 'in_progress' });
+        }
       }
     }
-  }, []);
+  }, [orders, openOrderTrackerDrawer, setSelectedOrderForDrawer]);
 
   // Real-time unread messages calculator for Admin Desk
   React.useEffect(() => {
@@ -135,16 +150,38 @@ export const AdminDashboard = () => {
     const handleOpenOrderChat = () => {
       setActiveTab('chat');
     };
+    const handleAdminTabSwitch = (e) => {
+      if (e.detail?.tab) {
+        setActiveTab(e.detail.tab === 'inbox' ? 'chat' : e.detail.tab);
+      }
+      if (e.detail?.orderId) {
+        if (openOrderTrackerDrawer) {
+          openOrderTrackerDrawer(e.detail.orderId);
+        } else if (setSelectedOrderForDrawer) {
+          const cleanId = String(e.detail.orderId).trim().replace(/^#+/, '');
+          const found = (orders || []).find(o => {
+            const oClean = String(o?.id || '').trim().replace(/^#+/, '');
+            return oClean === cleanId || o?.id === e.detail.orderId;
+          });
+          setSelectedOrderForDrawer(found || { id: `#${cleanId}`, title: `Order #${cleanId}`, status: 'in_progress' });
+        }
+      }
+    };
+
     window.addEventListener('bdigi_read_update', handleReadSync);
     window.addEventListener('bdigi_open_order_chat', handleOpenOrderChat);
+    window.addEventListener('bdigi_switch_admin_tab', handleAdminTabSwitch);
+    window.addEventListener('bdigi_switch_tab', handleAdminTabSwitch);
 
     return () => {
       isMounted = false;
       if (typeof unsubscribe === 'function') unsubscribe();
       window.removeEventListener('bdigi_read_update', handleReadSync);
       window.removeEventListener('bdigi_open_order_chat', handleOpenOrderChat);
+      window.removeEventListener('bdigi_switch_admin_tab', handleAdminTabSwitch);
+      window.removeEventListener('bdigi_switch_tab', handleAdminTabSwitch);
     };
-  }, [mounted, activeTab]);
+  }, [mounted, activeTab, orders, openOrderTrackerDrawer, setSelectedOrderForDrawer]);
 
   const configuredAdminEmail = (siteSettings?.adminEmail || authUser?.email || '').toLowerCase().trim();
   const isMasterAdmin = mounted && isAuthenticated && authUser?.role === 'admin';

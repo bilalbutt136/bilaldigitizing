@@ -1595,7 +1595,11 @@ export const StateProvider = ({ children }) => {
         title: `📦 Order ${formatOrderId(orderId)} Files Delivered!`,
         message: `Your digitized production files are ready for inspection and download.`,
         type: 'success',
-        link: '/client-portal'
+        order_id: orderId,
+        orderId: orderId,
+        link: `/client-portal?tab=orders&trackOrder=${orderId}`,
+        recipient_role: 'client',
+        recipient_email: targetOrder?.clientEmail || null
       });
       triggerEmailNotification('ORDER_DELIVERED', { ...(targetOrder || {}), id: orderId, ...safeExtraData });
     } else if (newStatus === 'completed') {
@@ -1604,7 +1608,11 @@ export const StateProvider = ({ children }) => {
         title: `✅ Order ${formatOrderId(orderId)} Accepted & Completed`,
         message: `Deliverables confirmed and archived in your studio portfolio.`,
         type: 'success',
-        link: authUser?.role === 'admin' ? '/admin-portal' : '/client-portal'
+        order_id: orderId,
+        orderId: orderId,
+        link: authUser?.role === 'admin' ? `/admin-portal?tab=orders&trackOrder=${orderId}` : `/client-portal?tab=orders&trackOrder=${orderId}`,
+        recipient_role: 'client',
+        recipient_email: targetOrder?.clientEmail || null
       });
       triggerEmailNotification('ORDER_COMPLETED', { ...(targetOrder || {}), id: orderId, ...safeExtraData });
     } else {
@@ -1613,7 +1621,11 @@ export const StateProvider = ({ children }) => {
         title: `🔔 Order ${formatOrderId(orderId)}: ${newStatus.toUpperCase()}`,
         message: `Order status is now updated to ${newStatus.toUpperCase()}.`,
         type: 'info',
-        link: authUser?.role === 'admin' ? '/admin-portal' : '/client-portal'
+        order_id: orderId,
+        orderId: orderId,
+        link: authUser?.role === 'admin' ? `/admin-portal?tab=orders&trackOrder=${orderId}` : `/client-portal?tab=orders&trackOrder=${orderId}`,
+        recipient_role: authUser?.role === 'admin' ? 'client' : 'admin',
+        recipient_email: targetOrder?.clientEmail || null
       });
     }
   };
@@ -1677,7 +1689,9 @@ export const StateProvider = ({ children }) => {
       title: `🔄 Modification Request Submitted`,
       message: revisionNote ? `"${revisionNote.slice(0, 60)}"` : 'Your modification request has been sent to the digitizer team.',
       type: 'info',
-      link: '/client-portal',
+      order_id: orderId,
+      orderId: orderId,
+      link: `/client-portal?tab=orders&trackOrder=${orderId}`,
       showToast: false
     });
 

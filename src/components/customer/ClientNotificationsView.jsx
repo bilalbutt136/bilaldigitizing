@@ -21,14 +21,27 @@ import {
   Zap
 } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
+import { useNavigate } from '../../utils/navigation';
+import { handleNotificationClick, parseNotificationTarget } from '../../utils/notificationRouter';
 
 export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, userEmail, isAdmin = false }) => {
+  const navigate = useNavigate();
   const {
     notifications = [],
     markNotificationAsRead,
     markAllNotificationsAsRead,
     unreadNotificationsCount = 0,
-    openOrderTrackerDrawer
+    openOrderTrackerDrawer,
+    setSelectedOrderForDrawer,
+    orders = [],
+    authUser,
+    currentUser,
+    isAuthenticated,
+    setActiveAdminTab,
+    setActiveCustomerTab,
+    protectedNavigate,
+    currentView,
+    mobileMode
   } = useAppState();
 
   const [filter, setFilter] = useState('all'); // 'all' | 'unread'
@@ -44,21 +57,63 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
   const handleItemClick = (notif) => {
     if (notif.id) handleMarkAsRead(notif.id);
 
-    const orderId = notif.order_id || notif.orderId || notif.metadata?.order_id || notif.metadata?.orderId;
-    const conversationId = notif.conversation_id || notif.conversationId || notif.metadata?.conversation_id;
+    const target = parseNotificationTarget(notif, orders);
 
-    if (notif.type === 'message' || conversationId) {
+    if (target.type === 'message' || target.type === 'offer') {
       if (typeof onNavigateToChat === 'function') {
-        onNavigateToChat(conversationId || (orderId ? `order-${orderId}` : null));
+        onNavigateToChat(target.conversationId || (target.orderId ? `order-${target.orderId}` : null));
+      } else {
+        handleNotificationClick(notif, {
+          markNotificationAsRead,
+          authUser,
+          currentUser,
+          isAuthenticated,
+          orders,
+          openOrderTrackerDrawer,
+          setSelectedOrderForDrawer,
+          setActiveAdminTab,
+          setActiveCustomerTab,
+          navigate,
+          protectedNavigate,
+          currentView: isAdmin ? 'admin' : (currentView || 'customer'),
+          mobileMode
+        });
       }
-    } else if (orderId) {
+    } else if (target.type === 'order' || target.orderId) {
+      if (typeof onNavigateToOrder === 'function') {
+        onNavigateToOrder(target.matchedOrder || target.orderId);
+      }
       if (openOrderTrackerDrawer) {
-        openOrderTrackerDrawer(orderId);
-      } else if (typeof onNavigateToOrder === 'function') {
-        onNavigateToOrder(orderId);
+        openOrderTrackerDrawer(target.matchedOrder || target.orderId);
+      } else if (setSelectedOrderForDrawer) {
+        setSelectedOrderForDrawer(target.matchedOrder || { 
+          id: String(target.orderId).startsWith('#') ? target.orderId : `#${target.orderId}`, 
+          title: `Order #${String(target.orderId).replace(/^#+/, '')}`, 
+          status: 'in_progress' 
+        });
       }
-    } else if (notif.link && typeof window !== 'undefined') {
-      window.location.href = notif.link;
+      if (typeof setActiveCustomerTab === 'function') {
+        setActiveCustomerTab('orders');
+      }
+      if (typeof setActiveAdminTab === 'function' && (isAdmin || authUser?.role === 'admin')) {
+        setActiveAdminTab('orders');
+      }
+    } else {
+      handleNotificationClick(notif, {
+        markNotificationAsRead,
+        authUser,
+        currentUser,
+        isAuthenticated,
+        orders,
+        openOrderTrackerDrawer,
+        setSelectedOrderForDrawer,
+        setActiveAdminTab,
+        setActiveCustomerTab,
+        navigate,
+        protectedNavigate,
+        currentView: isAdmin ? 'admin' : (currentView || 'customer'),
+        mobileMode
+      });
     }
   };
 

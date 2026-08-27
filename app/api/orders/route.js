@@ -201,7 +201,7 @@ export async function POST(request) {
             title: `🚨 New Order: ${mappedDbRow.title}`,
             message: `Received from ${mappedDbRow.client_name} (${clientEmail}) — ${mappedDbRow.service_category}. Price: $${mappedDbRow.price}`,
             type: 'info',
-            link: '/admin-portal',
+            link: `/admin-portal?tab=orders&trackOrder=${mappedDbRow.id}`,
             order_id: mappedDbRow.id,
             read: false,
             created_at: nowIso,
@@ -215,7 +215,7 @@ export async function POST(request) {
             title: `🎉 Order Placed Successfully!`,
             message: `Your order "${mappedDbRow.title}" has been received. Our team will begin production shortly.`,
             type: 'success',
-            link: '/client-portal',
+            link: `/client-portal?tab=orders&trackOrder=${mappedDbRow.id}`,
             order_id: mappedDbRow.id,
             read: false,
             created_at: nowIso,
@@ -376,14 +376,14 @@ export async function POST(request) {
             recipient_role: 'admin',
             title: `💳 Payment Confirmed: ${ordTitle}`,
             message: `Order from ${clientName} (${clientEmail}) is now paid and in production.`,
-            type: 'success', link: '/admin-portal'
+            type: 'success', link: `/admin-portal?tab=orders&trackOrder=${resolvedOrderId}`
           });
           await insertNotif({
             id: `notif-paid-${resolvedOrderId}-client-${Date.now()}`,
             recipient_role: 'client', recipient_email: clientEmail,
             title: `✅ Payment Confirmed — Production Started!`,
             message: `Your order "${ordTitle}" is now in production. We'll notify you when files are ready.`,
-            type: 'success', link: '/client-portal'
+            type: 'success', link: `/client-portal?tab=orders&trackOrder=${resolvedOrderId}`
           });
 
         } else if (newStatus === 'delivered') {
@@ -392,7 +392,7 @@ export async function POST(request) {
             recipient_role: 'client', recipient_email: clientEmail,
             title: `📦 Files Ready: ${ordTitle}`,
             message: `Your production files are ready! Review and approve, or request modifications.`,
-            type: 'success', link: '/client-portal'
+            type: 'success', link: `/client-portal?tab=orders&trackOrder=${resolvedOrderId}`
           });
 
         } else if (newStatus === 'revision' || newStatus === 'revision_requested') {
@@ -401,14 +401,14 @@ export async function POST(request) {
             recipient_role: 'admin',
             title: `🔄 Modification Requested: ${ordTitle}`,
             message: `${clientName} has requested modifications. Please review.`,
-            type: 'warning', link: '/admin-portal'
+            type: 'warning', link: `/admin-portal?tab=orders&trackOrder=${resolvedOrderId}`
           });
           await insertNotif({
             id: `notif-rev-${resolvedOrderId}-client-${Date.now()}`,
             recipient_role: 'client', recipient_email: clientEmail,
             title: `🔄 Modification Request Submitted`,
             message: `Your modification request for "${ordTitle}" has been sent to our team.`,
-            type: 'info', link: '/client-portal'
+            type: 'info', link: `/client-portal?tab=orders&trackOrder=${resolvedOrderId}`
           });
 
         } else if (newStatus === 'completed') {
@@ -417,14 +417,14 @@ export async function POST(request) {
             recipient_role: 'admin',
             title: `✅ Order Completed: ${ordTitle}`,
             message: `${clientName} approved the delivery. Order is now complete.`,
-            type: 'success', link: '/admin-portal'
+            type: 'success', link: `/admin-portal?tab=orders&trackOrder=${resolvedOrderId}`
           });
           await insertNotif({
             id: `notif-comp-${resolvedOrderId}-client-${Date.now()}`,
             recipient_role: 'client', recipient_email: clientEmail,
             title: `🎉 Order Complete — Thank You!`,
             message: `Your order "${ordTitle}" is complete. Download your files anytime from your portal.`,
-            type: 'success', link: '/client-portal'
+            type: 'success', link: `/client-portal?tab=orders&trackOrder=${resolvedOrderId}`
           });
 
         } else if (newStatus === 'cancelled') {
@@ -433,7 +433,7 @@ export async function POST(request) {
             recipient_role: 'client', recipient_email: clientEmail,
             title: `❌ Order Cancelled: ${ordTitle}`,
             message: `Your order has been cancelled. Contact support if you have questions.`,
-            type: 'error', link: '/client-portal'
+            type: 'error', link: `/client-portal?tab=orders&trackOrder=${resolvedOrderId}`
           });
         }
       } catch (notifErr) {
@@ -582,7 +582,7 @@ export async function POST(request) {
           title: `🔄 Modification Requested: ${ordTitle}`,
           message: instructions ? `${clientName}: "${instructions.slice(0, 120)}"` : `${clientName} requested modifications.`,
           type: 'warning',
-          link: '/admin-portal',
+          link: `/admin-portal?tab=orders&trackOrder=${orderId}`,
           order_id: orderId,
           read: false,
           created_at: nowIso,
@@ -602,7 +602,7 @@ export async function POST(request) {
           title: `🔄 Modification Request Submitted`,
           message: `Your modification request for "${ordTitle}" has been sent to our digitizer team.`,
           type: 'info',
-          link: '/client-portal',
+          link: `/client-portal?tab=orders&trackOrder=${orderId}`,
           order_id: orderId,
           read: false,
           created_at: nowIso,

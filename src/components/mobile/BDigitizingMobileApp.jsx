@@ -60,6 +60,7 @@ import {
 import MobileSimpleOrderModal from '../customer/MobileSimpleOrderModal';
 import { ClientChatInbox } from '../customer/ClientChatInbox';
 import { THEME_PRESETS } from '../../utils/themePresets';
+import { handleNotificationClick } from '../../utils/notificationRouter';
 
 export const BDigitizingMobileApp = () => {
   const navigate = useNavigate();
@@ -68,10 +69,11 @@ export const BDigitizingMobileApp = () => {
     authUser, 
     currentUser, 
     isAuthenticated,
+    openOrderTrackerDrawer,
+    setSelectedOrderForDrawer,
     setIsAuthModalOpen,
     setAuthModalMode,
     walletBalance = 0,
-    setSelectedOrderForDrawer,
     setIsDepositModalOpen,
     setIsCheckoutModalOpen,
     setCheckoutSession,
@@ -3029,21 +3031,24 @@ export const BDigitizingMobileApp = () => {
                   <div
                     key={n.id || Math.random()}
                     onClick={() => {
-                      if (markGlobalNotificationAsRead) markGlobalNotificationAsRead(n.id);
-                      markNotificationAsReadInSupabase(n.id);
                       setIsNotifDrawerOpen(false);
-                      const targetOrderId = n.order_id || n.orderId;
-                      if (targetOrderId) {
-                        const cleanTarget = String(targetOrderId).trim().replace(/^#+/, '');
-                        const found = orders.find(o => String(o.id).trim().replace(/^#+/, '') === cleanTarget);
-                        if (found) {
-                          setSelectedOrderForDrawer(found);
-                        } else {
-                          setMobileTab('orders');
-                        }
-                      } else {
-                        setMobileTab('inbox');
-                      }
+                      handleNotificationClick(n, {
+                        markNotificationAsRead: (id) => {
+                          if (markGlobalNotificationAsRead) markGlobalNotificationAsRead(id);
+                          markNotificationAsReadInSupabase(id);
+                        },
+                        markGlobalNotificationAsRead,
+                        authUser,
+                        currentUser,
+                        isAuthenticated,
+                        setIsAuthModalOpen,
+                        setAuthModalMode,
+                        orders,
+                        openOrderTrackerDrawer,
+                        setSelectedOrderForDrawer,
+                        setMobileTab,
+                        mobileMode: 'app'
+                      });
                     }}
                     style={{
                       padding: '0.85rem',

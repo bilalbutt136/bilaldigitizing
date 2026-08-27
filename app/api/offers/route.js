@@ -244,7 +244,7 @@ export async function POST(request) {
             title: 'New Custom Offer Received',
             message: `Support sent you a custom offer: "${offerDbRow.title}" for $${finalPrice.toFixed(2)}. Click to review and accept.`,
             type: 'info',
-            link: `/client-portal?tab=chat&chatId=${conversation_id}`,
+            link: `/client-portal?tab=inbox&chatId=${conversation_id}`,
             read: false,
             created_at: nowIso
           }]);
