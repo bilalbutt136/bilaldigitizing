@@ -203,6 +203,33 @@ export const BDigitizingMobileApp = () => {
     }
   }, [mobileTab, userEmail]);
 
+  // Listen for global tab switch events (e.g. clicking Client Dashboard, Inbox, or Notifications from header)
+  useEffect(() => {
+    const handleTabSwitch = (e) => {
+      const targetTab = e.detail?.tab;
+      if (targetTab === 'dashboard' || targetTab === 'home' || targetTab === 'orders') {
+        setMobileTab('home');
+        setIsPreferencesModalOpen(false);
+        setIsAccountModalOpen(false);
+        setIsSupportModalOpen(false);
+        setIsFeedbackModalOpen(false);
+        setIsLegalModalOpen(false);
+        setIsNotifDrawerOpen(false);
+        if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (targetTab === 'inbox' || targetTab === 'chat' || targetTab === 'support') {
+        setMobileTab('inbox');
+        if (e.detail?.orderId) {
+          setSelectedChatOrderId(e.detail.orderId);
+        }
+      } else if (targetTab === 'profile' || targetTab === 'wallet' || targetTab === 'settings') {
+        setMobileTab('profile');
+      }
+    };
+
+    window.addEventListener('bdigi_switch_tab', handleTabSwitch);
+    return () => window.removeEventListener('bdigi_switch_tab', handleTabSwitch);
+  }, []);
+
   const isAdmin = authUser?.role === 'admin' || currentUser?.role === 'admin';
 
   // Helper to determine if an order is unpaid and awaiting payment to start

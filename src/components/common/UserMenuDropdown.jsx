@@ -33,6 +33,8 @@ export const UserMenuDropdown = () => {
     walletBalance = 0,
     setIsDepositModalOpen,
     setIsOrderWizardOpen,
+    setSelectedOrderForDrawer,
+    setActiveCustomerTab,
     showToast,
     protectedNavigate,
     theme = 'light',
@@ -221,6 +223,8 @@ export const UserMenuDropdown = () => {
               type="button"
               onClick={() => {
                 setIsOpen(false);
+                if (setSelectedOrderForDrawer) setSelectedOrderForDrawer(null);
+                if (setActiveCustomerTab) setActiveCustomerTab('dashboard');
                 protectedNavigate('customer', false);
               }}
               style={{

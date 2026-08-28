@@ -1407,6 +1407,14 @@ export const StateProvider = ({ children }) => {
           if (!window.location.pathname.includes('client-portal') && !window.location.pathname.includes('client')) {
             window.location.href = '/client-portal';
           } else {
+            window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'dashboard' } }));
+            try {
+              const url = new URL(window.location.href);
+              url.searchParams.delete('trackOrder');
+              url.searchParams.delete('orderId');
+              url.searchParams.delete('tab');
+              window.history.replaceState({}, '', url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : ''));
+            } catch {}
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }
         }
