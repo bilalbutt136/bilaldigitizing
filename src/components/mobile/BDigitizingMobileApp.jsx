@@ -2445,7 +2445,8 @@ export const BDigitizingMobileApp = () => {
           display: 'grid',
           gridTemplateColumns: 'repeat(5, 1fr)',
           alignItems: 'center',
-          zIndex: 99999,
+          zIndex: isOrderModalOpen ? -1 : 800,
+          display: isOrderModalOpen ? 'none' : 'grid',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           boxShadow: '0 -4px 16px rgba(0,0,0,0.06)'
         }}

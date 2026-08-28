@@ -586,13 +586,20 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
     <div 
       style={{
         position: 'fixed',
-        inset: 0,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100dvh',
         background: 'rgba(15, 23, 42, 0.82)',
         backdropFilter: 'blur(6px)',
-        zIndex: 99980,
+        zIndex: 1000005,
         display: 'flex',
         alignItems: 'flex-end',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        padding: 0,
+        margin: 0
       }}
       onClick={onClose}
     >
@@ -602,14 +609,16 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
           background: '#ffffff',
           width: '100%',
           maxWidth: '560px',
-          maxHeight: '92vh',
+          height: '92dvh',
+          maxHeight: '92dvh',
           borderRadius: '24px 24px 0 0',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.25)',
+          boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.35)',
           overflow: 'hidden',
           animation: 'slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-          fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
+          fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+          position: 'relative'
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -686,7 +695,17 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         </div>
 
         {/* BODY CONTENT AREA */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.15rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: '#ffffff' }}>
+        <div style={{ 
+          flex: '1 1 auto', 
+          overflowY: 'auto', 
+          minHeight: 0,
+          WebkitOverflowScrolling: 'touch',
+          padding: '1.15rem 1.25rem 1.75rem', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '1rem', 
+          background: '#ffffff' 
+        }}>
           
           {/* =========================================================================
               STEP 1: SELECT 1 OF 3 CORE SERVICES (HIGH CONTRAST & CLEAR LABELS)
@@ -1800,13 +1819,18 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         {/* BOTTOM NAVIGATION CONTROLS */}
         {step <= 5 && (
           <div style={{
-            padding: '0.85rem 1.25rem',
-            borderTop: '1px solid #e2e8f0',
+            flexShrink: 0,
+            position: 'sticky',
+            bottom: 0,
+            padding: '0.85rem 1.25rem calc(0.85rem + env(safe-area-inset-bottom, 0px)) 1.25rem',
+            borderTop: '1.5px solid #cbd5e1',
             background: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '0.75rem'
+            gap: '0.75rem',
+            boxShadow: '0 -6px 20px rgba(0, 0, 0, 0.08)',
+            zIndex: 40
           }}>
             {step > 1 ? (
               <button
