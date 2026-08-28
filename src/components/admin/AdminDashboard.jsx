@@ -722,7 +722,7 @@ export const AdminDashboard = () => {
         flex: 1,
         minWidth: 0,
         width: '100%',
-        padding: activeTab === 'chat' ? '0.5rem 1rem 0.65rem' : '2rem 2.5rem 4rem',
+        padding: activeTab === 'chat' ? '0.5rem 1rem 0.65rem' : '0.85rem 1.25rem 2.5rem',
         boxSizing: 'border-box',
         height: '100%',
         maxHeight: '100%',
@@ -737,43 +737,45 @@ export const AdminDashboard = () => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '1.75rem',
+            marginBottom: '0.75rem',
             flexWrap: 'wrap',
-            gap: '1rem',
+            gap: '0.75rem',
             background: 'var(--bg-card)',
-            padding: '1.25rem 1.75rem',
-            borderRadius: 'var(--radius-lg)',
+            padding: '0.65rem 1.25rem',
+            borderRadius: 'var(--radius-md)',
             boxShadow: 'var(--shadow-sm)',
             border: '1px solid var(--border-color)'
           }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                   Admin Operations Portal
                 </h1>
-                <span className="badge badge-assigned" style={{ fontSize: '0.725rem' }}>MASTER ADMIN</span>
+                <span className="badge badge-assigned" style={{ fontSize: '0.68rem', padding: '0.1rem 0.45rem' }}>MASTER ADMIN</span>
               </div>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.2rem 0 0' }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', margin: '0.1rem 0 0' }}>
                 Centralized digitizing studio pipeline, client balances, and live CMS controls.
               </p>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               <button 
                 type="button"
                 className="btn btn-outline btn-sm"
                 onClick={resetAllData}
+                style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
                 title="Refresh catalog and admin data from the live database"
               >
-                <RefreshCw size={14} /> Refresh Catalog
+                <RefreshCw size={13} /> Refresh Catalog
               </button>
 
               <button 
                 type="button"
                 className="btn btn-navy btn-sm"
                 onClick={() => setIsPricingSettingsOpen(true)}
+                style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
               >
-                <Sliders size={14} /> Quick Rates Editor
+                <Sliders size={13} /> Quick Rates Editor
               </button>
             </div>
           </div>
@@ -784,60 +786,60 @@ export const AdminDashboard = () => {
             {/* Top KPI Metrics Cards */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: '1.25rem',
-              marginBottom: '1.75rem'
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: '0.65rem',
+              marginBottom: '0.75rem'
             }}>
-              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid var(--color-primary)', background: 'var(--bg-card)' }}>
+              <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid var(--color-primary)', background: 'var(--bg-card)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Revenue</span>
-                  <div style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
-                    <TrendingUp size={18} />
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Revenue</span>
+                  <div style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
+                    <TrendingUp size={14} />
                   </div>
                 </div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.4rem 0 0.1rem' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0' }}>
                   ${totalRevenue.toFixed(2)}
                 </div>
-                <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>Verified Studio Inflows</div>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Verified Studio Inflows</div>
               </div>
 
-              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #3b82f6', background: 'var(--bg-card)' }}>
+              <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid #3b82f6', background: 'var(--bg-card)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Jobs in Pipeline</span>
-                  <div style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
-                    <ClipboardList size={18} />
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Jobs in Pipeline</span>
+                  <div style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
+                    <ClipboardList size={14} />
                   </div>
                 </div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.4rem 0 0.1rem' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0' }}>
                   {activeJobsCount}
                 </div>
-                <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>In Digitizing / Vector / Patches</div>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>In Digitizing / Vector / Patches</div>
               </div>
 
-              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #10b981', background: 'var(--bg-card)' }}>
+              <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid #10b981', background: 'var(--bg-card)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Completed Files</span>
-                  <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
-                    <Layers size={18} />
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Completed Files</span>
+                  <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
+                    <Layers size={14} />
                   </div>
                 </div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.4rem 0 0.1rem' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0' }}>
                   {completedJobsCount}
                 </div>
-                <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>Delivered & Client Accepted</div>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Delivered & Client Accepted</div>
               </div>
 
-              <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #8b5cf6', background: 'var(--bg-card)' }}>
+              <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid #8b5cf6', background: 'var(--bg-card)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Registered Clients</span>
-                  <div style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
-                    <Users size={18} />
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Registered Clients</span>
+                  <div style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
+                    <Users size={14} />
                   </div>
                 </div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.4rem 0 0.1rem' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0' }}>
                   {safeClients.length}
                 </div>
-                <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>Active Client Accounts</div>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Active Client Accounts</div>
               </div>
             </div>
 

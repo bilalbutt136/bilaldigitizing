@@ -277,21 +277,21 @@ export const OrderManagementTable = () => {
   };
 
   return (
-    <div className="card" style={{ padding: 'clamp(0.85rem, 2vw, 1.5rem)', background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+    <div className="card" style={{ padding: '0.65rem 0.85rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
       
       {/* Controls & Lifecycle Filter Tabs */}
       <div style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.85rem',
-        marginBottom: '1.25rem'
+        gap: '0.5rem',
+        marginBottom: '0.65rem'
       }}>
         {/* Status Lifecycle Buttons */}
-        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <button 
             className={`btn btn-sm ${filterStatus === 'all' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('all')}
-            style={{ fontWeight: 800 }}
+            style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
           >
             All Orders ({orders.length})
           </button>
@@ -299,7 +299,7 @@ export const OrderManagementTable = () => {
           <button 
             className={`btn btn-sm ${filterStatus === 'submitted' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('submitted')}
-            style={{ fontWeight: 800 }}
+            style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
           >
             🔴 New ({orders.filter(o => o.status === 'submitted' || !o.status).length})
           </button>
@@ -307,7 +307,7 @@ export const OrderManagementTable = () => {
           <button 
             className={`btn btn-sm ${filterStatus === 'digitizing' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('digitizing')}
-            style={{ fontWeight: 800 }}
+            style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
           >
             ⚡ In Progress ({orders.filter(o => o.status === 'digitizing' || o.status === 'assigned').length})
           </button>
@@ -315,7 +315,7 @@ export const OrderManagementTable = () => {
           <button 
             className={`btn btn-sm ${filterStatus === 'revision' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('revision')}
-            style={{ fontWeight: 800 }}
+            style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
           >
             🔄 In Revision ({orders.filter(o => o.status === 'revision').length})
           </button>
@@ -323,7 +323,7 @@ export const OrderManagementTable = () => {
           <button 
             className={`btn btn-sm ${filterStatus === 'delivered' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('delivered')}
-            style={{ fontWeight: 800 }}
+            style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
           >
             📦 Delivered ({orders.filter(o => o.status === 'delivered' || o.status === 'qc').length})
           </button>
@@ -331,7 +331,7 @@ export const OrderManagementTable = () => {
           <button 
             className={`btn btn-sm ${filterStatus === 'completed' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('completed')}
-            style={{ fontWeight: 800 }}
+            style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
           >
             ✅ Completed ({orders.filter(o => o.status === 'completed').length})
           </button>
@@ -339,7 +339,7 @@ export const OrderManagementTable = () => {
           <button 
             className={`btn btn-sm ${filterStatus === 'cancelled' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('cancelled')}
-            style={{ fontWeight: 800 }}
+            style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
           >
             ❌ Cancelled ({orders.filter(o => o.status === 'cancelled').length})
           </button>
@@ -348,7 +348,7 @@ export const OrderManagementTable = () => {
         {/* Category, Payment & Search Controls (Strict Single Row) */}
         <div style={{ 
           display: 'flex', 
-          gap: '0.65rem', 
+          gap: '0.5rem', 
           alignItems: 'center', 
           width: '100%', 
           flexWrap: 'nowrap'
@@ -359,16 +359,16 @@ export const OrderManagementTable = () => {
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
             style={{ 
-              minWidth: '150px', 
-              maxWidth: '180px',
+              minWidth: '135px', 
+              maxWidth: '160px',
               flex: '0 0 auto', 
               fontWeight: 800, 
-              fontSize: '0.825rem', 
+              fontSize: '0.78rem', 
               background: 'var(--bg-surface)', 
               color: 'var(--text-main)',
-              height: '38px',
-              padding: '0 0.75rem',
-              borderRadius: '8px'
+              height: '32px',
+              padding: '0 0.5rem',
+              borderRadius: '6px'
             }}
           >
             <option value="all">📂 All Categories</option>
@@ -383,16 +383,16 @@ export const OrderManagementTable = () => {
             value={filterPayment}
             onChange={(e) => setFilterPayment(e.target.value)}
             style={{ 
-              minWidth: '140px', 
-              maxWidth: '160px',
+              minWidth: '130px', 
+              maxWidth: '150px',
               flex: '0 0 auto', 
               fontWeight: 800, 
-              fontSize: '0.825rem', 
+              fontSize: '0.78rem', 
               background: 'var(--bg-surface)', 
               color: 'var(--text-main)',
-              height: '38px',
-              padding: '0 0.75rem',
-              borderRadius: '8px'
+              height: '32px',
+              padding: '0 0.5rem',
+              borderRadius: '6px'
             }}
           >
             <option value="all">💳 All Payments</option>
@@ -402,7 +402,7 @@ export const OrderManagementTable = () => {
 
           {/* Search Input */}
           <div style={{ position: 'relative', flex: '1 1 auto', minWidth: 0 }}>
-            <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)', pointerEvents: 'none' }} />
+            <Search size={14} style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)', pointerEvents: 'none' }} />
             <input 
               type="text" 
               className="form-control"
@@ -410,11 +410,11 @@ export const OrderManagementTable = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{ 
-                paddingLeft: '2.1rem', 
-                fontSize: '0.825rem', 
+                paddingLeft: '2rem', 
+                fontSize: '0.78rem', 
                 width: '100%', 
-                height: '38px',
-                borderRadius: '8px'
+                height: '32px',
+                borderRadius: '6px'
               }}
             />
           </div>
@@ -425,40 +425,46 @@ export const OrderManagementTable = () => {
       <div 
         className="table-responsive"
         style={{ 
-          maxHeight: '600px', 
+          maxHeight: '680px', 
           overflowY: 'auto', 
           overflowX: 'auto', 
           border: '1px solid var(--border-color)',
-          borderRadius: '12px',
+          borderRadius: '10px',
           background: 'var(--bg-card)',
           boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)',
           WebkitOverflowScrolling: 'touch'
         }}
       >
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.825rem' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-surface)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
             <tr style={{ 
               borderBottom: '2px solid var(--border-color)', 
               color: 'var(--text-main)',
-              fontSize: '0.725rem',
+              fontSize: '0.72rem',
               fontWeight: 800,
               letterSpacing: '0.04em'
             }}>
-              <th style={{ padding: '0.85rem 1rem' }}>ORDER</th>
-              <th style={{ padding: '0.85rem 1rem' }}>ACCOUNT</th>
-              <th style={{ padding: '0.85rem 1rem' }}>SERVICE</th>
-              <th style={{ padding: '0.85rem 1rem' }}>PRICE</th>
-              <th style={{ padding: '0.85rem 1rem' }}>PAYMENT</th>
-              <th style={{ padding: '0.85rem 1rem' }}>STATUS</th>
-              <th style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>ARTWORK</th>
-              <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>ACTIONS</th>
+              <th style={{ padding: '0.45rem 0.75rem' }}>ORDER</th>
+              <th style={{ padding: '0.45rem 0.75rem' }}>ACCOUNT</th>
+              <th style={{ padding: '0.45rem 0.75rem' }}>SERVICE</th>
+              <th style={{ padding: '0.45rem 0.75rem' }}>PRICE</th>
+              <th style={{ padding: '0.45rem 0.75rem' }}>PAYMENT</th>
+              <th style={{ padding: '0.45rem 0.75rem' }}>STATUS</th>
+              <th style={{ padding: '0.45rem 0.75rem', textAlign: 'center' }}>ARTWORK</th>
+              <th style={{ padding: '0.45rem 0.75rem', textAlign: 'right' }}>ACTIONS</th>
             </tr>
           </thead>
           <tbody>
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ padding: '3rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  No orders found matching the current filters.
+                <td colSpan={8} style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <PackageOpen size={36} style={{ color: 'var(--text-light)', marginBottom: '0.5rem' }} />
+                  <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-900)' }}>
+                    No Orders Match Your Filters
+                  </div>
+                  <div style={{ fontSize: '0.78rem', marginTop: '0.2rem' }}>
+                    Try clearing your search query or selecting "All Orders" above.
+                  </div>
                 </td>
               </tr>
             ) : (
@@ -477,8 +483,7 @@ export const OrderManagementTable = () => {
                   ord.file_path || 
                   ord.file_url || 
                   'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
-                const msgCount = ord.messages?.length || 0;
-
+                
                 return (
                   <tr 
                     key={ord.id}
@@ -486,59 +491,59 @@ export const OrderManagementTable = () => {
                     className="order-table-row"
                   >
                     {/* 1. ORDER */}
-                    <td style={{ padding: '1rem' }}>
-                      <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>
+                      <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.84rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                         <span>{ord.title || 'Untitled Order'}</span>
-                        {ord.isRush && <span className="badge badge-rush" style={{ fontSize: '0.625rem', padding: '0.1rem 0.4rem' }}>⚡ RUSH</span>}
+                        {ord.isRush && <span className="badge badge-rush" style={{ fontSize: '0.6rem', padding: '0.05rem 0.35rem' }}>⚡ RUSH</span>}
                       </div>
-                      <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                        <span style={{ fontWeight: 800, color: 'var(--orange-600)', background: '#fff7ed', padding: '0.05rem 0.4rem', borderRadius: '4px', border: '1px solid #ffedd5' }}>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '1px', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 800, color: 'var(--orange-600)', background: '#fff7ed', padding: '0.05rem 0.35rem', borderRadius: '4px', border: '1px solid #ffedd5' }}>
                           {formatOrderId(ord.id)}
                         </span>
                         <span>•</span>
                         <span>📅 {formatPlacementTime(ord.createdAt || ord.created_at || ord.timestamp || ord.order_date)}</span>
                       </div>
-                      <div style={{ marginTop: '0.2rem' }}>
+                      <div style={{ marginTop: '0.15rem' }}>
                         {getDeliveryCountdown(ord)}
                       </div>
                     </td>
 
                     {/* 2. ACCOUNT */}
-                    <td style={{ padding: '1rem' }}>
-                      <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.85rem' }}>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>
+                      <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.82rem' }}>
                         {ord.clientName || 'Client Account'}
                       </div>
-                      <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '170px' }}>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '160px' }}>
                         ✉️ {ord.clientEmail || 'client@bdigitizing.pro'}
                       </div>
                     </td>
 
                     {/* 3. SERVICE */}
-                    <td style={{ padding: '1rem' }}>
-                      <div style={{ fontWeight: 700, color: 'var(--navy-900)', fontSize: '0.825rem' }}>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>
+                      <div style={{ fontWeight: 700, color: 'var(--navy-900)', fontSize: '0.8rem' }}>
                         {ord.serviceCategory || ord.type || 'Embroidery Digitizing'}
                       </div>
-                      <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '1px' }}>
                         {ord.fabricType || (ord.requestedFormats ? ord.requestedFormats.slice(0, 3).join(', ').toUpperCase() : 'Standard DST/PES')}
                       </div>
                     </td>
 
                     {/* 4. PRICE */}
-                    <td style={{ padding: '1rem' }}>
-                      <div style={{ fontWeight: 800, color: 'var(--navy-950)', fontSize: '0.925rem' }}>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>
+                      <div style={{ fontWeight: 800, color: 'var(--navy-950)', fontSize: '0.86rem' }}>
                         ${parseFloat(ord.price || 15).toFixed(2)}
                       </div>
                     </td>
 
                     {/* 5. PAYMENT */}
-                    <td style={{ padding: '1rem' }}>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>
                       {getPaymentBadge(ord)}
                     </td>
 
                     {/* 6. STATUS */}
-                    <td style={{ padding: '1rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--navy-900)' }}>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--navy-900)' }}>
                           {statusLabels[ord.status] || ord.status || 'Submitted'}
                         </div>
                         <div>
@@ -548,7 +553,7 @@ export const OrderManagementTable = () => {
                     </td>
 
                     {/* 7. ARTWORK */}
-                    <td style={{ padding: '1rem', textAlign: 'center' }}>
+                    <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
                       <div 
                         style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}
                         onClick={() => setLightboxOrder(ord)}
@@ -564,68 +569,68 @@ export const OrderManagementTable = () => {
                             e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
                           }}
                           style={{ 
-                            width: '46px', 
-                            height: '46px', 
-                            borderRadius: '8px', 
+                            width: '38px', 
+                            height: '38px', 
+                            borderRadius: '6px', 
                             objectFit: 'cover', 
                             border: '1.5px solid var(--orange-500)', 
                             background: '#f1f5f9',
-                            boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+                            boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
                           }}
                         />
                         <span style={{
                           position: 'absolute',
-                          bottom: '-4px',
-                          right: '-4px',
+                          bottom: '-3px',
+                          right: '-3px',
                           background: 'var(--navy-900)',
                           color: '#ffffff',
                           borderRadius: '50%',
-                          width: '18px',
-                          height: '18px',
+                          width: '16px',
+                          height: '16px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                         }}>
-                          <ZoomIn size={10} />
+                          <ZoomIn size={9} />
                         </span>
                       </div>
                     </td>
 
                     {/* 8. ACTIONS */}
-                    <td style={{ padding: '1rem', textAlign: 'right' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.35rem' }}>
+                    <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
                         {ord.status !== 'completed' && ord.status !== 'cancelled' && (
                           <button 
                             type="button"
                             onClick={() => setSelectedOrderForDrawer(ord)}
                             style={{ 
                               fontWeight: 800, 
-                              fontSize: '0.78rem', 
+                              fontSize: '0.74rem', 
                               whiteSpace: 'nowrap', 
-                              gap: '0.3rem', 
-                              padding: '0.35rem 0.75rem',
+                              gap: '0.25rem', 
+                              padding: '0.28rem 0.6rem',
                               background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                               color: '#ffffff',
                               border: 'none',
-                              borderRadius: '8px',
-                              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.28)',
+                              borderRadius: '6px',
+                              boxShadow: '0 2px 6px rgba(16, 185, 129, 0.28)',
                               cursor: 'pointer',
                               display: 'inline-flex',
                               alignItems: 'center'
                             }}
                             title="Open desk to deliver machine files"
                           >
-                            <UploadCloud size={13} /> {ord.status === 'delivered' ? 'Re-Deliver' : 'Deliver Files'}
+                            <UploadCloud size={12} /> {ord.status === 'delivered' ? 'Re-Deliver' : 'Deliver Files'}
                           </button>
                         )}
 
                         <button 
                           className="btn btn-primary-orange btn-sm"
                           onClick={() => setSelectedOrderForDrawer(ord)}
-                          style={{ fontWeight: 800, fontSize: '0.78rem', whiteSpace: 'nowrap', gap: '0.3rem', padding: '0.35rem 0.75rem' }}
+                          style={{ fontWeight: 800, fontSize: '0.74rem', whiteSpace: 'nowrap', gap: '0.25rem', padding: '0.28rem 0.6rem', borderRadius: '6px' }}
                         >
-                          Manage <ChevronRight size={14} />
+                          Manage <ChevronRight size={12} />
                         </button>
                       </div>
                     </td>
