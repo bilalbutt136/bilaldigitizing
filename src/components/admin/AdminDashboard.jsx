@@ -75,10 +75,12 @@ export const AdminDashboard = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const [mounted, setMounted] = React.useState(false);
+  const initialTrackSyncedRef = React.useRef(false);
 
   React.useEffect(() => {
     setMounted(true);
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !initialTrackSyncedRef.current) {
+      initialTrackSyncedRef.current = true;
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
       const trackId = urlParams.get('trackOrder') || urlParams.get('orderId');
@@ -98,7 +100,7 @@ export const AdminDashboard = () => {
         }
       }
     }
-  }, [orders, openOrderTrackerDrawer, setSelectedOrderForDrawer]);
+  }, []);
 
   // Real-time unread messages calculator for Admin Desk
   React.useEffect(() => {

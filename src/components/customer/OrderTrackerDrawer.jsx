@@ -102,12 +102,28 @@ export const OrderTrackerDrawer = () => {
   const modificationRef = useRef(null);
   const messagesRef = useRef(null);
 
+  const handleCloseDrawer = () => {
+    setSelectedOrderForDrawer(null);
+    if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+      try {
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('trackOrder') || url.searchParams.has('orderId')) {
+          url.searchParams.delete('trackOrder');
+          url.searchParams.delete('orderId');
+          const cleanQuery = url.searchParams.toString();
+          const cleanUrl = url.pathname + (cleanQuery ? `?${cleanQuery}` : '');
+          window.history.replaceState({}, '', cleanUrl);
+        }
+      } catch {}
+    }
+  };
+
   React.useEffect(() => {
     if (!selectedOrderForDrawer) return;
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        setSelectedOrderForDrawer(null);
+        handleCloseDrawer();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -118,7 +134,7 @@ export const OrderTrackerDrawer = () => {
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = originalOverflow || 'unset';
     };
-  }, [selectedOrderForDrawer, setSelectedOrderForDrawer]);
+  }, [selectedOrderForDrawer]);
 
   if (!selectedOrderForDrawer) return null;
 
@@ -437,7 +453,7 @@ export const OrderTrackerDrawer = () => {
   return (
     <div 
       className={isMobileLayout ? "mobile-fullscreen-modal" : "modal-overlay"}
-      onClick={() => setSelectedOrderForDrawer(null)}
+      onClick={handleCloseDrawer}
       style={{ 
         zIndex: 99999, 
         background: isMobileLayout ? '#ffffff' : 'rgba(11, 19, 41, 0.85)', 
@@ -488,7 +504,7 @@ export const OrderTrackerDrawer = () => {
             {isMobileLayout && (
               <button
                 type="button"
-                onClick={() => setSelectedOrderForDrawer(null)}
+                onClick={handleCloseDrawer}
                 style={{
                   background: 'rgba(255, 255, 255, 0.12)',
                   border: 'none',
@@ -560,7 +576,7 @@ export const OrderTrackerDrawer = () => {
 
           <button 
             type="button"
-            onClick={() => setSelectedOrderForDrawer(null)}
+            onClick={handleCloseDrawer}
             style={{ 
               background: 'rgba(255, 255, 255, 0.08)', 
               border: 'none', 
@@ -1582,7 +1598,7 @@ export const OrderTrackerDrawer = () => {
 
             <button
               type="button"
-              onClick={() => setSelectedOrderForDrawer(null)}
+              onClick={handleCloseDrawer}
               className="btn btn-outline btn-sm"
               style={{ padding: '0.5rem 1rem', fontSize: '0.82rem', fontWeight: 700 }}
             >

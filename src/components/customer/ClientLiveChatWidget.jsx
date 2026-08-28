@@ -641,7 +641,6 @@ export const ClientLiveChatWidget = () => {
       }
     }
 
-    playNotificationSound('send');
     setMessageInput('');
     setAttachedFile(null);
     setReplyingTo(null);

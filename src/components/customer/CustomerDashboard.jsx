@@ -111,6 +111,7 @@ export const CustomerDashboard = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   // Client-side mounting guard for hydration safety
   const [mounted, setMounted] = React.useState(false);
+  const initialTabSyncedRef = React.useRef(false);
 
   const setActiveTab = React.useCallback((tab) => {
     if (!tab) return;
@@ -179,8 +180,9 @@ export const CustomerDashboard = () => {
     };
     window.addEventListener('bdigi_switch_tab', handleTabSwitch);
 
-    // Sync tab and trackOrder from URL query params on mount/refresh
-    if (typeof window !== 'undefined') {
+    // Sync tab and trackOrder from URL query params on initial mount
+    if (typeof window !== 'undefined' && !initialTabSyncedRef.current) {
+      initialTabSyncedRef.current = true;
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
       const trackId = urlParams.get('trackOrder') || urlParams.get('orderId');
@@ -198,7 +200,7 @@ export const CustomerDashboard = () => {
     }
 
     return () => window.removeEventListener('bdigi_switch_tab', handleTabSwitch);
-  }, [setActiveTab, orders, setSelectedOrderForDrawer]);
+  }, []);
 
   React.useEffect(() => {
     setMounted(true);

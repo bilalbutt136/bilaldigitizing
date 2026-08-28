@@ -552,9 +552,11 @@ export const StateProvider = ({ children }) => {
       return nextList;
     });
 
-    try {
-      playNotificationSound(notif.soundType || 'notification');
-    } catch {}
+    if (notif.playSound === true) {
+      try {
+        playNotificationSound(notif.soundType || 'notification');
+      } catch {}
+    }
 
     if (notif.showToast !== false && notif.title) {
       showToast(`${notif.title}${notif.message ? `: ${notif.message}` : ''}`, notif.type || 'info');

@@ -781,7 +781,6 @@ export const AdminChatInbox = () => {
     setAttachedFile(null);
     setReplyingTo(null);
     broadcastTypingStatus(currentActiveChatId, 'Studio Support', 'admin', false);
-    playNotificationSound('send');
     showToast(`Reply sent to ${activeInfo.customerName || 'Customer'}!`, 'success');
     scrollToBottom('smooth');
 

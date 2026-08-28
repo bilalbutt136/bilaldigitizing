@@ -199,7 +199,6 @@ export default function OfferCardMessage({
         showToast(res.error, 'error');
       } else {
         setLocalStatus('accepted');
-        playNotificationSound('send');
         showToast('Offer accepted! Production order created.', 'success');
       }
     } catch {
