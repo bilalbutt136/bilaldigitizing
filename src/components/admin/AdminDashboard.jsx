@@ -288,30 +288,33 @@ export const AdminDashboard = () => {
   ];
 
   return (
-    <div className="admin-portal-wrapper" style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 65px)', background: 'var(--bg-main)', position: 'relative', width: '100%' }}>
+    <div className="admin-portal-wrapper" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 70px)', maxHeight: 'calc(100dvh - 70px)', minHeight: 'calc(100dvh - 70px)', background: 'var(--bg-main)', position: 'relative', width: '100%', overflow: 'hidden' }}>
       
       {/* Desktop Independent Layout Styles */}
       <style dangerouslySetInnerHTML={{__html: `
         @media (min-width: 1025px) {
           .admin-portal-wrapper {
-            height: calc(100vh - 65px) !important;
-            max-height: calc(100vh - 65px) !important;
+            height: calc(100dvh - 70px) !important;
+            max-height: calc(100dvh - 70px) !important;
             overflow: hidden !important;
           }
           .admin-portal-body {
             height: 100% !important;
             max-height: 100% !important;
+            min-height: 0 !important;
             overflow: hidden !important;
           }
           .admin-sidebar-fixed {
             height: 100% !important;
             max-height: 100% !important;
+            min-height: 0 !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
           }
           .admin-main-content {
             height: 100% !important;
             max-height: 100% !important;
+            min-height: 0 !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
             scroll-behavior: smooth;
@@ -712,10 +715,11 @@ export const AdminDashboard = () => {
         flex: 1,
         minWidth: 0,
         width: '100%',
-        padding: activeTab === 'chat' ? '0.35rem 1.25rem 0.5rem' : '2rem 2.5rem 4rem',
+        padding: activeTab === 'chat' ? '0.25rem 0.75rem 0.35rem' : '2rem 2.5rem 4rem',
         boxSizing: 'border-box',
         height: '100%',
         maxHeight: '100%',
+        minHeight: 0,
         overflowY: activeTab === 'chat' ? 'hidden' : 'auto',
         overflowX: 'hidden',
         display: activeTab === 'chat' ? 'flex' : 'block',

@@ -1218,7 +1218,9 @@ export const AdminChatInbox = () => {
               display: 'flex', 
               flexDirection: 'column', 
               height: '100%', 
+              maxHeight: '100%',
               minHeight: 0, 
+              flex: 1,
               background: 'var(--color-surface, #ffffff)', 
               overflow: 'hidden' 
             }}
@@ -1485,7 +1487,7 @@ export const AdminChatInbox = () => {
             )}
 
             {/* Messaging Input Area */}
-            <form onSubmit={handleSendMessage} style={{ padding: '0.65rem 0.85rem', borderTop: '1.5px solid var(--color-border)', background: 'var(--color-surface, #ffffff)', width: '100%', boxSizing: 'border-box', flexShrink: 0 }}>
+            <form onSubmit={handleSendMessage} style={{ padding: '0.45rem 0.75rem', borderTop: '1.5px solid var(--color-border)', background: 'var(--color-surface, #ffffff)', width: '100%', boxSizing: 'border-box', flexShrink: 0, position: 'relative', zIndex: 10, boxShadow: '0 -2px 8px rgba(0,0,0,0.02)' }}>
               <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', width: '100%' }}>
                 <input
                   type="file"
@@ -1560,14 +1562,15 @@ export const AdminChatInbox = () => {
                   style={{
                     flex: 1,
                     minWidth: 0,
+                    height: '36px',
                     minHeight: '36px',
-                    maxHeight: '120px',
+                    maxHeight: '85px',
                     fontSize: '0.85rem',
                     padding: '0.45rem 0.75rem',
                     borderRadius: '8px',
                     boxSizing: 'border-box',
                     resize: 'none',
-                    lineHeight: 1.4,
+                    lineHeight: 1.35,
                     overflowY: 'auto',
                     fontFamily: 'inherit'
                   }}
