@@ -194,6 +194,7 @@ export const UserMenuDropdown = () => {
                 type="button"
                 onClick={() => {
                   setIsOpen(false);
+                  navigate('/admin-portal');
                   protectedNavigate('admin', false);
                 }}
                 style={{
@@ -225,6 +226,7 @@ export const UserMenuDropdown = () => {
                 setIsOpen(false);
                 if (setSelectedOrderForDrawer) setSelectedOrderForDrawer(null);
                 if (setActiveCustomerTab) setActiveCustomerTab('dashboard');
+                navigate('/client-portal');
                 protectedNavigate('customer', false);
               }}
               style={{

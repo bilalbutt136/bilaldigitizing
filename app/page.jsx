@@ -13,12 +13,14 @@ import { BDigitizingMobileApp } from '../src/components/mobile/BDigitizingMobile
 import { normalizeCategory } from '../src/utils/categoryUtils';
 
 export default function HomePage() {
-  const { setCurrentView, activeHomeServiceTab, mobileMode } = useAppState();
+  const { currentView, setCurrentView, activeHomeServiceTab, mobileMode } = useAppState();
   const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
 
   useEffect(() => {
-    setCurrentView('public');
-  }, [setCurrentView]);
+    if (currentView !== 'public') {
+      setCurrentView('public');
+    }
+  }, [currentView, setCurrentView]);
 
   // If in Standalone App mode (or user toggled App Mode), render the 5-tab Fiverr-style mobile app
   if (mobileMode === 'app') {

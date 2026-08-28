@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 export function useNavigate() {
   const router = useRouter();
-  return (path, options) => {
+  return useCallback((path, options) => {
     if (typeof path === 'number') {
       if (path === -1) router.back();
       return;
@@ -16,7 +16,7 @@ export function useNavigate() {
     } else {
       router.push(path);
     }
-  };
+  }, [router]);
 }
 
 export function useLocation() {

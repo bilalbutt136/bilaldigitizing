@@ -5,11 +5,13 @@ import { useAppState } from '../../../src/context/StateContext';
 import { VectorArtPage } from '../../../src/components/public/VectorArtPage';
 
 export function VectorClient() {
-  const { setCurrentView } = useAppState();
+  const { currentView, setCurrentView } = useAppState();
 
   useEffect(() => {
-    setCurrentView('public');
-  }, [setCurrentView]);
+    if (currentView !== 'public') {
+      setCurrentView('public');
+    }
+  }, [currentView, setCurrentView]);
 
   return <VectorArtPage />;
 }

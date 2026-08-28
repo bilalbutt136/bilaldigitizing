@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 
 export function AdminPortalClient() {
   const [isMounted, setIsMounted] = useState(false);
-  const { setCurrentView, isAuthenticated, isAuthInitialized, authUser } = useAppState();
+  const { currentView, setCurrentView, isAuthenticated, isAuthInitialized, authUser } = useAppState();
   const router = useRouter();
 
   useEffect(() => {
@@ -26,9 +26,9 @@ export function AdminPortalClient() {
         router.replace('/secure-admin-login');
       }
     } else {
-      setCurrentView('admin');
+      if (currentView !== 'admin') setCurrentView('admin');
     }
-  }, [isMounted, isAuthenticated, isAuthInitialized, authUser, setCurrentView, router]);
+  }, [isMounted, isAuthenticated, isAuthInitialized, authUser, currentView, setCurrentView, router]);
 
   if (!isMounted || (!isAuthInitialized && !authUser)) {
     return (

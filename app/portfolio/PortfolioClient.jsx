@@ -5,11 +5,13 @@ import { useAppState } from '../../src/context/StateContext';
 import { PortfolioPage } from '../../src/components/public/PortfolioPage';
 
 export function PortfolioClient() {
-  const { setCurrentView } = useAppState();
+  const { currentView, setCurrentView } = useAppState();
 
   useEffect(() => {
-    setCurrentView('public');
-  }, [setCurrentView]);
+    if (currentView !== 'public') {
+      setCurrentView('public');
+    }
+  }, [currentView, setCurrentView]);
 
   return <PortfolioPage />;
 }

@@ -1405,7 +1405,18 @@ export const StateProvider = ({ children }) => {
   };
 
   const protectedNavigate = (targetView, triggerOrderWizard = false, initialData = null) => {
-    const isAuthed = isAuthenticated || Boolean(authUser?.email);
+    let isAuthed = isAuthenticated || Boolean(authUser?.email);
+    if (!isAuthed && typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('bdigi_auth_user');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.email) {
+            isAuthed = true;
+          }
+        }
+      } catch {}
+    }
 
     if (targetView === 'public') {
       setCurrentView('public');

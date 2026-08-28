@@ -5,11 +5,13 @@ import { useAppState } from '../../../src/context/StateContext';
 import { EmbroideryDigitizingPage } from '../../../src/components/public/EmbroideryDigitizingPage';
 
 export function EmbroideryClient() {
-  const { setCurrentView } = useAppState();
+  const { currentView, setCurrentView } = useAppState();
 
   useEffect(() => {
-    setCurrentView('public');
-  }, [setCurrentView]);
+    if (currentView !== 'public') {
+      setCurrentView('public');
+    }
+  }, [currentView, setCurrentView]);
 
   return <EmbroideryDigitizingPage />;
 }

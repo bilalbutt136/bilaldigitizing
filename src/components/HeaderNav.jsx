@@ -483,8 +483,8 @@ export const HeaderNav = () => {
           gap: '0.4rem',
           flexShrink: 0
         }}>
-          {/* Primary Get Started Button (Desktop) */}
-          {safeCurrentView !== 'admin' && safeCurrentView !== 'customer' && !currentPath.includes('admin') && (
+          {/* Primary Get Started Button (Desktop - only for non-authenticated guests) */}
+          {!safeIsAuthenticated && safeCurrentView !== 'admin' && safeCurrentView !== 'customer' && !currentPath.includes('admin') && (
             <button 
               className="desktop-only btn btn-primary-orange"
               onClick={() => {
@@ -703,8 +703,12 @@ export const HeaderNav = () => {
                     }}
                     onClick={() => {
                       if (isAdmin) {
+                        navigate('/admin-portal');
+                        if (setCurrentView) setCurrentView('admin');
                         protectedNavigate('admin', false);
                       } else {
+                        navigate('/client-portal');
+                        if (setCurrentView) setCurrentView('customer');
                         protectedNavigate('customer', false);
                       }
                     }}

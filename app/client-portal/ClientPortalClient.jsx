@@ -13,6 +13,7 @@ export function ClientPortalClient() {
     isAuthInitialized, 
     authUser, 
     mobileMode, 
+    currentView,
     setCurrentView,
     setIsAuthModalOpen,
     setAuthModalMode
@@ -34,12 +35,12 @@ export function ClientPortalClient() {
     if (!isUserLoggedIn) {
       setAuthModalMode('login');
       setIsAuthModalOpen(true);
-      setCurrentView('public');
+      if (currentView !== 'public') setCurrentView('public');
       navigate('/');
     } else {
-      setCurrentView('customer');
+      if (currentView !== 'customer') setCurrentView('customer');
     }
-  }, [isAuthInitialized, isAuthenticated, authUser, setCurrentView, setIsAuthModalOpen, setAuthModalMode, navigate]);
+  }, [isAuthInitialized, isAuthenticated, authUser, currentView, setCurrentView, setIsAuthModalOpen, setAuthModalMode, navigate]);
 
   if (mobileMode === 'app') {
     return (

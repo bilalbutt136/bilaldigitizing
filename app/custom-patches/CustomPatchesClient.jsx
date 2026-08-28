@@ -5,11 +5,13 @@ import { useAppState } from '../../src/context/StateContext';
 import { CustomPatchesSection } from '../../src/components/public/CustomPatchesSection';
 
 export function CustomPatchesClient() {
-  const { setCurrentView } = useAppState();
+  const { currentView, setCurrentView } = useAppState();
 
   useEffect(() => {
-    setCurrentView('public');
-  }, [setCurrentView]);
+    if (currentView !== 'public') {
+      setCurrentView('public');
+    }
+  }, [currentView, setCurrentView]);
 
   return <CustomPatchesSection />;
 }
