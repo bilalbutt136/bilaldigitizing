@@ -29,7 +29,8 @@ import {
   ChevronRight,
   HelpCircle,
   FileCode,
-  ShieldCheck
+  ShieldCheck,
+  ArrowLeft
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 
@@ -62,8 +63,21 @@ export const OrderTrackerDrawer = () => {
     assignDigitizer,
     digitizers,
     setIsCheckoutModalOpen,
-    setCheckoutSession
+    setCheckoutSession,
+    mobileMode
   } = useAppState();
+
+  const [isMobileScreen, setIsMobileScreen] = useState(false);
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobileScreen(window.innerWidth <= 768 || window.matchMedia('(max-width: 768px)').matches);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const isMobileLayout = isMobileScreen || mobileMode === 'app';
 
   // Active section scroll / focus toggle: 'all' | 'requirements' | 'delivery' | 'modification' | 'messages'
   const [activeSection, setActiveSection] = useState('all');
@@ -403,44 +417,82 @@ export const OrderTrackerDrawer = () => {
 
   return (
     <div 
-      className="modal-overlay"
+      className={isMobileLayout ? "mobile-fullscreen-modal" : "modal-overlay"}
       onClick={() => setSelectedOrderForDrawer(null)}
-      style={{ zIndex: 99990, background: 'rgba(11, 19, 41, 0.85)', backdropFilter: 'blur(10px)', padding: 'clamp(0.5rem, 2vw, 1.5rem)' }}
+      style={{ 
+        zIndex: 99999, 
+        background: isMobileLayout ? '#ffffff' : 'rgba(11, 19, 41, 0.85)', 
+        backdropFilter: 'blur(10px)', 
+        padding: isMobileLayout ? '0' : 'clamp(0.5rem, 2vw, 1.5rem)',
+        position: 'fixed',
+        inset: 0,
+        display: 'flex',
+        alignItems: isMobileLayout ? 'stretch' : 'center',
+        justifyContent: 'center',
+        width: '100vw',
+        height: '100dvh'
+      }}
     >
       <div 
-        className="modal-content" 
+        className="modal-content theme-light-enforced" 
         onClick={(e) => e.stopPropagation()}
         style={{ 
-          maxWidth: '960px', 
+          maxWidth: isMobileLayout ? '100vw' : '960px', 
           width: '100%',
-          maxHeight: '94vh', 
+          height: isMobileLayout ? '100dvh' : 'auto',
+          maxHeight: isMobileLayout ? '100dvh' : '94vh', 
           display: 'flex', 
           flexDirection: 'column',
-          borderRadius: '20px',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.5)',
+          borderRadius: isMobileLayout ? '0px' : '20px',
+          border: isMobileLayout ? 'none' : '1px solid rgba(255, 255, 255, 0.12)',
+          boxShadow: isMobileLayout ? 'none' : '0 25px 60px -15px rgba(0, 0, 0, 0.5)',
           overflow: 'hidden',
-          background: 'var(--bg-card)'
+          background: '#ffffff',
+          margin: 0
         }}
       >
         
         {/* ==================================================================
-            1. TOP HEADER
+            1. TOP HEADER (COMPACT & SAFE AREA OPTIMIZED)
            ================================================================== */}
         <div style={{
-          padding: '1.25rem 1.75rem',
+          padding: isMobileLayout ? 'max(0.75rem, env(safe-area-inset-top, 0.75rem)) 1rem 0.75rem' : '1.25rem 1.75rem',
           background: 'linear-gradient(135deg, #090f1d 0%, #111a2e 100%)',
           color: '#ffffff',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          flexShrink: 0
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flex: 1, minWidth: 0 }}>
+            {isMobileLayout && (
+              <button
+                type="button"
+                onClick={() => setSelectedOrderForDrawer(null)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  border: 'none',
+                  color: '#ffffff',
+                  borderRadius: '8px',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  flexShrink: 0
+                }}
+                title="Back to Orders"
+              >
+                <ArrowLeft size={18} />
+              </button>
+            )}
+
             <div style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '12px',
+              width: isMobileLayout ? '36px' : '44px',
+              height: isMobileLayout ? '36px' : '44px',
+              borderRadius: '10px',
               background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
               color: 'var(--color-text-on-primary, #ffffff)',
               display: 'flex',
@@ -449,39 +501,39 @@ export const OrderTrackerDrawer = () => {
               flexShrink: 0,
               boxShadow: '0 4px 14px var(--color-primary-glow)'
             }}>
-              <Layers size={22} />
+              <Layers size={isMobileLayout ? 18 : 22} />
             </div>
 
-            <div style={{ minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#ffffff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                <h3 style={{ fontSize: isMobileLayout ? '1.05rem' : '1.2rem', fontWeight: 900, color: '#ffffff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {ord.title || 'Studio Order'}
                 </h3>
                 <span style={{ 
                   background: 'rgba(255, 255, 255, 0.14)', 
                   color: '#f8fafc', 
-                  fontSize: '0.75rem', 
+                  fontSize: '0.72rem', 
                   fontWeight: 800, 
-                  padding: '0.15rem 0.5rem', 
+                  padding: '0.12rem 0.45rem', 
                   borderRadius: '6px' 
                 }}>
                   {formatOrderId(ord.id)}
                 </span>
                 {getStatusBadge()}
                 {isPaid ? (
-                  <span style={{ background: 'rgba(16, 185, 129, 0.18)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.4)', fontWeight: 800, padding: '0.15rem 0.5rem', borderRadius: '9999px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                  <span style={{ background: 'rgba(16, 185, 129, 0.18)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.4)', fontWeight: 800, padding: '0.12rem 0.45rem', borderRadius: '9999px', fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
                     <Check size={11} /> PAID
                   </span>
                 ) : (
-                  <span style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a', fontWeight: 800, padding: '0.15rem 0.5rem', borderRadius: '9999px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                  <span style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a', fontWeight: 800, padding: '0.12rem 0.45rem', borderRadius: '9999px', fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
                     <Clock size={11} /> PENDING
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.35rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 <span>{ord.serviceCategory || (ord.type === 'vector' ? 'Vector Art' : 'Embroidery Digitizing')}</span>
                 <span>•</span>
-                <span>Submitted {formattedSubmissionDate}</span>
+                <span>{formattedSubmissionDate}</span>
                 {ord.clientName && <span>• Client: <strong style={{ color: '#ffffff' }}>{ord.clientName}</strong></span>}
               </div>
             </div>
@@ -495,12 +547,13 @@ export const OrderTrackerDrawer = () => {
               border: 'none', 
               color: '#cbd5e1', 
               borderRadius: '10px',
-              width: '36px',
-              height: '36px',
+              width: '34px',
+              height: '34px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              flexShrink: 0
             }}
             title="Close (Esc)"
           >
@@ -515,9 +568,12 @@ export const OrderTrackerDrawer = () => {
           display: 'flex',
           borderBottom: '1px solid var(--border-color)',
           background: 'var(--bg-surface)',
-          padding: '0.6rem 1.5rem',
-          gap: '0.5rem',
-          overflowX: 'auto'
+          padding: isMobileLayout ? '0.5rem 0.75rem' : '0.6rem 1.5rem',
+          gap: '0.4rem',
+          overflowX: 'auto',
+          flexShrink: 0,
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none'
         }}>
           <button
             type="button"
@@ -580,7 +636,17 @@ export const OrderTrackerDrawer = () => {
         {/* ==================================================================
             3. MAIN SCROLLABLE CONTENT BODY (SINGLE PAGE)
            ================================================================== */}
-        <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1, background: 'var(--bg-main)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{
+          padding: isMobileLayout ? '0.85rem' : '1.5rem',
+          overflowY: 'auto',
+          flex: 1,
+          minHeight: 0,
+          background: 'var(--bg-main)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: isMobileLayout ? '1rem' : '1.5rem',
+          WebkitOverflowScrolling: 'touch'
+        }}>
 
           {/* Unpaid / Waiting for Payment Urgent Banner */}
           {!isPaid && !isAdmin && (
@@ -1106,42 +1172,43 @@ export const OrderTrackerDrawer = () => {
             ref={requirementsRef}
             style={{
               background: 'var(--bg-card)',
-              borderRadius: '16px',
+              borderRadius: isMobileLayout ? '12px' : '16px',
               border: '1.5px solid var(--border-color)',
-              padding: '1.5rem',
+              padding: isMobileLayout ? '1rem' : '1.5rem',
               boxShadow: 'var(--shadow-sm)'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.65rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1.3rem' }}>📋</span>
+                <span style={{ fontSize: '1.2rem' }}>📋</span>
                 <div>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                  <h4 style={{ fontSize: isMobileLayout ? '0.98rem' : '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                     Order Requirements & Specifications
                   </h4>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
                     Customer instructions, dimensions, target fabric, and source logo files
                   </div>
                 </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: isMobileLayout ? '1rem' : '1.5rem', flexDirection: isMobileLayout ? 'column' : 'row', alignItems: 'stretch' }}>
               {/* Artwork Box */}
               <div 
                 onClick={() => setLightboxArtwork({ url: primaryArtworkSrc, name: ord.title })}
                 style={{ 
-                  width: '180px', 
+                  width: isMobileLayout ? '100%' : '180px', 
                   flexShrink: 0, 
                   cursor: 'pointer', 
                   background: 'var(--bg-surface)', 
                   border: '1.5px solid var(--border-color)', 
                   borderRadius: '12px', 
                   padding: '0.65rem',
-                  textAlign: 'center'
+                  textAlign: 'center',
+                  boxSizing: 'border-box'
                 }}
               >
-                <div style={{ height: '150px', background: 'var(--bg-card)', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-color)' }}>
+                <div style={{ height: isMobileLayout ? '180px' : '150px', background: 'var(--bg-card)', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-color)' }}>
                   <img 
                     src={primaryArtworkSrc} 
                     alt="Design"
@@ -1153,37 +1220,37 @@ export const OrderTrackerDrawer = () => {
                   />
                 </div>
                 <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--orange-500)', marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
-                  <ZoomIn size={12} /> Inspect Full Logo
+                  <ZoomIn size={12} /> Inspect Full Logo (Tap to Zoom)
                 </div>
               </div>
 
               {/* Specs Grid */}
-              <div style={{ flex: 1, minWidth: '280px', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.65rem' }}>
-                  <div style={{ background: 'var(--bg-surface)', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Service Category</div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.15rem' }}>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobileLayout ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.5rem' }}>
+                  <div style={{ background: 'var(--bg-surface)', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Service Category</div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.15rem' }}>
                       {ord.serviceCategory || (ord.type === 'vector' ? 'Vector Art' : 'Embroidery Digitizing')}
                     </div>
                   </div>
 
-                  <div style={{ background: 'var(--bg-surface)', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Target Fabric</div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.15rem' }}>
+                  <div style={{ background: 'var(--bg-surface)', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Target Fabric</div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.15rem' }}>
                       {formatFabric(ord.fabric || ord.fabricType)}
                     </div>
                   </div>
 
-                  <div style={{ background: 'var(--bg-surface)', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Dimensions</div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.15rem' }}>
+                  <div style={{ background: 'var(--bg-surface)', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Dimensions</div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.15rem' }}>
                       {formatDimensions(ord.dimensions || ord.size)}
                     </div>
                   </div>
 
-                  <div style={{ background: 'var(--bg-surface)', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Placement</div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.15rem' }}>
+                  <div style={{ background: 'var(--bg-surface)', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Placement</div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.15rem' }}>
                       {ord.placement || ord.placementItems?.[0]?.placement || 'Standard Placement'}
                     </div>
                   </div>
@@ -1435,15 +1502,19 @@ export const OrderTrackerDrawer = () => {
             4. STICKY ACTION FOOTER
            ================================================================== */}
         <div style={{
-          padding: '0.85rem 1.6rem',
-          background: 'var(--bg-card)',
-          borderTop: '1px solid var(--border-color)',
+          padding: isMobileLayout ? '0.75rem 1rem max(0.75rem, env(safe-area-inset-bottom, 0.75rem))' : '0.85rem 1.6rem',
+          background: '#ffffff',
+          borderTop: '1.5px solid var(--border-color)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: '0.75rem',
-          boxShadow: 'var(--shadow-sm)'
+          boxShadow: isMobileLayout ? '0 -4px 16px rgba(0,0,0,0.06)' : 'var(--shadow-sm)',
+          position: 'sticky',
+          bottom: 0,
+          zIndex: 20,
+          flexShrink: 0
         }}>
           {/* Left: Total Price and Payment Badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>

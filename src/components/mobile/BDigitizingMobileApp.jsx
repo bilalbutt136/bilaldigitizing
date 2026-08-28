@@ -47,7 +47,10 @@ import {
   Volume2,
   VolumeX,
   CreditCard,
-  ChevronDown
+  ChevronDown,
+  RefreshCw,
+  Activity,
+  TrendingUp
 } from 'lucide-react';
 import { 
   fetchConversations, 
@@ -178,16 +181,42 @@ export const BDigitizingMobileApp = () => {
     }
   }, [activeUser]);
 
+  const [isRefreshingOrders, setIsRefreshingOrders] = useState(false);
+
+  const handleManualRefreshOrders = async () => {
+    if (typeof refreshOrders === 'function') {
+      setIsRefreshingOrders(true);
+      try {
+        await refreshOrders();
+      } catch (err) {
+        console.warn('Refresh orders error:', err);
+      } finally {
+        setTimeout(() => setIsRefreshingOrders(false), 600);
+      }
+    }
+  };
+
+  // Automatically refresh live orders on component mount and when switching tabs
+  useEffect(() => {
+    if (typeof refreshOrders === 'function') {
+      refreshOrders().catch(err => console.warn('Order sync note:', err));
+    }
+  }, [mobileTab, userEmail]);
+
+  const isAdmin = authUser?.role === 'admin' || currentUser?.role === 'admin';
+
   // Helper to determine if an order is unpaid and awaiting payment to start
   const isOrderUnpaid = (o) => {
     if (!o) return false;
     const s = String(o?.status || '').toLowerCase().trim();
     const pStatus = String(o?.payment_status || o?.paymentStatus || '').toLowerCase().trim();
-    return s === 'awaiting_payment' || s === 'pending_payment' || pStatus === 'unpaid' || (!o?.isPaid && !o?.paid_at && (s === 'awaiting_payment' || s === 'pending_payment' || s === 'submitted'));
+    return s === 'awaiting_payment' || s === 'pending_payment' || pStatus === 'unpaid' || (!o?.isPaid && !o?.paid_at && (s === 'awaiting_payment' || s === 'pending_payment'));
   };
 
-  // Filter Orders for Customer strictly (including locally created orders before auth sync)
+  // Filter Orders for Customer strictly (or show all if admin)
   const myOrders = orders.filter(o => {
+    if (isAdmin) return true;
+
     let localOrderIds = [];
     if (typeof window !== 'undefined') {
       try {
@@ -199,10 +228,11 @@ export const BDigitizingMobileApp = () => {
     if (isLocalMatch) return true;
 
     if (userEmail) {
-      const clientEmail = (o.client_email || o.clientEmail || '').toLowerCase().trim();
-      return clientEmail === userEmail;
+      const clientEmail = (o.client_email || o.clientEmail || o.user_email || o.userEmail || o.email || '').toLowerCase().trim();
+      if (clientEmail === userEmail) return true;
+      if (o.created_by && (o.created_by === activeUser?.id || o.created_by === activeUser?.email)) return true;
     }
-    return true;
+    return !userEmail;
   });
 
   const unpaidOrders = myOrders.filter(o => isOrderUnpaid(o));
@@ -223,6 +253,14 @@ export const BDigitizingMobileApp = () => {
     const isUnpaid = isOrderUnpaid(o);
     return !isDeliv && !isUnpaid && s !== 'completed' && s !== 'cancelled';
   });
+
+  // Calculate live statistics for Dashboard
+  const totalOrdersCount = myOrders.length;
+  const activeOrdersCount = activeOrders.length;
+  const deliveredOrdersCount = deliveredOrders.length;
+  const completedOrdersCount = completedOrders.length;
+  const unpaidOrdersCount = unpaidOrders.length;
+  const totalValueSpent = myOrders.reduce((sum, o) => sum + parseFloat(o.totalPrice || o.price || 0), 0);
 
   const handleOpenPaymentForOrder = (ord) => {
     const priceVal = parseFloat(ord.totalPrice || ord.price || 15);
@@ -552,6 +590,48 @@ export const BDigitizingMobileApp = () => {
               Search services (Embroidery, Vector, Patches...)
             </span>
           </div>
+
+          {/* Quick Metrics Studio Overview Banner */}
+          {myOrders.length > 0 && (
+            <div 
+              onClick={() => setMobileTab('orders')}
+              style={{
+                background: 'linear-gradient(135deg, #090f1d 0%, #111a2e 100%)',
+                borderRadius: '16px',
+                padding: '0.9rem 1.15rem',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(15, 23, 42, 0.12)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  background: 'rgba(255,255,255,0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <Layers size={20} style={{ color: '#10b981' }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 800 }}>
+                    Active Studio Tracker
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '0.1rem' }}>
+                    {activeOrdersCount} in production • {deliveredOrdersCount} delivered • {totalOrdersCount} total
+                  </div>
+                </div>
+              </div>
+              <ChevronRight size={18} style={{ color: '#94a3b8' }} />
+            </div>
+          )}
 
           {/* Unpaid / Waiting for Payment Widget */}
           {unpaidOrders.length > 0 && (
@@ -1062,7 +1142,7 @@ export const BDigitizingMobileApp = () => {
 
 
       {/* =========================================================================
-          SCREEN 4: MANAGE ORDERS
+          SCREEN 4: MANAGE ORDERS WITH LIVE DATA STATISTICS & KPI DASHBOARD
           ========================================================================= */}
       {mobileTab === 'orders' && (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', background: '#f8fafc' }}>
@@ -1074,26 +1154,61 @@ export const BDigitizingMobileApp = () => {
             borderBottom: '1px solid #f1f5f9',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            position: 'sticky',
+            top: 0,
+            zIndex: 30
           }}>
             <div>
               <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#0f172a' }}>
                 Manage Orders
               </h2>
-              <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                {myOrders.length} total orders recorded
-              </span>
+              <div style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.1rem' }}>
+                <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                <span>{myOrders.length} total orders recorded</span>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <button
+                type="button"
+                onClick={handleManualRefreshOrders}
+                disabled={isRefreshingOrders}
+                style={{
+                  background: '#f8fafc',
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: '10px',
+                  padding: '0.45rem',
+                  color: '#0f172a',
+                  cursor: isRefreshingOrders ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                title="Sync Live Orders"
+              >
+                <RefreshCw size={17} style={{ animation: isRefreshingOrders ? 'spin 0.8s linear infinite' : 'none' }} />
+              </button>
+
               <button
                 type="button"
                 onClick={() => setIsNotifDrawerOpen(true)}
-                style={{ background: 'none', border: 'none', color: '#0f172a', cursor: 'pointer', position: 'relative' }}
+                style={{
+                  background: '#f8fafc',
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: '10px',
+                  padding: '0.45rem',
+                  color: '#0f172a',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
               >
-                <Bell size={20} />
+                <Bell size={17} />
                 {unreadNotifCount > 0 && (
-                  <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
+                  <span style={{ position: 'absolute', top: '2px', right: '2px', width: '7px', height: '7px', borderRadius: '50%', background: '#ef4444' }} />
                 )}
               </button>
 
@@ -1104,23 +1219,223 @@ export const BDigitizingMobileApp = () => {
                   background: '#059669',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: '8px',
-                  padding: '0.35rem 0.65rem',
-                  fontSize: '0.75rem',
+                  borderRadius: '10px',
+                  padding: '0.45rem 0.75rem',
+                  fontSize: '0.78rem',
                   fontWeight: 800,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.25rem'
+                  gap: '0.25rem',
+                  boxShadow: '0 2px 6px rgba(5, 150, 105, 0.25)'
                 }}
               >
-                <Plus size={14} /> New
+                <Plus size={15} /> New Order
               </button>
             </div>
           </div>
 
+          {/* =========================================================================
+              LIVE ORDER DATA STATISTICS & KPI DASHBOARD (IMAGE 2 FIX)
+              ========================================================================= */}
+          <div style={{ padding: '0.85rem 1rem 0.25rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <Activity size={14} style={{ color: '#059669' }} />
+                <span>Live Studio Statistics</span>
+              </div>
+              <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>
+                Tap metric to filter
+              </span>
+            </div>
+
+            {/* Grid of 4 Key Stat Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.6rem' }}>
+              {/* Total Orders Card */}
+              <div 
+                onClick={() => setOrderFilter('all')}
+                style={{
+                  background: orderFilter === 'all' ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' : '#ffffff',
+                  color: orderFilter === 'all' ? '#ffffff' : '#0f172a',
+                  border: orderFilter === 'all' ? '1.5px solid #0f172a' : '1.5px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '0.75rem 0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.65rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: orderFilter === 'all' ? 'rgba(255,255,255,0.15)' : '#f1f5f9',
+                  color: orderFilter === 'all' ? '#ffffff' : '#0f172a',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <ClipboardList size={18} />
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, lineHeight: 1 }}>
+                    {totalOrdersCount}
+                  </div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: orderFilter === 'all' ? '#cbd5e1' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                    Total Orders
+                  </div>
+                </div>
+              </div>
+
+              {/* In Production Card */}
+              <div 
+                onClick={() => setOrderFilter('active')}
+                style={{
+                  background: orderFilter === 'active' ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : '#ffffff',
+                  color: orderFilter === 'active' ? '#ffffff' : '#0f172a',
+                  border: orderFilter === 'active' ? '1.5px solid #0284c7' : '1.5px solid #bae6fd',
+                  borderRadius: '12px',
+                  padding: '0.75rem 0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.65rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: orderFilter === 'active' ? 'rgba(255,255,255,0.2)' : '#e0f2fe',
+                  color: orderFilter === 'active' ? '#ffffff' : '#0284c7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <Zap size={18} />
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'active' ? '#ffffff' : '#0369a1' }}>
+                    {activeOrdersCount}
+                  </div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: orderFilter === 'active' ? '#e0f2fe' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                    In Production
+                  </div>
+                </div>
+              </div>
+
+              {/* Delivered Card */}
+              <div 
+                onClick={() => setOrderFilter('delivered')}
+                style={{
+                  background: orderFilter === 'delivered' ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : '#ffffff',
+                  color: orderFilter === 'delivered' ? '#ffffff' : '#0f172a',
+                  border: orderFilter === 'delivered' ? '1.5px solid #059669' : '1.5px solid #a7f3d0',
+                  borderRadius: '12px',
+                  padding: '0.75rem 0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.65rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: orderFilter === 'delivered' ? 'rgba(255,255,255,0.2)' : '#d1fae5',
+                  color: orderFilter === 'delivered' ? '#ffffff' : '#059669',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <Package size={18} />
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'delivered' ? '#ffffff' : '#047857' }}>
+                    {deliveredOrdersCount}
+                  </div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: orderFilter === 'delivered' ? '#d1fae5' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                    Delivered
+                  </div>
+                </div>
+              </div>
+
+              {/* Completed Card */}
+              <div 
+                onClick={() => setOrderFilter('completed')}
+                style={{
+                  background: orderFilter === 'completed' ? 'linear-gradient(135deg, #334155 0%, #1e293b 100%)' : '#ffffff',
+                  color: orderFilter === 'completed' ? '#ffffff' : '#0f172a',
+                  border: orderFilter === 'completed' ? '1.5px solid #334155' : '1.5px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '0.75rem 0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.65rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: orderFilter === 'completed' ? 'rgba(255,255,255,0.15)' : '#f1f5f9',
+                  color: orderFilter === 'completed' ? '#ffffff' : '#334155',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <CheckCircle2 size={18} />
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, lineHeight: 1 }}>
+                    {completedOrdersCount}
+                  </div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: orderFilter === 'completed' ? '#cbd5e1' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                    Completed
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Mini Metrics Pill: Total Spend + Turnaround Guarantee */}
+            <div style={{
+              background: '#ffffff',
+              border: '1.5px solid #e2e8f0',
+              borderRadius: '10px',
+              padding: '0.55rem 0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '0.75rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{ color: '#64748b', fontWeight: 600 }}>Total Value:</span>
+                <strong style={{ color: '#059669', fontWeight: 900 }}>${totalValueSpent.toFixed(2)}</strong>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#0284c7', fontWeight: 700 }}>
+                <Clock size={13} />
+                <span>Turnaround: 2–6h Express</span>
+              </div>
+            </div>
+          </div>
+
           {/* Sub-filter Switcher */}
-          <div style={{ padding: '0.75rem 1rem 0.25rem', display: 'flex', gap: '0.4rem', overflowX: 'auto' }}>
+          <div style={{ padding: '0.65rem 1rem 0.25rem', display: 'flex', gap: '0.4rem', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
             {[
               { id: 'all', label: `All (${myOrders.length})` },
               { id: 'awaiting_payment', label: `⏳ Waiting for Payment (${unpaidOrders.length})`, highlight: unpaidOrders.length > 0, unpaid: true },
@@ -1162,7 +1477,8 @@ export const BDigitizingMobileApp = () => {
                     fontWeight: 800,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
-                    boxShadow: isSelected && f.unpaid ? '0 3px 10px rgba(234, 88, 12, 0.3)' : 'none'
+                    boxShadow: isSelected && f.unpaid ? '0 3px 10px rgba(234, 88, 12, 0.3)' : 'none',
+                    flexShrink: 0
                   }}
                 >
                   {f.label}
@@ -1242,7 +1558,15 @@ export const BDigitizingMobileApp = () => {
                       No Orders Found
                     </h4>
                     <p style={{ margin: '0 0 1rem', fontSize: '0.78rem', color: '#64748b' }}>
-                      {orderFilter === 'awaiting_payment' ? 'No unpaid orders pending payment.' : orderFilter === 'delivered' ? 'No delivered orders pending review.' : orderFilter === 'active' ? 'You have no active orders in production.' : 'No completed orders in your history.'}
+                      {orderFilter === 'awaiting_payment'
+                        ? 'No unpaid orders pending payment.'
+                        : orderFilter === 'delivered'
+                        ? 'No delivered orders pending review.'
+                        : orderFilter === 'active'
+                        ? 'You have no active orders in production.'
+                        : orderFilter === 'completed'
+                        ? 'No completed orders in your history.'
+                        : 'You have no orders yet. Place an order to get started!'}
                     </p>
                     <button
                       type="button"

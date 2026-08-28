@@ -1116,6 +1116,201 @@ button, input, select, textarea, a {
 
 .grid-responsive-2,
 .grid-responsive-2col {
+}
+[data-theme="dark"] .btn-outline:hover, body.dark-mode .btn-outline:hover {
+  background: var(--color-primary-light) !important;
+  border-color: var(--color-primary-hover) !important;
+  color: var(--color-primary-hover) !important;
+}
+
+/* ==========================================================================
+   THEME-LIGHT-ENFORCED: 100% Guaranteed High-Contrast Modals & Cards
+   ========================================================================== */
+.theme-light-enforced,
+[data-theme="dark"] .theme-light-enforced,
+body.dark-mode .theme-light-enforced {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+.theme-light-enforced h1,
+.theme-light-enforced h2,
+.theme-light-enforced h3,
+.theme-light-enforced h4,
+.theme-light-enforced h5,
+.theme-light-enforced h6,
+[data-theme="dark"] .theme-light-enforced h1,
+[data-theme="dark"] .theme-light-enforced h2,
+[data-theme="dark"] .theme-light-enforced h3,
+[data-theme="dark"] .theme-light-enforced h4,
+[data-theme="dark"] .theme-light-enforced h5,
+[data-theme="dark"] .theme-light-enforced h6,
+body.dark-mode .theme-light-enforced h1,
+body.dark-mode .theme-light-enforced h2,
+body.dark-mode .theme-light-enforced h3,
+body.dark-mode .theme-light-enforced h4,
+body.dark-mode .theme-light-enforced h5,
+body.dark-mode .theme-light-enforced h6 {
+  color: #0f172a !important;
+}
+
+.theme-light-enforced p,
+[data-theme="dark"] .theme-light-enforced p,
+body.dark-mode .theme-light-enforced p {
+  color: #475569 !important;
+}
+
+.theme-light-enforced span.text-muted,
+.theme-light-enforced .text-muted,
+[data-theme="dark"] .theme-light-enforced span.text-muted,
+body.dark-mode .theme-light-enforced span.text-muted {
+  color: #64748b !important;
+}
+
+.theme-light-enforced input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+.theme-light-enforced textarea,
+.theme-light-enforced select,
+.theme-light-enforced .form-control,
+.client-chat-inbox input,
+.client-chat-inbox textarea,
+.client-chat-inbox .form-control,
+.mobile-app-root input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+.mobile-app-root textarea,
+.mobile-app-root .form-control,
+.chat-message-input,
+[data-theme="dark"] .theme-light-enforced input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+[data-theme="dark"] .theme-light-enforced textarea,
+[data-theme="dark"] .theme-light-enforced select,
+[data-theme="dark"] .theme-light-enforced .form-control,
+[data-theme="dark"] .client-chat-inbox input,
+[data-theme="dark"] .client-chat-inbox textarea,
+[data-theme="dark"] .client-chat-inbox .form-control,
+[data-theme="dark"] .mobile-app-root input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+[data-theme="dark"] .mobile-app-root textarea,
+[data-theme="dark"] .mobile-app-root .form-control,
+[data-theme="dark"] .chat-message-input,
+body.dark-mode .theme-light-enforced input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+body.dark-mode .theme-light-enforced textarea,
+body.dark-mode .theme-light-enforced select,
+body.dark-mode .theme-light-enforced .form-control,
+body.dark-mode .client-chat-inbox input,
+body.dark-mode .client-chat-inbox textarea,
+body.dark-mode .client-chat-inbox .form-control,
+body.dark-mode .mobile-app-root input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+body.dark-mode .mobile-app-root textarea,
+body.dark-mode .mobile-app-root .form-control,
+body.dark-mode .chat-message-input {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1.5px solid #cbd5e1 !important;
+}
+
+.theme-light-enforced input::placeholder,
+.theme-light-enforced textarea::placeholder,
+.client-chat-inbox input::placeholder,
+.client-chat-inbox textarea::placeholder,
+.mobile-app-root input::placeholder,
+.mobile-app-root textarea::placeholder,
+.chat-message-input::placeholder,
+[data-theme="dark"] .theme-light-enforced input::placeholder,
+[data-theme="dark"] .theme-light-enforced textarea::placeholder,
+[data-theme="dark"] .client-chat-inbox input::placeholder,
+[data-theme="dark"] .client-chat-inbox textarea::placeholder,
+[data-theme="dark"] .mobile-app-root input::placeholder,
+[data-theme="dark"] .mobile-app-root textarea::placeholder,
+[data-theme="dark"] .chat-message-input::placeholder,
+body.dark-mode .theme-light-enforced input::placeholder,
+body.dark-mode .theme-light-enforced textarea::placeholder,
+body.dark-mode .client-chat-inbox input::placeholder,
+body.dark-mode .client-chat-inbox textarea::placeholder,
+body.dark-mode .mobile-app-root input::placeholder,
+body.dark-mode .mobile-app-root textarea::placeholder,
+body.dark-mode .chat-message-input::placeholder {
+  color: #64748b !important;
+  opacity: 1 !important;
+}
+
+/* Mobile App Navigation & Headers */
+[data-theme="dark"] .mobile-bottom-nav, body.dark-mode .mobile-bottom-nav {
+  background: #ffffff !important;
+  border-top: 1.5px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+[data-theme="dark"] .mobile-app-header, body.dark-mode .mobile-app-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+/* Scrollbar in dark mode */
+[data-theme="dark"] ::-webkit-scrollbar-track,
+body.dark-mode ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb,
+body.dark-mode ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.20);
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover,
+body.dark-mode ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* ==========================================================================
+   MOBILE & TABLET RESPONSIVENESS SYSTEM
+   ========================================================================== */
+
+html, body {
+  overflow-x: hidden !important;
+  max-width: 100vw;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Prevent iOS Safari input focus auto-zoom while maintaining crisp text */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+button, input, select, textarea, a {
+  touch-action: manipulation;
+}
+
+.desktop-only { display: flex !important; }
+.mobile-only { display: none !important; }
+
+.table-responsive {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fluid Responsive Grid Utilities */
+.grid-responsive-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.grid-responsive-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.grid-responsive-2,
+.grid-responsive-2col {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 2rem;
@@ -1185,7 +1380,7 @@ button, input, select, textarea, a {
   .floating-chat-trigger > div:first-child { width: auto !important; height: auto !important; background: transparent !important; }
   .floating-chat-window { bottom: 70px !important; right: 10px !important; left: 10px !important; width: auto !important; max-height: calc(100vh - 140px) !important; z-index: 9995 !important; }
   
-  /* Native Mobile Bottom Navigation Toolbar (Fiverr App Standard) */
+  /* Native Mobile Bottom Navigation Toolbar */
   .mobile-bottom-nav { 
     position: fixed !important;
     bottom: 0 !important;
@@ -1216,12 +1411,11 @@ button, input, select, textarea, a {
     text-overflow: ellipsis !important;
     border: none !important;
     background: transparent !important;
-    -webkit-tap-highlight-color: transparent !important;
     cursor: pointer !important;
     padding: 0.2rem 0 !important;
   }
-  
-  /* On client dashboard screens with mobile bottom navigation, hide redundant floating bubble so it never overlaps cards */
+
+  /* On client dashboard screens with mobile bottom navigation, hide redundant floating bubble */
   body:has(.mobile-bottom-nav) .floating-chat-trigger {
     display: none !important;
   }
@@ -1268,127 +1462,33 @@ button, input, select, textarea, a {
 
   /* Modal Mobile Optimization */
   .modal-overlay {
-    padding: 0.5rem !important;
+    padding: 0 !important;
   }
   .modal-content, .modal-dialog {
     grid-template-columns: 1fr !important;
-    max-height: 96dvh !important;
+    max-height: 100dvh !important;
     width: 100% !important;
     max-width: 100% !important;
-    border-radius: 16px !important;
+    border-radius: 0 !important;
   }
-  .auth-split-left-panel {
-    display: none !important;
-  }
-}
-
-@media (max-width: 640px) {
-  .container { padding-left: 0.85rem !important; padding-right: 0.85rem !important; }
-  .modal-dialog, .modal-content {
-    width: 100% !important; 
-    max-width: 100% !important; 
-    margin: 0 auto !important;
-  }
-  table { display: block; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
-  .btn-full-mobile { width: 100% !important; }
-}
-
-@media (max-width: 480px) {
-  .container { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
-}
-
-.overflow-x-auto, .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.table-responsive table { min-width: 580px; }
-
-/* Order Wizard & Modal Responsiveness & Smooth Touch Scrolling */
-.order-wizard-dialog {
-  display: flex !important;
-  flex-direction: column !important;
-  max-height: 94dvh !important;
-  width: 100% !important;
-  max-width: 1140px !important;
-  overflow: hidden !important;
-  background: var(--color-surface, #ffffff) !important;
-  margin: auto !important;
-}
-
-.order-wizard-dialog form {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-
-.configurator-grid {
-  display: grid;
-  grid-template-columns: 1.35fr 1fr;
-  gap: 1.5rem;
-  align-items: start;
-}
-
-.wizard-summary-column {
-  position: sticky;
-  top: 0;
-}
-
-@media (max-width: 960px) {
-  .configurator-grid {
-    grid-template-columns: 1fr !important;
-    gap: 1.25rem !important;
-  }
-  .wizard-summary-column {
-    position: static !important;
-  }
-}
-
-@media (max-width: 768px) {
-  .order-wizard-dialog {
+  .mobile-fullscreen-modal {
+    position: fixed !important;
+    inset: 0 !important;
     width: 100vw !important;
-    max-width: 100vw !important;
     height: 100dvh !important;
     max-height: 100dvh !important;
     border-radius: 0 !important;
     margin: 0 !important;
+    padding: 0 !important;
     border: none !important;
-    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    z-index: 99999 !important;
   }
-  .order-wizard-header {
-    border-radius: 0 !important;
-    padding: 0.75rem 0.85rem !important;
+  .auth-split-left-panel {
+    display: none !important;
   }
-  .order-wizard-header h3 {
-    font-size: 1rem !important;
-  }
-  .wizard-bottom-bar {
-    padding: 0.65rem 0.85rem max(0.65rem, env(safe-area-inset-bottom, 0.65rem)) !important;
-  }
-}
 
-@media (max-width: 640px) {
-  .order-wizard-dialog form {
-    padding: 0.85rem !important;
-  }
-  .order-wizard-header {
-    padding: 0.75rem 0.85rem !important;
-  }
-}
-
-/* Chat Inbox Responsive System */
-.chat-inbox-grid {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.mobile-app-wrapper {
-  display: block;
-  width: 100%;
-  min-height: 100vh;
-}
-
-@media (max-width: 768px) {
   .chat-inbox-grid {
     grid-template-columns: 100% !important;
     display: flex !important;
