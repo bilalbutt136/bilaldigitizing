@@ -170,7 +170,6 @@ export async function POST(request) {
             .update({ 
               status: 'in_progress', 
               payment_status: 'paid',
-              paid_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             })
             .in('id', candidateOrdIds);

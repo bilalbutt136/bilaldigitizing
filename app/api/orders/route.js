@@ -308,9 +308,6 @@ export async function POST(request) {
 
       if (payStatus) {
         updatePayload.payment_status = payStatus;
-        if (payStatus === 'paid') {
-          updatePayload.paid_at = new Date().toISOString();
-        }
       }
 
       const resolvedId = targetOrder?.id || rawId;
