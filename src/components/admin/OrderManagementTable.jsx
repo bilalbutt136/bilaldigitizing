@@ -11,7 +11,10 @@ import {
   Clock,
   MessageSquare,
   UploadCloud,
-  PackageCheck
+  PackageCheck,
+  PackageOpen,
+  Package,
+  FileText
 } from 'lucide-react';
 
 const getNextStatuses = (currentStatus) => {
