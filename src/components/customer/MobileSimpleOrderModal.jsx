@@ -701,7 +701,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                   What would you like created?
                 </h3>
                 <p style={{ margin: 0, fontSize: '0.8rem', color: '#475569' }}>
-                  Select from our 3 primary professional digitizing services below
+                  Select a professional service below, then tap Continue to configure
                 </p>
               </div>
 
@@ -715,16 +715,17 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                     setStep(2);
                   }}
                   style={{
-                    border: '2px solid #059669',
-                    background: '#f0fdf4',
+                    border: selectedService === 'embroidery' ? '2.5px solid #059669' : '1.5px solid #cbd5e1',
+                    background: selectedService === 'embroidery' ? '#f0fdf4' : '#ffffff',
                     borderRadius: '18px',
                     padding: '1.15rem',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 18px rgba(5, 150, 105, 0.12)',
+                    boxShadow: selectedService === 'embroidery' ? '0 4px 20px rgba(5, 150, 105, 0.18)' : '0 2px 8px rgba(0, 0, 0, 0.03)',
                     display: 'flex',
                     gap: '0.95rem',
                     alignItems: 'center',
-                    transition: 'all 0.15s ease'
+                    transition: 'all 0.15s ease',
+                    position: 'relative'
                   }}
                 >
                   <div style={{
@@ -744,27 +745,27 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: '#064e3b', letterSpacing: '-0.01em' }}>
+                      <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'embroidery' ? '#064e3b' : '#0f172a', letterSpacing: '-0.01em' }}>
                         Embroidery Digitizing
                       </h4>
-                      <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#047857', background: '#ffffff', padding: '0.15rem 0.5rem', borderRadius: '6px', border: '1px solid #86efac' }}>
+                      <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#047857', background: '#ecfdf5', padding: '0.15rem 0.5rem', borderRadius: '6px', border: '1px solid #86efac' }}>
                         From $10.00
                       </span>
                     </div>
 
-                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: '#166534', lineHeight: 1.35, fontWeight: 500 }}>
+                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: '#475569', lineHeight: 1.35, fontWeight: 500 }}>
                       Commercial stitch files for Left Chest, Caps, 3D Puff Foam & Jacket Backs (.DST, .PES, .EMB)
                     </p>
 
                     <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#047857', background: '#ffffff', padding: '0.12rem 0.45rem', borderRadius: '4px', border: '1px solid #86efac' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#047857', background: '#ecfdf5', padding: '0.12rem 0.45rem', borderRadius: '4px', border: '1px solid #86efac' }}>
                         ⚡ 4–12H Delivery
                       </span>
                       <span style={{ fontSize: '0.68rem', color: '#065f46', fontWeight: 700 }}>
-                        Machine Sew-Out Tested
+                        Machine Tested
                       </span>
                       <span style={{ fontSize: '0.78rem', color: '#047857', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
-                        Select <ArrowRight size={14} />
+                        {selectedService === 'embroidery' ? '✓ Selected' : 'Select'} <ArrowRight size={14} />
                       </span>
                     </div>
                   </div>
@@ -777,16 +778,17 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                     setStep(2);
                   }}
                   style={{
-                    border: '2px solid #ea580c',
-                    background: '#fff7ed',
+                    border: selectedService === 'vector' ? '2.5px solid #ea580c' : '1.5px solid #cbd5e1',
+                    background: selectedService === 'vector' ? '#fff7ed' : '#ffffff',
                     borderRadius: '18px',
                     padding: '1.15rem',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 18px rgba(234, 88, 12, 0.12)',
+                    boxShadow: selectedService === 'vector' ? '0 4px 20px rgba(234, 88, 12, 0.18)' : '0 2px 8px rgba(0, 0, 0, 0.03)',
                     display: 'flex',
                     gap: '0.95rem',
                     alignItems: 'center',
-                    transition: 'all 0.15s ease'
+                    transition: 'all 0.15s ease',
+                    position: 'relative'
                   }}
                 >
                   <div style={{
@@ -806,27 +808,27 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: '#7c2d12', letterSpacing: '-0.01em' }}>
+                      <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'vector' ? '#7c2d12' : '#0f172a', letterSpacing: '-0.01em' }}>
                         Vector Art Tracing
                       </h4>
-                      <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#ea580c', background: '#ffffff', padding: '0.15rem 0.5rem', borderRadius: '6px', border: '1px solid #fdba74' }}>
+                      <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#ea580c', background: '#fff7ed', padding: '0.15rem 0.5rem', borderRadius: '6px', border: '1px solid #fdba74' }}>
                         From $15.00
                       </span>
                     </div>
 
-                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: '#9a3412', lineHeight: 1.35, fontWeight: 500 }}>
+                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: '#475569', lineHeight: 1.35, fontWeight: 500 }}>
                       Logo Redraw, Screen Print Color Separation & Raster-to-Vector (.AI, .EPS, .SVG, .PDF)
                     </p>
 
                     <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#c2410c', background: '#ffffff', padding: '0.12rem 0.45rem', borderRadius: '4px', border: '1px solid #fdba74' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#c2410c', background: '#fff7ed', padding: '0.12rem 0.45rem', borderRadius: '4px', border: '1px solid #fdba74' }}>
                         ⚡ 6–12H Delivery
                       </span>
                       <span style={{ fontSize: '0.68rem', color: '#9a3412', fontWeight: 700 }}>
                         Pantone PMS Match
                       </span>
                       <span style={{ fontSize: '0.78rem', color: '#ea580c', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
-                        Select <ArrowRight size={14} />
+                        {selectedService === 'vector' ? '✓ Selected' : 'Select'} <ArrowRight size={14} />
                       </span>
                     </div>
                   </div>
@@ -839,16 +841,17 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                     setStep(2);
                   }}
                   style={{
-                    border: '2px solid #0284c7',
-                    background: '#f0f9ff',
+                    border: selectedService === 'patch' ? '2.5px solid #0284c7' : '1.5px solid #cbd5e1',
+                    background: selectedService === 'patch' ? '#f0f9ff' : '#ffffff',
                     borderRadius: '18px',
                     padding: '1.15rem',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 18px rgba(2, 132, 199, 0.12)',
+                    boxShadow: selectedService === 'patch' ? '0 4px 20px rgba(2, 132, 199, 0.18)' : '0 2px 8px rgba(0, 0, 0, 0.03)',
                     display: 'flex',
                     gap: '0.95rem',
                     alignItems: 'center',
-                    transition: 'all 0.15s ease'
+                    transition: 'all 0.15s ease',
+                    position: 'relative'
                   }}
                 >
                   <div style={{
@@ -868,27 +871,27 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: '#0c4a6e', letterSpacing: '-0.01em' }}>
+                      <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'patch' ? '#0c4a6e' : '#0f172a', letterSpacing: '-0.01em' }}>
                         Custom Patches
                       </h4>
-                      <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#0284c7', background: '#ffffff', padding: '0.15rem 0.5rem', borderRadius: '6px', border: '1px solid #7dd3fc' }}>
+                      <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#0284c7', background: '#f0f9ff', padding: '0.15rem 0.5rem', borderRadius: '6px', border: '1px solid #7dd3fc' }}>
                         From $1.50 / pc
                       </span>
                     </div>
 
-                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: '#0369a1', lineHeight: 1.35, fontWeight: 500 }}>
+                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: '#475569', lineHeight: 1.35, fontWeight: 500 }}>
                       Embroidered, 3D Molded PVC Rubber, Woven & Leather Patches with physical shipment
                     </p>
 
                     <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#0369a1', background: '#ffffff', padding: '0.12rem 0.45rem', borderRadius: '4px', border: '1px solid #7dd3fc' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#0369a1', background: '#f0f9ff', padding: '0.12rem 0.45rem', borderRadius: '4px', border: '1px solid #7dd3fc' }}>
                         📦 3–7 Days Delivery
                       </span>
                       <span style={{ fontSize: '0.68rem', color: '#075985', fontWeight: 700 }}>
-                        10 Pcs Low Minimum
+                        10 Pcs Low Min
                       </span>
                       <span style={{ fontSize: '0.78rem', color: '#0284c7', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
-                        Select <ArrowRight size={14} />
+                        {selectedService === 'patch' ? '✓ Selected' : 'Select'} <ArrowRight size={14} />
                       </span>
                     </div>
                   </div>
@@ -1235,6 +1238,31 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                       PNG, JPG, PDF, AI, EPS, SVG, CDR up to 50MB each
                     </div>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '10px',
+                      padding: '0.55rem 1.15rem',
+                      fontSize: '0.82rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      marginTop: '0.35rem',
+                      boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25)'
+                    }}
+                  >
+                    <Upload size={15} /> Choose Artwork from Device
+                  </button>
                 </div>
 
                 {uploadError && (
@@ -1804,24 +1832,27 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
             <button
               type="button"
-              disabled={isSubmitting || (step === 3 && uploadedFiles.length === 0)}
+              disabled={isSubmitting}
               onClick={() => {
-                if (step === 1) setStep(2);
-                else if (step === 2) setStep(3);
-                else if (step === 3) {
+                if (step === 1) {
+                  setStep(2);
+                } else if (step === 2) {
+                  setStep(3);
+                } else if (step === 3) {
                   if (uploadedFiles.length === 0) {
-                    setUploadError('Please attach at least one artwork file.');
+                    setUploadError('Please attach at least one artwork or reference file.');
+                    if (fileInputRef.current) fileInputRef.current.click();
                     return;
                   }
                   setStep(4);
+                } else if (step === 4) {
+                  setStep(5);
+                } else if (step === 5) {
+                  handleSubmitOrder();
                 }
-                else if (step === 4) setStep(5);
-                else if (step === 5) handleSubmitOrder();
               }}
               style={{
-                background: (step === 3 && uploadedFiles.length === 0)
-                  ? '#cbd5e1'
-                  : 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '10px',
@@ -1831,8 +1862,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.45rem',
-                cursor: (step === 3 && uploadedFiles.length === 0) ? 'not-allowed' : 'pointer',
-                boxShadow: (step === 3 && uploadedFiles.length === 0) ? 'none' : '0 4px 14px rgba(5, 150, 105, 0.3)',
+                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                boxShadow: '0 4px 14px rgba(5, 150, 105, 0.3)',
                 marginLeft: 'auto'
               }}
             >
@@ -1840,13 +1871,31 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 <>
                   <Loader2 size={16} className="animate-spin" /> Recording Order...
                 </>
-              ) : step === 5 ? (
+              ) : step === 1 ? (
                 <>
-                  Confirm & Place Order (${totalPrice.toFixed(2)}) <Check size={16} />
+                  Next: Package & Quantity <ArrowRight size={16} />
+                </>
+              ) : step === 2 ? (
+                <>
+                  Next: Upload Artwork <ArrowRight size={16} />
+                </>
+              ) : step === 3 ? (
+                uploadedFiles.length === 0 ? (
+                  <>
+                    <Upload size={16} /> Choose Artwork & Continue
+                  </>
+                ) : (
+                  <>
+                    Next: Technical Specs <ArrowRight size={16} />
+                  </>
+                )
+              ) : step === 4 ? (
+                <>
+                  Next: Review Order <ArrowRight size={16} />
                 </>
               ) : (
                 <>
-                  Continue <ArrowRight size={16} />
+                  Confirm & Place Order (${totalPrice.toFixed(2)}) <Check size={16} />
                 </>
               )}
             </button>
