@@ -1950,11 +1950,7 @@ export const CustomerDashboard = () => {
                                       {!isPaid && (
                                         <button
                                           type="button"
-                                          onClick={() => {
-                                            const ordService = ord?.type === 'vector' ? 'vector' : (ord?.type === 'patch' ? 'patch' : 'embroidery');
-                                            setMobileOrderDefaultService(ordService);
-                                            setIsMobileOrderOpen(true);
-                                          }}
+                                          onClick={() => handlePayOrder(ord)}
                                           className="btn btn-primary-orange btn-sm"
                                           style={{
                                             padding: '0.32rem 0.65rem',
