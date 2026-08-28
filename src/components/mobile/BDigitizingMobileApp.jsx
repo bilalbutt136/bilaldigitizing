@@ -1239,7 +1239,7 @@ export const BDigitizingMobileApp = () => {
           
           {/* Manage Orders Top Bar */}
           <div style={{
-            padding: '1rem 1.25rem',
+            padding: '0.65rem 0.85rem',
             background: '#ffffff',
             borderBottom: '1px solid #f1f5f9',
             display: 'flex',
@@ -1250,25 +1250,25 @@ export const BDigitizingMobileApp = () => {
             zIndex: 30
           }}>
             <div>
-              <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#0f172a' }}>
+              <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#0f172a' }}>
                 Manage Orders
               </h2>
-              <div style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.1rem' }}>
-                <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+              <div style={{ fontSize: '0.66rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.05rem' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
                 <span>{myOrders.length} total orders recorded</span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <button
                 type="button"
                 onClick={handleManualRefreshOrders}
                 disabled={isRefreshingOrders}
                 style={{
                   background: '#f8fafc',
-                  border: '1.5px solid #cbd5e1',
-                  borderRadius: '10px',
-                  padding: '0.45rem',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  padding: '0.35rem',
                   color: '#0f172a',
                   cursor: isRefreshingOrders ? 'not-allowed' : 'pointer',
                   display: 'flex',
@@ -1277,7 +1277,7 @@ export const BDigitizingMobileApp = () => {
                 }}
                 title="Sync Live Orders"
               >
-                <RefreshCw size={17} style={{ animation: isRefreshingOrders ? 'spin 0.8s linear infinite' : 'none' }} />
+                <RefreshCw size={15} style={{ animation: isRefreshingOrders ? 'spin 0.8s linear infinite' : 'none' }} />
               </button>
 
               <button
@@ -1285,9 +1285,9 @@ export const BDigitizingMobileApp = () => {
                 onClick={() => setIsNotifDrawerOpen(true)}
                 style={{
                   background: '#f8fafc',
-                  border: '1.5px solid #cbd5e1',
-                  borderRadius: '10px',
-                  padding: '0.45rem',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  padding: '0.35rem',
                   color: '#0f172a',
                   cursor: 'pointer',
                   position: 'relative',
@@ -1296,9 +1296,9 @@ export const BDigitizingMobileApp = () => {
                   justifyContent: 'center'
                 }}
               >
-                <Bell size={17} />
+                <Bell size={15} />
                 {unreadNotifCount > 0 && (
-                  <span style={{ position: 'absolute', top: '2px', right: '2px', width: '7px', height: '7px', borderRadius: '50%', background: '#ef4444' }} />
+                  <span style={{ position: 'absolute', top: '2px', right: '2px', width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444' }} />
                 )}
               </button>
 
@@ -1309,62 +1309,62 @@ export const BDigitizingMobileApp = () => {
                   background: '#059669',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: '10px',
-                  padding: '0.45rem 0.75rem',
-                  fontSize: '0.78rem',
+                  borderRadius: '8px',
+                  padding: '0.35rem 0.65rem',
+                  fontSize: '0.74rem',
                   fontWeight: 800,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.25rem',
-                  boxShadow: '0 2px 6px rgba(5, 150, 105, 0.25)'
+                  gap: '0.2rem',
+                  boxShadow: '0 2px 5px rgba(5, 150, 105, 0.25)'
                 }}
               >
-                <Plus size={15} /> New Order
+                <Plus size={14} /> New Order
               </button>
             </div>
           </div>
 
           {/* =========================================================================
-              LIVE ORDER DATA STATISTICS & KPI DASHBOARD (IMAGE 2 FIX)
+              LIVE ORDER DATA STATISTICS & KPI DASHBOARD (COMPACTED)
               ========================================================================= */}
-          <div style={{ padding: '0.85rem 1rem 0.25rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+          <div style={{ padding: '0.45rem 0.75rem 0.15rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <Activity size={14} style={{ color: '#059669' }} />
+              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <Activity size={13} style={{ color: '#059669' }} />
                 <span>Live Studio Statistics</span>
               </div>
-              <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>
+              <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 600 }}>
                 Tap metric to filter
               </span>
             </div>
 
             {/* Grid of 5 Key Stat Cards + Total Spend Pill */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.35rem' }}>
               {/* Total Orders Card */}
               <div 
                 onClick={() => setOrderFilter('all')}
                 style={{
                   background: orderFilter === 'all' ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' : '#ffffff',
                   color: orderFilter === 'all' ? '#ffffff' : '#0f172a',
-                  border: orderFilter === 'all' ? '1.5px solid #0f172a' : '1.5px solid #e2e8f0',
-                  borderRadius: '12px',
-                  padding: '0.65rem 0.5rem',
+                  border: orderFilter === 'all' ? '1.5px solid #0f172a' : '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  padding: '0.4rem 0.3rem',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
                   textAlign: 'center',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
                   transition: 'all 0.15s ease'
                 }}
               >
-                <ClipboardList size={18} style={{ color: orderFilter === 'all' ? '#38bdf8' : '#64748b', marginBottom: '0.2rem' }} />
-                <div style={{ fontSize: '1.15rem', fontWeight: 900, lineHeight: 1 }}>
+                <ClipboardList size={15} style={{ color: orderFilter === 'all' ? '#38bdf8' : '#64748b', marginBottom: '0.1rem' }} />
+                <div style={{ fontSize: '0.95rem', fontWeight: 900, lineHeight: 1 }}>
                   {totalOrdersCount}
                 </div>
-                <div style={{ fontSize: '0.62rem', fontWeight: 700, color: orderFilter === 'all' ? '#cbd5e1' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '0.55rem', fontWeight: 700, color: orderFilter === 'all' ? '#cbd5e1' : '#64748b', marginTop: '0.1rem', textTransform: 'uppercase' }}>
                   Total Orders
                 </div>
               </div>
@@ -1375,24 +1375,24 @@ export const BDigitizingMobileApp = () => {
                 style={{
                   background: orderFilter === 'awaiting_payment' ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : '#ffffff',
                   color: orderFilter === 'awaiting_payment' ? '#ffffff' : '#0f172a',
-                  border: orderFilter === 'awaiting_payment' ? '1.5px solid #ea580c' : (unpaidOrdersCount > 0 ? '1.5px solid #fdba74' : '1.5px solid #e2e8f0'),
-                  borderRadius: '12px',
-                  padding: '0.65rem 0.5rem',
+                  border: orderFilter === 'awaiting_payment' ? '1.5px solid #ea580c' : (unpaidOrdersCount > 0 ? '1px solid #fdba74' : '1px solid #e2e8f0'),
+                  borderRadius: '8px',
+                  padding: '0.4rem 0.3rem',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
                   textAlign: 'center',
                   cursor: 'pointer',
-                  boxShadow: unpaidOrdersCount > 0 ? '0 2px 8px rgba(234, 88, 12, 0.15)' : '0 2px 6px rgba(0,0,0,0.03)',
+                  boxShadow: unpaidOrdersCount > 0 ? '0 1px 6px rgba(234, 88, 12, 0.15)' : '0 1px 4px rgba(0,0,0,0.03)',
                   transition: 'all 0.15s ease'
                 }}
               >
-                <CreditCard size={18} style={{ color: orderFilter === 'awaiting_payment' ? '#fef08a' : '#ea580c', marginBottom: '0.2rem' }} />
-                <div style={{ fontSize: '1.15rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'awaiting_payment' ? '#ffffff' : '#c2410c' }}>
+                <CreditCard size={15} style={{ color: orderFilter === 'awaiting_payment' ? '#fef08a' : '#ea580c', marginBottom: '0.1rem' }} />
+                <div style={{ fontSize: '0.95rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'awaiting_payment' ? '#ffffff' : '#c2410c' }}>
                   {unpaidOrdersCount}
                 </div>
-                <div style={{ fontSize: '0.62rem', fontWeight: 700, color: orderFilter === 'awaiting_payment' ? '#fed7aa' : '#c2410c', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '0.55rem', fontWeight: 700, color: orderFilter === 'awaiting_payment' ? '#fed7aa' : '#c2410c', marginTop: '0.1rem', textTransform: 'uppercase' }}>
                   Waiting Pay
                 </div>
               </div>
@@ -1403,24 +1403,24 @@ export const BDigitizingMobileApp = () => {
                 style={{
                   background: orderFilter === 'active' ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : '#ffffff',
                   color: orderFilter === 'active' ? '#ffffff' : '#0f172a',
-                  border: orderFilter === 'active' ? '1.5px solid #0284c7' : '1.5px solid #bae6fd',
-                  borderRadius: '12px',
-                  padding: '0.65rem 0.5rem',
+                  border: orderFilter === 'active' ? '1.5px solid #0284c7' : '1px solid #bae6fd',
+                  borderRadius: '8px',
+                  padding: '0.4rem 0.3rem',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
                   textAlign: 'center',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
                   transition: 'all 0.15s ease'
                 }}
               >
-                <Zap size={18} style={{ color: orderFilter === 'active' ? '#bae6fd' : '#0284c7', marginBottom: '0.2rem' }} />
-                <div style={{ fontSize: '1.15rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'active' ? '#ffffff' : '#0369a1' }}>
+                <Zap size={15} style={{ color: orderFilter === 'active' ? '#bae6fd' : '#0284c7', marginBottom: '0.1rem' }} />
+                <div style={{ fontSize: '0.95rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'active' ? '#ffffff' : '#0369a1' }}>
                   {activeOrdersCount}
                 </div>
-                <div style={{ fontSize: '0.62rem', fontWeight: 700, color: orderFilter === 'active' ? '#e0f2fe' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '0.55rem', fontWeight: 700, color: orderFilter === 'active' ? '#e0f2fe' : '#64748b', marginTop: '0.1rem', textTransform: 'uppercase' }}>
                   In Production
                 </div>
               </div>
@@ -1431,24 +1431,24 @@ export const BDigitizingMobileApp = () => {
                 style={{
                   background: orderFilter === 'delivered' ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : '#ffffff',
                   color: orderFilter === 'delivered' ? '#ffffff' : '#0f172a',
-                  border: orderFilter === 'delivered' ? '1.5px solid #059669' : '1.5px solid #a7f3d0',
-                  borderRadius: '12px',
-                  padding: '0.65rem 0.5rem',
+                  border: orderFilter === 'delivered' ? '1.5px solid #059669' : '1px solid #a7f3d0',
+                  borderRadius: '8px',
+                  padding: '0.4rem 0.3rem',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
                   textAlign: 'center',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
                   transition: 'all 0.15s ease'
                 }}
               >
-                <Package size={18} style={{ color: orderFilter === 'delivered' ? '#a7f3d0' : '#059669', marginBottom: '0.2rem' }} />
-                <div style={{ fontSize: '1.15rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'delivered' ? '#ffffff' : '#047857' }}>
+                <Package size={15} style={{ color: orderFilter === 'delivered' ? '#a7f3d0' : '#059669', marginBottom: '0.1rem' }} />
+                <div style={{ fontSize: '0.95rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'delivered' ? '#ffffff' : '#047857' }}>
                   {deliveredOrdersCount}
                 </div>
-                <div style={{ fontSize: '0.62rem', fontWeight: 700, color: orderFilter === 'delivered' ? '#d1fae5' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '0.55rem', fontWeight: 700, color: orderFilter === 'delivered' ? '#d1fae5' : '#64748b', marginTop: '0.1rem', textTransform: 'uppercase' }}>
                   Delivered
                 </div>
               </div>
@@ -1459,24 +1459,24 @@ export const BDigitizingMobileApp = () => {
                 style={{
                   background: orderFilter === 'completed' ? 'linear-gradient(135deg, #334155 0%, #1e293b 100%)' : '#ffffff',
                   color: orderFilter === 'completed' ? '#ffffff' : '#0f172a',
-                  border: orderFilter === 'completed' ? '1.5px solid #334155' : '1.5px solid #e2e8f0',
-                  borderRadius: '12px',
-                  padding: '0.65rem 0.5rem',
+                  border: orderFilter === 'completed' ? '1.5px solid #334155' : '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  padding: '0.4rem 0.3rem',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
                   textAlign: 'center',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
                   transition: 'all 0.15s ease'
                 }}
               >
-                <CheckCircle2 size={18} style={{ color: orderFilter === 'completed' ? '#94a3b8' : '#64748b', marginBottom: '0.2rem' }} />
-                <div style={{ fontSize: '1.15rem', fontWeight: 900, lineHeight: 1 }}>
+                <CheckCircle2 size={15} style={{ color: orderFilter === 'completed' ? '#94a3b8' : '#64748b', marginBottom: '0.1rem' }} />
+                <div style={{ fontSize: '0.95rem', fontWeight: 900, lineHeight: 1 }}>
                   {completedOrdersCount}
                 </div>
-                <div style={{ fontSize: '0.62rem', fontWeight: 700, color: orderFilter === 'completed' ? '#cbd5e1' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '0.55rem', fontWeight: 700, color: orderFilter === 'completed' ? '#cbd5e1' : '#64748b', marginTop: '0.1rem', textTransform: 'uppercase' }}>
                   Completed
                 </div>
               </div>
@@ -1485,9 +1485,9 @@ export const BDigitizingMobileApp = () => {
               <div 
                 style={{
                   background: '#f8fafc',
-                  border: '1.5px solid #e2e8f0',
-                  borderRadius: '12px',
-                  padding: '0.65rem 0.5rem',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  padding: '0.4rem 0.3rem',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -1495,11 +1495,11 @@ export const BDigitizingMobileApp = () => {
                   textAlign: 'center'
                 }}
               >
-                <DollarSign size={18} style={{ color: '#059669', marginBottom: '0.2rem' }} />
-                <div style={{ fontSize: '1.05rem', fontWeight: 900, lineHeight: 1, color: '#059669' }}>
+                <DollarSign size={15} style={{ color: '#059669', marginBottom: '0.1rem' }} />
+                <div style={{ fontSize: '0.92rem', fontWeight: 900, lineHeight: 1, color: '#059669' }}>
                   ${totalValueSpent.toFixed(0)}
                 </div>
-                <div style={{ fontSize: '0.62rem', fontWeight: 700, color: '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '0.55rem', fontWeight: 700, color: '#64748b', marginTop: '0.1rem', textTransform: 'uppercase' }}>
                   Total Value
                 </div>
               </div>
@@ -1509,20 +1509,20 @@ export const BDigitizingMobileApp = () => {
             {unpaidOrdersCount > 0 && (
               <div style={{
                 background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-                border: '1.5px solid #fde68a',
-                borderRadius: '12px',
-                padding: '0.75rem 0.9rem',
+                border: '1px solid #fde68a',
+                borderRadius: '8px',
+                padding: '0.45rem 0.65rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                gap: '0.5rem',
-                boxShadow: '0 2px 8px rgba(245, 158, 11, 0.12)'
+                gap: '0.45rem',
+                boxShadow: '0 1px 6px rgba(245, 158, 11, 0.1)'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
                   <div style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '8px',
+                    width: '26px',
+                    height: '26px',
+                    borderRadius: '6px',
                     background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
                     color: '#ffffff',
                     display: 'flex',
@@ -1530,14 +1530,14 @@ export const BDigitizingMobileApp = () => {
                     justifyContent: 'center',
                     flexShrink: 0
                   }}>
-                    <CreditCard size={16} />
+                    <CreditCard size={14} />
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 900, color: '#9a3412', lineHeight: 1.2 }}>
+                    <div style={{ fontSize: '0.76rem', fontWeight: 900, color: '#9a3412', lineHeight: 1.2 }}>
                       {unpaidOrdersCount} Order{unpaidOrdersCount > 1 ? 's' : ''} Awaiting Payment
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: '#c2410c', marginTop: '0.1rem' }}>
-                      Complete payment to start master digitizing immediately
+                    <div style={{ fontSize: '0.64rem', color: '#c2410c', marginTop: '1px' }}>
+                      Complete payment to start master digitizing
                     </div>
                   </div>
                 </div>
@@ -1551,14 +1551,14 @@ export const BDigitizingMobileApp = () => {
                     background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
                     color: '#ffffff',
                     border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.45rem 0.75rem',
-                    fontSize: '0.75rem',
+                    borderRadius: '6px',
+                    padding: '0.32rem 0.6rem',
+                    fontSize: '0.7rem',
                     fontWeight: 900,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                     flexShrink: 0,
-                    boxShadow: '0 2px 6px rgba(234, 88, 12, 0.3)'
+                    boxShadow: '0 2px 6px rgba(234, 88, 12, 0.25)'
                   }}
                 >
                   Pay Now
@@ -1568,13 +1568,13 @@ export const BDigitizingMobileApp = () => {
           </div>
 
           {/* Sub-filter Switcher */}
-          <div style={{ padding: '0.65rem 1rem 0.25rem', display: 'flex', gap: '0.4rem', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+          <div style={{ padding: '0.4rem 0.75rem 0.15rem', display: 'flex', gap: '0.35rem', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
             {[
               { id: 'all', label: `All (${myOrders.length})` },
-              { id: 'awaiting_payment', label: `⏳ Waiting for Payment (${unpaidOrders.length})`, highlight: unpaidOrders.length > 0, unpaid: true },
-              { id: 'active', label: `⚡ In Production (${activeOrders.length})` },
+              { id: 'awaiting_payment', label: `⏳ Waiting (${unpaidOrders.length})`, highlight: unpaidOrders.length > 0, unpaid: true },
+              { id: 'active', label: `⚡ Active (${activeOrders.length})` },
               { id: 'delivered', label: `📦 Delivered (${deliveredOrders.length})`, highlight: deliveredOrders.length > 0 },
-              { id: 'completed', label: `✓ Completed (${completedOrders.length})` }
+              { id: 'completed', label: `✓ Done (${completedOrders.length})` }
             ].map(f => {
               const isSelected = orderFilter === f.id;
               let bg = '#ffffff';
@@ -1601,16 +1601,16 @@ export const BDigitizingMobileApp = () => {
                   type="button"
                   onClick={() => setOrderFilter(f.id)}
                   style={{
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '20px',
+                    padding: '0.25rem 0.55rem',
+                    borderRadius: '14px',
                     border,
                     background: bg,
                     color,
-                    fontSize: '0.75rem',
+                    fontSize: '0.68rem',
                     fontWeight: 800,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
-                    boxShadow: isSelected && f.unpaid ? '0 3px 10px rgba(234, 88, 12, 0.3)' : 'none',
+                    boxShadow: isSelected && f.unpaid ? '0 2px 6px rgba(234, 88, 12, 0.25)' : 'none',
                     flexShrink: 0
                   }}
                 >
@@ -1621,20 +1621,20 @@ export const BDigitizingMobileApp = () => {
           </div>
 
           {/* Order Cards List */}
-          <div style={{ padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+          <div style={{ padding: '0.45rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
             {(!isAuthenticated && !userEmail && myOrders.length > 0) && (
               <div style={{
                 background: '#eff6ff',
                 border: '1px solid #bfdbfe',
-                borderRadius: '12px',
-                padding: '0.65rem 0.85rem',
+                borderRadius: '8px',
+                padding: '0.45rem 0.65rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                gap: '0.5rem',
-                marginBottom: '0.25rem'
+                gap: '0.4rem',
+                marginBottom: '0.15rem'
               }}>
-                <div style={{ fontSize: '0.75rem', color: '#1e40af', fontWeight: 600 }}>
+                <div style={{ fontSize: '0.7rem', color: '#1e40af', fontWeight: 600 }}>
                   Showing orders placed on this device. Sign in to sync across all devices.
                 </div>
                 <button
@@ -1648,8 +1648,8 @@ export const BDigitizingMobileApp = () => {
                     color: '#ffffff',
                     border: 'none',
                     borderRadius: '6px',
-                    padding: '0.3rem 0.65rem',
-                    fontSize: '0.72rem',
+                    padding: '0.25rem 0.55rem',
+                    fontSize: '0.68rem',
                     fontWeight: 800,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap'
@@ -1665,17 +1665,17 @@ export const BDigitizingMobileApp = () => {
                 return (
                   <div style={{
                     background: '#ffffff',
-                    border: '1.5px solid #e2e8f0',
-                    borderRadius: '16px',
-                    padding: '2.5rem 1.5rem',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    padding: '2rem 1.25rem',
                     textAlign: 'center',
-                    marginTop: '0.5rem'
+                    marginTop: '0.35rem'
                   }}>
-                    <Lock size={36} style={{ color: '#94a3b8', margin: '0 auto 0.75rem' }} />
-                    <h4 style={{ margin: '0 0 0.35rem', fontSize: '1rem', fontWeight: 900, color: '#0f172a' }}>
+                    <Lock size={30} style={{ color: '#94a3b8', margin: '0 auto 0.5rem' }} />
+                    <h4 style={{ margin: '0 0 0.25rem', fontSize: '0.92rem', fontWeight: 900, color: '#0f172a' }}>
                       Sign In to View Orders
                     </h4>
-                    <p style={{ margin: '0 0 1.25rem', fontSize: '0.78rem', color: '#64748b', lineHeight: 1.45 }}>
+                    <p style={{ margin: '0 0 1rem', fontSize: '0.74rem', color: '#64748b', lineHeight: 1.4 }}>
                       Sign in with your studio account to track real-time machine stitch test runs and download files.
                     </p>
                     <button
@@ -1688,10 +1688,10 @@ export const BDigitizingMobileApp = () => {
                         background: '#059669',
                         color: '#ffffff',
                         border: 'none',
-                        borderRadius: '10px',
-                        padding: '0.65rem 1.5rem',
+                        borderRadius: '8px',
+                        padding: '0.5rem 1.25rem',
                         fontWeight: 900,
-                        fontSize: '0.85rem',
+                        fontSize: '0.78rem',
                         cursor: 'pointer'
                       }}
                     >
@@ -1733,17 +1733,17 @@ export const BDigitizingMobileApp = () => {
                 return (
                   <div style={{
                     background: '#ffffff',
-                    border: '1.5px solid #e2e8f0',
-                    borderRadius: '16px',
-                    padding: '3rem 1.5rem',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    padding: '2.25rem 1.25rem',
                     textAlign: 'center',
-                    marginTop: '0.5rem'
+                    marginTop: '0.35rem'
                   }}>
-                    <ClipboardList size={36} style={{ color: '#94a3b8', margin: '0 auto 0.75rem', opacity: 0.5 }} />
-                    <h4 style={{ margin: '0 0 0.25rem', fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
+                    <ClipboardList size={30} style={{ color: '#94a3b8', margin: '0 auto 0.5rem', opacity: 0.5 }} />
+                    <h4 style={{ margin: '0 0 0.2rem', fontSize: '0.92rem', fontWeight: 800, color: '#0f172a' }}>
                       No Orders Found
                     </h4>
-                    <p style={{ margin: '0 0 1rem', fontSize: '0.78rem', color: '#64748b' }}>
+                    <p style={{ margin: '0 0 0.85rem', fontSize: '0.74rem', color: '#64748b' }}>
                       {orderFilter === 'awaiting_payment'
                         ? 'No unpaid orders pending payment.'
                         : orderFilter === 'delivered'
@@ -1761,10 +1761,10 @@ export const BDigitizingMobileApp = () => {
                         background: '#059669',
                         color: '#ffffff',
                         border: 'none',
-                        borderRadius: '10px',
-                        padding: '0.65rem 1.25rem',
+                        borderRadius: '8px',
+                        padding: '0.5rem 1rem',
                         fontWeight: 800,
-                        fontSize: '0.85rem',
+                        fontSize: '0.78rem',
                         cursor: 'pointer'
                       }}
                     >
@@ -1784,7 +1784,7 @@ export const BDigitizingMobileApp = () => {
 
                 let badgeInfo = { label: 'IN PRODUCTION', bg: '#eff6ff', border: '#bae6fd', color: '#0284c7' };
                 if (isUnpaid) {
-                  badgeInfo = { label: '⏳ WAITING FOR PAYMENT TO START', bg: '#fff7ed', border: '#fdba74', color: '#c2410c' };
+                  badgeInfo = { label: '⏳ WAITING FOR PAYMENT', bg: '#fff7ed', border: '#fdba74', color: '#c2410c' };
                 } else if (isDelivered) {
                   badgeInfo = { label: '📦 DELIVERED', bg: '#ecfdf5', border: '#86efac', color: '#047857' };
                 } else if (isCompleted) {
@@ -1803,17 +1803,17 @@ export const BDigitizingMobileApp = () => {
                     style={{
                       background: '#ffffff',
                       border: isUnpaid ? '1.5px solid #fdba74' : (isDelivered ? '1.5px solid #86efac' : '1px solid #e2e8f0'),
-                      borderRadius: '14px',
-                      padding: '1rem',
+                      borderRadius: '10px',
+                      padding: '0.65rem 0.75rem',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '0.75rem',
-                      boxShadow: isUnpaid ? '0 4px 14px rgba(234, 88, 12, 0.08)' : (isDelivered ? '0 4px 14px rgba(16, 185, 129, 0.08)' : '0 2px 8px rgba(0,0,0,0.03)'),
+                      gap: '0.45rem',
+                      boxShadow: isUnpaid ? '0 2px 8px rgba(234, 88, 12, 0.08)' : (isDelivered ? '0 2px 8px rgba(16, 185, 129, 0.08)' : '0 1px 4px rgba(0,0,0,0.03)'),
                       cursor: 'pointer'
                     }}
                   >
                     {/* Top Row: Thumbnail + Price + Title */}
-                    <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start' }}>
                       <img
                         src={primaryImg}
                         alt={ord.title}
@@ -1822,9 +1822,9 @@ export const BDigitizingMobileApp = () => {
                           e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
                         }}
                         style={{
-                          width: '58px',
-                          height: '58px',
-                          borderRadius: '10px',
+                          width: '42px',
+                          height: '42px',
+                          borderRadius: '6px',
                           objectFit: 'cover',
                           border: isUnpaid ? '1.5px solid #fb923c' : (isDelivered ? '1.5px solid #10b981' : '1px solid #cbd5e1'),
                           flexShrink: 0
@@ -1833,24 +1833,22 @@ export const BDigitizingMobileApp = () => {
 
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                          <span style={{ fontSize: '0.7rem', fontWeight: 800, color: isUnpaid ? '#c2410c' : '#059669' }}>
+                          <span style={{ fontSize: '0.65rem', fontWeight: 800, color: isUnpaid ? '#c2410c' : '#059669' }}>
                             {formatOrderId(ord.id)}
                           </span>
-                          <span style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0f172a' }}>
+                          <span style={{ fontSize: '0.92rem', fontWeight: 900, color: '#0f172a' }}>
                             ${priceVal}
                           </span>
                         </div>
                         <p style={{
-                          margin: '0.15rem 0 0',
-                          fontSize: '0.85rem',
+                          margin: '0.1rem 0 0',
+                          fontSize: '0.78rem',
                           color: '#334155',
                           fontWeight: 700,
-                          lineHeight: 1.3,
+                          lineHeight: 1.25,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical'
+                          whiteSpace: 'nowrap'
                         }}>
                           {ord.title || 'Embroidery Digitizing Design'}
                         </p>
@@ -1858,23 +1856,23 @@ export const BDigitizingMobileApp = () => {
                     </div>
 
                     {/* Middle Row: Digitizer Avatar + Status Badge */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.15rem', flexWrap: 'wrap', gap: '0.4rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.1rem', flexWrap: 'wrap', gap: '0.35rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                         <div style={{
-                          width: '24px',
-                          height: '24px',
+                          width: '18px',
+                          height: '18px',
                           borderRadius: '50%',
                           background: isUnpaid ? '#fff7ed' : '#ecfdf5',
                           color: isUnpaid ? '#c2410c' : '#047857',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '0.65rem',
+                          fontSize: '0.55rem',
                           fontWeight: 900
                         }}>
                           BD
                         </div>
-                        <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
+                        <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>
                           BDigitizing Studio
                         </span>
                       </div>
@@ -1883,14 +1881,14 @@ export const BDigitizingMobileApp = () => {
                         background: badgeInfo.bg,
                         color: badgeInfo.color,
                         border: `1px solid ${badgeInfo.border}`,
-                        fontSize: '0.68rem',
+                        fontSize: '0.62rem',
                         fontWeight: 900,
-                        padding: '0.2rem 0.55rem',
-                        borderRadius: '6px',
+                        padding: '0.15rem 0.4rem',
+                        borderRadius: '4px',
                         textTransform: 'uppercase',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '0.25rem'
+                        gap: '0.2rem'
                       }}>
                         {badgeInfo.label}
                       </span>
@@ -1900,22 +1898,22 @@ export const BDigitizingMobileApp = () => {
                     {isUnpaid && (
                       <div style={{
                         background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-                        border: '1.5px solid #fde68a',
-                        borderRadius: '10px',
-                        padding: '0.65rem 0.85rem',
+                        border: '1px solid #fde68a',
+                        borderRadius: '6px',
+                        padding: '0.45rem 0.65rem',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        gap: '0.65rem',
-                        boxShadow: '0 2px 8px rgba(245, 158, 11, 0.12)'
+                        gap: '0.45rem',
+                        boxShadow: '0 1px 6px rgba(245, 158, 11, 0.1)'
                       }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
-                          <span style={{ fontSize: '1.15rem', flexShrink: 0 }}>⏳</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', minWidth: 0 }}>
+                          <span style={{ fontSize: '0.95rem', flexShrink: 0 }}>⏳</span>
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: '0.78rem', fontWeight: 900, color: '#92400e', lineHeight: 1.2 }}>
+                            <div style={{ fontSize: '0.72rem', fontWeight: 900, color: '#92400e', lineHeight: 1.2 }}>
                               Waiting for Payment to Start
                             </div>
-                            <div style={{ fontSize: '0.68rem', color: '#b45309', fontWeight: 600, marginTop: '2px' }}>
+                            <div style={{ fontSize: '0.62rem', color: '#b45309', fontWeight: 600 }}>
                               Production starts immediately upon payment
                             </div>
                           </div>
@@ -1930,20 +1928,20 @@ export const BDigitizingMobileApp = () => {
                             background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
                             color: '#ffffff',
                             border: 'none',
-                            borderRadius: '8px',
-                            padding: '0.45rem 0.85rem',
-                            fontSize: '0.78rem',
+                            borderRadius: '6px',
+                            padding: '0.32rem 0.6rem',
+                            fontSize: '0.72rem',
                             fontWeight: 900,
                             cursor: 'pointer',
-                            boxShadow: '0 2px 8px rgba(234, 88, 12, 0.3)',
+                            boxShadow: '0 2px 6px rgba(234, 88, 12, 0.25)',
                             whiteSpace: 'nowrap',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.3rem',
+                            gap: '0.25rem',
                             flexShrink: 0
                           }}
                         >
-                          <Zap size={13} /> Pay ${priceVal} →
+                          <Zap size={11} /> Pay ${priceVal} →
                         </button>
                       </div>
                     )}
@@ -1953,12 +1951,12 @@ export const BDigitizingMobileApp = () => {
                       <div style={{
                         background: '#f0fdf4',
                         border: '1px dashed #86efac',
-                        borderRadius: '8px',
-                        padding: '0.45rem 0.75rem',
+                        borderRadius: '6px',
+                        padding: '0.35rem 0.65rem',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        fontSize: '0.75rem',
+                        fontSize: '0.7rem',
                         fontWeight: 800,
                         color: '#047857'
                       }}>
@@ -1973,10 +1971,10 @@ export const BDigitizingMobileApp = () => {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       borderTop: '1px solid #f1f5f9',
-                      paddingTop: '0.65rem',
-                      marginTop: '0.2rem'
+                      paddingTop: '0.4rem',
+                      marginTop: '0.1rem'
                     }}>
-                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b' }}>
                         {dateStr}
                       </span>
 
@@ -1991,10 +1989,10 @@ export const BDigitizingMobileApp = () => {
                           border: 'none',
                           color: '#0f172a',
                           cursor: 'pointer',
-                          padding: '0.2rem'
+                          padding: '0.15rem'
                         }}
                       >
-                        <MoreVertical size={18} />
+                        <MoreVertical size={15} />
                       </button>
                     </div>
                   </div>
