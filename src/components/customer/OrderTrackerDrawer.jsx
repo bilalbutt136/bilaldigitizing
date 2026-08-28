@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react';
 import { useAppState, formatOrderId, formatDimensions, formatFabric } from '../../context/StateContext';
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
 import { ProductionWorksheetModal } from '../common/ProductionWorksheetModal';
-import { triggerFileDownload } from '../../utils/fileDownloader';
+import { triggerFileDownload, openPdfInNewTab } from '../../utils/fileDownloader';
 import { 
   X, 
   CheckCircle2, 
@@ -354,20 +354,27 @@ export const OrderTrackerDrawer = () => {
 
   const handleDownloadFileAsset = (fileObj, fallbackFormatKey) => {
     if (fileObj && fileObj.url) {
-      const fileName = fileObj.name || `${ord.title}_${formatOrderId(ord.id)}.${fileObj.format || fallbackFormatKey}`;
-      const ext = fileObj.format || fileName.split('.').pop().toLowerCase() || fallbackFormatKey || 'dst';
-      triggerFileDownload(fileObj.url, fileName, ext);
+      const fileName = fileObj.name || `${(ord.title || 'Order').replace(/\s+/g, '_')}_${formatOrderId(ord.id)}.${fileObj.format || fallbackFormatKey || 'dst'}`;
+      triggerFileDownload(fileObj.url, fileName);
       return;
     }
 
     const formatKey = (fallbackFormatKey || 'dst').toLowerCase();
     if (formatKey === 'pdf') {
-      setShowWorksheetModal(true);
+      if (ord.outputFileUrl && (ord.outputFileUrl.toLowerCase().endsWith('.pdf') || ord.outputFileUrl.includes('.pdf'))) {
+        triggerFileDownload(ord.outputFileUrl, `${(ord.title || 'Order').replace(/\s+/g, '_')}_${formatOrderId(ord.id)}.pdf`);
+      } else {
+        setShowWorksheetModal(true);
+      }
       return;
     }
 
-    const fileName = `${ord.title.replace(/\s+/g, '_')}_${formatOrderId(ord.id)}.${formatKey}`;
-    triggerFileDownload(null, fileName, formatKey);
+    const fileName = `${(ord.title || 'Order').replace(/\s+/g, '_')}_${formatOrderId(ord.id)}.${formatKey}`;
+    if (ord.outputFileUrl) {
+      triggerFileDownload(ord.outputFileUrl, fileName);
+    } else {
+      setShowWorksheetModal(true);
+    }
   };
 
   const userFormats = ord.requestedFormats || ['dst', 'pes', 'emb'];
@@ -978,25 +985,53 @@ export const OrderTrackerDrawer = () => {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.65rem' }}>
                           {dFiles.map((f, fIdx) => {
                             const ext = (f.format || f.name?.split('.').pop() || 'dst').toUpperCase();
+                            const isPdf = ext.toLowerCase() === 'pdf';
+                            const fileIcon = isPdf ? '📄' : (['AI', 'EPS', 'SVG', 'CDR'].includes(ext) ? '🎨' : (['ZIP', 'RAR', '7Z'].includes(ext) ? '📦' : '🧵'));
+
                             return (
-                              <div key={fIdx} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                              <div key={fIdx} style={{ background: '#ffffff', border: isPdf ? '1.5px solid #fed7aa' : '1px solid #e2e8f0', borderRadius: '10px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                  <span style={{ fontSize: '1.2rem' }}>🧵</span>
+                                  <span style={{ fontSize: '1.2rem' }}>{fileIcon}</span>
                                   <div style={{ minWidth: 0, flex: 1 }}>
                                     <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                      {f.name || `Stitch_File.${ext}`}
+                                      {f.name || `Production_File.${ext}`}
                                     </div>
-                                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>.{ext} Production File</div>
+                                    <div style={{ fontSize: '0.68rem', color: isPdf ? '#ea580c' : 'var(--text-muted)', fontWeight: isPdf ? 700 : 500 }}>
+                                      .{ext} {isPdf ? 'Worksheet & Preview' : 'Production File'}
+                                    </div>
                                   </div>
                                 </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDownloadFileAsset(f, ext)}
-                                  className="btn btn-outline btn-sm"
-                                  style={{ width: '100%', gap: '0.25rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, padding: '0.3rem 0.5rem' }}
-                                >
-                                  <Download size={12} /> Download .{ext}
-                                </button>
+                                {isPdf ? (
+                                  <div style={{ display: 'flex', gap: '0.3rem' }}>
+                                    {f.url && (
+                                      <button
+                                        type="button"
+                                        onClick={() => openPdfInNewTab(f.url, f.name || 'document.pdf')}
+                                        className="btn btn-outline btn-sm"
+                                        style={{ flex: 1, gap: '0.2rem', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700, padding: '0.3rem 0.35rem' }}
+                                      >
+                                        👁️ View
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDownloadFileAsset(f, 'pdf')}
+                                      className="btn btn-primary-orange btn-sm"
+                                      style={{ flex: 1, gap: '0.2rem', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 0.35rem' }}
+                                    >
+                                      <Download size={11} /> Download
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDownloadFileAsset(f, ext)}
+                                    className="btn btn-outline btn-sm"
+                                    style={{ width: '100%', gap: '0.25rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, padding: '0.3rem 0.5rem' }}
+                                  >
+                                    <Download size={12} /> Download .{ext}
+                                  </button>
+                                )}
                               </div>
                             );
                           })}
@@ -1022,46 +1057,77 @@ export const OrderTrackerDrawer = () => {
                       {uniqueMachineFiles.length > 0 ? (
                         uniqueMachineFiles.map((f, idx) => {
                           const ext = (f.format || f.name?.split('.').pop() || 'dst').toUpperCase();
+                          const isPdf = ext.toLowerCase() === 'pdf';
+                          const fileIcon = isPdf ? '📄' : (['AI', 'EPS', 'SVG', 'CDR'].includes(ext) ? '🎨' : (['ZIP', 'RAR', '7Z'].includes(ext) ? '📦' : '🧵'));
+
                           return (
-                            <div key={idx} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <div key={idx} style={{ background: '#f8fafc', border: isPdf ? '1.5px solid #fed7aa' : '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span style={{ fontSize: '1.4rem' }}>🧵</span>
+                                <span style={{ fontSize: '1.4rem' }}>{fileIcon}</span>
                                 <div style={{ minWidth: 0, flex: 1 }}>
                                   <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.84rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name || `Machine_File.${ext}`}</div>
-                                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>.{ext} Production File</div>
+                                  <div style={{ fontSize: '0.72rem', color: isPdf ? '#ea580c' : 'var(--text-muted)', fontWeight: isPdf ? 700 : 500 }}>.{ext} {isPdf ? 'Worksheet & Preview' : 'Production File'}</div>
                                 </div>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => handleDownloadFileAsset(f, ext)}
-                                className="btn btn-outline btn-sm"
-                                style={{ width: '100%', gap: '0.3rem', justifyContent: 'center', fontSize: '0.78rem', fontWeight: 700 }}
-                              >
-                                <Download size={13} /> Download .{ext}
-                              </button>
+                              {isPdf ? (
+                                <div style={{ display: 'flex', gap: '0.35rem' }}>
+                                  {f.url && (
+                                    <button
+                                      type="button"
+                                      onClick={() => openPdfInNewTab(f.url, f.name || 'document.pdf')}
+                                      className="btn btn-outline btn-sm"
+                                      style={{ flex: 1, gap: '0.25rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}
+                                    >
+                                      👁️ View
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDownloadFileAsset(f, 'pdf')}
+                                    className="btn btn-primary-orange btn-sm"
+                                    style={{ flex: 1, gap: '0.25rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}
+                                  >
+                                    <Download size={13} /> Download
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownloadFileAsset(f, ext)}
+                                  className="btn btn-outline btn-sm"
+                                  style={{ width: '100%', gap: '0.3rem', justifyContent: 'center', fontSize: '0.78rem', fontWeight: 700 }}
+                                >
+                                  <Download size={13} /> Download .{ext}
+                                </button>
+                              )}
                             </div>
                           );
                         })
                       ) : (
-                        allDownloadFormats.map(fmt => (
-                          <div key={fmt} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                              <span style={{ fontSize: '1.4rem' }}>🧵</span>
-                              <div>
-                                <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.84rem' }}>Format (.{fmt.toUpperCase()})</div>
-                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Standard Stitch Package</div>
+                        allDownloadFormats.map(fmt => {
+                          const isPdf = fmt.toLowerCase() === 'pdf';
+                          const fileIcon = isPdf ? '📄' : (['ai', 'eps', 'svg', 'cdr'].includes(fmt.toLowerCase()) ? '🎨' : '🧵');
+
+                          return (
+                            <div key={fmt} style={{ background: '#f8fafc', border: isPdf ? '1.5px solid #fed7aa' : '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span style={{ fontSize: '1.4rem' }}>{fileIcon}</span>
+                                <div>
+                                  <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.84rem' }}>Format (.{fmt.toUpperCase()})</div>
+                                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Standard Production Package</div>
+                                </div>
                               </div>
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadFileAsset(null, fmt)}
+                                className="btn btn-outline btn-sm"
+                                style={{ width: '100%', gap: '0.3rem', justifyContent: 'center', fontSize: '0.78rem', fontWeight: 700 }}
+                              >
+                                <Download size={13} /> {isPdf ? 'Open / Download PDF' : `Download .${fmt.toUpperCase()}`}
+                              </button>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => handleDownloadFileAsset(null, fmt)}
-                              className="btn btn-outline btn-sm"
-                              style={{ width: '100%', gap: '0.3rem', justifyContent: 'center', fontSize: '0.78rem', fontWeight: 700 }}
-                            >
-                              <Download size={13} /> Download .{fmt.toUpperCase()}
-                            </button>
-                          </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
                   </div>

@@ -5,11 +5,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 const ALLOWED_EXTENSIONS = new Set([
   'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf',
-  'dst', 'pes', 'emb', 'exp', 'jef', 'ai', 'eps', 'zip'
+  'dst', 'pes', 'emb', 'exp', 'jef', 'ofm', 'pxf', 'vp3', 'hus', 'xxx', 'art',
+  'ai', 'eps', 'cdr', 'dxf', 'plt', 'zip', 'rar', '7z', 'txt', 'doc', 'docx'
 ]);
 
 const ALLOWED_BUCKETS = new Set([
-  'portfolio-images', 'order-files', 'chat-attachments', 'media-library', 'customer-assets'
+  'portfolio-images', 'order-files', 'chat-attachments', 'media-library', 'customer-assets',
+  'admin-deliveries', 'deliveries', 'client-uploads', 'orders'
 ]);
 
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB

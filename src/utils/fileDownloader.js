@@ -1,6 +1,7 @@
 /**
  * Universal File Downloader & PDF Viewer Utility
- * Solves cross-origin download issues and Cloudinary PDF preview errors
+ * Supports all Embroidery (.DST, .PES, .EMB, .EXP, .JEF, .OFM, .PXF, .VP3),
+ * Vector (.AI, .EPS, .CDR, .SVG, .PDF), Patches, and Document files across desktop & mobile.
  */
 
 export function getCleanCloudinaryDownloadUrl(url) {
@@ -21,16 +22,51 @@ export function getCleanCloudinaryViewUrl(url) {
 }
 
 /**
- * Downloads any file (PDF, Image, DST, PES, EMB, AI, ZIP) directly to user's device
+ * Downloads any file (PDF, Image, DST, PES, EMB, AI, EPS, ZIP, CDR) directly to user's device
  */
 export async function downloadFileDirectly(url, filename = 'download') {
   if (!url) return;
 
-  const downloadUrl = getCleanCloudinaryDownloadUrl(url);
+  // 1. If it's already a local blob / data URL
+  if (url.startsWith('blob:') || url.startsWith('data:')) {
+    try {
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = filename || 'download';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (a.parentNode) a.parentNode.removeChild(a);
+      }, 1000);
+      return;
+    } catch (e) {
+      console.warn('[FileDownloader] Blob direct anchor error:', e);
+    }
+  }
+
+  // 2. High-speed, CORS-free server-side proxy download (/api/download)
+  const proxyDownloadUrl = `/api/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename || 'download')}`;
 
   try {
-    // Attempt 1: Fetch as Blob and trigger standard download anchor
-    const response = await fetch(downloadUrl, { mode: 'cors' });
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = proxyDownloadUrl;
+    a.download = filename || 'download';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      if (a.parentNode) a.parentNode.removeChild(a);
+    }, 2000);
+    return;
+  } catch (err) {
+    console.warn('[FileDownloader] Proxy anchor error, trying direct fetch:', err);
+  }
+
+  // 3. Fallback: Fetch as Blob and trigger standard download anchor
+  try {
+    const directUrl = getCleanCloudinaryDownloadUrl(url);
+    const response = await fetch(directUrl, { mode: 'cors' });
     if (response.ok) {
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
@@ -47,24 +83,11 @@ export async function downloadFileDirectly(url, filename = 'download') {
       return;
     }
   } catch (err) {
-    console.warn('[FileDownloader] Blob download fallback to direct anchor:', err.message);
+    console.warn('[FileDownloader] Direct fetch error:', err.message);
   }
 
-  // Attempt 2: Fallback to direct anchor navigation
-  try {
-    const a = document.createElement('a');
-    a.href = downloadUrl;
-    a.download = filename || 'download';
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      if (a.parentNode) a.parentNode.removeChild(a);
-    }, 1500);
-  } catch (fallbackErr) {
-    window.open(downloadUrl, '_blank');
-  }
+  // 4. Last-resort fallback: Direct navigation
+  window.open(url, '_blank');
 }
 
 /**
@@ -73,25 +96,32 @@ export async function downloadFileDirectly(url, filename = 'download') {
 export async function openPdfInNewTab(url, filename = 'document.pdf') {
   if (!url) return;
 
+  // 1. If it's a blob/data URL
+  if (url.startsWith('blob:') || url.startsWith('data:')) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+    return;
+  }
+
+  // 2. High-speed server-side stream preview (/api/download?preview=true)
+  const previewProxyUrl = `/api/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename || 'document.pdf')}&preview=true`;
+  const newTab = window.open(previewProxyUrl, '_blank', 'noopener,noreferrer');
+  if (newTab) return;
+
+  // 3. Fallback to blob fetch if pop-up blocked
   try {
-    // Fetch the binary buffer as PDF Blob to bypass CORS / CDN header issues
     const response = await fetch(url, { mode: 'cors' });
     if (response.ok) {
       const blob = await response.blob();
       const pdfBlob = new Blob([blob], { type: 'application/pdf' });
       const blobUrl = window.URL.createObjectURL(pdfBlob);
-      const newTab = window.open(blobUrl, '_blank', 'noopener,noreferrer');
-      if (!newTab) {
-        // Pop-up blocked fallback
-        window.location.href = blobUrl;
-      }
+      window.location.href = blobUrl;
       return;
     }
   } catch (err) {
     console.warn('[FileDownloader] PDF blob open fallback:', err.message);
   }
 
-  // Direct open fallback
+  // 4. Fallback direct open
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 

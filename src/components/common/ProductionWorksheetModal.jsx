@@ -34,8 +34,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
   };
 
   const handleDownloadPDF = () => {
-    const fileName = `${(order.title || 'Order').replace(/\s+/g, '_')}_${formatOrderId(order.id)}_Production_Worksheet.pdf`;
-    triggerFileDownload(null, fileName, 'pdf');
+    window.print();
   };
 
   const colorStops = [

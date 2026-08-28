@@ -533,25 +533,50 @@ export default function WhatsAppChatMessage({
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={(e) => handleDownload(e)}
-              title="Download file"
-              style={{
-                background: isMe ? '#ffffff' : 'var(--color-primary, #ff7a00)',
-                color: isMe ? 'var(--color-primary, #ea580c)' : '#ffffff',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '0.35rem 0.55rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}
-            >
-              <Download size={13} />
-            </button>
+            <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
+              {(fileCategory === 'document' || fileName.toLowerCase().endsWith('.pdf') || (fileUrl && fileUrl.toLowerCase().includes('.pdf'))) && (
+                <button
+                  type="button"
+                  onClick={(e) => handleOpenPdf(e)}
+                  title="View PDF"
+                  style={{
+                    background: isMe ? 'rgba(255,255,255,0.2)' : '#f1f5f9',
+                    color: isMe ? '#ffffff' : '#0f172a',
+                    border: isMe ? '1px solid rgba(255,255,255,0.4)' : '1px solid #cbd5e1',
+                    borderRadius: '6px',
+                    padding: '0.35rem 0.55rem',
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.2rem'
+                  }}
+                >
+                  👁️ View
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={(e) => handleDownload(e)}
+                title="Download file"
+                style={{
+                  background: isMe ? '#ffffff' : 'var(--color-primary, #ff7a00)',
+                  color: isMe ? 'var(--color-primary, #ea580c)' : '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '0.35rem 0.55rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+              >
+                <Download size={13} />
+              </button>
+            </div>
           </div>
         )}
 
