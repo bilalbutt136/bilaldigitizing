@@ -1123,7 +1123,7 @@ export const OrderWizardModal = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 99999,
+        zIndex: 99980,
         padding: '1rem',
         overflowY: 'auto',
         WebkitOverflowScrolling: 'touch'

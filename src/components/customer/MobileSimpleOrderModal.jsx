@@ -572,7 +572,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         inset: 0,
         background: 'rgba(15, 23, 42, 0.82)',
         backdropFilter: 'blur(6px)',
-        zIndex: 999999,
+        zIndex: 99980,
         display: 'flex',
         alignItems: 'flex-end',
         justifyContent: 'center'

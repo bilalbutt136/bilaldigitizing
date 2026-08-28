@@ -269,7 +269,7 @@ export const AuthModal = () => {
       <div 
         className="modal-overlay" 
         onClick={() => { setIsAuthModalOpen(false); setAuthError(''); }}
-        style={{ backdropFilter: 'blur(8px)', background: 'rgba(15, 23, 42, 0.75)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+        style={{ backdropFilter: 'blur(8px)', background: 'rgba(15, 23, 42, 0.75)', zIndex: 1000000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
       >
       <div 
         className="modal-content" 

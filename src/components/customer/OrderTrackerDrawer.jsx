@@ -455,7 +455,7 @@ export const OrderTrackerDrawer = () => {
       className={isMobileLayout ? "mobile-fullscreen-modal" : "modal-overlay"}
       onClick={handleCloseDrawer}
       style={{ 
-        zIndex: 99999, 
+        zIndex: 99990, 
         background: isMobileLayout ? '#ffffff' : 'rgba(11, 19, 41, 0.85)', 
         backdropFilter: 'blur(10px)', 
         padding: isMobileLayout ? '0' : 'clamp(0.5rem, 2vw, 1.5rem)',

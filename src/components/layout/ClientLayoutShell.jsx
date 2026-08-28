@@ -57,14 +57,14 @@ export const ClientLayoutShell = ({ children }) => {
       )}
 
       {/* Global Interactive Modals & System Services */}
-      <AuthModal />
       <OrderWizardModal />
       <StoreOrderModal />
-      <CheckoutModal />
       <OrderTrackerDrawer />
       <DepositModal />
-      <ToastContainer />
+      <CheckoutModal />
+      <AuthModal />
       <GlobalUploadModal />
+      <ToastContainer />
       <MetaPixelTracker />
       
       {/* PWA Prompt Banner (Visible on mobile website to offer App installation or launch) */}

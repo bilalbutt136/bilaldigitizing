@@ -221,7 +221,7 @@ export const StoreOrderModal = () => {
         bottom: 0,
         background: 'rgba(15, 23, 42, 0.75)',
         backdropFilter: 'blur(6px)',
-        zIndex: 99999,
+        zIndex: 99980,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
