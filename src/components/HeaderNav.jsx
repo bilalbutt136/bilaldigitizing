@@ -69,6 +69,8 @@ export const HeaderNav = () => {
   const safeIsAuthenticated = mounted ? isAuthenticated : false;
   const safeAuthUser = mounted ? authUser : null;
   const currentPath = mounted ? (location?.pathname || '') : '';
+  const isAdmin = mounted && (safeAuthUser?.role === 'admin' || currentPath.includes('admin') || safeCurrentView === 'admin');
+  const isClient = mounted && safeIsAuthenticated && !isAdmin;
 
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -549,8 +551,8 @@ export const HeaderNav = () => {
             </button>
           )}
 
-          {/* Mobile Permanent Order Now CTA for Logged-In Clients */}
-          {safeIsAuthenticated && (
+          {/* Mobile Permanent Order Now CTA for Logged-In Clients Only (Never on Admin) */}
+          {isClient && (
             <button
               type="button"
               className="mobile-only"
@@ -644,44 +646,46 @@ export const HeaderNav = () => {
               </button>
             ) : (
               <>
-                {/* 2. Permanent Order Now Button for Logged-In Clients */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (setIsOrderWizardOpen) setIsOrderWizardOpen(true);
-                    else if (openOrderWizard) openOrderWizard({ type: 'embroidery' });
-                    else protectedNavigate('customer', true);
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.45rem',
-                    background: 'linear-gradient(135deg, var(--color-primary, #ff7a00) 0%, var(--orange-600, #ea580c) 100%)',
-                    color: '#ffffff',
-                    border: 'none',
-                    padding: '0.45rem 1rem',
-                    height: '38px',
-                    borderRadius: '9px',
-                    fontWeight: 800,
-                    fontSize: '0.85rem',
-                    cursor: 'pointer',
-                    boxShadow: '0 3px 12px var(--color-primary-glow, rgba(249, 115, 22, 0.35))',
-                    transition: 'all 0.15s ease',
-                    flexShrink: 0
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                    e.currentTarget.style.boxShadow = '0 5px 16px var(--color-primary-glow, rgba(249, 115, 22, 0.45))';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 3px 12px var(--color-primary-glow, rgba(249, 115, 22, 0.35))';
-                  }}
-                  title="Place a New Custom Digitizing or Vector Order"
-                >
-                  <PlusCircle size={15} style={{ strokeWidth: 2.5 }} />
-                  <span>Order Now</span>
-                </button>
+                {/* 2. Permanent Order Now Button for Logged-In Clients Only (Never on Admin) */}
+                {isClient && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (setIsOrderWizardOpen) setIsOrderWizardOpen(true);
+                      else if (openOrderWizard) openOrderWizard({ type: 'embroidery' });
+                      else protectedNavigate('customer', true);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.45rem',
+                      background: 'linear-gradient(135deg, var(--color-primary, #ff7a00) 0%, var(--orange-600, #ea580c) 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      padding: '0.45rem 1rem',
+                      height: '38px',
+                      borderRadius: '9px',
+                      fontWeight: 800,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      boxShadow: '0 3px 12px var(--color-primary-glow, rgba(249, 115, 22, 0.35))',
+                      transition: 'all 0.15s ease',
+                      flexShrink: 0
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                      e.currentTarget.style.boxShadow = '0 5px 16px var(--color-primary-glow, rgba(249, 115, 22, 0.45))';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 3px 12px var(--color-primary-glow, rgba(249, 115, 22, 0.35))';
+                    }}
+                    title="Place a New Custom Digitizing or Vector Order"
+                  >
+                    <PlusCircle size={15} style={{ strokeWidth: 2.5 }} />
+                    <span>Order Now</span>
+                  </button>
+                )}
 
                 {safeCurrentView === 'public' && (
                   <button 
@@ -698,14 +702,14 @@ export const HeaderNav = () => {
                       padding: '0.35rem 0.85rem'
                     }}
                     onClick={() => {
-                      if (safeAuthUser?.role === 'admin') {
+                      if (isAdmin) {
                         protectedNavigate('admin', false);
                       } else {
                         protectedNavigate('customer', false);
                       }
                     }}
                   >
-                    <User size={14} style={{ color: 'var(--orange-500)' }} /> Dashboard
+                    <User size={14} style={{ color: 'var(--orange-500)' }} /> {isAdmin ? 'Admin Portal' : 'Dashboard'}
                   </button>
                 )}
                 
