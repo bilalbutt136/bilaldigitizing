@@ -290,6 +290,8 @@ export const OrderWizardModal = () => {
     isAuthenticated,
     register,
     login,
+    loginWithGoogle,
+    loginWithApple,
     dynamicPricingTiers = [],
     siteSettings = {},
     refreshOrders
@@ -584,6 +586,46 @@ export const OrderWizardModal = () => {
       if (showToast) showToast(`Coupon ${clean} applied! (-${pct}% discount)`, 'success');
     } else {
       if (showToast) showToast('Invalid promo code. Use SAVE15 for 15% off.', 'error');
+    }
+  };
+
+  const handleGoogleAuthSuccess = async (googleUser) => {
+    try {
+      if (loginWithGoogle) {
+        const res = await loginWithGoogle(googleUser);
+        if (res?.success && res?.user) {
+          setGuestEmail(res.user.email || '');
+          setGuestName(res.user.name || '');
+          if (showToast) showToast(`✓ Connected with Google (${res.user.email})`, 'success');
+          return;
+        }
+      }
+      if (googleUser?.email) {
+        setGuestEmail(googleUser.email);
+        setGuestName(googleUser.name || '');
+        if (showToast) showToast(`✓ Connected with Google (${googleUser.email})`, 'success');
+      }
+    } catch (err) {
+      console.warn('Google sign-in notice:', err);
+      if (showToast) showToast(err.message || 'Google authentication notice', 'error');
+    }
+  };
+
+  const handleAppleAuth = async () => {
+    try {
+      if (loginWithApple) {
+        const res = await loginWithApple();
+        if (res?.success && res?.user) {
+          setGuestEmail(res.user.email || '');
+          setGuestName(res.user.name || '');
+          if (showToast) showToast(`✓ Signed in with Apple!`, 'success');
+          return;
+        }
+      }
+      if (showToast) showToast('Apple Sign-In is ready for Apple devices.', 'info');
+    } catch (err) {
+      console.warn('Apple auth notice:', err);
+      if (showToast) showToast(err.message || 'Apple sign-in notice', 'info');
     }
   };
 
@@ -1468,28 +1510,6 @@ export const OrderWizardModal = () => {
                   )}
                 </div>
 
-                {/* Optional Design Title */}
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.35rem' }}>
-                    Design / Project Title <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>(Optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={orderTitle}
-                    onChange={(e) => setOrderTitle(e.target.value)}
-                    placeholder="e.g., Company Left Chest Logo / Skull Jacket Back"
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 0.95rem',
-                      borderRadius: '10px',
-                      border: '1.5px solid #cbd5e1',
-                      fontSize: '0.85rem',
-                      color: '#0f172a',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-
                 {/* Special Instructions */}
                 <div>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.35rem' }}>
@@ -1931,6 +1951,54 @@ export const OrderWizardModal = () => {
                           Sign In
                         </button>
                       </div>
+                    </div>
+
+                    {/* 1-Click Social Logins (Google & Apple) */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '0.65rem' }}>
+                      <GoogleCustomSignInButton
+                        onAuthSuccess={handleGoogleAuthSuccess}
+                        onAuthError={(err) => {
+                          if (showToast) showToast(err || 'Google sign-in cancelled', 'error');
+                        }}
+                        style={{ height: '42px', borderRadius: '10px', fontSize: '0.84rem' }}
+                        text="Continue with Google"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={handleAppleAuth}
+                        style={{
+                          width: '100%',
+                          height: '42px',
+                          padding: '0 1rem',
+                          borderRadius: '10px',
+                          border: '1.5px solid #000000',
+                          background: '#000000',
+                          color: '#ffffff',
+                          fontSize: '0.84rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.5rem',
+                          boxSizing: 'border-box'
+                        }}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 170 170" fill="currentColor">
+                          <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.04-7.6-7.77-11.74-14.2-7.41-11.51-11.11-23.79-11.11-36.83 0-14.56 4.35-26.65 13.06-36.27 8.7-9.63 19.34-14.52 31.91-14.68 4.79 0 10.12 1.25 15.99 3.75 5.87 2.5 9.74 3.82 11.61 3.96 1.74-.14 5.72-1.5 11.94-4.08 6.22-2.58 11.45-3.75 15.69-3.52 11.85.65 21.32 4.96 28.41 12.92-10.45 6.32-15.57 15.14-15.35 26.46.22 8.71 3.65 16.03 10.29 21.95 6.64 5.92 14.52 9.4 23.63 10.43-2.18 6.31-4.78 12.83-7.81 19.57zM119.22 33.72c0-7.39 2.67-14.35 8.01-20.88C132.57 6.31 139.31 2.06 147.45 0c.22 1.31.33 2.5.33 3.59 0 7.39-2.83 14.47-8.49 21.23-5.66 6.75-12.63 10.74-20.91 11.97-.22-1.09-.33-2.07-.33-3.07z" />
+                        </svg>
+                        <span>Continue with Apple</span>
+                      </button>
+                    </div>
+
+                    {/* Divider */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', margin: '0.1rem 0' }}>
+                      <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>
+                        or {guestAuthMode === 'signup' ? 'create with email' : 'sign in with email'}
+                      </span>
+                      <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: guestAuthMode === 'signup' ? '1fr 1fr' : '1fr 1fr', gap: '0.65rem' }}>
