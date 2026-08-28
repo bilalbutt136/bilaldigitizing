@@ -56,7 +56,7 @@ export const UserMenuDropdown = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (!mounted || !isAuthenticated) return null;
+  if (!mounted || (!isAuthenticated && !authUser?.email)) return null;
 
   const activeUser = authUser || currentUser || {
     name: 'Verified User',
@@ -65,10 +65,16 @@ export const UserMenuDropdown = () => {
     role: 'customer'
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsOpen(false);
-    logout();
-    navigate('/');
+    try {
+      await logout();
+    } catch {}
+    if (typeof window !== 'undefined') {
+      window.location.href = '/';
+    } else {
+      navigate('/');
+    }
     showToast('Signed out successfully', 'info');
   };
 
@@ -108,44 +114,46 @@ export const UserMenuDropdown = () => {
           borderRadius: '50%',
           cursor: 'pointer',
           boxShadow: 'var(--shadow-sm)',
-          transition: 'all 0.2s ease'
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
-        title={`${cleanName} (${activeUser?.company || 'Verified Client'})`}
+        title={`${cleanName} (${activeUser?.email || ''})`}
       >
         {/* User Initials Avatar */}
         <div style={{
-          width: '36px',
-          height: '36px',
+          width: '32px',
+          height: '32px',
           borderRadius: '50%',
-          background: 'linear-gradient(135deg, var(--navy-900) 0%, var(--orange-600) 100%)',
+          background: 'linear-gradient(135deg, var(--navy-900) 0%, #1e293b 100%)',
           color: '#ffffff',
           fontWeight: 800,
-          fontSize: '0.85rem',
+          fontSize: '0.75rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 2px 8px rgba(249, 115, 22, 0.3)',
-          flexShrink: 0
+          border: '1.5px solid #ffffff'
         }}>
           {initials}
         </div>
       </button>
 
-      {/* Dropdown Menu Popup Box */}
+      {/* Dropdown Floating Menu */}
       {isOpen && (
-        <div style={{
-          position: 'absolute',
-          top: 'calc(100% + 6px)',
-          right: 0,
-          width: '260px',
-          background: 'var(--color-surface, #ffffff)',
-          border: '1.5px solid var(--color-border)',
-          borderRadius: 'var(--radius-md)',
-          boxShadow: 'var(--shadow-xl, 0 10px 30px rgba(0, 0, 0, 0.25))',
-          zIndex: 2000,
-          overflow: 'hidden',
-          animation: 'fadeIn 0.15s ease-out'
-        }}>
+        <div 
+          className="theme-light-enforced"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 8px)',
+            right: 0,
+            width: '240px',
+            background: 'var(--color-surface, #ffffff)',
+            borderRadius: '16px',
+            border: '1px solid var(--color-border)',
+            boxShadow: '0 12px 35px -8px rgba(0, 0, 0, 0.15)',
+            zIndex: 9999,
+            overflow: 'hidden',
+            animation: 'fadeIn 0.15s ease-out'
+          }}
+        >
           
           {/* Menu User Header (Compact 3-Line Layout) */}
           <div style={{ padding: '0.65rem 0.85rem', background: 'var(--color-subtle, #f8fafc)', borderBottom: '1px solid var(--color-border)' }}>
@@ -185,7 +193,6 @@ export const UserMenuDropdown = () => {
                 onClick={() => {
                   setIsOpen(false);
                   protectedNavigate('admin', false);
-                  navigate('/admin-portal');
                 }}
                 style={{
                   width: '100%',
@@ -215,7 +222,6 @@ export const UserMenuDropdown = () => {
               onClick={() => {
                 setIsOpen(false);
                 protectedNavigate('customer', false);
-                navigate('/client-portal');
               }}
               style={{
                 width: '100%',
@@ -243,7 +249,15 @@ export const UserMenuDropdown = () => {
               type="button"
               onClick={() => {
                 setIsOpen(false);
-                if (setIsDepositModalOpen) setIsDepositModalOpen(true);
+                if (typeof window !== 'undefined') {
+                  if (window.location.pathname.includes('client-portal')) {
+                    if (setIsDepositModalOpen) setIsDepositModalOpen(true);
+                  } else {
+                    window.location.href = '/client-portal?tab=wallet';
+                  }
+                } else if (setIsDepositModalOpen) {
+                  setIsDepositModalOpen(true);
+                }
               }}
               style={{
                 width: '100%',
@@ -384,7 +398,11 @@ export const UserMenuDropdown = () => {
               type="button"
               onClick={() => {
                 setIsOpen(false);
-                if (setIsOrderWizardOpen) setIsOrderWizardOpen(true);
+                if (setIsOrderWizardOpen) {
+                  setIsOrderWizardOpen(true);
+                } else {
+                  protectedNavigate('customer', true);
+                }
               }}
               style={{
                 width: '100%',

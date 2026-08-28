@@ -625,10 +625,8 @@ export const HeaderNav = () => {
                     onClick={() => {
                       if (safeAuthUser?.role === 'admin') {
                         protectedNavigate('admin', false);
-                        navigate('/admin-portal');
                       } else {
                         protectedNavigate('customer', false);
-                        navigate('/client-portal');
                       }
                     }}
                   >
@@ -1345,9 +1343,8 @@ export const HeaderNav = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    protectedNavigate('customer', false);
                     setIsMobileMenuOpen(false);
-                    navigate('/client-portal');
+                    protectedNavigate('customer', false);
                   }}
                   style={{
                     background: isDark ? '#1e293b' : '#f8fafc',

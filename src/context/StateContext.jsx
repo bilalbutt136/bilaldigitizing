@@ -1384,6 +1384,8 @@ export const StateProvider = ({ children }) => {
   };
 
   const protectedNavigate = (targetView, triggerOrderWizard = false, initialData = null) => {
+    const isAuthed = isAuthenticated || Boolean(authUser?.email);
+
     if (targetView === 'public') {
       setCurrentView('public');
       if (typeof window !== 'undefined' && window.location.pathname !== '/') {
@@ -1391,13 +1393,18 @@ export const StateProvider = ({ children }) => {
       }
       return;
     }
+
     if (targetView === 'customer') {
-      if (isAuthenticated) {
+      if (isAuthed) {
         setCurrentView('customer');
         if (triggerOrderWizard) {
           openOrderWizard(initialData);
-        } else if (typeof window !== 'undefined' && !window.location.pathname.includes('client')) {
-          window.location.href = '/client-portal';
+        } else if (typeof window !== 'undefined') {
+          if (!window.location.pathname.includes('client-portal') && !window.location.pathname.includes('client')) {
+            window.location.href = '/client-portal';
+          } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
         }
       } else {
         setAuthModalTarget('customer');
@@ -1407,11 +1414,16 @@ export const StateProvider = ({ children }) => {
       }
       return;
     }
+
     if (targetView === 'admin') {
-      if (isAuthenticated && authUser?.role === 'admin') {
+      if (isAuthed && authUser?.role === 'admin') {
         setCurrentView('admin');
-        if (typeof window !== 'undefined' && !window.location.pathname.includes('admin')) {
-          window.location.href = '/admin-portal';
+        if (typeof window !== 'undefined') {
+          if (!window.location.pathname.includes('admin-portal') && !window.location.pathname.includes('admin')) {
+            window.location.href = '/admin-portal';
+          } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
         }
       } else {
         showToast('Access Restricted to Studio Admin.', 'warning');
