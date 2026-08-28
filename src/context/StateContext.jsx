@@ -768,11 +768,13 @@ export const StateProvider = ({ children }) => {
     };
   }, [isAuthenticated, authUser, refreshUnreadChatCount, refreshNotifications]);
 
-  const showToast = (message, type = 'info') => {
+  const showToast = (message, type = 'info', playSound = false) => {
     setToast({ message, type, id: Date.now() });
-    try {
-      playNotificationSound('notification');
-    } catch {}
+    if (playSound) {
+      try {
+        playNotificationSound('notification');
+      } catch {}
+    }
     setTimeout(() => {
       setToast(null);
     }, 4000);
