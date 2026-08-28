@@ -288,14 +288,14 @@ export const AdminDashboard = () => {
   ];
 
   return (
-    <div className="admin-portal-wrapper" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 70px)', maxHeight: 'calc(100dvh - 70px)', minHeight: 'calc(100dvh - 70px)', background: 'var(--bg-main)', position: 'relative', width: '100%', overflow: 'hidden' }}>
+    <div className="admin-portal-wrapper" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 114px)', maxHeight: 'calc(100vh - 114px)', minHeight: 'calc(100vh - 114px)', background: 'var(--bg-main)', position: 'relative', width: '100%', overflow: 'hidden' }}>
       
       {/* Desktop Independent Layout Styles */}
       <style dangerouslySetInnerHTML={{__html: `
         @media (min-width: 1025px) {
           .admin-portal-wrapper {
-            height: calc(100dvh - 70px) !important;
-            max-height: calc(100dvh - 70px) !important;
+            height: calc(100vh - 114px) !important;
+            max-height: calc(100vh - 114px) !important;
             overflow: hidden !important;
           }
           .admin-portal-body {
@@ -305,6 +305,9 @@ export const AdminDashboard = () => {
             overflow: hidden !important;
           }
           .admin-sidebar-fixed {
+            width: 255px !important;
+            min-width: 255px !important;
+            max-width: 255px !important;
             height: 100% !important;
             max-height: 100% !important;
             min-height: 0 !important;
@@ -318,6 +321,10 @@ export const AdminDashboard = () => {
             overflow-y: auto !important;
             overflow-x: hidden !important;
             scroll-behavior: smooth;
+          }
+          .admin-main-content.chat-mode {
+            padding: 0.65rem 1.25rem 0.85rem !important;
+            overflow: hidden !important;
           }
         }
         /* Custom scrollbar for sidebar & main content */
@@ -547,9 +554,9 @@ export const AdminDashboard = () => {
       <div className="admin-portal-body" style={{ display: 'flex', flex: 1, width: '100%', minHeight: 0, height: '100%', position: 'relative', overflow: 'hidden' }}>
         <aside className="admin-sidebar-fixed desktop-only" style={{
           position: 'relative',
-          width: '280px',
-          minWidth: '280px',
-          maxWidth: '280px',
+          width: '255px',
+          minWidth: '255px',
+          maxWidth: '255px',
           height: '100%',
           maxHeight: '100%',
           background: 'var(--bg-card)',
@@ -557,7 +564,7 @@ export const AdminDashboard = () => {
           boxShadow: '4px 0 20px rgba(15, 23, 42, 0.04)',
           overflowY: 'auto',
           overflowX: 'hidden',
-          padding: '1.25rem 1rem',
+          padding: '1rem 0.85rem',
           zIndex: 90,
           display: 'flex',
           flexDirection: 'column',

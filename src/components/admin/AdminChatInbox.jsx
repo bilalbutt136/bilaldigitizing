@@ -830,7 +830,7 @@ export const AdminChatInbox = () => {
         className="chat-inbox-grid"
         style={{ 
           display: 'grid', 
-          gridTemplateColumns: '340px 1fr', 
+          gridTemplateColumns: '290px 1fr', 
           height: '100%', 
           maxHeight: '100%',
           minHeight: 0, 
