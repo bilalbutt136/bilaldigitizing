@@ -791,7 +791,7 @@ export const CustomerDashboard = () => {
         style={{ 
           maxWidth: '1680px', 
           width: '100%', 
-          padding: '0 2.25rem', 
+          padding: '0 1.25rem', 
           margin: '0 auto', 
           boxSizing: 'border-box',
           height: '100%',
@@ -1091,8 +1091,8 @@ export const CustomerDashboard = () => {
           className="dashboard-layout-grid"
           style={{
             display: 'grid',
-            gridTemplateColumns: '280px 1fr',
-            gap: '1.5rem',
+            gridTemplateColumns: '250px 1fr',
+            gap: '1rem',
             alignItems: 'stretch',
             flex: 1,
             height: '100%',
@@ -1149,28 +1149,28 @@ export const CustomerDashboard = () => {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginBottom: '1.75rem',
+                  marginBottom: '0.75rem',
                   flexWrap: 'wrap',
-                  gap: '1rem',
+                  gap: '0.75rem',
                   background: 'var(--bg-card)',
-                  padding: '1.25rem 1.75rem',
-                  borderRadius: 'var(--radius-lg)',
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: 'var(--radius-md)',
                   boxShadow: 'var(--shadow-sm)',
                   border: '1px solid var(--border-color)'
                 }}>
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                      <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                         Dashboard
                       </h1>
-                      <span className="badge badge-assigned" style={{ fontSize: '0.725rem', background: 'var(--color-primary-light)', color: 'var(--color-primary)', border: '1px solid var(--color-border)' }}>CLIENT ACCOUNT</span>
+                      <span className="badge badge-assigned" style={{ fontSize: '0.68rem', padding: '0.1rem 0.45rem', background: 'var(--color-primary-light)', color: 'var(--color-primary)', border: '1px solid var(--color-border)' }}>CLIENT ACCOUNT</span>
                     </div>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.2rem 0 0' }}>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', margin: '0.1rem 0 0' }}>
                       Welcome back, <strong>{activeUser?.name || 'Client'}</strong>{activeUser?.company ? ` (${activeUser.company})` : ''}
                     </p>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                     <button 
                       type="button"
                       className="btn btn-outline btn-sm"
@@ -1178,15 +1178,15 @@ export const CustomerDashboard = () => {
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '0.45rem',
-                        padding: '0.65rem 1.15rem',
-                        fontSize: '0.85rem',
+                        gap: '0.35rem',
+                        padding: '0.4rem 0.85rem',
+                        fontSize: '0.8rem',
                         fontWeight: 700,
                         borderRadius: 'var(--radius-md)',
                         cursor: 'pointer'
                       }}
                     >
-                      <Wallet size={16} style={{ color: 'var(--color-primary)' }} /> Top-Up Wallet
+                      <Wallet size={14} style={{ color: 'var(--color-primary)' }} /> Top-Up Wallet
                     </button>
 
                     <button 
@@ -1196,37 +1196,37 @@ export const CustomerDashboard = () => {
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.65rem 1.35rem',
-                        fontSize: '0.9rem',
+                        gap: '0.4rem',
+                        padding: '0.45rem 1.1rem',
+                        fontSize: '0.825rem',
                         fontWeight: 800,
                         borderRadius: 'var(--radius-md)',
-                        boxShadow: '0 4px 14px var(--color-primary-glow)',
+                        boxShadow: '0 3px 10px var(--color-primary-glow)',
                         cursor: 'pointer'
                       }}
                     >
-                      <PlusCircle size={18} /> Order Now
+                      <PlusCircle size={15} /> Order Now
                     </button>
                   </div>
                 </div>
 
-                {/* Summary Stat Cards - Styled with Operations Desk Border-Left Accents */}
+                {/* Summary Stat Cards - Compact & High Information Density */}
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-                  gap: '1.25rem',
-                  marginBottom: '1.75rem'
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                  gap: '0.65rem',
+                  marginBottom: '0.75rem'
                 }}>
                   {/* Card 1: Wallet Balance */}
-                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid var(--color-primary)', background: 'var(--bg-card)' }}>
+                  <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid var(--color-primary)', background: 'var(--bg-card)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Studio Wallet Credit</span>
-                      <div style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
-                        <Wallet size={18} />
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Studio Wallet Credit</span>
+                      <div style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
+                        <Wallet size={14} />
                       </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '0.4rem' }}>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '0.2rem' }}>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)' }}>
                         ${walletBalance.toFixed(2)}
                       </div>
                       <button
@@ -1236,7 +1236,7 @@ export const CustomerDashboard = () => {
                           background: 'none',
                           border: 'none',
                           color: 'var(--orange-600)',
-                          fontSize: '0.75rem',
+                          fontSize: '0.72rem',
                           fontWeight: 800,
                           cursor: 'pointer',
                           padding: 0
@@ -1248,53 +1248,53 @@ export const CustomerDashboard = () => {
                   </div>
 
                   {/* Card 2: Active Jobs */}
-                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #3b82f6', background: 'var(--bg-card)' }}>
+                  <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid #3b82f6', background: 'var(--bg-card)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Digitizing Jobs</span>
-                      <div style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
-                        <Clock size={18} />
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Digitizing Jobs</span>
+                      <div style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
+                        <Clock size={14} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.4rem 0 0.1rem' }}>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0' }}>
                       {activeOrders.length}
                     </div>
                   </div>
 
                   {/* Card 3: Completed Downloads */}
-                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #10b981', background: 'var(--bg-card)' }}>
+                  <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid #10b981', background: 'var(--bg-card)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Completed Downloads</span>
-                      <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
-                        <CheckCircle2 size={18} />
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Completed Downloads</span>
+                      <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
+                        <CheckCircle2 size={14} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.4rem 0 0.1rem' }}>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0' }}>
                       {completedOrders.length}
                     </div>
                   </div>
 
                   {/* Card 4: Revisions Requested */}
-                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #8b5cf6', background: 'var(--bg-card)' }}>
+                  <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid #8b5cf6', background: 'var(--bg-card)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Revisions Requested</span>
-                      <div style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
-                        <RotateCcw size={18} />
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Revisions Requested</span>
+                      <div style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
+                        <RotateCcw size={14} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.4rem 0 0.1rem' }}>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0' }}>
                       {revisionOrders.length}
                     </div>
                   </div>
 
                   {/* Card 5: Total Spend */}
-                  <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #ec4899', background: 'var(--bg-card)' }}>
+                  <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid #ec4899', background: 'var(--bg-card)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Invoiced Spend</span>
-                      <div style={{ background: 'rgba(236, 72, 153, 0.12)', color: '#ec4899', padding: '0.4rem', borderRadius: 'var(--radius-sm)' }}>
-                        <DollarSign size={18} />
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Invoiced Spend</span>
+                      <div style={{ background: 'rgba(236, 72, 153, 0.12)', color: '#ec4899', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
+                        <DollarSign size={14} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.4rem 0 0.1rem' }}>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0' }}>
                       ${totalSpent.toFixed(2)}
                     </div>
                   </div>
@@ -1636,11 +1636,11 @@ export const CustomerDashboard = () => {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: '1.25rem',
+                    marginBottom: '0.65rem',
                     flexWrap: 'wrap',
-                    gap: '0.85rem'
+                    gap: '0.5rem'
                   }}>
-                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                       <button 
                         type="button"
                         onClick={() => setFilterStatus('all')}
@@ -1650,11 +1650,11 @@ export const CustomerDashboard = () => {
                           color: filterStatus === 'all' ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-text-primary)',
                           border: filterStatus === 'all' ? '1.5px solid var(--color-primary)' : '1.5px solid var(--color-border)',
                           fontWeight: 800,
-                          fontSize: '0.825rem',
-                          padding: '0.45rem 0.85rem',
-                          borderRadius: '8px',
+                          fontSize: '0.76rem',
+                          padding: '0.32rem 0.65rem',
+                          borderRadius: '6px',
                           cursor: 'pointer',
-                          boxShadow: filterStatus === 'all' ? '0 4px 14px var(--color-primary-glow)' : 'none',
+                          boxShadow: filterStatus === 'all' ? '0 2px 8px var(--color-primary-glow)' : 'none',
                           transition: 'all 0.18s ease'
                         }}
                       >
@@ -1670,15 +1670,15 @@ export const CustomerDashboard = () => {
                             color: filterStatus === 'unpaid' ? '#ffffff' : '#c2410c',
                             border: filterStatus === 'unpaid' ? '1.5px solid #ea580c' : '1.5px solid #fdba74',
                             fontWeight: 900,
-                            fontSize: '0.825rem',
-                            padding: '0.45rem 0.85rem',
-                            borderRadius: '8px',
+                            fontSize: '0.76rem',
+                            padding: '0.32rem 0.65rem',
+                            borderRadius: '6px',
                             cursor: 'pointer',
-                            boxShadow: filterStatus === 'unpaid' ? '0 4px 14px rgba(234, 88, 12, 0.35)' : 'none',
+                            boxShadow: filterStatus === 'unpaid' ? '0 2px 8px rgba(234, 88, 12, 0.35)' : 'none',
                             transition: 'all 0.18s ease',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '0.35rem'
+                            gap: '0.25rem'
                           }}
                         >
                           ⏳ Waiting for Payment ({unpaidCount})
@@ -1694,11 +1694,11 @@ export const CustomerDashboard = () => {
                           color: filterStatus === 'active' ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-text-primary)',
                           border: filterStatus === 'active' ? '1.5px solid var(--color-primary)' : '1.5px solid var(--color-border)',
                           fontWeight: 800,
-                          fontSize: '0.825rem',
-                          padding: '0.45rem 0.85rem',
-                          borderRadius: '8px',
+                          fontSize: '0.76rem',
+                          padding: '0.32rem 0.65rem',
+                          borderRadius: '6px',
                           cursor: 'pointer',
-                          boxShadow: filterStatus === 'active' ? '0 4px 14px var(--color-primary-glow)' : 'none',
+                          boxShadow: filterStatus === 'active' ? '0 2px 8px var(--color-primary-glow)' : 'none',
                           transition: 'all 0.18s ease'
                         }}
                       >
@@ -1714,11 +1714,11 @@ export const CustomerDashboard = () => {
                           color: filterStatus === 'delivered' ? '#ffffff' : 'var(--color-success-text)',
                           border: filterStatus === 'delivered' ? '1.5px solid var(--color-success)' : '1.5px solid var(--color-border)',
                           fontWeight: 800,
-                          fontSize: '0.825rem',
-                          padding: '0.45rem 0.85rem',
-                          borderRadius: '8px',
+                          fontSize: '0.76rem',
+                          padding: '0.32rem 0.65rem',
+                          borderRadius: '6px',
                           cursor: 'pointer',
-                          boxShadow: filterStatus === 'delivered' ? '0 4px 14px rgba(16, 185, 129, 0.35)' : 'none',
+                          boxShadow: filterStatus === 'delivered' ? '0 2px 8px rgba(16, 185, 129, 0.35)' : 'none',
                           transition: 'all 0.18s ease'
                         }}
                       >
@@ -1734,11 +1734,11 @@ export const CustomerDashboard = () => {
                           color: filterStatus === 'revision' ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-text-primary)',
                           border: filterStatus === 'revision' ? '1.5px solid var(--color-primary)' : '1.5px solid var(--color-border)',
                           fontWeight: 800,
-                          fontSize: '0.825rem',
-                          padding: '0.45rem 0.85rem',
-                          borderRadius: '8px',
+                          fontSize: '0.76rem',
+                          padding: '0.32rem 0.65rem',
+                          borderRadius: '6px',
                           cursor: 'pointer',
-                          boxShadow: filterStatus === 'revision' ? '0 4px 14px var(--color-primary-glow)' : 'none',
+                          boxShadow: filterStatus === 'revision' ? '0 2px 8px var(--color-primary-glow)' : 'none',
                           transition: 'all 0.18s ease'
                         }}
                       >
@@ -1754,11 +1754,11 @@ export const CustomerDashboard = () => {
                           color: filterStatus === 'completed' ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-text-primary)',
                           border: filterStatus === 'completed' ? '1.5px solid var(--color-primary)' : '1.5px solid var(--color-border)',
                           fontWeight: 800,
-                          fontSize: '0.825rem',
-                          padding: '0.45rem 0.85rem',
-                          borderRadius: '8px',
+                          fontSize: '0.76rem',
+                          padding: '0.32rem 0.65rem',
+                          borderRadius: '6px',
                           cursor: 'pointer',
-                          boxShadow: filterStatus === 'completed' ? '0 4px 14px var(--color-primary-glow)' : 'none',
+                          boxShadow: filterStatus === 'completed' ? '0 2px 8px var(--color-primary-glow)' : 'none',
                           transition: 'all 0.18s ease'
                         }}
                       >
@@ -1767,47 +1767,47 @@ export const CustomerDashboard = () => {
                     </div>
 
                     {/* Search input */}
-                    <div style={{ position: 'relative', width: '100%', maxWidth: '280px' }}>
-                      <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
+                    <div style={{ position: 'relative', width: '100%', maxWidth: '240px' }}>
+                      <Search size={14} style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
                       <input 
                         type="text" 
                         className="form-control"
                         placeholder="Search order ID or title..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{ paddingLeft: '2.2rem', fontSize: '0.85rem' }}
+                        style={{ paddingLeft: '2rem', fontSize: '0.78rem', height: '32px', borderRadius: '6px' }}
                       />
                     </div>
                   </div>
 
                   {filteredDigitizingOrders.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-                      <FileText size={42} style={{ color: 'var(--text-light)', marginBottom: '0.75rem' }} />
-                      <p style={{ fontWeight: 600, fontSize: '1.05rem' }}>No orders found matching your search filter.</p>
-                      <p style={{ fontSize: '0.85rem' }}>Click "Upload New Design Brief" to place your embroidery or vector job.</p>
+                    <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--text-muted)' }}>
+                      <FileText size={36} style={{ color: 'var(--text-light)', marginBottom: '0.5rem' }} />
+                      <p style={{ fontWeight: 600, fontSize: '0.95rem' }}>No orders found matching your search filter.</p>
+                      <p style={{ fontSize: '0.8rem' }}>Click "Order Now" to place your embroidery or vector job.</p>
                     </div>
                   ) : (
                     <>
                       {/* A. DESKTOP DATA TABLE (Screens > 768px) */}
                       <div className="desktop-table-view" style={{ 
-                        maxHeight: '560px', 
+                        maxHeight: '680px', 
                         overflowY: 'auto', 
                         overflowX: 'auto', 
                         border: '1px solid var(--border-color)',
-                        borderRadius: '12px',
+                        borderRadius: '10px',
                         background: 'var(--bg-card)',
                         boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)'
                       }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.825rem' }}>
                           <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-surface)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                            <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-main)' }}>
-                              <th style={{ padding: '0.75rem 1rem' }}>Uploaded Artwork & Design</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Service Type</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Date Submitted</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Delivery & Order Status</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Payment Status</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Cost</th>
-                              <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Actions</th>
+                            <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-main)', fontSize: '0.72rem', fontWeight: 800 }}>
+                              <th style={{ padding: '0.45rem 0.75rem' }}>Uploaded Artwork & Design</th>
+                              <th style={{ padding: '0.45rem 0.75rem' }}>Service Type</th>
+                              <th style={{ padding: '0.45rem 0.75rem' }}>Date Submitted</th>
+                              <th style={{ padding: '0.45rem 0.75rem' }}>Delivery & Order Status</th>
+                              <th style={{ padding: '0.45rem 0.75rem' }}>Payment Status</th>
+                              <th style={{ padding: '0.45rem 0.75rem' }}>Cost</th>
+                              <th style={{ padding: '0.45rem 0.75rem', textAlign: 'right' }}>Actions</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1826,8 +1826,8 @@ export const CustomerDashboard = () => {
                                   onMouseLeave={(e) => e.currentTarget.style.background = isDelivered ? 'rgba(16, 185, 129, 0.08)' : (isPaid ? 'var(--bg-card)' : 'rgba(249, 115, 22, 0.04)')}
                                 >
                                   {/* Title & Interactive Lightbox Artwork Thumbnail */}
-                                  <td style={{ padding: '1rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                                  <td style={{ padding: '0.5rem 0.75rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                                       <div 
                                         style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}
                                         onClick={() => setLightboxOrder(ord)}
@@ -1852,13 +1852,13 @@ export const CustomerDashboard = () => {
                                             e.currentTarget.onerror = null;
                                             e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
                                           }}
-                                          style={{ width: '52px', height: '52px', borderRadius: '8px', objectFit: 'cover', border: isDelivered ? '2px solid #10b981' : '1.5px solid var(--orange-600)' }}
+                                          style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover', border: isDelivered ? '2px solid #10b981' : '1.5px solid var(--orange-600)' }}
                                         />
                                         <div style={{
                                           position: 'absolute',
                                           inset: 0,
                                           background: 'rgba(15, 23, 42, 0.4)',
-                                          borderRadius: '8px',
+                                          borderRadius: '6px',
                                           display: 'flex',
                                           alignItems: 'center',
                                           justifyContent: 'center',
@@ -1869,16 +1869,16 @@ export const CustomerDashboard = () => {
                                         onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
                                         onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
                                         >
-                                          <ZoomIn size={16} />
+                                          <ZoomIn size={14} />
                                         </div>
                                       </div>
 
                                       <div>
-                                        <div style={{ fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.92rem' }}>
+                                        <div style={{ fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.84rem' }}>
                                           {ord?.title || 'Embroidery Digitizing Order'}
-                                          {ord?.isRush && <span className="badge badge-rush" style={{ fontSize: '0.65rem' }}>RUSH</span>}
+                                          {ord?.isRush && <span className="badge badge-rush" style={{ fontSize: '0.6rem', padding: '0.05rem 0.3rem' }}>RUSH</span>}
                                         </div>
-                                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
                                           ID: <strong>{formatOrderId(ord?.id)}</strong>{ord?.dimensions?.width && ord?.dimensions?.height ? ` • ${ord.dimensions.width}"x${ord.dimensions.height}"` : ''}
                                         </div>
                                       </div>
@@ -1886,43 +1886,43 @@ export const CustomerDashboard = () => {
                                   </td>
 
                                   {/* Service Type */}
-                                  <td style={{ padding: '1rem' }}>
-                                    <div style={{ fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.88rem' }}>
+                                  <td style={{ padding: '0.5rem 0.75rem' }}>
+                                    <div style={{ fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem' }}>
                                       {ord?.type === 'vector' ? '✒️ Vector Art' : (ord?.type === 'patch' || ord?.type === 'patches' ? '🏷️ Custom Patches' : '🧵 Embroidery Digitizing')}
                                     </div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
                                       {ord?.serviceCategory || (ord?.type === 'vector' ? 'Vector Art Conversion' : (ord?.type === 'patch' || ord?.type === 'patches' ? 'Custom Physical Patches' : 'Embroidery Digitizing'))}
                                     </div>
                                   </td>
 
                                   {/* Date Submitted */}
-                                  <td style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.825rem' }}>
+                                  <td style={{ padding: '0.5rem 0.75rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
                                     <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>
                                       {ord?.createdAt || ord?.created_at ? new Date(ord.createdAt || ord.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
                                     </div>
-                                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                                       {ord?.createdAt || ord?.created_at ? new Date(ord.createdAt || ord.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : ''}
                                     </div>
                                   </td>
 
                                   {/* Delivery & Order Status (NEW) */}
-                                  <td style={{ padding: '1rem' }}>
+                                  <td style={{ padding: '0.5rem 0.75rem' }}>
                                     {getOrderDeliveryStatusBadge(ord)}
                                   </td>
 
                                   {/* Payment Status */}
-                                  <td style={{ padding: '1rem' }}>
+                                  <td style={{ padding: '0.5rem 0.75rem' }}>
                                     {getPaymentStatusBadge(ord)}
                                   </td>
 
                                   {/* Cost */}
-                                  <td style={{ padding: '1rem', fontWeight: 800, color: 'var(--text-main)', fontSize: '0.92rem' }}>
+                                  <td style={{ padding: '0.5rem 0.75rem', fontWeight: 800, color: 'var(--text-main)', fontSize: '0.85rem' }}>
                                     ${parseFloat(ord?.price || ord?.totalPrice || 0).toFixed(2)}
                                   </td>
 
                                   {/* Actions */}
-                                  <td style={{ padding: '1rem', textAlign: 'right' }}>
-                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                                  <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                                       {isDelivered && (
                                         <button
                                           type="button"
@@ -1931,67 +1931,63 @@ export const CustomerDashboard = () => {
                                             background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                                             color: '#ffffff',
                                             border: 'none',
-                                            padding: '0.45rem 0.85rem',
-                                            borderRadius: '8px',
+                                            padding: '0.32rem 0.65rem',
+                                            borderRadius: '6px',
                                             fontWeight: 800,
-                                            fontSize: '0.78rem',
+                                            fontSize: '0.74rem',
                                             cursor: 'pointer',
-                                            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
+                                            boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)',
                                             display: 'inline-flex',
                                             alignItems: 'center',
-                                            gap: '0.3rem',
+                                            gap: '0.25rem',
                                             whiteSpace: 'nowrap'
                                           }}
                                         >
-                                          <PackageCheck size={14} /> Download / Review
+                                          <PackageCheck size={12} /> Download / Review
                                         </button>
                                       )}
 
                                       {!isPaid && (
                                         <button
                                           type="button"
-                                          onClick={() => handlePayOrder(ord)}
+                                          onClick={() => {
+                                            const ordService = ord?.type === 'vector' ? 'vector' : (ord?.type === 'patch' ? 'patch' : 'embroidery');
+                                            setMobileOrderDefaultService(ordService);
+                                            setIsMobileOrderOpen(true);
+                                          }}
+                                          className="btn btn-primary-orange btn-sm"
                                           style={{
-                                            background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-                                            color: '#ffffff',
-                                            border: 'none',
-                                            padding: '0.45rem 0.85rem',
-                                            borderRadius: '8px',
-                                            fontWeight: 800,
-                                            fontSize: '0.78rem',
-                                            cursor: 'pointer',
-                                            boxShadow: '0 2px 8px rgba(249, 115, 22, 0.28)',
+                                            padding: '0.32rem 0.65rem',
+                                            fontSize: '0.74rem',
+                                            fontWeight: 900,
+                                            borderRadius: '6px',
+                                            whiteSpace: 'nowrap',
+                                            boxShadow: '0 2px 8px rgba(249, 115, 22, 0.35)',
                                             display: 'inline-flex',
                                             alignItems: 'center',
-                                            gap: '0.3rem',
-                                            lineHeight: 1.2,
-                                            whiteSpace: 'nowrap',
-                                            transition: 'all 0.15s ease'
+                                            gap: '0.25rem'
                                           }}
-                                          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
-                                          onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
                                         >
                                           <Zap size={12} /> Pay Now
                                         </button>
                                       )}
 
-                                      <button
+                                      <button 
+                                        type="button"
                                         className="btn btn-outline btn-sm"
                                         onClick={() => setSelectedOrderForDrawer(ord)}
-                                        style={{
+                                        style={{ 
+                                          padding: '0.32rem 0.65rem', 
+                                          fontSize: '0.74rem', 
+                                          fontWeight: 700, 
+                                          borderRadius: '6px',
+                                          whiteSpace: 'nowrap',
                                           display: 'inline-flex',
                                           alignItems: 'center',
-                                          gap: '0.35rem',
-                                          padding: '0.45rem 0.85rem',
-                                          borderRadius: '8px',
-                                          fontWeight: 700,
-                                          fontSize: '0.78rem',
-                                          color: 'var(--navy-800)',
-                                          borderColor: 'var(--border-color)',
-                                          whiteSpace: 'nowrap'
+                                          gap: '0.25rem'
                                         }}
                                       >
-                                        View Order <ChevronRight size={14} />
+                                        View Order <ChevronRight size={12} />
                                       </button>
                                     </div>
                                   </td>
@@ -2353,25 +2349,25 @@ export const CustomerDashboard = () => {
 
             {/* TAB: MY ORDERS (Clean, high-performance order management) */}
             {activeTab === 'orders' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {/* Header & Controls */}
                 <div style={{
                   background: 'var(--bg-card)',
-                  border: '1.5px solid var(--border-color)',
-                  borderRadius: '16px',
-                  padding: '1.25rem 1.5rem',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '0.65rem 1.25rem',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   flexWrap: 'wrap',
-                  gap: '1rem',
+                  gap: '0.75rem',
                   boxShadow: 'var(--shadow-sm)'
                 }}>
                   <div>
-                    <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                    <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: 'var(--navy-950)' }}>
                       My Orders
                     </h2>
-                    <p style={{ margin: '0.2rem 0 0', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                    <p style={{ margin: '0.1rem 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                       Track artwork production, machine files, quotes & revisions
                     </p>
                   </div>
