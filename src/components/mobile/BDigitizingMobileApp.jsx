@@ -291,7 +291,7 @@ export const BDigitizingMobileApp = () => {
     if (!o) return false;
     const s = String(o?.status || '').toLowerCase().trim();
     const pStatus = String(o?.payment_status || o?.paymentStatus || '').toLowerCase().trim();
-    const isPaidFlag = o?.isPaid || Boolean(o?.paid_at) || pStatus === 'paid' || pStatus === 'completed' || pStatus === 'wallet';
+    const isPaidFlag = o?.isPaid === true || Boolean(o?.paid_at) || pStatus === 'paid' || pStatus === 'completed' || pStatus === 'wallet' || ['in_progress', 'digitizing', 'assigned', 'qc', 'delivered', 'completed'].includes(s);
     if (isPaidFlag) return false;
     return s === 'awaiting_payment' || s === 'pending_payment' || s === 'submitted' || s === 'pending' || pStatus === 'unpaid' || pStatus === 'pending';
   };

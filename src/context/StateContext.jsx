@@ -741,18 +741,35 @@ export const StateProvider = ({ children }) => {
       refreshUnreadChatCount();
       if (msgPayload && (msgPayload.new || msgPayload.record)) {
         const msg = msgPayload.new || msgPayload.record;
-        let currentRole = 'customer';
+        let currentRole = isAdminUser ? 'admin' : 'customer';
+        let myEmail = (userEmail || '').toLowerCase().trim();
         try {
           const saved = localStorage.getItem('bdigi_auth_user');
-          if (saved) currentRole = JSON.parse(saved).role || 'customer';
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed.role === 'admin') currentRole = 'admin';
+            if (!myEmail) myEmail = (parsed.email || '').toLowerCase().trim();
+          }
         } catch {}
         
         if (msg.sender === 'client' && currentRole === 'admin') {
           playNotificationSound('chat');
           showToast(`💬 New message from ${msg.sender_name || 'Client'}`, 'info');
         } else if ((msg.sender === 'admin' || msg.sender === 'digitizer') && currentRole !== 'admin') {
-          playNotificationSound('chat');
-          showToast(`💬 New message from ${msg.sender_name || 'Studio Support'}`, 'info');
+          // Strictly verify that this message belongs to this specific customer
+          const msgEmail = (msg.client_email || msg.clientEmail || '').toLowerCase().trim();
+          const msgConvId = String(msg.conversation_id || '').toLowerCase().trim();
+          const isAddressedToMe = myEmail && (
+            msgEmail === myEmail ||
+            msgConvId === `inbox-${myEmail}` ||
+            msgConvId === `support-${myEmail}` ||
+            msgConvId.includes(myEmail)
+          );
+
+          if (isAddressedToMe) {
+            playNotificationSound('chat');
+            showToast(`💬 New message from ${msg.sender_name || 'Studio Support'}`, 'info');
+          }
         }
       }
     }, () => {
@@ -1596,16 +1613,32 @@ export const StateProvider = ({ children }) => {
       if (isMatch) {
         const resolvedPayStatus = safeExtraData.paymentStatus || safeExtraData.payment_status || (newStatus === 'in_progress' ? 'paid' : ord.payment_status || ord.paymentStatus);
         const isPaidComputed = resolvedPayStatus === 'paid' || resolvedPayStatus === 'completed' || resolvedPayStatus === 'wallet' || newStatus === 'in_progress';
-        return {
+        let resolvedStatus = newStatus || ord.status || 'in_progress';
+        if (isPaidComputed && (resolvedStatus === 'awaiting_payment' || resolvedStatus === 'pending_payment' || resolvedStatus === 'submitted')) {
+          resolvedStatus = 'in_progress';
+        }
+
+        const updatedOrderObj = {
           ...ord,
-          status: newStatus,
+          status: resolvedStatus,
           ...safeExtraData,
           payment_status: isPaidComputed ? 'paid' : resolvedPayStatus,
           paymentStatus: isPaidComputed ? 'paid' : resolvedPayStatus,
           isPaid: isPaidComputed,
           paid_at: isPaidComputed ? (ord.paid_at || new Date().toISOString()) : ord.paid_at,
-          history: [...(ord.history || []), { timestamp: new Date().toISOString(), label: `Status updated to ${newStatus}` }]
+          history: [...(ord.history || []), { timestamp: new Date().toISOString(), label: `Status updated to ${resolvedStatus}` }]
         };
+
+        setSelectedOrderForDrawer(prevDrawer => {
+          if (!prevDrawer) return null;
+          const prevClean = String(prevDrawer.id || '').trim().replace(/^#+/, '');
+          if (prevClean === cleanTargetId || prevDrawer.id === orderId || prevDrawer.id === targetWithHash) {
+            return { ...prevDrawer, ...updatedOrderObj };
+          }
+          return prevDrawer;
+        });
+
+        return updatedOrderObj;
       }
       return ord;
     }));

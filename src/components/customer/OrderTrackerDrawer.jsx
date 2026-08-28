@@ -813,7 +813,7 @@ export const OrderTrackerDrawer = () => {
               </div>
               <button
                 type="button"
-                onClick={() => updateOrderStatus(ord.id, ord.status || 'in_progress', { payment_status: 'paid', isPaid: true })}
+                onClick={() => updateOrderStatus(ord.id, 'in_progress', { payment_status: 'paid', paymentStatus: 'paid', isPaid: true, paid_at: new Date().toISOString() })}
                 className="btn btn-outline btn-sm"
                 style={{ fontSize: '0.78rem', fontWeight: 800, borderColor: '#10b981', color: '#047857', background: '#ecfdf5' }}
               >
@@ -1545,7 +1545,7 @@ export const OrderTrackerDrawer = () => {
             ) : !isPaid && isAdmin ? (
               <button
                 type="button"
-                onClick={() => updateOrderStatus(ord.id, ord.status || 'in_progress', { payment_status: 'paid', isPaid: true })}
+                onClick={() => updateOrderStatus(ord.id, 'in_progress', { payment_status: 'paid', paymentStatus: 'paid', isPaid: true, paid_at: new Date().toISOString() })}
                 className="btn btn-outline btn-sm"
                 style={{ fontSize: '0.8rem', fontWeight: 800, borderColor: '#10b981', color: '#047857', background: '#ecfdf5' }}
               >

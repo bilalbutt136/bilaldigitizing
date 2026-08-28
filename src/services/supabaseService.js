@@ -1776,17 +1776,23 @@ export function subscribeToNotifications({ onNewNotification, onNotificationUpda
     const notif = payload.new || payload.record || payload;
     if (!notif) return;
 
-    // Verify recipient permissions
+    // Verify recipient permissions strictly
     if (isAdmin) {
       if (notif.recipient_role !== 'admin' && notif.recipient_role !== 'all' && notif.recipient_role) {
         return;
       }
     } else {
-      const recipientEmail = (notif.recipient_email || '').toLowerCase().trim();
+      const recipientEmail = (notif.recipient_email || notif.client_email || notif.clientEmail || '').toLowerCase().trim();
       const thisEmail = (userEmail || '').toLowerCase().trim();
-      const isForThisUser = !notif.recipient_role || notif.recipient_role === 'all' ||
-        (notif.recipient_role === 'client' && (!recipientEmail || recipientEmail === thisEmail));
-      if (!isForThisUser) return;
+      
+      // If notification is explicitly for admin only, do not show to client
+      if (notif.recipient_role === 'admin') return;
+
+      // If notification has a specific recipient email, it MUST match this client's email
+      if (recipientEmail && thisEmail && recipientEmail !== thisEmail) return;
+
+      // If notification is role-specific to client, require email match if email is present
+      if (notif.recipient_role === 'client' && recipientEmail && recipientEmail !== thisEmail) return;
     }
 
     if (payload.eventType === 'UPDATE') {

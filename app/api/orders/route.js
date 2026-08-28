@@ -285,7 +285,12 @@ export async function POST(request) {
         }
       }
 
-      const updatePayload = { status: newStatus || 'in_progress', updated_at: new Date().toISOString() };
+      const payStatus = extraData?.paymentStatus || extraData?.payment_status || (newStatus === 'in_progress' ? 'paid' : null);
+      let resolvedStatus = newStatus || 'in_progress';
+      if (payStatus === 'paid' && (resolvedStatus === 'awaiting_payment' || resolvedStatus === 'pending_payment' || resolvedStatus === 'submitted' || !resolvedStatus)) {
+        resolvedStatus = 'in_progress';
+      }
+      const updatePayload = { status: resolvedStatus, updated_at: new Date().toISOString() };
       
       if (extraData?.deliveryNotes || extraData?.deliveryMessage) {
         let existingNotes = {};
@@ -301,7 +306,6 @@ export async function POST(request) {
         updatePayload.notes = JSON.stringify(existingNotes);
       }
 
-      const payStatus = extraData?.paymentStatus || extraData?.payment_status || (newStatus === 'in_progress' ? 'paid' : null);
       if (payStatus) {
         updatePayload.payment_status = payStatus;
         if (payStatus === 'paid') {
