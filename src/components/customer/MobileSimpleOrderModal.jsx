@@ -171,13 +171,13 @@ const CORE_PACKAGES = {
       service_type: 'patch',
       badge: 'SAMPLE RUN',
       is_popular: false,
-      title: 'Sample Batch (10–50 Pcs)',
-      subtitle: 'Low-minimum run perfect for small brands, clubs, prototypes & events.',
+      title: 'Sample Batch (50–100 Pcs)',
+      subtitle: 'Minimum run perfect for small brands, clubs, prototypes & events.',
       price: 4.50,
       original_price: 6.50,
       turnaround: '3–5 Days',
       features: [
-        'Ultra-Low 10 Pieces Minimum Order',
+        '50 Pieces Minimum Order',
         '12-Hour Free Digital Production Proof',
         'Velcro Hook & Loop or Iron-On Backings',
         'Custom Embroidered, Woven or 3D PVC'
@@ -384,7 +384,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
   };
 
   const handleQuantityChange = (delta) => {
-    const minVal = selectedService === 'patch' ? 10 : 1;
+    const minVal = selectedService === 'patch' ? 50 : 1;
     const stepVal = selectedService === 'patch' ? (quantity >= 100 ? 50 : 10) : 1;
     const nextVal = Math.max(minVal, quantity + (delta * stepVal));
     setQuantity(nextVal);
@@ -394,7 +394,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
   const handleQuantityInput = (val) => {
     setQuantityInput(val);
     const parsed = parseInt(val, 10);
-    const minVal = selectedService === 'patch' ? 10 : 1;
+    const minVal = selectedService === 'patch' ? 50 : 1;
     if (!isNaN(parsed) && parsed >= minVal) {
       setQuantity(parsed);
     }

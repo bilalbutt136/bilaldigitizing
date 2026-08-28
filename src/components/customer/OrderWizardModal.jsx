@@ -501,8 +501,16 @@ export const OrderWizardModal = () => {
   const updatePatchItem = (id, field, value) => {
     setPatchItems(prev => prev.map(item => {
       if (item.id === id) {
+        if (field === 'packageTier') {
+          let minForTier = 50;
+          if (value === 'standard') minForTier = 100;
+          if (value === 'premium') minForTier = 500;
+          const currentQ = item.quantity || 50;
+          const newQ = Math.max(minForTier, currentQ);
+          return { ...item, packageTier: value, quantity: newQ, quantityInput: String(newQ) };
+        }
         if (field === 'quantity') {
-          const num = Math.max(1, parseInt(value, 10) || 1);
+          const num = Math.max(50, parseInt(value, 10) || 50);
           return { ...item, quantity: num, quantityInput: String(num) };
         }
         if (field === 'quantityInput') {
@@ -819,6 +827,11 @@ export const OrderWizardModal = () => {
     let hasMissingFiles = false;
     if (type === 'patch') {
       for (const item of patchItems) {
+        const itemQty = parseInt(item.quantityInput || item.quantity, 10) || 0;
+        if (itemQty < 50) {
+          showToast('Custom Patches require a minimum quantity of 50 pieces per item.', 'warning');
+          return false;
+        }
         if (!item.files || item.files.length === 0) {
           hasMissingFiles = true;
           break;
@@ -2138,7 +2151,7 @@ export const OrderWizardModal = () => {
                                   onChange={(e) => updatePatchItem(item.id, 'packageTier', e.target.value)} 
                                   style={{ width: '100%', background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)', border: '1.5px solid var(--border-color, #cbd5e1)', fontSize: '0.85rem', fontWeight: 700, borderRadius: '8px', padding: '0.5rem' }}
                                 >
-                                  <option value="basic">⚡ Sample Batch (10–50 Pcs) — ${basicRate.toFixed(2)}/pc</option>
+                                  <option value="basic">⚡ Sample Batch (50–100 Pcs) — ${basicRate.toFixed(2)}/pc</option>
                                   <option value="standard">⭐ Production Batch (100–500 Pcs) — ${standardRate.toFixed(2)}/pc</option>
                                   <option value="premium">✨ Wholesale Bulk Batch (500+ Pcs) — ${premiumRate.toFixed(2)}/pc</option>
                                 </select>
@@ -2176,12 +2189,12 @@ export const OrderWizardModal = () => {
 
                               <div>
                                 <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
-                                  Quantity (Pcs) *
+                                  Quantity (Pcs) * <span style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 700 }}>(Min. 50)</span>
                                 </label>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                  <button type="button" onClick={() => updatePatchItem(item.id, 'quantity', Math.max(10, (item.quantity || 50) - 10))} style={{ width: '34px', height: '36px', background: 'var(--color-surface, #ffffff)', border: '1.5px solid var(--border-color, #cbd5e1)', color: 'var(--color-text-primary, #0f172a)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>-</button>
-                                  <input type="text" value={item.quantityInput} onChange={(e) => updatePatchItem(item.id, 'quantityInput', e.target.value)} style={{ textAlign: 'center', background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)', border: '1.5px solid var(--border-color, #cbd5e1)', fontWeight: 800, padding: '0.35rem', borderRadius: '8px', width: '65px' }} />
-                                  <button type="button" onClick={() => updatePatchItem(item.id, 'quantity', (item.quantity || 50) + 10)} style={{ width: '34px', height: '36px', background: 'var(--color-surface, #ffffff)', border: '1.5px solid var(--border-color, #cbd5e1)', color: 'var(--color-text-primary, #0f172a)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }}>+</button>
+                                  <button type="button" onClick={() => updatePatchItem(item.id, 'quantity', Math.max(50, (item.quantity || 50) - 10))} style={{ width: '34px', height: '36px', background: 'var(--color-surface, #ffffff)', border: '1.5px solid var(--border-color, #cbd5e1)', color: 'var(--color-text-primary, #0f172a)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }} title="Decrease (Min 50)">-</button>
+                                  <input type="text" value={item.quantityInput} onChange={(e) => updatePatchItem(item.id, 'quantityInput', e.target.value)} onBlur={() => { const parsed = parseInt(item.quantityInput, 10); if (isNaN(parsed) || parsed < 50) { updatePatchItem(item.id, 'quantity', 50); } }} style={{ textAlign: 'center', background: 'var(--color-surface, #ffffff)', color: 'var(--color-text-primary, #0f172a)', border: '1.5px solid var(--border-color, #cbd5e1)', fontWeight: 800, padding: '0.35rem', borderRadius: '8px', width: '65px' }} />
+                                  <button type="button" onClick={() => updatePatchItem(item.id, 'quantity', (item.quantity || 50) + 10)} style={{ width: '34px', height: '36px', background: 'var(--color-surface, #ffffff)', border: '1.5px solid var(--border-color, #cbd5e1)', color: 'var(--color-text-primary, #0f172a)', fontWeight: 900, borderRadius: '8px', cursor: 'pointer' }} title="Increase">+</button>
                                 </div>
                               </div>
                             </div>
