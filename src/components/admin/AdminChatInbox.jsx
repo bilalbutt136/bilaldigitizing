@@ -531,36 +531,25 @@ export const AdminChatInbox = () => {
     }
   };
 
-  const scrollToBottom = (behavior = 'smooth') => {
+  const scrollToBottom = () => {
     if (chatFeedRef.current) {
       chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
     }
     requestAnimationFrame(() => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
-      } else if (chatFeedRef.current) {
+      if (chatFeedRef.current) {
         chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
       }
     });
     setTimeout(() => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
-      } else if (chatFeedRef.current) {
+      if (chatFeedRef.current) {
         chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
       }
-    }, 60);
-    setTimeout(() => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
-      } else if (chatFeedRef.current) {
-        chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
-      }
-    }, 220);
+    }, 50);
   };
 
   // Auto-scroll chat feed on new messages, thread switch, or typing state
   useEffect(() => {
-    scrollToBottom('smooth');
+    scrollToBottom();
   }, [currentActiveChatId, activeChat?.messages?.length, isClientTyping, replyingTo]);
 
   // Mark active conversation read when opening
@@ -1487,7 +1476,21 @@ export const AdminChatInbox = () => {
             )}
 
             {/* Messaging Input Area */}
-            <form onSubmit={handleSendMessage} style={{ padding: '0.45rem 0.75rem', borderTop: '1.5px solid var(--color-border)', background: 'var(--color-surface, #ffffff)', width: '100%', boxSizing: 'border-box', flexShrink: 0, position: 'relative', zIndex: 10, boxShadow: '0 -2px 8px rgba(0,0,0,0.02)' }}>
+            <form 
+              onSubmit={handleSendMessage} 
+              style={{ 
+                padding: '0.65rem 0.85rem', 
+                borderTop: '1.5px solid #e2e8f0', 
+                background: '#ffffff', 
+                width: '100%', 
+                boxSizing: 'border-box', 
+                flexShrink: 0, 
+                position: 'sticky', 
+                bottom: 0, 
+                zIndex: 30, 
+                boxShadow: '0 -2px 10px rgba(0,0,0,0.03)' 
+              }}
+            >
               <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', width: '100%' }}>
                 <input
                   type="file"
@@ -1502,21 +1505,22 @@ export const AdminChatInbox = () => {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploadingAttachment}
                   style={{
-                    background: 'var(--color-subtle, #f1f5f9)',
-                    border: '1.5px solid var(--color-border)',
-                    color: 'var(--color-text-secondary, var(--navy-700))',
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '8px',
+                    background: '#f8fafc',
+                    border: '1.5px solid #cbd5e1',
+                    color: '#475569',
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: isUploadingAttachment ? 'not-allowed' : 'pointer',
-                    flexShrink: 0
+                    flexShrink: 0,
+                    transition: 'all 0.15s ease'
                   }}
                   title="Attach Image, PDF, Vector or Machine File"
                 >
-                  <Paperclip size={16} />
+                  {isUploadingAttachment ? <Loader2 size={16} className="animate-spin" style={{ color: '#ea580c' }} /> : <Paperclip size={18} />}
                 </button>
 
                 {/* Custom Offer Button (Only in Normal Customer Inbox, never in Support) */}
@@ -1528,14 +1532,14 @@ export const AdminChatInbox = () => {
                       background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.15))',
                       border: '1.5px solid rgba(99, 102, 241, 0.4)',
                       color: '#4f46e5',
-                      padding: '0 0.55rem',
-                      height: '36px',
-                      borderRadius: '8px',
+                      padding: '0 0.65rem',
+                      height: '38px',
+                      borderRadius: '10px',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '4px',
+                      gap: '5px',
                       fontWeight: 800,
-                      fontSize: '0.78rem',
+                      fontSize: '0.8rem',
                       cursor: 'pointer',
                       flexShrink: 0,
                       transition: 'all 0.2s ease',
@@ -1543,18 +1547,18 @@ export const AdminChatInbox = () => {
                     }}
                     title="Create & Send Custom Offer"
                   >
-                    <Tag size={13} className="text-indigo-600" />
+                    <Tag size={14} className="text-indigo-600" />
                     <span>Offer</span>
                   </button>
                 )}
 
                 <textarea
-                  className="form-control"
+                  className="chat-message-input"
                   rows={1}
                   placeholder={
                     replyingTo 
                       ? `Reply to ${replyingTo.senderName || 'Customer'}... (Shift+Enter for new line)` 
-                      : 'Type a message... (Shift+Enter for new line)'
+                      : 'Type a message to customer... (Shift+Enter for new line)'
                   }
                   value={replyInput}
                   onChange={handleInputChange}
@@ -1562,15 +1566,20 @@ export const AdminChatInbox = () => {
                   style={{
                     flex: 1,
                     minWidth: 0,
-                    height: '36px',
-                    minHeight: '36px',
-                    maxHeight: '85px',
-                    fontSize: '0.85rem',
-                    padding: '0.45rem 0.75rem',
-                    borderRadius: '8px',
+                    minHeight: '40px',
+                    maxHeight: '110px',
+                    fontSize: '0.9rem',
+                    fontWeight: 500,
+                    color: '#0f172a',
+                    background: '#ffffff',
+                    backgroundColor: '#ffffff',
+                    border: '1.5px solid #cbd5e1',
+                    padding: '0.6rem 0.85rem',
+                    borderRadius: '10px',
                     boxSizing: 'border-box',
+                    outline: 'none',
                     resize: 'none',
-                    lineHeight: 1.35,
+                    lineHeight: 1.4,
                     overflowY: 'auto',
                     fontFamily: 'inherit'
                   }}
@@ -1578,23 +1587,29 @@ export const AdminChatInbox = () => {
 
                 <button
                   type="submit"
-                  className="btn btn-primary-orange"
                   disabled={(!replyInput.trim() && !attachedFile) || isUploadingAttachment}
                   style={{
-                    height: '36px',
-                    padding: '0 0.85rem',
+                    height: '40px',
+                    padding: '0 1rem',
+                    borderRadius: '10px',
+                    background: (replyInput.trim() || attachedFile) ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : '#cbd5e1',
+                    border: 'none',
+                    color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.35rem',
+                    gap: '0.4rem',
                     fontWeight: 800,
-                    fontSize: '0.82rem',
-                    borderRadius: '8px',
+                    fontSize: '0.85rem',
+                    cursor: (replyInput.trim() || attachedFile) ? 'pointer' : 'not-allowed',
                     flexShrink: 0,
-                    opacity: ((!replyInput.trim() && !attachedFile) || isUploadingAttachment) ? 0.5 : 1,
-                    cursor: ((!replyInput.trim() && !attachedFile) || isUploadingAttachment) ? 'not-allowed' : 'pointer'
+                    boxShadow: (replyInput.trim() || attachedFile) ? '0 3px 12px rgba(234, 88, 12, 0.3)' : 'none',
+                    transition: 'all 0.2s ease',
+                    opacity: ((!replyInput.trim() && !attachedFile) || isUploadingAttachment) ? 0.6 : 1
                   }}
+                  title="Send message"
                 >
-                  <span>Send</span> <Send size={13} />
+                  <span>Send</span>
+                  <Send size={14} />
                 </button>
               </div>
             </form>

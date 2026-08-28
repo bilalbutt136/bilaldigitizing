@@ -715,7 +715,7 @@ export const AdminDashboard = () => {
         flex: 1,
         minWidth: 0,
         width: '100%',
-        padding: activeTab === 'chat' ? '0.25rem 0.75rem 0.35rem' : '2rem 2.5rem 4rem',
+        padding: activeTab === 'chat' ? '0.5rem 1rem 0.65rem' : '2rem 2.5rem 4rem',
         boxSizing: 'border-box',
         height: '100%',
         maxHeight: '100%',
@@ -1035,7 +1035,11 @@ export const AdminDashboard = () => {
         {activeTab === 'services' && <StudioServicesManager />}
         {activeTab === 'portfolio' && <PortfolioManager />}
         {activeTab === 'clients' && <ClientDirectory />}
-        {activeTab === 'chat' && <AdminChatInbox />}
+        {activeTab === 'chat' && (
+          <div style={{ flex: 1, height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <AdminChatInbox />
+          </div>
+        )}
         {activeTab === 'promotions' && <PromotionsManager />}
         {activeTab === 'contact' && <ContactInfoManager />}
         {activeTab === 'settings' && <SystemSettingsManager activeSubTab="theme" />}
