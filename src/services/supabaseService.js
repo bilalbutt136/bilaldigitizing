@@ -251,10 +251,37 @@ export async function updateUserPassword(newPassword) {
 
 
 // Fetch all orders from Supabase DB
-export async function fetchOrdersFromSupabase() {
+export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds = null) {
   try {
     const headers = await getAuthHeaders();
-    const res = await fetch('/api/orders?action=fetchAll', { headers });
+    let url = '/api/orders?action=fetchAll';
+    const params = new URLSearchParams();
+
+    let resolvedEmail = customEmail;
+    if (!resolvedEmail && typeof window !== 'undefined') {
+      try {
+        const authSaved = JSON.parse(localStorage.getItem('bdigi_auth_user') || 'null');
+        const clientSaved = JSON.parse(localStorage.getItem('bdigi_client_user') || 'null');
+        resolvedEmail = authSaved?.email || clientSaved?.email || localStorage.getItem('bdigi_user_email') || null;
+      } catch {}
+    }
+    if (resolvedEmail) params.append('email', resolvedEmail);
+
+    let resolvedOrderIds = customOrderIds;
+    if (!resolvedOrderIds && typeof window !== 'undefined') {
+      try {
+        const localIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
+        if (Array.isArray(localIds) && localIds.length > 0) {
+          resolvedOrderIds = localIds.join(',');
+        }
+      } catch {}
+    }
+    if (resolvedOrderIds) params.append('orderIds', resolvedOrderIds);
+
+    const qs = params.toString();
+    if (qs) url += `&${qs}`;
+
+    const res = await fetch(url, { headers });
     const data = await res.json();
     const orders = data.orders || [];
     

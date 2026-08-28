@@ -1811,12 +1811,31 @@ export const StateProvider = ({ children }) => {
 
   const refreshOrders = async () => {
     try {
-      const freshOrders = await fetchOrdersFromSupabase();
+      const email = authUser?.email || currentUser?.email || null;
+      let localIds = [];
+      if (typeof window !== 'undefined') {
+        try {
+          localIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
+        } catch {}
+      }
+      const freshOrders = await fetchOrdersFromSupabase(email, localIds.length > 0 ? localIds.join(',') : null);
       if (freshOrders && Array.isArray(freshOrders)) {
-        setOrders(freshOrders);
+        setOrders(prev => {
+          const freshMap = new Map(freshOrders.map(o => [String(o.id).trim().replace(/^#+/, ''), o]));
+          const merged = [...freshOrders];
+          for (const prevOrd of prev) {
+            const cleanId = String(prevOrd?.id || '').trim().replace(/^#+/, '');
+            if (cleanId && !freshMap.has(cleanId)) {
+              merged.push(prevOrd);
+            }
+          }
+          return merged;
+        });
         return freshOrders;
       }
-    } catch {}
+    } catch (err) {
+      console.warn('refreshOrders error:', err);
+    }
     return [];
   };
 

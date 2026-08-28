@@ -291,7 +291,9 @@ export const BDigitizingMobileApp = () => {
     if (!o) return false;
     const s = String(o?.status || '').toLowerCase().trim();
     const pStatus = String(o?.payment_status || o?.paymentStatus || '').toLowerCase().trim();
-    return s === 'awaiting_payment' || s === 'pending_payment' || pStatus === 'unpaid' || (!o?.isPaid && !o?.paid_at && (s === 'awaiting_payment' || s === 'pending_payment'));
+    const isPaidFlag = o?.isPaid || Boolean(o?.paid_at) || pStatus === 'paid' || pStatus === 'completed' || pStatus === 'wallet';
+    if (isPaidFlag) return false;
+    return s === 'awaiting_payment' || s === 'pending_payment' || s === 'submitted' || s === 'pending' || pStatus === 'unpaid' || pStatus === 'pending';
   };
 
   // Filter Orders for Customer strictly (or show all if admin)
@@ -308,14 +310,15 @@ export const BDigitizingMobileApp = () => {
     const isLocalMatch = localOrderIds.some(lid => String(lid).trim().replace(/^#+/, '') === cleanId);
     if (isLocalMatch) return true;
 
+    const clientEmail = (o?.client_email || o?.clientEmail || o?.user_email || o?.userEmail || o?.email || o?.recipient_email || '').toLowerCase().trim();
     if (userEmail) {
-      const clientEmail = (o.client_email || o.clientEmail || o.user_email || o.userEmail || o.email || o.recipient_email || '').toLowerCase().trim();
       if (clientEmail === userEmail) return true;
-      if (o.created_by && (String(o.created_by).toLowerCase() === activeUser?.id?.toLowerCase() || String(o.created_by).toLowerCase() === userEmail)) return true;
-      if (o.clientId && (String(o.clientId).toLowerCase() === activeUser?.id?.toLowerCase() || String(o.clientId).toLowerCase() === userEmail)) return true;
-      if (o.client_id && (String(o.client_id).toLowerCase() === activeUser?.id?.toLowerCase() || String(o.client_id).toLowerCase() === userEmail)) return true;
+      if (o?.created_by && (String(o.created_by).toLowerCase() === activeUser?.id?.toLowerCase() || String(o.created_by).toLowerCase() === userEmail)) return true;
+      if (o?.clientId && (String(o.clientId).toLowerCase() === activeUser?.id?.toLowerCase() || String(o.clientId).toLowerCase() === userEmail)) return true;
+      if (o?.client_id && (String(o.client_id).toLowerCase() === activeUser?.id?.toLowerCase() || String(o.client_id).toLowerCase() === userEmail)) return true;
     }
-    return !userEmail;
+    
+    return !userEmail && (isLocalMatch || !clientEmail || clientEmail === 'guest@bdigitizing.pro');
   });
 
   const unpaidOrders = myOrders.filter(o => isOrderUnpaid(o));
@@ -1619,8 +1622,46 @@ export const BDigitizingMobileApp = () => {
 
           {/* Order Cards List */}
           <div style={{ padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            {(!isAuthenticated && !userEmail && myOrders.length > 0) && (
+              <div style={{
+                background: '#eff6ff',
+                border: '1px solid #bfdbfe',
+                borderRadius: '12px',
+                padding: '0.65rem 0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.5rem',
+                marginBottom: '0.25rem'
+              }}>
+                <div style={{ fontSize: '0.75rem', color: '#1e40af', fontWeight: 600 }}>
+                  Showing orders placed on this device. Sign in to sync across all devices.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthModalMode('login');
+                    setIsAuthModalOpen(true);
+                  }}
+                  style={{
+                    background: '#2563eb',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '0.3rem 0.65rem',
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Sign In
+                </button>
+              </div>
+            )}
+
             {(() => {
-              if (!isAuthenticated && !userEmail) {
+              if (!isAuthenticated && !userEmail && myOrders.length === 0) {
                 return (
                   <div style={{
                     background: '#ffffff',

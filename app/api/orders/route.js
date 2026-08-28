@@ -12,7 +12,11 @@ export async function GET(request) {
     const { user, isAdmin } = await getServerAuthUser(request);
 
     if (action === 'fetchAll') {
-      if (!user) {
+      const emailParam = searchParams.get('email');
+      const orderIdsParam = searchParams.get('orderIds');
+      const targetEmail = (user?.email || emailParam || '').toLowerCase().trim();
+
+      if (!isAdmin && !targetEmail && !orderIdsParam) {
         return NextResponse.json({ orders: [] });
       }
       
@@ -20,7 +24,16 @@ export async function GET(request) {
       try {
         let query = supabase.from('orders').select('*, order_files(*), order_messages(*)').order('created_at', { ascending: false });
         if (!isAdmin) {
-          query = query.ilike('client_email', user.email.toLowerCase().trim());
+          if (targetEmail) {
+            query = query.ilike('client_email', targetEmail);
+          } else if (orderIdsParam) {
+            const idList = orderIdsParam.split(',').map(id => id.trim()).filter(Boolean);
+            if (idList.length > 0) {
+              query = query.in('id', idList);
+            } else {
+              return NextResponse.json({ orders: [] });
+            }
+          }
         }
         const res = await query;
         if (res.error) throw res.error;
@@ -29,7 +42,16 @@ export async function GET(request) {
         console.warn('Nested orders query fallback notice:', nestedErr);
         let fallbackQuery = supabase.from('orders').select('*').order('created_at', { ascending: false });
         if (!isAdmin) {
-          fallbackQuery = fallbackQuery.ilike('client_email', user.email.toLowerCase().trim());
+          if (targetEmail) {
+            fallbackQuery = fallbackQuery.ilike('client_email', targetEmail);
+          } else if (orderIdsParam) {
+            const idList = orderIdsParam.split(',').map(id => id.trim()).filter(Boolean);
+            if (idList.length > 0) {
+              fallbackQuery = fallbackQuery.in('id', idList);
+            } else {
+              return NextResponse.json({ orders: [] });
+            }
+          }
         }
         const fallbackRes = await fallbackQuery;
         if (fallbackRes.error) throw fallbackRes.error;
