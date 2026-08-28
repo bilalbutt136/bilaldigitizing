@@ -25,14 +25,8 @@ export async function POST(request) {
     const body = await request.json().catch(() => ({}));
     const action = body?.action;
     const amount = parseFloat(body?.amount);
-    let email = (user.email || '').toLowerCase().trim();
-    let targetUserId = user.id;
-
-    // Allow Admin to target any client for deposit or balance adjustment
-    if (isAdmin && (body?.targetClientEmail || body?.targetClientId)) {
-      if (body?.targetClientEmail) email = String(body.targetClientEmail).toLowerCase().trim();
-      if (body?.targetClientId) targetUserId = body.targetClientId;
-    }
+    const orderId = body?.orderId;
+    const email = (user.email || '').toLowerCase().trim();
 
     if (!action || !['deposit', 'deduct'].includes(action)) {
       return NextResponse.json({ success: false, error: 'Invalid wallet action.' }, { status: 400 });
@@ -52,16 +46,15 @@ export async function POST(request) {
 
     // 1. Locate or create client record by ID or Email
     let clientData = null;
-    if (targetUserId) {
-      const { data: byId } = await supabaseAdmin
-        .from('clients')
-        .select('id, email, wallet_balance, name')
-        .eq('id', targetUserId)
-        .maybeSingle();
-      if (byId) clientData = byId;
-    }
+    const { data: byId } = await supabaseAdmin
+      .from('clients')
+      .select('id, email, wallet_balance, name')
+      .eq('id', user.id)
+      .maybeSingle();
 
-    if (!clientData && email) {
+    if (byId) {
+      clientData = byId;
+    } else {
       const { data: byEmail } = await supabaseAdmin
         .from('clients')
         .select('id, email, wallet_balance, name')
