@@ -50,7 +50,8 @@ import {
   ChevronDown,
   RefreshCw,
   Activity,
-  TrendingUp
+  TrendingUp,
+  DollarSign
 } from 'lucide-react';
 import { 
   fetchConversations, 
@@ -94,13 +95,57 @@ export const BDigitizingMobileApp = () => {
   } = useAppState();
 
   // Active Tab: 'home' | 'inbox' | 'categories' | 'orders' | 'profile'
-  const [mobileTab, setMobileTab] = useState('home');
+  const getInitialMobileTab = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        const validTabs = ['home', 'inbox', 'categories', 'orders', 'profile'];
+        if (tabParam && validTabs.includes(tabParam)) return tabParam;
+        
+        const storedTab = localStorage.getItem('bdigi_mobile_active_tab');
+        if (storedTab && validTabs.includes(storedTab)) return storedTab;
+      } catch {}
+    }
+    return 'home';
+  };
+
+  const [mobileTab, setMobileTabState] = useState(getInitialMobileTab);
+
+  const setMobileTab = (newTab) => {
+    setMobileTabState(newTab);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('bdigi_mobile_active_tab', newTab);
+        const url = new URL(window.location.href);
+        url.searchParams.set('tab', newTab);
+        window.history.replaceState({}, '', url.toString());
+      } catch {}
+    }
+  };
+
+  // Sync tab with browser back/forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        const validTabs = ['home', 'inbox', 'categories', 'orders', 'profile'];
+        if (tabParam && validTabs.includes(tabParam)) {
+          setMobileTabState(tabParam);
+        }
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState('');
   
   // Category sub-tab: 'all' | 'embroidery' | 'vector' | 'patches'
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('all');
   
-  // Orders filter: 'all' | 'delivered' | 'active' | 'completed'
+  // Orders filter: 'all' | 'awaiting_payment' | 'delivered' | 'active' | 'completed'
   const [orderFilter, setOrderFilter] = useState('all');
 
   // Modals & Chat state
@@ -207,8 +252,17 @@ export const BDigitizingMobileApp = () => {
   useEffect(() => {
     const handleTabSwitch = (e) => {
       const targetTab = e.detail?.tab;
-      if (targetTab === 'dashboard' || targetTab === 'home' || targetTab === 'orders') {
+      if (targetTab === 'dashboard' || targetTab === 'home') {
         setMobileTab('home');
+        setIsPreferencesModalOpen(false);
+        setIsAccountModalOpen(false);
+        setIsSupportModalOpen(false);
+        setIsFeedbackModalOpen(false);
+        setIsLegalModalOpen(false);
+        setIsNotifDrawerOpen(false);
+        if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (targetTab === 'orders') {
+        setMobileTab('orders');
         setIsPreferencesModalOpen(false);
         setIsAccountModalOpen(false);
         setIsSupportModalOpen(false);
@@ -221,7 +275,7 @@ export const BDigitizingMobileApp = () => {
         if (e.detail?.orderId) {
           setSelectedChatOrderId(e.detail.orderId);
         }
-      } else if (targetTab === 'profile' || targetTab === 'wallet' || targetTab === 'settings') {
+      } else if (targetTab === 'profile' || targetTab === 'wallet' || targetTab === 'settings' || targetTab === 'account') {
         setMobileTab('profile');
       }
     };
@@ -255,9 +309,11 @@ export const BDigitizingMobileApp = () => {
     if (isLocalMatch) return true;
 
     if (userEmail) {
-      const clientEmail = (o.client_email || o.clientEmail || o.user_email || o.userEmail || o.email || '').toLowerCase().trim();
+      const clientEmail = (o.client_email || o.clientEmail || o.user_email || o.userEmail || o.email || o.recipient_email || '').toLowerCase().trim();
       if (clientEmail === userEmail) return true;
-      if (o.created_by && (o.created_by === activeUser?.id || o.created_by === activeUser?.email)) return true;
+      if (o.created_by && (String(o.created_by).toLowerCase() === activeUser?.id?.toLowerCase() || String(o.created_by).toLowerCase() === userEmail)) return true;
+      if (o.clientId && (String(o.clientId).toLowerCase() === activeUser?.id?.toLowerCase() || String(o.clientId).toLowerCase() === userEmail)) return true;
+      if (o.client_id && (String(o.client_id).toLowerCase() === activeUser?.id?.toLowerCase() || String(o.client_id).toLowerCase() === userEmail)) return true;
     }
     return !userEmail;
   });
@@ -1280,8 +1336,8 @@ export const BDigitizingMobileApp = () => {
               </span>
             </div>
 
-            {/* Grid of 4 Key Stat Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.6rem' }}>
+            {/* Grid of 5 Key Stat Cards + Total Spend Pill */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
               {/* Total Orders Card */}
               <div 
                 onClick={() => setOrderFilter('all')}
@@ -1290,35 +1346,51 @@ export const BDigitizingMobileApp = () => {
                   color: orderFilter === 'all' ? '#ffffff' : '#0f172a',
                   border: orderFilter === 'all' ? '1.5px solid #0f172a' : '1.5px solid #e2e8f0',
                   borderRadius: '12px',
-                  padding: '0.75rem 0.85rem',
+                  padding: '0.65rem 0.5rem',
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '0.65rem',
+                  justifyContent: 'center',
+                  textAlign: 'center',
                   cursor: 'pointer',
                   boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
                   transition: 'all 0.15s ease'
                 }}
               >
-                <div style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: orderFilter === 'all' ? 'rgba(255,255,255,0.15)' : '#f1f5f9',
-                  color: orderFilter === 'all' ? '#ffffff' : '#0f172a',
+                <ClipboardList size={18} style={{ color: orderFilter === 'all' ? '#38bdf8' : '#64748b', marginBottom: '0.2rem' }} />
+                <div style={{ fontSize: '1.15rem', fontWeight: 900, lineHeight: 1 }}>
+                  {totalOrdersCount}
+                </div>
+                <div style={{ fontSize: '0.62rem', fontWeight: 700, color: orderFilter === 'all' ? '#cbd5e1' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                  Total Orders
+                </div>
+              </div>
+
+              {/* Waiting for Payment Card */}
+              <div 
+                onClick={() => setOrderFilter('awaiting_payment')}
+                style={{
+                  background: orderFilter === 'awaiting_payment' ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : '#ffffff',
+                  color: orderFilter === 'awaiting_payment' ? '#ffffff' : '#0f172a',
+                  border: orderFilter === 'awaiting_payment' ? '1.5px solid #ea580c' : (unpaidOrdersCount > 0 ? '1.5px solid #fdba74' : '1.5px solid #e2e8f0'),
+                  borderRadius: '12px',
+                  padding: '0.65rem 0.5rem',
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  flexShrink: 0
-                }}>
-                  <ClipboardList size={18} />
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  boxShadow: unpaidOrdersCount > 0 ? '0 2px 8px rgba(234, 88, 12, 0.15)' : '0 2px 6px rgba(0,0,0,0.03)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <CreditCard size={18} style={{ color: orderFilter === 'awaiting_payment' ? '#fef08a' : '#ea580c', marginBottom: '0.2rem' }} />
+                <div style={{ fontSize: '1.15rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'awaiting_payment' ? '#ffffff' : '#c2410c' }}>
+                  {unpaidOrdersCount}
                 </div>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 900, lineHeight: 1 }}>
-                    {totalOrdersCount}
-                  </div>
-                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: orderFilter === 'all' ? '#cbd5e1' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
-                    Total Orders
-                  </div>
+                <div style={{ fontSize: '0.62rem', fontWeight: 700, color: orderFilter === 'awaiting_payment' ? '#fed7aa' : '#c2410c', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                  Waiting Pay
                 </div>
               </div>
 
@@ -1330,35 +1402,23 @@ export const BDigitizingMobileApp = () => {
                   color: orderFilter === 'active' ? '#ffffff' : '#0f172a',
                   border: orderFilter === 'active' ? '1.5px solid #0284c7' : '1.5px solid #bae6fd',
                   borderRadius: '12px',
-                  padding: '0.75rem 0.85rem',
+                  padding: '0.65rem 0.5rem',
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '0.65rem',
+                  justifyContent: 'center',
+                  textAlign: 'center',
                   cursor: 'pointer',
                   boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
                   transition: 'all 0.15s ease'
                 }}
               >
-                <div style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: orderFilter === 'active' ? 'rgba(255,255,255,0.2)' : '#e0f2fe',
-                  color: orderFilter === 'active' ? '#ffffff' : '#0284c7',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}>
-                  <Zap size={18} />
+                <Zap size={18} style={{ color: orderFilter === 'active' ? '#bae6fd' : '#0284c7', marginBottom: '0.2rem' }} />
+                <div style={{ fontSize: '1.15rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'active' ? '#ffffff' : '#0369a1' }}>
+                  {activeOrdersCount}
                 </div>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'active' ? '#ffffff' : '#0369a1' }}>
-                    {activeOrdersCount}
-                  </div>
-                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: orderFilter === 'active' ? '#e0f2fe' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
-                    In Production
-                  </div>
+                <div style={{ fontSize: '0.62rem', fontWeight: 700, color: orderFilter === 'active' ? '#e0f2fe' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                  In Production
                 </div>
               </div>
 
@@ -1370,35 +1430,23 @@ export const BDigitizingMobileApp = () => {
                   color: orderFilter === 'delivered' ? '#ffffff' : '#0f172a',
                   border: orderFilter === 'delivered' ? '1.5px solid #059669' : '1.5px solid #a7f3d0',
                   borderRadius: '12px',
-                  padding: '0.75rem 0.85rem',
+                  padding: '0.65rem 0.5rem',
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '0.65rem',
+                  justifyContent: 'center',
+                  textAlign: 'center',
                   cursor: 'pointer',
                   boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
                   transition: 'all 0.15s ease'
                 }}
               >
-                <div style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: orderFilter === 'delivered' ? 'rgba(255,255,255,0.2)' : '#d1fae5',
-                  color: orderFilter === 'delivered' ? '#ffffff' : '#059669',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}>
-                  <Package size={18} />
+                <Package size={18} style={{ color: orderFilter === 'delivered' ? '#a7f3d0' : '#059669', marginBottom: '0.2rem' }} />
+                <div style={{ fontSize: '1.15rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'delivered' ? '#ffffff' : '#047857' }}>
+                  {deliveredOrdersCount}
                 </div>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'delivered' ? '#ffffff' : '#047857' }}>
-                    {deliveredOrdersCount}
-                  </div>
-                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: orderFilter === 'delivered' ? '#d1fae5' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
-                    Delivered
-                  </div>
+                <div style={{ fontSize: '0.62rem', fontWeight: 700, color: orderFilter === 'delivered' ? '#d1fae5' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                  Delivered
                 </div>
               </div>
 
@@ -1410,59 +1458,110 @@ export const BDigitizingMobileApp = () => {
                   color: orderFilter === 'completed' ? '#ffffff' : '#0f172a',
                   border: orderFilter === 'completed' ? '1.5px solid #334155' : '1.5px solid #e2e8f0',
                   borderRadius: '12px',
-                  padding: '0.75rem 0.85rem',
+                  padding: '0.65rem 0.5rem',
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '0.65rem',
+                  justifyContent: 'center',
+                  textAlign: 'center',
                   cursor: 'pointer',
                   boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
                   transition: 'all 0.15s ease'
                 }}
               >
-                <div style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: orderFilter === 'completed' ? 'rgba(255,255,255,0.15)' : '#f1f5f9',
-                  color: orderFilter === 'completed' ? '#ffffff' : '#334155',
+                <CheckCircle2 size={18} style={{ color: orderFilter === 'completed' ? '#94a3b8' : '#64748b', marginBottom: '0.2rem' }} />
+                <div style={{ fontSize: '1.15rem', fontWeight: 900, lineHeight: 1 }}>
+                  {completedOrdersCount}
+                </div>
+                <div style={{ fontSize: '0.62rem', fontWeight: 700, color: orderFilter === 'completed' ? '#cbd5e1' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                  Completed
+                </div>
+              </div>
+
+              {/* Total Spend Pill */}
+              <div 
+                style={{
+                  background: '#f8fafc',
+                  border: '1.5px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '0.65rem 0.5rem',
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  flexShrink: 0
-                }}>
-                  <CheckCircle2 size={18} />
+                  textAlign: 'center'
+                }}
+              >
+                <DollarSign size={18} style={{ color: '#059669', marginBottom: '0.2rem' }} />
+                <div style={{ fontSize: '1.05rem', fontWeight: 900, lineHeight: 1, color: '#059669' }}>
+                  ${totalValueSpent.toFixed(0)}
                 </div>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 900, lineHeight: 1 }}>
-                    {completedOrdersCount}
-                  </div>
-                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: orderFilter === 'completed' ? '#cbd5e1' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
-                    Completed
-                  </div>
+                <div style={{ fontSize: '0.62rem', fontWeight: 700, color: '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                  Total Value
                 </div>
               </div>
             </div>
 
-            {/* Bottom Mini Metrics Pill: Total Spend + Turnaround Guarantee */}
-            <div style={{
-              background: '#ffffff',
-              border: '1.5px solid #e2e8f0',
-              borderRadius: '10px',
-              padding: '0.55rem 0.85rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: '0.75rem'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span style={{ color: '#64748b', fontWeight: 600 }}>Total Value:</span>
-                <strong style={{ color: '#059669', fontWeight: 900 }}>${totalValueSpent.toFixed(2)}</strong>
+            {/* Action Required Alert Banner for Unpaid Orders */}
+            {unpaidOrdersCount > 0 && (
+              <div style={{
+                background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                border: '1.5px solid #fde68a',
+                borderRadius: '12px',
+                padding: '0.75rem 0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.5rem',
+                boxShadow: '0 2px 8px rgba(245, 158, 11, 0.12)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', minWidth: 0 }}>
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <CreditCard size={16} />
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 900, color: '#9a3412', lineHeight: 1.2 }}>
+                      {unpaidOrdersCount} Order{unpaidOrdersCount > 1 ? 's' : ''} Awaiting Payment
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#c2410c', marginTop: '0.1rem' }}>
+                      Complete payment to start master digitizing immediately
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOrderFilter('awaiting_payment');
+                    if (unpaidOrders[0]) handleOpenPaymentForOrder(unpaidOrders[0]);
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.45rem 0.75rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 900,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    boxShadow: '0 2px 6px rgba(234, 88, 12, 0.3)'
+                  }}
+                >
+                  Pay Now
+                </button>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#0284c7', fontWeight: 700 }}>
-                <Clock size={13} />
-                <span>Turnaround: 2–6h Express</span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Sub-filter Switcher */}
@@ -1567,10 +1666,25 @@ export const BDigitizingMobileApp = () => {
                 const isDelivered = (s === 'delivered' || (Array.isArray(o?.uploadedMachineFiles) && o.uploadedMachineFiles.length > 0)) && s !== 'completed' && s !== 'cancelled';
                 const isCompleted = s === 'completed';
 
-                if (orderFilter === 'awaiting_payment') return isUnpaid;
-                if (orderFilter === 'delivered') return isDelivered;
-                if (orderFilter === 'active') return !isDelivered && !isCompleted && !isUnpaid && s !== 'cancelled';
-                if (orderFilter === 'completed') return isCompleted;
+                if (orderFilter === 'awaiting_payment') {
+                  if (!isUnpaid) return false;
+                } else if (orderFilter === 'delivered') {
+                  if (!isDelivered) return false;
+                } else if (orderFilter === 'active') {
+                  if (isDelivered || isCompleted || isUnpaid || s === 'cancelled') return false;
+                } else if (orderFilter === 'completed') {
+                  if (!isCompleted) return false;
+                }
+
+                if (searchQuery?.trim()) {
+                  const q = searchQuery.toLowerCase().trim().replace(/^#+/, '');
+                  const idMatch = String(o?.id || '').toLowerCase().replace(/^#+/, '').includes(q);
+                  const titleMatch = String(o?.title || '').toLowerCase().includes(q);
+                  const serviceMatch = String(o?.serviceCategory || o?.type || '').toLowerCase().includes(q);
+                  const statusMatch = String(o?.status || '').toLowerCase().includes(q);
+                  return idMatch || titleMatch || serviceMatch || statusMatch;
+                }
+
                 return true;
               });
 
@@ -2444,12 +2558,12 @@ export const BDigitizingMobileApp = () => {
             transition: 'all 0.2s ease'
           }}>
             <ClipboardList size={20} strokeWidth={mobileTab === 'orders' ? 2.5 : 1.75} />
-            {activeOrders.length > 0 && (
+            {(unpaidOrders.length > 0 || activeOrders.length > 0) && (
               <span style={{
                 position: 'absolute',
                 top: '-1px',
                 right: '-1px',
-                background: '#047857',
+                background: unpaidOrders.length > 0 ? '#ea580c' : '#047857',
                 color: '#ffffff',
                 fontSize: '0.55rem',
                 fontWeight: 900,
@@ -2460,7 +2574,7 @@ export const BDigitizingMobileApp = () => {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                {activeOrders.length}
+                {unpaidOrders.length > 0 ? unpaidOrders.length : activeOrders.length}
               </span>
             )}
           </div>
@@ -3435,6 +3549,9 @@ export const BDigitizingMobileApp = () => {
         defaultService={orderDefaultService}
         onOrderCreated={(newOrd) => {
           setMobileTab('orders');
+          if (typeof refreshOrders === 'function') {
+            refreshOrders().catch(() => {});
+          }
         }}
       />
 

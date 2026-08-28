@@ -247,7 +247,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
     setSelectedOrderForDrawer,
     setIsCheckoutModalOpen,
     setCheckoutSession,
-    dynamicPricingTiers = []
+    dynamicPricingTiers = [],
+    refreshOrders
   } = useAppState();
 
   // Wizard Step (1: Service, 2: Package & Quantity, 3: Upload Artwork & Notes, 4: Specs, 5: Review, 6: Confirmation)
@@ -543,7 +544,14 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         } catch {}
       }
 
+      if (typeof refreshOrders === 'function') {
+        refreshOrders().catch(() => {});
+      }
+
       setCreatedOrderObj(resultingOrder);
+      if (typeof onOrderCreated === 'function') {
+        onOrderCreated(resultingOrder);
+      }
       setStep(6);
       if (showToast) showToast('Order successfully generated! Complete payment to start production.', 'success');
     } catch (err) {
@@ -556,11 +564,20 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
   const handlePayNow = () => {
     if (createdOrderObj) {
+      const priceVal = parseFloat(createdOrderObj.totalPrice || createdOrderObj.price || totalPrice || 15);
       setCheckoutSession({
-        amount: totalPrice,
-        orderId: createdOrderObj.id
+        amount: priceVal,
+        price: priceVal,
+        totalPrice: priceVal,
+        orderId: createdOrderObj.id,
+        title: createdOrderObj.title || `Order ${createdOrderObj.id}`,
+        clientEmail: createdOrderObj.clientEmail || authUser?.email,
+        serviceType: createdOrderObj.serviceCategory || createdOrderObj.type || selectedService
       });
       setIsCheckoutModalOpen(true);
+      if (typeof onOrderCreated === 'function') {
+        onOrderCreated(createdOrderObj);
+      }
       onClose();
     }
   };
@@ -1728,7 +1745,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 <button
                   type="button"
                   onClick={() => {
-                    if (createdOrderObj) setSelectedOrderForDrawer(createdOrderObj);
+                    if (createdOrderObj && setSelectedOrderForDrawer) setSelectedOrderForDrawer(createdOrderObj);
+                    if (typeof onOrderCreated === 'function') onOrderCreated(createdOrderObj);
                     onClose();
                   }}
                   style={{
