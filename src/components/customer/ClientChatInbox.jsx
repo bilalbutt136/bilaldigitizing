@@ -691,7 +691,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
           value={messageInput}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          placeholder={activeChannel === 'inbox' ? 'Type a message to Studio Digitizers...' : 'Type a question to 24/7 Support...'}
+          placeholder={replyingTo ? 'Type a reply...' : 'Type a message...'}
           className="chat-message-input"
           style={{
             flex: 1,

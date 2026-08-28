@@ -1469,7 +1469,7 @@ export const OrderTrackerDrawer = () => {
               <textarea 
                 rows={1}
                 className="form-control" 
-                placeholder="Type a message or question... (Shift+Enter for new line)" 
+                placeholder="Type a message..." 
                 value={chatMessageText} 
                 onChange={e => setChatMessageText(e.target.value)} 
                 onKeyDown={handleKeyDown}
