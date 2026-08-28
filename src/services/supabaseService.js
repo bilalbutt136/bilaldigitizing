@@ -322,8 +322,15 @@ export async function fetchOrdersFromSupabase() {
                              Boolean(order.paid_at) ||
                              ['in_progress', 'digitizing', 'assigned', 'qc', 'delivered', 'completed'].includes(oStatusLower);
 
+      const rawPrice = parseFloat(order.price ?? order.total_price ?? order.totalPrice ?? order.cost ?? order.amount ?? 0);
+      const categoryStr = String(order.service_category || order.service_type || order.type || '').toLowerCase();
+      const defaultCategoryPrice = categoryStr.includes('vector') ? 12.00 : categoryStr.includes('patch') ? 25.00 : 15.00;
+      const normalizedPrice = !isNaN(rawPrice) && rawPrice > 0 ? rawPrice : defaultCategoryPrice;
+
       return {
         ...order,
+        price: normalizedPrice,
+        totalPrice: normalizedPrice,
         createdAt: order.created_at || order.createdAt || order.timestamp || order.order_date || new Date().toISOString(),
         created_at: order.created_at || order.createdAt || order.timestamp || order.order_date || new Date().toISOString(),
         turnaroundHours: Number(order.turnaround_hours || order.turnaroundHours) || (order.is_rush || order.isRush ? 4 : (order.service_category === 'patch' || order.serviceCategory === 'patch' ? 168 : 12)),

@@ -260,7 +260,11 @@ export const BDigitizingMobileApp = () => {
   const deliveredOrdersCount = deliveredOrders.length;
   const completedOrdersCount = completedOrders.length;
   const unpaidOrdersCount = unpaidOrders.length;
-  const totalValueSpent = myOrders.reduce((sum, o) => sum + parseFloat(o.totalPrice || o.price || 0), 0);
+  const totalValueSpent = myOrders.reduce((sum, o) => {
+    const rawP = parseFloat(o.totalPrice ?? o.price ?? 0);
+    const p = !isNaN(rawP) && rawP > 0 ? rawP : 15;
+    return sum + p;
+  }, 0);
 
   const handleOpenPaymentForOrder = (ord) => {
     const priceVal = parseFloat(ord.totalPrice || ord.price || 15);

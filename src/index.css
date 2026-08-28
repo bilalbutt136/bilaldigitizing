@@ -1155,6 +1155,18 @@ body.dark-mode .theme-light-enforced h6 {
   color: #0f172a !important;
 }
 
+.theme-light-enforced .order-drawer-title,
+.theme-light-enforced .order-header-title,
+.theme-light-enforced .modal-header-dark,
+.theme-light-enforced .modal-header-dark h1,
+.theme-light-enforced .modal-header-dark h2,
+.theme-light-enforced .modal-header-dark h3,
+.order-drawer-header h3,
+.order-drawer-header h2,
+.order-drawer-header h1 {
+  color: #ffffff !important;
+}
+
 .theme-light-enforced p,
 [data-theme="dark"] .theme-light-enforced p,
 body.dark-mode .theme-light-enforced p {

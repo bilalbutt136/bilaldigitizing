@@ -231,7 +231,8 @@ export const CheckoutModal = () => {
   }, [isCheckoutModalOpen, checkoutSession?.amount, authUser]);
 
   const handleSelectMethod = async (methodId) => {
-    const amount = parseFloat(checkoutSession?.amount || 0);
+    const rawAmount = parseFloat(checkoutSession?.amount ?? checkoutSession?.price ?? checkoutSession?.totalPrice ?? 15.00);
+    const amount = !isNaN(rawAmount) && rawAmount > 0 ? rawAmount : 15.00;
     const custRole = authUser?.email
       ? `${authUser.name || 'Customer'} (${authUser.email})`
       : null;
@@ -316,7 +317,7 @@ export const CheckoutModal = () => {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          amount: checkoutSession.amount,
+          amount: amount,
           method: methodId,
           orderId: checkoutSession?.orderId,
           clientEmail: checkoutSession?.clientEmail || authUser?.email || currentUser?.email
@@ -445,6 +446,10 @@ export const CheckoutModal = () => {
   };
 
   if (!isCheckoutModalOpen || !checkoutSession) return null;
+
+  const sessionAmountNum = parseFloat(checkoutSession?.amount ?? checkoutSession?.price ?? checkoutSession?.totalPrice ?? 15.00);
+  const safeSessionAmount = !isNaN(sessionAmountNum) && sessionAmountNum > 0 ? sessionAmountNum : 15.00;
+  const formattedSessionAmount = `$${safeSessionAmount.toFixed(2)}`;
 
   return (
     <div 
@@ -668,7 +673,7 @@ export const CheckoutModal = () => {
                   Complete in 2 Easy Steps
                 </h3>
                 <p style={{ fontSize: '0.85rem', color: '#475569', margin: 0 }}>
-                  Amount: <strong style={{ color: '#047857', fontSize: '1.1rem' }}>${parseFloat(checkoutSession.amount || 0).toFixed(2)}</strong>
+                  Amount: <strong style={{ color: '#047857', fontSize: '1.1rem' }}>{formattedSessionAmount}</strong>
                 </p>
               </div>
 
@@ -854,7 +859,7 @@ export const CheckoutModal = () => {
                   Pay with Cash App
                 </h3>
                 <p style={{ fontSize: '0.85rem', color: '#475569', margin: 0 }}>
-                  Amount: <strong style={{ color: '#16a34a', fontSize: '1.1rem' }}>${parseFloat(checkoutSession.amount || 0).toFixed(2)}</strong>
+                  Amount: <strong style={{ color: '#16a34a', fontSize: '1.1rem' }}>{formattedSessionAmount}</strong>
                 </p>
               </div>
 
@@ -995,7 +1000,7 @@ export const CheckoutModal = () => {
                   Pay with PayPal PYUSD
                 </h3>
                 <p style={{ fontSize: '0.85rem', color: '#475569', margin: 0 }}>
-                  Amount: <strong style={{ color: '#003087', fontSize: '1.1rem' }}>${parseFloat(checkoutSession.amount || 0).toFixed(2)}</strong>
+                  Amount: <strong style={{ color: '#003087', fontSize: '1.1rem' }}>{formattedSessionAmount}</strong>
                 </p>
               </div>
 
@@ -1181,7 +1186,7 @@ export const CheckoutModal = () => {
               </h3>
               
               <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 1.5rem', maxWidth: '320px' }}>
-                Total: <strong style={{ color: '#047857', fontSize: '1.1rem' }}>${parseFloat(checkoutSession.amount || 0).toFixed(2)}</strong>. Tap the button below to authorize payment.
+                Total: <strong style={{ color: '#047857', fontSize: '1.1rem' }}>{formattedSessionAmount}</strong>. Tap the button below to authorize payment.
               </p>
 
               <div style={{ width: '100%', maxWidth: '320px', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -1263,7 +1268,7 @@ export const CheckoutModal = () => {
                   TOTAL AMOUNT DUE
                 </div>
                 <div style={{ color: '#047857', fontSize: '2.3rem', fontWeight: 900, fontFamily: 'var(--font-heading)', marginTop: '0.2rem' }}>
-                  ${parseFloat(checkoutSession.amount || 0).toFixed(2)}
+                  {formattedSessionAmount}
                 </div>
                 <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 700, marginTop: '0.15rem' }}>
                   ✓ Instant production dispatch upon confirmation
@@ -1277,7 +1282,7 @@ export const CheckoutModal = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.65rem' }}>
                 {paymentMethods.map(method => {
                   const isWallet = method.id === 'studio_wallet';
-                  const isInsufficient = isWallet && (walletBalance || 0) < (checkoutSession.amount || 0);
+                  const isInsufficient = isWallet && (walletBalance || 0) < safeSessionAmount;
 
                   return (
                     <button

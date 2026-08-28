@@ -136,7 +136,20 @@ export const OrderTrackerDrawer = () => {
     return isPaidFlag || pStatus === 'paid' || pStatus === 'completed' || pStatus === 'settled' || pStatus === 'verified' || pStatus === 'wallet';
   };
 
+  // Robust price resolution that guarantees a positive price for every order
+  const getOrderPrice = (o) => {
+    if (!o) return 15.00;
+    const raw = parseFloat(o.price ?? o.totalPrice ?? o.total_price ?? o.amount ?? o.cost ?? 0);
+    if (!isNaN(raw) && raw > 0) return raw;
+    const cat = String(o.serviceCategory || o.service_category || o.type || o.serviceType || '').toLowerCase();
+    if (cat.includes('vector')) return 12.00;
+    if (cat.includes('patch')) return 25.00;
+    return 15.00;
+  };
+
   const isPaid = isOrderPaid(ord);
+  const orderPrice = getOrderPrice(ord);
+  const formattedPrice = `$${orderPrice.toFixed(2)}`;
 
   // Normalize status — treat 'revision_requested' as 'revision' for all UI guards
   const normalizedStatus = (ord.status === 'revision_requested') ? 'revision' : (ord.status || 'submitted');
@@ -364,11 +377,17 @@ export const OrderTrackerDrawer = () => {
   };
 
   const handleLaunchPayment = () => {
+    const priceAmount = getOrderPrice(ord);
     if (setCheckoutSession && setIsCheckoutModalOpen) {
       setCheckoutSession({
-        amount: parseFloat(ord.price || ord.totalPrice || 15.00),
+        amount: priceAmount,
+        price: priceAmount,
+        totalPrice: priceAmount,
         orderId: ord.id,
-        orderTitle: ord.title || 'Studio Design Order'
+        title: ord.title || `Order ${formatOrderId(ord.id)}`,
+        orderTitle: ord.title || `Order ${formatOrderId(ord.id)}`,
+        clientEmail: ord.clientEmail || ord.client_email || authUser?.email,
+        serviceType: ord.serviceCategory || ord.type || 'embroidery'
       });
       setIsCheckoutModalOpen(true);
     }
@@ -455,7 +474,7 @@ export const OrderTrackerDrawer = () => {
         {/* ==================================================================
             1. TOP HEADER (COMPACT & SAFE AREA OPTIMIZED)
            ================================================================== */}
-        <div style={{
+        <div className="modal-header-dark" style={{
           padding: isMobileLayout ? 'max(0.75rem, env(safe-area-inset-top, 0.75rem)) 1rem 0.75rem' : '1.25rem 1.75rem',
           background: 'linear-gradient(135deg, #090f1d 0%, #111a2e 100%)',
           color: '#ffffff',
@@ -506,8 +525,8 @@ export const OrderTrackerDrawer = () => {
 
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                <h3 style={{ fontSize: isMobileLayout ? '1.05rem' : '1.2rem', fontWeight: 900, color: '#ffffff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {ord.title || 'Studio Order'}
+                <h3 className="order-drawer-title" style={{ fontSize: isMobileLayout ? '1.05rem' : '1.2rem', fontWeight: 900, color: '#ffffff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {ord.title || `Order ${formatOrderId(ord.id)}`}
                 </h3>
                 <span style={{ 
                   background: 'rgba(255, 255, 255, 0.14)', 
@@ -682,7 +701,7 @@ export const OrderTrackerDrawer = () => {
                     ⏳ Waiting for Payment to Start Production
                   </h4>
                   <p style={{ margin: 0, fontSize: '0.82rem', color: '#78350f', lineHeight: 1.4 }}>
-                    Your order requirements and specifications are safely saved. Complete payment of <strong>${Number(ord.totalPrice || ord.price || 15).toFixed(2)}</strong> to dispatch this design to our master digitizing desk immediately.
+                    Your order requirements and specifications are safely saved. Complete payment of <strong>{formattedPrice}</strong> to dispatch this design to our master digitizing desk immediately.
                   </p>
                 </div>
               </div>
@@ -706,7 +725,7 @@ export const OrderTrackerDrawer = () => {
                   whiteSpace: 'nowrap'
                 }}
               >
-                <Zap size={18} /> Complete Payment Now →
+                <Zap size={18} /> Pay Now ({formattedPrice})
               </button>
             </div>
           )}
@@ -750,45 +769,6 @@ export const OrderTrackerDrawer = () => {
             </div>
           </div>
 
-          {/* UNPAID PAYMENT BANNER (CUSTOMER ONLY) */}
-          {!isPaid && !isAdmin && (
-            <div style={{
-              background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-              border: '1.5px solid #fcd34d',
-              borderRadius: '14px',
-              padding: '1.15rem 1.4rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '1rem',
-              boxShadow: '0 4px 14px rgba(217, 119, 6, 0.1)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#f59e0b', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <CreditCard size={20} />
-                </div>
-                <div>
-                  <div style={{ fontWeight: 900, color: '#78350f', fontSize: '0.95rem' }}>
-                    Payment Required to Dispatch Production (${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)})
-                  </div>
-                  <div style={{ color: '#92400e', fontSize: '0.78rem', marginTop: '0.1rem' }}>
-                    Your design brief is saved. Finalize checkout to start digitizing immediately.
-                  </div>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleLaunchPayment}
-                className="btn btn-primary-orange"
-                style={{ fontWeight: 900, gap: '0.4rem', padding: '0.55rem 1.25rem' }}
-              >
-                <Zap size={15} /> Pay Now (${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)})
-              </button>
-            </div>
-          )}
-
           {/* ADMIN UNPAID NOTICE */}
           {!isPaid && isAdmin && (
             <div style={{
@@ -808,7 +788,7 @@ export const OrderTrackerDrawer = () => {
                 </div>
                 <div>
                   <div style={{ fontWeight: 800, color: '#92400e', fontSize: '0.9rem' }}>
-                    Payment Status: Awaiting Client Checkout (${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)})
+                    Payment Status: Awaiting Client Checkout ({formattedPrice})
                   </div>
                   <div style={{ color: '#b45309', fontSize: '0.75rem', marginTop: '0.1rem' }}>
                     Customer has submitted requirements but has not finalized online payment yet.
@@ -1521,7 +1501,7 @@ export const OrderTrackerDrawer = () => {
             <div>
               <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase' }}>Project Total</div>
               <div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)', lineHeight: 1 }}>
-                ${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)}
+                {formattedPrice}
               </div>
             </div>
             {isPaid ? (
@@ -1544,7 +1524,7 @@ export const OrderTrackerDrawer = () => {
                 className="btn btn-primary-orange"
                 style={{ fontWeight: 900, gap: '0.35rem', padding: '0.5rem 1.25rem' }}
               >
-                <Zap size={15} /> Pay Now (${parseFloat(ord.price || ord.totalPrice || 0).toFixed(2)})
+                <Zap size={15} /> Pay Now ({formattedPrice})
               </button>
             ) : !isPaid && isAdmin ? (
               <button
