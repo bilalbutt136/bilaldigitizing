@@ -398,12 +398,31 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
     const minVal = selectedService === 'patch' ? 50 : 1;
     if (!isNaN(parsed) && parsed >= minVal) {
       setQuantity(parsed);
+    } else if (!isNaN(parsed) && parsed > 0) {
+      setQuantity(parsed);
+    }
+  };
+
+  const handleQuantityBlur = () => {
+    const parsed = parseInt(quantityInput, 10);
+    const minVal = selectedService === 'patch' ? 50 : 1;
+    if (isNaN(parsed) || parsed < minVal) {
+      setQuantity(minVal);
+      setQuantityInput(String(minVal));
+      if (selectedService === 'patch' && showToast) {
+        showToast('Minimum order quantity for Custom Patches is 50 pieces.', 'warning');
+      }
+    } else {
+      setQuantity(parsed);
+      setQuantityInput(String(parsed));
     }
   };
 
   const handleSetPresetQuantity = (presetQty) => {
-    setQuantity(presetQty);
-    setQuantityInput(String(presetQty));
+    const minVal = selectedService === 'patch' ? 50 : 1;
+    const finalQty = Math.max(minVal, presetQty);
+    setQuantity(finalQty);
+    setQuantityInput(String(finalQty));
   };
 
   const handleMultipleFiles = async (e) => {
@@ -462,6 +481,14 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
   };
 
   const handleSubmitOrder = async () => {
+    if (selectedService === 'patch' && quantity < 50) {
+      if (showToast) showToast('Minimum order requirement for Custom Patches is 50 pieces.', 'error');
+      setQuantity(50);
+      setQuantityInput('50');
+      setStep(2);
+      return;
+    }
+
     if (uploadedFiles.length === 0) {
       setUploadError('Please attach at least one artwork or reference file.');
       setStep(3);
@@ -974,7 +1001,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                       {selectedService === 'patch' ? 'Patch Order Quantity (Pcs)' : 'Design Order Quantity'}
                     </span>
                     <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>
-                      {selectedService === 'patch' ? 'Minimum 10 pcs • Bulk tier discount applies' : 'Add multiple designs to get volume discounts'}
+                      {selectedService === 'patch' ? 'Minimum 50 pcs • Factory wholesale pricing' : 'Add multiple designs to get volume discounts'}
                     </span>
                   </div>
 
@@ -982,6 +1009,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '10px', padding: '0.2rem' }}>
                     <button
                       type="button"
+                      disabled={selectedService === 'patch' && quantity <= 50}
                       onClick={() => handleQuantityChange(-1)}
                       style={{
                         width: '32px',
@@ -989,11 +1017,11 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         borderRadius: '8px',
                         border: 'none',
                         background: '#f1f5f9',
-                        color: '#0f172a',
+                        color: (selectedService === 'patch' && quantity <= 50) ? '#94a3b8' : '#0f172a',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        cursor: 'pointer',
+                        cursor: (selectedService === 'patch' && quantity <= 50) ? 'not-allowed' : 'pointer',
                         fontWeight: 900
                       }}
                     >
@@ -1004,12 +1032,13 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                       type="number"
                       value={quantityInput}
                       onChange={(e) => handleQuantityInput(e.target.value)}
+                      onBlur={handleQuantityBlur}
                       style={{
                         width: '54px',
                         textAlign: 'center',
                         fontWeight: 900,
                         fontSize: '0.95rem',
-                        color: '#0f172a',
+                        color: (selectedService === 'patch' && quantity < 50) ? '#dc2626' : '#0f172a',
                         border: 'none',
                         background: 'transparent',
                         outline: 'none'
@@ -1038,10 +1067,28 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                   </div>
                 </div>
 
+                {/* Warning notice if quantity is less than 50 for patches */}
+                {selectedService === 'patch' && (quantity < 50 || parseInt(quantityInput, 10) < 50) && (
+                  <div style={{
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '8px',
+                    padding: '0.4rem 0.65rem',
+                    color: '#b91c1c',
+                    fontSize: '0.74rem',
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}>
+                    ⚠️ Minimum order quantity for Custom Patches is 50 pcs.
+                  </div>
+                )}
+
                 {/* Quick Quantity Chips */}
                 <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
                   {(selectedService === 'patch' 
-                    ? [25, 50, 100, 250, 500, 1000] 
+                    ? [50, 100, 250, 500, 1000, 2500] 
                     : [1, 2, 3, 5, 10, 25]
                   ).map(preset => (
                     <button
@@ -1861,6 +1908,13 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 if (step === 1) {
                   setStep(2);
                 } else if (step === 2) {
+                  const parsed = parseInt(quantityInput, 10);
+                  if (selectedService === 'patch' && (quantity < 50 || isNaN(parsed) || parsed < 50)) {
+                    setQuantity(50);
+                    setQuantityInput('50');
+                    if (showToast) showToast('Minimum order quantity for Custom Patches is 50 pieces.', 'warning');
+                    return;
+                  }
                   setStep(3);
                 } else if (step === 3) {
                   if (uploadedFiles.length === 0) {

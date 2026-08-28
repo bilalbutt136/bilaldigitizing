@@ -72,6 +72,8 @@ export const StoreOrderModal = () => {
       const match = unitText.match(/Min\.\s*(\d+)/i);
       if (match && match[1]) {
         parsedMin = parseInt(match[1], 10);
+      } else if (selectedStoreItem.category === 'patch' || selectedStoreItem.category === 'patches' || (selectedStoreItem.title && selectedStoreItem.title.toLowerCase().includes('patch'))) {
+        parsedMin = 50;
       } else if (selectedStoreItem.category === 'tshirts') {
         parsedMin = 5;
       } else if (selectedStoreItem.category === 'caps') {
