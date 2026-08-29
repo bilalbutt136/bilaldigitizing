@@ -595,9 +595,12 @@ export const HeroServicesEditor = () => {
                 <ImageIcon size={20} style={{ color: 'var(--orange-500)' }} />
                 2. Multiple Showcase Images (Auto-Changes Every {formState.slideshow_interval || 5}s) ({(formState.showcase_images || []).length})
               </h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.2rem 0 0.4rem' }}>
                 Upload multiple high-quality showcase images for <strong>{selectedService.toUpperCase()}</strong>. The homepage hero will automatically cycle through all active images every {formState.slideshow_interval || 5} seconds.
               </p>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.74rem', fontWeight: 800, color: 'var(--orange-600)', background: 'rgba(249, 115, 22, 0.1)', padding: '0.2rem 0.55rem', borderRadius: '6px', border: '1px solid rgba(249, 115, 22, 0.2)' }}>
+                📐 Recommended Showcase Dimensions: 1200 × 750 px (16:10) or 1200 × 800 px • Format: PNG, JPG, WEBP (Max 5MB)
+              </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>

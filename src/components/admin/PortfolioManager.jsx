@@ -627,11 +627,16 @@ export const PortfolioManager = () => {
 
               {/* Finished Production Image (Required) */}
               <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', display: 'block', marginBottom: '0.35rem' }}>
-                  Finished Design / Sew-Out Image *
-                </label>
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-                  The primary high-resolution finished sew-out or vector image.
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.35rem' }}>
+                  <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', margin: 0 }}>
+                    Finished Design / Sew-Out Image *
+                  </label>
+                  <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--orange-600)', background: 'rgba(249, 115, 22, 0.1)', padding: '0.2rem 0.55rem', borderRadius: '6px', border: '1px solid rgba(249, 115, 22, 0.2)' }}>
+                    📐 Recommended: 1200 × 900 px (4:3) or 1000 × 1000 px (1:1)
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.65rem' }}>
+                  The primary high-resolution finished sew-out or vector image (Format: PNG, JPG, WEBP • Max 5MB).
                 </p>
 
                 {formState.digitized_image && (
@@ -672,11 +677,16 @@ export const PortfolioManager = () => {
 
               {/* Optional Raw Artwork / Before Image */}
               <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', display: 'block', marginBottom: '0.35rem' }}>
-                  Original Artwork / Before Image (Optional)
-                </label>
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-                  If provided, visitors can inspect the raw artwork versus digitized production.
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.35rem' }}>
+                  <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', margin: 0 }}>
+                    Original Artwork / Before Image (Optional)
+                  </label>
+                  <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--navy-700)', background: '#f1f5f9', padding: '0.2rem 0.55rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                    📐 Recommended: 1200 × 900 px (4:3)
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.65rem' }}>
+                  If provided, visitors can inspect the raw artwork versus digitized production (Format: PNG, JPG, WEBP • Max 5MB).
                 </p>
 
                 {formState.original_image && (
