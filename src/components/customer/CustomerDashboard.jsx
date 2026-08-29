@@ -74,6 +74,7 @@ export const CustomerDashboard = () => {
     setTheme,
     colorTheme,
     setColorTheme,
+    setMobileMode,
     availableThemes = THEME_PRESETS,
     activeCustomerTab,
     setActiveCustomerTab,
@@ -106,9 +107,6 @@ export const CustomerDashboard = () => {
   const [isMobileOrderOpen, setIsMobileOrderOpen] = useState(false);
   const [mobileOrderDefaultService, setMobileOrderDefaultService] = useState('embroidery');
 
-  // Mobile App UI State
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   // Client-side mounting guard for hydration safety
   const [mounted, setMounted] = React.useState(false);
   const initialTabSyncedRef = React.useRef(false);
@@ -800,291 +798,48 @@ export const CustomerDashboard = () => {
         }}
       >
 
-        {/* 1. TOP NATIVE MOBILE APP HEADER (Fiverr / Modern App Standard) */}
+        {/* Optional App Mode Launch Banner for Mobile Screens */}
         <div 
-          className="mobile-only mobile-app-header"
+          className="mobile-only"
           style={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 95,
-            background: '#ffffff',
+            background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0.02) 100%)',
             borderBottom: '1px solid var(--border-color)',
-            padding: '0.75rem 1rem',
+            padding: '0.45rem 0.85rem',
+            display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            boxShadow: 'var(--shadow-sm)',
-            width: '100%',
-            boxSizing: 'border-box'
+            gap: '0.5rem',
+            marginBottom: '0.65rem',
+            borderRadius: '8px'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            {/* User Avatar Circle */}
-            <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
-              color: 'var(--color-text-on-primary, #ffffff)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 800,
-              fontSize: '0.85rem',
-              boxShadow: '0 2px 8px var(--color-primary-glow)',
-              flexShrink: 0
-            }}>
-              {(activeUser?.name?.[0] || 'C').toUpperCase()}
-            </div>
-            
-            <div style={{ minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--navy-900)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {activeUser?.name || 'Client'}
-                </span>
-                <span style={{ fontSize: '0.62rem', background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', padding: '0.05rem 0.35rem', borderRadius: '4px', fontWeight: 800 }}>
-                  VIP
-                </span>
-              </div>
-              <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>
-                {activeTab === 'dashboard' ? 'Studio Dashboard' : (activeTab === 'digitizing' ? 'Embroidery Digitizing' : (activeTab === 'vector' ? 'Vector Art' : (activeTab === 'patches' ? 'Custom Patches' : (activeTab === 'inbox' ? 'Customer Inbox' : 'Client Portal'))))}
-              </span>
-            </div>
-          </div>
-
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-            {/* Quick Mobile Inbox Button */}
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('inbox');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              style={{
-                background: (activeTab === 'support' || activeTab === 'inbox' || activeTab === 'help-support') ? '#fff7ed' : '#f8fafc',
-                border: (activeTab === 'support' || activeTab === 'inbox' || activeTab === 'help-support') ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
-                color: (activeTab === 'support' || activeTab === 'inbox' || activeTab === 'help-support') ? 'var(--orange-500)' : 'var(--navy-900)',
-                width: '34px',
-                height: '34px',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                position: 'relative'
-              }}
-              title="Open Inbox"
-            >
-              <MessageSquare size={16} />
-              {unreadChatCount > 0 && (
-                <span style={{
-                  position: 'absolute',
-                  top: '-4px',
-                  right: '-4px',
-                  background: '#ef4444',
-                  color: '#ffffff',
-                  fontSize: '0.58rem',
-                  fontWeight: 900,
-                  borderRadius: '9999px',
-                  padding: '0.05rem 0.25rem',
-                  lineHeight: 1
-                }}>
-                  {unreadChatCount}
-                </span>
-              )}
-            </button>
-
-            {/* Wallet Button */}
-            <button
-              type="button"
-              onClick={() => setIsDepositModalOpen(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                background: '#fff7ed',
-                border: '1.5px solid #fed7aa',
-                borderRadius: '20px',
-                padding: '0.3rem 0.65rem',
-                color: '#c2410c',
-                fontWeight: 800,
-                fontSize: '0.78rem',
-                cursor: 'pointer',
-                boxShadow: '0 1px 4px rgba(234, 88, 12, 0.12)'
-              }}
-              title="Deposit Wallet Funds"
-            >
-              <Wallet size={14} style={{ color: 'var(--color-primary)' }} />
-              <span style={{ fontWeight: 900 }}>${walletBalance.toFixed(0)}</span>
-              <span style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary, #fff)', width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 900, lineHeight: 1 }}>+</span>
-            </button>
-
-            {/* Menu Trigger */}
-            <button
-              type="button"
-              onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-              style={{
-                background: '#f8fafc',
-                border: '1px solid var(--border-color)',
-                color: 'var(--navy-900)',
-                width: '34px',
-                height: '34px',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer'
-              }}
-              aria-label="Menu"
-            >
-              <Menu size={17} />
-            </button>
+            <Sparkles size={14} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>
+              Prefer the full-screen 5-Tab App?
+            </span>
           </div>
-        </div>
-
-        {/* 2. SLIDE-OUT SIDEBAR DRAWER OVERLAY FOR MOBILE */}
-        {isMobileSidebarOpen && (
-          <div 
-            className="mobile-only"
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(15, 23, 42, 0.65)',
-              backdropFilter: 'blur(4px)',
-              zIndex: 2000,
-              display: 'flex'
+          <button
+            type="button"
+            onClick={() => {
+              if (setMobileMode) setMobileMode('app');
+              showToast('Switched to App Mode 📱', 'info');
             }}
-            onClick={() => setIsMobileSidebarOpen(false)}
+            style={{
+              background: 'var(--orange-500)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '0.25rem 0.6rem',
+              fontSize: '0.72rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
           >
-            <div 
-              style={{
-                width: '285px',
-                maxHeight: '100vh',
-                background: '#ffffff',
-                padding: '1.25rem 1rem',
-                boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
-                overflowY: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between'
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)' }}>
-                  <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--navy-900)' }}>Client Menu</span>
-                  <button 
-                    type="button" 
-                    onClick={() => setIsMobileSidebarOpen(false)}
-                    style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '0.35rem', cursor: 'pointer' }}
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-
-                {/* User Info Header */}
-                <div style={{ background: 'var(--bg-subtle, #f1f5f9)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '0.85rem', color: 'var(--text-main)', marginBottom: '1rem' }}>
-                  <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--navy-950)' }}>{activeUser?.name || 'Client'}</div>
-                  <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>{activeUser?.company || ''}</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '0.45rem 0.65rem', borderRadius: '8px', fontSize: '0.75rem' }}>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Wallet Credit:</span>
-                    <strong style={{ color: '#059669', fontWeight: 900, background: 'var(--color-success-bg, #ecfdf5)', padding: '0.1rem 0.45rem', borderRadius: '6px', border: '1px solid var(--color-success-border, #a7f3d0)' }}>${walletBalance.toFixed(2)}</strong>
-                  </div>
-                </div>
-
-                {/* Navigation Items */}
-                <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                  {[
-                    { 
-                      id: 'dashboard', 
-                      label: 'Dashboard', 
-                      icon: LayoutDashboard
-                    },
-                    { 
-                      id: 'orders', 
-                      label: 'My Orders', 
-                      icon: ClipboardList, 
-                      badge: (digitizingOrders.length + vectorOrders.length + patchOrders.length) > 0 ? (digitizingOrders.length + vectorOrders.length + patchOrders.length) : null
-                    },
-                    { 
-                      id: 'inbox', 
-                      label: 'Customer Inbox (Orders & Offers)', 
-                      icon: MessageSquare, 
-                      badge: unreadChatCount > 0 ? unreadChatCount : null,
-                      isUnread: unreadChatCount > 0
-                    },
-                    { 
-                      id: 'help-support', 
-                      label: '24/7 Live Support Helpdesk', 
-                      icon: Headphones
-                    },
-                    { 
-                      id: 'notifications', 
-                      label: 'Notifications', 
-                      icon: Bell, 
-                      badge: unreadNotifCount > 0 ? unreadNotifCount : null,
-                      isUnread: unreadNotifCount > 0
-                    },
-                    { id: 'digitizing', label: 'Embroidery Digitizing', icon: Layers, badge: digitizingOrders.length },
-                    { id: 'vector', label: 'Vector Art Conversion', icon: PenTool, badge: vectorOrders.length },
-                    { id: 'patches', label: 'Custom Patches & Goods', icon: Package, badge: patchOrders.length },
-                    { id: 'profile', label: 'Account Profile', icon: User },
-                    { id: 'settings', label: 'Preferences & Settings', icon: Settings }
-                  ].map(item => {
-                    const IconComp = item.icon;
-                    const isActive = activeTab === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => {
-                          setActiveTab(item.id);
-                          setIsMobileSidebarOpen(false);
-                        }}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          width: '100%',
-                          padding: '0.7rem 0.85rem',
-                          borderRadius: '10px',
-                          border: isActive ? '1.5px solid var(--orange-500)' : '1.5px solid transparent',
-                          background: isActive ? 'linear-gradient(135deg, rgba(255,122,0,0.14) 0%, rgba(255,122,0,0.06) 100%)' : 'transparent',
-                          color: isActive ? 'var(--orange-600)' : 'var(--navy-800)',
-                          fontWeight: isActive ? 800 : 600,
-                          fontSize: '0.875rem',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                          <IconComp size={18} style={{ color: isActive ? 'var(--orange-600)' : 'var(--navy-600)' }} />
-                          <span>{item.label}</span>
-                        </div>
-                        {item.badge !== undefined && item.badge !== null && item.badge !== 0 && item.badge !== '0' && (
-                          <span style={{ fontSize: '0.72rem', fontWeight: 800, background: item.badgeColor || (item.isUnread ? '#ef4444' : (isActive ? 'var(--orange-500)' : 'var(--navy-100)')), color: (item.badgeColor || item.isUnread || isActive) ? '#ffffff' : 'var(--navy-700)', padding: '0.15rem 0.45rem', borderRadius: '9999px' }}>
-                            {item.badge}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </nav>
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
-                onClick={() => {
-                  setIsMobileSidebarOpen(false);
-                  logout();
-                  navigate('/login');
-                }}
-                style={{ width: '100%', justifyContent: 'center', marginTop: '1rem' }}
-              >
-                <LogOut size={16} /> Sign Out Account
-              </button>
-            </div>
-          </div>
-        )}
+            Launch App
+          </button>
+        </div>
 
         {/* Main Grid Layout: Left Vertical Sidebar + Right Content Workspace */}
         <div 

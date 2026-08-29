@@ -118,13 +118,12 @@ export default function RootLayout({ children }) {
               (function() {
                 try {
                   var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-                  var isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
                   var params = new URLSearchParams(window.location.search);
                   var urlApp = params.get('app') === 'true' || params.get('mode') === 'app';
                   var urlWeb = params.get('web') === 'true' || params.get('mode') === 'web';
                   var saved = localStorage.getItem('bdigi_mobile_mode');
                   
-                  if (!urlWeb && (urlApp || isStandalone || saved === 'app' || (saved !== 'website' && isMobile))) {
+                  if (!urlWeb && (urlApp || isStandalone || saved === 'app')) {
                     document.documentElement.classList.add('mobile-app-active');
                     document.documentElement.setAttribute('data-mobile-mode', 'app');
                   }

@@ -235,13 +235,12 @@ export const StateProvider = ({ children }) => {
     showToast(`Theme updated to ${THEME_PRESETS.find(t => t.id === targetPreset)?.name || 'New Theme'} ✨`, 'success');
   };
 
-  // Mobile View Mode: 'app' (default on mobile devices, standalone PWA, installed app) | 'website' (for desktop browsers or explicit web mode)
+  // Mobile View Mode: 'app' (standalone PWA, installed app, or explicit user App Mode) | 'website' (default for desktop and mobile web browsers)
   const [mobileMode, setMobileModeState] = useState(() => {
     if (typeof window !== 'undefined') {
       try {
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                              window.navigator.standalone === true;
-        const isMobileScreen = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const urlParams = new URLSearchParams(window.location.search);
         const urlApp = urlParams.get('app') === 'true' || urlParams.get('mode') === 'app';
         const urlWeb = urlParams.get('web') === 'true' || urlParams.get('mode') === 'web';
@@ -250,7 +249,6 @@ export const StateProvider = ({ children }) => {
         if (urlWeb) return 'website';
         if (urlApp || isStandalone) return 'app';
         if (savedMode === 'app' || savedMode === 'website') return savedMode;
-        if (isMobileScreen) return 'app';
       } catch {}
     }
     return 'website';
@@ -276,7 +274,6 @@ export const StateProvider = ({ children }) => {
       const urlWeb = urlParams.get('web') === 'true' || urlParams.get('mode') === 'web';
       
       const savedMode = localStorage.getItem('bdigi_mobile_mode');
-      const isMobileScreen = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
       let targetMode = 'website';
       if (urlWeb) {
@@ -285,8 +282,6 @@ export const StateProvider = ({ children }) => {
         targetMode = 'app';
       } else if (savedMode === 'app' || savedMode === 'website') {
         targetMode = savedMode;
-      } else if (isMobileScreen) {
-        targetMode = 'app';
       }
 
       setMobileModeState(targetMode);
