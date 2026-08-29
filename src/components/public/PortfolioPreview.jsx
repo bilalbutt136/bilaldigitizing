@@ -35,7 +35,7 @@ export const PortfolioPreview = () => {
       mappedCategory: (item.category || '').toLowerCase().includes('vector') ? 'Vector Art' 
                     : (item.category || '').toLowerCase().includes('patch') ? 'Custom Patches' 
                     : 'Embroidery',
-      image: item.digitized_image || item.original_image || item.after_img || item.before_img || item.afterImg || item.image || 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/c41fb095-1b51-45b2-8990-30c9232002d8.png'
+      image: item.digitized_image || item.original_image || item.after_img || item.before_img || item.afterImg || item.image || 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/portfolio-gallery/9e3dcdd7-e3b4-4886-9f18-a94361029147.png'
     }))
     .filter(item => Boolean(item.image) && !item.image.includes('unsplash.com'));
 

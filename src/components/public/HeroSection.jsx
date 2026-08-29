@@ -61,7 +61,7 @@ const DEFAULT_SERVICE_DATA = {
       {
         id: 'all-1',
         title: 'Commercial Embroidery Digitizing',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/c41fb095-1b51-45b2-8990-30c9232002d8.png',
+        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/portfolio-gallery/9e3dcdd7-e3b4-4886-9f18-a94361029147.png',
         display_order: 1,
         is_active: true
       },
@@ -192,7 +192,7 @@ const DEFAULT_SERVICE_DATA = {
       {
         id: 'pat-2',
         title: 'High-Density Uniform Emblem',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/c41fb095-1b51-45b2-8990-30c9232002d8.png',
+        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/portfolio-gallery/9e3dcdd7-e3b4-4886-9f18-a94361029147.png',
         display_order: 2,
         is_active: true
       }

@@ -36,7 +36,7 @@ export const MetaSeoTrackingSettings = () => {
   const [metaDescription, setMetaDescription] = useState(siteSettings?.metaDescription || 'Precision machine embroidery digitizing and vector conversion services backed by 25+ years master craftsmanship. 8-12 hour express turnaround.');
   const [metaKeywords, setMetaKeywords] = useState(siteSettings?.metaKeywords || 'embroidery digitizing, vector art conversion, custom patches, 3d puff embroidery, left chest logo digitizing, machine stitch files');
   const [canonicalUrl, setCanonicalUrl] = useState(siteSettings?.canonicalUrl || 'https://bdigitizing-pro.com');
-  const [ogImageUrl, setOgImageUrl] = useState(siteSettings?.ogImageUrl || 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/c41fb095-1b51-45b2-8990-30c9232002d8.png');
+  const [ogImageUrl, setOgImageUrl] = useState(siteSettings?.ogImageUrl || 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/portfolio-gallery/9e3dcdd7-e3b4-4886-9f18-a94361029147.png');
 
   // Event Logs State
   const [events, setEvents] = useState([]);
