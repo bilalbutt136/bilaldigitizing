@@ -22,7 +22,7 @@ import {
   X,
   Maximize2
 } from 'lucide-react';
-import { savePortfolioItemViaApi, deletePortfolioItemViaApi } from '../../services/supabaseService';
+import { savePortfolioItemViaApi, deletePortfolioItemViaApi, getAuthHeaders } from '../../services/supabaseService';
 
 const CATEGORY_OPTIONS = [
   { value: 'Embroidery', label: 'Embroidery Digitizing', icon: Layers, color: '#f97316' },
@@ -107,9 +107,14 @@ export const PortfolioManager = () => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('folder', 'portfolio-gallery');
+      formData.append('bucket', 'portfolio-images');
+
+      const authHeaders = await getAuthHeaders();
+      const { 'Content-Type': _, ...headers } = authHeaders;
 
       const response = await fetch('/api/cloudinary/upload', {
         method: 'POST',
+        headers,
         body: formData
       });
 
@@ -154,20 +159,29 @@ export const PortfolioManager = () => {
 
       const result = await savePortfolioItemViaApi(payload);
       if (result.success || result.data) {
+        const savedItem = result.data || payload;
         showToast(`Portfolio item "${formState.title}" saved successfully!`, 'success');
         
-        // Update local StateContext
+        // Update local StateContext & broadcast immediately
         if (setPortfolioSamples) {
           setPortfolioSamples(prev => {
             const list = [...(prev || [])];
             const index = list.findIndex(p => p.id === formState.id);
             if (index >= 0) {
-              list[index] = payload;
+              list[index] = savedItem;
             } else {
-              list.unshift(payload);
+              list.unshift(savedItem);
+            }
+            if (typeof window !== 'undefined') {
+              try {
+                localStorage.setItem('portfolio_samples_live', JSON.stringify(list));
+              } catch {}
             }
             return list;
           });
+        }
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('portfolio_updated', { detail: savedItem }));
         }
         setIsModalOpen(false);
       } else {
@@ -187,7 +201,16 @@ export const PortfolioManager = () => {
     if (result.success || result.data) {
       showToast(`Item "${item.title}" ${updated.is_active ? 'enabled' : 'hidden'}`, 'success');
       if (setPortfolioSamples) {
-        setPortfolioSamples(prev => prev.map(p => p.id === item.id ? updated : p));
+        setPortfolioSamples(prev => {
+          const list = prev.map(p => p.id === item.id ? updated : p);
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('portfolio_samples_live', JSON.stringify(list));
+            } catch {}
+            window.dispatchEvent(new CustomEvent('portfolio_updated', { detail: updated }));
+          }
+          return list;
+        });
       }
     }
   };
@@ -200,7 +223,15 @@ export const PortfolioManager = () => {
       if (result.success) {
         showToast(`"${item.title}" removed from portfolio`, 'success');
         if (setPortfolioSamples) {
-          setPortfolioSamples(prev => prev.filter(p => p.id !== item.id));
+          setPortfolioSamples(prev => {
+            const list = prev.filter(p => p.id !== item.id);
+            if (typeof window !== 'undefined') {
+              try {
+                localStorage.setItem('portfolio_samples_live', JSON.stringify(list));
+              } catch {}
+            }
+            return list;
+          });
         }
       } else {
         showToast('Failed to delete: ' + (result.error || 'Unknown error'), 'error');

@@ -972,7 +972,7 @@ export const StateProvider = ({ children }) => {
       
       const tablesToSync = [
         'services', 'pricing_tiers', 'patch_cards', 'store_products', 
-        'portfolio_items', 'sew_outs', 'hero_slides', 'digitizers', 'cms_content',
+        'portfolio', 'portfolio_items', 'sew_outs', 'hero_slides', 'digitizers', 'cms_content',
         'faqs', 'testimonials', 'site_config', 'home_page_settings'
       ];
       
@@ -1017,6 +1017,20 @@ export const StateProvider = ({ children }) => {
         setSiteSettings(prev => ({ ...prev, ...e.detail }));
       }
     };
+    const handlePortfolioLocalSync = (e) => {
+      if (e.detail) {
+        setPortfolioSamples(prev => {
+          const list = [...(prev || [])];
+          const index = list.findIndex(p => p.id === e.detail.id);
+          if (index >= 0) {
+            list[index] = { ...list[index], ...e.detail };
+          } else {
+            list.unshift(e.detail);
+          }
+          return list;
+        });
+      }
+    };
     const handleStorageSync = (e) => {
       if (e.key === 'site_settings_live' && e.newValue) {
         try {
@@ -1024,9 +1038,16 @@ export const StateProvider = ({ children }) => {
           setSiteSettings(prev => ({ ...prev, ...parsed }));
         } catch {}
       }
+      if (e.key === 'portfolio_samples_live' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) setPortfolioSamples(parsed);
+        } catch {}
+      }
     };
     if (typeof window !== 'undefined') {
       window.addEventListener('site_settings_updated', handleLocalSync);
+      window.addEventListener('portfolio_updated', handlePortfolioLocalSync);
       window.addEventListener('storage', handleStorageSync);
     }
 
@@ -1965,7 +1986,7 @@ export const StateProvider = ({ children }) => {
 
   const updatePortfolioSamples = (newPortfolio) => {
     setPortfolioSamples(newPortfolio);
-    upsertCatalogDataToSupabase('portfolio_items', newPortfolio);
+    upsertCatalogDataToSupabase('portfolio', newPortfolio);
   };
 
   const updateSewOuts = (newSewOuts) => {

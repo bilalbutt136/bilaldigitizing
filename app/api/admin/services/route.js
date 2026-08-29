@@ -159,13 +159,15 @@ export async function POST(request) {
       console.warn('[Hero Slides Table Sync Warning]', tableErr);
     }
 
-    // 5. Invalidate Next.js cache for the home page
+    // 5. Invalidate Next.js cache for the home page & portfolio
     try {
-      revalidatePath('/');
+      revalidatePath('/', 'layout');
       revalidatePath('/pricing');
       revalidatePath('/services/embroidery-digitizing');
       revalidatePath('/services/vector-tracing');
       revalidatePath('/custom-patches');
+      revalidatePath('/portfolio');
+      revalidatePath('/');
     } catch (cacheErr) {
       console.warn('[Cache Revalidation Warning]', cacheErr);
     }

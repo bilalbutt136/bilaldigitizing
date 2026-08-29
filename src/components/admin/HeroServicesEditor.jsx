@@ -23,7 +23,7 @@ import {
   Clock
 } from 'lucide-react';
 
-import { saveHeroServiceViaApi } from '../../services/supabaseService';
+import { saveHeroServiceViaApi, getAuthHeaders } from '../../services/supabaseService';
 
 const DEFAULT_SERVICES = {
   all: {
@@ -364,9 +364,14 @@ export const HeroServicesEditor = () => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('folder', 'showcase-gallery');
+      formData.append('bucket', 'portfolio-images');
+
+      const authHeaders = await getAuthHeaders();
+      const { 'Content-Type': _, ...headers } = authHeaders;
 
       const response = await fetch('/api/cloudinary/upload', {
         method: 'POST',
+        headers,
         body: formData
       });
 
@@ -424,12 +429,20 @@ export const HeroServicesEditor = () => {
             const index = prev.findIndex(
               s => s.id?.toLowerCase() === selectedService || s.serviceKey?.toLowerCase() === selectedService
             );
+            let updated;
             if (index >= 0) {
-              const updated = [...prev];
+              updated = [...prev];
               updated[index] = payload;
-              return updated;
+            } else {
+              updated = [...prev, payload];
             }
-            return [...prev, payload];
+            if (typeof window !== 'undefined') {
+              try {
+                localStorage.setItem('hero_slides_live', JSON.stringify(updated));
+              } catch {}
+              window.dispatchEvent(new CustomEvent('hero_slides_updated', { detail: payload }));
+            }
+            return updated;
           });
         }
       } else {

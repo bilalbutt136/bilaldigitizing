@@ -20,6 +20,7 @@ function revalidateAllSitePages() {
     revalidatePath('/services/embroidery-digitizing');
     revalidatePath('/services/vector-tracing');
     revalidatePath('/custom-patches');
+    revalidatePath('/portfolio');
     revalidatePath('/');
   } catch (e) {
     console.warn('[Revalidate Error]:', e);
