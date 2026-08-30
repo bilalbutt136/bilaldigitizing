@@ -235,7 +235,7 @@ export const StateProvider = ({ children }) => {
     showToast(`Theme updated to ${THEME_PRESETS.find(t => t.id === targetPreset)?.name || 'New Theme'} ✨`, 'success');
   };
 
-  // Mobile View Mode: 'app' (standalone PWA, installed app, or explicit user App Mode) | 'website' (default for desktop and mobile web browsers)
+  // Mobile View Mode: 'app' (standalone PWA/installed app) | 'website' (default for desktop and mobile web browsers)
   const [mobileMode, setMobileModeState] = useState(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -244,11 +244,9 @@ export const StateProvider = ({ children }) => {
         const urlParams = new URLSearchParams(window.location.search);
         const urlApp = urlParams.get('app') === 'true' || urlParams.get('mode') === 'app';
         const urlWeb = urlParams.get('web') === 'true' || urlParams.get('mode') === 'web';
-        const savedMode = localStorage.getItem('bdigi_mobile_mode');
 
         if (urlWeb) return 'website';
         if (urlApp || isStandalone) return 'app';
-        if (savedMode === 'app' || savedMode === 'website') return savedMode;
       } catch {}
     }
     return 'website';
@@ -272,16 +270,12 @@ export const StateProvider = ({ children }) => {
       const urlParams = new URLSearchParams(window.location.search);
       const urlApp = urlParams.get('app') === 'true' || urlParams.get('mode') === 'app';
       const urlWeb = urlParams.get('web') === 'true' || urlParams.get('mode') === 'web';
-      
-      const savedMode = localStorage.getItem('bdigi_mobile_mode');
 
       let targetMode = 'website';
       if (urlWeb) {
         targetMode = 'website';
       } else if (urlApp || isStandalone) {
         targetMode = 'app';
-      } else if (savedMode === 'app' || savedMode === 'website') {
-        targetMode = savedMode;
       }
 
       setMobileModeState(targetMode);

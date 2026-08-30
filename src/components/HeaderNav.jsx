@@ -584,6 +584,38 @@ export const HeaderNav = () => {
             </button>
           )}
 
+          {/* Mobile Direct Sign In Button for Guests */}
+          {!safeIsAuthenticated && (
+            <button
+              type="button"
+              className="mobile-only"
+              onClick={() => {
+                setAuthModalMode('login');
+                setIsAuthModalOpen(true);
+                navigate('/login');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--orange-600) 100%)',
+                color: '#ffffff',
+                border: 'none',
+                padding: '0.35rem 0.65rem',
+                height: '38px',
+                borderRadius: '8px',
+                fontWeight: 800,
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(249, 115, 22, 0.3)'
+              }}
+            >
+              <User size={13} />
+              <span>Sign In</span>
+            </button>
+          )}
+
           {/* Mobile Theme Toggle Quick Icon */}
           <div className="mobile-only" style={{ display: 'flex', alignItems: 'center' }}>
             <ThemeToggle />
@@ -1313,79 +1345,110 @@ export const HeaderNav = () => {
             </button>
 
             {!safeIsAuthenticated ? (
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '0.35rem' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    if (openOrderWizard) openOrderWizard({ type: 'all' });
-                    else protectedNavigate('customer', true, { type: 'all' });
-                  }}
-                  style={{
-                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.55rem 0.35rem',
-                    fontWeight: 900,
-                    fontSize: '0.78rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.25rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Order <ArrowRight size={13} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthModalMode('login');
-                    setIsAuthModalOpen(true);
-                    setIsMobileMenuOpen(false);
-                    navigate('/login');
-                  }}
-                  style={{
-                    background: isDark ? '#1e293b' : '#f8fafc',
-                    border: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid #cbd5e1',
-                    color: isDark ? '#f8fafc' : '#0f172a',
-                    borderRadius: '8px',
-                    padding: '0.55rem 0.35rem',
-                    fontWeight: 800,
-                    fontSize: '0.78rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.25rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <User size={13} /> Login
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    handleOpenLiveSupport();
-                  }}
-                  style={{
-                    background: isDark ? 'rgba(59, 130, 246, 0.15)' : '#eff6ff',
-                    border: isDark ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid #bfdbfe',
-                    color: isDark ? '#93c5fd' : '#1d4ed8',
-                    borderRadius: '8px',
-                    padding: '0.55rem 0.35rem',
-                    fontWeight: 800,
-                    fontSize: '0.78rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.25rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <Headphones size={13} /> Support
-                </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthModalMode('login');
+                      setIsAuthModalOpen(true);
+                      setIsMobileMenuOpen(false);
+                      navigate('/login');
+                    }}
+                    style={{
+                      background: isDark ? '#1e293b' : '#f8fafc',
+                      border: isDark ? '1.5px solid rgba(255,255,255,0.15)' : '1.5px solid #cbd5e1',
+                      color: isDark ? '#f8fafc' : '#0f172a',
+                      borderRadius: '10px',
+                      padding: '0.65rem 0.5rem',
+                      fontWeight: 800,
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.35rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <User size={15} /> Sign In
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthModalMode('signup');
+                      setIsAuthModalOpen(true);
+                      setIsMobileMenuOpen(false);
+                      navigate('/signup');
+                    }}
+                    style={{
+                      background: 'rgba(249, 115, 22, 0.12)',
+                      border: '1.5px solid var(--color-primary)',
+                      color: 'var(--color-primary)',
+                      borderRadius: '10px',
+                      padding: '0.65rem 0.5rem',
+                      fontWeight: 900,
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.35rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Sparkles size={15} /> Create Account
+                  </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.4rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      if (openOrderWizard) openOrderWizard({ type: 'all' });
+                      else protectedNavigate('customer', true, { type: 'all' });
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '10px',
+                      padding: '0.65rem 0.5rem',
+                      fontWeight: 900,
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.35rem',
+                      cursor: 'pointer',
+                      boxShadow: '0 3px 12px var(--color-primary-glow)'
+                    }}
+                  >
+                    <Upload size={15} /> Start Order <ArrowRight size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      handleOpenLiveSupport();
+                    }}
+                    style={{
+                      background: isDark ? 'rgba(59, 130, 246, 0.15)' : '#eff6ff',
+                      border: isDark ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid #bfdbfe',
+                      color: isDark ? '#93c5fd' : '#1d4ed8',
+                      borderRadius: '10px',
+                      padding: '0.65rem 0.5rem',
+                      fontWeight: 800,
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.35rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Headphones size={15} /> 24/7 Support
+                  </button>
+                </div>
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '0.35rem' }}>

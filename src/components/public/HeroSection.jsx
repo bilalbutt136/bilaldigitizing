@@ -499,7 +499,17 @@ export const HeroSection = () => {
           background: rgba(255, 255, 255, 0.08) !important;
           color: #ffffff !important;
         }
+        @media (max-width: 992px) {
+          .hero-grid-layout {
+            grid-template-columns: 1fr !important;
+            gap: 1.5rem !important;
+          }
+        }
         @media (max-width: 768px) {
+          .hero-grid-layout {
+            grid-template-columns: 1fr !important;
+            gap: 1.25rem !important;
+          }
           .hero-nav-tabs-wrapper {
             border-radius: 14px !important;
             padding: 0.3rem !important;
