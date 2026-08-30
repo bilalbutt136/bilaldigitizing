@@ -396,94 +396,128 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
       
       {/* 1. TOP CHANNEL SELECTOR HEADER */}
       <div style={{
-        padding: '0.65rem 1rem',
+        padding: '0.65rem 0.85rem',
         background: '#ffffff',
         borderBottom: '1.5px solid #e2e8f0',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        gap: '0.55rem',
         flexShrink: 0,
-        gap: '0.5rem'
+        boxSizing: 'border-box',
+        width: '100%'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-          {onBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              style={{
-                background: '#f8fafc',
-                border: '1.5px solid #cbd5e1',
-                borderRadius: '10px',
-                width: '38px',
-                height: '38px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#0f172a',
-                cursor: 'pointer',
-                flexShrink: 0,
-                transition: 'all 0.15s ease'
-              }}
-              aria-label="Back to App"
-              title="Back"
-            >
-              <ArrowLeft size={18} />
-            </button>
-          )}
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              background: '#f1f5f9',
+              border: '1.5px solid #cbd5e1',
+              borderRadius: '10px',
+              width: '38px',
+              height: '38px',
+              minWidth: '38px',
+              minHeight: '38px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#0f172a',
+              cursor: 'pointer',
+              flexShrink: 0,
+              transition: 'all 0.15s ease'
+            }}
+            aria-label="Back to App"
+            title="Back"
+          >
+            <ArrowLeft size={18} />
+          </button>
+        )}
 
-          <div style={{ display: 'flex', gap: '4px', overflowX: 'auto' }}>
-            <button
-              type="button"
-              onClick={() => handleChannelSwitch('inbox')}
-              style={{
-                padding: '0.5rem 0.8rem',
-                borderRadius: '8px',
-                border: activeChannel === 'inbox' ? '1.5px solid #059669' : '1px solid #e2e8f0',
-                background: activeChannel === 'inbox' ? '#f0fdf4' : 'transparent',
-                color: activeChannel === 'inbox' ? '#047857' : '#64748b',
-                fontWeight: activeChannel === 'inbox' ? 900 : 700,
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <MessageSquare size={14} style={{ color: activeChannel === 'inbox' ? '#059669' : '#64748b' }} />
-              <span>Studio Digitizers</span>
-            </button>
+        {/* 2-Tab High-Contrast Segmented Switcher */}
+        <div style={{
+          flex: 1,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          background: '#f1f5f9',
+          borderRadius: '12px',
+          padding: '3px',
+          gap: '3px',
+          minWidth: 0,
+          border: '1px solid #e2e8f0'
+        }}>
+          <button
+            type="button"
+            onClick={() => handleChannelSwitch('inbox')}
+            style={{
+              padding: '0.55rem 0.35rem',
+              borderRadius: '9px',
+              border: 'none',
+              background: activeChannel === 'inbox' ? '#047857' : 'transparent',
+              color: activeChannel === 'inbox' ? '#ffffff' : '#475569',
+              fontWeight: 900,
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.35rem',
+              whiteSpace: 'nowrap',
+              boxShadow: activeChannel === 'inbox' ? '0 2px 6px rgba(4, 120, 87, 0.25)' : 'none',
+              transition: 'all 0.2s ease',
+              minWidth: 0
+            }}
+          >
+            <MessageSquare size={14} style={{ flexShrink: 0 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>Studio Digitizers</span>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => handleChannelSwitch('support')}
-              style={{
-                padding: '0.5rem 0.8rem',
-                borderRadius: '8px',
-                border: activeChannel === 'support' ? '1.5px solid #059669' : '1px solid #e2e8f0',
-                background: activeChannel === 'support' ? '#f0fdf4' : 'transparent',
-                color: activeChannel === 'support' ? '#047857' : '#64748b',
-                fontWeight: activeChannel === 'support' ? 900 : 700,
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <Headphones size={14} style={{ color: activeChannel === 'support' ? '#059669' : '#64748b' }} />
-              <span>24/7 Help Desk</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => handleChannelSwitch('support')}
+            style={{
+              padding: '0.55rem 0.35rem',
+              borderRadius: '9px',
+              border: 'none',
+              background: activeChannel === 'support' ? '#047857' : 'transparent',
+              color: activeChannel === 'support' ? '#ffffff' : '#475569',
+              fontWeight: 900,
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.35rem',
+              whiteSpace: 'nowrap',
+              boxShadow: activeChannel === 'support' ? '0 2px 6px rgba(4, 120, 87, 0.25)' : 'none',
+              transition: 'all 0.2s ease',
+              minWidth: 0
+            }}
+          >
+            <Headphones size={14} style={{ flexShrink: 0 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>24/7 Help Desk</span>
+          </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', paddingBottom: '0.35rem' }}>
-          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981' }} />
-          <span style={{ fontSize: '0.7rem', color: '#047857', fontWeight: 800 }}>
-            Online
+        {/* Live Online Status Badge */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.3rem',
+          background: '#ecfdf5',
+          border: '1px solid #a7f3d0',
+          borderRadius: '20px',
+          padding: '0.35rem 0.55rem',
+          flexShrink: 0
+        }}>
+          <span style={{
+            width: '6px',
+            height: '6px',
+            borderRadius: '50%',
+            background: '#10b981',
+            boxShadow: '0 0 6px #10b981'
+          }} />
+          <span style={{ fontSize: '0.68rem', color: '#047857', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Live
           </span>
         </div>
       </div>
