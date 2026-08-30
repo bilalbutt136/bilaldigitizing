@@ -34,7 +34,8 @@ import {
   Inbox,
   User,
   ShieldCheck,
-  Zap
+  Zap,
+  ArrowLeft
 } from 'lucide-react';
 
 const parseMessageTime = (msg) => {
@@ -61,7 +62,7 @@ const formatChatTime = (timestamp) => {
   }
 };
 
-export const ClientChatInbox = ({ initialOrderId = null }) => {
+export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
   const { 
     authUser, 
     currentUser, 
@@ -395,62 +396,88 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
       
       {/* 1. TOP CHANNEL SELECTOR HEADER */}
       <div style={{
-        padding: '0.65rem 1rem 0',
+        padding: '0.65rem 1rem',
         background: '#ffffff',
-        borderBottom: '1px solid #e2e8f0',
+        borderBottom: '1.5px solid #e2e8f0',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        flexShrink: 0
+        flexShrink: 0,
+        gap: '0.5rem'
       }}>
-        <div style={{ display: 'flex', gap: '4px' }}>
-          <button
-            type="button"
-            onClick={() => handleChannelSwitch('inbox')}
-            style={{
-              padding: '0.55rem 0.85rem',
-              borderRadius: '10px 10px 0 0',
-              border: '1px solid #e2e8f0',
-              borderBottom: activeChannel === 'inbox' ? '2.5px solid #059669' : '1px solid transparent',
-              background: activeChannel === 'inbox' ? '#f0fdf4' : 'transparent',
-              color: activeChannel === 'inbox' ? '#047857' : '#64748b',
-              fontWeight: activeChannel === 'inbox' ? 900 : 700,
-              fontSize: '0.8rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              whiteSpace: 'nowrap',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <MessageSquare size={14} style={{ color: activeChannel === 'inbox' ? '#059669' : '#64748b' }} />
-            <span>Studio Digitizers</span>
-          </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              style={{
+                background: '#f8fafc',
+                border: '1.5px solid #cbd5e1',
+                borderRadius: '10px',
+                width: '38px',
+                height: '38px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#0f172a',
+                cursor: 'pointer',
+                flexShrink: 0,
+                transition: 'all 0.15s ease'
+              }}
+              aria-label="Back to App"
+              title="Back"
+            >
+              <ArrowLeft size={18} />
+            </button>
+          )}
 
-          <button
-            type="button"
-            onClick={() => handleChannelSwitch('support')}
-            style={{
-              padding: '0.55rem 0.85rem',
-              borderRadius: '10px 10px 0 0',
-              border: '1px solid #e2e8f0',
-              borderBottom: activeChannel === 'support' ? '2.5px solid #059669' : '1px solid transparent',
-              background: activeChannel === 'support' ? '#f0fdf4' : 'transparent',
-              color: activeChannel === 'support' ? '#047857' : '#64748b',
-              fontWeight: activeChannel === 'support' ? 900 : 700,
-              fontSize: '0.8rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              whiteSpace: 'nowrap',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <Headphones size={14} style={{ color: activeChannel === 'support' ? '#059669' : '#64748b' }} />
-            <span>24/7 Help Desk</span>
-          </button>
+          <div style={{ display: 'flex', gap: '4px', overflowX: 'auto' }}>
+            <button
+              type="button"
+              onClick={() => handleChannelSwitch('inbox')}
+              style={{
+                padding: '0.5rem 0.8rem',
+                borderRadius: '8px',
+                border: activeChannel === 'inbox' ? '1.5px solid #059669' : '1px solid #e2e8f0',
+                background: activeChannel === 'inbox' ? '#f0fdf4' : 'transparent',
+                color: activeChannel === 'inbox' ? '#047857' : '#64748b',
+                fontWeight: activeChannel === 'inbox' ? 900 : 700,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <MessageSquare size={14} style={{ color: activeChannel === 'inbox' ? '#059669' : '#64748b' }} />
+              <span>Studio Digitizers</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleChannelSwitch('support')}
+              style={{
+                padding: '0.5rem 0.8rem',
+                borderRadius: '8px',
+                border: activeChannel === 'support' ? '1.5px solid #059669' : '1px solid #e2e8f0',
+                background: activeChannel === 'support' ? '#f0fdf4' : 'transparent',
+                color: activeChannel === 'support' ? '#047857' : '#64748b',
+                fontWeight: activeChannel === 'support' ? 900 : 700,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <Headphones size={14} style={{ color: activeChannel === 'support' ? '#059669' : '#64748b' }} />
+              <span>24/7 Help Desk</span>
+            </button>
+          </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', paddingBottom: '0.35rem' }}>

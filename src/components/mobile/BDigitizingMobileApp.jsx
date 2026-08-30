@@ -129,17 +129,17 @@ export const BDigitizingMobileApp = () => {
 
   const [mobileTab, setMobileTabState] = useState(getInitialMobileTab);
 
-  const setMobileTab = (newTab, replace = false) => {
+  const setMobileTab = (newTab) => {
     setMobileTabState(newTab);
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('bdigi_mobile_active_tab', newTab);
         const url = new URL(window.location.href);
         url.searchParams.set('tab', newTab);
-        if (replace || newTab === 'home') {
-          window.history.replaceState({ tab: newTab }, '', url.toString());
+        if (newTab === 'home') {
+          window.history.replaceState({ app: true, tab: 'home' }, '', url.toString());
         } else {
-          window.history.pushState({ tab: newTab }, '', url.toString());
+          window.history.pushState({ app: true, tab: newTab }, '', url.toString());
         }
       } catch {}
     }
@@ -241,13 +241,30 @@ export const BDigitizingMobileApp = () => {
 
   // Sync tab with mobile hardware / browser back/forward buttons
   useEffect(() => {
+    // When app mounts on home, prime history state so hardware back button is caught
+    if (typeof window !== 'undefined') {
+      try {
+        if (!window.history.state?.app) {
+          window.history.replaceState({ app: true, tab: 'home' }, '', window.location.href);
+        }
+      } catch {}
+    }
+
     const handlePopState = (e) => {
       if (typeof window !== 'undefined') {
         const stateTab = e?.state?.tab;
         const urlParams = new URLSearchParams(window.location.search);
         const tabParam = stateTab || urlParams.get('tab');
         const validTabs = ['home', 'inbox', 'categories', 'orders', 'profile', 'login', 'signup', 'auth'];
-        if (tabParam && validTabs.includes(tabParam)) {
+        
+        // If user is currently on inbox or any sub-tab and presses Android back key, return to home
+        if (mobileTab !== 'home') {
+          setMobileTabState('home');
+          try {
+            localStorage.setItem('bdigi_mobile_active_tab', 'home');
+            window.history.replaceState({ app: true, tab: 'home' }, '', window.location.pathname + '?tab=home');
+          } catch {}
+        } else if (tabParam && validTabs.includes(tabParam)) {
           setMobileTabState(tabParam);
         } else {
           setMobileTabState('home');
@@ -256,7 +273,7 @@ export const BDigitizingMobileApp = () => {
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  }, [mobileTab]);
 
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -1870,7 +1887,7 @@ export const BDigitizingMobileApp = () => {
         }}>
           {/* Render Full Client Chat Inbox with built-in channels and complete scrolling */}
           <div style={{ flex: 1, minHeight: 0, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <ClientChatInbox initialOrderId={selectedChatOrderId} />
+            <ClientChatInbox initialOrderId={selectedChatOrderId} onBack={() => setMobileTab('home')} />
           </div>
         </div>
       )}
