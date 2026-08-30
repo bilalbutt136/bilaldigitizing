@@ -129,14 +129,18 @@ export const BDigitizingMobileApp = () => {
 
   const [mobileTab, setMobileTabState] = useState(getInitialMobileTab);
 
-  const setMobileTab = (newTab) => {
+  const setMobileTab = (newTab, replace = false) => {
     setMobileTabState(newTab);
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('bdigi_mobile_active_tab', newTab);
         const url = new URL(window.location.href);
         url.searchParams.set('tab', newTab);
-        window.history.replaceState({}, '', url.toString());
+        if (replace || newTab === 'home') {
+          window.history.replaceState({ tab: newTab }, '', url.toString());
+        } else {
+          window.history.pushState({ tab: newTab }, '', url.toString());
+        }
       } catch {}
     }
   };
@@ -235,15 +239,18 @@ export const BDigitizingMobileApp = () => {
     }
   };
 
-  // Sync tab with browser back/forward buttons
+  // Sync tab with mobile hardware / browser back/forward buttons
   useEffect(() => {
-    const handlePopState = () => {
+    const handlePopState = (e) => {
       if (typeof window !== 'undefined') {
+        const stateTab = e?.state?.tab;
         const urlParams = new URLSearchParams(window.location.search);
-        const tabParam = urlParams.get('tab');
+        const tabParam = stateTab || urlParams.get('tab');
         const validTabs = ['home', 'inbox', 'categories', 'orders', 'profile', 'login', 'signup', 'auth'];
         if (tabParam && validTabs.includes(tabParam)) {
           setMobileTabState(tabParam);
+        } else {
+          setMobileTabState('home');
         }
       }
     };
@@ -1861,68 +1868,6 @@ export const BDigitizingMobileApp = () => {
           zIndex: 9999,
           background: '#ffffff'
         }}>
-          {/* Top Chat Header with Back Button */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0.65rem 1rem',
-            background: '#ffffff',
-            borderBottom: '1.5px solid #e2e8f0',
-            flexShrink: 0,
-            zIndex: 10
-          }}>
-            <button
-              type="button"
-              onClick={() => setMobileTab('home')}
-              style={{
-                background: '#f8fafc',
-                border: '1px solid #cbd5e1',
-                borderRadius: '10px',
-                padding: '0.4rem 0.75rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                fontSize: '0.82rem',
-                fontWeight: 800,
-                color: '#0f172a',
-                cursor: 'pointer'
-              }}
-            >
-              <ArrowLeft size={16} /> Back
-            </button>
-
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.2 }}>
-                Studio Messages & Support
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', marginTop: '2px' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
-                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#047857' }}>Digitizers Online</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (setSelectedChatOrderId) setSelectedChatOrderId(null);
-                setMobileTab('orders');
-              }}
-              style={{
-                background: '#ecfdf5',
-                border: '1px solid #a7f3d0',
-                color: '#047857',
-                borderRadius: '8px',
-                padding: '0.35rem 0.6rem',
-                fontSize: '0.72rem',
-                fontWeight: 800,
-                cursor: 'pointer'
-              }}
-            >
-              Orders
-            </button>
-          </div>
-
           {/* Render Full Client Chat Inbox with built-in channels and complete scrolling */}
           <div style={{ flex: 1, minHeight: 0, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <ClientChatInbox initialOrderId={selectedChatOrderId} />
