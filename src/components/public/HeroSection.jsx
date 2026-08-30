@@ -512,18 +512,24 @@ export const HeroSection = () => {
           }
           .hero-nav-tabs-wrapper {
             border-radius: 14px !important;
-            padding: 0.3rem !important;
-            gap: 0.3rem !important;
+            padding: 0.35rem !important;
+            gap: 0.35rem !important;
             width: 100% !important;
             max-width: 100% !important;
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            box-sizing: border-box !important;
           }
           .hero-nav-tab-btn {
-            padding: 0.4rem 0.7rem !important;
-            font-size: 0.78rem !important;
-            flex: 1 1 calc(50% - 0.4rem) !important;
+            padding: 0.55rem 0.65rem !important;
+            font-size: 0.82rem !important;
+            width: 100% !important;
             justify-content: center !important;
+            border-radius: 10px !important;
+            box-sizing: border-box !important;
           }
           .hero-cta-buttons-row {
+            display: flex !important;
             flex-direction: column !important;
             width: 100% !important;
             gap: 0.65rem !important;
@@ -532,7 +538,9 @@ export const HeroSection = () => {
             width: 100% !important;
             justify-content: center !important;
             white-space: normal !important;
-            min-height: 44px !important;
+            min-height: 48px !important;
+            font-size: 0.95rem !important;
+            border-radius: 12px !important;
           }
           .hero-trust-badges-row {
             display: grid !important;

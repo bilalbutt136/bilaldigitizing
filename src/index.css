@@ -1184,11 +1184,11 @@ button, input, select, textarea, a {
 
   /* Floating Chat Responsive Adaptation */
   .floating-chat-trigger {
-    bottom: 78px !important; 
-    right: 16px !important; 
+    bottom: 20px !important; 
+    right: 14px !important; 
     padding: 0 !important;
-    width: 52px !important; 
-    height: 52px !important; 
+    width: 48px !important; 
+    height: 48px !important; 
     border-radius: 50% !important;
     justify-content: center !important; 
     align-items: center !important;
@@ -1196,7 +1196,7 @@ button, input, select, textarea, a {
     z-index: 8500 !important;
   }
   .floating-chat-trigger > div:first-child { width: auto !important; height: auto !important; background: transparent !important; }
-  .floating-chat-window { bottom: 70px !important; right: 10px !important; left: 10px !important; width: auto !important; max-height: calc(100vh - 140px) !important; z-index: 9995 !important; }
+  .floating-chat-window { bottom: 80px !important; right: 10px !important; left: 10px !important; width: auto !important; max-height: calc(100vh - 140px) !important; z-index: 9995 !important; }
   
   /* Native Mobile Bottom Navigation Toolbar */
   .mobile-bottom-nav { 
