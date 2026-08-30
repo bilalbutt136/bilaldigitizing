@@ -204,24 +204,24 @@ export const HeaderNav = () => {
       }}>
         {/* Brand Logo */}
         <div 
-          style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', minWidth: 0, flexShrink: 1 }}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', flexShrink: 0 }}
           onClick={handleGoHome}
         >
           <div style={{
             background: 'linear-gradient(135deg, var(--color-surface-elevated, #090d16), var(--color-primary))',
             color: 'var(--color-text-on-primary, #ffffff)',
-            padding: '0.38rem',
-            borderRadius: '10px',
+            padding: '0.45rem',
+            borderRadius: 'var(--radius-md)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: '0 4px 12px var(--color-primary-glow)',
             flexShrink: 0
           }}>
-            <Scissors size={18} style={{ color: 'var(--color-primary)' }} />
+            <Scissors size={20} style={{ color: 'var(--color-primary)' }} />
           </div>
-          <div style={{ minWidth: 0, overflow: 'hidden' }}>
-            <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: 'clamp(0.85rem, 3.2vw, 1.15rem)', color: 'var(--text-main)', letterSpacing: '-0.02em', lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', letterSpacing: '-0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
               BILAL DIGITIZING<span style={{ color: 'var(--orange-500)' }}>.PRO</span>
             </div>
             <div className="desktop-only" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -232,7 +232,7 @@ export const HeaderNav = () => {
 
         {/* Public Navigation Links (Desktop) */}
         {safeCurrentView === 'public' && (
-          <nav className="desktop-only" style={{ alignItems: 'center', gap: '1.75rem' }}>
+          <nav className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '1.75rem' }}>
             {/* Home Link */}
             <button 
               onClick={handleGoHome}

@@ -1090,7 +1090,7 @@ button, input, select, textarea, a {
   touch-action: manipulation;
 }
 
-.desktop-only { display: block !important; }
+.desktop-only { display: flex !important; }
 .mobile-only { display: none !important; }
 
 .table-responsive {
