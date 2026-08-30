@@ -1026,10 +1026,22 @@ export const HeaderNav = () => {
           }}>
             <div 
               onClick={() => { handleGoHome(); setIsMobileMenuOpen(false); }}
-              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
             >
-              <span style={{ fontSize: '1.35rem', fontWeight: 900, color: '#047857', letterSpacing: '-0.03em' }}>
-                bdigitizing<span style={{ color: '#10b981' }}>.</span>
+              <div style={{
+                background: 'linear-gradient(135deg, #090d16, var(--color-primary))',
+                color: '#ffffff',
+                padding: '0.4rem',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 8px var(--color-primary-glow)'
+              }}>
+                <Scissors size={18} style={{ color: 'var(--color-primary)' }} />
+              </div>
+              <span style={{ fontFamily: 'var(--font-heading)', fontSize: '1.15rem', fontWeight: 900, color: isDark ? '#f8fafc' : '#0f172a', letterSpacing: '-0.02em' }}>
+                BILAL DIGITIZING<span style={{ color: 'var(--color-primary)' }}>.PRO</span>
               </span>
             </div>
 

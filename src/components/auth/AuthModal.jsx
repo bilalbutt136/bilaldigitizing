@@ -272,7 +272,7 @@ export const AuthModal = () => {
         style={{ backdropFilter: 'blur(8px)', background: 'rgba(15, 23, 42, 0.75)', zIndex: 1000000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
       >
       <div 
-        className="modal-content" 
+        className="modal-content auth-modal-dialog" 
         onClick={(e) => e.stopPropagation()}
         style={{ 
           maxWidth: '920px', 

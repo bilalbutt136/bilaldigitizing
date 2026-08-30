@@ -873,15 +873,19 @@ export const OrderWizardModal = () => {
             </div>
 
             {/* 5-Step Interactive Tabs */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(5, 1fr)',
-              gap: '0.4rem',
-              background: '#f8fafc',
-              padding: '0.3rem',
-              borderRadius: '10px',
-              border: '1px solid #e2e8f0'
-            }}>
+            <div 
+              className="order-wizard-stepper-bar"
+              style={{
+                display: 'flex',
+                gap: '0.35rem',
+                background: '#f8fafc',
+                padding: '0.3rem',
+                borderRadius: '10px',
+                border: '1px solid #e2e8f0',
+                overflowX: 'auto',
+                WebkitOverflowScrolling: 'touch'
+              }}
+            >
               {[
                 { s: 1, label: '1. Service', icon: Layers },
                 { s: 2, label: '2. Packages', icon: Sliders },
@@ -903,20 +907,24 @@ export const OrderWizardModal = () => {
                       }
                     }}
                     style={{
+                      flex: '1 1 auto',
+                      minWidth: '65px',
                       background: isActive ? '#059669' : (isPassed ? '#ecfdf5' : 'transparent'),
                       color: isActive ? '#ffffff' : (isPassed ? '#047857' : '#64748b'),
                       border: isActive ? '1px solid #047857' : (isPassed ? '1px solid #a7f3d0' : '1px solid transparent'),
-                      padding: '0.35rem 0.45rem',
+                      padding: '0.4rem 0.5rem',
+                      minHeight: '36px',
                       borderRadius: '8px',
                       fontSize: '0.74rem',
                       fontWeight: isActive ? 900 : 700,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '0.35rem',
+                      gap: '0.3rem',
                       cursor: isPassed || isActive ? 'pointer' : 'default',
                       transition: 'all 0.15s ease',
-                      whiteSpace: 'nowrap'
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0
                     }}
                   >
                     {isPassed ? <Check size={13} strokeWidth={3} /> : <IconComp size={13} />}
