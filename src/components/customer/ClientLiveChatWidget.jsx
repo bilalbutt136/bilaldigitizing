@@ -150,6 +150,11 @@ export const ClientLiveChatWidget = () => {
     const val = e.target.value;
     setMessageInput(val);
 
+    if (e.target) {
+      e.target.style.height = 'auto';
+      e.target.style.height = `${Math.min(Math.max(e.target.scrollHeight, 36), 110)}px`;
+    }
+
     broadcastTypingStatus(targetConvId, cleanName, 'client', true);
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
@@ -537,9 +542,19 @@ export const ClientLiveChatWidget = () => {
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage(e);
+    if (e.key === 'Enter') {
+      const isMobileOrTouch = typeof window !== 'undefined' && (
+        window.innerWidth <= 768 || 
+        'ontouchstart' in window || 
+        navigator.maxTouchPoints > 0
+      );
+
+      // On mobile / touch screens, Enter creates a new line in the message box.
+      // On desktop keyboards, Enter sends the message and Shift+Enter creates a new line.
+      if (!isMobileOrTouch && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage(e);
+      }
     }
   };
 

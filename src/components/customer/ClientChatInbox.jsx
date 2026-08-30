@@ -104,6 +104,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   const chatFeedRef = useRef(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
   const scrollToBottom = (behavior = 'smooth') => {
@@ -260,6 +261,12 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
     const val = e.target.value;
     setMessageInput(val);
 
+    // Auto-adjust height for smooth multi-line typing
+    if (e.target) {
+      e.target.style.height = 'auto';
+      e.target.style.height = `${Math.min(Math.max(e.target.scrollHeight, 40), 120)}px`;
+    }
+
     broadcastTypingStatus(canonicalChatId, clientName, 'client', true);
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
@@ -268,15 +275,29 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage(e);
+    if (e.key === 'Enter') {
+      const isMobileOrTouch = typeof window !== 'undefined' && (
+        window.innerWidth <= 768 || 
+        'ontouchstart' in window || 
+        navigator.maxTouchPoints > 0
+      );
+
+      // On mobile / touch screens, Enter creates a new line in the message box.
+      // On desktop keyboards, Enter sends the message and Shift+Enter creates a new line.
+      if (!isMobileOrTouch && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage(e);
+      }
     }
   };
 
   const handleSendMessage = async (e) => {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
     if (!messageInput.trim() && !attachedFile) return;
+
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '40px';
+    }
 
     const nowIso = new Date().toISOString();
     const tempMsgId = `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
@@ -687,6 +708,7 @@ export const ClientChatInbox = ({ initialOrderId = null }) => {
 
         {/* Textarea Input */}
         <textarea
+          ref={textareaRef}
           rows={1}
           value={messageInput}
           onChange={handleInputChange}

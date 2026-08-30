@@ -237,9 +237,19 @@ export const OrderTrackerDrawer = () => {
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage(e);
+    if (e.key === 'Enter') {
+      const isMobileOrTouch = typeof window !== 'undefined' && (
+        window.innerWidth <= 768 || 
+        'ontouchstart' in window || 
+        navigator.maxTouchPoints > 0
+      );
+
+      // On mobile / touch screens, Enter creates a new line in the message box.
+      // On desktop keyboards, Enter sends the message and Shift+Enter creates a new line.
+      if (!isMobileOrTouch && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage(e);
+      }
     }
   };
 
