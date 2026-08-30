@@ -1843,17 +1843,86 @@ export const BDigitizingMobileApp = () => {
 
 
       {/* =========================================================================
-          SCREEN 2: INBOX / MESSAGES
+          SCREEN 2: INBOX / MESSAGES (Dedicated Fullscreen View)
           ========================================================================= */}
       {mobileTab === 'inbox' && (
         <div style={{
           display: 'flex',
           flexDirection: 'column',
-          height: 'calc(100dvh - 66px - env(safe-area-inset-bottom, 0px))',
-          maxHeight: 'calc(100dvh - 66px - env(safe-area-inset-bottom, 0px))',
+          height: '100dvh',
+          maxHeight: '100dvh',
+          width: '100vw',
           overflow: 'hidden',
-          position: 'relative'
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 9999,
+          background: '#ffffff'
         }}>
+          {/* Top Chat Header with Back Button */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0.65rem 1rem',
+            background: '#ffffff',
+            borderBottom: '1.5px solid #e2e8f0',
+            flexShrink: 0,
+            zIndex: 10
+          }}>
+            <button
+              type="button"
+              onClick={() => setMobileTab('home')}
+              style={{
+                background: '#f8fafc',
+                border: '1px solid #cbd5e1',
+                borderRadius: '10px',
+                padding: '0.4rem 0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                fontSize: '0.82rem',
+                fontWeight: 800,
+                color: '#0f172a',
+                cursor: 'pointer'
+              }}
+            >
+              <ArrowLeft size={16} /> Back
+            </button>
+
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.2 }}>
+                Studio Messages & Support
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', marginTop: '2px' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#047857' }}>Digitizers Online</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (setSelectedChatOrderId) setSelectedChatOrderId(null);
+                setMobileTab('orders');
+              }}
+              style={{
+                background: '#ecfdf5',
+                border: '1px solid #a7f3d0',
+                color: '#047857',
+                borderRadius: '8px',
+                padding: '0.35rem 0.6rem',
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                cursor: 'pointer'
+              }}
+            >
+              Orders
+            </button>
+          </div>
+
           {/* Render Full Client Chat Inbox with built-in channels and complete scrolling */}
           <div style={{ flex: 1, minHeight: 0, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <ClientChatInbox initialOrderId={selectedChatOrderId} />
@@ -3259,7 +3328,7 @@ export const BDigitizingMobileApp = () => {
           gridTemplateColumns: 'repeat(5, 1fr)',
           alignItems: 'center',
           zIndex: isOrderModalOpen ? -1 : 800,
-          display: (isOrderModalOpen || ['login', 'signup', 'auth', 'forgot'].includes(mobileTab)) ? 'none' : 'grid',
+          display: (isOrderModalOpen || ['inbox', 'login', 'signup', 'auth', 'forgot'].includes(mobileTab)) ? 'none' : 'grid',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           boxShadow: '0 -4px 16px rgba(0,0,0,0.06)'
         }}
