@@ -204,24 +204,24 @@ export const HeaderNav = () => {
       }}>
         {/* Brand Logo */}
         <div 
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', flexShrink: 0 }}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', minWidth: 0, flexShrink: 1 }}
           onClick={handleGoHome}
         >
           <div style={{
             background: 'linear-gradient(135deg, var(--color-surface-elevated, #090d16), var(--color-primary))',
             color: 'var(--color-text-on-primary, #ffffff)',
-            padding: '0.45rem',
-            borderRadius: 'var(--radius-md)',
+            padding: '0.38rem',
+            borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: '0 4px 12px var(--color-primary-glow)',
             flexShrink: 0
           }}>
-            <Scissors size={20} style={{ color: 'var(--color-primary)' }} />
+            <Scissors size={18} style={{ color: 'var(--color-primary)' }} />
           </div>
-          <div>
-            <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', letterSpacing: '-0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
+          <div style={{ minWidth: 0, overflow: 'hidden' }}>
+            <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: 'clamp(0.85rem, 3.2vw, 1.15rem)', color: 'var(--text-main)', letterSpacing: '-0.02em', lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               BILAL DIGITIZING<span style={{ color: 'var(--orange-500)' }}>.PRO</span>
             </div>
             <div className="desktop-only" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -509,143 +509,117 @@ export const HeaderNav = () => {
             </button>
           )}
 
-          {/* Mobile Quick-Access Inbox Button for Logged-In Users */}
-          {safeIsAuthenticated && (
+          {/* Mobile Right Action Area (Clean Bar: Sign In + Sign Up + Hamburger) */}
+          <div className="mobile-only" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+            {safeIsAuthenticated ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (isAdmin) protectedNavigate('admin');
+                  else protectedNavigate('customer');
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--orange-600) 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '0.38rem 0.65rem',
+                  height: '36px',
+                  borderRadius: '8px',
+                  fontWeight: 800,
+                  fontSize: '0.78rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(249, 115, 22, 0.35)',
+                  flexShrink: 0
+                }}
+              >
+                <User size={13} />
+                <span>{isAdmin ? 'Admin' : 'Portal'}</span>
+              </button>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthModalMode('login');
+                    setIsAuthModalOpen(true);
+                    navigate('/login');
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.2rem',
+                    background: 'var(--color-primary-light, #ffedd5)',
+                    color: 'var(--color-primary, #ea580c)',
+                    border: '1px solid var(--color-border)',
+                    padding: '0.35rem 0.55rem',
+                    height: '36px',
+                    borderRadius: '8px',
+                    fontWeight: 800,
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    flexShrink: 0
+                  }}
+                >
+                  <User size={13} />
+                  <span>Sign In</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthModalMode('signup');
+                    setIsAuthModalOpen(true);
+                    navigate('/signup');
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.2rem',
+                    background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '0.35rem 0.6rem',
+                    height: '36px',
+                    borderRadius: '8px',
+                    fontWeight: 800,
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(249, 115, 22, 0.35)',
+                    flexShrink: 0
+                  }}
+                >
+                  <span>Sign Up</span>
+                </button>
+              </div>
+            )}
+
+            {/* Mobile Hamburger Toggle Button (Always Guaranteed Visible) */}
             <button
               type="button"
-              className="mobile-only"
-              onClick={handleOpenInbox}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               style={{
+                background: isMobileMenuOpen ? 'rgba(255, 122, 0, 0.12)' : 'transparent',
+                border: isMobileMenuOpen ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
+                color: isMobileMenuOpen ? 'var(--orange-500)' : 'var(--text-main)',
+                width: '36px',
+                height: '36px',
+                minWidth: '36px',
+                minHeight: '36px',
+                borderRadius: '8px',
+                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '40px',
-                height: '40px',
-                borderRadius: '10px',
-                border: '1.5px solid var(--border-color)',
-                background: 'var(--bg-card)',
-                color: 'var(--orange-500)',
-                cursor: 'pointer',
-                position: 'relative'
-              }}
-              title="Open Inbox"
-              aria-label="Open Inbox"
-            >
-              <MessageSquare size={19} />
-              {unreadChatCount > 0 && (
-                <span style={{
-                  position: 'absolute',
-                  top: '-4px',
-                  right: '-4px',
-                  background: '#ef4444',
-                  color: '#ffffff',
-                  fontSize: '0.62rem',
-                  fontWeight: 900,
-                  borderRadius: '9999px',
-                  padding: '1px 5px',
-                  lineHeight: 1.2
-                }}>
-                  {unreadChatCount}
-                </span>
-              )}
-            </button>
-          )}
-
-          {/* Mobile Permanent Order Now CTA for Logged-In Clients Only (Never on Admin) */}
-          {isClient && (
-            <button
-              type="button"
-              className="mobile-only"
-              onClick={() => {
-                if (setIsOrderWizardOpen) setIsOrderWizardOpen(true);
-                else if (openOrderWizard) openOrderWizard({ type: 'embroidery' });
-                else protectedNavigate('customer', true);
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.3rem',
-                background: 'linear-gradient(135deg, var(--color-primary, #ff7a00) 0%, var(--orange-600, #ea580c) 100%)',
-                color: '#ffffff',
-                border: 'none',
-                padding: '0.35rem 0.75rem',
-                height: '36px',
-                borderRadius: '8px',
-                fontWeight: 800,
-                fontSize: '0.78rem',
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(249, 115, 22, 0.35)',
-                flexShrink: 0
-              }}
-              title="Order Now"
-            >
-              <PlusCircle size={14} style={{ strokeWidth: 2.5 }} />
-              <span>Order Now</span>
-            </button>
-          )}
-
-          {/* Mobile Direct Sign In Button for Guests */}
-          {!safeIsAuthenticated && (
-            <button
-              type="button"
-              className="mobile-only"
-              onClick={() => {
-                setAuthModalMode('login');
-                setIsAuthModalOpen(true);
-                navigate('/login');
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-                background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--orange-600) 100%)',
-                color: '#ffffff',
-                border: 'none',
-                padding: '0.35rem 0.65rem',
-                height: '38px',
-                borderRadius: '8px',
-                fontWeight: 800,
-                fontSize: '0.78rem',
-                cursor: 'pointer',
                 flexShrink: 0,
-                boxShadow: '0 2px 8px rgba(249, 115, 22, 0.3)'
+                transition: 'all 0.2s ease'
               }}
+              aria-label="Toggle Navigation Menu"
             >
-              <User size={13} />
-              <span>Sign In</span>
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
-          )}
-
-          {/* Mobile Theme Toggle Quick Icon */}
-          <div className="mobile-only" style={{ display: 'flex', alignItems: 'center' }}>
-            <ThemeToggle />
           </div>
-
-          {/* Mobile Hamburger Toggle Button */}
-          <button
-            type="button"
-            className="mobile-only"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            style={{
-              background: isMobileMenuOpen ? 'rgba(255, 122, 0, 0.12)' : 'transparent',
-              border: isMobileMenuOpen ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
-              color: isMobileMenuOpen ? 'var(--orange-500)' : 'var(--text-main)',
-              width: '42px',
-              height: '42px',
-              minWidth: '42px',
-              minHeight: '42px',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              transition: 'all 0.2s ease'
-            }}
-            aria-label="Toggle Navigation Menu"
-          >
-            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
 
           {/* Dynamic Header Controls (Desktop) */}
           <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
