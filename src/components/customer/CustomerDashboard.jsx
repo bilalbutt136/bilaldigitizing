@@ -1123,9 +1123,11 @@ export const CustomerDashboard = () => {
                   {/* 5 Quick Action Cards */}
                   <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(5, 1fr)',
-                    gap: '0.4rem',
-                    marginBottom: '1.25rem'
+                    gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+                    gap: '0.35rem',
+                    marginBottom: '1.25rem',
+                    width: '100%',
+                    boxSizing: 'border-box'
                   }}>
                     {/* 1. New Order */}
                     <button
@@ -1137,19 +1139,21 @@ export const CustomerDashboard = () => {
                         background: '#ffffff',
                         border: '1.5px solid #e2e8f0',
                         borderRadius: '14px',
-                        padding: '0.65rem 0.2rem',
+                        padding: '0.65rem 0.15rem',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '0.3rem',
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        minWidth: 0,
+                        boxSizing: 'border-box'
                       }}
                     >
                       <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--color-primary-light)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <PlusCircle size={20} />
                       </div>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--color-text-primary)', whiteSpace: 'nowrap' }}>New Order</span>
+                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>New Order</span>
                     </button>
 
                     {/* 2. My Orders */}
@@ -1160,20 +1164,22 @@ export const CustomerDashboard = () => {
                         background: '#ffffff',
                         border: '1.5px solid #e2e8f0',
                         borderRadius: '14px',
-                        padding: '0.65rem 0.2rem',
+                        padding: '0.65rem 0.15rem',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '0.3rem',
                         cursor: 'pointer',
-                        position: 'relative'
+                        position: 'relative',
+                        minWidth: 0,
+                        boxSizing: 'border-box'
                       }}
                     >
                       <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#e0f2fe', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <ClipboardList size={20} />
                       </div>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap' }}>My Orders</span>
+                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>My Orders</span>
                       {activeOrders.length > 0 && (
                         <span style={{ position: 'absolute', top: '4px', right: '4px', background: '#0284c7', color: '#fff', fontSize: '0.55rem', fontWeight: 900, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {activeOrders.length}
@@ -1189,20 +1195,22 @@ export const CustomerDashboard = () => {
                         background: '#ffffff',
                         border: '1.5px solid #e2e8f0',
                         borderRadius: '14px',
-                        padding: '0.65rem 0.2rem',
+                        padding: '0.65rem 0.15rem',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '0.3rem',
                         cursor: 'pointer',
-                        position: 'relative'
+                        position: 'relative',
+                        minWidth: 0,
+                        boxSizing: 'border-box'
                       }}
                     >
                       <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <MessageSquare size={20} />
                       </div>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap' }}>Messages</span>
+                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>Messages</span>
                       {unreadChatCount > 0 && (
                         <span style={{ position: 'absolute', top: '4px', right: '4px', background: '#ef4444', color: '#fff', fontSize: '0.55rem', fontWeight: 900, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {unreadChatCount}
@@ -1218,20 +1226,22 @@ export const CustomerDashboard = () => {
                         background: '#ffffff',
                         border: '1.5px solid #e2e8f0',
                         borderRadius: '14px',
-                        padding: '0.65rem 0.2rem',
+                        padding: '0.65rem 0.15rem',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '0.3rem',
                         cursor: 'pointer',
-                        position: 'relative'
+                        position: 'relative',
+                        minWidth: 0,
+                        boxSizing: 'border-box'
                       }}
                     >
                       <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f1f5f9', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Bell size={20} />
                       </div>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap' }}>Alerts</span>
+                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>Alerts</span>
                       {unreadNotifCount > 0 && (
                         <span style={{ position: 'absolute', top: '4px', right: '4px', background: '#f97316', color: '#fff', fontSize: '0.55rem', fontWeight: 900, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {unreadNotifCount}
@@ -1247,19 +1257,21 @@ export const CustomerDashboard = () => {
                         background: '#ffffff',
                         border: '1.5px solid #e2e8f0',
                         borderRadius: '14px',
-                        padding: '0.65rem 0.2rem',
+                        padding: '0.65rem 0.15rem',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '0.3rem',
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        minWidth: 0,
+                        boxSizing: 'border-box'
                       }}
                     >
                       <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <User size={20} />
                       </div>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap' }}>Profile</span>
+                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>Profile</span>
                     </button>
                   </div>
 

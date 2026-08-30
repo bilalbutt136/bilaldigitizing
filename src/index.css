@@ -1090,7 +1090,7 @@ button, input, select, textarea, a {
   touch-action: manipulation;
 }
 
-.desktop-only { display: flex !important; }
+.desktop-only { display: block !important; }
 .mobile-only { display: none !important; }
 
 .table-responsive {
@@ -1148,7 +1148,8 @@ button, input, select, textarea, a {
 
 @media (max-width: 768px) {
   .desktop-only { display: none !important; }
-  .mobile-only { display: flex !important; }
+  .mobile-only { display: block !important; }
+  .mobile-bottom-nav { display: grid !important; }
   
   h1, .hero-title { font-size: clamp(1.75rem, 5.5vw, 2.4rem) !important; line-height: 1.18 !important; }
   h2 { font-size: clamp(1.35rem, 4.2vw, 1.8rem) !important; line-height: 1.22 !important; }

@@ -42,6 +42,7 @@ import {
   Globe,
   Phone,
   MessageCircle,
+  MessageSquare,
   ExternalLink,
   Star,
   Lock,
