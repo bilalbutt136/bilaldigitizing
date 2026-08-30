@@ -126,7 +126,7 @@ export const AuthModal = () => {
       import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
         const userRole = result?.role === 'admin'
           ? (result?.email ? `Platform Admin (${result.email})` : 'Platform Admin')
-          : (result?.email ? `${result.name || 'Customer'} (${result.email})` : (emailInput.trim() ? `Customer (${emailInput.trim()})` : null));
+          : (result?.email ? `${result.name || 'Customer'} (${result.email})` : (loginEmail.trim() ? `Customer (${loginEmail.trim()})` : null));
         trackMetaEvent('Login', { method: 'email', status: 'success' }, userRole);
       }).catch(() => {});
 

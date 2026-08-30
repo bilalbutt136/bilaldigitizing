@@ -51,7 +51,12 @@ import {
   RefreshCw,
   Activity,
   TrendingUp,
-  DollarSign
+  DollarSign,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  Loader2,
+  Building
 } from 'lucide-react';
 import { 
   fetchConversations, 
@@ -65,6 +70,10 @@ import MobileSimpleOrderModal from '../customer/MobileSimpleOrderModal';
 import { ClientChatInbox } from '../customer/ClientChatInbox';
 import { THEME_PRESETS } from '../../utils/themePresets';
 import { handleNotificationClick } from '../../utils/notificationRouter';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import { GoogleCustomSignInButton } from '../auth/GoogleCustomSignInButton';
+
+const GOOGLE_CLIENT_ID = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '421520521310-7appibeh1m7cdd90iid17lsq8thlq2oc.apps.googleusercontent.com').trim();
 
 export const BDigitizingMobileApp = () => {
   const navigate = useNavigate();
@@ -73,6 +82,12 @@ export const BDigitizingMobileApp = () => {
     authUser, 
     currentUser, 
     isAuthenticated,
+    isAuthInitialized,
+    login,
+    register,
+    loginWithGoogle,
+    loginWithApple,
+    requestPasswordReset,
     openOrderTrackerDrawer,
     setSelectedOrderForDrawer,
     setIsAuthModalOpen,
@@ -94,13 +109,13 @@ export const BDigitizingMobileApp = () => {
     refreshOrders
   } = useAppState();
 
-  // Active Tab: 'home' | 'inbox' | 'categories' | 'orders' | 'profile'
+  // Active Tab: 'home' | 'inbox' | 'categories' | 'orders' | 'profile' | 'login' | 'signup' | 'auth'
   const getInitialMobileTab = () => {
     if (typeof window !== 'undefined') {
       try {
         const urlParams = new URLSearchParams(window.location.search);
         const tabParam = urlParams.get('tab');
-        const validTabs = ['home', 'inbox', 'categories', 'orders', 'profile'];
+        const validTabs = ['home', 'inbox', 'categories', 'orders', 'profile', 'login', 'signup', 'auth'];
         if (tabParam && validTabs.includes(tabParam)) return tabParam;
         
         const storedTab = localStorage.getItem('bdigi_mobile_active_tab');
@@ -124,13 +139,107 @@ export const BDigitizingMobileApp = () => {
     }
   };
 
+  // Dedicated Mobile Auth Form States
+  const [mobileAuthMode, setMobileAuthMode] = useState('login'); // 'login' | 'signup' | 'forgot'
+  const [authLoginEmail, setAuthLoginEmail] = useState('');
+  const [authLoginPassword, setAuthLoginPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [authSignupName, setAuthSignupName] = useState('');
+  const [authSignupEmail, setAuthSignupEmail] = useState('');
+  const [authSignupPassword, setAuthSignupPassword] = useState('');
+  const [authSignupCompany, setAuthSignupCompany] = useState('');
+  const [authForgotEmail, setAuthForgotEmail] = useState('');
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [authErrorMessage, setAuthErrorMessage] = useState('');
+  const [authSuccessMessage, setAuthSuccessMessage] = useState('');
+
+  // Handle Mobile Login Submit
+  const handleMobileLoginSubmit = async (e) => {
+    e.preventDefault();
+    if (!authLoginEmail.trim() || !authLoginPassword.trim()) {
+      setAuthErrorMessage('Please enter both your email address and password.');
+      return;
+    }
+
+    setIsAuthLoading(true);
+    setAuthErrorMessage('');
+    try {
+      const res = await login(authLoginEmail, authLoginPassword);
+      setIsAuthLoading(false);
+      if (res && res.success) {
+        showToast(`Welcome back ${res.user?.name || res.user?.email || ''}! ✨`, 'success');
+        setMobileTab('home');
+        setAuthLoginPassword('');
+      } else {
+        setAuthErrorMessage(res?.error || 'Invalid email or password. Please check your credentials.');
+      }
+    } catch (err) {
+      setIsAuthLoading(false);
+      setAuthErrorMessage(err?.message || 'Authentication error. Please try again.');
+    }
+  };
+
+  // Handle Mobile Signup Submit
+  const handleMobileSignupSubmit = async (e) => {
+    e.preventDefault();
+    if (!authSignupName.trim() || !authSignupEmail.trim() || !authSignupPassword.trim()) {
+      setAuthErrorMessage('Please fill in all required registration fields.');
+      return;
+    }
+    if (authSignupPassword.length < 6) {
+      setAuthErrorMessage('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setIsAuthLoading(true);
+    setAuthErrorMessage('');
+    try {
+      const res = await register(authSignupName, authSignupEmail, authSignupPassword, authSignupCompany);
+      setIsAuthLoading(false);
+      if (res && res.success) {
+        showToast(`Account created! Welcome to Bilal Digitizing, ${authSignupName}! 🎉`, 'success');
+        setMobileTab('home');
+        setAuthSignupPassword('');
+      } else {
+        setAuthErrorMessage(res?.error || 'Registration failed. An account with this email may already exist.');
+      }
+    } catch (err) {
+      setIsAuthLoading(false);
+      setAuthErrorMessage(err?.message || 'Registration exception. Please try again.');
+    }
+  };
+
+  // Handle Mobile Forgot Password Submit
+  const handleMobileForgotSubmit = async (e) => {
+    e.preventDefault();
+    if (!authForgotEmail.trim()) {
+      setAuthErrorMessage('Please enter your registered email address.');
+      return;
+    }
+
+    setIsAuthLoading(true);
+    setAuthErrorMessage('');
+    try {
+      const res = await requestPasswordReset(authForgotEmail);
+      setIsAuthLoading(false);
+      if (res && res.success) {
+        setAuthSuccessMessage(`Password reset link dispatched to ${authForgotEmail}. Check your inbox!`);
+      } else {
+        setAuthErrorMessage(res?.error || 'Could not send reset email. Please verify your email address.');
+      }
+    } catch (err) {
+      setIsAuthLoading(false);
+      setAuthErrorMessage(err?.message || 'Failed to dispatch reset email.');
+    }
+  };
+
   // Sync tab with browser back/forward buttons
   useEffect(() => {
     const handlePopState = () => {
       if (typeof window !== 'undefined') {
         const urlParams = new URLSearchParams(window.location.search);
         const tabParam = urlParams.get('tab');
-        const validTabs = ['home', 'inbox', 'categories', 'orders', 'profile'];
+        const validTabs = ['home', 'inbox', 'categories', 'orders', 'profile', 'login', 'signup', 'auth'];
         if (tabParam && validTabs.includes(tabParam)) {
           setMobileTabState(tabParam);
         }
@@ -565,6 +674,46 @@ export const BDigitizingMobileApp = () => {
     );
   });
 
+  if (!isAuthInitialized) {
+    return (
+      <div style={{
+        minHeight: '100dvh',
+        width: '100vw',
+        background: '#ffffff',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '1.25rem',
+        padding: '2rem',
+        boxSizing: 'border-box',
+        fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
+      }}>
+        <div style={{
+          width: '68px',
+          height: '68px',
+          borderRadius: '20px',
+          background: 'linear-gradient(135deg, #047857 0%, #10b981 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 10px 28px rgba(4, 120, 87, 0.3)'
+        }}>
+          <span style={{ fontSize: '2rem', fontWeight: 900, color: '#ffffff' }}>B</span>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>
+            BDigitizing<span style={{ color: '#059669' }}>.PRO</span>
+          </div>
+          <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, marginTop: '0.25rem' }}>
+            Embroidery Digitizing & Vector Art Studio
+          </div>
+        </div>
+        <div style={{ width: '28px', height: '28px', border: '3px solid #e2e8f0', borderTopColor: '#059669', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginTop: '0.5rem' }} />
+      </div>
+    );
+  }
+
   return (
     <div 
       className="mobile-app-root theme-light-enforced"
@@ -575,13 +724,675 @@ export const BDigitizingMobileApp = () => {
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
-        paddingBottom: mobileTab === 'inbox' ? '0px' : '70px',
+        paddingBottom: (mobileTab === 'inbox' || ['login', 'signup', 'auth', 'forgot'].includes(mobileTab)) ? '0px' : '70px',
         overflowX: 'hidden',
         boxSizing: 'border-box',
         fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
       }}
     >
       
+      {/* =========================================================================
+          SCREEN 0: DEDICATED FULL-SCREEN MOBILE AUTHENTICATION (LOGIN / SIGNUP / FORGOT)
+          ========================================================================= */}
+      {['login', 'signup', 'auth', 'forgot'].includes(mobileTab) && (
+        <div style={{
+          minHeight: '100dvh',
+          width: '100%',
+          background: '#ffffff',
+          display: 'flex',
+          flexDirection: 'column',
+          boxSizing: 'border-box'
+        }}>
+          {/* Top Bar with Back Button */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0.85rem 1rem',
+            borderBottom: '1.5px solid #e2e8f0',
+            background: '#ffffff',
+            position: 'sticky',
+            top: 0,
+            zIndex: 10
+          }}>
+            <button
+              type="button"
+              onClick={() => setMobileTab('home')}
+              style={{
+                background: '#f8fafc',
+                border: '1px solid #cbd5e1',
+                borderRadius: '10px',
+                padding: '0.45rem 0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                fontSize: '0.82rem',
+                fontWeight: 800,
+                color: '#0f172a',
+                cursor: 'pointer'
+              }}
+            >
+              <ArrowLeft size={16} /> Back
+            </button>
+
+            <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#047857', letterSpacing: '-0.02em' }}>
+              bdigitizing<span style={{ color: '#10b981' }}>.</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMobileTab('home')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#64748b',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              Skip
+            </button>
+          </div>
+
+          <div style={{ padding: '1.5rem 1.25rem 3rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '440px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+            
+            {/* Header Title */}
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: '52px',
+                height: '52px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, #047857 0%, #10b981 100%)',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 0.75rem auto',
+                boxShadow: '0 4px 14px rgba(4, 120, 87, 0.25)'
+              }}>
+                <Lock size={26} />
+              </div>
+              <h2 style={{ margin: '0 0 0.25rem', fontSize: '1.45rem', fontWeight: 900, color: '#0f172a' }}>
+                {mobileAuthMode === 'signup' ? 'Create Studio Account' : mobileAuthMode === 'forgot' ? 'Reset Password' : 'Sign In to Studio'}
+              </h2>
+              <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.4 }}>
+                {mobileAuthMode === 'signup' 
+                  ? 'Join thousands of apparel brands and get instant access to 4–12h turnaround digitizing.' 
+                  : mobileAuthMode === 'forgot'
+                  ? 'Enter your account email and we will send you a secure password reset link.'
+                  : 'Access your order stitch test runs, downloads, and live digitizer chat.'}
+              </p>
+            </div>
+
+            {/* Mode Switcher Tabs */}
+            {mobileAuthMode !== 'forgot' && (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                background: '#f1f5f9',
+                borderRadius: '12px',
+                padding: '4px',
+                gap: '4px'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileAuthMode('login');
+                    setAuthErrorMessage('');
+                    setAuthSuccessMessage('');
+                  }}
+                  style={{
+                    padding: '0.65rem',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: mobileAuthMode === 'login' ? '#ffffff' : 'transparent',
+                    color: mobileAuthMode === 'login' ? '#047857' : '#64748b',
+                    fontWeight: 900,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    boxShadow: mobileAuthMode === 'login' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileAuthMode('signup');
+                    setAuthErrorMessage('');
+                    setAuthSuccessMessage('');
+                  }}
+                  style={{
+                    padding: '0.65rem',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: mobileAuthMode === 'signup' ? '#ffffff' : 'transparent',
+                    color: mobileAuthMode === 'signup' ? '#047857' : '#64748b',
+                    fontWeight: 900,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    boxShadow: mobileAuthMode === 'signup' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  Register
+                </button>
+              </div>
+            )}
+
+            {/* Error Message Box */}
+            {authErrorMessage && (
+              <div style={{
+                background: '#fef2f2',
+                border: '1.5px solid #fecaca',
+                borderRadius: '12px',
+                padding: '0.75rem 1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                color: '#dc2626',
+                fontSize: '0.82rem',
+                fontWeight: 700
+              }}>
+                <AlertCircle size={18} style={{ flexShrink: 0 }} />
+                <span>{authErrorMessage}</span>
+              </div>
+            )}
+
+            {/* Success Message Box */}
+            {authSuccessMessage && (
+              <div style={{
+                background: '#f0fdf4',
+                border: '1.5px solid #86efac',
+                borderRadius: '12px',
+                padding: '0.75rem 1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                color: '#047857',
+                fontSize: '0.82rem',
+                fontWeight: 700
+              }}>
+                <CheckCircle2 size={18} style={{ flexShrink: 0 }} />
+                <span>{authSuccessMessage}</span>
+              </div>
+            )}
+
+            {/* AUTH FORMS */}
+            {mobileAuthMode === 'login' && (
+              <form onSubmit={handleMobileLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                    Email Address
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                    <input
+                      type="email"
+                      value={authLoginEmail}
+                      onChange={(e) => { setAuthLoginEmail(e.target.value); setAuthErrorMessage(''); }}
+                      placeholder="name@company.com"
+                      required
+                      autoComplete="email"
+                      style={{
+                        width: '100%',
+                        height: '46px',
+                        padding: '0 0.85rem 0 2.5rem',
+                        borderRadius: '12px',
+                        border: '1.5px solid #cbd5e1',
+                        fontSize: '16px',
+                        color: '#0f172a',
+                        background: '#ffffff',
+                        boxSizing: 'border-box',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>
+                      Password
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setMobileAuthMode('forgot')}
+                      style={{ background: 'none', border: 'none', color: '#047857', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                  <div style={{ position: 'relative' }}>
+                    <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={authLoginPassword}
+                      onChange={(e) => { setAuthLoginPassword(e.target.value); setAuthErrorMessage(''); }}
+                      placeholder="Enter your password"
+                      required
+                      autoComplete="current-password"
+                      style={{
+                        width: '100%',
+                        height: '46px',
+                        padding: '0 2.5rem 0 2.5rem',
+                        borderRadius: '12px',
+                        border: '1.5px solid #cbd5e1',
+                        fontSize: '16px',
+                        color: '#0f172a',
+                        background: '#ffffff',
+                        boxSizing: 'border-box',
+                        outline: 'none'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: 0
+                      }}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isAuthLoading}
+                  style={{
+                    height: '48px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #047857 0%, #10b981 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 900,
+                    fontSize: '0.95rem',
+                    cursor: isAuthLoading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 14px rgba(4, 120, 87, 0.3)',
+                    marginTop: '0.25rem'
+                  }}
+                >
+                  {isAuthLoading ? (
+                    <>
+                      <Loader2 size={18} className="spin-icon" style={{ animation: 'spin 1s linear infinite' }} />
+                      <span>Signing In...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Sign In to Studio Account</span>
+                      <ArrowRight size={18} />
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+
+            {mobileAuthMode === 'signup' && (
+              <form onSubmit={handleMobileSignupSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                    Full Name *
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <User size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                    <input
+                      type="text"
+                      value={authSignupName}
+                      onChange={(e) => setAuthSignupName(e.target.value)}
+                      placeholder="e.g. Alex Johnson"
+                      required
+                      autoComplete="name"
+                      style={{
+                        width: '100%',
+                        height: '44px',
+                        padding: '0 0.85rem 0 2.5rem',
+                        borderRadius: '12px',
+                        border: '1.5px solid #cbd5e1',
+                        fontSize: '16px',
+                        color: '#0f172a',
+                        background: '#ffffff',
+                        boxSizing: 'border-box',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                    Business Email *
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                    <input
+                      type="email"
+                      value={authSignupEmail}
+                      onChange={(e) => setAuthSignupEmail(e.target.value)}
+                      placeholder="alex@apparelbrand.com"
+                      required
+                      autoComplete="email"
+                      style={{
+                        width: '100%',
+                        height: '44px',
+                        padding: '0 0.85rem 0 2.5rem',
+                        borderRadius: '12px',
+                        border: '1.5px solid #cbd5e1',
+                        fontSize: '16px',
+                        color: '#0f172a',
+                        background: '#ffffff',
+                        boxSizing: 'border-box',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                    Create Password * (Min 6 chars)
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={authSignupPassword}
+                      onChange={(e) => setAuthSignupPassword(e.target.value)}
+                      placeholder="Min 6 characters"
+                      required
+                      autoComplete="new-password"
+                      style={{
+                        width: '100%',
+                        height: '44px',
+                        padding: '0 2.5rem 0 2.5rem',
+                        borderRadius: '12px',
+                        border: '1.5px solid #cbd5e1',
+                        fontSize: '16px',
+                        color: '#0f172a',
+                        background: '#ffffff',
+                        boxSizing: 'border-box',
+                        outline: 'none'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: 0
+                      }}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                    Company / Brand Name (Optional)
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Building size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                    <input
+                      type="text"
+                      value={authSignupCompany}
+                      onChange={(e) => setAuthSignupCompany(e.target.value)}
+                      placeholder="e.g. Apex Apparel Co."
+                      autoComplete="organization"
+                      style={{
+                        width: '100%',
+                        height: '44px',
+                        padding: '0 0.85rem 0 2.5rem',
+                        borderRadius: '12px',
+                        border: '1.5px solid #cbd5e1',
+                        fontSize: '16px',
+                        color: '#0f172a',
+                        background: '#ffffff',
+                        boxSizing: 'border-box',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isAuthLoading}
+                  style={{
+                    height: '48px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #047857 0%, #10b981 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 900,
+                    fontSize: '0.95rem',
+                    cursor: isAuthLoading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 14px rgba(4, 120, 87, 0.3)',
+                    marginTop: '0.25rem'
+                  }}
+                >
+                  {isAuthLoading ? (
+                    <>
+                      <Loader2 size={18} className="spin-icon" style={{ animation: 'spin 1s linear infinite' }} />
+                      <span>Creating Account...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Create Free Client Account</span>
+                      <ArrowRight size={18} />
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+
+            {mobileAuthMode === 'forgot' && (
+              <form onSubmit={handleMobileForgotSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                    Registered Email Address
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                    <input
+                      type="email"
+                      value={authForgotEmail}
+                      onChange={(e) => setAuthForgotEmail(e.target.value)}
+                      placeholder="name@company.com"
+                      required
+                      autoComplete="email"
+                      style={{
+                        width: '100%',
+                        height: '46px',
+                        padding: '0 0.85rem 0 2.5rem',
+                        borderRadius: '12px',
+                        border: '1.5px solid #cbd5e1',
+                        fontSize: '16px',
+                        color: '#0f172a',
+                        background: '#ffffff',
+                        boxSizing: 'border-box',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isAuthLoading}
+                  style={{
+                    height: '48px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #047857 0%, #10b981 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 900,
+                    fontSize: '0.95rem',
+                    cursor: isAuthLoading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 14px rgba(4, 120, 87, 0.3)'
+                  }}
+                >
+                  {isAuthLoading ? (
+                    <>
+                      <Loader2 size={18} className="spin-icon" style={{ animation: 'spin 1s linear infinite' }} />
+                      <span>Sending Link...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Send Password Reset Link</span>
+                      <ArrowRight size={18} />
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMobileAuthMode('login')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#047857',
+                    fontWeight: 800,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    padding: '0.5rem'
+                  }}
+                >
+                  ← Back to Sign In
+                </button>
+              </form>
+            )}
+
+            {/* Social Logins Divider */}
+            {mobileAuthMode !== 'forgot' && (
+              <>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  margin: '0.5rem 0',
+                  color: '#94a3b8',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+                  <span style={{ padding: '0 0.75rem' }}>Or continue with</span>
+                  <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                  <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+                    <GoogleCustomSignInButton
+                      onAuthSuccess={async (googleUser) => {
+                        setIsAuthLoading(true);
+                        try {
+                          const res = await loginWithGoogle(googleUser);
+                          setIsAuthLoading(false);
+                          if (res?.success) {
+                            showToast(`Welcome ${res.user?.name || 'back'}!`, 'success');
+                            setMobileTab('home');
+                          } else {
+                            setAuthErrorMessage(res?.error || 'Google Sign-In failed.');
+                          }
+                        } catch (err) {
+                          setIsAuthLoading(false);
+                          setAuthErrorMessage(err?.message || 'Google Sign-In failed.');
+                        }
+                      }}
+                      onAuthError={(err) => setAuthErrorMessage(err)}
+                    />
+                  </GoogleOAuthProvider>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsAuthLoading(true);
+                      try {
+                        const res = await loginWithApple();
+                        setIsAuthLoading(false);
+                        if (res?.success) {
+                          showToast('Welcome!', 'success');
+                          setMobileTab('home');
+                        } else if (res?.error) {
+                          setAuthErrorMessage('Apple Sign-In is in verification with Apple Developer. Please use Google or Email/Password.');
+                        }
+                      } catch (err) {
+                        setIsAuthLoading(false);
+                        setAuthErrorMessage(err?.message || 'Apple Sign-In failed.');
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      height: '46px',
+                      padding: '0 1rem',
+                      borderRadius: '12px',
+                      border: '1.5px solid #000000',
+                      background: '#000000',
+                      color: '#ffffff',
+                      fontSize: '0.92rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.65rem',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 170 170" fill="#ffffff">
+                      <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.08-7.56-7.85-11.6-14.29-6.3-9.98-11.19-21.72-14.68-35.21-3.48-13.49-5.23-25.59-5.23-36.29 0-14.39 3.52-26.31 10.56-35.76 7.04-9.45 15.82-14.28 26.34-14.49 4.36 0 9.27 1.13 14.73 3.39 5.46 2.26 9.23 3.44 11.32 3.55 1.74-.11 5.63-1.32 11.68-3.64 6.05-2.32 10.9-3.37 14.56-3.15 11.53.64 20.67 4.96 27.42 12.96-10.02 6.09-14.92 14.54-14.71 25.35.22 8.49 3.44 15.65 9.67 21.48 6.23 5.83 13.68 9.17 22.35 10.02-1.96 6.09-4.27 12.08-6.93 17.97zM119.22 33.15c0-6.73 2.45-13.06 7.35-18.99 4.9-5.93 10.9-9.74 18-11.43-.22 1.3-.43 2.5-.64 3.6-1.52 7.07-4.8 13.39-9.84 18.96-5.04 5.57-11.02 9.07-17.94 10.5-.43-.88-.86-1.76-1.28-2.64h-.65z"/>
+                    </svg>
+                    <span>Continue with Apple</span>
+                  </button>
+                </div>
+              </>
+            )}
+
+            <div style={{ textAlign: 'center', fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+              By continuing, you agree to our Terms of Service and Privacy Policy.
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* =========================================================================
           SCREEN 1: HOME TAB
           ========================================================================= */}
@@ -1640,8 +2451,8 @@ export const BDigitizingMobileApp = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    setAuthModalMode('login');
-                    setIsAuthModalOpen(true);
+                    setMobileAuthMode('login');
+                    setMobileTab('login');
                   }}
                   style={{
                     background: '#2563eb',
@@ -1681,8 +2492,8 @@ export const BDigitizingMobileApp = () => {
                     <button
                       type="button"
                       onClick={() => {
-                        setAuthModalMode('login');
-                        setIsAuthModalOpen(true);
+                        setMobileAuthMode('login');
+                        setMobileTab('login');
                       }}
                       style={{
                         background: '#059669',
@@ -2120,8 +2931,8 @@ export const BDigitizingMobileApp = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    setAuthModalMode('login');
-                    setIsAuthModalOpen(true);
+                    setMobileAuthMode('login');
+                    setMobileTab('login');
                   }}
                   style={{
                     background: '#ffffff',
@@ -2403,8 +3214,8 @@ export const BDigitizingMobileApp = () => {
               <button
                 type="button"
                 onClick={() => {
-                  setAuthModalMode('login');
-                  setIsAuthModalOpen(true);
+                  setMobileAuthMode('login');
+                  setMobileTab('login');
                 }}
                 style={{
                   background: '#047857',
@@ -2446,7 +3257,7 @@ export const BDigitizingMobileApp = () => {
           gridTemplateColumns: 'repeat(5, 1fr)',
           alignItems: 'center',
           zIndex: isOrderModalOpen ? -1 : 800,
-          display: isOrderModalOpen ? 'none' : 'grid',
+          display: (isOrderModalOpen || ['login', 'signup', 'auth', 'forgot'].includes(mobileTab)) ? 'none' : 'grid',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           boxShadow: '0 -4px 16px rgba(0,0,0,0.06)'
         }}

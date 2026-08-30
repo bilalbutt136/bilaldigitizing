@@ -1301,6 +1301,7 @@ button, input, select, textarea, a {
     display: flex !important;
     flex-direction: column !important;
     z-index: 99999 !important;
+  }
   .auth-split-left-panel {
     display: none !important;
   }
@@ -1390,5 +1391,4 @@ html[data-mobile-mode="app"] .mobile-app-wrapper {
   display: block !important;
   width: 100% !important;
   min-height: 100vh !important;
-}eight: 100vh !important;
 }
