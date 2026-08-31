@@ -208,39 +208,155 @@ export default function BlogsPage() {
                   </span>
                 </div>
 
-                {/* Article Content Rendered Safely */}
+                {/* Article Content Rendered with Editorial Typography */}
                 <div 
                   style={{ 
-                    color: 'var(--color-text-secondary)', 
-                    fontSize: 'clamp(0.95rem, 2vw, 1.05rem)', 
-                    lineHeight: 1.75,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '1.15rem'
+                    gap: '1rem',
+                    paddingTop: '0.5rem'
                   }}
                 >
                   {post.content.split('\n\n').map((paragraph, index) => {
                     const trimmed = paragraph.trim();
                     if (!trimmed) return null;
                     
+                    // 1. Section Headings (H3)
                     if (trimmed.startsWith('###')) {
+                      const headingText = trimmed.replace(/^###\s*/, '');
                       return (
-                        <h3 key={index} style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--navy-900)', marginTop: '1.5rem', borderBottom: '2px solid #f1f5f9', paddingBottom: '0.5rem' }}>
-                          {trimmed.replace('### ', '')}
+                        <h3 
+                          key={index} 
+                          style={{ 
+                            fontSize: 'clamp(1.15rem, 2.5vw, 1.35rem)', 
+                            fontWeight: 800, 
+                            color: 'var(--color-text-primary, #0f172a)', 
+                            marginTop: index === 0 ? '0.5rem' : '1.75rem', 
+                            marginBottom: '0.4rem',
+                            paddingLeft: '0.75rem',
+                            borderLeft: '3.5px solid var(--color-primary, #ea580c)',
+                            lineHeight: 1.3,
+                            letterSpacing: '-0.01em'
+                          }}
+                        >
+                          {headingText}
                         </h3>
                       );
                     }
+
+                    // 2. Unordered Bullet Lists
                     if (trimmed.startsWith('-')) {
+                      const listLines = trimmed.split('\n').filter(line => line.trim().startsWith('-'));
                       return (
-                        <ul key={index} style={{ paddingLeft: '1.5rem', listStyleType: 'disc', margin: '0.5rem 0' }}>
-                          {trimmed.split('\n').map((li, i) => (
-                            <li key={i} style={{ marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: li.replace('- **', '<strong>').replace(':**', '</strong>:') }} />
-                          ))}
+                        <ul 
+                          key={index} 
+                          style={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            gap: '0.65rem', 
+                            margin: '0.5rem 0 0.85rem 0', 
+                            padding: 0, 
+                            listStyle: 'none' 
+                          }}
+                        >
+                          {listLines.map((line, liIdx) => {
+                            const cleanLine = line.replace(/^-\s*/, '').trim();
+                            const boldMatch = cleanLine.match(/^\*\*(.*?)\*\*(.*)$/);
+                            
+                            if (boldMatch) {
+                              const boldTitle = boldMatch[1].trim();
+                              const restText = boldMatch[2].trim();
+                              return (
+                                <li 
+                                  key={liIdx} 
+                                  style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'flex-start', 
+                                    gap: '0.65rem', 
+                                    lineHeight: 1.7, 
+                                    fontSize: 'clamp(0.92rem, 1.8vw, 1rem)' 
+                                  }}
+                                >
+                                  <span 
+                                    style={{ 
+                                      width: '6px', 
+                                      height: '6px', 
+                                      borderRadius: '50%', 
+                                      background: 'var(--color-primary, #ea580c)', 
+                                      marginTop: '0.55rem', 
+                                      flexShrink: 0 
+                                    }} 
+                                  />
+                                  <div style={{ color: 'var(--color-text-secondary, #475569)', fontWeight: 400 }}>
+                                    <strong style={{ fontWeight: 700, color: 'var(--color-text-primary, #0f172a)', marginRight: '0.35rem' }}>
+                                      {boldTitle}
+                                    </strong>
+                                    {restText}
+                                  </div>
+                                </li>
+                              );
+                            }
+
+                            return (
+                              <li 
+                                key={liIdx} 
+                                style={{ 
+                                  display: 'flex', 
+                                  alignItems: 'flex-start', 
+                                  gap: '0.65rem', 
+                                  lineHeight: 1.7, 
+                                  fontSize: 'clamp(0.92rem, 1.8vw, 1rem)' 
+                                }}
+                              >
+                                <span 
+                                  style={{ 
+                                    width: '6px', 
+                                    height: '6px', 
+                                    borderRadius: '50%', 
+                                    background: 'var(--color-primary, #ea580c)', 
+                                    marginTop: '0.55rem', 
+                                    flexShrink: 0 
+                                  }} 
+                                />
+                                <div style={{ color: 'var(--color-text-secondary, #475569)', fontWeight: 400 }}>
+                                  {cleanLine}
+                                </div>
+                              </li>
+                            );
+                          })}
                         </ul>
                       );
                     }
 
-                    return <p key={index}>{trimmed}</p>;
+                    // 3. Regular Body Paragraphs with Inline Bold Parsing
+                    const renderInlineMarkdown = (text) => {
+                      const parts = text.split(/(\*\*.*?\*\*)/g);
+                      return parts.map((part, i) => {
+                        if (part.startsWith('**') && part.endsWith('**')) {
+                          return (
+                            <strong key={i} style={{ fontWeight: 700, color: 'var(--color-text-primary, #0f172a)' }}>
+                              {part.slice(2, -2)}
+                            </strong>
+                          );
+                        }
+                        return part;
+                      });
+                    };
+
+                    return (
+                      <p 
+                        key={index} 
+                        style={{ 
+                          fontSize: 'clamp(0.94rem, 1.8vw, 1.02rem)', 
+                          fontWeight: 400, 
+                          color: 'var(--color-text-secondary, #475569)', 
+                          lineHeight: 1.75,
+                          margin: 0
+                        }}
+                      >
+                        {renderInlineMarkdown(trimmed)}
+                      </p>
+                    );
                   })}
                 </div>
               </div>

@@ -95,12 +95,24 @@ export const HeaderNav = () => {
 
   useEffect(() => {
     if (isMobileMenuOpen) {
+      const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      if (scrollBarWidth > 0) {
+        document.body.style.paddingRight = `${scrollBarWidth}px`;
+      }
     } else {
+      document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+      document.body.style.paddingRight = '';
     }
     return () => {
+      document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+      document.body.style.paddingRight = '';
     };
   }, [isMobileMenuOpen]);
 
@@ -957,6 +969,10 @@ export const HeaderNav = () => {
           <div 
             className="mobile-drawer-overlay"
             onClick={() => setIsMobileMenuOpen(false)}
+            onTouchMove={(e) => {
+              if (e.cancelable) e.preventDefault();
+              e.stopPropagation();
+            }}
             aria-hidden="true"
           />
 
@@ -971,7 +987,10 @@ export const HeaderNav = () => {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              gap: '0.85rem'
+              gap: '0.85rem',
+              touchAction: 'pan-y',
+              overscrollBehavior: 'contain',
+              WebkitOverflowScrolling: 'touch'
             }}
           >
             {/* 1. Header Area: Brand Logo + Theme Toggle + Clean "X" Close Button */}
