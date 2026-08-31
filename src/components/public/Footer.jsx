@@ -334,7 +334,7 @@ export const Footer = () => {
                 onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                 onMouseLeave={(e) => e.currentTarget.style.color = '#64748b'}
               >
-                Client Portal
+                My Account
               </button>
             )}
             {safeIsAuthenticated && safeAuthUser?.role === 'admin' && (

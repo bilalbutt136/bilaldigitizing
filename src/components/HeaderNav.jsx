@@ -536,7 +536,7 @@ export const HeaderNav = () => {
                 }}
               >
                 <User size={13} />
-                <span>{isAdmin ? 'Admin' : 'Portal'}</span>
+                <span>{isAdmin ? 'Admin' : 'Account'}</span>
               </button>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -1493,7 +1493,7 @@ export const HeaderNav = () => {
                     cursor: 'pointer'
                   }}
                 >
-                  <User size={13} /> Portal
+                  <User size={13} /> My Account
                 </button>
               </div>
             )}
