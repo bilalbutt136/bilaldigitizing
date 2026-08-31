@@ -27,20 +27,72 @@ const CATEGORIES = [
   { key: 'patches', label: 'Custom Patches', icon: Tag }
 ];
 
+import { supabase } from '../../lib/supabase/client';
+import { fetchCatalogFromSupabase } from '../../services/supabaseService';
+
 export const PortfolioPage = () => {
   const navigate = useNavigate();
-  const { portfolioSamples = [], openOrderWizard, protectedNavigate } = useAppState();
+  const { portfolioSamples: contextSamples = [], setPortfolioSamples, openOrderWizard, protectedNavigate } = useAppState();
 
+  const [localPortfolio, setLocalPortfolio] = useState(contextSamples);
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeItemModal, setActiveItemModal] = useState(null);
   const [showOriginalInModal, setShowOriginalInModal] = useState(false);
 
   useEffect(() => {
+    if (contextSamples && contextSamples.length > 0) {
+      setLocalPortfolio(contextSamples);
+    }
+  }, [contextSamples]);
+
+  // Direct database fetch on mount & real-time update listeners
+  useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-  }, []);
+
+    let isMounted = true;
+    const fetchFreshPortfolio = async () => {
+      try {
+        if (supabase) {
+          const { data, error } = await supabase
+            .from('portfolio')
+            .select('*')
+            .order('sort_order', { ascending: true });
+          if (!error && data && data.length > 0 && isMounted) {
+            setLocalPortfolio(data);
+            if (setPortfolioSamples) setPortfolioSamples(data);
+            return;
+          }
+        }
+        const res = await fetch(`/api/catalog?action=fetchAll&_t=${Date.now()}`, { cache: 'no-store' });
+        const json = await res.json();
+        if (json?.portfolio && isMounted) {
+          setLocalPortfolio(json.portfolio);
+          if (setPortfolioSamples) setPortfolioSamples(json.portfolio);
+        }
+      } catch (err) {
+        console.warn('Portfolio direct sync notice:', err);
+      }
+    };
+
+    fetchFreshPortfolio();
+
+    const handlePortfolioSync = () => {
+      fetchFreshPortfolio();
+    };
+
+    window.addEventListener('portfolio_updated', handlePortfolioSync);
+    window.addEventListener('storage', handlePortfolioSync);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('portfolio_updated', handlePortfolioSync);
+      window.removeEventListener('storage', handlePortfolioSync);
+    };
+  }, [setPortfolioSamples]);
 
   // Normalize and parse items from database
-  const combinedItems = (portfolioSamples || [])
+  const activeDataList = localPortfolio && localPortfolio.length > 0 ? localPortfolio : contextSamples;
+  const combinedItems = (activeDataList || [])
     .filter(s => s.is_active !== false)
     .map((s, idx) => {
       const catLower = (s.category || '').toLowerCase();

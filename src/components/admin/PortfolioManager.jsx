@@ -22,7 +22,7 @@ import {
   X,
   Maximize2
 } from 'lucide-react';
-import { savePortfolioItemViaApi, deletePortfolioItemViaApi, getAuthHeaders } from '../../services/supabaseService';
+import { savePortfolioItemViaApi, deletePortfolioItemViaApi, getAuthHeaders, fetchCatalogFromSupabase } from '../../services/supabaseService';
 
 const CATEGORY_OPTIONS = [
   { value: 'Embroidery', label: 'Embroidery Digitizing', icon: Layers, color: '#f97316' },
@@ -184,6 +184,14 @@ export const PortfolioManager = () => {
           window.dispatchEvent(new CustomEvent('portfolio_updated', { detail: savedItem }));
         }
         setIsModalOpen(false);
+
+        // Fetch fresh catalog from DB in background to guarantee 100% sync
+        try {
+          const fresh = await fetchCatalogFromSupabase();
+          if (fresh?.portfolioSamples && setPortfolioSamples) {
+            setPortfolioSamples(fresh.portfolioSamples);
+          }
+        } catch {}
       } else {
         showToast('Failed to save portfolio item: ' + (result.error || 'Unknown error'), 'error');
       }
@@ -212,6 +220,12 @@ export const PortfolioManager = () => {
           return list;
         });
       }
+      try {
+        const fresh = await fetchCatalogFromSupabase();
+        if (fresh?.portfolioSamples && setPortfolioSamples) {
+          setPortfolioSamples(fresh.portfolioSamples);
+        }
+      } catch {}
     }
   };
 
@@ -229,10 +243,17 @@ export const PortfolioManager = () => {
               try {
                 localStorage.setItem('portfolio_samples_live', JSON.stringify(list));
               } catch {}
+              window.dispatchEvent(new CustomEvent('portfolio_updated', { detail: { id: item.id, deleted: true } }));
             }
             return list;
           });
         }
+        try {
+          const fresh = await fetchCatalogFromSupabase();
+          if (fresh?.portfolioSamples && setPortfolioSamples) {
+            setPortfolioSamples(fresh.portfolioSamples);
+          }
+        } catch {}
       } else {
         showToast('Failed to delete: ' + (result.error || 'Unknown error'), 'error');
       }
@@ -257,6 +278,9 @@ export const PortfolioManager = () => {
 
     // Save the moved item
     await savePortfolioItemViaApi({ ...item, sort_order: targetIdx + 1 });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('portfolio_updated', { detail: item }));
+    }
   };
 
   // Filtered items

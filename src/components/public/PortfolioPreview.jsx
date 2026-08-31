@@ -6,9 +6,12 @@ import { useAppState } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
 import { normalizeCategory } from '../../utils/categoryUtils';
 
+import { supabase } from '../../lib/supabase/client';
+
 export const PortfolioPreview = () => {
-  const { portfolioSamples, activeHomeServiceTab, homePageConfig = {} } = useAppState();
+  const { portfolioSamples = [], setPortfolioSamples, activeHomeServiceTab, homePageConfig = {} } = useAppState();
   
+  const [localItems, setLocalItems] = useState(portfolioSamples);
   const dbSettings = homePageConfig?.settings || {};
   const badgeText = dbSettings.portfolio_badge || 'Our Work';
   const titleText = dbSettings.portfolio_title || 'Crafted with Precision';
@@ -19,6 +22,49 @@ export const PortfolioPreview = () => {
   const [hoveredId, setHoveredId] = useState(null);
 
   useEffect(() => {
+    if (portfolioSamples && portfolioSamples.length > 0) {
+      setLocalItems(portfolioSamples);
+    }
+  }, [portfolioSamples]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const syncFreshPortfolio = async () => {
+      try {
+        if (supabase) {
+          const { data, error } = await supabase
+            .from('portfolio')
+            .select('*')
+            .order('sort_order', { ascending: true });
+          if (!error && data && data.length > 0 && isMounted) {
+            setLocalItems(data);
+            if (setPortfolioSamples) setPortfolioSamples(data);
+            return;
+          }
+        }
+        const res = await fetch(`/api/catalog?action=fetchAll&_t=${Date.now()}`, { cache: 'no-store' });
+        const json = await res.json();
+        if (json?.portfolio && isMounted) {
+          setLocalItems(json.portfolio);
+          if (setPortfolioSamples) setPortfolioSamples(json.portfolio);
+        }
+      } catch {}
+    };
+
+    syncFreshPortfolio();
+
+    const handleSync = () => syncFreshPortfolio();
+    window.addEventListener('portfolio_updated', handleSync);
+    window.addEventListener('storage', handleSync);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('portfolio_updated', handleSync);
+      window.removeEventListener('storage', handleSync);
+    };
+  }, [setPortfolioSamples]);
+
+  useEffect(() => {
     const norm = normalizeCategory(activeHomeServiceTab);
     if (norm === 'embroidery') setActiveCategory('Embroidery');
     else if (norm === 'vector-art') setActiveCategory('Vector Art');
@@ -26,9 +72,8 @@ export const PortfolioPreview = () => {
     else setActiveCategory('All');
   }, [activeHomeServiceTab]);
 
-  const portfolioItems = portfolioSamples || [];
-
-  const combinedItems = portfolioItems
+  const activePortfolioSource = localItems && localItems.length > 0 ? localItems : portfolioSamples;
+  const combinedItems = (activePortfolioSource || [])
     .filter(item => item.is_active !== false)
     .map(item => ({
       ...item,

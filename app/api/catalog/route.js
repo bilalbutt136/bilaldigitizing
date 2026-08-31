@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 const ALLOWED_TABLES = [
   'services', 'pricing_cards', 'patch_cards', 'store_products',
@@ -16,12 +17,15 @@ const ALLOWED_TABLES = [
 function revalidateAllSitePages() {
   try {
     revalidatePath('/', 'layout');
-    revalidatePath('/pricing');
-    revalidatePath('/services/embroidery-digitizing');
-    revalidatePath('/services/vector-tracing');
-    revalidatePath('/custom-patches');
-    revalidatePath('/portfolio');
-    revalidatePath('/');
+    revalidatePath('/', 'page');
+    revalidatePath('/portfolio', 'page');
+    revalidatePath('/portfolio', 'layout');
+    revalidatePath('/pricing', 'page');
+    revalidatePath('/services/embroidery-digitizing', 'page');
+    revalidatePath('/services/vector-tracing', 'page');
+    revalidatePath('/custom-patches', 'page');
+    revalidateTag('portfolio');
+    revalidateTag('catalog');
   } catch (e) {
     console.warn('[Revalidate Error]:', e);
   }

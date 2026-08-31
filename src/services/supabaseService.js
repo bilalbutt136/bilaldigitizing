@@ -706,7 +706,7 @@ export const savePortfolioItemViaApi = async (item) => {
           digitized_image: item.digitized_image || item.digitizedImage || item.afterImg || item.image_url || '',
           stitch_count: item.stitch_count !== undefined ? String(item.stitch_count) : (item.stitchCount || ''),
           colors: item.colors || 'Standard',
-          formats: Array.isArray(item.formats) ? JSON.stringify(item.formats) : (item.formats || 'DST, PES, EMB'),
+          formats: Array.isArray(item.formats) ? item.formats.join(', ') : (item.formats || 'DST, PES, EMB'),
           client_type: item.client_type || item.clientType || 'Commercial Client',
           sort_order: Number(item.sort_order) || 0,
           is_active: item.is_active !== false,
