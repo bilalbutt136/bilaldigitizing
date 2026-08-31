@@ -4,9 +4,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from '../utils/navigation';
 import { useAppState } from '../context/StateContext';
 import { 
+  Home,
   Scissors, 
   User, 
   ChevronDown, 
+  ChevronRight,
   Menu, 
   MoreVertical,
   X, 
@@ -28,7 +30,9 @@ import {
   LogOut,
   Package,
   Layers,
-  Upload
+  Upload,
+  DollarSign,
+  BookOpen
 } from 'lucide-react';
 import { UserMenuDropdown } from './common/UserMenuDropdown';
 import { ThemeToggle } from './common/ThemeToggle';
@@ -85,6 +89,7 @@ export const HeaderNav = () => {
 
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileServicesOpen, setIsMobileServicesOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
   const [isSupportDropdownOpen, setIsSupportDropdownOpen] = useState(false);
 
@@ -945,449 +950,568 @@ export const HeaderNav = () => {
           </div>
         </div>
 
-      {/* Mobile Slide-Down / Overlay Navigation Drawer */}
+      {/* Mobile Drawer (Backdrop Overlay + Smooth Slide-In Sheet) */}
       {isMobileMenuOpen && (
-        <div 
-          className="mobile-navigation-drawer"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            width: '100vw',
-            height: '100dvh',
-            background: isDark ? '#0b1120' : '#ffffff',
-            color: isDark ? '#f8fafc' : '#0f172a',
-            zIndex: 999999,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            padding: '1.15rem 1.25rem',
-            boxSizing: 'border-box',
-            animation: 'fadeIn 0.2s ease-out',
-            overflowY: 'auto',
-            WebkitOverflowScrolling: 'touch'
-          }}
-        >
-          {/* Top Bar: Brand + Theme Toggle + Close Button */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingBottom: '0.65rem',
-            borderBottom: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
-            flexShrink: 0
-          }}>
-            <div 
-              onClick={() => { handleGoHome(); setIsMobileMenuOpen(false); }}
-              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
-            >
-              <div style={{
-                background: 'linear-gradient(135deg, #090d16, var(--color-primary))',
-                color: '#ffffff',
-                padding: '0.4rem',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 8px var(--color-primary-glow)'
-              }}>
-                <Scissors size={18} style={{ color: 'var(--color-primary)' }} />
-              </div>
-              <span style={{ fontFamily: 'var(--font-heading)', fontSize: '1.15rem', fontWeight: 900, color: isDark ? '#f8fafc' : '#0f172a', letterSpacing: '-0.02em' }}>
-                BILAL DIGITIZING<span style={{ color: 'var(--color-primary)' }}>.PRO</span>
-              </span>
-            </div>
+        <>
+          {/* Backdrop Overlay (Click outside to close) */}
+          <div 
+            className="mobile-drawer-overlay"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <ThemeToggle variant="pill" />
-              <button
-                type="button"
-                onClick={() => setIsMobileMenuOpen(false)}
-                style={{
-                  background: isDark ? '#1e293b' : '#f1f5f9',
-                  border: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid #cbd5e1',
-                  borderRadius: '50%',
-                  width: '38px',
-                  height: '38px',
+          {/* Drawer Sheet Panel */}
+          <aside 
+            className="mobile-drawer-sheet"
+            role="dialog"
+            aria-label="Navigation Menu"
+            style={{
+              padding: '1.25rem 1.15rem',
+              boxSizing: 'border-box',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: '0.85rem'
+            }}
+          >
+            {/* 1. Header Area: Brand Logo + Theme Toggle + Clean "X" Close Button */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingBottom: '0.85rem',
+              borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
+              flexShrink: 0
+            }}>
+              <div 
+                onClick={() => { handleGoHome(); setIsMobileMenuOpen(false); }}
+                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                <div style={{
+                  background: 'linear-gradient(135deg, #090d16, var(--color-primary))',
+                  color: '#ffffff',
+                  padding: '0.4rem',
+                  borderRadius: '8px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: isDark ? '#f8fafc' : '#0f172a'
-                }}
-                aria-label="Close menu"
-              >
-                <X size={20} />
-              </button>
-            </div>
-          </div>
-
-          {/* Main Content Area */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.75rem',
-            paddingTop: '0.65rem',
-            flex: 1
-          }}>
-
-            {/* 1. TOP PROMINENT CARD: INSTALL MOBILE APP BUTTON */}
-            <button
-              type="button"
-              onClick={handleInstallMobileApp}
-              style={{
-                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '12px',
-                padding: '0.75rem 1rem',
-                fontWeight: 900,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(5, 150, 105, 0.35)',
-                textAlign: 'left'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <div style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  padding: '0.45rem',
-                  borderRadius: '10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
+                  boxShadow: '0 2px 8px var(--color-primary-glow)'
                 }}>
-                  <Smartphone size={20} style={{ color: '#ffffff' }} />
+                  <Scissors size={18} style={{ color: 'var(--color-primary)' }} />
                 </div>
-                <div>
-                  <div style={{ fontSize: '0.92rem', fontWeight: 900, lineHeight: 1.2 }}>
-                    Install Mobile App
-                  </div>
-                  <div style={{ fontSize: '0.72rem', color: '#d1fae5', fontWeight: 600, marginTop: '2px' }}>
-                    1-Tap Home Screen Access & Real-Time Alerts
-                  </div>
-                </div>
+                <span style={{ fontFamily: 'var(--font-heading)', fontSize: '1.05rem', fontWeight: 900, color: isDark ? '#f8fafc' : '#0f172a', letterSpacing: '-0.02em' }}>
+                  BILAL DIGITIZING<span style={{ color: 'var(--color-primary)' }}>.PRO</span>
+                </span>
               </div>
-              <div style={{
-                background: '#ffffff',
-                color: '#047857',
-                padding: '0.35rem 0.65rem',
-                borderRadius: '999px',
-                fontSize: '0.75rem',
-                fontWeight: 900,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-                flexShrink: 0
-              }}>
-                <Download size={13} /> Install
-              </div>
-            </button>
 
-            {/* 2. AUTHENTICATION ACTION SUITE: SIGN IN & SIGN UP (OR ACCOUNT/DASHBOARD) */}
-            {!safeIsAuthenticated ? (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <ThemeToggle variant="pill" />
                 <button
                   type="button"
-                  onClick={() => {
-                    setAuthModalMode('login');
-                    setIsAuthModalOpen(true);
-                    setIsMobileMenuOpen(false);
-                    navigate('/login');
-                  }}
+                  onClick={() => setIsMobileMenuOpen(false)}
                   style={{
-                    background: isDark ? '#1e293b' : '#f8fafc',
-                    border: isDark ? '1.5px solid rgba(255,255,255,0.15)' : '1.5px solid #cbd5e1',
-                    color: isDark ? '#f8fafc' : '#0f172a',
-                    borderRadius: '10px',
-                    padding: '0.7rem 0.5rem',
-                    fontWeight: 800,
-                    fontSize: '0.88rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.4rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <LogIn size={16} style={{ color: 'var(--color-primary)' }} />
-                  <span>Sign In</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthModalMode('signup');
-                    setIsAuthModalOpen(true);
-                    setIsMobileMenuOpen(false);
-                    navigate('/signup');
-                  }}
-                  style={{
-                    background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '10px',
-                    padding: '0.7rem 0.5rem',
-                    fontWeight: 900,
-                    fontSize: '0.88rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.4rem',
-                    cursor: 'pointer',
-                    boxShadow: '0 3px 10px rgba(249, 115, 22, 0.35)'
-                  }}
-                >
-                  <UserPlus size={16} />
-                  <span>Create Account</span>
-                </button>
-              </div>
-            ) : (
-              <div style={{
-                background: isDark ? '#1e293b' : '#f8fafc',
-                border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
-                borderRadius: '12px',
-                padding: '0.65rem 0.85rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                  <div style={{
-                    width: '34px',
-                    height: '34px',
+                    background: isDark ? '#1e293b' : '#f1f5f9',
+                    border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #cbd5e1',
                     borderRadius: '50%',
-                    background: 'var(--color-primary)',
-                    color: '#ffffff',
+                    width: '36px',
+                    height: '36px',
+                    minWidth: '36px',
+                    minHeight: '36px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontWeight: 800,
-                    fontSize: '0.85rem'
-                  }}>
-                    {safeAuthUser?.name ? safeAuthUser.name.charAt(0).toUpperCase() : 'U'}
+                    cursor: 'pointer',
+                    color: isDark ? '#f8fafc' : '#0f172a',
+                    transition: 'all 0.15s ease'
+                  }}
+                  aria-label="Close menu"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable Center Area (User Profile + Navigation Links) */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.85rem',
+              overflowY: 'auto',
+              flex: 1,
+              paddingRight: '2px'
+            }}>
+              {/* 2. User Profile / Auth Section */}
+              {safeIsAuthenticated ? (
+                <div style={{
+                  background: isDark ? '#1e293b' : '#f8fafc',
+                  border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '0.85rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.65rem'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <div style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--orange-600) 100%)',
+                      color: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 900,
+                      fontSize: '0.95rem',
+                      flexShrink: 0,
+                      boxShadow: '0 2px 8px var(--color-primary-glow)'
+                    }}>
+                      {safeAuthUser?.name ? safeAuthUser.name.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontWeight: 800, fontSize: '0.88rem', color: isDark ? '#ffffff' : '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {safeAuthUser?.name || 'Customer Account'}
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {safeAuthUser?.email || 'Logged In'}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: '0.85rem', color: isDark ? '#ffffff' : '#0f172a' }}>
-                      {safeAuthUser?.name || 'Customer Account'}
-                    </div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                      {safeAuthUser?.email || 'Logged In'}
-                    </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.4rem', paddingTop: '0.25rem', borderTop: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #e2e8f0' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        if (isAdmin) protectedNavigate('admin');
+                        else protectedNavigate('customer');
+                      }}
+                      style={{
+                        background: 'var(--color-primary)',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '0.5rem 0.65rem',
+                        borderRadius: '8px',
+                        fontWeight: 800,
+                        fontSize: '0.78rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.3rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <User size={13} /> My Account
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        if (logout) logout();
+                      }}
+                      style={{
+                        background: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fee2e2',
+                        color: isDark ? '#fca5a5' : '#dc2626',
+                        border: isDark ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid #fecaca',
+                        padding: '0.5rem 0.65rem',
+                        borderRadius: '8px',
+                        fontWeight: 800,
+                        fontSize: '0.78rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.3rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <LogOut size={13} /> Sign Out
+                    </button>
                   </div>
                 </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthModalMode('login');
+                      setIsAuthModalOpen(true);
+                      setIsMobileMenuOpen(false);
+                      navigate('/login');
+                    }}
+                    style={{
+                      background: isDark ? '#1e293b' : '#f8fafc',
+                      border: isDark ? '1.5px solid rgba(255,255,255,0.15)' : '1.5px solid #cbd5e1',
+                      color: isDark ? '#f8fafc' : '#0f172a',
+                      borderRadius: '10px',
+                      padding: '0.65rem 0.5rem',
+                      fontWeight: 800,
+                      fontSize: '0.84rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.35rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <LogIn size={15} style={{ color: 'var(--color-primary)' }} />
+                    <span>Sign In</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthModalMode('signup');
+                      setIsAuthModalOpen(true);
+                      setIsMobileMenuOpen(false);
+                      navigate('/signup');
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '10px',
+                      padding: '0.65rem 0.5rem',
+                      fontWeight: 900,
+                      fontSize: '0.84rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.35rem',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(249, 115, 22, 0.35)'
+                    }}
+                  >
+                    <UserPlus size={15} />
+                    <span>Create Account</span>
+                  </button>
+                </div>
+              )}
+
+              {/* 3. Navigation Links (Clean Vertical List with subtle icons and dividers) */}
+              <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                {/* Home */}
                 <button
                   type="button"
                   onClick={() => {
+                    handleGoHome();
                     setIsMobileMenuOpen(false);
-                    if (isAdmin) protectedNavigate('admin');
-                    else protectedNavigate('customer');
                   }}
                   style={{
-                    background: 'var(--color-primary)',
-                    color: '#ffffff',
-                    border: 'none',
-                    padding: '0.4rem 0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '0.7rem 0.75rem',
                     borderRadius: '8px',
-                    fontWeight: 800,
-                    fontSize: '0.78rem',
-                    cursor: 'pointer'
+                    background: 'transparent',
+                    border: 'none',
+                    color: isDark ? '#f1f5f9' : '#1e293b',
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'background 0.15s ease'
                   }}
                 >
-                  My Account
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <Home size={18} style={{ color: 'var(--color-primary)' }} />
+                    <span>Home</span>
+                  </div>
+                  <ChevronRight size={15} style={{ color: isDark ? '#64748b' : '#94a3b8' }} />
                 </button>
-              </div>
-            )}
 
-            {/* 3. Services Section as Compact 3-Column Grid */}
-            <div style={{ marginTop: '0.15rem' }}>
-              <span style={{
-                fontSize: '0.7rem',
-                fontWeight: 800,
-                color: '#f97316',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                display: 'block',
-                marginBottom: '0.35rem'
-              }}>
-                Services
-              </span>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.45rem' }}>
+                {/* Services Collapsible Accordion */}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileServicesOpen(!isMobileServicesOpen)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '0.7rem 0.75rem',
+                      borderRadius: '8px',
+                      background: isMobileServicesOpen ? (isDark ? 'rgba(249, 115, 22, 0.1)' : '#fff7ed') : 'transparent',
+                      border: 'none',
+                      color: isMobileServicesOpen ? 'var(--color-primary)' : (isDark ? '#f1f5f9' : '#1e293b'),
+                      fontSize: '0.92rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <Layers size={18} style={{ color: 'var(--color-primary)' }} />
+                      <span>Services</span>
+                    </div>
+                    <ChevronDown 
+                      size={16} 
+                      style={{ 
+                        color: isMobileServicesOpen ? 'var(--color-primary)' : (isDark ? '#64748b' : '#94a3b8'),
+                        transform: isMobileServicesOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.2s ease'
+                      }} 
+                    />
+                  </button>
+
+                  {/* Sub-Services Accordion Dropdown */}
+                  {isMobileServicesOpen && (
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.2rem',
+                      paddingLeft: '1.25rem',
+                      marginTop: '0.2rem',
+                      marginBottom: '0.2rem',
+                      borderLeft: isDark ? '2px solid rgba(249, 115, 22, 0.3)' : '2px solid #fed7aa',
+                      marginLeft: '1.1rem'
+                    }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigate('/services/embroidery-digitizing');
+                          setIsMobileMenuOpen(false);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.55rem',
+                          padding: '0.55rem 0.65rem',
+                          borderRadius: '6px',
+                          background: 'transparent',
+                          border: 'none',
+                          color: isDark ? '#cbd5e1' : '#334155',
+                          fontSize: '0.84rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <PenTool size={15} style={{ color: '#f97316' }} />
+                        <span>Embroidery Digitizing</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigate('/services/vector-tracing');
+                          setIsMobileMenuOpen(false);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.55rem',
+                          padding: '0.55rem 0.65rem',
+                          borderRadius: '6px',
+                          background: 'transparent',
+                          border: 'none',
+                          color: isDark ? '#cbd5e1' : '#334155',
+                          fontSize: '0.84rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <ImageIcon size={15} style={{ color: '#3b82f6' }} />
+                        <span>Vector Art Tracing</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigate('/custom-patches');
+                          setIsMobileMenuOpen(false);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.55rem',
+                          padding: '0.55rem 0.65rem',
+                          borderRadius: '6px',
+                          background: 'transparent',
+                          border: 'none',
+                          color: isDark ? '#cbd5e1' : '#334155',
+                          fontSize: '0.84rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <Award size={15} style={{ color: '#10b981' }} />
+                        <span>Custom Patches</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Portfolio Gallery */}
                 <button
                   type="button"
                   onClick={() => {
-                    navigate('/services/embroidery-digitizing');
+                    navigate('/portfolio');
                     setIsMobileMenuOpen(false);
                   }}
                   style={{
-                    background: isDark ? '#1e293b' : '#f8fafc',
-                    border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
-                    borderRadius: '10px',
-                    padding: '0.5rem 0.3rem',
                     display: 'flex',
-                    flexDirection: 'column',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.3rem',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '0.7rem 0.75rem',
+                    borderRadius: '8px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: isDark ? '#f1f5f9' : '#1e293b',
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
                     cursor: 'pointer',
-                    color: isDark ? '#f8fafc' : '#0f172a'
+                    textAlign: 'left',
+                    transition: 'background 0.15s ease'
                   }}
                 >
-                  <PenTool size={16} style={{ color: '#f97316' }} />
-                  <span style={{ fontSize: '0.68rem', fontWeight: 800, textAlign: 'center', lineHeight: 1.2 }}>
-                    Embroidery Digitizing
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <Sparkles size={18} style={{ color: '#8b5cf6' }} />
+                    <span>Portfolio Gallery</span>
+                  </div>
+                  <ChevronRight size={15} style={{ color: isDark ? '#64748b' : '#94a3b8' }} />
                 </button>
 
+                {/* Pricing & Rates */}
                 <button
                   type="button"
                   onClick={() => {
-                    navigate('/services/vector-tracing');
+                    navigate('/pricing');
                     setIsMobileMenuOpen(false);
                   }}
                   style={{
-                    background: isDark ? '#1e293b' : '#f8fafc',
-                    border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
-                    borderRadius: '10px',
-                    padding: '0.5rem 0.3rem',
                     display: 'flex',
-                    flexDirection: 'column',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.3rem',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '0.7rem 0.75rem',
+                    borderRadius: '8px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: isDark ? '#f1f5f9' : '#1e293b',
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
                     cursor: 'pointer',
-                    color: isDark ? '#f8fafc' : '#0f172a'
+                    textAlign: 'left',
+                    transition: 'background 0.15s ease'
                   }}
                 >
-                  <ImageIcon size={16} style={{ color: '#3b82f6' }} />
-                  <span style={{ fontSize: '0.68rem', fontWeight: 800, textAlign: 'center', lineHeight: 1.2 }}>
-                    Vector Art Tracing
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <DollarSign size={18} style={{ color: '#10b981' }} />
+                    <span>Pricing & Rates</span>
+                  </div>
+                  <ChevronRight size={15} style={{ color: isDark ? '#64748b' : '#94a3b8' }} />
                 </button>
 
+                {/* FAQs & Guides */}
                 <button
                   type="button"
                   onClick={() => {
-                    navigate('/custom-patches');
+                    navigate('/faqs');
                     setIsMobileMenuOpen(false);
                   }}
                   style={{
-                    background: isDark ? '#1e293b' : '#f8fafc',
-                    border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
-                    borderRadius: '10px',
-                    padding: '0.5rem 0.3rem',
                     display: 'flex',
-                    flexDirection: 'column',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.3rem',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '0.7rem 0.75rem',
+                    borderRadius: '8px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: isDark ? '#f1f5f9' : '#1e293b',
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
                     cursor: 'pointer',
-                    color: isDark ? '#f8fafc' : '#0f172a'
+                    textAlign: 'left',
+                    transition: 'background 0.15s ease'
                   }}
                 >
-                  <Award size={16} style={{ color: '#10b981' }} />
-                  <span style={{ fontSize: '0.68rem', fontWeight: 800, textAlign: 'center', lineHeight: 1.2 }}>
-                    Custom Patches
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <HelpCircle size={18} style={{ color: '#3b82f6' }} />
+                    <span>FAQs & Formats</span>
+                  </div>
+                  <ChevronRight size={15} style={{ color: isDark ? '#64748b' : '#94a3b8' }} />
                 </button>
-              </div>
+
+                {/* Blogs & Industry Guides */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/blogs');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '0.7rem 0.75rem',
+                    borderRadius: '8px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: isDark ? '#f1f5f9' : '#1e293b',
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'background 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <BookOpen size={18} style={{ color: '#ec4899' }} />
+                    <span>Blogs & Guides</span>
+                  </div>
+                  <ChevronRight size={15} style={{ color: isDark ? '#64748b' : '#94a3b8' }} />
+                </button>
+
+                {/* Contact / 24/7 Live Support */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleOpenLiveSupport();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '0.7rem 0.75rem',
+                    borderRadius: '8px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: isDark ? '#f1f5f9' : '#1e293b',
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'background 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <Headphones size={18} style={{ color: '#06b6d4' }} />
+                    <span>Contact / 24/7 Support</span>
+                  </div>
+                  <ChevronRight size={15} style={{ color: isDark ? '#64748b' : '#94a3b8' }} />
+                </button>
+              </nav>
             </div>
 
-            {/* 4. Quick Explore Links Grid */}
+            {/* 4. Footer / Actions Area: Start Order & Install App */}
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '0.45rem',
-              marginTop: '0.15rem'
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.55rem',
+              paddingTop: '0.75rem',
+              borderTop: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
+              flexShrink: 0
             }}>
-              <button
-                type="button"
-                onClick={() => { navigate('/portfolio'); setIsMobileMenuOpen(false); }}
-                style={{
-                  textAlign: 'left',
-                  background: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
-                  border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  fontWeight: 700,
-                  fontSize: '0.8rem',
-                  color: isDark ? '#f1f5f9' : '#1e293b',
-                  padding: '0.45rem 0.6rem',
-                  cursor: 'pointer'
-                }}
-              >
-                Portfolio Gallery
-              </button>
-
-              <button
-                type="button"
-                onClick={() => { navigate('/pricing'); setIsMobileMenuOpen(false); }}
-                style={{
-                  textAlign: 'left',
-                  background: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
-                  border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  fontWeight: 700,
-                  fontSize: '0.8rem',
-                  color: isDark ? '#f1f5f9' : '#1e293b',
-                  padding: '0.45rem 0.6rem',
-                  cursor: 'pointer'
-                }}
-              >
-                Pricing & Rates
-              </button>
-
-              <button
-                type="button"
-                onClick={() => { navigate('/faqs'); setIsMobileMenuOpen(false); }}
-                style={{
-                  textAlign: 'left',
-                  background: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
-                  border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  fontWeight: 700,
-                  fontSize: '0.8rem',
-                  color: isDark ? '#f1f5f9' : '#1e293b',
-                  padding: '0.45rem 0.6rem',
-                  cursor: 'pointer'
-                }}
-              >
-                FAQs & Formats
-              </button>
-
-              <button
-                type="button"
-                onClick={() => { navigate('/blogs'); setIsMobileMenuOpen(false); }}
-                style={{
-                  textAlign: 'left',
-                  background: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
-                  border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  fontWeight: 700,
-                  fontSize: '0.8rem',
-                  color: isDark ? '#f1f5f9' : '#1e293b',
-                  padding: '0.45rem 0.6rem',
-                  cursor: 'pointer'
-                }}
-              >
-                Blogs & Guides
-              </button>
-            </div>
-          </div>
-
-          {/* Bottom Action Area (Start Order + 24/7 Support) */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.4rem',
-            paddingTop: '0.55rem',
-            borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
-            flexShrink: 0
-          }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.4rem' }}>
+              {/* Primary CTA: Start Order */}
               <button
                 type="button"
                 onClick={() => {
@@ -1400,45 +1524,51 @@ export const HeaderNav = () => {
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '10px',
-                  padding: '0.65rem 0.5rem',
+                  padding: '0.75rem 1rem',
                   fontWeight: 900,
-                  fontSize: '0.85rem',
+                  fontSize: '0.9rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '0.35rem',
+                  gap: '0.45rem',
                   cursor: 'pointer',
-                  boxShadow: '0 3px 12px var(--color-primary-glow)'
+                  boxShadow: '0 3px 12px var(--color-primary-glow)',
+                  width: '100%'
                 }}
               >
-                <Upload size={15} /> Start Order <ArrowRight size={14} />
+                <Upload size={16} />
+                <span>Start Order</span>
+                <ArrowRight size={15} />
               </button>
+
+              {/* Install Mobile App Compact Banner/Button */}
               <button
                 type="button"
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  handleOpenLiveSupport();
-                }}
+                onClick={handleInstallMobileApp}
                 style={{
-                  background: isDark ? 'rgba(59, 130, 246, 0.15)' : '#eff6ff',
-                  border: isDark ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid #bfdbfe',
-                  color: isDark ? '#93c5fd' : '#1d4ed8',
+                  background: isDark ? 'rgba(5, 150, 105, 0.15)' : '#ecfdf5',
+                  color: isDark ? '#6ee7b7' : '#047857',
+                  border: isDark ? '1px solid rgba(5, 150, 105, 0.3)' : '1px solid #a7f3d0',
                   borderRadius: '10px',
-                  padding: '0.65rem 0.5rem',
+                  padding: '0.55rem 0.85rem',
                   fontWeight: 800,
-                  fontSize: '0.85rem',
+                  fontSize: '0.8rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '0.35rem',
-                  cursor: 'pointer'
+                  gap: '0.45rem',
+                  cursor: 'pointer',
+                  width: '100%',
+                  transition: 'all 0.15s ease'
                 }}
               >
-                <Headphones size={15} /> 24/7 Support
+                <Smartphone size={15} />
+                <span>Install Mobile App (1-Tap Access)</span>
+                <Download size={13} />
               </button>
             </div>
-          </div>
-        </div>
+          </aside>
+        </>
       )}
     </header>
   );
