@@ -541,93 +541,9 @@ export const HeaderNav = () => {
             </button>
           )}
 
-          {/* Mobile Right Action Area (Clean Bar: Sign In + Sign Up + Hamburger) */}
+          {/* Mobile Right Action Area (Clean Three-Lines Hamburger Menu) */}
           <div className="mobile-only" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
-            {safeIsAuthenticated ? (
-              <button
-                type="button"
-                onClick={() => {
-                  if (isAdmin) protectedNavigate('admin');
-                  else protectedNavigate('customer');
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.3rem',
-                  background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--orange-600) 100%)',
-                  color: '#ffffff',
-                  border: 'none',
-                  padding: '0.38rem 0.65rem',
-                  height: '36px',
-                  borderRadius: '8px',
-                  fontWeight: 800,
-                  fontSize: '0.78rem',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(249, 115, 22, 0.35)',
-                  flexShrink: 0
-                }}
-              >
-                <User size={13} />
-                <span>{isAdmin ? 'Admin' : 'Account'}</span>
-              </button>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthModalMode('login');
-                    setIsAuthModalOpen(true);
-                    navigate('/login');
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.2rem',
-                    background: 'var(--color-primary-light, #ffedd5)',
-                    color: 'var(--color-primary, #ea580c)',
-                    border: '1px solid var(--color-border)',
-                    padding: '0.35rem 0.55rem',
-                    height: '36px',
-                    borderRadius: '8px',
-                    fontWeight: 800,
-                    fontSize: '0.75rem',
-                    cursor: 'pointer',
-                    flexShrink: 0
-                  }}
-                >
-                  <User size={13} />
-                  <span>Sign In</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthModalMode('signup');
-                    setIsAuthModalOpen(true);
-                    navigate('/signup');
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.2rem',
-                    background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
-                    color: '#ffffff',
-                    border: 'none',
-                    padding: '0.35rem 0.6rem',
-                    height: '36px',
-                    borderRadius: '8px',
-                    fontWeight: 800,
-                    fontSize: '0.75rem',
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 8px rgba(249, 115, 22, 0.35)',
-                    flexShrink: 0
-                  }}
-                >
-                  <span>Sign Up</span>
-                </button>
-              </div>
-            )}
-
-            {/* Mobile Three-Dots Toggle Button (Always Guaranteed Visible) */}
+            {/* Mobile Three-Lines Menu Toggle Button */}
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -635,10 +551,10 @@ export const HeaderNav = () => {
                 background: isMobileMenuOpen ? 'rgba(255, 122, 0, 0.12)' : 'transparent',
                 border: isMobileMenuOpen ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
                 color: isMobileMenuOpen ? 'var(--orange-500)' : 'var(--text-main)',
-                width: '36px',
-                height: '36px',
-                minWidth: '36px',
-                minHeight: '36px',
+                width: '38px',
+                height: '38px',
+                minWidth: '38px',
+                minHeight: '38px',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 display: 'flex',
@@ -647,10 +563,10 @@ export const HeaderNav = () => {
                 flexShrink: 0,
                 transition: 'all 0.2s ease'
               }}
-              aria-label="Toggle Actions Menu"
-              title="Menu & Actions"
+              aria-label="Toggle Navigation Menu"
+              title="Menu"
             >
-              {isMobileMenuOpen ? <X size={20} /> : <MoreVertical size={20} />}
+              {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
 
