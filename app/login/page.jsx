@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { AuthPageView } from '../../src/components/auth/AuthPageView';
+import { AuthModal } from '../../src/components/auth/AuthModal';
 
 export default function LoginRoute() {
-  return <AuthPageView initialMode="login" />;
+  return <AuthModal isStandalonePage={true} initialMode="login" />;
 }

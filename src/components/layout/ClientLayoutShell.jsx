@@ -2,6 +2,7 @@
 
 import React, { Suspense } from 'react';
 import { useAppState } from '../../context/StateContext';
+import { usePathname } from 'next/navigation';
 import { AnnouncementBar } from '../public/AnnouncementBar';
 import { HeaderNav } from '../HeaderNav';
 import { Footer } from '../public/Footer';
@@ -20,7 +21,9 @@ import { PWARegistrar } from '../common/PWARegistrar';
 
 export const ClientLayoutShell = ({ children }) => {
   const { mobileMode } = useAppState();
+  const pathname = usePathname() || '';
   const isAppMode = mobileMode === 'app';
+  const isDedicatedAuthRoute = ['/login', '/signup', '/reset-password', '/secure-admin-login'].includes(pathname);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -62,7 +65,7 @@ export const ClientLayoutShell = ({ children }) => {
       <OrderTrackerDrawer />
       <DepositModal />
       <CheckoutModal />
-      <AuthModal />
+      {!isDedicatedAuthRoute && <AuthModal />}
       <GlobalUploadModal />
       <ToastContainer />
       <MetaPixelTracker />

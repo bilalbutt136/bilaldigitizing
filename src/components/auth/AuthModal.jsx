@@ -20,7 +20,7 @@ import AppleSignin from 'react-apple-signin-auth';
 const GOOGLE_CLIENT_ID = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '421520521310-7appibeh1m7cdd90iid17lsq8thlq2oc.apps.googleusercontent.com').trim();
 const APPLE_CLIENT_ID = process.env.NEXT_PUBLIC_APPLE_CLIENT_ID || '';
 
-export const AuthModal = () => {
+export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
   const navigate = useNavigate();
   const { 
     isAuthModalOpen, 
@@ -38,6 +38,13 @@ export const AuthModal = () => {
     orderWizardInitialData,
     authModalTarget
   } = useAppState();
+
+  // Sync initial mode if provided
+  React.useEffect(() => {
+    if (initialMode && setAuthModalMode) {
+      setAuthModalMode(initialMode);
+    }
+  }, [initialMode, setAuthModalMode]);
 
   // Form & Validation State
   const [loginEmail, setLoginEmail] = useState('');
@@ -65,13 +72,28 @@ export const AuthModal = () => {
   // Centered Error Modal Popup State
   const [errorModalText, setErrorModalText] = useState(null);
 
+  const handleClose = () => {
+    setIsAuthModalOpen(false);
+    setAuthError('');
+    if (isStandalonePage) {
+      navigate('/');
+    } else if (typeof window !== 'undefined') {
+      const isAuthPath = ['/login', '/signup', '/reset-password'].some(p => 
+        window.location.pathname === p || window.location.pathname.startsWith(`${p}/`)
+      );
+      if (isAuthPath) {
+        navigate('/');
+      }
+    }
+  };
+
   React.useEffect(() => {
     setAuthError('');
     setIsLoading(false);
   }, [authModalMode, isAuthModalOpen]);
 
   React.useEffect(() => {
-    if (!isAuthModalOpen) return;
+    if (!isStandalonePage && !isAuthModalOpen) return;
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -80,22 +102,27 @@ export const AuthModal = () => {
         } else if (errorModalText) {
           setErrorModalText(null);
         } else {
-          setIsAuthModalOpen(false);
-          setAuthError('');
+          handleClose();
         }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    
+    let originalOverflow = '';
+    if (!isStandalonePage) {
+      originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+    }
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = originalOverflow || 'unset';
+      if (!isStandalonePage) {
+        document.body.style.overflow = originalOverflow || 'unset';
+      }
     };
-  }, [isAuthModalOpen, legalModalType, errorModalText, setIsAuthModalOpen]);
+  }, [isAuthModalOpen, isStandalonePage, legalModalType, errorModalText]);
 
-  if (!isAuthModalOpen) return null;
+  if (!isStandalonePage && !isAuthModalOpen) return null;
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -267,9 +294,24 @@ export const AuthModal = () => {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <div 
-        className="modal-overlay" 
-        onClick={() => { setIsAuthModalOpen(false); setAuthError(''); }}
-        style={{ backdropFilter: 'blur(8px)', background: 'rgba(15, 23, 42, 0.75)', zIndex: 1000000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+        className={isStandalonePage ? "auth-standalone-page" : "modal-overlay"} 
+        onClick={isStandalonePage ? undefined : handleClose}
+        style={isStandalonePage ? {
+          minHeight: 'calc(100vh - 120px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2.5rem 1rem',
+          background: 'var(--bg-main, #f8fafc)'
+        } : {
+          backdropFilter: 'blur(8px)',
+          background: 'rgba(15, 23, 42, 0.75)',
+          zIndex: 1000000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem'
+        }}
       >
       <div 
         className="modal-content auth-modal-dialog" 
@@ -277,10 +319,10 @@ export const AuthModal = () => {
         style={{ 
           maxWidth: '920px', 
           width: '100%',
-          maxHeight: 'calc(100vh - 40px)',
+          maxHeight: isStandalonePage ? 'none' : 'calc(100vh - 40px)',
           borderRadius: '24px', 
           overflow: 'hidden',
-          boxShadow: '0 25px 70px rgba(15, 23, 42, 0.35)',
+          boxShadow: isStandalonePage ? '0 20px 60px rgba(15, 23, 42, 0.12)' : '0 25px 70px rgba(15, 23, 42, 0.35)',
           border: '1px solid var(--color-border)',
           background: 'var(--color-surface, #ffffff)',
           color: 'var(--color-text-primary, #0f172a)',
@@ -385,7 +427,7 @@ export const AuthModal = () => {
         {/* Floating Close Button */}
         <button 
           type="button"
-          onClick={() => { setIsAuthModalOpen(false); setAuthError(''); }}
+          onClick={handleClose}
           style={{ 
             position: 'absolute',
             top: '1.25rem',
@@ -405,7 +447,8 @@ export const AuthModal = () => {
           }}
           onMouseOver={(e) => { e.currentTarget.style.background = 'var(--color-primary, #ff7a00)'; e.currentTarget.style.color = '#ffffff'; }}
           onMouseOut={(e) => { e.currentTarget.style.background = 'var(--color-subtle, #f1f5f9)'; e.currentTarget.style.color = 'var(--color-text-primary, var(--navy-900))'; }}
-          aria-label="Close"
+          aria-label={isStandalonePage ? "Back to Homepage" : "Close"}
+          title={isStandalonePage ? "Back to Homepage" : "Close"}
         >
           <X size={18} />
         </button>
