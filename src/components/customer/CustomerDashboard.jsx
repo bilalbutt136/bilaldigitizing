@@ -770,6 +770,19 @@ export const CustomerDashboard = () => {
             display: flex !important;
             flex-direction: column !important;
             overflow: hidden !important;
+            transition: bottom 0.15s ease-out !important;
+          }
+
+          body.chat-keyboard-active .mobile-bottom-nav {
+            transform: translateY(100%) !important;
+            pointer-events: none !important;
+            opacity: 0 !important;
+            transition: transform 0.2s ease, opacity 0.2s ease !important;
+          }
+
+          body.chat-keyboard-active .client-inbox-fullscreen-mobile {
+            bottom: 0px !important;
+            z-index: 99999 !important;
           }
         }
 

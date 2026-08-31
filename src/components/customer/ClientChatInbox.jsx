@@ -101,6 +101,8 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
   const [replyingTo, setReplyingTo] = useState(null);
   const [isSupportTyping, setIsSupportTyping] = useState(false);
   const [isOrdersMenuOpen, setIsOrdersMenuOpen] = useState(false);
+  const [viewportBottomOffset, setViewportBottomOffset] = useState(0);
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   const chatFeedRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -125,6 +127,40 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
       }
     }, 80);
   };
+
+  // Visual Viewport Listener for iOS Safari & Android Chrome virtual keyboards
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleVisualViewportChange = () => {
+      if (!window.visualViewport) return;
+      const vv = window.visualViewport;
+      const offset = Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0));
+      setViewportBottomOffset(offset);
+      if (offset > 40 || isInputFocused) {
+        scrollToBottom('smooth');
+      }
+    };
+
+    window.visualViewport?.addEventListener('resize', handleVisualViewportChange);
+    window.visualViewport?.addEventListener('scroll', handleVisualViewportChange);
+
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleVisualViewportChange);
+      window.visualViewport?.removeEventListener('scroll', handleVisualViewportChange);
+    };
+  }, [isInputFocused]);
+
+  useEffect(() => {
+    if (isInputFocused || viewportBottomOffset > 40) {
+      document.body.classList.add('chat-keyboard-active');
+    } else {
+      document.body.classList.remove('chat-keyboard-active');
+    }
+    return () => {
+      document.body.classList.remove('chat-keyboard-active');
+    };
+  }, [isInputFocused, viewportBottomOffset]);
 
   // 1. Initial load of channel chat history from Supabase
   const loadChatHistory = async () => {
@@ -741,8 +777,9 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           boxSizing: 'border-box',
           width: '100%',
           position: 'sticky',
-          bottom: 0,
-          zIndex: 20
+          bottom: viewportBottomOffset > 0 ? `${viewportBottomOffset}px` : 0,
+          zIndex: 30,
+          transition: 'bottom 0.15s ease-out'
         }}
       >
         <input 
@@ -777,13 +814,22 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           {isUploadingAttachment ? <Loader2 size={16} className="animate-spin" style={{ color: '#059669' }} /> : <Paperclip size={18} />}
         </button>
 
-        {/* Textarea Input */}
+        {/* Textarea Input (16px minimum prevents iOS Safari auto-zoom) */}
         <textarea
           ref={textareaRef}
           rows={1}
           value={messageInput}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
+          onFocus={() => {
+            setIsInputFocused(true);
+            setTimeout(() => scrollToBottom('smooth'), 100);
+            setTimeout(() => scrollToBottom('smooth'), 300);
+          }}
+          onBlur={() => {
+            setIsInputFocused(false);
+            setTimeout(() => scrollToBottom('smooth'), 150);
+          }}
           placeholder={replyingTo ? 'Type a reply...' : 'Type a message...'}
           className="chat-message-input"
           style={{
@@ -794,7 +840,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
             borderRadius: '10px',
             border: '1.5px solid #cbd5e1',
             padding: '0.6rem 0.85rem',
-            fontSize: '0.9rem',
+            fontSize: '16px',
             fontWeight: 500,
             color: '#0f172a',
             background: '#ffffff',
