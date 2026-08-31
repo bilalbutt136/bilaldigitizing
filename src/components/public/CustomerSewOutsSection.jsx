@@ -8,7 +8,8 @@ export const CustomerSewOutsSection = () => {
   const { 
     activeHomeServiceTab = 'embroidery', 
     serviceCmsContent = {},
-    sewOuts = []
+    sewOuts = [],
+    portfolioSamples = []
   } = useAppState();
   
   const [isMounted, setIsMounted] = useState(false);
@@ -40,40 +41,37 @@ export const CustomerSewOutsSection = () => {
   };
   const mappedCategory = serviceCategoryMap[currentKey] || 'Embroidery';
 
-  // Default to showing active sew outs, regardless of category since the CMS doesn't assign specific categories yet.
-  const dynamicSamples = sewOuts.filter(s => s.is_active !== false);
+  // 1. Gather all active database samples from sewOuts and portfolio database
+  const combinedDbSamples = React.useMemo(() => {
+    const fromSewOuts = (sewOuts || []).filter(s => s.is_active !== false).map(s => ({
+      id: s.id,
+      title: s.title,
+      category: s.category === 'general' ? mappedCategory : (s.category || mappedCategory),
+      stitches: s.stitch_count || 'Varies',
+      formats: s.formats || 'DST, EMB',
+      image: s.after_img || s.before_img || s.afterImg || s.beforeImg
+    }));
 
-  const samplesList = dynamicSamples.length > 0 
-    ? dynamicSamples.map(s => ({
-        id: s.id,
-        title: s.title,
-        category: s.category === 'general' ? mappedCategory : (s.category || mappedCategory),
-        stitches: s.stitch_count || 'Varies',
-        formats: s.formats || 'DST, EMB',
-        image: s.after_img || s.before_img || s.afterImg || s.beforeImg
-      }))
-    : (cmsShowcase.samples && cmsShowcase.samples.length > 0 ? cmsShowcase.samples : (
-      currentKey === 'vector' ? [
-        { id: 'vec-s1', title: 'Vintage Skull & Rose Vector', category: 'Spot Color Sep', stitches: 'N/A (Scalable Vector)', formats: 'AI, EPS, SVG, PDF', image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80' },
-        { id: 'vec-s2', title: 'Wildcat Athletic Team Mascot', category: 'Hand-Drawn Vector', stitches: 'N/A (Scalable Vector)', formats: 'AI, EPS, SVG', image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80' },
-        { id: 'vec-s3', title: 'Corporate Shield & Crest Redraw', category: 'Clean AI & SVG', stitches: 'N/A (Scalable Vector)', formats: 'AI, SVG, PDF', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80' }
-      ] :
-      currentKey === 'patch' ? [
-        { id: 'pat-s1', title: 'Tactical Merrowed Embroidered Patch', category: 'Overlock Edge', stitches: 'High Density Rayon', formats: 'Velcro Backing', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80' },
-        { id: 'pat-s2', title: '3D Molded Rubber PVC Patch', category: 'Tactical PVC', stitches: 'Waterproof Rubber', formats: 'Hook & Loop Backing', image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80' },
-        { id: 'pat-s3', title: 'Laser Debossed Genuine Leather Patch', category: 'Real Leather', stitches: 'Engraved Leather', formats: 'Heat Seal Iron-On', image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80' }
-      ] : [
-        { id: 'emb-s1', title: 'Golden Eagle Sports Polo', category: 'Left Chest', stitches: '12,450 Stitches', formats: 'DST, PES, EMB, EXP', image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80' },
-        { id: 'emb-s2', title: 'Tactical Flexfit Cap Front', category: '3D Puff Cap', stitches: '15,800 Stitches', formats: 'DST, PES, EMB, JEF', image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80' },
-        { id: 'emb-s3', title: 'Heritage Apparel Jacket Crest', category: 'Jacket Back', stitches: '48,200 Stitches', formats: 'DST, PES, EMB, VP3', image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80' }
-      ]
-    ));
+    const fromPortfolio = (portfolioSamples || []).filter(p => {
+      if (p.is_active === false) return false;
+      const cat = (p.category || '').toLowerCase();
+      if (currentKey === 'vector') return cat.includes('vector');
+      if (currentKey === 'patch' || currentKey === 'patches') return cat.includes('patch');
+      return cat.includes('embroid') || cat === 'general' || !cat;
+    }).map(p => ({
+      id: p.id,
+      title: p.title,
+      category: p.category || mappedCategory,
+      stitches: p.stitch_count || p.stitchCount || (currentKey === 'vector' ? 'Scalable Vector' : 'Precision Stitching'),
+      formats: p.formats || (currentKey === 'vector' ? 'AI, EPS, SVG' : 'DST, PES, EMB'),
+      image: p.digitized_image || p.digitizedImage || p.afterImg || p.after_img || p.image || p.original_image
+    }));
 
-  const categoryFallback = currentKey === 'vector' 
-    ? 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80'
-    : currentKey === 'patch'
-    ? 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'
-    : 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80';
+    const merged = [...fromSewOuts, ...fromPortfolio].filter(item => Boolean(item.image));
+    return merged;
+  }, [sewOuts, portfolioSamples, currentKey, mappedCategory]);
+
+  const samplesList = combinedDbSamples;
 
   return (
     <section id="sew-outs" style={{ padding: '5rem 0', background: 'var(--bg-main)', borderBottom: '1px solid var(--border-color)' }}>
@@ -145,15 +143,17 @@ export const CustomerSewOutsSection = () => {
               }}
             >
               <div style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden', backgroundColor: 'var(--navy-950)' }}>
-                <img 
-                  src={item.image || item.afterImg || item.beforeImg || categoryFallback} 
-                  alt={item.title || 'Work Showcase Sample'}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)' }}
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = categoryFallback;
-                  }}
-                />
+                {item.image ? (
+                  <img 
+                    src={item.image} 
+                    alt={item.title || 'Work Showcase Sample'}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)' }}
+                  />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+                    <Sparkles size={28} />
+                  </div>
+                )}
                 
                 {/* Overlay gradient for premium feel */}
                 <div style={{

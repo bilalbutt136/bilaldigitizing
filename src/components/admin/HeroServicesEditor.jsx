@@ -48,31 +48,9 @@ const DEFAULT_SERVICES = {
     primary_btn_action: '#pricing',
     secondary_cta: 'Explore Packages',
     secondary_btn_action: '/pricing',
-    previewTitle: 'All Studio Production Results',
+    previewTitle: 'Live Studio Production Showcase',
     slideshow_interval: 5,
-    showcase_images: [
-      {
-        id: 'all-img-1',
-        title: 'Commercial Embroidery Digitizing',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/portfolio-gallery/9e3dcdd7-e3b4-4886-9f18-a94361029147.png',
-        display_order: 1,
-        is_active: true
-      },
-      {
-        id: 'all-img-2',
-        title: 'Precision Embroidery Sew-Out',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/9b99906f-75cc-4697-9e82-4cecf6e9de08.JPG',
-        display_order: 2,
-        is_active: true
-      },
-      {
-        id: 'all-img-3',
-        title: 'High-Density Custom Embroidery',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/b8cb84c5-9241-4ce8-8a78-48a6ddf86e9a.JPG',
-        display_order: 3,
-        is_active: true
-      }
-    ]
+    showcase_images: []
   },
   embroidery: {
     id: 'embroidery',
@@ -96,24 +74,9 @@ const DEFAULT_SERVICES = {
     primary_btn_action: '/order',
     secondary_cta: 'View Embroidery Packages',
     secondary_btn_action: '/services/embroidery-digitizing',
-    previewTitle: 'Raw Art to High-Density Sew-Out',
+    previewTitle: 'Embroidery Digitizing & Sew-Out Showcase',
     slideshow_interval: 5,
-    showcase_images: [
-      {
-        id: 'emb-img-1',
-        title: 'Commercial Embroidery Digitizing',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/e82803b4-1dca-4138-bc49-892f57095c9a.PNG',
-        display_order: 1,
-        is_active: true
-      },
-      {
-        id: 'emb-img-2',
-        title: 'Precision Embroidery Sew-Out',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/f36e7a8e-db0c-4f49-a2c8-e53dca578c0a.PNG',
-        display_order: 2,
-        is_active: true
-      }
-    ]
+    showcase_images: []
   },
   'vector-art': {
     id: 'vector-art',
@@ -137,24 +100,9 @@ const DEFAULT_SERVICES = {
     primary_btn_action: '/order',
     secondary_cta: 'View Vector Packages',
     secondary_btn_action: '/services/vector-tracing',
-    previewTitle: 'Blurry Raster to Clean Scalable Vector',
+    previewTitle: 'Scalable Vector Redraw Showcase',
     slideshow_interval: 5,
-    showcase_images: [
-      {
-        id: 'vec-img-1',
-        title: 'Blurry Raster to Clean Scalable Vector',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/86f3f965-f16c-4c22-8ef7-4f2acf3f0086.PNG',
-        display_order: 1,
-        is_active: true
-      },
-      {
-        id: 'vec-img-2',
-        title: 'Precision Vector Paths',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/dcd10b4e-b7fc-41f7-8736-05c5364ae665.JPG',
-        display_order: 2,
-        is_active: true
-      }
-    ]
+    showcase_images: []
   },
   patches: {
     id: 'patches',
@@ -178,24 +126,9 @@ const DEFAULT_SERVICES = {
     primary_btn_action: '/order',
     secondary_cta: 'Get Free Patch Proof',
     secondary_btn_action: '/custom-patches',
-    previewTitle: 'Artwork to Physical Manufactured Patch',
+    previewTitle: 'Physical Custom Patches Showcase',
     slideshow_interval: 5,
-    showcase_images: [
-      {
-        id: 'pat-img-1',
-        title: 'Manufactured Custom Patches',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/b8cb84c5-9241-4ce8-8a78-48a6ddf86e9a.JPG',
-        display_order: 1,
-        is_active: true
-      },
-      {
-        id: 'pat-img-2',
-        title: 'High-Density Uniform Emblem',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/portfolio-gallery/9e3dcdd7-e3b4-4886-9f18-a94361029147.png',
-        display_order: 2,
-        is_active: true
-      }
-    ]
+    showcase_images: []
   }
 };
 
@@ -229,19 +162,19 @@ export const HeroServicesEditor = () => {
       }
 
       if (showcaseImages.length === 0) {
-        const fallbackImg = existing.afterImg || existing.banner_image || existing.beforeImg || defaults.showcase_images[0]?.image_url;
-        if (fallbackImg) {
+        const fallbackImg = existing.afterImg || existing.banner_image || existing.beforeImg;
+        if (fallbackImg && !fallbackImg.includes('unsplash.com')) {
           showcaseImages = [
             {
               id: `${selectedService}-img-1`,
-              title: existing.previewTitle || defaults.previewTitle,
+              title: existing.previewTitle || defaults.previewTitle || 'Showcase Image',
               image_url: fallbackImg,
               display_order: 1,
               is_active: true
             }
           ];
         } else {
-          showcaseImages = defaults.showcase_images || [];
+          showcaseImages = [];
         }
       }
 

@@ -225,7 +225,7 @@ export const PortfolioSlider = ({ isHero = false }) => {
 
         {/* Background Layer: Digitized Stitched Result (Right Side) */}
         <img 
-          src={currentItem.after || currentItem.afterImg || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80'} 
+          src={currentItem.after || currentItem.afterImg || ''} 
           alt={`${currentItem.title || 'Showcase'} After Digitizing`}
           style={{
             position: 'absolute',
@@ -233,10 +233,6 @@ export const PortfolioSlider = ({ isHero = false }) => {
             width: '100%',
             height: '100%',
             objectFit: 'cover'
-          }}
-          onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80';
           }}
         />
 
@@ -269,7 +265,7 @@ export const PortfolioSlider = ({ isHero = false }) => {
           transition: isDragging ? 'none' : 'width 0.1s ease-out'
         }}>
           <img 
-            src={currentItem.before || currentItem.beforeImg || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'} 
+            src={currentItem.before || currentItem.beforeImg || ''} 
             alt={`${currentItem.title || 'Showcase'} Before Digitizing`}
             style={{
               position: 'absolute',
@@ -278,10 +274,6 @@ export const PortfolioSlider = ({ isHero = false }) => {
               width: `${containerWidth}px`,
               height: isHero ? '380px' : '420px',
               objectFit: 'cover'
-            }}
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80';
             }}
           />
 

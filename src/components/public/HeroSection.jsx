@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { normalizeCategory } from '../../utils/categoryUtils';
+import { supabase } from '../../lib/supabase/client';
 import { 
   CheckCircle2, 
   ArrowRight, 
@@ -55,31 +56,8 @@ const DEFAULT_SERVICE_DATA = {
     primary_btn_action: '/order',
     secondary_cta: 'Explore Packages',
     secondary_btn_action: '/pricing',
-    previewTitle: 'All Studio Production Results',
-    slideshow_interval: 5,
-    showcase_images: [
-      {
-        id: 'all-1',
-        title: 'Commercial Embroidery Digitizing',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/portfolio-gallery/9e3dcdd7-e3b4-4886-9f18-a94361029147.png',
-        display_order: 1,
-        is_active: true
-      },
-      {
-        id: 'all-2',
-        title: 'Precision Embroidery Sew-Out',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/9b99906f-75cc-4697-9e82-4cecf6e9de08.JPG',
-        display_order: 2,
-        is_active: true
-      },
-      {
-        id: 'all-3',
-        title: 'High-Density Custom Embroidery',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/b8cb84c5-9241-4ce8-8a78-48a6ddf86e9a.JPG',
-        display_order: 3,
-        is_active: true
-      }
-    ]
+    previewTitle: 'Live Studio Production Showcase',
+    slideshow_interval: 5
   },
   embroidery: {
     badge: 'Factory-Grade Machine Digitizing',
@@ -101,24 +79,8 @@ const DEFAULT_SERVICE_DATA = {
     primary_btn_action: '/order',
     secondary_cta: 'View Embroidery Packages',
     secondary_btn_action: '/services/embroidery-digitizing',
-    previewTitle: 'Raw Art to High-Density Sew-Out',
-    slideshow_interval: 5,
-    showcase_images: [
-      {
-        id: 'emb-1',
-        title: 'Commercial Embroidery Digitizing',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/e82803b4-1dca-4138-bc49-892f57095c9a.PNG',
-        display_order: 1,
-        is_active: true
-      },
-      {
-        id: 'emb-2',
-        title: 'Precision Embroidery Sew-Out',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/f36e7a8e-db0c-4f49-a2c8-e53dca578c0a.PNG',
-        display_order: 2,
-        is_active: true
-      }
-    ]
+    previewTitle: 'Embroidery Digitizing & Sew-Out Showcase',
+    slideshow_interval: 5
   },
   'vector-art': {
     badge: 'Resolution-Independent Vector Tracing',
@@ -140,24 +102,8 @@ const DEFAULT_SERVICE_DATA = {
     primary_btn_action: '/order',
     secondary_cta: 'View Vector Packages',
     secondary_btn_action: '/services/vector-tracing',
-    previewTitle: 'Blurry Raster to Clean Scalable Vector',
-    slideshow_interval: 5,
-    showcase_images: [
-      {
-        id: 'vec-1',
-        title: 'Blurry Raster to Clean Scalable Vector',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/86f3f965-f16c-4c22-8ef7-4f2acf3f0086.PNG',
-        display_order: 1,
-        is_active: true
-      },
-      {
-        id: 'vec-2',
-        title: 'Precision Vector Paths',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/dcd10b4e-b7fc-41f7-8736-05c5364ae665.JPG',
-        display_order: 2,
-        is_active: true
-      }
-    ]
+    previewTitle: 'Scalable Vector Redraw Showcase',
+    slideshow_interval: 5
   },
   patches: {
     badge: 'Custom Manufactured Emblems',
@@ -179,24 +125,8 @@ const DEFAULT_SERVICE_DATA = {
     primary_btn_action: '/order',
     secondary_cta: 'Get Free Patch Proof',
     secondary_btn_action: '/custom-patches',
-    previewTitle: 'Artwork to Physical Manufactured Patch',
-    slideshow_interval: 5,
-    showcase_images: [
-      {
-        id: 'pat-1',
-        title: 'Manufactured Custom Patches',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/showcase-gallery/b8cb84c5-9241-4ce8-8a78-48a6ddf86e9a.JPG',
-        display_order: 1,
-        is_active: true
-      },
-      {
-        id: 'pat-2',
-        title: 'High-Density Uniform Emblem',
-        image_url: 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/portfolio-gallery/9e3dcdd7-e3b4-4886-9f18-a94361029147.png',
-        display_order: 2,
-        is_active: true
-      }
-    ]
+    previewTitle: 'Physical Custom Patches Showcase',
+    slideshow_interval: 5
   }
 };
 
@@ -207,12 +137,66 @@ export const HeroSection = () => {
     openOrderWizard, 
     activeHomeServiceTab = 'all', 
     setActiveHomeServiceTab,
-    heroSlides = []
+    heroSlides = [],
+    portfolioSamples = [],
+    setPortfolioSamples
   } = useAppState();
 
+  const [livePortfolio, setLivePortfolio] = useState(portfolioSamples || []);
   const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isFading, setIsFading] = useState(false);
+
+  // Synchronize with state context
+  useEffect(() => {
+    if (portfolioSamples && portfolioSamples.length > 0) {
+      setLivePortfolio(portfolioSamples);
+    }
+  }, [portfolioSamples]);
+
+  // Real-time Database Fetch & Live Sync
+  useEffect(() => {
+    let isMounted = true;
+    const fetchFreshPortfolio = async () => {
+      try {
+        if (supabase) {
+          const { data, error } = await supabase
+            .from('portfolio')
+            .select('*')
+            .eq('is_active', true)
+            .order('sort_order', { ascending: true });
+          if (!error && data && data.length > 0 && isMounted) {
+            setLivePortfolio(data);
+            if (setPortfolioSamples) setPortfolioSamples(data);
+            return;
+          }
+        }
+        const res = await fetch(`/api/catalog?action=fetchAll&_t=${Date.now()}`, { cache: 'no-store' });
+        const json = await res.json();
+        if (json?.portfolio && isMounted) {
+          setLivePortfolio(json.portfolio);
+          if (setPortfolioSamples) setPortfolioSamples(json.portfolio);
+        }
+      } catch (err) {
+        console.warn('Hero showcase live sync notice:', err);
+      }
+    };
+
+    fetchFreshPortfolio();
+
+    const handlePortfolioUpdate = () => {
+      fetchFreshPortfolio();
+    };
+
+    window.addEventListener('portfolio_updated', handlePortfolioUpdate);
+    window.addEventListener('storage', handlePortfolioUpdate);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('portfolio_updated', handlePortfolioUpdate);
+      window.removeEventListener('storage', handlePortfolioUpdate);
+    };
+  }, [setPortfolioSamples]);
 
   const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
   const defaultContent = DEFAULT_SERVICE_DATA[activeTab] || DEFAULT_SERVICE_DATA.all;
@@ -244,56 +228,73 @@ export const HeroSection = () => {
   const previewTitle = matchedSlide?.previewTitle || matchedSlide?.trust_points?.[0]?.previewTitle || defaultContent.previewTitle;
   const slideshowIntervalSec = Number(matchedSlide?.slideshow_interval || matchedSlide?.trust_points?.[0]?.slideshow_interval) || defaultContent.slideshow_interval || 5;
 
-  // Multi-image collection parsing (Only uses uploaded images from admin portal / DB)
+  // Dynamic Live Showcase items strictly from the live database
   const activeShowcaseImages = React.useMemo(() => {
-    let images = matchedSlide?.showcase_images || matchedSlide?.showcaseImages || matchedSlide?.trust_points?.[0]?.showcase_images || [];
-    
-    if (Array.isArray(images) && images.length > 0) {
-      const activeList = images
-        .filter(img => img.is_active !== false && (img.image_url || img.after_image_url || img.afterImg || img.before_image_url || img.beforeImg))
-        .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
-      if (activeList.length > 0) {
-        return activeList.map((img, i) => ({
-          id: img.id || `img-${i}`,
-          title: img.title || `Showcase Image #${i + 1}`,
-          imageUrl: img.image_url || img.after_image_url || img.afterImg || img.before_image_url || img.beforeImg || ''
-        }));
-      }
+    const portfolioSource = livePortfolio && livePortfolio.length > 0 ? livePortfolio : portfolioSamples;
+
+    // 1. Filter live database portfolio items by active tab category
+    const categoryMatches = (portfolioSource || []).filter(item => {
+      if (item.is_active === false) return false;
+      const img = item.digitized_image || item.digitizedImage || item.afterImg || item.after_img || item.image || item.original_image;
+      if (!img) return false;
+
+      const cat = (item.category || '').toLowerCase();
+      if (activeTab === 'all') return true;
+      if (activeTab === 'embroidery') return cat.includes('embroid') || cat === 'general';
+      if (activeTab === 'vector-art') return cat.includes('vector');
+      if (activeTab === 'patches') return cat.includes('patch');
+      return true;
+    });
+
+    if (categoryMatches.length > 0) {
+      return categoryMatches.map((item, idx) => ({
+        id: item.id || `live-port-${idx}`,
+        title: item.title || 'Studio Production Sew-Out',
+        imageUrl: item.digitized_image || item.digitizedImage || item.afterImg || item.after_img || item.image || item.original_image,
+        category: item.category || 'Embroidery',
+        stitchCount: item.stitch_count || item.stitchCount || '',
+        formats: item.formats || ''
+      }));
     }
 
-    // Fallback to all-services uploaded gallery if specific tab is empty
-    const allSlide = (heroSlides || []).find(s => s.id?.toLowerCase() === 'all' || s.serviceKey?.toLowerCase() === 'all');
-    let allImages = allSlide?.showcase_images || allSlide?.showcaseImages || allSlide?.trust_points?.[0]?.showcase_images || [];
-    if (Array.isArray(allImages) && allImages.length > 0) {
-      const activeAll = allImages
+    // 2. Custom showcase images uploaded via CMS if configured
+    let customSlideImages = matchedSlide?.showcase_images || matchedSlide?.showcaseImages || matchedSlide?.trust_points?.[0]?.showcase_images || [];
+    if (Array.isArray(customSlideImages) && customSlideImages.length > 0) {
+      const activeCustom = customSlideImages
         .filter(img => img.is_active !== false && (img.image_url || img.after_image_url || img.afterImg))
         .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
-      if (activeAll.length > 0) {
-        return activeAll.map((img, i) => ({
-          id: img.id || `all-img-${i}`,
-          title: img.title || `Showcase Image #${i + 1}`,
-          imageUrl: img.image_url || img.after_image_url || img.afterImg || ''
+      if (activeCustom.length > 0) {
+        return activeCustom.map((img, i) => ({
+          id: img.id || `custom-${i}`,
+          title: img.title || `Showcase Design #${i + 1}`,
+          imageUrl: img.image_url || img.after_image_url || img.afterImg || '',
+          category: activeTab,
+          stitchCount: '',
+          formats: ''
         }));
       }
     }
 
-    // Fallback: check legacy single image in matchedSlide if not an unsplash url
-    const legacyImg = matchedSlide?.banner_image || matchedSlide?.afterImg;
-    if (legacyImg && !legacyImg.includes('unsplash.com')) {
-      return [{
-        id: `${activeTab}-img-1`,
-        title: previewTitle,
-        imageUrl: legacyImg
-      }];
+    // 3. Fallback to any active portfolio items in database
+    const anyActiveItems = (portfolioSource || []).filter(item => {
+      if (item.is_active === false) return false;
+      const img = item.digitized_image || item.digitizedImage || item.afterImg || item.after_img || item.image || item.original_image;
+      return Boolean(img);
+    });
+
+    if (anyActiveItems.length > 0) {
+      return anyActiveItems.map((item, idx) => ({
+        id: item.id || `live-port-all-${idx}`,
+        title: item.title || 'Studio Production Sew-Out',
+        imageUrl: item.digitized_image || item.digitizedImage || item.afterImg || item.after_img || item.image || item.original_image,
+        category: item.category || 'Embroidery',
+        stitchCount: item.stitch_count || item.stitchCount || '',
+        formats: item.formats || ''
+      }));
     }
 
-    // Default curated real storage collection
-    return (defaultContent.showcase_images || []).map((img, i) => ({
-      id: img.id || `default-${i}`,
-      title: img.title,
-      imageUrl: img.image_url
-    }));
-  }, [matchedSlide, heroSlides, defaultContent, activeTab, previewTitle]);
+    return [];
+  }, [livePortfolio, portfolioSamples, activeTab, matchedSlide]);
 
   // Reset slide index when activeTab changes
   useEffect(() => {
@@ -878,21 +879,80 @@ export const HeroSection = () => {
                   justifyContent: 'center'
                 }}
               >
-                {/* Full, Auto-Adjusted Showcase Image (Never cut off or incomplete) */}
-                <img 
-                  src={currentImage?.imageUrl} 
-                  alt={currentImage?.title || "Studio Showcase"} 
-                  style={{ 
-                    maxWidth: '100%', 
-                    maxHeight: '100%', 
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    objectPosition: 'center',
-                    display: 'block'
-                  }} 
-                  draggable="false" 
-                />
+                {/* Full, Auto-Adjusted Showcase Image or Empty State */}
+                {currentImage?.imageUrl ? (
+                  <>
+                    <img 
+                      src={currentImage.imageUrl} 
+                      alt={currentImage?.title || "Studio Showcase"} 
+                      style={{ 
+                        maxWidth: '100%', 
+                        maxHeight: '100%', 
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'contain', 
+                        objectPosition: 'center', 
+                        display: 'block' 
+                      }} 
+                      draggable="false" 
+                    />
+
+                    {/* Live Specs / Stitch Count Badge Overlay */}
+                    {Boolean(currentImage?.stitchCount || currentImage?.formats) && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '10px',
+                        left: '10px',
+                        background: 'rgba(15, 23, 42, 0.85)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '8px',
+                        padding: '0.25rem 0.6rem',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        color: '#ffffff',
+                        backdropFilter: 'blur(6px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        zIndex: 5,
+                        pointerEvents: 'none'
+                      }}>
+                        <span style={{ color: 'var(--orange-500, #ea580c)' }}>★</span>
+                        {currentImage.stitchCount && <span>{currentImage.stitchCount}</span>}
+                        {currentImage.formats && (
+                          <span style={{ opacity: 0.75 }}>{currentImage.stitchCount ? '· ' : ''}{currentImage.formats}</span>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    padding: '2rem 1.5rem',
+                    gap: '0.75rem',
+                    color: '#94a3b8'
+                  }}>
+                    <Sparkles size={32} style={{ color: 'var(--color-primary, #ea580c)' }} />
+                    <div style={{ fontWeight: 800, fontSize: '1rem', color: '#ffffff' }}>
+                      Studio Production Showcase
+                    </div>
+                    <p style={{ fontSize: '0.82rem', margin: 0, maxWidth: '280px', color: '#94a3b8' }}>
+                      Live sew-outs and digitized machine files directly from our studio.
+                    </p>
+                    <button 
+                      type="button" 
+                      className="btn btn-outline btn-sm"
+                      onClick={() => navigate('/portfolio')}
+                      style={{ marginTop: '0.25rem', borderColor: 'rgba(255, 255, 255, 0.25)', color: '#ffffff' }}
+                    >
+                      View Full Portfolio →
+                    </button>
+                  </div>
+                )}
 
                 {/* Subtle Previous/Next Arrow Controls (if multiple images) */}
                 {hasMultipleImages && (
