@@ -1072,11 +1072,25 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
    MOBILE & TABLET RESPONSIVENESS SYSTEM
    ========================================================================== */
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 html, body {
   overflow-x: hidden !important;
   max-width: 100vw;
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+}
+
+img, svg, video, canvas, audio, iframe, embed, object {
+  max-width: 100%;
+  height: auto;
+}
+
+.container, .container-fluid, .website-page-wrapper {
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Prevent iOS Safari input focus auto-zoom while maintaining crisp text */
