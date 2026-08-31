@@ -753,6 +753,26 @@ export const CustomerDashboard = () => {
           }
         }
 
+        @media (max-width: 768px) {
+          .client-inbox-fullscreen-mobile {
+            position: fixed !important;
+            top: 56px !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 64px !important;
+            height: auto !important;
+            width: 100% !important;
+            border-radius: 0 !important;
+            border: none !important;
+            z-index: 9980 !important;
+            margin: 0 !important;
+            background: #ffffff !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+          }
+        }
+
         /* Custom smooth scrollbar for Client Portal main content */
         .client-main-content::-webkit-scrollbar {
           width: 7px;
@@ -2350,14 +2370,40 @@ export const CustomerDashboard = () => {
 
             {/* TAB: CUSTOMER INBOX (MESSAGES & OFFERS) */}
             {(activeTab === 'inbox' || activeTab === 'support') && (
-              <div style={{ flex: 1, height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <div 
+                className="client-inbox-fullscreen-mobile"
+                style={{ 
+                  flex: 1, 
+                  height: 'calc(100dvh - 140px)', 
+                  minHeight: '400px', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  overflow: 'hidden',
+                  borderRadius: '16px',
+                  border: '1.5px solid var(--border-color)',
+                  background: '#ffffff'
+                }}
+              >
                 <ClientChatInbox initialOrderId="inbox" />
               </div>
             )}
 
             {/* TAB: 24/7 LIVE CUSTOMER SUPPORT HELPDESK */}
             {activeTab === 'help-support' && (
-              <div style={{ flex: 1, height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <div 
+                className="client-inbox-fullscreen-mobile"
+                style={{ 
+                  flex: 1, 
+                  height: 'calc(100dvh - 140px)', 
+                  minHeight: '400px', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  overflow: 'hidden',
+                  borderRadius: '16px',
+                  border: '1.5px solid var(--border-color)',
+                  background: '#ffffff'
+                }}
+              >
                 <ClientChatInbox initialOrderId="help-support" />
               </div>
             )}

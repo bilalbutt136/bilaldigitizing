@@ -169,6 +169,12 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
     }
   }, [initialOrderId]);
 
+  useEffect(() => {
+    if (messages.length > 0) {
+      scrollToBottom(messages.length > 2 ? 'smooth' : 'auto');
+    }
+  }, [messages.length, activeChannel]);
+
   const handleChannelSwitch = (channel) => {
     setActiveChannel(channel);
   };
@@ -722,6 +728,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
       {/* 5. PROFESSIONAL WRITING & INPUT BAR */}
       <form 
         onSubmit={handleSendMessage}
+        className="chat-input-bar-container"
         style={{
           padding: '0.65rem 0.85rem',
           background: '#ffffff',
@@ -730,9 +737,12 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           alignItems: 'center',
           gap: '0.45rem',
           flexShrink: 0,
-          boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.03)',
+          boxShadow: '0 -2px 12px rgba(0, 0, 0, 0.04)',
           boxSizing: 'border-box',
-          width: '100%'
+          width: '100%',
+          position: 'sticky',
+          bottom: 0,
+          zIndex: 20
         }}
       >
         <input 
