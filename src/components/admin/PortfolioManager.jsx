@@ -100,6 +100,19 @@ export const PortfolioManager = () => {
 
   const handleFileUpload = async (file, isBefore = false) => {
     if (!file) return;
+
+    if (file.size > 25 * 1024 * 1024) {
+      showToast('File size exceeds maximum limit of 25MB', 'error');
+      return;
+    }
+
+    const ext = (file.name?.split('.').pop() || '').toLowerCase();
+    const validExtensions = ['jpg', 'jpeg', 'png', 'webp', 'svg', 'gif', 'dst', 'pes', 'emb', 'exp', 'ai', 'eps', 'pdf'];
+    if (!validExtensions.includes(ext)) {
+      showToast(`Unsupported format (.${ext}). Please upload an image or vector file.`, 'error');
+      return;
+    }
+
     if (isBefore) setIsUploadingBefore(true);
     else setIsUploadingMain(true);
 
@@ -121,18 +134,22 @@ export const PortfolioManager = () => {
       const data = await response.json();
       if (data.url || data.secure_url) {
         const uploadedUrl = data.secure_url || data.url;
+        if (!uploadedUrl.startsWith('http://') && !uploadedUrl.startsWith('https://')) {
+          throw new Error('Upload returned an invalid non-HTTP URL.');
+        }
+
         if (isBefore) {
           setFormState(prev => ({ ...prev, original_image: uploadedUrl }));
         } else {
           setFormState(prev => ({ ...prev, digitized_image: uploadedUrl }));
         }
-        showToast('Image uploaded successfully!', 'success');
+        showToast('Image uploaded and stored in Supabase storage!', 'success');
       } else {
         throw new Error(data.error || 'Upload returned no URL');
       }
     } catch (err) {
       console.error('Portfolio image upload error:', err);
-      showToast('Image upload failed: ' + err.message, 'error');
+      showToast('Image upload failed: ' + (err.message || 'Unknown error'), 'error');
     } finally {
       if (isBefore) setIsUploadingBefore(false);
       else setIsUploadingMain(false);
