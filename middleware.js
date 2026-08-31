@@ -7,8 +7,16 @@ const PROTECTED_PREFIXES = ['/admin', '/admin-portal', '/client-portal', '/clien
 // Admin paths that require admin authorization
 const ADMIN_PREFIXES = ['/admin', '/admin-portal'];
 
+// Public authentication routes that MUST NEVER be intercepted or redirected to login
+const PUBLIC_AUTH_PATHS = ['/login', '/signup', '/reset-password', '/secure-admin-login', '/auth', '/auth/callback'];
+
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
+
+  // 0. Fast Path: Immediately pass public authentication routes to prevent any redirect chains
+  if (PUBLIC_AUTH_PATHS.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
+    return NextResponse.next();
+  }
 
   // 1. Fast Path: Immediately pass all public routes, API routes, and static assets with 0ms latency
   const isProtectedRoute = PROTECTED_PREFIXES.some(

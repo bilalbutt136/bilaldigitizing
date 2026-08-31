@@ -116,7 +116,7 @@ export const StateProvider = ({ children }) => {
   // Navigation & Authentication state
   const [currentView, setCurrentView] = useState(initialAuth.view);
   const [isAuthenticated, setIsAuthenticated] = useState(initialAuth.isAuth);
-  const [isAuthInitialized, setIsAuthInitialized] = useState(initialAuth.isAuth);
+  const [isAuthInitialized, setIsAuthInitialized] = useState(false);
   const [authUser, setAuthUser] = useState(initialAuth.user);
 
   // Auth modal & Tab navigation states
