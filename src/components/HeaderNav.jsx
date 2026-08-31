@@ -8,6 +8,7 @@ import {
   User, 
   ChevronDown, 
   Menu, 
+  MoreVertical,
   X, 
   MessageSquare, 
   Bell, 
@@ -19,7 +20,15 @@ import {
   Sparkles,
   Headphones,
   PlusCircle,
-  Plus
+  Plus,
+  Smartphone,
+  Download,
+  LogIn,
+  UserPlus,
+  LogOut,
+  Package,
+  Layers,
+  Upload
 } from 'lucide-react';
 import { UserMenuDropdown } from './common/UserMenuDropdown';
 import { ThemeToggle } from './common/ThemeToggle';
@@ -61,7 +70,9 @@ export const HeaderNav = () => {
     unreadNotificationsCount = 0,
     unreadChatCount = 0,
     setMobileMode,
-    mobileMode
+    mobileMode,
+    logout,
+    showToast
   } = useAppState();
 
   const isDark = theme === 'dark';
@@ -165,6 +176,27 @@ export const HeaderNav = () => {
         chatBtn.click();
       }
     }, 100);
+  };
+
+  const handleInstallMobileApp = async () => {
+    setIsMobileMenuOpen(false);
+    if (typeof window !== 'undefined') {
+      if (window.deferredPWAInstallPrompt) {
+        try {
+          window.deferredPWAInstallPrompt.prompt();
+          const { outcome } = await window.deferredPWAInstallPrompt.userChoice;
+          if (outcome === 'accepted') {
+            window.deferredPWAInstallPrompt = null;
+            if (showToast) showToast('Bilal Digitizing App installed successfully!', 'success');
+          }
+          return;
+        } catch (err) {
+          console.error('PWA install error:', err);
+        }
+      }
+      // Trigger PWA install banner / instructions event
+      window.dispatchEvent(new Event('bdigi_trigger_pwa_install'));
+    }
   };
 
   const handleNavClick = (sectionId) => {
@@ -595,7 +627,7 @@ export const HeaderNav = () => {
               </div>
             )}
 
-            {/* Mobile Hamburger Toggle Button (Always Guaranteed Visible) */}
+            {/* Mobile Three-Dots Toggle Button (Always Guaranteed Visible) */}
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -615,9 +647,10 @@ export const HeaderNav = () => {
                 flexShrink: 0,
                 transition: 'all 0.2s ease'
               }}
-              aria-label="Toggle Navigation Menu"
+              aria-label="Toggle Actions Menu"
+              title="Menu & Actions"
             >
-              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              {isMobileMenuOpen ? <X size={20} /> : <MoreVertical size={20} />}
             </button>
           </div>
 
@@ -1075,37 +1108,186 @@ export const HeaderNav = () => {
             </div>
           </div>
 
-          {/* Navigation Links Area */}
+          {/* Main Content Area */}
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.5rem',
-            paddingTop: '0.5rem',
+            gap: '0.75rem',
+            paddingTop: '0.65rem',
             flex: 1
           }}>
-            {/* Home */}
+
+            {/* 1. TOP PROMINENT CARD: INSTALL MOBILE APP BUTTON */}
             <button
               type="button"
-              onClick={() => {
-                handleGoHome();
-                setIsMobileMenuOpen(false);
-              }}
+              onClick={handleInstallMobileApp}
               style={{
-                textAlign: 'left',
-                background: 'none',
+                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                color: '#ffffff',
                 border: 'none',
-                fontWeight: 800,
-                fontSize: '1.05rem',
-                color: isDark ? '#ffffff' : '#0f172a',
-                padding: '0.25rem 0',
-                cursor: 'pointer'
+                borderRadius: '12px',
+                padding: '0.75rem 1rem',
+                fontWeight: 900,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(5, 150, 105, 0.35)',
+                textAlign: 'left'
               }}
             >
-              Home
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  padding: '0.45rem',
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Smartphone size={20} style={{ color: '#ffffff' }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.92rem', fontWeight: 900, lineHeight: 1.2 }}>
+                    Install Mobile App
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#d1fae5', fontWeight: 600, marginTop: '2px' }}>
+                    1-Tap Home Screen Access & Real-Time Alerts
+                  </div>
+                </div>
+              </div>
+              <div style={{
+                background: '#ffffff',
+                color: '#047857',
+                padding: '0.35rem 0.65rem',
+                borderRadius: '999px',
+                fontSize: '0.75rem',
+                fontWeight: 900,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                flexShrink: 0
+              }}>
+                <Download size={13} /> Install
+              </div>
             </button>
 
-            {/* Services Section as Compact 3-Column Grid */}
-            <div style={{ marginTop: '0.1rem' }}>
+            {/* 2. AUTHENTICATION ACTION SUITE: SIGN IN & SIGN UP (OR ACCOUNT/DASHBOARD) */}
+            {!safeIsAuthenticated ? (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthModalMode('login');
+                    setIsAuthModalOpen(true);
+                    setIsMobileMenuOpen(false);
+                    navigate('/login');
+                  }}
+                  style={{
+                    background: isDark ? '#1e293b' : '#f8fafc',
+                    border: isDark ? '1.5px solid rgba(255,255,255,0.15)' : '1.5px solid #cbd5e1',
+                    color: isDark ? '#f8fafc' : '#0f172a',
+                    borderRadius: '10px',
+                    padding: '0.7rem 0.5rem',
+                    fontWeight: 800,
+                    fontSize: '0.88rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <LogIn size={16} style={{ color: 'var(--color-primary)' }} />
+                  <span>Sign In</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthModalMode('signup');
+                    setIsAuthModalOpen(true);
+                    setIsMobileMenuOpen(false);
+                    navigate('/signup');
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '10px',
+                    padding: '0.7rem 0.5rem',
+                    fontWeight: 900,
+                    fontSize: '0.88rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 3px 10px rgba(249, 115, 22, 0.35)'
+                  }}
+                >
+                  <UserPlus size={16} />
+                  <span>Create Account</span>
+                </button>
+              </div>
+            ) : (
+              <div style={{
+                background: isDark ? '#1e293b' : '#f8fafc',
+                border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
+                borderRadius: '12px',
+                padding: '0.65rem 0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                  <div style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '50%',
+                    background: 'var(--color-primary)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 800,
+                    fontSize: '0.85rem'
+                  }}>
+                    {safeAuthUser?.name ? safeAuthUser.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: '0.85rem', color: isDark ? '#ffffff' : '#0f172a' }}>
+                      {safeAuthUser?.name || 'Customer Account'}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                      {safeAuthUser?.email || 'Logged In'}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    if (isAdmin) protectedNavigate('admin');
+                    else protectedNavigate('customer');
+                  }}
+                  style={{
+                    background: 'var(--color-primary)',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '0.4rem 0.75rem',
+                    borderRadius: '8px',
+                    fontWeight: 800,
+                    fontSize: '0.78rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  My Account
+                </button>
+              </div>
+            )}
+
+            {/* 3. Services Section as Compact 3-Column Grid */}
+            <div style={{ marginTop: '0.15rem' }}>
               <span style={{
                 fontSize: '0.7rem',
                 fontWeight: 800,
@@ -1199,14 +1381,12 @@ export const HeaderNav = () => {
               </div>
             </div>
 
-            {/* Quick Links 2x2 Grid */}
+            {/* 4. Quick Explore Links Grid */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
               gap: '0.45rem',
-              marginTop: '0.25rem',
-              paddingTop: '0.35rem',
-              borderTop: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f1f5f9'
+              marginTop: '0.15rem'
             }}>
               <button
                 type="button"
@@ -1282,7 +1462,7 @@ export const HeaderNav = () => {
             </div>
           </div>
 
-          {/* Bottom Action Area (Compact & Fits Screen with No Bottom Scrolling) */}
+          {/* Bottom Action Area (Start Order + 24/7 Support) */}
           <div style={{
             display: 'flex',
             flexDirection: 'column',
@@ -1291,212 +1471,56 @@ export const HeaderNav = () => {
             borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
             flexShrink: 0
           }}>
-            {/* Switch to BDigitizing App Mode CTA */}
-            <button
-              type="button"
-              onClick={() => {
-                if (setMobileMode) setMobileMode('app');
-                setIsMobileMenuOpen(false);
-              }}
-              style={{
-                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '10px',
-                padding: '0.65rem 0.85rem',
-                fontWeight: 900,
-                fontSize: '0.85rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.45rem',
-                cursor: 'pointer',
-                boxShadow: '0 3px 12px rgba(5, 150, 105, 0.3)'
-              }}
-            >
-              <Sparkles size={15} style={{ color: '#fef08a' }} />
-              <span>📱 Open BDigitizing App Mode</span>
-            </button>
-
-            {!safeIsAuthenticated ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthModalMode('login');
-                      setIsAuthModalOpen(true);
-                      setIsMobileMenuOpen(false);
-                      navigate('/login');
-                    }}
-                    style={{
-                      background: isDark ? '#1e293b' : '#f8fafc',
-                      border: isDark ? '1.5px solid rgba(255,255,255,0.15)' : '1.5px solid #cbd5e1',
-                      color: isDark ? '#f8fafc' : '#0f172a',
-                      borderRadius: '10px',
-                      padding: '0.65rem 0.5rem',
-                      fontWeight: 800,
-                      fontSize: '0.85rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.35rem',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <User size={15} /> Sign In
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthModalMode('signup');
-                      setIsAuthModalOpen(true);
-                      setIsMobileMenuOpen(false);
-                      navigate('/signup');
-                    }}
-                    style={{
-                      background: 'rgba(249, 115, 22, 0.12)',
-                      border: '1.5px solid var(--color-primary)',
-                      color: 'var(--color-primary)',
-                      borderRadius: '10px',
-                      padding: '0.65rem 0.5rem',
-                      fontWeight: 900,
-                      fontSize: '0.85rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.35rem',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <Sparkles size={15} /> Create Account
-                  </button>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.4rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      if (openOrderWizard) openOrderWizard({ type: 'all' });
-                      else protectedNavigate('customer', true, { type: 'all' });
-                    }}
-                    style={{
-                      background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '10px',
-                      padding: '0.65rem 0.5rem',
-                      fontWeight: 900,
-                      fontSize: '0.85rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.35rem',
-                      cursor: 'pointer',
-                      boxShadow: '0 3px 12px var(--color-primary-glow)'
-                    }}
-                  >
-                    <Upload size={15} /> Start Order <ArrowRight size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      handleOpenLiveSupport();
-                    }}
-                    style={{
-                      background: isDark ? 'rgba(59, 130, 246, 0.15)' : '#eff6ff',
-                      border: isDark ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid #bfdbfe',
-                      color: isDark ? '#93c5fd' : '#1d4ed8',
-                      borderRadius: '10px',
-                      padding: '0.65rem 0.5rem',
-                      fontWeight: 800,
-                      fontSize: '0.85rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.35rem',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <Headphones size={15} /> 24/7 Support
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '0.35rem' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    handleOpenInbox();
-                  }}
-                  style={{
-                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.55rem 0.35rem',
-                    fontWeight: 900,
-                    fontSize: '0.78rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.25rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <MessageSquare size={13} /> Inbox {unreadChatCount > 0 && `(${unreadChatCount})`}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    handleOpenLiveSupport();
-                  }}
-                  style={{
-                    background: isDark ? 'rgba(59, 130, 246, 0.15)' : '#eff6ff',
-                    border: isDark ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid #bfdbfe',
-                    color: isDark ? '#93c5fd' : '#1d4ed8',
-                    borderRadius: '8px',
-                    padding: '0.55rem 0.35rem',
-                    fontWeight: 800,
-                    fontSize: '0.78rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.25rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <Headphones size={13} /> Help
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    protectedNavigate('customer', false);
-                  }}
-                  style={{
-                    background: isDark ? '#1e293b' : '#f8fafc',
-                    border: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid #cbd5e1',
-                    color: isDark ? '#f8fafc' : '#0f172a',
-                    borderRadius: '8px',
-                    padding: '0.55rem 0.35rem',
-                    fontWeight: 800,
-                    fontSize: '0.78rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.25rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <User size={13} /> My Account
-                </button>
-              </div>
-            )}
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.4rem' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  if (openOrderWizard) openOrderWizard({ type: 'all' });
+                  else protectedNavigate('customer', true, { type: 'all' });
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '0.65rem 0.5rem',
+                  fontWeight: 900,
+                  fontSize: '0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.35rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 3px 12px var(--color-primary-glow)'
+                }}
+              >
+                <Upload size={15} /> Start Order <ArrowRight size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  handleOpenLiveSupport();
+                }}
+                style={{
+                  background: isDark ? 'rgba(59, 130, 246, 0.15)' : '#eff6ff',
+                  border: isDark ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid #bfdbfe',
+                  color: isDark ? '#93c5fd' : '#1d4ed8',
+                  borderRadius: '10px',
+                  padding: '0.65rem 0.5rem',
+                  fontWeight: 800,
+                  fontSize: '0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.35rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <Headphones size={15} /> 24/7 Support
+              </button>
+            </div>
           </div>
         </div>
       )}

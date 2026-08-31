@@ -34,6 +34,9 @@ export const PWAInstallBanner = () => {
     const handleBeforeInstall = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
+      if (typeof window !== 'undefined') {
+        window.deferredPWAInstallPrompt = e;
+      }
       // Wait 3 seconds before showing banner to ensure smooth initial load
       setTimeout(() => {
         setShowBanner(true);
