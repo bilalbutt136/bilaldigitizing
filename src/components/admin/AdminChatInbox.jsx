@@ -1574,7 +1574,7 @@ export const AdminChatInbox = () => {
                     minWidth: 0,
                     minHeight: '40px',
                     maxHeight: '110px',
-                    fontSize: '0.9rem',
+                    fontSize: '16px',
                     fontWeight: 500,
                     color: '#0f172a',
                     background: '#ffffff',

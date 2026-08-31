@@ -14,6 +14,7 @@ import {
   subscribeToTypingStatus
 } from '../../services/supabaseService';
 import { playNotificationSound } from '../../utils/audioNotification';
+import { useVisualViewport } from '../../hooks/useVisualViewport';
 import WhatsAppChatMessage from '../common/WhatsAppChatMessage';
 import {
   MessageSquare,
@@ -101,8 +102,8 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
   const [replyingTo, setReplyingTo] = useState(null);
   const [isSupportTyping, setIsSupportTyping] = useState(false);
   const [isOrdersMenuOpen, setIsOrdersMenuOpen] = useState(false);
-  const [viewportBottomOffset, setViewportBottomOffset] = useState(0);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const { keyboardOffset, isKeyboardOpen } = useVisualViewport();
 
   const chatFeedRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -128,39 +129,11 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
     }, 80);
   };
 
-  // Visual Viewport Listener for iOS Safari & Android Chrome virtual keyboards
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const handleVisualViewportChange = () => {
-      if (!window.visualViewport) return;
-      const vv = window.visualViewport;
-      const offset = Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0));
-      setViewportBottomOffset(offset);
-      if (offset > 40 || isInputFocused) {
-        scrollToBottom('smooth');
-      }
-    };
-
-    window.visualViewport?.addEventListener('resize', handleVisualViewportChange);
-    window.visualViewport?.addEventListener('scroll', handleVisualViewportChange);
-
-    return () => {
-      window.visualViewport?.removeEventListener('resize', handleVisualViewportChange);
-      window.visualViewport?.removeEventListener('scroll', handleVisualViewportChange);
-    };
-  }, [isInputFocused]);
-
-  useEffect(() => {
-    if (isInputFocused || viewportBottomOffset > 40) {
-      document.body.classList.add('chat-keyboard-active');
-    } else {
-      document.body.classList.remove('chat-keyboard-active');
+    if (isKeyboardOpen || isInputFocused) {
+      scrollToBottom('smooth');
     }
-    return () => {
-      document.body.classList.remove('chat-keyboard-active');
-    };
-  }, [isInputFocused, viewportBottomOffset]);
+  }, [isKeyboardOpen, isInputFocused]);
 
   // 1. Initial load of channel chat history from Supabase
   const loadChatHistory = async () => {
@@ -777,7 +750,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           boxSizing: 'border-box',
           width: '100%',
           position: 'sticky',
-          bottom: viewportBottomOffset > 0 ? `${viewportBottomOffset}px` : 0,
+          bottom: keyboardOffset > 0 ? `${keyboardOffset}px` : 0,
           zIndex: 30,
           transition: 'bottom 0.15s ease-out'
         }}

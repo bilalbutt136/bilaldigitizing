@@ -1115,7 +1115,7 @@ export const ClientLiveChatWidget = () => {
                       flex: 1,
                       minHeight: '36px',
                       maxHeight: '100px',
-                      fontSize: '0.85rem',
+                      fontSize: '16px',
                       padding: '0.45rem 0.75rem',
                       borderRadius: 'var(--radius-sm)',
                       resize: 'none',
