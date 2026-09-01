@@ -717,11 +717,22 @@ export const AdminChatInbox = () => {
   }, [conversations, activeSection, subFilter, searchTerm, orders, activeChatId]);
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && e.altKey) {
-      e.preventDefault();
-      handleSendMessage(e);
+    if (e.key === 'Enter') {
+      const isMobileOrTouch = typeof window !== 'undefined' && (
+        window.innerWidth <= 768 || 
+        'ontouchstart' in window || 
+        navigator.maxTouchPoints > 0
+      );
+
+      // On mobile / touch keyboards, Enter creates a newline so user can type comfortably and tap Send.
+      // On desktop:
+      // 1. Enter (without Shift) sends message immediately.
+      // 2. Shift + Enter inserts a newline without sending.
+      if (!isMobileOrTouch && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage(e);
+      }
     }
-    // Regular Enter alone allows standard multi-line input
   };
 
   const handleSendMessage = async (e) => {
@@ -1508,7 +1519,7 @@ export const AdminChatInbox = () => {
                     transition: 'all 0.2s ease',
                     opacity: ((!replyInput.trim() && !attachedFile) || isUploadingAttachment) ? 0.6 : 1
                   }}
-                  title="Send message (Alt + Enter)"
+                  title="Send message (Enter)"
                 >
                   <span>Send</span>
                   <Send size={14} />
@@ -1526,9 +1537,11 @@ export const AdminChatInbox = () => {
                 color: '#64748b'
               }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  ⌨️ Press <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Alt</kbd> + <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Enter</kbd> to send
+                  ⌨️ Press <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Enter</kbd> to send
                 </span>
-                <span>Enter for new line</span>
+                <span>
+                  <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Shift</kbd> + <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Enter</kbd> for new line
+                </span>
               </div>
             </form>
           </div>
