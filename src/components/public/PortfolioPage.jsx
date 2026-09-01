@@ -350,7 +350,7 @@ export const PortfolioPage = () => {
                         position: 'relative',
                         width: '100%',
                         height: '240px',
-                        background: 'radial-gradient(circle at center, #1e293b 0%, #090d16 100%)',
+                        background: 'var(--color-surface-elevated, #f1f5f9)',
                         overflow: 'hidden',
                         display: 'flex',
                         alignItems: 'center',
@@ -360,9 +360,10 @@ export const PortfolioPage = () => {
                           src={item.afterImg}
                           alt={item.title}
                           style={{
-                            maxWidth: '100%',
-                            maxHeight: '100%',
-                            objectFit: 'contain',
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            objectPosition: 'center',
                             transition: 'transform 0.4s ease'
                           }}
                         />
@@ -503,7 +504,7 @@ export const PortfolioPage = () => {
           >
             {/* Left Side: Big Image Display */}
             <div style={{
-              background: 'radial-gradient(circle at center, #1e293b 0%, #090d16 100%)',
+              background: 'var(--color-surface-elevated, #f8fafc)',
               padding: '2rem',
               display: 'flex',
               flexDirection: 'column',

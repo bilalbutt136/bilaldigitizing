@@ -866,14 +866,14 @@ export const HeroSection = () => {
                   position: 'relative',
                   width: '100%',
                   aspectRatio: '16/10',
-                  minHeight: '200px',
-                  maxHeight: '345px',
-                  borderRadius: '14px',
+                  minHeight: '220px',
+                  maxHeight: '360px',
+                  borderRadius: '16px',
                   overflow: 'hidden',
-                  background: 'radial-gradient(circle at center, #1e293b 0%, #090d16 100%)',
+                  background: 'var(--color-surface-elevated, #f1f5f9)',
                   opacity: isFading ? 0.35 : 1,
                   transition: 'opacity 0.25s ease-in-out',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  border: '1px solid var(--color-border, #e2e8f0)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -886,13 +886,12 @@ export const HeroSection = () => {
                       src={currentImage.imageUrl} 
                       alt={currentImage?.title || "Studio Showcase"} 
                       style={{ 
-                        maxWidth: '100%', 
-                        maxHeight: '100%', 
                         width: '100%', 
                         height: '100%', 
-                        objectFit: 'contain', 
+                        objectFit: 'cover', 
                         objectPosition: 'center', 
-                        display: 'block' 
+                        display: 'block',
+                        transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
                       }} 
                       draggable="false" 
                     />
@@ -901,26 +900,27 @@ export const HeroSection = () => {
                     {Boolean(currentImage?.stitchCount || currentImage?.formats) && (
                       <div style={{
                         position: 'absolute',
-                        bottom: '10px',
-                        left: '10px',
-                        background: 'rgba(15, 23, 42, 0.85)',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
-                        borderRadius: '8px',
-                        padding: '0.25rem 0.6rem',
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
+                        bottom: '12px',
+                        left: '12px',
+                        background: 'rgba(15, 23, 42, 0.88)',
+                        border: '1px solid rgba(255, 255, 255, 0.18)',
+                        borderRadius: '9999px',
+                        padding: '0.3rem 0.75rem',
+                        fontSize: '0.74rem',
+                        fontWeight: 800,
                         color: '#ffffff',
-                        backdropFilter: 'blur(6px)',
+                        backdropFilter: 'blur(10px)',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.4rem',
                         zIndex: 5,
                         pointerEvents: 'none'
                       }}>
-                        <span style={{ color: 'var(--orange-500, #ea580c)' }}>★</span>
+                        <span style={{ color: '#fb923c' }}>★</span>
                         {currentImage.stitchCount && <span>{currentImage.stitchCount}</span>}
                         {currentImage.formats && (
-                          <span style={{ opacity: 0.75 }}>{currentImage.stitchCount ? '· ' : ''}{currentImage.formats}</span>
+                          <span style={{ opacity: 0.85 }}>{currentImage.stitchCount ? '· ' : ''}{currentImage.formats}</span>
                         )}
                       </div>
                     )}
@@ -937,17 +937,17 @@ export const HeroSection = () => {
                     color: '#94a3b8'
                   }}>
                     <Sparkles size={32} style={{ color: 'var(--color-primary, #ea580c)' }} />
-                    <div style={{ fontWeight: 800, fontSize: '1rem', color: '#ffffff' }}>
+                    <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--color-text-primary)' }}>
                       Studio Production Showcase
                     </div>
-                    <p style={{ fontSize: '0.82rem', margin: 0, maxWidth: '280px', color: '#94a3b8' }}>
+                    <p style={{ fontSize: '0.82rem', margin: 0, maxWidth: '280px', color: 'var(--color-text-muted)' }}>
                       Live sew-outs and digitized machine files directly from our studio.
                     </p>
                     <button 
                       type="button" 
                       className="btn btn-outline btn-sm"
                       onClick={() => navigate('/portfolio')}
-                      style={{ marginTop: '0.25rem', borderColor: 'rgba(255, 255, 255, 0.25)', color: '#ffffff' }}
+                      style={{ marginTop: '0.25rem' }}
                     >
                       View Full Portfolio →
                     </button>
@@ -962,25 +962,26 @@ export const HeroSection = () => {
                       onClick={(e) => { e.stopPropagation(); handlePrev(); }}
                       style={{
                         position: 'absolute',
-                        left: '10px',
+                        left: '12px',
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        background: 'rgba(15, 23, 42, 0.8)',
+                        background: 'rgba(15, 23, 42, 0.75)',
                         border: '1px solid rgba(255, 255, 255, 0.25)',
                         borderRadius: '50%',
-                        width: '34px',
-                        height: '34px',
+                        width: '36px',
+                        height: '36px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
                         color: '#ffffff',
-                        backdropFilter: 'blur(6px)',
+                        backdropFilter: 'blur(8px)',
                         zIndex: 10,
-                        transition: 'background 0.2s'
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                        transition: 'all 0.2s ease'
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--orange-500)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(15, 23, 42, 0.8)'}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--orange-500)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(15, 23, 42, 0.75)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
                       title="Previous Showcase Image"
                     >
                       <ChevronLeft size={18} />
@@ -991,25 +992,26 @@ export const HeroSection = () => {
                       onClick={(e) => { e.stopPropagation(); handleNext(); }}
                       style={{
                         position: 'absolute',
-                        right: '10px',
+                        right: '12px',
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        background: 'rgba(15, 23, 42, 0.8)',
+                        background: 'rgba(15, 23, 42, 0.75)',
                         border: '1px solid rgba(255, 255, 255, 0.25)',
                         borderRadius: '50%',
-                        width: '34px',
-                        height: '34px',
+                        width: '36px',
+                        height: '36px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
                         color: '#ffffff',
-                        backdropFilter: 'blur(6px)',
+                        backdropFilter: 'blur(8px)',
                         zIndex: 10,
-                        transition: 'background 0.2s'
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                        transition: 'all 0.2s ease'
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--orange-500)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(15, 23, 42, 0.8)'}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--orange-500)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(15, 23, 42, 0.75)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
                       title="Next Showcase Image"
                     >
                       <ChevronRight size={18} />

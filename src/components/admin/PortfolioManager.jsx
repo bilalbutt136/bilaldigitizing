@@ -457,12 +457,12 @@ export const PortfolioManager = () => {
               >
                 <div>
                   {/* Image Container with Preview */}
-                  <div style={{ position: 'relative', width: '100%', height: '210px', background: '#090d16', overflow: 'hidden' }}>
+                  <div style={{ position: 'relative', width: '100%', height: '210px', background: 'var(--color-surface-elevated, #f1f5f9)', overflow: 'hidden' }}>
                     {displayImg ? (
                       <img
                         src={displayImg}
                         alt={item.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
                       />
                     ) : (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '0.85rem' }}>
@@ -712,8 +712,8 @@ export const PortfolioManager = () => {
                 </p>
 
                 {formState.digitized_image && (
-                  <div style={{ width: '100%', height: '180px', borderRadius: '10px', overflow: 'hidden', background: '#090d16', marginBottom: '0.75rem', border: '1px solid #e2e8f0' }}>
-                    <img src={formState.digitized_image} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  <div style={{ width: '100%', height: '180px', borderRadius: '10px', overflow: 'hidden', background: '#f1f5f9', marginBottom: '0.75rem', border: '1px solid #e2e8f0' }}>
+                    <img src={formState.digitized_image} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
                   </div>
                 )}
 
@@ -762,8 +762,8 @@ export const PortfolioManager = () => {
                 </p>
 
                 {formState.original_image && (
-                  <div style={{ width: '100%', height: '140px', borderRadius: '10px', overflow: 'hidden', background: '#090d16', marginBottom: '0.75rem', border: '1px solid #e2e8f0' }}>
-                    <img src={formState.original_image} alt="Before Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  <div style={{ width: '100%', height: '140px', borderRadius: '10px', overflow: 'hidden', background: '#f1f5f9', marginBottom: '0.75rem', border: '1px solid #e2e8f0' }}>
+                    <img src={formState.original_image} alt="Before Preview" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
                   </div>
                 )}
 
