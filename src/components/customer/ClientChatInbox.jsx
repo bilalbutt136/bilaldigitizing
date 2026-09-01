@@ -280,20 +280,11 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      const isMobileOrTouch = typeof window !== 'undefined' && (
-        window.innerWidth <= 768 || 
-        'ontouchstart' in window || 
-        navigator.maxTouchPoints > 0
-      );
-
-      // On mobile / touch screens, Enter creates a new line in the message box.
-      // On desktop keyboards, Enter sends the message and Shift+Enter creates a new line.
-      if (!isMobileOrTouch && !e.shiftKey) {
-        e.preventDefault();
-        handleSendMessage(e);
-      }
+    if (e.key === 'Enter' && e.altKey) {
+      e.preventDefault();
+      handleSendMessage(e);
     }
+    // Regular Enter alone allows standard multi-line input
   };
 
   const handleSendMessage = async (e) => {
@@ -797,7 +788,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
             setIsInputFocused(false);
             setTimeout(() => scrollToBottom('smooth'), 150);
           }}
-          placeholder={replyingTo ? 'Type a reply...' : 'Type a message...'}
+          placeholder={replyingTo ? 'Type a reply... (Alt + Enter to send)' : 'Type a message... (Alt + Enter to send)'}
           className="chat-message-input"
           style={{
             flex: 1,
@@ -843,12 +834,29 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
             transition: 'all 0.2s ease',
             opacity: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 0.6 : 1
           }}
-          title="Send message"
+          title="Send message (Alt + Enter)"
         >
           <span>Send</span>
           <Send size={14} />
         </button>
       </form>
+
+      {/* Keyboard Shortcut Hint Footer */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0.25rem 1.25rem 0.5rem',
+        background: '#ffffff',
+        borderTop: 'none',
+        fontSize: '0.68rem',
+        color: '#64748b'
+      }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+          ⌨️ Press <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Alt</kbd> + <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Enter</kbd> to send
+        </span>
+        <span>Enter for new line</span>
+      </div>
 
     </div>
   );

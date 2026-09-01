@@ -480,43 +480,28 @@ export const ClientLiveChatWidget = () => {
     if (isOpen) {
       scrollToBottom('smooth');
       if (isSupabaseConfigured) {
-        fetchConversations(clientEmail, 'support').then(data => {
-          if (Array.isArray(data) && data.length > 0) {
-            const onlySupport = data.filter(c => isSupportId(c.id));
-            setChats(prev => {
-              const safePrev = Array.isArray(prev) ? prev.filter(c => isSupportId(c.id)) : [];
-              const mergedMap = new Map();
-              
-              // 1. Existing local state messages
-              safePrev.forEach(conv => {
-                if (isSupportId(conv.id)) {
-                  mergedMap.set(conv.id, { ...conv, messages: [...(conv.messages || [])] });
-                }
-              });
-
-              // 2. Remote conversations from server
-              onlySupport.forEach(remoteConv => {
-                const existing = mergedMap.get(remoteConv.id) || Array.from(mergedMap.values()).find(c => isSupportId(c.id));
-                if (existing) {
-                  const msgs = [...(existing.messages || [])];
-                  (remoteConv.messages || []).forEach(rm => {
-                    if (!msgs.some(em => (em.id && rm.id && em.id === rm.id) || (em.text && rm.text && em.text === rm.text && em.sender === rm.sender && Math.abs(parseMessageTime(em) - parseMessageTime(rm)) < 20000))) {
-                      msgs.push(rm);
-                    }
-                  });
-                  msgs.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
-                  mergedMap.set(existing.id, { ...remoteConv, id: existing.id, messages: msgs });
-                } else {
-                  mergedMap.set(remoteConv.id, remoteConv);
-                }
-              });
-
-              const resultList = Array.from(mergedMap.values());
-              if (typeof window !== 'undefined') {
-                try { localStorage.setItem(cacheKey, JSON.stringify(resultList)); } catch {}
-              }
-              return resultList;
-            });
+        fetchChatMessages(targetConvId, clientEmail).then(directMsgs => {
+          if (Array.isArray(directMsgs)) {
+            const sorted = [...directMsgs].sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+            const threadObj = {
+              id: targetConvId,
+              clientName: cleanName,
+              clientEmail: clientEmail,
+              company: clientCompany,
+              avatar: avatarUrl,
+              status: 'online',
+              unreadCount: 0,
+              clientUnreadCount: 0,
+              messages: sorted,
+              createdAt: sorted[0]?.timestamp || new Date().toISOString(),
+              updatedAt: sorted[sorted.length - 1]?.timestamp || new Date().toISOString()
+            };
+            setChats([threadObj]);
+            if (typeof window !== 'undefined') {
+              try {
+                localStorage.setItem(cacheKey, JSON.stringify([threadObj]));
+              } catch {}
+            }
           }
         }).catch(() => {});
       }
@@ -541,20 +526,11 @@ export const ClientLiveChatWidget = () => {
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      const isMobileOrTouch = typeof window !== 'undefined' && (
-        window.innerWidth <= 768 || 
-        'ontouchstart' in window || 
-        navigator.maxTouchPoints > 0
-      );
-
-      // On mobile / touch screens, Enter creates a new line in the message box.
-      // On desktop keyboards, Enter sends the message and Shift+Enter creates a new line.
-      if (!isMobileOrTouch && !e.shiftKey) {
-        e.preventDefault();
-        handleSendMessage(e);
-      }
+    if (e.key === 'Enter' && e.altKey) {
+      e.preventDefault();
+      handleSendMessage(e);
     }
+    // Regular Enter alone allows standard multi-line input
   };
 
   const handleSendMessage = async (e) => {
@@ -1106,7 +1082,7 @@ export const ClientLiveChatWidget = () => {
                   <textarea
                     rows={1}
                     className="form-control"
-                    placeholder={replyingTo ? 'Type a reply...' : 'Type a message...'}
+                    placeholder={replyingTo ? 'Type a reply... (Alt + Enter to send)' : 'Type a message... (Alt + Enter to send)'}
                     value={messageInput}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
@@ -1139,9 +1115,18 @@ export const ClientLiveChatWidget = () => {
                       opacity: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 0.5 : 1,
                       cursor: ((!messageInput.trim() && !attachedFile) || isUploadingAttachment) ? 'not-allowed' : 'pointer'
                     }}
+                    title="Send Message (Alt + Enter)"
                   >
                     <Send size={15} />
                   </button>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.3rem', padding: '0 0.15rem' }}>
+                  <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    Press <kbd style={{ padding: '0.05rem 0.3rem', borderRadius: '3px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.62rem', fontWeight: 700 }}>Alt</kbd> + <kbd style={{ padding: '0.05rem 0.3rem', borderRadius: '3px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.62rem', fontWeight: 700 }}>Enter</kbd> to send
+                  </span>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                    Enter for new line
+                  </span>
                 </div>
               </form>
             </>
