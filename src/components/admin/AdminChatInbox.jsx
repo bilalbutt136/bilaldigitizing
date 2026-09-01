@@ -1855,135 +1855,137 @@ export const AdminChatInbox = () => {
                 </div>
               )}
 
-              {/* AI Action Toolbar (Side-by-Side: ⚡ Smart Reply + ✨ Polish with AI) */}
+              {/* Action Toolbar (Single unified container: ⚡ Smart Reply + ✨ Polish with AI + 🤖 Auto-Pilot + 🏷️ Create Offer) */}
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '0.5rem',
-                marginBottom: '0.45rem',
+                gap: '0.45rem',
+                marginBottom: '0.5rem',
                 flexWrap: 'wrap'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                  {/* Smart Auto Reply Button */}
-                  <button
-                    type="button"
-                    onClick={handleSmartReply}
-                    disabled={isGeneratingSmartReply}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      padding: '0.32rem 0.75rem',
-                      fontSize: '0.74rem',
-                      fontWeight: 700,
-                      color: '#b45309',
-                      background: isGeneratingSmartReply ? '#fef3c7' : '#fffbeb',
-                      border: '1px solid #fde68a',
-                      borderRadius: '8px',
-                      cursor: isGeneratingSmartReply ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.15s ease',
-                      boxShadow: '0 1px 2px rgba(180, 83, 9, 0.05)'
-                    }}
-                    onMouseEnter={(e) => { if (!isGeneratingSmartReply) e.currentTarget.style.background = '#fef3c7'; }}
-                    onMouseLeave={(e) => { if (!isGeneratingSmartReply) e.currentTarget.style.background = '#fffbeb'; }}
-                    title="Read conversation context and auto-generate a tailored client response (Ctrl+Shift+S)"
-                  >
-                    {isGeneratingSmartReply ? (
-                      <>
-                        <Loader2 size={13} className="animate-spin text-amber-600" />
-                        <span>Generating...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Zap size={13} className="text-amber-500 fill-amber-500" />
-                        <span>⚡ Smart Reply</span>
-                      </>
-                    )}
-                  </button>
+                {/* 1. ⚡ Smart Reply Button */}
+                <button
+                  type="button"
+                  onClick={handleSmartReply}
+                  disabled={isGeneratingSmartReply}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.32rem 0.75rem',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    color: '#b45309',
+                    background: isGeneratingSmartReply ? '#fef3c7' : '#fffbeb',
+                    border: '1px solid #fde68a',
+                    borderRadius: '8px',
+                    cursor: isGeneratingSmartReply ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.15s ease',
+                    boxShadow: '0 1px 2px rgba(180, 83, 9, 0.05)'
+                  }}
+                  onMouseEnter={(e) => { if (!isGeneratingSmartReply) e.currentTarget.style.background = '#fef3c7'; }}
+                  onMouseLeave={(e) => { if (!isGeneratingSmartReply) e.currentTarget.style.background = '#fffbeb'; }}
+                  title="Read conversation context and auto-generate a tailored client response (Ctrl+Shift+S)"
+                >
+                  {isGeneratingSmartReply ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin text-amber-600" />
+                      <span>Generating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap size={13} className="text-amber-500 fill-amber-500" />
+                      <span>⚡ Smart Reply</span>
+                    </>
+                  )}
+                </button>
 
-                  {/* AI Polish Draft Button */}
-                  <button
-                    type="button"
-                    onClick={handleAIPolish}
-                    disabled={!replyInput.trim() || isRefiningAI}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      padding: '0.32rem 0.75rem',
-                      fontSize: '0.74rem',
-                      fontWeight: 700,
-                      color: replyInput.trim() ? '#4338ca' : '#94a3b8',
-                      background: replyInput.trim() ? '#eef2ff' : '#f8fafc',
-                      border: replyInput.trim() ? '1px solid #c7d2fe' : '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      cursor: replyInput.trim() && !isRefiningAI ? 'pointer' : 'not-allowed',
-                      transition: 'all 0.15s ease',
-                      boxShadow: replyInput.trim() ? '0 1px 2px rgba(67, 56, 202, 0.08)' : 'none'
-                    }}
-                    onMouseEnter={(e) => { if (replyInput.trim() && !isRefiningAI) e.currentTarget.style.background = '#e0e7ff'; }}
-                    onMouseLeave={(e) => { if (replyInput.trim() && !isRefiningAI) e.currentTarget.style.background = '#eef2ff'; }}
-                    title="Transform current draft into polished, native US customer service English (Ctrl+Shift+P)"
-                  >
-                    {isRefiningAI ? (
-                      <>
-                        <Loader2 size={13} className="animate-spin text-indigo-600" />
-                        <span>Polishing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles size={13} className={replyInput.trim() ? 'text-indigo-600' : 'text-slate-400'} />
-                        <span>✨ Polish with AI</span>
-                      </>
-                    )}
-                  </button>
+                {/* 2. ✨ Polish Draft Button */}
+                <button
+                  type="button"
+                  onClick={handleAIPolish}
+                  disabled={!replyInput.trim() || isRefiningAI}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.32rem 0.75rem',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    color: replyInput.trim() ? '#4338ca' : '#94a3b8',
+                    background: replyInput.trim() ? '#eef2ff' : '#f8fafc',
+                    border: replyInput.trim() ? '1px solid #c7d2fe' : '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    cursor: replyInput.trim() && !isRefiningAI ? 'pointer' : 'not-allowed',
+                    transition: 'all 0.15s ease',
+                    boxShadow: replyInput.trim() ? '0 1px 2px rgba(67, 56, 202, 0.08)' : 'none'
+                  }}
+                  onMouseEnter={(e) => { if (replyInput.trim() && !isRefiningAI) e.currentTarget.style.background = '#e0e7ff'; }}
+                  onMouseLeave={(e) => { if (replyInput.trim() && !isRefiningAI) e.currentTarget.style.background = '#eef2ff'; }}
+                  title="Transform current draft into polished, native US customer service English (Ctrl+Shift+P)"
+                >
+                  {isRefiningAI ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin text-indigo-600" />
+                      <span>Polishing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={13} className={replyInput.trim() ? 'text-indigo-600' : 'text-slate-400'} />
+                      <span>✨ Polish with AI</span>
+                    </>
+                  )}
+                </button>
 
-                  {/* 🤖 Auto-Pilot AI Toggle Button */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const next = !autoPilotEnabled;
-                      setAutoPilotEnabled(next);
-                      showToast(next ? '🤖 Auto-Pilot AI enabled (Auto-Replying)' : '🤖 Auto-Pilot AI disabled (Manual Mode)', next ? 'success' : 'info');
-                    }}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      padding: '0.32rem 0.65rem',
-                      fontSize: '0.74rem',
-                      fontWeight: 700,
-                      color: autoPilotEnabled ? '#065f46' : '#64748b',
-                      background: autoPilotEnabled ? '#ecfdf5' : '#f8fafc',
-                      border: autoPilotEnabled ? '1px solid #a7f3d0' : '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                      boxShadow: autoPilotEnabled ? '0 1px 2px rgba(16, 185, 129, 0.12)' : 'none'
-                    }}
-                    title="When enabled, incoming customer inquiries will be answered automatically by AI."
-                  >
-                    <Bot size={13} className={autoPilotEnabled ? 'text-emerald-600' : 'text-slate-400'} />
-                    <span>Auto-Pilot</span>
-                    <span style={{
-                      fontSize: '0.6rem',
-                      fontWeight: 800,
-                      padding: '1px 5px',
-                      borderRadius: '4px',
-                      background: autoPilotEnabled ? '#10b981' : '#e2e8f0',
-                      color: autoPilotEnabled ? '#ffffff' : '#64748b',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '2px'
-                    }}>
-                      {autoPilotEnabled && <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ffffff', animation: 'pulse 1.5s infinite' }} />}
-                      {autoPilotEnabled ? 'ON' : 'OFF'}
-                    </span>
-                  </button>
-                </div>
+                {/* 3. 🤖 Auto-Pilot AI Toggle Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !autoPilotEnabled;
+                    setAutoPilotEnabled(next);
+                    showToast(next ? '🤖 Auto-Pilot AI enabled (Auto-Replying)' : '🤖 Auto-Pilot AI disabled (Manual Mode)', next ? 'success' : 'info');
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.32rem 0.65rem',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    color: autoPilotEnabled ? '#065f46' : '#64748b',
+                    background: autoPilotEnabled ? '#ecfdf5' : '#f8fafc',
+                    border: autoPilotEnabled ? '1px solid #a7f3d0' : '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    boxShadow: autoPilotEnabled ? '0 1px 2px rgba(16, 185, 129, 0.12)' : 'none'
+                  }}
+                  title="When enabled, incoming customer inquiries will be answered automatically by AI."
+                >
+                  <Bot size={13} className={autoPilotEnabled ? 'text-emerald-600' : 'text-slate-400'} />
+                  <span>Auto-Pilot</span>
+                  <span style={{
+                    fontSize: '0.6rem',
+                    fontWeight: 800,
+                    padding: '1px 5px',
+                    borderRadius: '4px',
+                    background: autoPilotEnabled ? '#10b981' : '#e2e8f0',
+                    color: autoPilotEnabled ? '#ffffff' : '#64748b',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '2px'
+                  }}>
+                    {autoPilotEnabled && <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ffffff', animation: 'pulse 1.5s infinite' }} />}
+                    {autoPilotEnabled ? 'ON' : 'OFF'}
+                  </span>
+                </button>
 
-                {/* Custom Offer Button (Only in Normal Customer Inbox, never in Support) */}
+                {/* Subtle Divider / Spacer */}
+                {(!activeChat?.isSupport && !isSupportThread(activeChat)) && (
+                  <div style={{ width: '1px', height: '18px', background: '#e2e8f0', margin: '0 0.15rem' }} />
+                )}
+
+                {/* 4. 🏷️ Create Offer Button (Only in Normal Customer Inbox, never in Support) */}
                 {(!activeChat?.isSupport && !isSupportThread(activeChat)) && (
                   <button
                     type="button"
@@ -1991,20 +1993,23 @@ export const AdminChatInbox = () => {
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '0.3rem',
-                      padding: '0.3rem 0.65rem',
-                      fontSize: '0.72rem',
+                      gap: '0.35rem',
+                      padding: '0.32rem 0.75rem',
+                      fontSize: '0.74rem',
                       fontWeight: 700,
                       color: '#4f46e5',
                       background: '#f5f3ff',
                       border: '1px solid #ddd6fe',
                       borderRadius: '8px',
                       cursor: 'pointer',
-                      transition: 'all 0.15s ease'
+                      transition: 'all 0.15s ease',
+                      boxShadow: '0 1px 2px rgba(79, 70, 229, 0.06)'
                     }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = '#ede9fe'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#f5f3ff'; }}
                     title="Create & Send Custom Offer"
                   >
-                    <Tag size={12} className="text-indigo-600" />
+                    <Tag size={13} className="text-indigo-600" />
                     <span>Create Offer</span>
                   </button>
                 )}
