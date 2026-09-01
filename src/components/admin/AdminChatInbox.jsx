@@ -305,21 +305,22 @@ export const AdminChatInbox = () => {
       // 2. Natural human typing delay (2.2 seconds)
       await new Promise(r => setTimeout(r, 2200));
 
-      const attachedImageUrl = newMsg.attachment_url || (typeof newMsg.attachment === 'string' && newMsg.attachment.startsWith('http') ? newMsg.attachment : null);
+      const threadMessages = targetConv?.messages || [newMsg];
 
-      // 3. Call AI endpoint with full context & vision support
+      // 3. Call AI endpoint with clean conversationHistory and vision support
       const response = await fetch('/api/ai/generate-reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          latestMessage: newMsg.text,
+          conversationHistory: threadMessages.map(m => ({
+            sender: m.sender,
+            text: m.text,
+            attachment_url: m.attachment_url,
+            attachment_name: m.attachment_name
+          })),
           customerName: customerName,
-          clientName: customerName,
-          imageUrl: attachedImageUrl,
-          attachment_url: attachedImageUrl,
-          messages: targetConv?.messages || [newMsg],
-          conversationHistory: targetConv?.messages || [newMsg],
-          serviceCategory: targetConv?.orderTitle || 'Embroidery Digitizing'
+          latestMessage: newMsg.text,
+          imageUrl: attachedImageUrl
         })
       });
 
@@ -994,14 +995,15 @@ export const AdminChatInbox = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: threadMsgs,
-          conversationHistory: threadMsgs,
-          latestMessage: latestMessageText,
+          conversationHistory: threadMsgs.map(m => ({ 
+            sender: m.sender, 
+            text: m.text, 
+            attachment_url: m.attachment_url,
+            attachment_name: m.attachment_name
+          })),
           customerName: clientDisplayName,
-          clientName: clientDisplayName,
-          imageUrl: lastAttachedImg,
-          attachment_url: lastAttachedImg,
-          serviceCategory: activeInfo?.serviceCategory || 'Embroidery Digitizing'
+          latestMessage: latestMessageText,
+          imageUrl: lastAttachedImg
         })
       });
       const data = await response.json();
