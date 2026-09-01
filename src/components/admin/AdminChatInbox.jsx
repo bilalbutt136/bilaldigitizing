@@ -854,7 +854,7 @@ export const AdminChatInbox = () => {
       const currentDraft = (replyInput || '').trim();
       if (currentDraft) setUndoDraft(currentDraft);
 
-      const response = await fetch('/api/ai/smart-reply', {
+      const response = await fetch('/api/ai/generate-reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
