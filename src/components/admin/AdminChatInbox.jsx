@@ -1989,51 +1989,12 @@ export const AdminChatInbox = () => {
                   )}
                 </button>
 
-                {/* 3. 🤖 Auto-Pilot AI Toggle Button (Per-Channel Aware) */}
-                <button
-                  type="button"
-                  onClick={() => toggleChannelAutoPilot()}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    padding: '0.32rem 0.65rem',
-                    fontSize: '0.74rem',
-                    fontWeight: 700,
-                    color: isCurrentAutoPilotOn ? '#065f46' : '#64748b',
-                    background: isCurrentAutoPilotOn ? '#ecfdf5' : '#f8fafc',
-                    border: isCurrentAutoPilotOn ? '1px solid #a7f3d0' : '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    boxShadow: isCurrentAutoPilotOn ? '0 1px 2px rgba(16, 185, 129, 0.12)' : 'none'
-                  }}
-                  title={`Auto-Pilot for ${currentChannelType === 'helpdesk' ? '24/7 Help Desk' : 'Studio Digitizer'} (${isCurrentAutoPilotOn ? 'ON' : 'OFF'}). When enabled, incoming inquiries in this channel will be answered automatically by AI.`}
-                >
-                  <Bot size={13} className={isCurrentAutoPilotOn ? 'text-emerald-600' : 'text-slate-400'} />
-                  <span>Auto-Pilot</span>
-                  <span style={{
-                    fontSize: '0.6rem',
-                    fontWeight: 800,
-                    padding: '1px 5px',
-                    borderRadius: '4px',
-                    background: isCurrentAutoPilotOn ? '#10b981' : '#e2e8f0',
-                    color: isCurrentAutoPilotOn ? '#ffffff' : '#64748b',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '2px'
-                  }}>
-                    {isCurrentAutoPilotOn && <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ffffff', animation: 'pulse 1.5s infinite' }} />}
-                    {isCurrentAutoPilotOn ? 'ON' : 'OFF'}
-                  </span>
-                </button>
-
                 {/* Subtle Divider / Spacer */}
                 {(!activeChat?.isSupport && !isSupportThread(activeChat)) && (
                   <div style={{ width: '1px', height: '18px', background: '#e2e8f0', margin: '0 0.15rem' }} />
                 )}
 
-                {/* 4. 🏷️ Create Offer Button (Only in Normal Customer Inbox, never in Support) */}
+                {/* 3. 🏷️ Create Offer Button (Only in Normal Customer Inbox, never in Support) */}
                 {(!activeChat?.isSupport && !isSupportThread(activeChat)) && (
                   <button
                     type="button"
