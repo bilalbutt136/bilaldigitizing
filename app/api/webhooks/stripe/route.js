@@ -1,10 +1,10 @@
-import { NextResponse, NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest) {
+export async function POST(req) {
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -20,28 +20,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
   }
 
-  let event: Stripe.Event;
+  let event;
 
   try {
     // Read raw body for Next.js App Router webhook verification
     const rawBody = await req.text();
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
-  } catch (err: any) {
+  } catch (err) {
     console.error(`[Stripe Webhook] Signature verification failed: ${err.message}`);
     return NextResponse.json({ error: `Webhook signature verification failed: ${err.message}` }, { status: 400 });
   }
 
-  let supabase: any;
+  let supabase;
   try {
     supabase = createAdminClient();
-  } catch (dbErr: any) {
+  } catch (dbErr) {
     console.error('[Stripe Webhook] Database admin client initialization error:', dbErr.message);
     return NextResponse.json({ error: 'Database client initialization error' }, { status: 500 });
   }
 
   // Handle checkout.session.completed event
   if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Stripe.Checkout.Session;
+    const session = event.data.object;
     const metadata = session.metadata || {};
 
     // Extract offer_id and thread_id
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
     try {
       // 1. Fetch existing offer details if available
-      let matchedOffer: any = null;
+      let matchedOffer = null;
       if (offerId) {
         try {
           const { data: offData } = await supabase
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
 
       try {
         await supabase.from('orders').insert([orderPayload]);
-      } catch (ordErr: any) {
+      } catch (ordErr) {
         console.warn('[Stripe Webhook] Order insert notice:', ordErr.message);
       }
 
@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
           accepted_at: nowIso,
           updated_at: nowIso
         }]);
-      } catch (offErr: any) {
+      } catch (offErr) {
         console.warn('[Stripe Webhook] custom_offers upsert notice:', offErr.message);
       }
 
@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
             attachment: JSON.stringify(updatedOfferData),
             text: `📋 Custom Offer: ${offerTitle} ($${amountInDollars.toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(updatedOfferData)}]`
           }).or(`offer_id.eq.${targetOfferId},id.eq.${targetOfferId}`);
-        } catch (msgUpdateErr: any) {
+        } catch (msgUpdateErr) {
           console.warn('[Stripe Webhook] messages offer update notice:', msgUpdateErr.message);
         }
       }
@@ -177,6 +177,7 @@ export async function POST(req: NextRequest) {
         const confirmMessage = {
           id: `msg-stripe-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           conversation_id: effectiveThreadId,
+          thread_id: effectiveThreadId,
           sender: 'admin',
           sender_name: 'Studio Support',
           type: 'system',
@@ -193,13 +194,13 @@ export async function POST(req: NextRequest) {
             const { type: _type, ...standardMsg } = confirmMessage;
             await supabase.from('messages').insert([standardMsg]);
           }
-        } catch (msgErr: any) {
+        } catch (msgErr) {
           console.warn('[Stripe Webhook] Chat message insertion notice:', msgErr.message);
         }
       }
 
       console.log(`[Stripe Webhook] Successfully processed session ${session.id} for offer ${offerId}`);
-    } catch (processErr: any) {
+    } catch (processErr) {
       console.error('[Stripe Webhook] Processing error:', processErr);
       return NextResponse.json({ error: 'Webhook processing error', details: processErr.message }, { status: 500 });
     }
