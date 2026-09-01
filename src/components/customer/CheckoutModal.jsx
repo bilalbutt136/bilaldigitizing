@@ -319,7 +319,10 @@ export const CheckoutModal = () => {
         body: JSON.stringify({
           amount: amount,
           method: methodId,
-          orderId: checkoutSession?.orderId,
+          orderId: checkoutSession?.orderId || null,
+          offerId: checkoutSession?.offerId || null,
+          conversationId: checkoutSession?.conversationId || null,
+          title: checkoutSession?.title || checkoutSession?.orderTitle || 'Custom Design Order',
           clientEmail: checkoutSession?.clientEmail || authUser?.email || currentUser?.email
         })
       });
