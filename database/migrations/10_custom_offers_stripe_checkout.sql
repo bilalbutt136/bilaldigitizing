@@ -102,3 +102,14 @@ CREATE INDEX IF NOT EXISTS idx_custom_offers_client_email ON public.custom_offer
 CREATE INDEX IF NOT EXISTS idx_custom_offers_order_id ON public.custom_offers (order_id);
 CREATE INDEX IF NOT EXISTS idx_custom_offers_status ON public.custom_offers (status);
 CREATE INDEX IF NOT EXISTS idx_custom_offers_created_at ON public.custom_offers (created_at DESC);
+
+-- Ensure messages table supports custom offer types and metadata
+ALTER TABLE public.messages 
+    ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'text',
+    ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb,
+    ADD COLUMN IF NOT EXISTS offer_id TEXT,
+    ADD COLUMN IF NOT EXISTS offer_data JSONB;
+
+CREATE INDEX IF NOT EXISTS idx_messages_offer_id ON public.messages (offer_id);
+CREATE INDEX IF NOT EXISTS idx_messages_type ON public.messages (type);
+

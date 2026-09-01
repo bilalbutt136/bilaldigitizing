@@ -89,8 +89,8 @@ export default function WhatsAppChatMessage({
 
   const isMessageRead = message.is_read === true || message.is_read === 'true';
 
-  // Extract or construct offer object
-  let offerObj = message.offer_data || message.offer || null;
+  // Extract or construct offer object from all possible sources
+  let offerObj = message.offer_data || message.offer || message.metadata?.offer || message.metadata?.offer_data || (message.type === 'custom_offer' && message.metadata ? message.metadata : null);
   if (typeof offerObj === 'string') {
     try {
       offerObj = JSON.parse(offerObj);
@@ -110,37 +110,37 @@ export default function WhatsAppChatMessage({
   }
 
   // 2. Check JSON in attachment
-  if (!offerObj && message.attachment && typeof message.attachment === 'string' && message.attachment.trim().startsWith('{') && message.attachment.includes('"title"')) {
+  if (!offerObj && message.attachment && typeof message.attachment === 'string' && message.attachment.trim().startsWith('{') && (message.attachment.includes('"title"') || message.attachment.includes('"price"'))) {
     try {
       offerObj = JSON.parse(message.attachment);
     } catch {}
   }
 
-  // 3. Fallback: If offer_data wasn't attached, but message is a Custom Offer (starts with 📋 Custom Offer: or has offer_id)
-  if (!offerObj && (message.offer_id || (message.text && message.text.includes('Custom Offer:')))) {
+  // 3. Fallback: If message.type is custom_offer or starts with 📋 Custom Offer: or has offer_id
+  if (!offerObj && (message.type === 'custom_offer' || message.type === 'offer' || message.offer_id || (message.text && message.text.includes('Custom Offer:')))) {
     const rawText = message.text || '';
     const titleMatch = rawText.match(/Custom Offer:\s*([^(]+)/i);
     const priceMatch = rawText.match(/\(\$([0-9.]+)\)/);
     
-    const parsedTitle = titleMatch ? titleMatch[1].trim() : 'Custom Design Offer';
-    const parsedPrice = priceMatch ? parseFloat(priceMatch[1]) : 25.00;
+    const parsedTitle = titleMatch ? titleMatch[1].trim() : (message.metadata?.title || 'Custom Design Offer');
+    const parsedPrice = priceMatch ? parseFloat(priceMatch[1]) : (parseFloat(message.metadata?.price) || 25.00);
     const isVector = parsedTitle.toLowerCase().includes('vector');
     const isPatch = parsedTitle.toLowerCase().includes('patch');
     const serviceType = isVector ? 'Vector Artwork Conversion' : (isPatch ? 'Custom Patches' : 'Embroidery Digitizing');
 
     offerObj = {
-      id: message.offer_id || `off-${message.id || Date.now()}`,
+      id: message.offer_id || message.metadata?.id || message.metadata?.offer_id || `off-${message.id || Date.now()}`,
       title: parsedTitle,
-      description: 'Production-ready embroidery or vector artwork files crafted to exact technical specifications.',
-      service_type: serviceType,
+      description: message.metadata?.description || 'Production-ready embroidery or vector artwork files crafted to exact technical specifications.',
+      service_type: message.metadata?.service_type || serviceType,
       price: parsedPrice,
       final_price: parsedPrice,
       discount_amount: 0,
-      delivery_time_text: '1 Day',
-      delivery_days: 1,
-      revisions_allowed: '2',
-      status: 'sent',
-      expires_at: new Date(Date.now() + 86400000).toISOString()
+      delivery_time_text: message.metadata?.delivery_time_text || `${message.metadata?.delivery_days || 1} Day`,
+      delivery_days: parseInt(message.metadata?.delivery_days, 10) || 1,
+      revisions_allowed: String(message.metadata?.revisions || message.metadata?.revisions_allowed || '2'),
+      status: message.metadata?.status || 'pending',
+      expires_at: message.metadata?.expires_at || new Date(Date.now() + 86400000).toISOString()
     };
   }
 

@@ -238,8 +238,14 @@ export async function POST(request) {
         is_read: false
       };
 
-      // Try inserting with offer columns first, fallback to standard text/attachment
-      let insertedMessage = { ...standardMessageRow, offer_id: offerId, offer_data: offerDbRow };
+      // Try inserting with offer columns (type, metadata, offer_id, offer_data) first, fallback to standard text/attachment
+      let insertedMessage = { 
+        ...standardMessageRow, 
+        type: 'custom_offer',
+        metadata: offerDbRow,
+        offer_id: offerId, 
+        offer_data: offerDbRow 
+      };
       try {
         const { error: msgErr } = await supabase.from('messages').insert([insertedMessage]);
         if (msgErr) {
@@ -248,7 +254,7 @@ export async function POST(request) {
           if (stdErr) console.error('Standard offer message insert failed:', stdErr.message);
           insertedMessage = standardMessageRow;
         }
-      } catch (err) {
+      } catch {
         await supabase.from('messages').insert([standardMessageRow]);
         insertedMessage = standardMessageRow;
       }
