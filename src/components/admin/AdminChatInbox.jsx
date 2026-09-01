@@ -256,6 +256,7 @@ export const AdminChatInbox = () => {
   const chatFeedRef = useRef(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
   // Instant local cache hydration on mount for zero-latency load on refresh
@@ -549,6 +550,23 @@ export const AdminChatInbox = () => {
       }
     }, 50);
   };
+
+  // Auto-expanding textarea height adjustment logic (min 40px, max 150px)
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'; // Reset to calculate true scrollHeight
+      const minHeight = 40;
+      const maxHeight = 150;
+      const scrollH = textareaRef.current.scrollHeight;
+      const nextHeight = Math.max(minHeight, Math.min(scrollH, maxHeight));
+      textareaRef.current.style.height = `${nextHeight}px`;
+      textareaRef.current.style.overflowY = scrollH > maxHeight ? 'auto' : 'hidden';
+    }
+  };
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [replyInput]);
 
   // Auto-scroll chat feed on new messages, thread switch, or typing state
   useEffect(() => {
@@ -1591,7 +1609,7 @@ export const AdminChatInbox = () => {
               </div>
 
               {/* Input Row: Attachment + Textarea + Send */}
-              <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', width: '100%' }}>
+              <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'flex-end', width: '100%' }}>
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -1624,6 +1642,7 @@ export const AdminChatInbox = () => {
                 </button>
 
                 <textarea
+                  ref={textareaRef}
                   className="chat-message-input"
                   rows={1}
                   placeholder={replyingTo ? 'Type a reply...' : 'Type a message...'}
@@ -1633,21 +1652,22 @@ export const AdminChatInbox = () => {
                   style={{
                     flex: 1,
                     minWidth: 0,
+                    height: '40px',
                     minHeight: '40px',
-                    maxHeight: '110px',
+                    maxHeight: '150px',
                     fontSize: '16px',
                     fontWeight: 500,
                     color: '#0f172a',
                     background: '#ffffff',
                     backgroundColor: '#ffffff',
                     border: '1.5px solid #cbd5e1',
-                    padding: '0.6rem 0.85rem',
+                    padding: '0.55rem 0.85rem',
                     borderRadius: '10px',
                     boxSizing: 'border-box',
                     outline: 'none',
                     resize: 'none',
                     lineHeight: 1.4,
-                    overflowY: 'auto',
+                    overflowY: 'hidden',
                     fontFamily: 'inherit'
                   }}
                 />

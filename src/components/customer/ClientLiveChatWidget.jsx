@@ -448,6 +448,24 @@ export const ClientLiveChatWidget = () => {
   const chatFeedRef = useRef(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
+
+  // Auto-expanding textarea height adjustment logic (min 38px, max 140px)
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'; // Reset to calculate true scrollHeight
+      const minHeight = 38;
+      const maxHeight = 140;
+      const scrollH = textareaRef.current.scrollHeight;
+      const nextHeight = Math.max(minHeight, Math.min(scrollH, maxHeight));
+      textareaRef.current.style.height = `${nextHeight}px`;
+      textareaRef.current.style.overflowY = scrollH > maxHeight ? 'auto' : 'hidden';
+    }
+  };
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [messageInput]);
 
   const scrollToBottom = (behavior = 'smooth') => {
     if (chatFeedRef.current) {
@@ -1046,8 +1064,8 @@ export const ClientLiveChatWidget = () => {
               )}
 
               {/* Input Form */}
-              <form onSubmit={handleSendMessage} style={{ padding: '0.75rem 1rem', borderTop: '1px solid var(--border-color)', background: '#ffffff' }}>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <form onSubmit={handleSendMessage} style={{ padding: '0.65rem 0.85rem', borderTop: '1px solid var(--border-color)', background: '#ffffff' }}>
+                <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'flex-end' }}>
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -1079,6 +1097,7 @@ export const ClientLiveChatWidget = () => {
                   </button>
 
                   <textarea
+                    ref={textareaRef}
                     rows={1}
                     className="form-control"
                     placeholder={replyingTo ? 'Type a reply...' : 'Type a message...'}
@@ -1087,14 +1106,15 @@ export const ClientLiveChatWidget = () => {
                     onKeyDown={handleKeyDown}
                     style={{
                       flex: 1,
-                      minHeight: '36px',
-                      maxHeight: '100px',
+                      height: '38px',
+                      minHeight: '38px',
+                      maxHeight: '140px',
                       fontSize: '16px',
                       padding: '0.45rem 0.75rem',
                       borderRadius: 'var(--radius-sm)',
                       resize: 'none',
                       lineHeight: 1.4,
-                      overflowY: 'auto',
+                      overflowY: 'hidden',
                       fontFamily: 'inherit',
                       boxSizing: 'border-box'
                     }}

@@ -262,15 +262,26 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
     };
   }, [canonicalChatId, clientEmail, clientName, activeChannel]);
 
+  // Auto-expanding textarea height adjustment logic (min 40px, max 150px)
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'; // Reset to calculate true scrollHeight
+      const minHeight = 40;
+      const maxHeight = 150;
+      const scrollH = textareaRef.current.scrollHeight;
+      const nextHeight = Math.max(minHeight, Math.min(scrollH, maxHeight));
+      textareaRef.current.style.height = `${nextHeight}px`;
+      textareaRef.current.style.overflowY = scrollH > maxHeight ? 'auto' : 'hidden';
+    }
+  };
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [messageInput]);
+
   const handleInputChange = (e) => {
     const val = e.target.value;
     setMessageInput(val);
-
-    // Auto-adjust height for smooth multi-line typing
-    if (e.target) {
-      e.target.style.height = 'auto';
-      e.target.style.height = `${Math.min(Math.max(e.target.scrollHeight, 40), 120)}px`;
-    }
 
     broadcastTypingStatus(canonicalChatId, clientName, 'client', true);
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
@@ -723,11 +734,11 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
         onSubmit={handleSendMessage}
         className="chat-input-bar-container"
         style={{
-          padding: '0.65rem 0.85rem',
+          padding: '0.65rem 1rem 0.5rem',
           background: '#ffffff',
-          borderTop: '1.5px solid #e2e8f0',
+          borderTop: '1px solid #e2e8f0',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-end',
           gap: '0.45rem',
           flexShrink: 0,
           boxShadow: '0 -2px 12px rgba(0, 0, 0, 0.04)',
@@ -792,11 +803,12 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           style={{
             flex: 1,
             minWidth: 0,
+            height: '40px',
             minHeight: '40px',
-            maxHeight: '110px',
+            maxHeight: '150px',
             borderRadius: '10px',
             border: '1.5px solid #cbd5e1',
-            padding: '0.6rem 0.85rem',
+            padding: '0.55rem 0.85rem',
             fontSize: '16px',
             fontWeight: 500,
             color: '#0f172a',
@@ -806,7 +818,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
             boxSizing: 'border-box',
             resize: 'none',
             lineHeight: 1.4,
-            overflowY: 'auto',
+            overflowY: 'hidden',
             fontFamily: 'inherit'
           }}
         />
