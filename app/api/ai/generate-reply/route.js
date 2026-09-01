@@ -50,6 +50,20 @@ export async function POST(req) {
     const customerName = body.customerName || body.clientName || 'Client';
     const serviceCategory = body.serviceCategory || '';
 
+    // Build complete formatted chat memory transcript (last 8 messages)
+    const formattedHistory = messages.length > 0
+      ? messages
+          .slice(-8)
+          .map(msg => {
+            const role = (msg.sender === 'admin' || msg.sender === 'support') ? 'Admin (You)' : `Customer (${customerName})`;
+            const attInfo = msg.attachment_name || msg.attachment ? ` [Attached: ${msg.attachment_name || 'File'}]` : '';
+            const offerInfo = msg.offer_data?.title ? ` [Custom Offer Sent: ${msg.offer_data.title} ($${msg.offer_data.price})]` : '';
+            return `${role}: ${msg.text || ''}${attInfo}${offerInfo}`.trim();
+          })
+          .filter(Boolean)
+          .join('\n')
+      : `Customer (${customerName}): ${latestMessage || 'Hello, I need assistance with my design.'}`;
+
     // Extract image attachment (imageBase64 or imageUrl)
     let imageBase64 = body.imageBase64 || null;
     let mimeType = body.mimeType || 'image/png';
@@ -63,7 +77,7 @@ export async function POST(req) {
       }
     }
 
-    // Also check if latest message had an attached image url
+    // Also check if any recent message had an attached image url
     if (!imageBase64 && messages.length > 0) {
       const reversed = [...messages].reverse();
       const lastWithImg = reversed.find(m => m && (m.attachment_url || (typeof m.attachment === 'string' && m.attachment.startsWith('http'))));
@@ -77,14 +91,28 @@ export async function POST(req) {
       }
     }
 
-    const systemInstruction = `You are a fast, highly converting sales lead at B Digitizing Studio (Embroidery Digitizing, Vector Art, Custom Physical Patches).
+    const systemInstruction = `You are a Senior Project Manager and Sales Lead at B Digitizing Studio (Embroidery Digitizing, Vector Art, Custom Physical Patches).
 
-### STRICT RULES:
-1. **NO REPETITIVE GREETINGS:** NEVER start with "Welcome to B Digitizing" or long robotic intros. If a greeting is needed, a brief "Hi ${customerName || 'there'}!" or direct answer is enough.
-2. **SUPER CONCISE (2 to 4 sentences max):** Answer directly. Do not write long essays, numbered lectures, or generic bullet points.
-3. **IMAGE AWARENESS:** If an image is provided, analyze the design (complexity, fine details, tiny lettering, color count) and comment specifically on it regarding digitizing/vector/patch feasibility.
-4. **CLEAR CALL TO ACTION:** Ask only for the 1 or 2 missing details (e.g., required size/width, placement like cap vs left-chest, or patch quantity).
-5. **TONE:** Friendly, professional, American business casual (Fiverr Top-Rated style). No quotes around the response.`;
+### CONVERSATION MEMORY & STRICT ANTI-REPETITION RULES:
+1. **TRACK KNOWN DETAILS (STRICT):**
+   - Carefully review the entire chat transcript.
+   - If the customer ALREADY stated their required size/dimensions (e.g., 3.5 inches, 4x4), file format (e.g., DST, PES), quantity (e.g., 50 pcs), garment type/placement (e.g., cap, left chest, jacket back), backing type (e.g., iron-on, velcro), or colors in earlier messages, NEVER ask for that information again!
+   - Acknowledge what they provided (e.g., "Got it, 3.5 inches on left chest.").
+
+2. **NATURAL PROGRESSION (NO LOOPS):**
+   - Once requirements are clear, move directly to the next logical step: offer a quote/turnaround time or confirm order readiness (e.g., "I can have this digitized in DST format for $15 within 2-4 hours. Would you like me to set up the custom offer?").
+   - If only ONE specific detail is missing, ask ONLY for that single missing piece.
+
+3. **IMAGE & ARTWORK AWARENESS:**
+   - If an image/sketch/logo is attached, evaluate its stitch/vector/patch feasibility (e.g., detail complexity, color separations, small text).
+
+4. **BREVITY & TONE:**
+   - 2 to 3 sentences maximum.
+   - Crisp, confident, native US client support tone (Fiverr Top-Rated style).
+   - NO repeated greetings, no robotic introductions like "Welcome to B Digitizing".
+   - Do NOT wrap output in quotation marks or markdown code blocks.`;
+
+    const promptText = `Recent Chat Transcript:\n${formattedHistory}\n\nClient Name: ${customerName || 'Client'}${serviceCategory ? `\nService Category: ${serviceCategory}` : ''}\n\nDraft the next direct, smart, memory-aware response for the Admin to send:`;
 
     const contents = [];
 
@@ -98,9 +126,7 @@ export async function POST(req) {
       });
     }
 
-    contents.push({
-      text: `Client Name: ${customerName || 'Client'}${serviceCategory ? `\nService: ${serviceCategory}` : ''}\nClient Message: "${latestMessage || 'Please check this design'}"`,
-    });
+    contents.push({ text: promptText });
 
     const ai = new GoogleGenAI({ apiKey });
     const models = ['gemini-2.5-flash', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-3.5-flash-lite', 'gemini-flash-latest'];
@@ -113,7 +139,7 @@ export async function POST(req) {
           config: {
             systemInstruction: systemInstruction,
             temperature: 0.2,
-            maxOutputTokens: 250, // Enforce brevity (2-4 sentences)
+            maxOutputTokens: 200, // Enforce brevity (2-3 sentences)
           },
         });
 
@@ -130,11 +156,12 @@ export async function POST(req) {
     }
 
     // Fallback direct concise reply if models fail
-    const fallbackText = `Hi ${customerName}! We can definitely help you with this. Could you please share the required dimensions (width/height) and placement (cap, left chest, or jacket) so we can get started right away?`;
+    const fallbackText = `Got it, ${customerName}! We can definitely take care of this for you right away. Would you like me to set up the custom order now?`;
     return Response.json({ replyText: fallbackText, smartReply: fallbackText, success: true });
   } catch (error) {
-    console.error('Generate Reply Error:', error);
+    console.error('Smart reply memory error:', error);
     return Response.json({ error: error.message || 'Failed to generate reply' }, { status: 500 });
   }
 }
+
 
