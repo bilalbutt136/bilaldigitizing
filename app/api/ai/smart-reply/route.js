@@ -1,3 +1,4 @@
+import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -77,65 +78,41 @@ Please draft a direct, professional, ready-to-send live chat response for the cl
     ).trim();
 
     if (apiKey) {
+      const ai = new GoogleGenAI({ apiKey });
       const models = ['gemini-2.5-flash', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-3.5-flash-lite', 'gemini-flash-latest'];
 
       for (const model of models) {
         try {
-          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-          
-          const payload = {
-            systemInstruction: {
-              parts: [{ text: SYSTEM_INSTRUCTION }]
-            },
-            contents: [
-              {
-                role: 'user',
-                parts: [{ text: promptUserText }]
-              }
-            ],
-            generationConfig: {
+          const response = await ai.models.generateContent({
+            model,
+            contents: promptUserText,
+            config: {
+              systemInstruction: SYSTEM_INSTRUCTION,
               temperature: 0.25,
-              maxOutputTokens: 2048,
-              thinkingConfig: { thinkingBudget: 0 }
-            }
-          };
-
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'x-goog-api-key': apiKey
             },
-            body: JSON.stringify(payload)
           });
 
-          if (response.ok) {
-            const data = await response.json();
-            const rawOutput = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            let replyText = rawOutput.trim();
+          let replyText = response.text?.trim() || '';
 
-            if (replyText.startsWith('```') && replyText.endsWith('```')) {
-              replyText = replyText.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '').trim();
-            }
-            if ((replyText.startsWith('"') && replyText.endsWith('"')) || (replyText.startsWith("'") && replyText.endsWith("'"))) {
-              replyText = replyText.substring(1, replyText.length - 1).trim();
-            }
+          if (replyText.startsWith('```') && replyText.endsWith('```')) {
+            replyText = replyText.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '').trim();
+          }
+          if ((replyText.startsWith('"') && replyText.endsWith('"')) || (replyText.startsWith("'") && replyText.endsWith("'"))) {
+            replyText = replyText.substring(1, replyText.length - 1).trim();
+          }
 
-            // Remove email artifacts if any slipped through
-            replyText = replyText.replace(/^Subject:\s*.*?\n+/i, '').trim();
+          // Remove email artifacts if any slipped through
+          replyText = replyText.replace(/^Subject:\s*.*?\n+/i, '').trim();
 
-            if (replyText) {
-              return NextResponse.json({
-                replyText,
-                smartReply: replyText,
-                model
-              });
-            }
-          } else {
-            console.warn(`[Gemini Smart Reply] Model ${model} returned status ${response.status}`);
+          if (replyText) {
+            return NextResponse.json({
+              replyText,
+              smartReply: replyText,
+              model
+            });
           }
         } catch (err) {
-          console.warn(`[Gemini Smart Reply] Error calling ${model}:`, err.message);
+          console.warn(`[Gemini Smart Reply] Model ${model} failed, trying next:`, err.message || err);
         }
       }
     }

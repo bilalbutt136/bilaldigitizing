@@ -1,23 +1,23 @@
+import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-const SYSTEM_INSTRUCTION = `You are an elite Fiverr/Upwork Top-Rated agency client communication specialist and master copy editor for Bilal Digitizing Studio (a premier studio specializing in Custom Embroidery Digitizing, Vector Art Tracing, and Custom Physical Patches).
+const SYSTEM_INSTRUCTION = `You are an elite Fiverr Top-Rated Seller & Customer Success Specialist for an embroidery digitizing, vector art, and custom patch studio.
 
-Your sole mission is to rewrite the admin's raw, broken English, shorthand notes, phonetic phrasing, or rough bullet points into polished, courteous, high-converting, native US/UK client support English.
+The user will provide rough, broken English, shorthand notes, or informal phrases. Your job is to REWRITE it into warm, polite, confident, and grammatically flawless American business English.
 
-### Core Rules:
-1. **Flawless Tone & Grammar:** Fix all verb tenses, typos, grammatical mismatches, punctuation, and capitalization. Ensure a confident, helpful, and professional customer service tone.
-2. **Preserve Exact Technical Data & Numbers:** NEVER change or hallucinate prices (e.g. $10, $15, $25), turnaround times (e.g. 2 hours, 2-6 hours, 24 hours), dimensions (e.g. 3.5 inches, 4x4, 100mm), quantities (e.g. 50 pcs, 100 patches), or machine/design formats (DST, PES, EMB, EXP, JEF, VP3, AI, EPS, SVG, PDF, 3D Puff, Velcro, Iron-on).
-3. **DO NOT Answer Draft Questions:** Do not answer questions in the draft or hold a conversation with the admin. Simply polish what the admin is trying to tell or ask the client.
-4. **Live Chat Ready:** Output ONLY the final polished ready-to-send message. NEVER include introductory commentary (e.g. "Here is the rewritten text:"), conversational chatter, markdown options, or quotation marks wrapping the whole message.
+### RULES:
+1. Correct all broken tenses, missing words ("is/are/have/will"), and typos.
+2. Maintain all business data: retain exact prices ($), delivery times (hours/days), stitch counts, sizes, and file extensions (DST, PES, EMB, AI, EPS, SVG).
+3. If the input is very short (e.g., "done check file", "price 10 give 2 hour"), expand it naturally into a complete, professional sentence.
+4. Output ONLY the polished message text ready to send to the client. No intro, no explanations, no wrapping quotation marks.
 
-### Real-world Shorthand Examples:
-- "helo sir i make dst file 2 hour price 10$" -> "Hello! I will digitize your design into a DST file within 2 hours. The price is $10.00."
-- "we is complete your patch order 100 pcs velcro backing send tomorrow" -> "We have completed your order of 100 custom patches with Velcro backing. They will be shipped out tomorrow!"
-- "sir your logo very blur send big file high quality png or pdf" -> "Your logo appears slightly blurry. Could you please provide a higher-resolution image, PNG, or vector PDF file for the cleanest result?"
-- "3d puff cap embroidery need 5mm foam i do good quality" -> "For 3D puff cap embroidery, we will optimize the underlay and use high-density foam to ensure crisp, premium raised embroidery."
-- "ok i change color red to blue and send file soon" -> "I have updated the color from red to blue as requested and will send over the updated file shortly."`;
+### EXAMPLES:
+- "helo what you name?" -> "Hello! Thank you for reaching out. May I please know your name?"
+- "i send file yesterday check it" -> "I sent over your files yesterday. Have you had a chance to review them?"
+- "price 15 dollar give me 2 hour for dst format" -> "The price for the DST format will be $15.00, and I will have it ready for you in about 2 hours."
+- "we make patch iron on velcro both available" -> "We can produce custom physical patches with either iron-on or Velcro (hook & loop) backing based on your preference."`;
 
 /**
  * Deterministic local fallback matching transformation rules
@@ -28,7 +28,7 @@ function localRefineMessage(rawText) {
 
   // Direct exact transformations
   if (/^(helo|hello)[,\s]+what\s+(is\s+)?(you|ur)\s+name\??$/i.test(text)) {
-    return 'Hello! May I please have your name?';
+    return 'Hello! Thank you for reaching out. May I please know your name?';
   }
 
   if (/^we (is|are) complete your (file|patch order|order)/i.test(text)) {
@@ -44,7 +44,7 @@ function localRefineMessage(rawText) {
   }
 
   if (/^i send file yesterday you check\??/i.test(text)) {
-    return 'I sent the files yesterday. Have you had a chance to review them?';
+    return 'I sent over your files yesterday. Have you had a chance to review them?';
   }
 
   const replacements = [
@@ -118,63 +118,39 @@ export async function POST(req) {
     ).trim();
 
     if (apiKey) {
+      const ai = new GoogleGenAI({ apiKey });
       const models = ['gemini-2.5-flash', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-3.5-flash-lite', 'gemini-flash-latest'];
 
       for (const model of models) {
         try {
-          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-          
-          const payload = {
-            systemInstruction: {
-              parts: [{ text: SYSTEM_INSTRUCTION }]
+          const response = await ai.models.generateContent({
+            model,
+            contents: `Draft to rewrite: "${trimmed}"`,
+            config: {
+              systemInstruction: SYSTEM_INSTRUCTION,
+              temperature: 0.2,
             },
-            contents: [
-              {
-                role: 'user',
-                parts: [{ text: `Draft to rewrite:\n"${trimmed}"` }]
-              }
-            ],
-            generationConfig: {
-              temperature: 0.1,
-              maxOutputTokens: 2048,
-              thinkingConfig: { thinkingBudget: 0 }
-            }
-          };
-
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'x-goog-api-key': apiKey
-            },
-            body: JSON.stringify(payload)
           });
 
-          if (response.ok) {
-            const data = await response.json();
-            const rawOutput = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            let polishedResult = rawOutput.trim();
+          let polishedResult = response.text?.trim() || '';
 
-            if (polishedResult.startsWith('```') && polishedResult.endsWith('```')) {
-              polishedResult = polishedResult.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '').trim();
-            }
-            if ((polishedResult.startsWith('"') && polishedResult.endsWith('"')) || (polishedResult.startsWith("'") && polishedResult.endsWith("'"))) {
-              polishedResult = polishedResult.substring(1, polishedResult.length - 1).trim();
-            }
+          if (polishedResult.startsWith('```') && polishedResult.endsWith('```')) {
+            polishedResult = polishedResult.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '').trim();
+          }
+          if ((polishedResult.startsWith('"') && polishedResult.endsWith('"')) || (polishedResult.startsWith("'") && polishedResult.endsWith("'"))) {
+            polishedResult = polishedResult.substring(1, polishedResult.length - 1).trim();
+          }
 
-            if (polishedResult) {
-              return NextResponse.json({
-                refinedText: polishedResult,
-                refinedMessage: polishedResult,
-                success: true,
-                model
-              }, { status: 200 });
-            }
-          } else {
-            console.warn(`[AI Polish API] Model ${model} returned status ${response.status}`);
+          if (polishedResult) {
+            return NextResponse.json({
+              refinedText: polishedResult,
+              refinedMessage: polishedResult,
+              success: true,
+              model
+            }, { status: 200 });
           }
         } catch (err) {
-          console.warn(`[AI Polish API] Error calling ${model}:`, err.message);
+          console.warn(`[AI Polish API] Model ${model} failed, trying next:`, err.message || err);
         }
       }
     }
