@@ -148,7 +148,11 @@ export default function RootLayout({ children }) {
         />
         <script src="https://accounts.google.com/gsi/client" async defer></script>
       </head>
-      <body suppressHydrationWarning style={{ fontFamily: "'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+      <body 
+        suppressHydrationWarning 
+        className="font-sans antialiased text-slate-900 bg-slate-50 dark:bg-slate-950 dark:text-slate-100" 
+        style={{ fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}
+      >
         <StateProvider>
           <ErrorBoundary>
             <ClientLayoutShell>

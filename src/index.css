@@ -1,11 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap');
 
 :root {
-  --font-heading: 'Plus Jakarta Sans', 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: var(--font-body);
 
   /* ==========================================================================
-     CENTRAL SEMANTIC DESIGN TOKENS — LIGHT MODE (Clean Studio White)
+     CENTRAL SEMANTIC DESIGN TOKENS — LIGHT MODE (Clean VIP Studio)
      ========================================================================== */
   --color-primary: #ea580c;
   --color-primary-hover: #c2410c;
@@ -18,21 +19,21 @@
   --color-accent-light: #fff7ed;
 
   /* 4-Layer Surface System — clear visual separation */
-  --color-background: #f2f4f8;        /* Page canvas — warm-cool off-white */
+  --color-background: #f8fafc;        /* Slate-50 Page canvas */
   --color-surface: #ffffff;           /* Cards, panels — clean white */
-  --color-surface-elevated: #f8f9fb;  /* Inner sections, step bars */
-  --color-subtle: #edf0f5;            /* Sidebars, alt-row tints, hover states */
-  --color-input: #f8f9fa;             /* Input field backgrounds */
+  --color-surface-elevated: #f1f5f9;  /* Slate-100 Inner sections */
+  --color-subtle: #e2e8f0;            /* Slate-200 Sidebars, hover states */
+  --color-input: #f8fafc;             /* Input field backgrounds */
 
   /* Borders — strong enough to see clearly */
-  --color-border: #d1d9e0;
-  --color-border-hover: #a8b4c0;
+  --color-border: #e2e8f0;            /* Slate-200 */
+  --color-border-hover: #cbd5e1;      /* Slate-300 */
   --color-border-focus: var(--color-primary);
 
-  /* Text Colors — full contrast hierarchy */
-  --color-text-primary: #0d1117;      /* Near-black — maximum readability */
-  --color-text-secondary: #2d3748;    /* Rich dark gray — clear secondary text */
-  --color-text-muted: #5a6478;        /* Medium gray — muted but readable */
+  /* Text Colors — VIP Rich Slate Hierarchy */
+  --color-text-primary: #0f172a;      /* Slate-900 — maximum readability */
+  --color-text-secondary: #334155;    /* Slate-700 — clear secondary text */
+  --color-text-muted: #64748b;        /* Slate-500 — balanced muted text */
   --color-text-on-primary: #ffffff;
 
   /* Semantic Status Colors — WCAG AA compliant */
@@ -63,12 +64,12 @@
   --bg-subtle: var(--color-subtle);
   --bg-input: var(--color-input);
   
-  --navy-950: #0d1117;
-  --navy-900: #161b22;
-  --navy-800: #21262d;
-  --navy-700: #2d3748;
-  --navy-600: #4a5568;
-  --navy-100: #edf0f5;
+  --navy-950: #0f172a; /* Slate 900 */
+  --navy-900: #1e293b; /* Slate 800 */
+  --navy-800: #334155; /* Slate 700 */
+  --navy-700: #475569; /* Slate 600 */
+  --navy-600: #64748b; /* Slate 500 */
+  --navy-100: #f1f5f9; /* Slate 100 */
 
   /* Primary Palette Aliases */
   --orange-500: var(--color-secondary);

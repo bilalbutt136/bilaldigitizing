@@ -1,1 +1,156 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap');
 @import '../src/index.css';
+
+/* ==========================================================================
+   VIP STUDIO GLOBAL TYPOGRAPHY & COLOR SYSTEM
+   ========================================================================== */
+
+/* 1. Global Font Families */
+:root {
+  --font-heading: 'Plus Jakarta Sans', var(--font-plus-jakarta, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  --font-body: 'Inter', var(--font-inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  --font-sans: var(--font-body);
+}
+
+.font-heading {
+  font-family: var(--font-heading) !important;
+}
+
+.font-sans,
+.font-body {
+  font-family: var(--font-body) !important;
+}
+
+/* 2. Typography Hierarchy & Readability Rules */
+h1, h2, h3, h4, h5, h6,
+.title-primary,
+.heading-vip {
+  font-family: var(--font-heading) !important;
+  font-weight: 700;
+  letter-spacing: -0.025em; /* tracking-tight */
+  color: #0f172a; /* text-slate-900 */
+}
+
+h1 {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+h2 {
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+h3 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4,
+body.dark-mode h5,
+body.dark-mode h6 {
+  color: #ffffff !important;
+}
+
+/* Body & Descriptions: font-sans font-normal text-slate-600 dark:text-slate-300 leading-relaxed */
+p,
+.body-text,
+.text-description {
+  font-family: var(--font-body);
+  font-weight: 400;
+  color: #475569; /* text-slate-600 */
+  line-height: 1.625; /* leading-relaxed */
+}
+
+[data-theme="dark"] p,
+[data-theme="dark"] .body-text,
+[data-theme="dark"] .text-description,
+body.dark-mode p,
+body.dark-mode .body-text,
+body.dark-mode .text-description {
+  color: #cbd5e1 !important; /* text-slate-300 */
+}
+
+/* Badges & Small Meta Text: text-xs font-semibold uppercase tracking-wider */
+.meta-badge,
+.meta-text,
+.badge-meta,
+.label-uppercase {
+  font-family: var(--font-heading);
+  font-size: 0.75rem !important; /* text-xs */
+  font-weight: 600 !important;   /* font-semibold */
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important; /* tracking-wider */
+}
+
+/* 3. VIP Color Palette & Crisp Container Cards */
+.vip-card,
+.studio-card,
+.clean-card {
+  background-color: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.85); /* border-slate-200/80 */
+  border-radius: 1rem; /* rounded-2xl */
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05); /* shadow-sm */
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vip-card:hover,
+.studio-card:hover,
+.clean-card:hover {
+  border-color: #cbd5e1; /* border-slate-300 */
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04); /* hover:shadow-md */
+  transform: translateY(-2px);
+}
+
+[data-theme="dark"] .vip-card,
+[data-theme="dark"] .studio-card,
+[data-theme="dark"] .clean-card,
+body.dark-mode .vip-card,
+body.dark-mode .studio-card,
+body.dark-mode .clean-card {
+  background-color: #0f172a !important; /* dark:bg-slate-900 */
+  border-color: rgba(30, 41, 59, 0.8) !important; /* dark:border-slate-800 */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+}
+
+/* 4. Buttons & Primary CTAs */
+.btn-vip-primary,
+.btn-royal-blue {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  color: #ffffff !important;
+  border-radius: 0.75rem !important; /* rounded-xl */
+  padding: 0.75rem 1.6rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.32);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.btn-vip-primary:hover,
+.btn-royal-blue:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.45);
+  transform: translateY(-2px);
+}
+
+.btn-vip-pill {
+  border-radius: 9999px !important; /* rounded-full */
+}
