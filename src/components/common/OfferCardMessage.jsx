@@ -184,7 +184,8 @@ export default function OfferCardMessage({
     if (isCheckingOut || isAccepting || !isPending) return;
     setIsCheckingOut(true);
     try {
-      const res = await createOfferCheckoutSession(offer.id, {
+      const targetOfferId = offer.id || offer.offer_id || messageId;
+      const res = await createOfferCheckoutSession(targetOfferId, {
         amount: price,
         clientEmail: offer.client_email,
         conversationId: offer.conversation_id || offer.thread_id,
@@ -207,7 +208,8 @@ export default function OfferCardMessage({
     if (isAccepting || isCheckingOut || !isPending) return;
     setIsAccepting(true);
     try {
-      const res = await acceptCustomOffer(offer.id);
+      const targetOfferId = offer.id || offer.offer_id || messageId;
+      const res = await acceptCustomOffer(targetOfferId, offer);
       if (res.error) {
         showToast(res.error, 'error');
       } else {
@@ -226,7 +228,8 @@ export default function OfferCardMessage({
     if (isDeclining || isCheckingOut || isAccepting || !isPending) return;
     setIsDeclining(true);
     try {
-      const res = await declineCustomOffer(offer.id);
+      const targetOfferId = offer.id || offer.offer_id || messageId;
+      const res = await declineCustomOffer(targetOfferId, offer);
       if (res.error) {
         showToast(res.error, 'error');
       } else {
@@ -244,7 +247,8 @@ export default function OfferCardMessage({
     if (isCancelling || !isPending) return;
     setIsCancelling(true);
     try {
-      const res = await cancelCustomOffer(offer.id);
+      const targetOfferId = offer.id || offer.offer_id || messageId;
+      const res = await cancelCustomOffer(targetOfferId, offer);
       if (res.error) {
         showToast(res.error, 'error');
       } else {

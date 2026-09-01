@@ -30,13 +30,30 @@ export async function POST(req) {
         const { offerId, conversationId } = session.metadata || {};
         const nowIso = new Date().toISOString();
 
-        // 1. Fetch current offer from custom_offers table
+        // 1. Fetch current offer from custom_offers table or messages fallback
         let offer = null;
         if (offerId) {
           try {
-            const { data: offData } = await supabase.from('custom_offers').select('*').eq('id', offerId).maybeSingle();
-            offer = offData;
+            const { data: offData } = await supabase
+              .from('custom_offers')
+              .select('*')
+              .or(`id.eq.${offerId},stripe_session_id.eq.${session.id},stripe_session_id.eq.${offerId}`)
+              .maybeSingle();
+            if (offData) offer = offData;
           } catch {}
+
+          if (!offer) {
+            try {
+              const { data: msgRow } = await supabase
+                .from('messages')
+                .select('*')
+                .or(`offer_id.eq.${offerId},id.eq.${offerId}`)
+                .maybeSingle();
+              if (msgRow?.offer_data) {
+                offer = typeof msgRow.offer_data === 'string' ? JSON.parse(msgRow.offer_data) : msgRow.offer_data;
+              }
+            } catch {}
+          }
         }
 
         // 2. Generate authoritative order
@@ -61,7 +78,7 @@ export async function POST(req) {
           payment_status: 'paid',
           turnaround_time: offer?.delivery_time_text || `${offer?.delivery_days || 1} Day`,
           is_rush: (offer?.delivery_time_text || '').toLowerCase().includes('express') || (offer?.delivery_time_text || '').toLowerCase().includes('12 hour'),
-          revisions_allowed: offer?.revisions_allowed || '2',
+          revisions_allowed: String(offer?.revisions_allowed || '2'),
           notes: JSON.stringify({
             source: 'custom_offer_stripe',
             offer_id: offerId,
@@ -78,18 +95,33 @@ export async function POST(req) {
           console.error('[Stripe Webhook] Order creation error for custom offer:', ordErr.message);
         }
 
-        // 3. Update custom_offers table
-        if (offerId) {
+        // 3. Upsert custom_offers table
+        if (offerId || offer?.id) {
+          const targetOfferId = offer?.id || offerId;
           try {
-            await supabase.from('custom_offers').update({
-              status: 'paid',
-              accepted_at: nowIso,
+            await supabase.from('custom_offers').upsert([{
+              id: targetOfferId,
+              conversation_id: conversationId || offer?.conversation_id || offer?.thread_id || 'general-support',
+              thread_id: conversationId || offer?.thread_id || offer?.conversation_id || 'general-support',
               order_id: generatedOrderId,
+              created_by: offer?.created_by || 'admin',
+              client_name: clientName,
+              client_email: targetEmail,
+              title: offerTitle,
+              description: offer?.description || '',
+              service_type: svcCategory,
+              price: amountInDollars,
+              final_price: amountInDollars,
+              delivery_time_text: offer?.delivery_time_text || `${offer?.delivery_days || 1} Day`,
+              delivery_days: parseInt(offer?.delivery_days, 10) || 1,
+              revisions_allowed: String(offer?.revisions_allowed || '2'),
+              status: 'paid',
               stripe_session_id: session.id,
+              accepted_at: nowIso,
               updated_at: nowIso
-            }).eq('id', offerId);
+            }]);
           } catch (coErr) {
-            console.warn('[Stripe Webhook] custom_offers update notice:', coErr.message);
+            console.warn('[Stripe Webhook] custom_offers upsert notice:', coErr.message);
           }
         }
 

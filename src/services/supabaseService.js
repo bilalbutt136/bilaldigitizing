@@ -1411,14 +1411,14 @@ export async function createOfferCheckoutSession(offerId, options = {}) {
   }
 }
 
-export async function acceptCustomOffer(offerId) {
+export async function acceptCustomOffer(offerId, fallbackOffer = null) {
   try {
     broadcastOfferStatusChange(offerId, 'accepted');
     const headers = await getAuthHeaders();
     const res = await fetch('/api/offers', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ action: 'acceptOffer', payload: { offerId } })
+      body: JSON.stringify({ action: 'acceptOffer', payload: { offerId, offer: fallbackOffer } })
     });
     const data = await res.json();
     if (data.message) {
@@ -1433,14 +1433,14 @@ export async function acceptCustomOffer(offerId) {
   }
 }
 
-export async function declineCustomOffer(offerId) {
+export async function declineCustomOffer(offerId, fallbackOffer = null) {
   try {
     broadcastOfferStatusChange(offerId, 'declined');
     const headers = await getAuthHeaders();
     const res = await fetch('/api/offers', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ action: 'declineOffer', payload: { offerId } })
+      body: JSON.stringify({ action: 'declineOffer', payload: { offerId, offer: fallbackOffer } })
     });
     const data = await res.json();
     if (data.message) {
@@ -1455,14 +1455,14 @@ export async function declineCustomOffer(offerId) {
   }
 }
 
-export async function cancelCustomOffer(offerId) {
+export async function cancelCustomOffer(offerId, fallbackOffer = null) {
   try {
     broadcastOfferStatusChange(offerId, 'cancelled');
     const headers = await getAuthHeaders();
     const res = await fetch('/api/offers', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ action: 'cancelOffer', payload: { offerId } })
+      body: JSON.stringify({ action: 'cancelOffer', payload: { offerId, offer: fallbackOffer } })
     });
     const data = await res.json();
     if (data.message) {
