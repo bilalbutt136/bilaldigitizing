@@ -11,7 +11,8 @@ import {
   uploadFileToCloudinaryFull,
   broadcastTypingStatus,
   subscribeToTypingStatus,
-  getAdminThreadUnreadCount
+  getAdminThreadUnreadCount,
+  createCustomOffer
 } from '../../services/supabaseService';
 import { playNotificationSound } from '../../utils/audioNotification';
 import WhatsAppChatMessage from '../common/WhatsAppChatMessage';
@@ -251,6 +252,8 @@ export const AdminChatInbox = () => {
   const [attachedFile, setAttachedFile] = useState(null); // { name, url, size, format }
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
   const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
+  const [pendingAiOffer, setPendingAiOffer] = useState(null);
+  const [isSubmittingAiOffer, setIsSubmittingAiOffer] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
   const [isClientTyping, setIsClientTyping] = useState(false);
   const [mobileView, setMobileView] = useState('list');
@@ -306,6 +309,7 @@ export const AdminChatInbox = () => {
       await new Promise(r => setTimeout(r, 2200));
 
       const threadMessages = targetConv?.messages || [newMsg];
+      const attachedImageUrl = newMsg.attachment_url || (typeof newMsg.attachment === 'string' && newMsg.attachment.startsWith('http') ? newMsg.attachment : null);
 
       // 3. Call AI endpoint with clean conversationHistory and vision support
       const response = await fetch('/api/ai/generate-reply', {
@@ -371,17 +375,50 @@ export const AdminChatInbox = () => {
           return deduplicated;
         });
 
-        // Persist message to Supabase DB
+        // Persist message to Supabase
         if (isSupabaseConfigured) {
-          try {
-            await addChatMessage(newMsg.conversation_id, autoMsg);
-          } catch (err) {
-            console.warn('Auto-Pilot persist notice:', err);
-          }
+          addChatMessage({
+            conversation_id: newMsg.conversation_id,
+            sender: 'admin',
+            senderName: 'Studio Support',
+            text: replyText,
+            is_read: false,
+            is_autopilot: true
+          }).catch(err => console.warn('[Auto-Pilot DB] Failed to save chat message:', err));
         }
 
-        playNotificationSound('send');
-        showToast(`🤖 Auto-Pilot replied to ${customerName}!`, 'success');
+        // Auto-Create Custom Offer if AI determined requirements are complete
+        if (data.shouldCreateOffer && data.offerDetails?.title && data.offerDetails?.price && !targetConv?.isSupport) {
+          try {
+            const offerPayload = {
+              conversation_id: newMsg.conversation_id,
+              client_name: customerName,
+              client_email: targetConv?.clientEmail || '',
+              title: String(data.offerDetails.title).trim(),
+              description: String(data.offerDetails.description || 'Production-ready embroidery or vector files crafted to exact technical specifications.').trim(),
+              service_type: data.offerDetails.service_type || 'Embroidery Digitizing',
+              price: parseFloat(data.offerDetails.price) || 25,
+              discount_amount: 0,
+              final_price: parseFloat(data.offerDetails.price) || 25,
+              delivery_time_text: `${data.offerDetails.deliveryDays || 1} Day${(data.offerDetails.deliveryDays || 1) > 1 ? 's' : ''}`,
+              delivery_days: parseInt(data.offerDetails.deliveryDays, 10) || 1,
+              revisions_allowed: '99',
+              expires_in_hours: 24,
+              requires_requirements: true
+            };
+            const offerRes = await createCustomOffer(offerPayload);
+            if (offerRes && !offerRes.error) {
+              playNotificationSound();
+              showToast(`🤖 Auto-Pilot created & sent Custom Offer ($${data.offerDetails.price}) to ${customerName}!`, 'success');
+            }
+            playNotificationSound('send');
+          } catch (offerErr) {
+            console.warn('[Auto-Pilot] Could not auto-create custom offer:', offerErr);
+          }
+        } else {
+          playNotificationSound('send');
+          showToast(`🤖 Auto-Pilot replied to ${customerName}!`, 'success');
+        }
       }
     } catch (err) {
       console.error('Auto-Pilot execution error:', err);
@@ -744,6 +781,7 @@ export const AdminChatInbox = () => {
 
   const handleSelectChat = async (chatId) => {
     setActiveChatId(chatId);
+    setPendingAiOffer(null);
     setMobileView('chat');
     const targetConv = conversations.find(c => c.id === chatId);
     const email = targetConv?.clientEmail || '';
@@ -1008,13 +1046,21 @@ export const AdminChatInbox = () => {
       });
       const data = await response.json();
       const generated = data?.replyText || data?.smartReply;
-      if (response.ok && generated) {
+      if (response.ok && (generated || data?.shouldCreateOffer)) {
         if (currentDraft) setUndoDraft(currentDraft);
-        setReplyInput(generated);
+        if (generated) setReplyInput(generated);
+
+        if (data.shouldCreateOffer && data.offerDetails?.title && data.offerDetails?.price) {
+          setPendingAiOffer(data.offerDetails);
+          showToast(`⚡ AI prepared a Custom Offer ($${data.offerDetails.price}) ready to attach!`, 'success');
+        } else {
+          setPendingAiOffer(null);
+          showToast('⚡ Smart Reply generated!', 'success');
+        }
+
         setTimeout(() => {
           adjustTextareaHeight();
         }, 10);
-        showToast('⚡ Smart Reply generated!', 'success');
       } else {
         console.error('Smart reply failed:', data?.error);
         showToast(data?.error || 'Failed to generate smart reply', 'error');
@@ -1024,6 +1070,44 @@ export const AdminChatInbox = () => {
       showToast('Smart Reply service unavailable', 'error');
     } finally {
       setIsGeneratingSmartReply(false);
+    }
+  };
+
+  const handleSendPendingAiOffer = async () => {
+    if (!pendingAiOffer || !currentActiveChatId) return;
+    setIsSubmittingAiOffer(true);
+    try {
+      const offerPayload = {
+        conversation_id: currentActiveChatId,
+        client_name: activeInfo?.customerName || activeChat?.clientName || 'Customer',
+        client_email: activeInfo?.customerEmail || activeChat?.clientEmail || '',
+        title: String(pendingAiOffer.title).trim(),
+        description: String(pendingAiOffer.description || 'Production-ready embroidery or vector files crafted to exact technical specifications.').trim(),
+        service_type: pendingAiOffer.service_type || 'Embroidery Digitizing',
+        price: parseFloat(pendingAiOffer.price) || 25,
+        discount_amount: 0,
+        final_price: parseFloat(pendingAiOffer.price) || 25,
+        delivery_time_text: `${pendingAiOffer.deliveryDays || 1} Day${(pendingAiOffer.deliveryDays || 1) > 1 ? 's' : ''}`,
+        delivery_days: parseInt(pendingAiOffer.deliveryDays, 10) || 1,
+        revisions_allowed: '99',
+        expires_in_hours: 24,
+        requires_requirements: true
+      };
+
+      const res = await createCustomOffer(offerPayload);
+      if (res?.error) {
+        showToast(res.error, 'error');
+      } else {
+        showToast(`Custom offer sent to ${offerPayload.client_name}!`, 'success');
+        setPendingAiOffer(null);
+        if (replyInput.trim()) {
+          handleSendMessage();
+        }
+      }
+    } catch {
+      showToast('Failed to create custom offer. Please try again.', 'error');
+    } finally {
+      setIsSubmittingAiOffer(false);
     }
   };
 
@@ -1712,6 +1796,65 @@ export const AdminChatInbox = () => {
                 boxShadow: '0 -2px 10px rgba(0,0,0,0.03)' 
               }}
             >
+              {/* ⚡ Pending AI Custom Offer Banner */}
+              {pendingAiOffer && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
+                  border: '1.5px solid #6ee7b7',
+                  borderRadius: '10px',
+                  padding: '0.45rem 0.75rem',
+                  marginBottom: '0.5rem',
+                  gap: '0.5rem',
+                  boxShadow: '0 2px 6px rgba(16, 185, 129, 0.1)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
+                    <Tag size={14} className="text-emerald-600 flex-shrink-0" />
+                    <div style={{ fontSize: '0.74rem', color: '#065f46', lineHeight: 1.25 }}>
+                      <strong style={{ fontWeight: 800 }}>⚡ Ready to Send Offer:</strong> {pendingAiOffer.title}{' '}
+                      <span style={{ background: '#10b981', color: '#ffffff', padding: '1px 6px', borderRadius: '4px', fontWeight: 800 }}>
+                        ${pendingAiOffer.price}
+                      </span>{' '}
+                      <span style={{ color: '#047857', fontWeight: 600 }}>({pendingAiOffer.deliveryDays || 1}d delivery)</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      onClick={handleSendPendingAiOffer}
+                      disabled={isSubmittingAiOffer}
+                      style={{
+                        background: '#059669',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '0.28rem 0.65rem',
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        cursor: isSubmittingAiOffer ? 'not-allowed' : 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        boxShadow: '0 1px 3px rgba(5, 150, 105, 0.25)'
+                      }}
+                    >
+                      {isSubmittingAiOffer ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+                      <span>Send Offer Now</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPendingAiOffer(null)}
+                      title="Dismiss Offer"
+                      style={{ background: 'transparent', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: '3px' }}
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* AI Action Toolbar (Side-by-Side: ⚡ Smart Reply + ✨ Polish with AI) */}
               <div style={{
                 display: 'flex',

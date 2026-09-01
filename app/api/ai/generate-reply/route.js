@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,28 +91,25 @@ export async function POST(req) {
       }
     }
 
-    const systemInstruction = `You are a Senior Project Manager and Sales Lead at B Digitizing Studio (Embroidery Digitizing, Vector Art, Custom Physical Patches).
+    const systemInstruction = `You are a Senior Project Manager and Sales Specialist at B Digitizing Studio (Embroidery Digitizing, Vector Art, Custom Physical Patches).
+Analyze the chat history and provide a client-ready response.
 
-### CONVERSATION MEMORY & STRICT ANTI-REPETITION RULES:
-1. **TRACK KNOWN DETAILS (STRICT):**
-   - Carefully review the entire chat transcript.
-   - If the customer ALREADY stated their required size/dimensions (e.g., 3.5 inches, 4x4), file format (e.g., DST, PES), quantity (e.g., 50 pcs), garment type/placement (e.g., cap, left chest, jacket back), backing type (e.g., iron-on, velcro), or colors in earlier messages, NEVER ask for that information again!
-   - Acknowledge what they provided (e.g., "Got it, 3.5 inches on left chest.").
+### CUSTOM OFFER GENERATION RULES:
+- If the customer explicitly asks to send an offer or link (e.g. "send me offer", "send link", "ready to order", "how to pay", "create invoice", "send custom offer", "i want to buy"), OR if all core specs (format, size/placement) are provided:
+  Set 'shouldCreateOffer' to true and fill in realistic offer details:
+  - title: e.g. "Embroidery Digitizing (DST & PES)" or "Vector Logo Artwork Conversion" or "Custom Physical Patch Production"
+  - price: realistic standard price (e.g. 15 for simple left-chest logo digitizing, 25 for standard, 35 for 3D puff, 18 for vector redraw, or 50+ for custom patches)
+  - deliveryDays: turnaround in days (typically 1 day)
+  - description: clear, professional scope of deliverables (e.g. "Production-ready Tajima DST and Brother PES files with high-density stitching and production PDF worksheet.")
+  - service_type: 'Embroidery Digitizing' | 'Vector Artwork' | 'Custom Patches'
+- If requirements are still incomplete or customer is just exploring, set 'shouldCreateOffer' to false.
 
-2. **NATURAL PROGRESSION (NO LOOPS):**
-   - Once requirements are clear, move directly to the next logical step: offer a quote/turnaround time or confirm order readiness (e.g., "I can have this digitized in DST format for $15 within 2-4 hours. Would you like me to set up the custom offer?").
-   - If only ONE specific detail is missing, ask ONLY for that single missing piece.
+### CONVERSATION MEMORY & BREVITY:
+1. Review full chat history. Never ask for size, format, or colors if the customer already stated them.
+2. 1 to 2 sentences maximum for 'replyText'. Acknowledge the design and confirm the offer.
+3. No robotic greetings like "Welcome to B Digitizing".`;
 
-3. **IMAGE & ARTWORK AWARENESS:**
-   - If an image/sketch/logo is attached, evaluate its stitch/vector/patch feasibility (e.g., detail complexity, color separations, small text).
-
-4. **BREVITY & TONE:**
-   - 2 to 3 sentences maximum.
-   - Crisp, confident, native US client support tone (Fiverr Top-Rated style).
-   - NO repeated greetings, no robotic introductions like "Welcome to B Digitizing".
-   - Do NOT wrap output in quotation marks or markdown code blocks.`;
-
-    const promptText = `Recent Chat Transcript:\n${formattedHistory}\n\nClient Name: ${customerName || 'Client'}${serviceCategory ? `\nService Category: ${serviceCategory}` : ''}\n\nDraft the next direct, smart, memory-aware response for the Admin to send:`;
+    const promptText = `Recent Chat Transcript:\n${formattedHistory}\n\nClient Name: ${customerName || 'Client'}${serviceCategory ? `\nService Category: ${serviceCategory}` : ''}\n\nDraft the next response and decide if a custom offer should be attached:`;
 
     const contents = [];
 
@@ -138,29 +135,71 @@ export async function POST(req) {
           contents: contents,
           config: {
             systemInstruction: systemInstruction,
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                replyText: { type: Type.STRING },
+                shouldCreateOffer: { type: Type.BOOLEAN },
+                offerDetails: {
+                  type: Type.OBJECT,
+                  properties: {
+                    title: { type: Type.STRING },
+                    price: { type: Type.NUMBER },
+                    deliveryDays: { type: Type.NUMBER },
+                    description: { type: Type.STRING },
+                    service_type: { type: Type.STRING }
+                  },
+                  required: ['title', 'price', 'deliveryDays', 'description']
+                }
+              },
+              required: ['replyText', 'shouldCreateOffer']
+            },
             temperature: 0.2,
-            maxOutputTokens: 200, // Enforce brevity (2-3 sentences)
+            maxOutputTokens: 350,
           },
         });
 
-        let replyText = response.text?.trim().replace(/^["']|["']$/g, '') || '';
-        // Remove email subject artifacts if any slipped through
-        replyText = replyText.replace(/^Subject:\s*.*?\n+/i, '').trim();
+        const rawText = response.text?.trim() || '';
+        let parsedData = {};
+        try {
+          parsedData = JSON.parse(rawText);
+        } catch {
+          const cleaned = rawText.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '').trim();
+          parsedData = JSON.parse(cleaned);
+        }
 
-        if (replyText) {
-          return Response.json({ replyText, smartReply: replyText, success: true });
+        if (parsedData && (parsedData.replyText || parsedData.shouldCreateOffer)) {
+          return Response.json({
+            replyText: parsedData.replyText || '',
+            smartReply: parsedData.replyText || '',
+            shouldCreateOffer: Boolean(parsedData.shouldCreateOffer),
+            offerDetails: parsedData.offerDetails || null,
+            success: true
+          });
         }
       } catch (err) {
-        console.warn(`[Generate Reply API] Model ${model} failed, trying next:`, err.message || err);
+        console.warn(`[Generate Reply API] Model ${model} failed with structured JSON, trying next:`, err.message || err);
       }
     }
 
     // Fallback direct concise reply if models fail
-    const fallbackText = `Got it, ${customerName}! We can definitely take care of this for you right away. Would you like me to set up the custom order now?`;
-    return Response.json({ replyText: fallbackText, smartReply: fallbackText, success: true });
+    const fallbackText = `Got it, ${customerName}! We can take care of this for you right away. Would you like me to set up the custom order now?`;
+    return Response.json({
+      replyText: fallbackText,
+      smartReply: fallbackText,
+      shouldCreateOffer: false,
+      offerDetails: null,
+      success: true
+    });
   } catch (error) {
-    console.error('Smart reply memory error:', error);
-    return Response.json({ error: error.message || 'Failed to generate reply' }, { status: 500 });
+    console.error('AI Offer Error:', error);
+    return Response.json({
+      replyText: 'I can create that custom offer for you right away.',
+      shouldCreateOffer: false,
+      offerDetails: null,
+      error: error.message
+    }, { status: 500 });
   }
 }
 
