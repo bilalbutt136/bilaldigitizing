@@ -100,23 +100,35 @@ export async function POST(request) {
     const rawAmount = parseFloat(body.amount);
     const rawMethod = body.method || 'card';
     const orderId = body.orderId || null;
+    const offerId = body.offerId || null;
+    const conversationId = body.conversationId || body.chatId || null;
     const bodyEmail = (body.clientEmail || body.email || '').toLowerCase().trim();
 
     let targetEmail = (user?.email || bodyEmail || '').toLowerCase().trim();
     let targetUserId = user?.id || null;
 
-    // If session is unauthenticated (e.g. mobile client or guest flow), resolve email from order in database
-    if (!targetEmail && orderId && hasServiceRole && supabaseAdmin) {
+    // If session is unauthenticated, resolve email from order or custom offer in database
+    if (!targetEmail && (orderId || offerId) && hasServiceRole && supabaseAdmin) {
       try {
-        const { data: ord } = await supabaseAdmin
-          .from('orders')
-          .select('client_email, clientEmail, user_id')
-          .eq('id', orderId)
-          .maybeSingle();
-        targetEmail = (ord?.client_email || ord?.clientEmail || '').toLowerCase().trim();
-        if (!targetUserId && ord?.user_id) targetUserId = ord.user_id;
+        if (orderId) {
+          const { data: ord } = await supabaseAdmin
+            .from('orders')
+            .select('client_email, clientEmail, user_id')
+            .eq('id', orderId)
+            .maybeSingle();
+          targetEmail = (ord?.client_email || ord?.clientEmail || '').toLowerCase().trim();
+          if (!targetUserId && ord?.user_id) targetUserId = ord.user_id;
+        } else if (offerId) {
+          const { data: off } = await supabaseAdmin
+            .from('custom_offers')
+            .select('client_email, customer_id')
+            .eq('id', offerId)
+            .maybeSingle();
+          targetEmail = (off?.client_email || '').toLowerCase().trim();
+          if (!targetUserId && off?.customer_id) targetUserId = off.customer_id;
+        }
       } catch (ordLookupErr) {
-        console.warn('[BoltPayouts Create] Order lookup warning:', ordLookupErr.message);
+        console.warn('[BoltPayouts Create] Order/Offer lookup warning:', ordLookupErr.message);
       }
     }
 
@@ -248,10 +260,25 @@ export async function POST(request) {
       bolt_order_id: boltOrderId,
       payment_url: paymentUrl,
       invoice_number: `INV-${Date.now()}`,
-      order_id: orderId,
+      order_id: orderId || offerId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
+
+    if (offerId && supabaseAdmin) {
+      try {
+        await supabaseAdmin
+          .from('custom_offers')
+          .update({
+            stripe_session_id: boltOrderId,
+            payment_intent_id: boltOrderId,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', offerId);
+      } catch (coErr) {
+        console.warn('[BoltPayouts Create] custom_offers update notice:', coErr.message);
+      }
+    }
 
     let invoice = null;
     try {

@@ -180,7 +180,7 @@ export default function OfferCardMessage({
 
   const isPending = !['paid', 'accepted', 'declined', 'rejected', 'expired', 'cancelled', 'withdrawn'].includes(currentStatus);
 
-  const handleStripeCheckout = async () => {
+  const handlePaymentCheckout = async () => {
     if (isCheckingOut || isAccepting || !isPending) return;
     setIsCheckingOut(true);
     try {
@@ -192,13 +192,16 @@ export default function OfferCardMessage({
         title: offer.title
       });
 
-      if (res.url) {
-        window.location.href = res.url;
+      const checkoutUrl = res?.paymentUrl || res?.url || res?.checkoutUrl || res?.invoice?.payment_url;
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      } else if (res?.error) {
+        showToast(res.error, 'error');
       } else {
-        showToast(res.error || 'Failed to initiate card checkout session', 'error');
+        showToast('Payment checkout initiated.', 'info');
       }
     } catch {
-      showToast('Stripe checkout service temporarily unavailable', 'error');
+      showToast('Payment checkout service temporarily unavailable', 'error');
     } finally {
       setIsCheckingOut(false);
     }
@@ -479,10 +482,10 @@ export default function OfferCardMessage({
         {/* Action Controls for Customer (Active Offer) */}
         {isPending && !isAdmin && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {/* Primary Action: Stripe Card Checkout */}
+            {/* Primary Action: Accept & Pay */}
             <button
               type="button"
-              onClick={handleStripeCheckout}
+              onClick={handlePaymentCheckout}
               disabled={isCheckingOut || isAccepting || isDeclining}
               style={{
                 width: '100%',
@@ -503,7 +506,7 @@ export default function OfferCardMessage({
               }}
             >
               {isCheckingOut ? <Loader2 size={16} className="animate-spin" /> : <CreditCard size={16} />}
-              {isCheckingOut ? 'Opening Stripe Checkout...' : `💳 Pay with Card • $${price.toFixed(2)}`}
+              {isCheckingOut ? 'Opening Secure Payment...' : `💳 Accept & Pay • $${price.toFixed(2)}`}
             </button>
 
             {/* Secondary Action Row: Instant Accept & Details */}

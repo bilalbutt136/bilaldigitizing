@@ -174,6 +174,138 @@ export async function POST(request) {
             })
             .in('id', candidateOrdIds);
         }
+
+        // Custom Offer fulfillment
+        const potentialOfferId = invoice.order_id;
+        let matchedOffer = null;
+        if (potentialOfferId || boltOrderId) {
+          try {
+            const { data: offRow } = await supabaseAdmin
+              .from('custom_offers')
+              .select('*')
+              .or(`id.eq.${potentialOfferId},stripe_session_id.eq.${boltOrderId},payment_intent_id.eq.${boltOrderId}`)
+              .maybeSingle();
+            if (offRow) matchedOffer = offRow;
+          } catch {}
+
+          if (!matchedOffer && potentialOfferId) {
+            try {
+              const { data: msgRow } = await supabaseAdmin
+                .from('messages')
+                .select('*')
+                .or(`offer_id.eq.${potentialOfferId},id.eq.${potentialOfferId}`)
+                .maybeSingle();
+              if (msgRow?.offer_data) {
+                matchedOffer = typeof msgRow.offer_data === 'string' ? JSON.parse(msgRow.offer_data) : msgRow.offer_data;
+              }
+            } catch {}
+          }
+        }
+
+        if (matchedOffer) {
+          const rawOrderNum = Math.random().toString(36).substring(2, 7).toUpperCase();
+          const generatedOrderId = `ORD-${Date.now().toString().slice(-4)}${rawOrderNum}`;
+          const nowIso = new Date().toISOString();
+
+          const offerTitle = matchedOffer.title || 'Custom Design Order';
+          const svcCategory = matchedOffer.service_type || 'Embroidery Digitizing';
+          const svcType = svcCategory.toLowerCase().includes('vector') ? 'vector' : (svcCategory.toLowerCase().includes('patch') ? 'patches' : 'digitizing');
+          const clientName = matchedOffer.client_name || 'Client';
+
+          const orderPayload = {
+            id: generatedOrderId,
+            title: offerTitle,
+            client_name: clientName,
+            client_email: clientEmail,
+            service_category: svcCategory,
+            service_type: svcType,
+            price: amount,
+            cost: amount,
+            status: 'in_progress',
+            payment_status: 'paid',
+            turnaround_time: matchedOffer.delivery_time_text || `${matchedOffer.delivery_days || 1} Day`,
+            is_rush: (matchedOffer.delivery_time_text || '').toLowerCase().includes('express') || (matchedOffer.delivery_time_text || '').toLowerCase().includes('12 hour'),
+            revisions_allowed: String(matchedOffer.revisions_allowed || '2'),
+            notes: JSON.stringify({
+              source: 'custom_offer_boltpayouts',
+              offer_id: matchedOffer.id || potentialOfferId,
+              bolt_order_id: boltOrderId,
+              description: matchedOffer.description
+            }),
+            created_at: nowIso,
+            updated_at: nowIso
+          };
+
+          try {
+            await supabaseAdmin.from('orders').insert([orderPayload]);
+          } catch (ordErr) {
+            console.error('[Bolt Webhook] Custom offer order insert notice:', ordErr.message);
+          }
+
+          // Upsert custom_offers table
+          const targetOfferId = matchedOffer.id || potentialOfferId || `off-${Date.now()}`;
+          const targetChatId = matchedOffer.conversation_id || matchedOffer.thread_id;
+          try {
+            await supabaseAdmin.from('custom_offers').upsert([{
+              id: targetOfferId,
+              conversation_id: targetChatId || 'general-support',
+              thread_id: targetChatId || 'general-support',
+              order_id: generatedOrderId,
+              created_by: matchedOffer.created_by || 'admin',
+              client_name: clientName,
+              client_email: clientEmail,
+              title: offerTitle,
+              description: matchedOffer.description || '',
+              service_type: svcCategory,
+              price: amount,
+              final_price: amount,
+              delivery_time_text: matchedOffer.delivery_time_text || `${matchedOffer.delivery_days || 1} Day`,
+              delivery_days: parseInt(matchedOffer.delivery_days, 10) || 1,
+              revisions_allowed: String(matchedOffer.revisions_allowed || '2'),
+              status: 'paid',
+              stripe_session_id: boltOrderId,
+              payment_intent_id: boltOrderId,
+              accepted_at: nowIso,
+              updated_at: nowIso
+            }]);
+          } catch (coErr) {
+            console.warn('[Bolt Webhook] custom_offers upsert notice:', coErr.message);
+          }
+
+          // Update messages table
+          const updatedOfferData = {
+            ...matchedOffer,
+            status: 'paid',
+            accepted_at: nowIso,
+            order_id: generatedOrderId,
+            bolt_order_id: boltOrderId
+          };
+
+          try {
+            await supabaseAdmin.from('messages').update({
+              offer_data: updatedOfferData,
+              attachment: JSON.stringify(updatedOfferData),
+              text: `📋 Custom Offer: ${offerTitle} ($${amount.toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(updatedOfferData)}]`
+            }).or(`offer_id.eq.${targetOfferId},id.eq.${targetOfferId},offer_id.eq.${potentialOfferId},id.eq.${potentialOfferId}`);
+          } catch {}
+
+          // Post confirmation message in chat thread
+          if (targetChatId) {
+            const confirmMsg = {
+              id: `msg-bolt-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+              conversation_id: targetChatId,
+              sender: 'admin',
+              sender_name: 'Studio System',
+              text: `🎉 Custom Offer Paid ($${amount.toFixed(2)}) via BoltPayouts! Order #${generatedOrderId} is now active and in production.`,
+              timestamp: nowIso,
+              created_at: nowIso,
+              is_read: false
+            };
+            try {
+              await supabaseAdmin.from('messages').insert([confirmMsg]);
+            } catch {}
+          }
+        }
       }
 
       // 5. Generate receipt

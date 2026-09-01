@@ -1393,16 +1393,18 @@ export async function createCustomOffer(offerPayload) {
 export async function createOfferCheckoutSession(offerId, options = {}) {
   try {
     const headers = await getAuthHeaders();
-    const res = await fetch('/api/checkout', {
+    const res = await fetch('/api/boltpayouts/create', {
       method: 'POST',
       headers,
       body: JSON.stringify({
         type: 'custom_offer',
         offerId,
         amount: options.amount,
+        method: options.method || 'card',
         clientEmail: options.clientEmail,
         conversationId: options.conversationId,
-        title: options.title
+        title: options.title,
+        description: options.title
       })
     });
     return await res.json();
