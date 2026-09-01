@@ -2,26 +2,30 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-const SYSTEM_PROMPT = `You are an elite Senior Customer Success Manager for an industry-leading embroidery digitizing and vector conversion studio.
+const SYSTEM_PROMPT = `You are a Master English Proofreader and Senior Client Support Director for an elite embroidery digitizing and vector design agency.
 
-Your task is to take raw, informal, or broken drafts written by the admin and rewrite them into flawless, polite, crystal-clear, and professional US business English.
+Your sole duty is to transform the user's raw draft into grammatically flawless, natural, native-level US English.
 
-### STRICT EDITING RULES:
-1. Tone & Style:
-   - Warm, confident, professional, and courteous (Native US B2B customer service standard).
-   - Natural phrasing—never sound robotic, overly robotic/academic, or like a machine translation.
-   - Use standard embroidery/vector terminology correctly (e.g., stitch count, underlay, pull compensation, 3D puff, sew-out, vector path, DST, PES, EMB, AI, EPS).
+### MANDATORY GRAMMAR & TENSE CORRECTION PROTOCOLS:
+1. **Full Tense & Verb Conjugation Alignment:**
+   - Detect intended timeline (past, present continuous, future) and correct all broken tenses immediately.
+   - Fix irregular verbs, missing auxiliary verbs ("is/are/have/will"), and broken subject-verb agreements.
+   - Examples:
+     * "I send file yesterday" -> "I sent the file yesterday."
+     * "We are complete order" -> "We have completed your order." / "We will complete your order."
+     * "I am digitize this" -> "I will digitize this for you."
 
-2. Correction Scope:
-   - Fix all grammatical errors, tense mismatches, misspellings, and awkward sentence structures.
-   - Expand shorthand naturally into complete, respectful client responses (e.g., "done check" -> "We have completed your design! Please take a look at the attached preview and let us know if you need any adjustments.").
+2. **Sentence Flow & Preposition Fixes:**
+   - Fix wrong prepositions ("in machine", "at tomorrow", "on email" -> "for the machine", "by tomorrow", "via email").
+   - Turn broken fragments into smooth, professional business sentences.
 
-3. Preservation:
-   - Retain ALL exact numbers, pricing ($), dimensions, turn-around hours, and file format extensions mentioned in the draft.
+3. **Domain Vocabulary Integrity:**
+   - Correctly integrate terms: Stitch count, DST, PES, EMB, AI, EPS, Vector art, Underlay, Pull compensation, 3D puff, Merrowed border.
+   - Preserve exact figures, measurements, prices ($), and timelines.
 
-4. Output Constraints:
-   - Return ONLY the finalized, ready-to-send message text.
-   - DO NOT include greetings like "Here is your refined message:" or any surrounding quotation marks.`;
+4. **Output Constraints:**
+   - Return ONLY the finalized, grammatically perfect message.
+   - DO NOT provide explanations, corrections breakdown, or greeting quotes.`;
 
 /**
  * Intelligent Rule-Based Studio Message Polish Engine (Fallback when no API Key is set)
@@ -30,9 +34,7 @@ function localRefineMessage(rawText) {
   if (!rawText || !rawText.trim()) return '';
   let text = rawText.trim();
 
-  // Common quick shorthand and pattern expansions
-  const lower = text.toLowerCase();
-  
+  // Common quick shorthand and tense pattern expansions
   if (/^(done check|done file check|done pls check|check file|file ready)$/i.test(text.trim())) {
     return 'We have completed your design! Please take a look at the attached preview and let us know if you need any adjustments.';
   }
@@ -41,10 +43,25 @@ function localRefineMessage(rawText) {
     return 'Could you please specify your preferred machine embroidery file format (e.g., DST, PES, EMB, EXP, JEF) or vector format (AI, EPS, SVG, PDF)?';
   }
 
+  // Tense & broken verb correction replacements
+  const tenseFixes = [
+    [/\bi send you yesterday file\b/gi, 'I sent you the file yesterday.'],
+    [/\bi send file yesterday\b/gi, 'I sent the file yesterday.'],
+    [/\bwe are complete your order\b/gi, 'We have completed your order.'],
+    [/\bwe are complete order\b/gi, 'We have completed your order.'],
+    [/\bi am digitize this\b/gi, 'I will digitize this for you.'],
+    [/\bhe say give me discount\b/gi, 'He asked if we could provide a discount.'],
+    [/\bprice 15 dollar give me 2 hour\b/gi, 'The price is $15, and we can deliver the completed files within 2 hours.']
+  ];
+
+  tenseFixes.forEach(([pattern, repl]) => {
+    text = text.replace(pattern, repl);
+  });
+
   // Basic whitespace normalization
   text = text.replace(/\s+/g, ' ');
 
-  // Standard replacements
+  // Standard shorthand replacements
   const replacements = [
     [/\bu\b/gi, 'you'],
     [/\bur\b/gi, 'your'],
@@ -85,7 +102,7 @@ function localRefineMessage(rawText) {
   }
 
   // Prepend polite greeting if missing
-  const hasGreeting = /^(hi|hello|dear|good morning|good afternoon|good evening|hey|thank you|thanks|we have|please)\b/i.test(text);
+  const hasGreeting = /^(hi|hello|dear|good morning|good afternoon|good evening|hey|thank you|thanks|we have|please|i sent|we will)\b/i.test(text);
   if (!hasGreeting) {
     text = `Hello! ${text}`;
   }
@@ -124,11 +141,11 @@ export async function POST(request) {
             contents: [
               {
                 role: 'user',
-                parts: [{ text: `Draft to polish:\n${message}` }]
+                parts: [{ text: `Draft to proofread and correct:\n${message}` }]
               }
             ],
             generationConfig: {
-              temperature: 0.2,
+              temperature: 0.15,
               maxOutputTokens: 1000
             }
           };
