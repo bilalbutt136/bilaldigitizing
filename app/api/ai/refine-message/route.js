@@ -2,13 +2,26 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-const SYSTEM_PROMPT = `You are a professional customer support assistant for an embroidery digitizing and vector art studio (B Digitizing Studio). 
-Your job is to rewrite the admin's draft message into clean, polite, clear, and professional English suitable for client communication.
-Rules:
-- Keep the original meaning and core details (pricing, turnaround time, file formats like DST/PES/EMB, stitch count, revisions).
-- Make it courteous, welcoming, and concise.
-- Preserve order numbers or links if present.
-- Output ONLY the polished message text. Do not add conversational intro/outro, disclaimers, or quotes.`;
+const SYSTEM_PROMPT = `You are an elite Senior Customer Success Manager for an industry-leading embroidery digitizing and vector conversion studio.
+
+Your task is to take raw, informal, or broken drafts written by the admin and rewrite them into flawless, polite, crystal-clear, and professional US business English.
+
+### STRICT EDITING RULES:
+1. Tone & Style:
+   - Warm, confident, professional, and courteous (Native US B2B customer service standard).
+   - Natural phrasing—never sound robotic, overly robotic/academic, or like a machine translation.
+   - Use standard embroidery/vector terminology correctly (e.g., stitch count, underlay, pull compensation, 3D puff, sew-out, vector path, DST, PES, EMB, AI, EPS).
+
+2. Correction Scope:
+   - Fix all grammatical errors, tense mismatches, misspellings, and awkward sentence structures.
+   - Expand shorthand naturally into complete, respectful client responses (e.g., "done check" -> "We have completed your design! Please take a look at the attached preview and let us know if you need any adjustments.").
+
+3. Preservation:
+   - Retain ALL exact numbers, pricing ($), dimensions, turn-around hours, and file format extensions mentioned in the draft.
+
+4. Output Constraints:
+   - Return ONLY the finalized, ready-to-send message text.
+   - DO NOT include greetings like "Here is your refined message:" or any surrounding quotation marks.`;
 
 /**
  * Intelligent Rule-Based Studio Message Polish Engine (Fallback when no API Key is set)
@@ -17,10 +30,21 @@ function localRefineMessage(rawText) {
   if (!rawText || !rawText.trim()) return '';
   let text = rawText.trim();
 
-  // Basic cleanup
+  // Common quick shorthand and pattern expansions
+  const lower = text.toLowerCase();
+  
+  if (/^(done check|done file check|done pls check|check file|file ready)$/i.test(text.trim())) {
+    return 'We have completed your design! Please take a look at the attached preview and let us know if you need any adjustments.';
+  }
+  
+  if (/^tell me format( dst pes)?/i.test(text)) {
+    return 'Could you please specify your preferred machine embroidery file format (e.g., DST, PES, EMB, EXP, JEF) or vector format (AI, EPS, SVG, PDF)?';
+  }
+
+  // Basic whitespace normalization
   text = text.replace(/\s+/g, ' ');
 
-  // Common quick shorthand replacements
+  // Standard replacements
   const replacements = [
     [/\bu\b/gi, 'you'],
     [/\bur\b/gi, 'your'],
@@ -32,8 +56,8 @@ function localRefineMessage(rawText) {
     [/\bcant\b/gi, "can't"],
     [/\bdont\b/gi, "don't"],
     [/\bthats\b/gi, "that's"],
-    [/\bive\b/gi, "I've"],
-    [/\bill\b/gi, "I'll"],
+    [/\bive\b/gi, "I have"],
+    [/\bill\b/gi, "I will"],
     [/\bim\b/gi, "I am"],
     [/\bdst\b/gi, 'DST'],
     [/\bpes\b/gi, 'PES'],
@@ -61,7 +85,7 @@ function localRefineMessage(rawText) {
   }
 
   // Prepend polite greeting if missing
-  const hasGreeting = /^(hi|hello|dear|good morning|good afternoon|good evening|hey|thank you|thanks)\b/i.test(text);
+  const hasGreeting = /^(hi|hello|dear|good morning|good afternoon|good evening|hey|thank you|thanks|we have|please)\b/i.test(text);
   if (!hasGreeting) {
     text = `Hello! ${text}`;
   }
@@ -120,7 +144,10 @@ export async function POST(request) {
             const rawOutput = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
             let polished = rawOutput.trim();
 
-            // Strip leading/trailing quotes if the model wrapped the response
+            // Strip leading/trailing quotes or markdown codeblocks if model wrapped output
+            if (polished.startsWith('```') && polished.endsWith('```')) {
+              polished = polished.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '').trim();
+            }
             if ((polished.startsWith('"') && polished.endsWith('"')) || (polished.startsWith("'") && polished.endsWith("'"))) {
               polished = polished.substring(1, polished.length - 1).trim();
             }
