@@ -28,6 +28,7 @@ import {
   Reply,
   Tag,
   Sparkles,
+  Zap,
   Layers,
   Headphones,
   Inbox,
@@ -244,6 +245,7 @@ export const AdminChatInbox = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [replyInput, setReplyInput] = useState('');
   const [isRefiningAI, setIsRefiningAI] = useState(false);
+  const [isGeneratingSmartReply, setIsGeneratingSmartReply] = useState(false);
   const [undoDraft, setUndoDraft] = useState(null);
   const [attachedFile, setAttachedFile] = useState(null); // { name, url, size, format }
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
@@ -799,6 +801,45 @@ export const AdminChatInbox = () => {
       } catch (err) {
         console.warn('Admin persist message notice:', err);
       }
+    }
+  };
+
+  const handleSmartReply = async () => {
+    if (isGeneratingSmartReply) return;
+    const threadMsgs = activeChat?.messages || [];
+    if (threadMsgs.length === 0) {
+      showToast('No messages in this thread yet to generate a reply from', 'info');
+      return;
+    }
+
+    setIsGeneratingSmartReply(true);
+    if (replyInput.trim()) {
+      setUndoDraft(replyInput);
+    }
+
+    try {
+      const res = await fetch('/api/ai/smart-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: threadMsgs,
+          serviceCategory: activeInfo?.serviceCategory || 'Embroidery Digitizing',
+          clientName: activeInfo?.customerName || 'Customer'
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data?.smartReply) {
+        if (replyInput.trim()) setUndoDraft(replyInput);
+        setReplyInput(data.smartReply);
+        showToast('⚡ Smart Reply generated!', 'success');
+      } else {
+        showToast(data?.error || 'Failed to generate smart reply', 'error');
+      }
+    } catch (err) {
+      console.error('Smart Reply error:', err);
+      showToast('Smart Reply service unavailable', 'error');
+    } finally {
+      setIsGeneratingSmartReply(false);
     }
   };
 
@@ -1421,11 +1462,9 @@ export const AdminChatInbox = () => {
             <form 
               onSubmit={handleSendMessage} 
               style={{ 
-                padding: '0.65rem 0.85rem', 
-                borderTop: '1.5px solid #e2e8f0', 
+                padding: '0.65rem 1rem 0.6rem 1rem', 
                 background: '#ffffff', 
-                width: '100%', 
-                boxSizing: 'border-box', 
+                borderTop: '1px solid #e2e8f0', 
                 flexShrink: 0, 
                 position: 'sticky', 
                 bottom: 0, 
@@ -1433,6 +1472,119 @@ export const AdminChatInbox = () => {
                 boxShadow: '0 -2px 10px rgba(0,0,0,0.03)' 
               }}
             >
+              {/* AI Action Toolbar (Side-by-Side: ⚡ Smart Reply + ✨ Polish with AI) */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.5rem',
+                marginBottom: '0.45rem',
+                flexWrap: 'wrap'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                  {/* Smart Auto Reply Button */}
+                  <button
+                    type="button"
+                    onClick={handleSmartReply}
+                    disabled={isGeneratingSmartReply}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      padding: '0.32rem 0.75rem',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      color: '#b45309',
+                      background: isGeneratingSmartReply ? '#fef3c7' : '#fffbeb',
+                      border: '1px solid #fde68a',
+                      borderRadius: '8px',
+                      cursor: isGeneratingSmartReply ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.15s ease',
+                      boxShadow: '0 1px 2px rgba(180, 83, 9, 0.05)'
+                    }}
+                    onMouseEnter={(e) => { if (!isGeneratingSmartReply) e.currentTarget.style.background = '#fef3c7'; }}
+                    onMouseLeave={(e) => { if (!isGeneratingSmartReply) e.currentTarget.style.background = '#fffbeb'; }}
+                    title="Read conversation context and auto-generate a tailored client response"
+                  >
+                    {isGeneratingSmartReply ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin text-amber-600" />
+                        <span>Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap size={13} className="text-amber-500 fill-amber-500" />
+                        <span>⚡ Smart Reply</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* AI Polish Draft Button */}
+                  <button
+                    type="button"
+                    onClick={handleAIPolish}
+                    disabled={!replyInput.trim() || isRefiningAI}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      padding: '0.32rem 0.75rem',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      color: replyInput.trim() ? '#4338ca' : '#94a3b8',
+                      background: replyInput.trim() ? '#eef2ff' : '#f8fafc',
+                      border: replyInput.trim() ? '1px solid #c7d2fe' : '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      cursor: replyInput.trim() && !isRefiningAI ? 'pointer' : 'not-allowed',
+                      transition: 'all 0.15s ease',
+                      boxShadow: replyInput.trim() ? '0 1px 2px rgba(67, 56, 202, 0.08)' : 'none'
+                    }}
+                    onMouseEnter={(e) => { if (replyInput.trim() && !isRefiningAI) e.currentTarget.style.background = '#e0e7ff'; }}
+                    onMouseLeave={(e) => { if (replyInput.trim() && !isRefiningAI) e.currentTarget.style.background = '#eef2ff'; }}
+                    title="Transform current draft into polished, native US customer service English"
+                  >
+                    {isRefiningAI ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin text-indigo-600" />
+                        <span>Polishing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={13} className={replyInput.trim() ? 'text-indigo-600' : 'text-slate-400'} />
+                        <span>✨ Polish with AI</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Custom Offer Button (Only in Normal Customer Inbox, never in Support) */}
+                {(!activeChat?.isSupport && !isSupportThread(activeChat)) && (
+                  <button
+                    type="button"
+                    onClick={() => setIsOfferModalOpen(true)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      padding: '0.3rem 0.65rem',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      color: '#4f46e5',
+                      background: '#f5f3ff',
+                      border: '1px solid #ddd6fe',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="Create & Send Custom Offer"
+                  >
+                    <Tag size={12} className="text-indigo-600" />
+                    <span>Create Offer</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Input Row: Attachment + Textarea + Send */}
               <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', width: '100%' }}>
                 <input
                   type="file"
@@ -1465,35 +1617,6 @@ export const AdminChatInbox = () => {
                   {isUploadingAttachment ? <Loader2 size={16} className="animate-spin" style={{ color: '#ea580c' }} /> : <Paperclip size={18} />}
                 </button>
 
-                {/* Custom Offer Button (Only in Normal Customer Inbox, never in Support) */}
-                {(!activeChat?.isSupport && !isSupportThread(activeChat)) && (
-                  <button
-                    type="button"
-                    onClick={() => setIsOfferModalOpen(true)}
-                    style={{
-                      background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.15))',
-                      border: '1.5px solid rgba(99, 102, 241, 0.4)',
-                      color: '#4f46e5',
-                      padding: '0 0.65rem',
-                      height: '38px',
-                      borderRadius: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      fontWeight: 800,
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                      transition: 'all 0.2s ease',
-                      whiteSpace: 'nowrap'
-                    }}
-                    title="Create & Send Custom Offer"
-                  >
-                    <Tag size={14} className="text-indigo-600" />
-                    <span>Offer</span>
-                  </button>
-                )}
-
                 <textarea
                   className="chat-message-input"
                   rows={1}
@@ -1522,44 +1645,6 @@ export const AdminChatInbox = () => {
                     fontFamily: 'inherit'
                   }}
                 />
-
-                {/* AI Polish Button */}
-                <button
-                  type="button"
-                  onClick={handleAIPolish}
-                  disabled={!replyInput.trim() || isRefiningAI}
-                  style={{
-                    height: '40px',
-                    padding: '0 0.85rem',
-                    borderRadius: '10px',
-                    background: replyInput.trim() ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' : '#f1f5f9',
-                    border: replyInput.trim() ? '1px solid #4338ca' : '1.5px solid #cbd5e1',
-                    color: replyInput.trim() ? '#ffffff' : '#94a3b8',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    fontWeight: 800,
-                    fontSize: '0.8rem',
-                    cursor: replyInput.trim() && !isRefiningAI ? 'pointer' : 'not-allowed',
-                    flexShrink: 0,
-                    boxShadow: replyInput.trim() ? '0 3px 10px rgba(99, 102, 241, 0.3)' : 'none',
-                    transition: 'all 0.2s ease',
-                    opacity: isRefiningAI ? 0.7 : 1
-                  }}
-                  title="Refine and polish draft into professional English with AI"
-                >
-                  {isRefiningAI ? (
-                    <>
-                      <Loader2 size={14} className="animate-spin" />
-                      <span>Polishing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles size={14} className={replyInput.trim() ? 'text-amber-300' : ''} />
-                      <span>AI Polish</span>
-                    </>
-                  )}
-                </button>
 
                 <button
                   type="submit"
