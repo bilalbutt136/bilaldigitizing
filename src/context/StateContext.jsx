@@ -36,6 +36,7 @@ import {
   updateHomePageSettingsInSupabase,
   saveHeroServiceViaApi,
   fetchConversations,
+  getAdminThreadUnreadCount,
   subscribeToLiveMessages,
   fetchNotificationsFromSupabase,
   createNotificationInSupabase,
@@ -617,7 +618,7 @@ export const StateProvider = ({ children }) => {
 
         let total = 0;
         if (currentRole === 'admin') {
-          total = convs.reduce((sum, c) => sum + (c.adminUnreadCount ?? c.unreadCount ?? 0), 0);
+          total = convs.reduce((sum, c) => sum + getAdminThreadUnreadCount(c), 0);
         } else {
           total = convs.reduce((sum, c) => sum + (c.clientUnreadCount ?? 0), 0);
         }

@@ -1491,25 +1491,38 @@ export async function addChatMessage(chatId, messageObj) {
   } catch { return false; }
 }
 
+export function getAdminThreadUnreadCount(conv, activeChatId = null) {
+  if (!conv) return 0;
+  if (activeChatId && conv.id === activeChatId) return 0;
+
+  const msgs = conv.messages || [];
+  const clientUnreadMsgs = msgs.filter(m => 
+    (m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin') && 
+    m.is_read !== true && 
+    m.is_read !== 'true'
+  );
+
+  if (clientUnreadMsgs.length > 0) return clientUnreadMsgs.length;
+  return conv.adminUnreadCount ?? conv.admin_unread_count ?? conv.unreadCount ?? conv.unread_count ?? 0;
+}
+
 export async function markConversationAsRead(chatId, role = 'admin', clientEmail = '') {
   try {
     if (!chatId) return false;
-    const headers = await getAuthHeaders();
-    await fetch('/api/messages', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ 
-        action: 'markAsRead', 
-        payload: { 
-          conversation_id: chatId,
-          role,
-          clientEmail
-        } 
-      })
-    });
+    const cleanEmail = clientEmail ? String(clientEmail).toLowerCase().trim() : '';
 
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: chatId, role } }));
+      const nowTs = String(Date.now());
+      if (role === 'admin') {
+        localStorage.setItem('bdigi_read_admin_' + chatId, nowTs);
+        if (cleanEmail) localStorage.setItem('bdigi_read_admin_chat-' + cleanEmail, nowTs);
+      }
+      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: chatId, role, clientEmail: cleanEmail } }));
+      try {
+        const bc = new BroadcastChannel('bdigi_chat_sync');
+        bc.postMessage({ type: 'read_update', conversation_id: chatId, role, clientEmail: cleanEmail });
+        bc.close();
+      } catch {}
     }
 
     const channel = getSharedChatChannel();
@@ -1525,6 +1538,20 @@ export async function markConversationAsRead(chatId, role = 'admin', clientEmail
         }
       });
     }
+
+    const headers = await getAuthHeaders();
+    await fetch('/api/messages', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ 
+        action: 'markAsRead', 
+        payload: { 
+          conversation_id: chatId,
+          role,
+          clientEmail: cleanEmail
+        } 
+      })
+    });
 
     return true;
   } catch { return false; }

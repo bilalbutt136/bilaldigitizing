@@ -710,20 +710,46 @@ export async function POST(request) {
             .update({ admin_unread_count: 0, unread_count: 0, updated_at: nowIso })
             .in('id', targetIds);
           
+          if (targetEmail) {
+            await supabase.from('conversations')
+              .update({ admin_unread_count: 0, unread_count: 0, updated_at: nowIso })
+              .ilike('client_email', targetEmail);
+          }
+          
           await supabase.from('messages')
             .update({ is_read: true })
             .in('conversation_id', targetIds)
             .neq('sender', 'admin');
+
+          if (targetEmail) {
+            await supabase.from('messages')
+              .update({ is_read: true })
+              .ilike('client_email', targetEmail)
+              .neq('sender', 'admin');
+          }
         } else {
           // Client read admin/support's messages
           await supabase.from('conversations')
             .update({ client_unread_count: 0, updated_at: nowIso })
             .in('id', targetIds);
+
+          if (targetEmail) {
+            await supabase.from('conversations')
+              .update({ client_unread_count: 0, updated_at: nowIso })
+              .ilike('client_email', targetEmail);
+          }
           
           await supabase.from('messages')
             .update({ is_read: true })
             .in('conversation_id', targetIds)
             .eq('sender', 'admin');
+
+          if (targetEmail) {
+            await supabase.from('messages')
+              .update({ is_read: true })
+              .ilike('client_email', targetEmail)
+              .eq('sender', 'admin');
+          }
         }
       }
       

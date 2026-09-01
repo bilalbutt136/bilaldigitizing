@@ -10,11 +10,13 @@ import {
   subscribeToLiveMessages,
   uploadFileToCloudinaryFull,
   broadcastTypingStatus,
-  subscribeToTypingStatus
+  subscribeToTypingStatus,
+  getAdminThreadUnreadCount
 } from '../../services/supabaseService';
 import { playNotificationSound } from '../../utils/audioNotification';
 import WhatsAppChatMessage from '../common/WhatsAppChatMessage';
 import AdminCreateOfferModal from './AdminCreateOfferModal';
+import AdminConversationCard from './AdminConversationCard';
 import {
   MessageSquare,
   Send,
@@ -557,48 +559,33 @@ export const AdminChatInbox = () => {
     if (currentActiveChatId && isSupabaseConfigured) {
       const targetConv = conversations.find(c => c.id === currentActiveChatId);
       const email = targetConv?.clientEmail || '';
-      const now = Date.now();
-
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('bdigi_read_admin_' + currentActiveChatId, String(now));
-        if (email) localStorage.setItem('bdigi_read_admin_chat-' + email, String(now));
-        window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: currentActiveChatId, role: 'admin' } }));
-      }
 
       markConversationAsRead(currentActiveChatId, 'admin', email);
 
-      setConversations(prev => prev.map(c => 
-        (c.id === currentActiveChatId || (email && c.clientEmail === email))
-          ? {
-              ...c,
-              unreadCount: 0,
-              adminUnreadCount: 0,
-              messages: (c.messages || []).map(m => m.sender === 'client' ? { ...m, is_read: true } : m)
-            } 
-          : c
-      ));
+      setConversations(prev => {
+        const updated = prev.map(c => 
+          (c.id === currentActiveChatId || (email && c.clientEmail === email))
+            ? {
+                ...c,
+                unreadCount: 0,
+                adminUnreadCount: 0,
+                messages: (c.messages || []).map(m => (m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin') ? { ...m, is_read: true } : m)
+              } 
+            : c
+        );
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify(updated));
+          } catch {}
+        }
+        return updated;
+      });
     }
   }, [currentActiveChatId]);
 
   // Helper to compute admin unread count strictly for client messages
   const getThreadUnreadCount = (conv) => {
-    if (!conv) return 0;
-    if (activeChatId === conv.id || currentActiveChatId === conv.id) return 0;
-    
-    const lastRead = typeof window !== 'undefined' ? Math.max(
-      parseInt(localStorage.getItem('bdigi_read_admin_' + conv.id) || '0', 10),
-      conv.clientEmail ? parseInt(localStorage.getItem('bdigi_read_admin_chat-' + conv.clientEmail) || '0', 10) : 0
-    ) : 0;
-
-    const msgs = conv.messages || [];
-    const unreadMsgs = msgs.filter(m => {
-      if (m.sender !== 'client') return false;
-      if (m.is_read === true || m.is_read === 'true') return false;
-      const msgTime = parseMessageTime(m);
-      return msgTime > lastRead;
-    });
-
-    return unreadMsgs.length;
+    return getAdminThreadUnreadCount(conv, activeChatId);
   };
 
   const handleSelectChat = (chatId) => {
@@ -606,26 +593,29 @@ export const AdminChatInbox = () => {
     setMobileView('chat');
     const targetConv = conversations.find(c => c.id === chatId);
     const email = targetConv?.clientEmail || '';
-    const now = Date.now();
 
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('bdigi_read_admin_' + chatId, String(now));
-      if (email) localStorage.setItem('bdigi_read_admin_chat-' + email, String(now));
-      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: chatId, role: 'admin' } }));
-    }
+    // 1. Instant optimistic local UI update
+    setConversations(prev => {
+      const updated = prev.map(c => 
+        (c.id === chatId || (email && c.clientEmail === email))
+          ? {
+              ...c,
+              unreadCount: 0,
+              adminUnreadCount: 0,
+              messages: (c.messages || []).map(m => (m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin') ? { ...m, is_read: true } : m)
+            } 
+          : c
+      );
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(updated));
+        } catch {}
+      }
+      return updated;
+    });
 
+    // 2. Trigger background DB update & global broadcast
     markConversationAsRead(chatId, 'admin', email);
-
-    setConversations(prev => prev.map(c => 
-      (c.id === chatId || (email && c.clientEmail === email))
-        ? {
-            ...c,
-            unreadCount: 0,
-            adminUnreadCount: 0,
-            messages: (c.messages || []).map(m => m.sender === 'client' ? { ...m, is_read: true } : m)
-          } 
-        : c
-    ));
   };
 
   const isSupportThread = (c) => {
@@ -646,18 +636,24 @@ export const AdminChatInbox = () => {
   const inboxUnreadTotal = useMemo(() => {
     return conversations
       .filter(c => !isSupportThread(c))
-      .reduce((sum, c) => sum + getThreadUnreadCount(c), 0);
-  }, [conversations, activeChatId, currentActiveChatId]);
+      .reduce((sum, c) => sum + getAdminThreadUnreadCount(c, activeChatId), 0);
+  }, [conversations, activeChatId]);
 
   const supportUnreadTotal = useMemo(() => {
     return conversations
       .filter(c => isSupportThread(c))
-      .reduce((sum, c) => sum + getThreadUnreadCount(c), 0);
-  }, [conversations, activeChatId, currentActiveChatId]);
+      .reduce((sum, c) => sum + getAdminThreadUnreadCount(c, activeChatId), 0);
+  }, [conversations, activeChatId]);
 
   const unreadTotal = useMemo(() => {
     return activeSection === 'inbox' ? inboxUnreadTotal : supportUnreadTotal;
   }, [activeSection, inboxUnreadTotal, supportUnreadTotal]);
+
+  const unreadThreadsCount = useMemo(() => {
+    return conversations
+      .filter(c => (activeSection === 'inbox' ? !isSupportThread(c) : isSupportThread(c)))
+      .filter(c => getAdminThreadUnreadCount(c, activeChatId) > 0).length;
+  }, [conversations, activeSection, activeChatId]);
 
   // Switch active conversation when switching section if current is not in section
   const handleSectionSwitch = (section) => {
@@ -683,7 +679,7 @@ export const AdminChatInbox = () => {
       if (activeSection === 'support' && !isSupport) return false;
 
       if (subFilter === 'unread') {
-        if (getThreadUnreadCount(conv) === 0) return false;
+        if (getAdminThreadUnreadCount(conv, activeChatId) === 0) return false;
       }
 
       if (!searchTerm.trim()) return true;
@@ -697,7 +693,7 @@ export const AdminChatInbox = () => {
         (conv.messages || []).some(m => (m.text || '').toLowerCase().includes(term))
       );
     });
-  }, [conversations, activeSection, subFilter, searchTerm, orders, activeChatId, currentActiveChatId]);
+  }, [conversations, activeSection, subFilter, searchTerm, orders, activeChatId]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
@@ -991,7 +987,7 @@ export const AdminChatInbox = () => {
                   }}
                   onClick={() => setSubFilter('all')}
                 >
-                  All ({filteredConversations.length})
+                  All ({activeSection === 'inbox' ? inboxConversationsCount : supportConversationsCount})
                 </button>
                 <button
                   type="button"
@@ -1004,7 +1000,7 @@ export const AdminChatInbox = () => {
                   }}
                   onClick={() => setSubFilter('unread')}
                 >
-                  Unread ({unreadTotal})
+                  Unread ({unreadThreadsCount})
                 </button>
               </div>
 
@@ -1050,159 +1046,47 @@ export const AdminChatInbox = () => {
           {/* Conversations Thread Feed */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
             {filteredConversations.length === 0 ? (
-              <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                <MessageSquare size={24} style={{ margin: '0 auto 0.5rem', opacity: 0.3 }} />
-                <p style={{ margin: 0 }}>No conversations found</p>
+              <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                <MessageSquare size={28} style={{ margin: '0 auto 0.75rem', opacity: 0.3 }} />
+                <p style={{ margin: 0, fontWeight: 700 }}>
+                  {subFilter === 'unread' ? 'No unread conversations' : 'No conversations found'}
+                </p>
+                {subFilter === 'unread' && (
+                  <button
+                    type="button"
+                    onClick={() => setSubFilter('all')}
+                    style={{
+                      marginTop: '0.75rem',
+                      background: 'transparent',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-primary, #ea580c)',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      padding: '0.35rem 0.75rem',
+                      borderRadius: '6px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    View All Messages
+                  </button>
+                )}
               </div>
             ) : (
               filteredConversations.map((conv) => {
                 const isActive = conv.id === activeChatId;
                 const info = resolveThreadInfo(conv, orders);
-                const lastMsg = (conv.messages || [])[(conv.messages || []).length - 1] || {};
                 const threadUnread = getThreadUnreadCount(conv);
 
                 return (
-                  <div
+                  <AdminConversationCard
                     key={conv.id}
-                    onClick={() => handleSelectChat(conv.id)}
-                    style={{
-                      padding: '0.85rem',
-                      marginBottom: '0.45rem',
-                      borderRadius: '10px',
-                      border: isActive 
-                        ? '2px solid var(--color-primary, var(--orange-500))' 
-                        : (threadUnread > 0 ? '1.5px solid #bfdbfe' : '1px solid var(--color-border, #e2e8f0)'),
-                      borderLeft: isActive 
-                        ? '4.5px solid var(--color-primary, var(--orange-500))' 
-                        : (threadUnread > 0 ? '4.5px solid #2563eb' : '1px solid var(--color-border, #e2e8f0)'),
-                      background: isActive 
-                        ? 'var(--color-surface, #ffffff)' 
-                        : (threadUnread > 0 ? '#eff6ff' : 'var(--color-surface, #ffffff)'),
-                      boxShadow: isActive 
-                        ? '0 4px 14px rgba(249, 115, 22, 0.16)' 
-                        : (threadUnread > 0 ? '0 2px 8px rgba(37, 99, 235, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.02)'),
-                      cursor: 'pointer',
-                      transition: 'all 0.18s ease'
-                    }}
-                    onMouseEnter={(e) => { 
-                      if (!isActive) e.currentTarget.style.background = threadUnread > 0 ? '#dbeafe' : 'var(--color-subtle, #f1f5f9)'; 
-                    }}
-                    onMouseLeave={(e) => { 
-                      if (!isActive) e.currentTarget.style.background = threadUnread > 0 ? '#eff6ff' : 'var(--color-surface, #ffffff)'; 
-                    }}
-                  >
-                    <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
-                      {/* Avatar / Initials */}
-                      <div style={{ position: 'relative', flexShrink: 0 }}>
-                        <img
-                          src={conv.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(info.customerName)}&background=0f172a&color=fff`}
-                          alt={info.customerName}
-                          style={{ 
-                            width: '40px', 
-                            height: '40px', 
-                            borderRadius: '50%', 
-                            objectFit: 'cover', 
-                            border: threadUnread > 0 ? '2px solid #2563eb' : '1.5px solid var(--border-color)' 
-                          }}
-                        />
-                        <span style={{
-                          position: 'absolute',
-                          bottom: -2,
-                          right: -2,
-                          width: '10px',
-                          height: '10px',
-                          borderRadius: '50%',
-                          background: conv.status === 'online' ? '#10b981' : '#94a3b8',
-                          border: '2px solid #ffffff'
-                        }} />
-                      </div>
-
-                      {/* Info & Last Message */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem' }}>
-                          <div style={{ 
-                            fontSize: '0.85rem', 
-                            fontWeight: threadUnread > 0 ? 900 : 700, 
-                            color: threadUnread > 0 ? '#1e3a8a' : 'var(--navy-900)', 
-                            whiteSpace: 'nowrap', 
-                            overflow: 'hidden', 
-                            textOverflow: 'ellipsis',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.35rem'
-                          }}>
-                            <span>{info.customerName}</span>
-                            {threadUnread > 0 && (
-                              <span style={{
-                                width: '7px',
-                                height: '7px',
-                                borderRadius: '50%',
-                                background: '#2563eb',
-                                flexShrink: 0
-                              }} />
-                            )}
-                          </div>
-                          <span style={{ 
-                            fontSize: '0.68rem', 
-                            color: threadUnread > 0 ? '#1d4ed8' : 'var(--text-muted)', 
-                            fontWeight: threadUnread > 0 ? 800 : 500,
-                            flexShrink: 0, 
-                            marginLeft: '0.35rem' 
-                          }}>
-                            {formatChatTime(lastMsg.timestamp)}
-                          </span>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
-                          {info.customerEmail && (
-                            <span style={{ fontSize: '0.725rem', color: 'var(--navy-700)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {info.customerEmail}
-                            </span>
-                          )}
-                          {conv.orders && conv.orders.length > 0 && (
-                            <span style={{ fontSize: '0.65rem', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', padding: '0.05rem 0.35rem', borderRadius: '4px', fontWeight: 800, flexShrink: 0 }}>
-                              📦 {conv.orders.length} {conv.orders.length === 1 ? 'Order' : 'Orders'}
-                            </span>
-                          )}
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <p style={{
-                            fontSize: '0.78rem',
-                            color: threadUnread > 0 ? '#0f172a' : 'var(--text-muted)',
-                            fontWeight: threadUnread > 0 ? 800 : 400,
-                            margin: 0,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            maxWidth: '175px'
-                          }}>
-                            {lastMsg.sender === 'admin' ? 'You: ' : ''}{lastMsg.text || (lastMsg.attachment ? `📎 Attachment` : 'No messages yet')}
-                          </p>
-
-                          {threadUnread > 0 && (
-                            <span style={{
-                              background: '#ef4444',
-                              color: '#ffffff',
-                              fontSize: '0.68rem',
-                              fontWeight: 900,
-                              minWidth: '20px',
-                              height: '20px',
-                              borderRadius: '9999px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              padding: '0 5px',
-                              flexShrink: 0,
-                              boxShadow: '0 2px 6px rgba(239, 68, 68, 0.4)'
-                            }}>
-                              {threadUnread}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                    conversation={conv}
+                    isActive={isActive}
+                    unreadCount={threadUnread}
+                    threadInfo={info}
+                    onSelect={handleSelectChat}
+                    formatTime={formatChatTime}
+                  />
                 );
               })
             )}

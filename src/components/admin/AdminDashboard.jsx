@@ -11,7 +11,7 @@ import { AdminChatInbox } from './AdminChatInbox';
 import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
 import { PortfolioManager } from './PortfolioManager';
-import { fetchConversations, subscribeToLiveMessages } from '../../services/supabaseService';
+import { fetchConversations, subscribeToLiveMessages, getAdminThreadUnreadCount } from '../../services/supabaseService';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
 import { 
   LayoutDashboard, 
@@ -70,7 +70,6 @@ export const AdminDashboard = () => {
   const setActiveTab = (tab) => {
     setActiveTabState(tab);
     if (setActiveAdminTab) setActiveAdminTab(tab);
-    if (tab === 'chat') setAdminUnreadCount(0);
   };
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -114,15 +113,7 @@ export const AdminDashboard = () => {
           if (convs && isMounted) {
             let totalUnread = 0;
             convs.forEach(c => {
-              const msgs = c.messages || [];
-              const lastRead = typeof window !== 'undefined' ? parseInt(localStorage.getItem('bdigi_read_admin_' + c.id) || '0', 10) : 0;
-              const unreadFromClient = msgs.filter(m => {
-                const isClient = m.sender === 'client';
-                if (!isClient) return false;
-                const msgTime = m.timestamp && !isNaN(new Date(m.timestamp).getTime()) ? new Date(m.timestamp).getTime() : 0;
-                return msgTime > lastRead;
-              });
-              totalUnread += unreadFromClient.length;
+              totalUnread += getAdminThreadUnreadCount(c);
             });
             setAdminUnreadCount(totalUnread);
           }
@@ -136,8 +127,8 @@ export const AdminDashboard = () => {
       (msgPayload) => {
         if (!isMounted) return;
         const record = msgPayload.new || msgPayload.record;
-        if (record && record.sender === 'client' && activeTab !== 'chat') {
-          setAdminUnreadCount(prev => prev + 1);
+        if (record && (record.sender === 'client' || record.sender === 'customer' || record.sender !== 'admin')) {
+          loadAdminUnreadCount();
         }
       },
       (convPayload) => {
@@ -183,7 +174,7 @@ export const AdminDashboard = () => {
       window.removeEventListener('bdigi_switch_admin_tab', handleAdminTabSwitch);
       window.removeEventListener('bdigi_switch_tab', handleAdminTabSwitch);
     };
-  }, [mounted, activeTab, orders, openOrderTrackerDrawer, setSelectedOrderForDrawer]);
+  }, [mounted, orders, openOrderTrackerDrawer, setSelectedOrderForDrawer]);
 
   const configuredAdminEmail = (siteSettings?.adminEmail || authUser?.email || '').toLowerCase().trim();
   const isMasterAdmin = mounted && isAuthenticated && authUser?.role === 'admin';
