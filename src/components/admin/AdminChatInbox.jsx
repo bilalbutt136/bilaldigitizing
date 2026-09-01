@@ -739,6 +739,19 @@ export const AdminChatInbox = () => {
   }, [conversations, activeSection, subFilter, searchTerm, orders, activeChatId]);
 
   const handleKeyDown = (e) => {
+    // Ctrl/Cmd + Shift + P => Polish with AI
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'P' || e.key === 'p')) {
+      e.preventDefault();
+      handleAIPolish();
+      return;
+    }
+    // Ctrl/Cmd + Shift + S => Smart Reply
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'S' || e.key === 's')) {
+      e.preventDefault();
+      handleSmartReply();
+      return;
+    }
+    // Enter without Shift => Send Message
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage(e);
@@ -858,6 +871,9 @@ export const AdminChatInbox = () => {
       if (response.ok && generated) {
         if (currentDraft) setUndoDraft(currentDraft);
         setReplyInput(generated);
+        setTimeout(() => {
+          adjustTextareaHeight();
+        }, 10);
         showToast('⚡ Smart Reply generated!', 'success');
       } else {
         console.error('Smart reply failed:', data?.error);
@@ -1542,7 +1558,7 @@ export const AdminChatInbox = () => {
                     }}
                     onMouseEnter={(e) => { if (!isGeneratingSmartReply) e.currentTarget.style.background = '#fef3c7'; }}
                     onMouseLeave={(e) => { if (!isGeneratingSmartReply) e.currentTarget.style.background = '#fffbeb'; }}
-                    title="Read conversation context and auto-generate a tailored client response"
+                    title="Read conversation context and auto-generate a tailored client response (Ctrl+Shift+S)"
                   >
                     {isGeneratingSmartReply ? (
                       <>
@@ -1579,7 +1595,7 @@ export const AdminChatInbox = () => {
                     }}
                     onMouseEnter={(e) => { if (replyInput.trim() && !isRefiningAI) e.currentTarget.style.background = '#e0e7ff'; }}
                     onMouseLeave={(e) => { if (replyInput.trim() && !isRefiningAI) e.currentTarget.style.background = '#eef2ff'; }}
-                    title="Transform current draft into polished, native US customer service English"
+                    title="Transform current draft into polished, native US customer service English (Ctrl+Shift+P)"
                   >
                     {isRefiningAI ? (
                       <>
@@ -1728,10 +1744,16 @@ export const AdminChatInbox = () => {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    ⌨️ Press <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Enter</kbd> to send
+                    ⌨️ <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Enter</kbd> Send
                   </span>
                   <span>
-                    <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Shift</kbd> + <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Enter</kbd> for new line
+                    <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Shift</kbd>+<kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Enter</kbd> New line
+                  </span>
+                  <span>
+                    <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Ctrl</kbd>+<kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Shift</kbd>+<kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>P</kbd> Polish
+                  </span>
+                  <span>
+                    <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Ctrl</kbd>+<kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Shift</kbd>+<kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>S</kbd> Smart Reply
                   </span>
                 </div>
 

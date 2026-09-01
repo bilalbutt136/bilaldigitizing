@@ -2,19 +2,22 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-const SYSTEM_INSTRUCTION = `You are an elite copy editor for a professional embroidery digitizing and vector studio.
-Your sole job is to rewrite raw, broken, or informal messages into grammatically flawless, natural, and polite US business English.
+const SYSTEM_INSTRUCTION = `You are an elite Fiverr/Upwork Top-Rated agency client communication specialist and master copy editor for Bilal Digitizing Studio (a premier studio specializing in Custom Embroidery Digitizing, Vector Art Tracing, and Custom Physical Patches).
 
-Rules:
-1. Fix all typos, spelling mistakes, tense mismatches, and missing words.
-2. DO NOT answer questions in the draft. DO NOT add chat commentary.
-3. Keep all numbers, prices ($), turnarounds, and formats (DST, PES, EMB, AI, EPS) exact.
-4. Output ONLY the polished text.
+Your sole mission is to rewrite the admin's raw, broken English, shorthand notes, phonetic phrasing, or rough bullet points into polished, courteous, high-converting, native US/UK client support English.
 
-Examples:
-- "helo, what you name?" -> "Hello! May I please have your name?"
-- "we is complete your file" -> "We have completed your design file."
-- "price 10 dollar give me 2 hours" -> "The price is $10.00, and I will have this completed for you in about 2 hours."`;
+### Core Rules:
+1. **Flawless Tone & Grammar:** Fix all verb tenses, typos, grammatical mismatches, punctuation, and capitalization. Ensure a confident, helpful, and professional customer service tone.
+2. **Preserve Exact Technical Data & Numbers:** NEVER change or hallucinate prices (e.g. $10, $15, $25), turnaround times (e.g. 2 hours, 2-6 hours, 24 hours), dimensions (e.g. 3.5 inches, 4x4, 100mm), quantities (e.g. 50 pcs, 100 patches), or machine/design formats (DST, PES, EMB, EXP, JEF, VP3, AI, EPS, SVG, PDF, 3D Puff, Velcro, Iron-on).
+3. **DO NOT Answer Draft Questions:** Do not answer questions in the draft or hold a conversation with the admin. Simply polish what the admin is trying to tell or ask the client.
+4. **Live Chat Ready:** Output ONLY the final polished ready-to-send message. NEVER include introductory commentary (e.g. "Here is the rewritten text:"), conversational chatter, markdown options, or quotation marks wrapping the whole message.
+
+### Real-world Shorthand Examples:
+- "helo sir i make dst file 2 hour price 10$" -> "Hello! I will digitize your design into a DST file within 2 hours. The price is $10.00."
+- "we is complete your patch order 100 pcs velcro backing send tomorrow" -> "We have completed your order of 100 custom patches with Velcro backing. They will be shipped out tomorrow!"
+- "sir your logo very blur send big file high quality png or pdf" -> "Your logo appears slightly blurry. Could you please provide a higher-resolution image, PNG, or vector PDF file for the cleanest result?"
+- "3d puff cap embroidery need 5mm foam i do good quality" -> "For 3D puff cap embroidery, we will optimize the underlay and use high-density foam to ensure crisp, premium raised embroidery."
+- "ok i change color red to blue and send file soon" -> "I have updated the color from red to blue as requested and will send over the updated file shortly."`;
 
 /**
  * Deterministic local fallback matching transformation rules
@@ -101,8 +104,6 @@ export async function POST(req) {
     const body = await req.json().catch(() => ({}));
     const rawMessage = body?.message || body?.text || '';
 
-    console.log('[AI Polish API] Received input:', rawMessage);
-
     if (!rawMessage || !String(rawMessage).trim()) {
       return NextResponse.json({ refinedText: '', refinedMessage: '', success: true }, { status: 200 });
     }
@@ -117,7 +118,7 @@ export async function POST(req) {
     ).trim();
 
     if (apiKey) {
-      const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+      const models = ['gemini-2.5-flash', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-3.5-flash-lite', 'gemini-flash-latest'];
 
       for (const model of models) {
         try {
@@ -130,12 +131,13 @@ export async function POST(req) {
             contents: [
               {
                 role: 'user',
-                parts: [{ text: `Draft to rewrite: "${trimmed}"` }]
+                parts: [{ text: `Draft to rewrite:\n"${trimmed}"` }]
               }
             ],
             generationConfig: {
               temperature: 0.1,
-              maxOutputTokens: 1000
+              maxOutputTokens: 2048,
+              thinkingConfig: { thinkingBudget: 0 }
             }
           };
 
@@ -151,14 +153,16 @@ export async function POST(req) {
           if (response.ok) {
             const data = await response.json();
             const rawOutput = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            let polishedResult = rawOutput.trim().replace(/^["']|["']$/g, '');
+            let polishedResult = rawOutput.trim();
 
             if (polishedResult.startsWith('```') && polishedResult.endsWith('```')) {
               polishedResult = polishedResult.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '').trim();
             }
+            if ((polishedResult.startsWith('"') && polishedResult.endsWith('"')) || (polishedResult.startsWith("'") && polishedResult.endsWith("'"))) {
+              polishedResult = polishedResult.substring(1, polishedResult.length - 1).trim();
+            }
 
             if (polishedResult) {
-              console.log('[AI Polish API] Generated output:', polishedResult);
               return NextResponse.json({
                 refinedText: polishedResult,
                 refinedMessage: polishedResult,
@@ -177,7 +181,6 @@ export async function POST(req) {
 
     // Fallback if no API key or API call failed
     const fallbackResult = localRefineMessage(trimmed);
-    console.log('[AI Polish API] Fallback output:', fallbackResult);
     return NextResponse.json({
       refinedText: fallbackResult,
       refinedMessage: fallbackResult,
