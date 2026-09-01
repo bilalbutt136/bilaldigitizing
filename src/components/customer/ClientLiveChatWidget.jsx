@@ -526,21 +526,9 @@ export const ClientLiveChatWidget = () => {
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      const isMobileOrTouch = typeof window !== 'undefined' && (
-        window.innerWidth <= 768 || 
-        'ontouchstart' in window || 
-        navigator.maxTouchPoints > 0
-      );
-
-      // On mobile / touch keyboards, Enter creates a newline so user can type comfortably and tap Send.
-      // On desktop:
-      // 1. Enter (without Shift) sends message immediately.
-      // 2. Shift + Enter inserts a newline without sending.
-      if (!isMobileOrTouch && !e.shiftKey) {
-        e.preventDefault();
-        handleSendMessage(e);
-      }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(e);
     }
   };
 
