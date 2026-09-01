@@ -13,7 +13,7 @@ export async function POST(req) {
     ).trim();
 
     if (!apiKey) {
-      return Response.json({ error: 'GEMINI_API_KEY is not configured in .env.local' }, { status: 500 });
+      return Response.json({ error: 'GEMINI_API_KEY is not configured in environment variables (Vercel / .env.local)' }, { status: 500 });
     }
 
     const body = await req.json().catch(() => ({}));
