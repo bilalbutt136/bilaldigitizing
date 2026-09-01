@@ -261,15 +261,32 @@ export const AdminChatInbox = () => {
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
-  const [autoPilotEnabled, setAutoPilotEnabled] = useState(() => {
+
+  // Independent Auto-Pilot settings per channel/department
+  // Channel 1: 'helpdesk' (24/7 Help Desk) -> Defaults to ON
+  // Channel 2: 'digitizer' (Studio Digitizer) -> Defaults to OFF
+  const DEFAULT_CHANNEL_AUTOPILOT = {
+    helpdesk: true,
+    digitizer: false
+  };
+
+  const [channelAutoPilot, setChannelAutoPilot] = useState(() => {
     if (typeof window !== 'undefined') {
       try {
-        return localStorage.getItem('bdigi_admin_autopilot') === 'true';
+        const saved = localStorage.getItem('bdigi_admin_channel_autopilot');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          return {
+            helpdesk: parsed.helpdesk ?? true,
+            digitizer: parsed.digitizer ?? false
+          };
+        }
       } catch {}
     }
-    return false;
+    return DEFAULT_CHANNEL_AUTOPILOT;
   });
-  const autoPilotEnabledRef = useRef(autoPilotEnabled);
+
+  const channelAutoPilotRef = useRef(channelAutoPilot);
   const processedAutoRepliesRef = useRef(new Set());
   const conversationsRef = useRef(conversations);
 
@@ -278,13 +295,13 @@ export const AdminChatInbox = () => {
   }, [conversations]);
 
   useEffect(() => {
-    autoPilotEnabledRef.current = autoPilotEnabled;
+    channelAutoPilotRef.current = channelAutoPilot;
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('bdigi_admin_autopilot', String(autoPilotEnabled));
+        localStorage.setItem('bdigi_admin_channel_autopilot', JSON.stringify(channelAutoPilot));
       } catch {}
     }
-  }, [autoPilotEnabled]);
+  }, [channelAutoPilot]);
 
   // Autonomous AI Responder for incoming customer inquiries
   const triggerAutoPilotReply = async (newMsg) => {
@@ -294,16 +311,28 @@ export const AdminChatInbox = () => {
     if (newMsg.is_autopilot || newMsg.auto_pilot) return;
     if (!newMsg.text || !String(newMsg.text).trim()) return;
 
+    const targetConv = (conversationsRef.current || []).find(c => c.id === newMsg.conversation_id);
+    const isHelpDesk = newMsg.conversation_id === 'general-support' || 
+                       newMsg.conversation_id === 'support-guest' ||
+                       String(newMsg.conversation_id).startsWith('support-') || 
+                       targetConv?.isSupport === true;
+    const msgChannelType = isHelpDesk ? 'helpdesk' : 'digitizer';
+
+    // Check independent Auto-Pilot state for this specific channel
+    if (!channelAutoPilotRef.current[msgChannelType]) {
+      return; // Auto-Pilot is disabled for this channel
+    }
+
     const msgKey = newMsg.id || `${newMsg.conversation_id}-${newMsg.text}-${newMsg.timestamp}`;
     if (processedAutoRepliesRef.current.has(msgKey)) return;
     processedAutoRepliesRef.current.add(msgKey);
 
-    const targetConv = (conversationsRef.current || []).find(c => c.id === newMsg.conversation_id);
     const customerName = newMsg.senderName || targetConv?.clientName || 'Customer';
+    const channelName = isHelpDesk ? '24/7 Help Desk' : 'Studio Digitizer';
 
     try {
       // 1. Broadcast typing indicator to simulate natural response
-      broadcastTypingStatus(newMsg.conversation_id, 'Studio Support (Auto-Pilot)', 'admin', true);
+      broadcastTypingStatus(newMsg.conversation_id, `${channelName} (Auto-Pilot)`, 'admin', true);
 
       // 2. Natural human typing delay (2.2 seconds)
       await new Promise(r => setTimeout(r, 2200));
@@ -311,7 +340,7 @@ export const AdminChatInbox = () => {
       const threadMessages = targetConv?.messages || [newMsg];
       const attachedImageUrl = newMsg.attachment_url || (typeof newMsg.attachment === 'string' && newMsg.attachment.startsWith('http') ? newMsg.attachment : null);
 
-      // 3. Call AI endpoint with clean conversationHistory and vision support
+      // 3. Call AI endpoint with channel-specific prompt & vision support
       const response = await fetch('/api/ai/generate-reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -324,7 +353,9 @@ export const AdminChatInbox = () => {
           })),
           customerName: customerName,
           latestMessage: newMsg.text,
-          imageUrl: attachedImageUrl
+          imageUrl: attachedImageUrl,
+          channelType: msgChannelType,
+          isSupport: isHelpDesk
         })
       });
 
@@ -340,8 +371,8 @@ export const AdminChatInbox = () => {
           id: 'msg-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
           conversation_id: newMsg.conversation_id,
           sender: 'admin',
-          senderName: 'Studio Support',
-          sender_name: 'Studio Support',
+          senderName: isHelpDesk ? '24/7 Live Support' : 'Studio Digitizer',
+          sender_name: isHelpDesk ? '24/7 Live Support' : 'Studio Digitizer',
           text: replyText,
           is_autopilot: true,
           auto_pilot: true,
@@ -911,6 +942,21 @@ export const AdminChatInbox = () => {
     });
   }, [conversations, activeSection, subFilter, searchTerm, orders, activeChatId]);
 
+  // Current active channel ('helpdesk' vs 'digitizer')
+  const currentChannelType = (activeChat?.isSupport || isSupportThread(activeChat) || activeSection === 'support') ? 'helpdesk' : 'digitizer';
+  const isCurrentAutoPilotOn = Boolean(channelAutoPilot[currentChannelType]);
+
+  const toggleChannelAutoPilot = (channelOverride) => {
+    const targetChannel = channelOverride || currentChannelType;
+    const nextVal = !channelAutoPilot[targetChannel];
+    setChannelAutoPilot(prev => ({
+      ...prev,
+      [targetChannel]: nextVal
+    }));
+    const channelName = targetChannel === 'helpdesk' ? '24/7 Help Desk' : 'Studio Digitizer';
+    showToast(`🤖 ${channelName} Auto-Pilot ${nextVal ? 'enabled (Auto-Replying)' : 'disabled (Manual Mode)'}`, nextVal ? 'success' : 'info');
+  };
+
   const handleKeyDown = (e) => {
     // Ctrl/Cmd + Shift + P => Polish with AI
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'P' || e.key === 'p')) {
@@ -1041,7 +1087,9 @@ export const AdminChatInbox = () => {
           })),
           customerName: clientDisplayName,
           latestMessage: latestMessageText,
-          imageUrl: lastAttachedImg
+          imageUrl: lastAttachedImg,
+          channelType: currentChannelType,
+          isSupport: currentChannelType === 'helpdesk'
         })
       });
       const data = await response.json();
@@ -1257,9 +1305,13 @@ export const AdminChatInbox = () => {
                   gap: '0.35rem',
                   transition: 'all 0.15s ease'
                 }}
+                title={`Studio Digitizer Inbox (Auto-Pilot: ${channelAutoPilot.digitizer ? 'ON' : 'OFF'})`}
               >
                 <Inbox size={13} />
                 <span>Inbox ({inboxConversationsCount})</span>
+                {channelAutoPilot.digitizer && (
+                  <span style={{ fontSize: '0.65rem' }} title="Auto-Pilot Active">🤖</span>
+                )}
                 {inboxUnreadTotal > 0 && (
                   <span style={{
                     background: '#ef4444',
@@ -1293,9 +1345,13 @@ export const AdminChatInbox = () => {
                   gap: '0.35rem',
                   transition: 'all 0.15s ease'
                 }}
+                title={`24/7 Live Support Queue (Auto-Pilot: ${channelAutoPilot.helpdesk ? 'ON' : 'OFF'})`}
               >
                 <Headphones size={13} />
                 <span>Support ({supportConversationsCount})</span>
+                {channelAutoPilot.helpdesk && (
+                  <span style={{ fontSize: '0.65rem' }} title="Auto-Pilot Active">🤖</span>
+                )}
                 {supportUnreadTotal > 0 && (
                   <span style={{
                     background: '#ef4444',
@@ -1568,33 +1624,29 @@ export const AdminChatInbox = () => {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
-                {/* 🤖 Auto-Pilot AI Toggle Switch */}
+                {/* 🤖 Auto-Pilot AI Toggle Switch (Per-Channel Aware) */}
                 <button
                   type="button"
-                  onClick={() => {
-                    const next = !autoPilotEnabled;
-                    setAutoPilotEnabled(next);
-                    showToast(next ? '🤖 Auto-Pilot AI enabled (Auto-Replying)' : '🤖 Auto-Pilot AI disabled (Manual Mode)', next ? 'success' : 'info');
-                  }}
-                  title="When enabled, incoming customer inquiries will be answered automatically by AI."
+                  onClick={() => toggleChannelAutoPilot()}
+                  title={`Auto-Pilot for ${currentChannelType === 'helpdesk' ? '24/7 Help Desk' : 'Studio Digitizer'} (${isCurrentAutoPilotOn ? 'ON' : 'OFF'}). When enabled, incoming inquiries in this channel will be answered automatically by AI.`}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.4rem',
-                    background: autoPilotEnabled ? '#ecfdf5' : '#f8fafc',
-                    border: autoPilotEnabled ? '1.5px solid #10b981' : '1.5px solid #cbd5e1',
+                    background: isCurrentAutoPilotOn ? '#ecfdf5' : '#f8fafc',
+                    border: isCurrentAutoPilotOn ? '1.5px solid #10b981' : '1.5px solid #cbd5e1',
                     borderRadius: '20px',
                     padding: '0.22rem 0.55rem',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
-                    boxShadow: autoPilotEnabled ? '0 1px 4px rgba(16, 185, 129, 0.2)' : 'none'
+                    boxShadow: isCurrentAutoPilotOn ? '0 1px 4px rgba(16, 185, 129, 0.2)' : 'none'
                   }}
                 >
-                  <Bot size={13} className={autoPilotEnabled ? 'text-emerald-600' : 'text-slate-400'} />
+                  <Bot size={13} className={isCurrentAutoPilotOn ? 'text-emerald-600' : 'text-slate-400'} />
                   <span style={{ 
                     fontSize: '0.72rem', 
                     fontWeight: 800, 
-                    color: autoPilotEnabled ? '#065f46' : '#64748b' 
+                    color: isCurrentAutoPilotOn ? '#065f46' : '#64748b' 
                   }}>
                     Auto-Pilot
                   </span>
@@ -1603,14 +1655,14 @@ export const AdminChatInbox = () => {
                     fontWeight: 800,
                     padding: '1px 6px',
                     borderRadius: '10px',
-                    background: autoPilotEnabled ? '#10b981' : '#e2e8f0',
-                    color: autoPilotEnabled ? '#ffffff' : '#64748b',
+                    background: isCurrentAutoPilotOn ? '#10b981' : '#e2e8f0',
+                    color: isCurrentAutoPilotOn ? '#ffffff' : '#64748b',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '3px'
                   }}>
-                    {autoPilotEnabled && <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#ffffff', animation: 'pulse 1.5s infinite' }} />}
-                    {autoPilotEnabled ? 'ON' : 'OFF'}
+                    {isCurrentAutoPilotOn && <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#ffffff', animation: 'pulse 1.5s infinite' }} />}
+                    {isCurrentAutoPilotOn ? 'ON' : 'OFF'}
                   </span>
                 </button>
 
@@ -1937,14 +1989,10 @@ export const AdminChatInbox = () => {
                   )}
                 </button>
 
-                {/* 3. 🤖 Auto-Pilot AI Toggle Button */}
+                {/* 3. 🤖 Auto-Pilot AI Toggle Button (Per-Channel Aware) */}
                 <button
                   type="button"
-                  onClick={() => {
-                    const next = !autoPilotEnabled;
-                    setAutoPilotEnabled(next);
-                    showToast(next ? '🤖 Auto-Pilot AI enabled (Auto-Replying)' : '🤖 Auto-Pilot AI disabled (Manual Mode)', next ? 'success' : 'info');
-                  }}
+                  onClick={() => toggleChannelAutoPilot()}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -1952,31 +2000,31 @@ export const AdminChatInbox = () => {
                     padding: '0.32rem 0.65rem',
                     fontSize: '0.74rem',
                     fontWeight: 700,
-                    color: autoPilotEnabled ? '#065f46' : '#64748b',
-                    background: autoPilotEnabled ? '#ecfdf5' : '#f8fafc',
-                    border: autoPilotEnabled ? '1px solid #a7f3d0' : '1px solid #e2e8f0',
+                    color: isCurrentAutoPilotOn ? '#065f46' : '#64748b',
+                    background: isCurrentAutoPilotOn ? '#ecfdf5' : '#f8fafc',
+                    border: isCurrentAutoPilotOn ? '1px solid #a7f3d0' : '1px solid #e2e8f0',
                     borderRadius: '8px',
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
-                    boxShadow: autoPilotEnabled ? '0 1px 2px rgba(16, 185, 129, 0.12)' : 'none'
+                    boxShadow: isCurrentAutoPilotOn ? '0 1px 2px rgba(16, 185, 129, 0.12)' : 'none'
                   }}
-                  title="When enabled, incoming customer inquiries will be answered automatically by AI."
+                  title={`Auto-Pilot for ${currentChannelType === 'helpdesk' ? '24/7 Help Desk' : 'Studio Digitizer'} (${isCurrentAutoPilotOn ? 'ON' : 'OFF'}). When enabled, incoming inquiries in this channel will be answered automatically by AI.`}
                 >
-                  <Bot size={13} className={autoPilotEnabled ? 'text-emerald-600' : 'text-slate-400'} />
+                  <Bot size={13} className={isCurrentAutoPilotOn ? 'text-emerald-600' : 'text-slate-400'} />
                   <span>Auto-Pilot</span>
                   <span style={{
                     fontSize: '0.6rem',
                     fontWeight: 800,
                     padding: '1px 5px',
                     borderRadius: '4px',
-                    background: autoPilotEnabled ? '#10b981' : '#e2e8f0',
-                    color: autoPilotEnabled ? '#ffffff' : '#64748b',
+                    background: isCurrentAutoPilotOn ? '#10b981' : '#e2e8f0',
+                    color: isCurrentAutoPilotOn ? '#ffffff' : '#64748b',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '2px'
                   }}>
-                    {autoPilotEnabled && <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ffffff', animation: 'pulse 1.5s infinite' }} />}
-                    {autoPilotEnabled ? 'ON' : 'OFF'}
+                    {isCurrentAutoPilotOn && <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ffffff', animation: 'pulse 1.5s infinite' }} />}
+                    {isCurrentAutoPilotOn ? 'ON' : 'OFF'}
                   </span>
                 </button>
 
