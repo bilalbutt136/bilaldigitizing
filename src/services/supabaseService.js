@@ -1497,6 +1497,9 @@ export async function addChatMessage(chatId, messageObj) {
   const fullMsg = {
     ...messageObj,
     conversation_id: chatId,
+    thread_id: chatId,
+    type: messageObj.type || (messageObj.offer_id || messageObj.offer_data ? 'custom_offer' : 'text'),
+    metadata: messageObj.metadata || {},
     timestamp: messageObj.timestamp || new Date().toISOString()
   };
 

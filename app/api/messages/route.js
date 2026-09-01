@@ -198,7 +198,7 @@ export async function GET(request) {
 
       // Distribute messages strictly to unified conversation threads
       rawMessages.forEach(m => {
-        const cId = String(m.conversation_id || '').toLowerCase().trim();
+        const cId = String(m.conversation_id || m.thread_id || '').toLowerCase().trim();
         const isSupport = isSupportConversation(cId);
 
         let matchedEmail = '';
@@ -240,6 +240,9 @@ export async function GET(request) {
         const mappedMsg = {
           id: m.id,
           conversation_id: thread.id,
+          thread_id: thread.id,
+          type: m.type || (resolvedOfferId || resolvedOfferData ? 'custom_offer' : 'text'),
+          metadata: m.metadata || {},
           sender: m.sender,
           senderName: m.sender === 'admin' ? 'Support' : (m.sender_name || thread.clientName),
           sender_name: m.sender_name,
@@ -432,7 +435,10 @@ export async function GET(request) {
 
         return {
           id: m.id,
-          conversation_id: m.conversation_id || chatId,
+          conversation_id: m.conversation_id || m.thread_id || chatId,
+          thread_id: m.thread_id || m.conversation_id || chatId,
+          type: m.type || (resolvedOfferId || resolvedOfferData ? 'custom_offer' : 'text'),
+          metadata: m.metadata || {},
           client_email: m.client_email || targetEmail || null,
           sender: m.sender,
           senderName: m.sender === 'admin' ? 'Support' : (m.sender_name || 'Client'),
@@ -566,7 +572,7 @@ export async function POST(request) {
     }
     
     if (action === 'insertMessage') {
-      let passedId = payload.conversation_id || '';
+      let passedId = payload.conversation_id || payload.thread_id || '';
       const isSupport = isSupportConversation(passedId) || payload.isSupport === true || payload.channel === 'support';
       
       let targetEmail = normalizeEmail(payload.client_email || payload.clientEmail || (!isAdmin ? cleanUserEmail : ''));
@@ -620,6 +626,9 @@ export async function POST(request) {
       const dbPayload = {
         id: payload.id || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         conversation_id: canonicalConvId,
+        thread_id: canonicalConvId,
+        type: payload.type || (payload.offer_id || payload.offer_data ? 'custom_offer' : 'text'),
+        metadata: payload.metadata || {},
         client_email: targetEmail || null,
         sender: actualSender,
         sender_name: actualSenderName,

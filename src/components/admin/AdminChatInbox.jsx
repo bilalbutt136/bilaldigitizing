@@ -534,9 +534,7 @@ export const AdminChatInbox = () => {
 
         if (newMsg.sender === 'client' || newMsg.sender === 'customer') {
           playNotificationSound('receive');
-          if (autoPilotEnabledRef.current) {
-            triggerAutoPilotReply(newMsg);
-          }
+          triggerAutoPilotReply(newMsg);
         }
 
         setConversations(prev => {
