@@ -830,6 +830,12 @@ export const AdminChatInbox = () => {
       return;
     }
 
+    // Extract latest customer inquiry message
+    const reversed = [...threadMsgs].reverse();
+    const lastCustomerMsg = reversed.find(m => m && (m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin'));
+    const latestMessageText = lastCustomerMsg ? String(lastCustomerMsg.text || '').trim() : String(threadMsgs[threadMsgs.length - 1]?.text || '').trim();
+    const clientDisplayName = activeInfo?.customerName || activeChat?.clientName || 'Client';
+
     try {
       setIsGeneratingSmartReply(true);
       const currentDraft = (replyInput || '').trim();
@@ -841,8 +847,10 @@ export const AdminChatInbox = () => {
         body: JSON.stringify({
           messages: threadMsgs,
           conversationHistory: threadMsgs,
-          serviceCategory: activeInfo?.serviceCategory || 'Embroidery Digitizing',
-          clientName: activeInfo?.customerName || 'Customer'
+          latestMessage: latestMessageText,
+          customerName: clientDisplayName,
+          clientName: clientDisplayName,
+          serviceCategory: activeInfo?.serviceCategory || 'Embroidery Digitizing'
         })
       });
       const data = await response.json();

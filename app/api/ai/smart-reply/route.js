@@ -2,66 +2,57 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-const SYSTEM_PROMPT = `You are an elite Senior Customer Success Manager for an industry-leading embroidery digitizing and vector conversion studio (B Digitizing Studio).
-
-Your task is to analyze the recent conversation history with a client and auto-generate a tailored, polite, crystal-clear, and professional response in native US business English.
-
-### GUIDELINES:
-1. Review the client's latest message, questions, or artwork submissions.
-2. If the client asked for a quote/pricing: Warmly acknowledge and share our standard studio pricing ($10-$15 for standard left-chest/cap digitizing, $10-$15 for vector art tracing, or custom quote for jacket backs) or offer to inspect their artwork.
-3. If the client inquired about turnaround time: Reassure them that standard turnaround is 2-4 hours (rush turnaround available in 1-2 hours).
-4. If the client asked about machine formats: State that we provide all major formats (DST, PES, EMB, EXP, JEF, VP3, etc.) along with a production PDF worksheet / sew-out preview.
-5. If the client submitted artwork or an order: Acknowledge receipt, confirm the details, and ask about specific target dimensions or garment placement (e.g., left chest, cap/hat, jacket back, 3D puff).
-6. If the client requested revisions: Graciously accept and confirm adjustments will be made swiftly.
-7. Tone: Warm, confident, helpful, courteous, and concise (Native US B2B standard).
-8. Output Constraints: Return ONLY the exact message text ready to send. DO NOT add quotation marks, intros like "Here is a reply:", or meta commentary.`;
-
 /**
- * Intelligent Rule-Based Smart Reply Engine (Fallback when no API Key is set)
+ * Lead Support Specialist Smart Reply Generator for B Digitizing Studio
  */
-function localGenerateSmartReply(messages = [], serviceCategory = '', clientName = '') {
-  const nameGreeting = clientName && !clientName.toLowerCase().includes('client') ? `Hi ${clientName}, ` : 'Hello! ';
-  
-  // Find the most recent non-admin message
-  const lastClientMsg = [...messages].reverse().find(m => m && (m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin'));
-  const text = (lastClientMsg?.text || '').toLowerCase();
-  const hasAttachment = Boolean(lastClientMsg?.attachment || lastClientMsg?.attachment_url);
-
-  if (text.includes('price') || text.includes('cost') || text.includes('quote') || text.includes('how much')) {
-    return `${nameGreeting}Thank you for reaching out! Our standard left-chest and cap digitizing ranges from $10 to $15, and vector tracing is $10 to $15 depending on detail complexity. Please feel free to attach your artwork, target dimensions, and preferred format (DST, PES, EMB, etc.), and we will be happy to assist you right away!`;
-  }
-
-  if (text.includes('turnaround') || text.includes('how long') || text.includes('how fast') || text.includes('time') || text.includes('urgent') || text.includes('rush')) {
-    return `${nameGreeting}Our standard production turnaround is 2 to 4 hours. We also provide express 1 to 2 hour rush delivery if needed. Please send over your artwork and specifications, and we will get right to work on it!`;
-  }
-
-  if (text.includes('format') || text.includes('dst') || text.includes('pes') || text.includes('emb') || text.includes('vector') || text.includes('svg')) {
-    return `${nameGreeting}We deliver all major machine embroidery formats (DST, PES, EMB, EXP, JEF, VP3, etc.) as well as production-ready vector files (AI, EPS, SVG, high-res PDF). Let us know your preferred machine or software format and we will include it!`;
-  }
-
-  if (text.includes('revision') || text.includes('change') || text.includes('edit') || text.includes('fix') || text.includes('adjust') || text.includes('stitch')) {
-    return `${nameGreeting}Thank you for your feedback! We would be glad to make those adjustments for you. We are prioritizing your revision right now and will send over the updated files shortly.`;
-  }
-
-  if (hasAttachment || text.includes('attached') || text.includes('artwork') || text.includes('logo') || text.includes('image')) {
-    return `${nameGreeting}Thank you for sending over your artwork! We have received your file and are reviewing the details. Could you please confirm your desired size (width/height) and garment placement (e.g., left chest, cap, jacket back, or 3D puff)? We will prepare your production file right away.`;
-  }
-
-  if (text.includes('thank') || text.includes('great') || text.includes('looks good') || text.includes('perfect')) {
-    return `${nameGreeting}You are very welcome! It was a pleasure working on your design. Please let us know if you need any other embroidery digitizing or vector art services in the future. Have a great day!`;
-  }
-
-  // Default warm assistance reply
-  return `${nameGreeting}Thank you for messaging B Digitizing Studio! How can we assist you with your embroidery digitizing, vector tracing, or custom patches today?`;
-}
-
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const body = await request.json().catch(() => ({}));
+    const body = await req.json().catch(() => ({}));
     const rawMessages = body?.conversationHistory || body?.messages || [];
     const messages = Array.isArray(rawMessages) ? rawMessages : [];
-    const serviceCategory = body?.serviceCategory || 'Embroidery Digitizing';
-    const clientName = body?.clientName || '';
+    const customerName = body?.customerName || body?.clientName || 'Client';
+    
+    // Extract latest customer message if not explicitly passed
+    let latestMessage = body?.latestMessage ? String(body.latestMessage).trim() : '';
+    if (!latestMessage && messages.length > 0) {
+      const reversed = [...messages].reverse();
+      const lastClientMsg = reversed.find(m => m && (m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin'));
+      latestMessage = lastClientMsg ? String(lastClientMsg.text || '').trim() : String(messages[messages.length - 1]?.text || '').trim();
+    }
+
+    const conversationTranscript = messages.slice(-8).map(m => {
+      const role = (m.sender === 'admin') ? 'Studio Admin' : `Client (${customerName})`;
+      const att = m.attachment || m.attachment_name ? ` [Attached: ${m.attachment || m.attachment_name}]` : '';
+      return `${role}: ${m.text || ''}${att}`;
+    }).join('\n');
+
+    const prompt = `You are the lead support specialist at B Digitizing Studio.
+A client (${customerName}) just sent this inquiry:
+"${latestMessage || conversationTranscript || 'Hello, I have a question about your services.'}"
+
+Recent Conversation Context:
+${conversationTranscript || 'No prior context.'}
+
+Write a helpful, direct, and professional response that specifically answers what they asked.
+
+### Domain Rules:
+1. **If asking about Physical Patches Process:**
+   - Explain the quick 3-step process:
+     1) Share artwork/logo, dimensions (width/height), and quantity.
+     2) Choose patch type (Embroidered, PVC, Leather, or Woven) and backing (Iron-on, Hook & Loop/Velcro, Adhesive, or Sew-on).
+     3) We provide a free sew-out/digital proof before mass production.
+   - Ask them to upload their design and specify their desired quantity and size to get an instant quote.
+
+2. **If asking about Embroidery Digitizing:**
+   - Mention turnaround time (usually 2-6 hours / 1 day), file formats (DST, PES, EMB, etc.), flat vs 3D puff embroidery, and ask for logo dimensions and placement (cap, left chest, jacket back).
+
+3. **If asking about Vector Art Tracing:**
+   - Mention converting low-res images/sketches into clean vector files (AI, EPS, SVG, PDF) ready for screen printing or engraving.
+
+### Tone & Style:
+- Warm, professional US English, concise, and straight to the point.
+- NEVER return a generic "How can we assist you today?" if the client already asked a specific question. Answer their question first!
+- Do not wrap the response in quotation marks or include intros like "Here is a response:".`;
 
     const apiKey = (
       process.env.GEMINI_API_KEY ||
@@ -71,31 +62,19 @@ export async function POST(request) {
       ''
     ).trim();
 
-    if (apiKey && messages.length > 0) {
-      const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
-
-      // Format last 8 messages for context
-      const recentMessages = messages.slice(-8);
-      const conversationTranscript = recentMessages.map(m => {
-        const role = (m.sender === 'admin') ? 'Studio Admin / Support' : `Client (${m.sender_name || clientName || 'Customer'})`;
-        const att = m.attachment || m.attachment_name ? ` [Attachment: ${m.attachment || m.attachment_name}]` : '';
-        return `${role}: ${m.text || ''}${att}`;
-      }).join('\n');
-
-      const userPrompt = `Context:\nService Category: ${serviceCategory}\nClient Name: ${clientName || 'Valued Client'}\n\nRecent Conversation History:\n${conversationTranscript}\n\nPlease generate a polite, professional, and helpful response from the studio to the client:`;
+    if (apiKey) {
+      // Models to try in order of capability
+      const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
 
       for (const model of models) {
         try {
           const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
           
           const payload = {
-            systemInstruction: {
-              parts: [{ text: SYSTEM_PROMPT }]
-            },
             contents: [
               {
                 role: 'user',
-                parts: [{ text: userPrompt }]
+                parts: [{ text: prompt }]
               }
             ],
             generationConfig: {
@@ -127,33 +106,61 @@ export async function POST(request) {
 
             if (replyText) {
               return NextResponse.json({
-                replyText: replyText,
+                replyText,
                 smartReply: replyText,
-                model: model
+                model
               });
             }
           } else {
-            console.warn(`[Smart Reply API] Model ${model} returned status ${response.status}`);
+            console.warn(`[Gemini Smart Reply] Model ${model} returned status ${response.status}`);
           }
         } catch (err) {
-          console.warn(`[Smart Reply API] Error calling ${model}:`, err.message);
+          console.warn(`[Gemini Smart Reply] Error calling ${model}:`, err.message);
         }
       }
     }
 
-    // Fallback if no API key or API call failed
-    const fallbackReply = localGenerateSmartReply(messages, serviceCategory, clientName);
+    // Fallback rule-based generator if API key is missing or calls fail
+    const fallbackReply = localGenerateSpecificReply(latestMessage, customerName);
     return NextResponse.json({
       replyText: fallbackReply,
       smartReply: fallbackReply,
-      model: 'studio-smart-reply-fallback'
+      model: 'studio-lead-support-fallback'
     });
 
   } catch (error) {
-    console.error('[Smart Reply Route Error]:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate smart reply: ' + error.message },
-      { status: 500 }
-    );
+    console.error('Smart reply error:', error);
+    return NextResponse.json({ error: error.message || 'Failed to generate reply' }, { status: 500 });
   }
+}
+
+/**
+ * Highly specific domain fallback matching the exact rules
+ */
+function localGenerateSpecificReply(latestMessage = '', customerName = '') {
+  const nameGreeting = customerName && !customerName.toLowerCase().includes('client') ? `Hi ${customerName}, ` : 'Hello! ';
+  const lower = (latestMessage || '').toLowerCase();
+
+  if (lower.includes('patch') || lower.includes('pvc') || lower.includes('velcro') || lower.includes('iron on') || lower.includes('leather')) {
+    return `${nameGreeting}Thank you for inquiring about our custom patches! Here is our quick 3-step process:\n1. Share your artwork/logo, target dimensions (width/height), and quantity.\n2. Choose your patch type (Embroidered, PVC, Leather, or Woven) and backing (Iron-on, Hook & Loop/Velcro, Adhesive, or Sew-on).\n3. We provide a free sew-out/digital proof for your approval before production.\n\nPlease upload your design and let us know your required quantity and size, and we will send you an instant quote!`;
+  }
+
+  if (lower.includes('vector') || lower.includes('trace') || lower.includes('svg') || lower.includes('eps') || lower.includes('ai file')) {
+    return `${nameGreeting}Thank you for reaching out! We specialize in converting low-resolution images, logos, and sketches into crisp, high-resolution vector files (AI, EPS, SVG, and print-ready PDF) suitable for screen printing, vinyl cutting, and engraving. Standard turnaround is 2 to 4 hours. Please feel free to upload your image and we will get right to work!`;
+  }
+
+  if (lower.includes('price') || lower.includes('cost') || lower.includes('quote') || lower.includes('how much')) {
+    return `${nameGreeting}Our standard left-chest and cap digitizing ranges from $10 to $15 (flat or 3D puff), and vector conversion is $10 to $15 depending on detail complexity. Standard turnaround is 2 to 4 hours with all formats included (DST, PES, EMB, etc.). Please share your artwork and dimensions for an instant confirmation!`;
+  }
+
+  if (lower.includes('turnaround') || lower.includes('how long') || lower.includes('time') || lower.includes('rush') || lower.includes('urgent')) {
+    return `${nameGreeting}Our standard production turnaround is 2 to 6 hours (within 1 business day). We also offer rush delivery in 1 to 2 hours upon request. Please send over your artwork and we will prioritize it immediately!`;
+  }
+
+  if (lower.includes('format') || lower.includes('dst') || lower.includes('pes') || lower.includes('emb')) {
+    return `${nameGreeting}We deliver all major machine embroidery formats including DST, PES, EMB, EXP, JEF, VP3, along with a production PDF worksheet showing thread color sequence and stitch counts. Let us know your machine model or preferred format!`;
+  }
+
+  // Default Embroidery Digitizing direct answer
+  return `${nameGreeting}Thank you for reaching out to B Digitizing Studio! For embroidery digitizing, our standard turnaround is 2 to 6 hours with all machine formats (DST, PES, EMB, etc.) and free revisions included. We support flat embroidery as well as 3D puff. Could you please share your logo artwork, dimensions, and placement (e.g., cap, left chest, or jacket back)? We look forward to assisting you!`;
 }
