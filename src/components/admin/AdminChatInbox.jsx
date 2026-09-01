@@ -243,6 +243,8 @@ export const AdminChatInbox = () => {
   const [subFilter, setSubFilter] = useState('all'); // 'all' | 'unread'
   const [searchTerm, setSearchTerm] = useState('');
   const [replyInput, setReplyInput] = useState('');
+  const [isRefiningAI, setIsRefiningAI] = useState(false);
+  const [undoDraft, setUndoDraft] = useState(null);
   const [attachedFile, setAttachedFile] = useState(null); // { name, url, size, format }
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
   const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
@@ -786,6 +788,7 @@ export const AdminChatInbox = () => {
     setReplyInput('');
     setAttachedFile(null);
     setReplyingTo(null);
+    setUndoDraft(null);
     broadcastTypingStatus(currentActiveChatId, 'Studio Support', 'admin', false);
     showToast(`Reply sent to ${activeInfo.customerName || 'Customer'}!`, 'success');
     scrollToBottom('smooth');
@@ -796,6 +799,40 @@ export const AdminChatInbox = () => {
       } catch (err) {
         console.warn('Admin persist message notice:', err);
       }
+    }
+  };
+
+  const handleAIPolish = async () => {
+    if (!replyInput.trim() || isRefiningAI) return;
+    setIsRefiningAI(true);
+    const original = replyInput;
+    try {
+      const res = await fetch('/api/ai/refine-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: original })
+      });
+      const data = await res.json();
+      if (res.ok && data?.refinedMessage) {
+        setUndoDraft(original);
+        setReplyInput(data.refinedMessage);
+        showToast('✨ Message polished with AI!', 'success');
+      } else {
+        showToast(data?.error || 'Failed to polish message with AI', 'error');
+      }
+    } catch (err) {
+      console.error('AI Polish error:', err);
+      showToast('AI Refiner service unavailable', 'error');
+    } finally {
+      setIsRefiningAI(false);
+    }
+  };
+
+  const handleUndoAIPolish = () => {
+    if (undoDraft !== null) {
+      setReplyInput(undoDraft);
+      setUndoDraft(null);
+      showToast('Reverted to original draft', 'info');
     }
   };
 
@@ -1486,6 +1523,44 @@ export const AdminChatInbox = () => {
                   }}
                 />
 
+                {/* AI Polish Button */}
+                <button
+                  type="button"
+                  onClick={handleAIPolish}
+                  disabled={!replyInput.trim() || isRefiningAI}
+                  style={{
+                    height: '40px',
+                    padding: '0 0.85rem',
+                    borderRadius: '10px',
+                    background: replyInput.trim() ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' : '#f1f5f9',
+                    border: replyInput.trim() ? '1px solid #4338ca' : '1.5px solid #cbd5e1',
+                    color: replyInput.trim() ? '#ffffff' : '#94a3b8',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
+                    cursor: replyInput.trim() && !isRefiningAI ? 'pointer' : 'not-allowed',
+                    flexShrink: 0,
+                    boxShadow: replyInput.trim() ? '0 3px 10px rgba(99, 102, 241, 0.3)' : 'none',
+                    transition: 'all 0.2s ease',
+                    opacity: isRefiningAI ? 0.7 : 1
+                  }}
+                  title="Refine and polish draft into professional English with AI"
+                >
+                  {isRefiningAI ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Polishing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={14} className={replyInput.trim() ? 'text-amber-300' : ''} />
+                      <span>AI Polish</span>
+                    </>
+                  )}
+                </button>
+
                 <button
                   type="submit"
                   disabled={(!replyInput.trim() && !attachedFile) || isUploadingAttachment}
@@ -1514,22 +1589,51 @@ export const AdminChatInbox = () => {
                 </button>
               </div>
 
-              {/* Keyboard Shortcut Hint Footer */}
+              {/* Keyboard Shortcut & Undo Footer */}
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.35rem',
                 marginTop: '0.35rem',
                 padding: '0 0.15rem',
                 fontSize: '0.68rem',
                 color: '#64748b'
               }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  ⌨️ Press <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Enter</kbd> to send
-                </span>
-                <span>
-                  <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Shift</kbd> + <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Enter</kbd> for new line
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    ⌨️ Press <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Enter</kbd> to send
+                  </span>
+                  <span>
+                    <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Shift</kbd> + <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Enter</kbd> for new line
+                  </span>
+                </div>
+
+                {undoDraft && (
+                  <button
+                    type="button"
+                    onClick={handleUndoAIPolish}
+                    style={{
+                      background: 'rgba(99, 102, 241, 0.1)',
+                      border: '1px solid rgba(99, 102, 241, 0.3)',
+                      color: '#4f46e5',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      fontSize: '0.7rem',
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: '6px',
+                      transition: 'all 0.2s ease'
+                    }}
+                    title="Undo AI refinement and restore original draft"
+                  >
+                    <RotateCcw size={11} />
+                    <span>Undo AI Polish</span>
+                  </button>
+                )}
               </div>
             </form>
           </div>
