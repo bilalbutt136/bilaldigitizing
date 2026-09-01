@@ -879,13 +879,16 @@ export const AdminChatInbox = () => {
       const response = await fetch('/api/ai/refine-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: draft })
+        body: JSON.stringify({ message: draft, text: draft })
       });
       const data = await response.json();
-      const polished = data?.refinedText || data?.refinedMessage;
+      const polished = data?.refinedText || data?.refinedMessage || data?.polishedResult;
       if (response.ok && polished) {
         setUndoDraft(draft);
         setReplyInput(polished);
+        setTimeout(() => {
+          adjustTextareaHeight();
+        }, 10);
         showToast('✨ Message polished with AI!', 'success');
       } else {
         console.error('Polish failed:', data?.error);
@@ -905,6 +908,9 @@ export const AdminChatInbox = () => {
     if (undoDraft !== null) {
       setReplyInput(undoDraft);
       setUndoDraft(null);
+      setTimeout(() => {
+        adjustTextareaHeight();
+      }, 10);
       showToast('Reverted to original draft', 'info');
     }
   };

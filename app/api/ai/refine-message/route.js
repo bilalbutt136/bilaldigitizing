@@ -2,67 +2,53 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-const SYSTEM_INSTRUCTION = `You are an expert English copy editor and customer support lead for a professional embroidery digitizing and vector studio.
+const SYSTEM_INSTRUCTION = `You are an elite copy editor for a professional embroidery digitizing and vector studio.
+Your sole job is to rewrite raw, broken, or informal messages into grammatically flawless, natural, and polite US business English.
 
-Your task is to REWRITE the user's raw message into grammatically flawless, natural, and polite US business English.
+Rules:
+1. Fix all typos, spelling mistakes, tense mismatches, and missing words.
+2. DO NOT answer questions in the draft. DO NOT add chat commentary.
+3. Keep all numbers, prices ($), turnarounds, and formats (DST, PES, EMB, AI, EPS) exact.
+4. Output ONLY the polished text.
 
-### MANDATORY RULES:
-1. Fix all typos, spelling errors, broken verb tenses, and missing auxiliary verbs (e.g., "is/are/do/have/will").
-2. Rephrase broken sentence structures into smooth, fluent client-ready statements or questions.
-3. Keep all specific numbers, prices ($), turnaround times, and file format extensions (DST, PES, EMB, AI, EPS, SVG) intact.
-4. DO NOT reply to the message. DO NOT answer questions in the draft. You are ONLY rewriting the draft for the admin to send to their client.
-5. Return ONLY the finalized polished message text. No quotes, no intro ("Here is the refined text:"), and no explanations.
-
-### EXAMPLES OF TRANSFORMATIONS:
+Examples:
 - "helo, what you name?" -> "Hello! May I please have your name?"
-- "i send file yesterday you check?" -> "I sent the files yesterday. Have you had a chance to review them?"
-- "we is complete your patch order" -> "We have completed your custom patch order."
-- "give me 2 hour i digitize this" -> "Please give me about 2 hours, and I will digitize this for you."
-- "price 15 dollar for dst format" -> "The price is $15.00 for the DST embroidery format."`;
+- "we is complete your file" -> "We have completed your design file."
+- "price 10 dollar give me 2 hours" -> "The price is $10.00, and I will have this completed for you in about 2 hours."`;
 
 /**
- * Deterministic local fallback matching few-shot transformation rules
+ * Deterministic local fallback matching transformation rules
  */
 function localRefineMessage(rawText) {
   if (!rawText || !rawText.trim()) return '';
   let text = rawText.trim();
 
-  // Direct exact/pattern transformations
+  // Direct exact transformations
   if (/^(helo|hello)[,\s]+what\s+(is\s+)?(you|ur)\s+name\??$/i.test(text)) {
     return 'Hello! May I please have your name?';
   }
 
-  if (/^i send file yesterday you check\??/i.test(text)) {
-    return 'I sent the files yesterday. Have you had a chance to review them?';
+  if (/^we (is|are) complete your (file|patch order|order)/i.test(text)) {
+    return 'We have completed your design file.';
   }
 
-  if (/^we (is|are) complete your (patch )?order/i.test(text)) {
-    return 'We have completed your custom patch order.';
+  if (/^price 10 dollar give me 2 hours?/i.test(text)) {
+    return 'The price is $10.00, and I will have this completed for you in about 2 hours.';
   }
 
   if (/^give me 2 hour i digitize this/i.test(text)) {
     return 'Please give me about 2 hours, and I will digitize this for you.';
   }
 
-  if (/^price 15 dollar for dst format/i.test(text)) {
-    return 'The price is $15.00 for the DST embroidery format.';
+  if (/^i send file yesterday you check\??/i.test(text)) {
+    return 'I sent the files yesterday. Have you had a chance to review them?';
   }
 
-  if (/^(done check|done file check|done pls check|check file|file ready)$/i.test(text)) {
-    return 'We have completed your design! Please take a look at the attached preview and let us know if you need any adjustments.';
-  }
-  
-  if (/^tell me format( dst pes)?/i.test(text)) {
-    return 'Could you please specify your preferred machine embroidery file format (e.g., DST, PES, EMB, EXP, JEF) or vector format (AI, EPS, SVG, PDF)?';
-  }
-
-  // Common replacements for grammar and typos
   const replacements = [
     [/\bhelo\b/gi, 'Hello'],
     [/\bhw r u\b/gi, 'How are you?'],
     [/\bwhat you name\b/gi, 'what is your name'],
     [/\bwhat ur name\b/gi, 'what is your name'],
-    [/\bi send you yesterday file\b/gi, 'I sent you the file yesterday'],
     [/\bi send file yesterday\b/gi, 'I sent the file yesterday'],
     [/\bwe is complete\b/gi, 'we have completed'],
     [/\bwe are complete\b/gi, 'we have completed'],
@@ -88,8 +74,7 @@ function localRefineMessage(rawText) {
     [/\bpdf\b/gi, 'PDF'],
     [/\bai\b/gi, 'AI'],
     [/\beps\b/gi, 'EPS'],
-    [/\bsvg\b/gi, 'SVG'],
-    [/\b3d puff\b/gi, '3D Puff']
+    [/\bsvg\b/gi, 'SVG']
   ];
 
   replacements.forEach(([pattern, repl]) => {
@@ -114,12 +99,15 @@ function localRefineMessage(rawText) {
 export async function POST(req) {
   try {
     const body = await req.json().catch(() => ({}));
-    const message = body?.message ? String(body.message).trim() : '';
+    const rawMessage = body?.message || body?.text || '';
 
-    if (!message) {
-      return NextResponse.json({ refinedText: '', refinedMessage: '' });
+    console.log('[AI Polish API] Received input:', rawMessage);
+
+    if (!rawMessage || !String(rawMessage).trim()) {
+      return NextResponse.json({ refinedText: '', refinedMessage: '', success: true }, { status: 200 });
     }
 
+    const trimmed = String(rawMessage).trim();
     const apiKey = (
       process.env.GEMINI_API_KEY ||
       process.env.GOOGLE_AI_API_KEY ||
@@ -142,7 +130,7 @@ export async function POST(req) {
             contents: [
               {
                 role: 'user',
-                parts: [{ text: `Raw draft to rewrite: "${message}"` }]
+                parts: [{ text: `Draft to rewrite: "${trimmed}"` }]
               }
             ],
             generationConfig: {
@@ -163,40 +151,42 @@ export async function POST(req) {
           if (response.ok) {
             const data = await response.json();
             const rawOutput = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            let polished = rawOutput.trim().replace(/^["']|["']$/g, '');
+            let polishedResult = rawOutput.trim().replace(/^["']|["']$/g, '');
 
-            if (polished.startsWith('```') && polished.endsWith('```')) {
-              polished = polished.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '').trim();
+            if (polishedResult.startsWith('```') && polishedResult.endsWith('```')) {
+              polishedResult = polishedResult.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '').trim();
             }
 
-            if (polished) {
+            if (polishedResult) {
+              console.log('[AI Polish API] Generated output:', polishedResult);
               return NextResponse.json({
-                refinedText: polished,
-                refinedMessage: polished,
-                originalMessage: message,
+                refinedText: polishedResult,
+                refinedMessage: polishedResult,
+                success: true,
                 model
-              });
+              }, { status: 200 });
             }
           } else {
-            console.warn(`[Gemini AI Polish] Model ${model} returned status ${response.status}`);
+            console.warn(`[AI Polish API] Model ${model} returned status ${response.status}`);
           }
         } catch (err) {
-          console.warn(`[Gemini AI Polish] Error calling ${model}:`, err.message);
+          console.warn(`[AI Polish API] Error calling ${model}:`, err.message);
         }
       }
     }
 
     // Fallback if no API key or API call failed
-    const fallbackRefined = localRefineMessage(message);
+    const fallbackResult = localRefineMessage(trimmed);
+    console.log('[AI Polish API] Fallback output:', fallbackResult);
     return NextResponse.json({
-      refinedText: fallbackRefined,
-      refinedMessage: fallbackRefined,
-      originalMessage: message,
+      refinedText: fallbackResult,
+      refinedMessage: fallbackResult,
+      success: true,
       model: 'studio-refiner-fallback'
-    });
+    }, { status: 200 });
 
   } catch (error) {
-    console.error('AI Polish error:', error);
+    console.error('[AI Polish API] Error:', error);
     return NextResponse.json({ error: error.message || 'Failed to refine message' }, { status: 500 });
   }
 }
