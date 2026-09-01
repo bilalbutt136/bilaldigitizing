@@ -58,7 +58,8 @@ function localGenerateSmartReply(messages = [], serviceCategory = '', clientName
 export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const messages = Array.isArray(body?.messages) ? body.messages : [];
+    const rawMessages = body?.conversationHistory || body?.messages || [];
+    const messages = Array.isArray(rawMessages) ? rawMessages : [];
     const serviceCategory = body?.serviceCategory || 'Embroidery Digitizing';
     const clientName = body?.clientName || '';
 
@@ -123,6 +124,7 @@ export async function POST(request) {
 
             if (replyText) {
               return NextResponse.json({
+                replyText: replyText,
                 smartReply: replyText,
                 model: model
               });
@@ -139,6 +141,7 @@ export async function POST(request) {
     // Fallback if no API key or API call failed
     const fallbackReply = localGenerateSmartReply(messages, serviceCategory, clientName);
     return NextResponse.json({
+      replyText: fallbackReply,
       smartReply: fallbackReply,
       model: 'studio-smart-reply-fallback'
     });

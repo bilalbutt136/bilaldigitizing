@@ -812,27 +812,29 @@ export const AdminChatInbox = () => {
       return;
     }
 
-    setIsGeneratingSmartReply(true);
-    if (replyInput.trim()) {
-      setUndoDraft(replyInput);
-    }
-
     try {
-      const res = await fetch('/api/ai/smart-reply', {
+      setIsGeneratingSmartReply(true);
+      const currentDraft = (replyInput || '').trim();
+      if (currentDraft) setUndoDraft(currentDraft);
+
+      const response = await fetch('/api/ai/smart-reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: threadMsgs,
+          conversationHistory: threadMsgs,
           serviceCategory: activeInfo?.serviceCategory || 'Embroidery Digitizing',
           clientName: activeInfo?.customerName || 'Customer'
         })
       });
-      const data = await res.json();
-      if (res.ok && data?.smartReply) {
-        if (replyInput.trim()) setUndoDraft(replyInput);
-        setReplyInput(data.smartReply);
+      const data = await response.json();
+      const generated = data?.replyText || data?.smartReply;
+      if (response.ok && generated) {
+        if (currentDraft) setUndoDraft(currentDraft);
+        setReplyInput(generated);
         showToast('⚡ Smart Reply generated!', 'success');
       } else {
+        console.error('Smart reply failed:', data?.error);
         showToast(data?.error || 'Failed to generate smart reply', 'error');
       }
     } catch (err) {
@@ -843,31 +845,35 @@ export const AdminChatInbox = () => {
     }
   };
 
-  const handleAIPolish = async () => {
-    if (!replyInput.trim() || isRefiningAI) return;
-    setIsRefiningAI(true);
-    const original = replyInput;
+  const handlePolishDraft = async () => {
+    const draft = (replyInput || '').trim();
+    if (!draft || isRefiningAI) return;
     try {
-      const res = await fetch('/api/ai/refine-message', {
+      setIsRefiningAI(true);
+      const response = await fetch('/api/ai/refine-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: original })
+        body: JSON.stringify({ message: draft })
       });
-      const data = await res.json();
-      if (res.ok && data?.refinedMessage) {
-        setUndoDraft(original);
-        setReplyInput(data.refinedMessage);
+      const data = await response.json();
+      const polished = data?.refinedText || data?.refinedMessage;
+      if (response.ok && polished) {
+        setUndoDraft(draft);
+        setReplyInput(polished);
         showToast('✨ Message polished with AI!', 'success');
       } else {
+        console.error('Polish failed:', data?.error);
         showToast(data?.error || 'Failed to polish message with AI', 'error');
       }
     } catch (err) {
-      console.error('AI Polish error:', err);
-      showToast('AI Refiner service unavailable', 'error');
+      console.error('Network error during AI polish:', err);
+      showToast('Network error during AI polish', 'error');
     } finally {
       setIsRefiningAI(false);
     }
   };
+
+  const handleAIPolish = handlePolishDraft;
 
   const handleUndoAIPolish = () => {
     if (undoDraft !== null) {

@@ -14,6 +14,7 @@ Your sole duty is to transform the user's raw draft into grammatically flawless,
      * "I send file yesterday" -> "I sent the file yesterday."
      * "We are complete order" -> "We have completed your order." / "We will complete your order."
      * "I am digitize this" -> "I will digitize this for you."
+     * "helo, what you name?" -> "Hello! May I please have your name?"
 
 2. **Sentence Flow & Preposition Fixes:**
    - Fix wrong prepositions ("in machine", "at tomorrow", "on email" -> "for the machine", "by tomorrow", "via email").
@@ -34,7 +35,7 @@ function localRefineMessage(rawText) {
   if (!rawText || !rawText.trim()) return '';
   let text = rawText.trim();
 
-  // Common quick shorthand and tense pattern expansions
+  // Common quick shorthand and typo pattern expansions
   if (/^(done check|done file check|done pls check|check file|file ready)$/i.test(text.trim())) {
     return 'We have completed your design! Please take a look at the attached preview and let us know if you need any adjustments.';
   }
@@ -43,26 +44,23 @@ function localRefineMessage(rawText) {
     return 'Could you please specify your preferred machine embroidery file format (e.g., DST, PES, EMB, EXP, JEF) or vector format (AI, EPS, SVG, PDF)?';
   }
 
+  if (/^(helo|hello)[,\s]+what\s+(is\s+)?(you|ur)\s+name\??$/i.test(text)) {
+    return 'Hello! May I please have your name?';
+  }
+
   // Tense & broken verb correction replacements
-  const tenseFixes = [
-    [/\bi send you yesterday file\b/gi, 'I sent you the file yesterday.'],
-    [/\bi send file yesterday\b/gi, 'I sent the file yesterday.'],
-    [/\bwe are complete your order\b/gi, 'We have completed your order.'],
-    [/\bwe are complete order\b/gi, 'We have completed your order.'],
-    [/\bi am digitize this\b/gi, 'I will digitize this for you.'],
-    [/\bhe say give me discount\b/gi, 'He asked if we could provide a discount.'],
-    [/\bprice 15 dollar give me 2 hour\b/gi, 'The price is $15, and we can deliver the completed files within 2 hours.']
-  ];
-
-  tenseFixes.forEach(([pattern, repl]) => {
-    text = text.replace(pattern, repl);
-  });
-
-  // Basic whitespace normalization
-  text = text.replace(/\s+/g, ' ');
-
-  // Standard shorthand replacements
   const replacements = [
+    [/\bhelo\b/gi, 'Hello'],
+    [/\bhw r u\b/gi, 'How are you?'],
+    [/\bwhat you name\b/gi, 'what is your name'],
+    [/\bwhat ur name\b/gi, 'what is your name'],
+    [/\bi send you yesterday file\b/gi, 'I sent you the file yesterday'],
+    [/\bi send file yesterday\b/gi, 'I sent the file yesterday'],
+    [/\bwe are complete your order\b/gi, 'We have completed your order'],
+    [/\bwe are complete order\b/gi, 'We have completed your order'],
+    [/\bi am digitize this\b/gi, 'I will digitize this for you'],
+    [/\bhe say give me discount\b/gi, 'He asked if we could provide a discount'],
+    [/\bprice 15 dollar give me 2 hour\b/gi, 'The price is $15, and we can deliver the completed files within 2 hours'],
     [/\bu\b/gi, 'you'],
     [/\bur\b/gi, 'your'],
     [/\br\b/gi, 'are'],
@@ -93,6 +91,9 @@ function localRefineMessage(rawText) {
     text = text.replace(pattern, repl);
   });
 
+  // Basic whitespace normalization
+  text = text.replace(/\s+/g, ' ').trim();
+
   // Capitalize first letter of sentences
   text = text.replace(/(^\s*|[.!?]\s+)([a-z])/g, (m, p1, p2) => p1 + p2.toUpperCase());
 
@@ -102,7 +103,7 @@ function localRefineMessage(rawText) {
   }
 
   // Prepend polite greeting if missing
-  const hasGreeting = /^(hi|hello|dear|good morning|good afternoon|good evening|hey|thank you|thanks|we have|please|i sent|we will)\b/i.test(text);
+  const hasGreeting = /^(hi|hello|dear|good morning|good afternoon|good evening|hey|thank you|thanks|we have|please|i sent|we will|may i)\b/i.test(text);
   if (!hasGreeting) {
     text = `Hello! ${text}`;
   }
@@ -171,6 +172,7 @@ export async function POST(request) {
 
             if (polished) {
               return NextResponse.json({
+                refinedText: polished,
                 refinedMessage: polished,
                 originalMessage: message,
                 model: model
@@ -188,6 +190,7 @@ export async function POST(request) {
     // Fallback if no API key or API call failed
     const fallbackRefined = localRefineMessage(message);
     return NextResponse.json({
+      refinedText: fallbackRefined,
       refinedMessage: fallbackRefined,
       originalMessage: message,
       model: 'studio-refiner-fallback'
