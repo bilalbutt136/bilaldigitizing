@@ -18,7 +18,18 @@ export const AdminConversationCard = ({
   const lastTimeFormatted = formatTime ? formatTime(lastMsg.timestamp || lastMsg.created_at) : 'Just now';
 
   // Customer display details
-  const customerName = threadInfo?.customerName || conversation.clientName || 'Customer';
+  let customerName = threadInfo?.customerName || conversation.clientName;
+  if (!customerName || customerName === 'Client' || customerName === 'Support' || customerName.includes('Admin') || customerName === 'Studio Support') {
+    const clientMsg = (conversation.messages || []).find(m => m.sender !== 'admin' && m.senderName && m.senderName !== 'Support' && !m.senderName.includes('Admin'));
+    if (clientMsg?.senderName) {
+      customerName = clientMsg.senderName;
+    } else if (conversation.id && (conversation.id.startsWith('support-guest_') || conversation.id.startsWith('inbox-guest_'))) {
+      const sub = conversation.id.replace('support-guest_', '').replace('inbox-guest_', '').substring(0, 5).toUpperCase();
+      customerName = `Guest Client (#${sub})`;
+    } else {
+      customerName = conversation.isSupport ? 'Guest Client' : 'Customer';
+    }
+  }
   const customerEmail = threadInfo?.customerEmail || conversation.clientEmail || '';
   const isOrder = Boolean(threadInfo?.isOrder);
   const orderNum = threadInfo?.orderNum || '';

@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { playNotificationSound } from '../../utils/audioNotification';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
 import { 
   fetchConversations, 
+  fetchChatMessages,
   addChatMessage, 
   subscribeToLiveMessages, 
   markConversationAsRead,
@@ -13,6 +14,7 @@ import {
   broadcastTypingStatus,
   subscribeToTypingStatus
 } from '../../services/supabaseService';
+import { getGuestSessionId, getCanonicalThreadId } from '../../utils/sessionHelper';
 import WhatsAppChatMessage from '../common/WhatsAppChatMessage';
 import {
   MessageSquare,
@@ -100,11 +102,12 @@ export const ClientLiveChatWidget = () => {
   const clientCompany = activeUser?.company || `${cleanName}'s Account`;
   const avatarUrl = activeUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0f172a&color=fff`;
 
-  const cacheKey = `bdigi_live_support_widget_cache_${clientEmail || 'guest'}`;
+  const guestSessionId = typeof window !== 'undefined' ? getGuestSessionId() : 'guest_init';
+  const targetConvId = useMemo(() => {
+    return getCanonicalThreadId('support', clientEmail, guestSessionId);
+  }, [clientEmail, guestSessionId]);
 
-  const targetConvId = clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')
-    ? `support-${clientEmail}`
-    : 'general-support';
+  const cacheKey = `bdigi_live_support_widget_cache_${clientEmail || guestSessionId}`;
 
   // Instant local cache hydration on mount for zero-latency load on refresh
   useEffect(() => {
@@ -169,38 +172,34 @@ export const ClientLiveChatWidget = () => {
     const loadChats = async () => {
       if (!isMounted) return;
       if (isSupabaseConfigured) {
-        const data = await fetchConversations(clientEmail, 'support');
-        if (data && data.length > 0 && isMounted) {
-          const onlySupport = data.filter(c => isSupportId(c.id));
-          setChats(prev => {
-            const safePrev = Array.isArray(prev) ? prev.filter(c => isSupportId(c.id)) : [];
-            const merged = onlySupport.map(remoteConv => {
-              const localConv = safePrev.find(c => c.id === remoteConv.id || (isSupportId(c.id) && isSupportId(remoteConv.id)));
-              if (!localConv) return remoteConv;
-              const combinedMessages = [...(remoteConv.messages || [])];
-              (localConv.messages || []).forEach(lm => {
-                if (!combinedMessages.some(rm => 
-                  (rm.id && lm.id && rm.id === lm.id) || 
-                  (rm.text && lm.text && rm.text === lm.text && rm.sender === lm.sender && Math.abs(parseMessageTime(rm) - parseMessageTime(lm)) < 20000) ||
-                  (rm.attachment_url && lm.attachment_url && rm.attachment_url === lm.attachment_url)
-                )) {
-                  combinedMessages.push(lm);
-                }
-              });
-              combinedMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
-              return {
-                ...remoteConv,
-                messages: combinedMessages
-              };
-            });
+        try {
+          const directMsgs = await fetchChatMessages(targetConvId, clientEmail);
+          if (Array.isArray(directMsgs) && isMounted) {
+            const sorted = [...directMsgs].sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+            const threadObj = {
+              id: targetConvId,
+              clientName: cleanName,
+              clientEmail: clientEmail,
+              company: clientCompany,
+              avatar: avatarUrl,
+              status: 'online',
+              unreadCount: 0,
+              clientUnreadCount: 0,
+              messages: sorted,
+              createdAt: sorted[0]?.timestamp || new Date().toISOString(),
+              updatedAt: sorted[sorted.length - 1]?.timestamp || new Date().toISOString()
+            };
+
+            setChats([threadObj]);
 
             if (typeof window !== 'undefined') {
               try {
-                localStorage.setItem(cacheKey, JSON.stringify(merged));
+                localStorage.setItem(cacheKey, JSON.stringify([threadObj]));
               } catch {}
             }
-            return merged;
-          });
+          }
+        } catch (err) {
+          console.warn('[LiveChatWidget] loadChats error:', err);
         }
       }
     };

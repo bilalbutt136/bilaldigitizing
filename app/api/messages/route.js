@@ -93,73 +93,70 @@ export async function GET(request) {
         if (cEmail) clientsByEmail.set(cEmail, c);
       });
 
-      // ----------------------------------------------------
-      // A. BUILD STRICT INBOX CONVERSATIONS (One per customer)
-      // ----------------------------------------------------
-      const inboxThreadsMap = new Map();
-
-      const getOrCreateInboxThread = (email, fallbackName = 'Customer') => {
-        const cleanEmail = normalizeEmail(email);
-        const key = cleanEmail || 'guest';
-        if (!inboxThreadsMap.has(key)) {
-          const clientProfile = cleanEmail ? clientsByEmail.get(cleanEmail) : null;
-          const clientOrders = cleanEmail ? (ordersByEmail.get(cleanEmail) || []) : [];
-          
-          let resolvedName = clientProfile?.name || clientProfile?.full_name;
-          if (!resolvedName && clientOrders.length > 0) {
-            resolvedName = clientOrders[0].client_name;
-          }
-          if (!resolvedName && cleanEmail) {
-            resolvedName = cleanEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-          }
-          if (!resolvedName) resolvedName = fallbackName || 'Guest Visitor';
-
-          inboxThreadsMap.set(key, {
-            id: cleanEmail ? `inbox-${cleanEmail}` : 'inbox-guest',
-            clientEmail: cleanEmail,
-            clientName: resolvedName,
-            company: clientProfile?.company || 'Studio Client',
-            status: 'online',
-            avatar: null,
-            orders: clientOrders,
-            messages: [],
-            adminUnreadCount: 0,
-            clientUnreadCount: 0,
-            unreadCount: 0,
-            isSupport: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          });
+      // Helper to resolve canonical thread key and ID
+      const resolveThreadKeyAndId = (convId, email, isSupport) => {
+        const clean = normalizeEmail(email);
+        if (clean) {
+          return {
+            key: `user_${clean}`,
+            id: isSupport ? `support-${clean}` : `inbox-${clean}`,
+            isGuest: false,
+            email: clean
+          };
         }
-        return inboxThreadsMap.get(key);
+
+        const idStr = String(convId || '').toLowerCase().trim();
+        if (idStr.startsWith('support-guest_') || idStr.startsWith('inbox-guest_')) {
+          const guestSessionId = idStr.replace('support-', '').replace('inbox-', '');
+          return {
+            key: `guest_${guestSessionId}`,
+            id: isSupport ? `support-${guestSessionId}` : `inbox-${guestSessionId}`,
+            isGuest: true,
+            email: ''
+          };
+        }
+
+        return {
+          key: isSupport ? 'support_general' : 'inbox_general',
+          id: isSupport ? 'general-support' : 'inbox-guest',
+          isGuest: true,
+          email: ''
+        };
       };
 
       // ----------------------------------------------------
-      // B. BUILD STRICT SUPPORT CONVERSATIONS (Support Queue)
+      // A. THREAD MAPS (Strictly One Thread Per User / Guest Session)
       // ----------------------------------------------------
+      const inboxThreadsMap = new Map();
       const supportThreadsMap = new Map();
 
-      const getOrCreateSupportThread = (email, fallbackName = 'Support User') => {
-        const cleanEmail = normalizeEmail(email);
-        const key = cleanEmail || 'support-guest';
-        if (!supportThreadsMap.has(key)) {
-          const clientProfile = cleanEmail ? clientsByEmail.get(cleanEmail) : null;
-          const clientOrders = cleanEmail ? (ordersByEmail.get(cleanEmail) || []) : [];
-          
+      const getOrCreateThread = (convId, email, isSupport, fallbackClientName = null) => {
+        const { key, id, isGuest, email: resolvedEmail } = resolveThreadKeyAndId(convId, email, isSupport);
+        const targetMap = isSupport ? supportThreadsMap : inboxThreadsMap;
+
+        if (!targetMap.has(key)) {
+          const clientProfile = resolvedEmail ? clientsByEmail.get(resolvedEmail) : null;
+          const clientOrders = resolvedEmail ? (ordersByEmail.get(resolvedEmail) || []) : [];
+
           let resolvedName = clientProfile?.name || clientProfile?.full_name;
           if (!resolvedName && clientOrders.length > 0) {
             resolvedName = clientOrders[0].client_name;
           }
-          if (!resolvedName && cleanEmail) {
-            resolvedName = cleanEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          if (!resolvedName && resolvedEmail) {
+            resolvedName = resolvedEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
           }
-          if (!resolvedName) resolvedName = fallbackName || (cleanEmail ? 'Customer' : 'Guest Visitor');
+          if (!resolvedName && fallbackClientName && !['Support', 'Admin', 'Studio Support', 'Master Digitizer Support'].includes(fallbackClientName)) {
+            resolvedName = fallbackClientName;
+          }
+          if (!resolvedName) {
+            resolvedName = isGuest ? 'Guest Client' : 'Customer';
+          }
 
-          supportThreadsMap.set(key, {
-            id: cleanEmail ? `support-${cleanEmail}` : 'support-guest',
-            clientEmail: cleanEmail,
+          targetMap.set(key, {
+            id,
+            clientEmail: resolvedEmail || '',
             clientName: resolvedName,
-            company: clientProfile?.company || 'Help & Support',
+            company: clientProfile?.company || (isSupport ? 'Live Support' : 'Studio Client'),
             status: 'online',
             avatar: null,
             orders: clientOrders,
@@ -167,41 +164,43 @@ export async function GET(request) {
             adminUnreadCount: 0,
             clientUnreadCount: 0,
             unreadCount: 0,
-            isSupport: true,
+            isSupport,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           });
         }
-        return supportThreadsMap.get(key);
+
+        const thread = targetMap.get(key);
+        // If thread currently has generic name, and we now have a real customer name, update it
+        if (fallbackClientName && (!thread.clientName || thread.clientName === 'Guest Client' || thread.clientName === 'Customer') && !['Support', 'Admin', 'Studio Support', 'Master Digitizer Support'].includes(fallbackClientName)) {
+          thread.clientName = fallbackClientName;
+        }
+        return thread;
       };
 
       // Seed threads from existing conversations table
       rawConvs.forEach(conv => {
-        const convEmail = normalizeEmail(conv.client_email) || (conv.id?.startsWith('inbox-') ? normalizeEmail(conv.id.replace('inbox-', '')) : (conv.id?.startsWith('support-') ? normalizeEmail(conv.id.replace('support-', '')) : (conv.id?.startsWith('chat-') ? normalizeEmail(conv.id.replace('chat-', '')) : '')));
-        if (isSupportConversation(conv.id)) {
-          const thread = getOrCreateSupportThread(convEmail, conv.client_name);
-          if (conv.client_name && !['Customer', 'Client', 'Guest Client'].includes(conv.client_name)) {
-            thread.clientName = conv.client_name;
-          }
-        } else {
-          const thread = getOrCreateInboxThread(convEmail, conv.client_name);
-          if (conv.client_name && !['Customer', 'Client', 'Guest Client'].includes(conv.client_name)) {
-            thread.clientName = conv.client_name;
-          }
-        }
+        const convEmail = normalizeEmail(conv.client_email);
+        const isSupport = isSupportConversation(conv.id);
+        const convClientName = (!conv.client_name || ['Support', 'Admin', 'Studio Support'].includes(conv.client_name)) ? null : conv.client_name;
+        getOrCreateThread(conv.id, convEmail, isSupport, convClientName);
       });
 
-      // Distribute messages strictly according to their channel
+      // Distribute messages strictly to unified conversation threads
       rawMessages.forEach(m => {
-        const cId = String(m.conversation_id || '').toLowerCase();
+        const cId = String(m.conversation_id || '').toLowerCase().trim();
         const isSupport = isSupportConversation(cId);
 
         let matchedEmail = '';
-        if (cId.startsWith('inbox-')) matchedEmail = normalizeEmail(cId.replace('inbox-', ''));
-        else if (cId.startsWith('support-')) matchedEmail = normalizeEmail(cId.replace('support-', ''));
-        else if (cId.startsWith('direct-')) matchedEmail = normalizeEmail(cId.replace('direct-', ''));
-        else if (cId.startsWith('chat-')) matchedEmail = normalizeEmail(cId.replace('chat-', ''));
-        else if (cId.startsWith('order-') || orderToEmailMap.has(cId)) {
+        if (cId.startsWith('inbox-') && !cId.startsWith('inbox-guest_')) {
+          matchedEmail = normalizeEmail(cId.replace('inbox-', ''));
+        } else if (cId.startsWith('support-') && !cId.startsWith('support-guest_')) {
+          matchedEmail = normalizeEmail(cId.replace('support-', ''));
+        } else if (cId.startsWith('direct-')) {
+          matchedEmail = normalizeEmail(cId.replace('direct-', ''));
+        } else if (cId.startsWith('chat-')) {
+          matchedEmail = normalizeEmail(cId.replace('chat-', ''));
+        } else if (cId.startsWith('order-') || orderToEmailMap.has(cId)) {
           matchedEmail = orderToEmailMap.get(cId) || '';
         }
 
@@ -209,15 +208,17 @@ export async function GET(request) {
           matchedEmail = normalizeEmail(m.client_email);
         }
 
-        const thread = isSupport 
-          ? getOrCreateSupportThread(matchedEmail, m.sender_name)
-          : getOrCreateInboxThread(matchedEmail, m.sender_name);
+        const clientSenderName = (m.sender !== 'admin' && m.sender_name && !['Support', 'Admin', 'Studio Support'].includes(m.sender_name))
+          ? m.sender_name 
+          : null;
+
+        const thread = getOrCreateThread(cId, matchedEmail, isSupport, clientSenderName);
 
         const mappedMsg = {
           id: m.id,
           conversation_id: thread.id,
           sender: m.sender,
-          senderName: m.sender_name || (m.sender === 'admin' ? 'Support' : thread.clientName),
+          senderName: m.sender === 'admin' ? 'Support' : (m.sender_name || thread.clientName),
           sender_name: m.sender_name,
           text: m.text,
           attachment: m.attachment,
@@ -232,7 +233,17 @@ export async function GET(request) {
           timestamp: m.timestamp || m.created_at
         };
 
-        thread.messages.push(mappedMsg);
+        // Deduplicate messages within thread using Map by ID
+        const existingMsgIdx = thread.messages.findIndex(ex => 
+          (ex.id && mappedMsg.id && ex.id === mappedMsg.id) ||
+          (ex.text && mappedMsg.text && ex.text === mappedMsg.text && ex.sender === mappedMsg.sender && Math.abs(parseMessageTime(ex) - parseMessageTime(mappedMsg)) < 5000)
+        );
+
+        if (existingMsgIdx >= 0) {
+          thread.messages[existingMsgIdx] = { ...thread.messages[existingMsgIdx], ...mappedMsg };
+        } else {
+          thread.messages.push(mappedMsg);
+        }
       });
 
       // Finalize and sort lists
@@ -262,8 +273,8 @@ export async function GET(request) {
       // Return per-user or admin data
       if (!isAdmin) {
         if (cleanUserEmail) {
-          const userInbox = inboxConversations.find(c => c.clientEmail === cleanUserEmail) || getOrCreateInboxThread(cleanUserEmail);
-          const userSupport = supportConversations.find(c => c.clientEmail === cleanUserEmail) || getOrCreateSupportThread(cleanUserEmail);
+          const userInbox = inboxConversations.find(c => c.clientEmail === cleanUserEmail) || getOrCreateThread('', cleanUserEmail, false);
+          const userSupport = supportConversations.find(c => c.clientEmail === cleanUserEmail) || getOrCreateThread('', cleanUserEmail, true);
           
           if (channelParam === 'support') {
             return NextResponse.json({ conversations: [userSupport], inboxConversations: [userInbox], supportConversations: [userSupport] });
@@ -272,7 +283,14 @@ export async function GET(request) {
           }
           return NextResponse.json({ conversations: [userInbox, userSupport], inboxConversations: [userInbox], supportConversations: [userSupport] });
         } else {
-          const guestSupport = supportConversations.find(c => c.id === 'support-guest') || getOrCreateSupportThread('');
+          const guestSessionParam = searchParams.get('sessionId') || searchParams.get('chatId') || '';
+          let guestSupport = null;
+          if (guestSessionParam) {
+            guestSupport = supportConversations.find(c => c.id === guestSessionParam || c.id.includes(guestSessionParam));
+          }
+          if (!guestSupport) {
+            guestSupport = supportConversations.find(c => c.id === 'general-support') || getOrCreateThread('', '', true);
+          }
           return NextResponse.json({ conversations: [guestSupport], inboxConversations: [], supportConversations: [guestSupport] });
         }
       }
@@ -297,13 +315,18 @@ export async function GET(request) {
       const cleanUserEmail = normalizeEmail(user?.email || emailParam || '');
       let targetEmail = cleanUserEmail;
       
-      const cId = String(chatId).toLowerCase();
+      const cId = String(chatId).toLowerCase().trim();
       const isSupport = isSupportConversation(cId);
 
-      if (cId.startsWith('support-')) targetEmail = normalizeEmail(cId.replace('support-', ''));
-      else if (cId.startsWith('inbox-')) targetEmail = normalizeEmail(cId.replace('inbox-', ''));
-      else if (cId.startsWith('direct-')) targetEmail = normalizeEmail(cId.replace('direct-', ''));
-      else if (cId.startsWith('chat-')) targetEmail = normalizeEmail(cId.replace('chat-', ''));
+      if (cId.startsWith('support-') && !cId.startsWith('support-guest_')) {
+        targetEmail = normalizeEmail(cId.replace('support-', ''));
+      } else if (cId.startsWith('inbox-') && !cId.startsWith('inbox-guest_')) {
+        targetEmail = normalizeEmail(cId.replace('inbox-', ''));
+      } else if (cId.startsWith('direct-')) {
+        targetEmail = normalizeEmail(cId.replace('direct-', ''));
+      } else if (cId.startsWith('chat-')) {
+        targetEmail = normalizeEmail(cId.replace('chat-', ''));
+      }
 
       let orderIds = [];
       if (targetEmail) {
@@ -315,71 +338,58 @@ export async function GET(request) {
         } catch {}
       }
 
-      // Query all related conversation IDs for this customer
-      const targetIds = Array.from(new Set([
-        chatId,
-        targetEmail ? `support-${targetEmail}` : '',
-        targetEmail ? `inbox-${targetEmail}` : '',
-        targetEmail ? `direct-${targetEmail}` : '',
-        targetEmail ? `chat-${targetEmail}` : '',
-        'general-support',
-        'support-guest',
-        'inbox-guest',
-        'inbox-client',
-        ...orderIds
-      ].filter(Boolean)));
+      let targetIds = [chatId];
+      if (targetEmail) {
+        targetIds = Array.from(new Set([
+          chatId,
+          `support-${targetEmail}`,
+          `inbox-${targetEmail}`,
+          `direct-${targetEmail}`,
+          `chat-${targetEmail}`,
+          ...orderIds
+        ]));
+      } else if (cId === 'general-support' || cId === 'support-guest') {
+        targetIds = ['general-support', 'support-guest'];
+      }
 
       let rawMessages = [];
       try {
         if (targetEmail) {
-          // 1. Fetch by target conversation IDs
-          const { data: convMsgs, error: convErr } = await supabase
+          const { data: convMsgs } = await supabase
             .from('messages')
             .select('*')
             .in('conversation_id', targetIds)
             .order('created_at', { ascending: true });
-          if (convErr) console.warn('[fetchMessages convMsgs notice]:', convErr.message);
 
-          // 2. Fetch by client_email
-          const { data: emailMsgs, error: emailErr } = await supabase
+          const { data: emailMsgs } = await supabase
             .from('messages')
             .select('*')
             .ilike('client_email', targetEmail)
             .order('created_at', { ascending: true });
-          if (emailErr) console.warn('[fetchMessages emailMsgs notice]:', emailErr.message);
 
-          // Merge & deduplicate by message ID or (text + sender + created_at)
-          const seen = new Set();
-          const combined = [];
+          const msgMap = new Map();
           for (const m of [...(convMsgs || []), ...(emailMsgs || [])]) {
-            const key = m.id || `${m.text}_${m.sender}_${m.created_at || m.timestamp}`;
-            if (!seen.has(key)) {
-              seen.add(key);
-              combined.push(m);
-            }
+            if (m && m.id) msgMap.set(m.id, m);
           }
-          rawMessages = combined;
+          rawMessages = Array.from(msgMap.values());
         } else {
-          const { data, error } = await supabase
+          const { data } = await supabase
             .from('messages')
             .select('*')
             .in('conversation_id', targetIds)
             .order('created_at', { ascending: true });
-          if (error) console.warn('[fetchMessages targetIds error]:', error.message);
           rawMessages = data || [];
         }
       } catch (err) {
         console.error('[fetchMessages query error]:', err);
       }
 
-      const data = rawMessages;
-
-      const mappedMessages = (data || []).map(m => ({
+      const mappedMessages = (rawMessages || []).map(m => ({
         id: m.id,
-        conversation_id: m.conversation_id || (isSupport ? (targetEmail ? `support-${targetEmail}` : 'support-guest') : (targetEmail ? `inbox-${targetEmail}` : 'inbox-client')),
+        conversation_id: m.conversation_id || chatId,
         client_email: m.client_email || targetEmail || null,
         sender: m.sender,
-        senderName: m.sender_name || (m.sender === 'admin' ? 'Support' : 'Client'),
+        senderName: m.sender === 'admin' ? 'Support' : (m.sender_name || 'Client'),
         sender_name: m.sender_name,
         text: m.text,
         attachment: m.attachment,
@@ -530,7 +540,7 @@ export async function POST(request) {
       }
 
       let canonicalConvId = passedId;
-      if (!canonicalConvId || canonicalConvId === 'inbox' || canonicalConvId === 'help-support' || canonicalConvId === 'support' || canonicalConvId === 'general-support') {
+      if (!canonicalConvId || canonicalConvId === 'inbox' || canonicalConvId === 'help-support' || canonicalConvId === 'support') {
         canonicalConvId = isSupport ? getCanonicalSupportId(targetEmail) : getCanonicalInboxId(targetEmail);
       }
 

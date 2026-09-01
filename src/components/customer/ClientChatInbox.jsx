@@ -13,6 +13,7 @@ import {
   broadcastTypingStatus,
   subscribeToTypingStatus
 } from '../../services/supabaseService';
+import { getGuestSessionId, getCanonicalThreadId } from '../../utils/sessionHelper';
 import { playNotificationSound } from '../../utils/audioNotification';
 import { useVisualViewport } from '../../hooks/useVisualViewport';
 import WhatsAppChatMessage from '../common/WhatsAppChatMessage';
@@ -82,16 +83,10 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
   const isInitialSupport = initialOrderId === 'help-support' || initialOrderId === 'support' || initialOrderId === 'general-support' || (initialOrderId && String(initialOrderId).startsWith('support-'));
   const [activeChannel, setActiveChannel] = useState(isInitialSupport ? 'support' : 'inbox');
 
+  const guestSessionId = typeof window !== 'undefined' ? getGuestSessionId() : 'guest_init';
   const canonicalChatId = useMemo(() => {
-    if (activeChannel === 'support') {
-      return clientEmail && !clientEmail.includes('guest@bdigitizing.pro')
-        ? `support-${clientEmail}`
-        : 'general-support';
-    }
-    return clientEmail && !clientEmail.includes('guest@bdigitizing.pro')
-      ? `inbox-${clientEmail}`
-      : 'inbox-client';
-  }, [clientEmail, activeChannel]);
+    return getCanonicalThreadId(activeChannel, clientEmail, guestSessionId);
+  }, [clientEmail, activeChannel, guestSessionId]);
 
   const [mounted, setMounted] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -139,16 +134,10 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
   const loadChatHistory = async () => {
     setLoading(true);
     try {
-      const email = clientEmail || '';
-      const directMsgs = await fetchChatMessages(canonicalChatId, email);
-      if (Array.isArray(directMsgs) && directMsgs.length > 0) {
+      const directMsgs = await fetchChatMessages(canonicalChatId, clientEmail);
+      if (Array.isArray(directMsgs)) {
         const sorted = [...directMsgs].sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
         setMessages(sorted);
-      } else if (!email) {
-        const guestMsgs = await fetchChatMessages('general-support', '');
-        setMessages(Array.isArray(guestMsgs) ? guestMsgs : []);
-      } else {
-        setMessages(Array.isArray(directMsgs) ? directMsgs : []);
       }
     } catch (err) {
       console.warn('Load chat history notice:', err);
@@ -205,42 +194,42 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
         (!cleanCustomerEmail && (recordConvId === 'general-support' || recordConvId === 'support-guest' || recordConvId === 'inbox-client'));
 
       if (isForThisCustomer) {
+        const formattedRecord = {
+          id: record.id,
+          conversation_id: canonicalChatId,
+          sender: record.sender,
+          senderName: record.sender_name || (record.sender === 'admin' ? 'Support' : clientName),
+          sender_name: record.sender_name,
+          text: record.text,
+          attachment: record.attachment,
+          attachment_url: record.attachment_url,
+          attachment_name: record.attachment_name || record.attachment,
+          attachment_size: record.attachment_size,
+          attachment_type: record.attachment_type,
+          reply_to: record.reply_to,
+          offer_id: record.offer_id,
+          offer_data: record.offer_data,
+          is_read: record.is_read || false,
+          timestamp: record.timestamp || record.created_at || new Date().toISOString()
+        };
+
         setMessages(prev => {
-          const safePrev = Array.isArray(prev) ? prev : [];
-          const existingIdx = safePrev.findIndex(m => 
-            (m.id && record.id && m.id === record.id) ||
-            (m.id && String(m.id).startsWith('msg-') && m.text === record.text && m.sender === record.sender && Math.abs(parseMessageTime(m) - parseMessageTime(record)) < 15000) ||
-            (m.text && record.text && m.text === record.text && m.sender === record.sender && Math.abs(parseMessageTime(m) - parseMessageTime(record)) < 10000)
-          );
+          const map = new Map();
+          (prev || []).forEach(m => { if (m && m.id) map.set(m.id, m); });
 
-          const formattedRecord = {
-            id: record.id,
-            conversation_id: canonicalChatId,
-            sender: record.sender,
-            senderName: record.sender_name || (record.sender === 'admin' ? 'Support' : clientName),
-            sender_name: record.sender_name,
-            text: record.text,
-            attachment: record.attachment,
-            attachment_url: record.attachment_url,
-            attachment_name: record.attachment_name || record.attachment,
-            attachment_size: record.attachment_size,
-            attachment_type: record.attachment_type,
-            reply_to: record.reply_to,
-            offer_id: record.offer_id,
-            offer_data: record.offer_data,
-            is_read: record.is_read || false,
-            timestamp: record.timestamp || record.created_at || new Date().toISOString()
-          };
-
-          let updated;
-          if (existingIdx >= 0) {
-            updated = [...safePrev];
-            updated[existingIdx] = { ...updated[existingIdx], ...formattedRecord };
-          } else {
-            updated = [...safePrev, formattedRecord];
+          // Remove optimistic match if exists
+          for (const [k, v] of map.entries()) {
+            if (
+              k.startsWith('msg-') &&
+              v.sender === formattedRecord.sender &&
+              v.text === formattedRecord.text &&
+              Math.abs(parseMessageTime(v) - parseMessageTime(formattedRecord)) < 15000
+            ) {
+              map.delete(k);
+            }
           }
-          updated.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
-          return updated;
+          map.set(formattedRecord.id, formattedRecord);
+          return Array.from(map.values()).sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
         });
 
         if (record.sender === 'admin') {
@@ -344,7 +333,12 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
       is_read: false
     };
 
-    setMessages(prev => [...prev, newMsg]);
+    setMessages(prev => {
+      const map = new Map();
+      (prev || []).forEach(m => { if (m && m.id) map.set(m.id, m); });
+      map.set(newMsg.id, newMsg);
+      return Array.from(map.values()).sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+    });
     setMessageInput('');
     setAttachedFile(null);
     setReplyingTo(null);

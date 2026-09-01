@@ -71,16 +71,19 @@ export const resolveThreadInfo = (conv, orders = []) => {
     ? orders.find(o => String(o.id) === String(rawId) || String(o.id).endsWith(String(rawId))) 
     : null;
 
-  // Real Customer Name (no hardcoded or fake strings)
+  // Real Customer Name (no hardcoded "Support" or fake strings)
   let customerName = matchOrd?.client_name || matchOrd?.clientName;
-  if (!customerName || customerName === 'Client' || customerName.includes('Admin') || customerName === 'Master Digitizer Support') {
-    const clientMsg = (conv.messages || []).find(m => m.sender === 'client' && m.senderName && m.senderName !== 'Client' && !m.senderName.includes('Admin'));
+  if (!customerName || customerName === 'Client' || customerName.includes('Admin') || customerName === 'Support' || customerName === 'Studio Support' || customerName === 'Master Digitizer Support') {
+    const clientMsg = (conv.messages || []).find(m => m.sender !== 'admin' && m.senderName && m.senderName !== 'Client' && !m.senderName.includes('Admin') && m.senderName !== 'Support');
     if (clientMsg?.senderName) {
       customerName = clientMsg.senderName;
-    } else if (conv.clientName && conv.clientName !== 'Client' && !conv.clientName.includes('Admin') && conv.clientName !== 'Master Digitizer Support') {
+    } else if (conv.clientName && conv.clientName !== 'Client' && !conv.clientName.includes('Admin') && conv.clientName !== 'Support' && conv.clientName !== 'Studio Support' && conv.clientName !== 'Master Digitizer Support') {
       customerName = conv.clientName;
+    } else if (conv.id && (conv.id.startsWith('support-guest_') || conv.id.startsWith('inbox-guest_'))) {
+      const guestSub = conv.id.replace('support-guest_', '').replace('inbox-guest_', '').substring(0, 5).toUpperCase();
+      customerName = `Guest Client (#${guestSub})`;
     } else {
-      customerName = 'Customer';
+      customerName = isSupport ? 'Guest Client' : 'Customer';
     }
   }
 
@@ -156,7 +159,7 @@ const deduplicateThreads = (rawList) => {
       key = `inbox_${clientEmail || 'client'}`;
       unifiedId = `inbox-${clientEmail || 'client'}`;
     } else {
-      // Support thread: Extract real customer email from conv or its messages
+      // Support thread
       let clientEmail = (conv.clientEmail || conv.client_email || '').toLowerCase().trim();
       if (!clientEmail || clientEmail === 'client@studio.com' || clientEmail.includes('guest@bdigitizing.pro')) {
         const emailMsg = cleanMessages.find(m => m.client_email && m.client_email !== 'client@studio.com' && !m.client_email.includes('guest@bdigitizing.pro'));
@@ -166,11 +169,15 @@ const deduplicateThreads = (rawList) => {
       if (clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')) {
         key = `support_${clientEmail}`;
         unifiedId = `support-${clientEmail}`;
-      } else if (conv.id && conv.id.startsWith('support-') && !conv.id.startsWith('support-guest')) {
+      } else if (conv.id && (conv.id.startsWith('support-guest_') || conv.id.startsWith('support-guest-'))) {
+        const sessionId = conv.id.replace('support-', '').toLowerCase().trim();
+        key = `support_${sessionId}`;
+        unifiedId = conv.id;
+      } else if (conv.id && conv.id.startsWith('support-') && conv.id !== 'support-guest') {
         key = `support_${conv.id.replace('support-', '').toLowerCase().trim()}`;
         unifiedId = conv.id;
       } else {
-        key = 'general-support';
+        key = 'support_general';
         unifiedId = 'general-support';
       }
     }
@@ -190,25 +197,20 @@ const deduplicateThreads = (rawList) => {
       });
     } else {
       const existing = map.get(key);
-      const combinedMessages = [...(existing.messages || [])];
-      cleanMessages.forEach(m => {
-        if (!combinedMessages.some(ex => 
-          (ex.id && m.id && ex.id === m.id) || 
-          (ex.text && m.text && ex.text === m.text && ex.sender === m.sender && Math.abs(parseMessageTime(ex) - parseMessageTime(m)) < 20000) ||
-          (ex.attachment_url && m.attachment_url && ex.attachment_url === m.attachment_url)
-        )) {
-          combinedMessages.push(m);
-        }
-      });
-      combinedMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+      // Map deduplication for messages
+      const msgMap = new Map();
+      (existing.messages || []).forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
+      cleanMessages.forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
+      
+      const combinedMessages = Array.from(msgMap.values()).sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
       const updatedLastMsg = combinedMessages[combinedMessages.length - 1];
       const updatedLastTime = updatedLastMsg ? parseMessageTime(updatedLastMsg) : (existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0);
 
       const combinedUnread = Math.max(existing.adminUnreadCount || 0, convUnread);
 
-      const resolvedName = (existing.clientName && existing.clientName !== 'Customer' && existing.clientName !== 'Client') 
+      const resolvedName = (existing.clientName && !['Customer', 'Client', 'Support', 'Admin'].includes(existing.clientName)) 
         ? existing.clientName 
-        : (conv.clientName || existing.clientName);
+        : ((conv.clientName && !['Customer', 'Client', 'Support', 'Admin'].includes(conv.clientName)) ? conv.clientName : existing.clientName);
       const resolvedEmail = (existing.clientEmail && existing.clientEmail !== 'client@studio.com') 
         ? existing.clientEmail 
         : (conv.clientEmail || existing.clientEmail);
@@ -218,21 +220,16 @@ const deduplicateThreads = (rawList) => {
         id: unifiedId,
         clientName: resolvedName,
         clientEmail: resolvedEmail,
-        messages: combinedMessages,
         unreadCount: combinedUnread,
         adminUnreadCount: combinedUnread,
-        lastMessageTime: updatedLastTime
+        messages: combinedMessages,
+        lastMessageTime: Math.max(existing.lastMessageTime || 0, updatedLastTime),
+        updatedAt: updatedLastMsg?.timestamp || existing.updatedAt
       });
     }
   });
 
-  const list = Array.from(map.values());
-  list.sort((a, b) => {
-    const timeA = a.lastMessageTime || (a.updatedAt ? new Date(a.updatedAt).getTime() : 0);
-    const timeB = b.lastMessageTime || (b.updatedAt ? new Date(b.updatedAt).getTime() : 0);
-    return timeB - timeA;
-  });
-  return list;
+  return Array.from(map.values()).sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
 };
 
 export const AdminChatInbox = () => {
@@ -588,7 +585,7 @@ export const AdminChatInbox = () => {
     return getAdminThreadUnreadCount(conv, activeChatId);
   };
 
-  const handleSelectChat = (chatId) => {
+  const handleSelectChat = async (chatId) => {
     setActiveChatId(chatId);
     setMobileView('chat');
     const targetConv = conversations.find(c => c.id === chatId);
@@ -616,6 +613,30 @@ export const AdminChatInbox = () => {
 
     // 2. Trigger background DB update & global broadcast
     markConversationAsRead(chatId, 'admin', email);
+
+    // 3. Fetch latest full message stream for this specific thread
+    if (isSupabaseConfigured) {
+      try {
+        const freshMsgs = await fetchChatMessages(chatId, email);
+        if (Array.isArray(freshMsgs) && freshMsgs.length > 0) {
+          setConversations(prev => {
+            const updated = prev.map(c => {
+              if (c.id === chatId || (email && c.clientEmail === email)) {
+                const msgMap = new Map();
+                (c.messages || []).forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
+                freshMsgs.forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
+                const merged = Array.from(msgMap.values()).sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+                return { ...c, messages: merged };
+              }
+              return c;
+            });
+            return deduplicateThreads(updated);
+          });
+        }
+      } catch (err) {
+        console.warn('Fetch chat messages on select notice:', err);
+      }
+    }
   };
 
   const isSupportThread = (c) => {
