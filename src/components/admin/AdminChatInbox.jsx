@@ -35,7 +35,8 @@ import {
   LifeBuoy,
   ShoppingBag,
   ExternalLink,
-  RotateCcw
+  RotateCcw,
+  Bot
 } from 'lucide-react';
 
 const formatChatTime = (timestamp) => {
@@ -257,7 +258,131 @@ export const AdminChatInbox = () => {
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
-  const typingTimeoutRef = useRef(null);
+  const [autoPilotEnabled, setAutoPilotEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return localStorage.getItem('bdigi_admin_autopilot') === 'true';
+      } catch {}
+    }
+    return false;
+  });
+  const autoPilotEnabledRef = useRef(autoPilotEnabled);
+  const processedAutoRepliesRef = useRef(new Set());
+  const conversationsRef = useRef(conversations);
+
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
+
+  useEffect(() => {
+    autoPilotEnabledRef.current = autoPilotEnabled;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('bdigi_admin_autopilot', String(autoPilotEnabled));
+      } catch {}
+    }
+  }, [autoPilotEnabled]);
+
+  // Autonomous AI Responder for incoming customer inquiries
+  const triggerAutoPilotReply = async (newMsg) => {
+    if (!newMsg || !newMsg.conversation_id) return;
+    // Strict safety & loop prevention: only respond to customer/client, never admin or self
+    if (newMsg.sender !== 'client' && newMsg.sender !== 'customer') return;
+    if (newMsg.is_autopilot || newMsg.auto_pilot) return;
+    if (!newMsg.text || !String(newMsg.text).trim()) return;
+
+    const msgKey = newMsg.id || `${newMsg.conversation_id}-${newMsg.text}-${newMsg.timestamp}`;
+    if (processedAutoRepliesRef.current.has(msgKey)) return;
+    processedAutoRepliesRef.current.add(msgKey);
+
+    const targetConv = (conversationsRef.current || []).find(c => c.id === newMsg.conversation_id);
+    const customerName = newMsg.senderName || targetConv?.clientName || 'Customer';
+
+    try {
+      // 1. Broadcast typing indicator to simulate natural response
+      broadcastTypingStatus(newMsg.conversation_id, 'Studio Support (Auto-Pilot)', 'admin', true);
+
+      // 2. Natural human typing delay (2.2 seconds)
+      await new Promise(r => setTimeout(r, 2200));
+
+      // 3. Call AI endpoint with full context
+      const response = await fetch('/api/ai/generate-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          latestMessage: newMsg.text,
+          customerName: customerName,
+          clientName: customerName,
+          messages: targetConv?.messages || [newMsg],
+          conversationHistory: targetConv?.messages || [newMsg],
+          serviceCategory: targetConv?.orderTitle || 'Embroidery Digitizing'
+        })
+      });
+
+      const data = await response.json();
+      const replyText = data?.replyText || data?.smartReply;
+
+      // Turn off typing indicator
+      broadcastTypingStatus(newMsg.conversation_id, 'Studio Support', 'admin', false);
+
+      if (response.ok && replyText) {
+        const nowIso = new Date().toISOString();
+        const autoMsg = {
+          id: 'msg-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+          conversation_id: newMsg.conversation_id,
+          sender: 'admin',
+          senderName: 'Studio Support',
+          sender_name: 'Studio Support',
+          text: replyText,
+          is_autopilot: true,
+          auto_pilot: true,
+          is_read: false,
+          timestamp: nowIso,
+          created_at: nowIso
+        };
+
+        // Optimistically insert auto-reply into state
+        setConversations(prev => {
+          const safePrev = Array.isArray(prev) ? prev : [];
+          const updated = safePrev.map(conv => {
+            if (conv.id === newMsg.conversation_id) {
+              const currentMsgs = conv.messages || [];
+              const nextMsgs = [...currentMsgs, autoMsg].sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+              return {
+                ...conv,
+                messages: nextMsgs,
+                lastMessageTime: Date.now(),
+                updatedAt: nowIso
+              };
+            }
+            return conv;
+          });
+          const deduplicated = deduplicateThreads(updated);
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem(cacheKey, JSON.stringify(deduplicated));
+            } catch {}
+          }
+          return deduplicated;
+        });
+
+        // Persist message to Supabase DB
+        if (isSupabaseConfigured) {
+          try {
+            await addChatMessage(newMsg.conversation_id, autoMsg);
+          } catch (err) {
+            console.warn('Auto-Pilot persist notice:', err);
+          }
+        }
+
+        playNotificationSound('send');
+        showToast(`🤖 Auto-Pilot replied to ${customerName}!`, 'success');
+      }
+    } catch (err) {
+      console.error('Auto-Pilot execution error:', err);
+      broadcastTypingStatus(newMsg.conversation_id, 'Studio Support', 'admin', false);
+    }
+  };
 
   // Instant local cache hydration on mount for zero-latency load on refresh
   useEffect(() => {
@@ -329,11 +454,16 @@ export const AdminChatInbox = () => {
           offer_id: record.offer_id || record.offerId || null,
           offer_data: record.offer_data || record.offerData || null,
           is_read: record.is_read || false,
+          is_autopilot: record.is_autopilot || record.auto_pilot || false,
+          auto_pilot: record.is_autopilot || record.auto_pilot || false,
           timestamp: record.timestamp || record.created_at || new Date().toISOString()
         };
 
-        if (newMsg.sender === 'client') {
+        if (newMsg.sender === 'client' || newMsg.sender === 'customer') {
           playNotificationSound('receive');
+          if (autoPilotEnabledRef.current) {
+            triggerAutoPilotReply(newMsg);
+          }
         }
 
         setConversations(prev => {
@@ -1343,9 +1473,55 @@ export const AdminChatInbox = () => {
                 </div>
               </div>
 
-              {/* View Customer Orders dropdown / trigger */}
-              {activeChat.orders && activeChat.orders.length > 0 && (
-                <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+                {/* 🤖 Auto-Pilot AI Toggle Switch */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !autoPilotEnabled;
+                    setAutoPilotEnabled(next);
+                    showToast(next ? '🤖 Auto-Pilot AI enabled (Auto-Replying)' : '🤖 Auto-Pilot AI disabled (Manual Mode)', next ? 'success' : 'info');
+                  }}
+                  title="When enabled, incoming customer inquiries will be answered automatically by AI."
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    background: autoPilotEnabled ? '#ecfdf5' : '#f8fafc',
+                    border: autoPilotEnabled ? '1.5px solid #10b981' : '1.5px solid #cbd5e1',
+                    borderRadius: '20px',
+                    padding: '0.22rem 0.55rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: autoPilotEnabled ? '0 1px 4px rgba(16, 185, 129, 0.2)' : 'none'
+                  }}
+                >
+                  <Bot size={13} className={autoPilotEnabled ? 'text-emerald-600' : 'text-slate-400'} />
+                  <span style={{ 
+                    fontSize: '0.72rem', 
+                    fontWeight: 800, 
+                    color: autoPilotEnabled ? '#065f46' : '#64748b' 
+                  }}>
+                    Auto-Pilot
+                  </span>
+                  <span style={{
+                    fontSize: '0.62rem',
+                    fontWeight: 800,
+                    padding: '1px 6px',
+                    borderRadius: '10px',
+                    background: autoPilotEnabled ? '#10b981' : '#e2e8f0',
+                    color: autoPilotEnabled ? '#ffffff' : '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px'
+                  }}>
+                    {autoPilotEnabled && <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#ffffff', animation: 'pulse 1.5s infinite' }} />}
+                    {autoPilotEnabled ? 'ON' : 'OFF'}
+                  </span>
+                </button>
+
+                {/* View Customer Orders dropdown / trigger */}
+                {activeChat.orders && activeChat.orders.length > 0 && (
                   <button
                     type="button"
                     onClick={() => {
@@ -1360,8 +1536,8 @@ export const AdminChatInbox = () => {
                     <span>Latest #{String(activeChat.orders[0].id).substring(0, 6).toUpperCase()}</span>
                     <ChevronRight size={12} />
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Messages Feed */}
@@ -1608,6 +1784,49 @@ export const AdminChatInbox = () => {
                         <span>✨ Polish with AI</span>
                       </>
                     )}
+                  </button>
+
+                  {/* 🤖 Auto-Pilot AI Toggle Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !autoPilotEnabled;
+                      setAutoPilotEnabled(next);
+                      showToast(next ? '🤖 Auto-Pilot AI enabled (Auto-Replying)' : '🤖 Auto-Pilot AI disabled (Manual Mode)', next ? 'success' : 'info');
+                    }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      padding: '0.32rem 0.65rem',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      color: autoPilotEnabled ? '#065f46' : '#64748b',
+                      background: autoPilotEnabled ? '#ecfdf5' : '#f8fafc',
+                      border: autoPilotEnabled ? '1px solid #a7f3d0' : '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      boxShadow: autoPilotEnabled ? '0 1px 2px rgba(16, 185, 129, 0.12)' : 'none'
+                    }}
+                    title="When enabled, incoming customer inquiries will be answered automatically by AI."
+                  >
+                    <Bot size={13} className={autoPilotEnabled ? 'text-emerald-600' : 'text-slate-400'} />
+                    <span>Auto-Pilot</span>
+                    <span style={{
+                      fontSize: '0.6rem',
+                      fontWeight: 800,
+                      padding: '1px 5px',
+                      borderRadius: '4px',
+                      background: autoPilotEnabled ? '#10b981' : '#e2e8f0',
+                      color: autoPilotEnabled ? '#ffffff' : '#64748b',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '2px'
+                    }}>
+                      {autoPilotEnabled && <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ffffff', animation: 'pulse 1.5s infinite' }} />}
+                      {autoPilotEnabled ? 'ON' : 'OFF'}
+                    </span>
                   </button>
                 </div>
 

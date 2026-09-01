@@ -591,22 +591,44 @@ export default function WhatsAppChatMessage({
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'flex-end',
+          justifyContent: (message.is_autopilot || message.auto_pilot) ? 'space-between' : 'flex-end',
           gap: '0.35rem',
           fontSize: '0.65rem',
           color: resolvedIsMe ? 'rgba(255, 255, 255, 0.85)' : 'var(--color-text-muted, #94a3b8)',
           marginTop: '0.35rem'
         }}>
-          <Clock size={10} />
-          <span>{displayTime}</span>
-          {resolvedIsMe && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', marginLeft: '0.2rem' }}>
-              <span style={{ fontSize: '0.62rem', fontWeight: 800, color: isMessageRead ? '#7dd3fc' : 'rgba(255, 255, 255, 0.75)' }}>
-                {isMessageRead ? 'Read' : 'Delivered'}
-              </span>
-              <CheckCheck size={13} style={{ color: isMessageRead ? '#38bdf8' : 'rgba(255,255,255,0.7)' }} />
+          {(message.is_autopilot || message.auto_pilot) && (
+            <span 
+              title="Generated and sent automatically by Auto-Pilot AI"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '3px',
+                padding: '1px 5px',
+                borderRadius: '4px',
+                fontSize: '0.6rem',
+                fontWeight: 800,
+                background: resolvedIsMe ? 'rgba(255, 255, 255, 0.22)' : 'rgba(16, 185, 129, 0.15)',
+                color: resolvedIsMe ? '#ffffff' : '#059669',
+                border: resolvedIsMe ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)'
+              }}
+            >
+              <span>🤖 Auto-Pilot AI</span>
             </span>
           )}
+
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', marginLeft: 'auto' }}>
+            <Clock size={10} />
+            <span>{displayTime}</span>
+            {resolvedIsMe && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', marginLeft: '0.2rem' }}>
+                <span style={{ fontSize: '0.62rem', fontWeight: 800, color: isMessageRead ? '#7dd3fc' : 'rgba(255, 255, 255, 0.75)' }}>
+                  {isMessageRead ? 'Read' : 'Delivered'}
+                </span>
+                <CheckCheck size={13} style={{ color: isMessageRead ? '#38bdf8' : 'rgba(255,255,255,0.7)' }} />
+              </span>
+            )}
+          </div>
         </div>
 
         {/* 5. HOVER ACTION TOOLBAR (WhatsApp Style Reply button) */}
