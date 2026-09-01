@@ -130,7 +130,9 @@ export async function POST(request) {
       const offerDbRow = {
         id: offerId,
         conversation_id: conversation_id,
+        thread_id: conversation_id,
         order_id: null,
+        customer_id: payload.customer_id || null,
         created_by: user?.email || 'admin',
         client_name: cleanClientName,
         client_email: cleanClientEmail,
@@ -146,7 +148,8 @@ export async function POST(request) {
         expires_in_hours: hours,
         expires_at: expiresAt,
         requires_requirements: Boolean(requires_requirements),
-        status: 'sent',
+        status: 'pending',
+        stripe_session_id: null,
         created_at: nowIso,
         updated_at: nowIso
       };

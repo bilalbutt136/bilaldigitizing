@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
+import { createAdminClient } from '../../../src/lib/supabase/admin';
 
 export async function POST(req) {
   try {
@@ -14,7 +15,7 @@ export async function POST(req) {
 
     const { user } = await getServerAuthUser(req);
     const body = await req.json().catch(() => ({}));
-    const { amount, clientEmail, type, orderId } = body;
+    const { amount, clientEmail, type, orderId, offerId, conversationId, title } = body;
 
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
@@ -32,6 +33,21 @@ export async function POST(req) {
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
 
+    let productName = `Bilal Digitizing - Order Payment ${orderId ? `(#${orderId})` : ''}`;
+    if (type === 'deposit') {
+      productName = 'Bilal Digitizing - Studio Wallet Top-up';
+    } else if (type === 'custom_offer') {
+      productName = `Bilal Digitizing - Custom Offer: ${title || 'Custom Design Order'}`;
+    }
+
+    const successUrl = type === 'custom_offer'
+      ? `${siteUrl}/client-portal?tab=inbox&chatId=${conversationId || ''}&payment=success&offerId=${offerId || ''}&session_id={CHECKOUT_SESSION_ID}`
+      : `${siteUrl}/client-portal?success=true&session_id={CHECKOUT_SESSION_ID}`;
+
+    const cancelUrl = type === 'custom_offer'
+      ? `${siteUrl}/client-portal?tab=inbox&chatId=${conversationId || ''}&payment=canceled`
+      : `${siteUrl}/client-portal?canceled=true`;
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       customer_email: targetEmail,
@@ -39,26 +55,45 @@ export async function POST(req) {
         price_data: {
           currency: 'usd',
           product_data: { 
-            name: type === 'deposit' ? 'Bilal Digitizing - Studio Wallet Top-up' : `Bilal Digitizing - Order Payment ${orderId ? `(#${orderId})` : ''}` 
+            name: productName
           },
           unit_amount: Math.round(parsedAmount * 100), // Stripe expects integer cents
         },
         quantity: 1,
       }],
       mode: 'payment',
-      success_url: `${siteUrl}/client-portal?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${siteUrl}/client-portal?canceled=true`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       metadata: { 
         clientEmail: targetEmail, 
         type: type || 'order_payment', 
-        orderId: orderId || '' 
+        orderId: orderId || '',
+        offerId: offerId || '',
+        conversationId: conversationId || '',
+        title: title || ''
       }
     });
+
+    if (type === 'custom_offer' && offerId) {
+      try {
+        const supabase = createAdminClient();
+        await supabase
+          .from('custom_offers')
+          .update({
+            stripe_session_id: session.id,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', offerId);
+      } catch (dbErr) {
+        console.warn('Stripe session id update notice for custom offer:', dbErr.message);
+      }
+    }
 
     return NextResponse.json({ 
       success: true, 
       message: 'Checkout session created successfully.',
-      url: session.url
+      url: session.url,
+      sessionId: session.id
     });
   } catch (error) {
     console.error('Checkout API Error:', error);

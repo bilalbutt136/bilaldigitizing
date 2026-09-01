@@ -22,15 +22,21 @@ async function runMigrations() {
     await client.connect();
     console.log("✓ Connected to Supabase PostgreSQL.");
 
-    const migrationsDir = path.resolve(process.cwd(), 'database', 'migrations');
-    if (fs.existsSync(migrationsDir)) {
-      const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
-      for (const file of files) {
-        const filePath = path.join(migrationsDir, file);
-        const sql = fs.readFileSync(filePath, 'utf8');
-        console.log(`Executing migration: ${file}...`);
-        await client.query(sql);
-        console.log(`✓ Migration ${file} applied successfully.`);
+    const dirs = [
+      path.resolve(process.cwd(), 'database', 'migrations'),
+      path.resolve(process.cwd(), 'supabase', 'migrations')
+    ];
+
+    for (const migrationsDir of dirs) {
+      if (fs.existsSync(migrationsDir)) {
+        const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
+        for (const file of files) {
+          const filePath = path.join(migrationsDir, file);
+          const sql = fs.readFileSync(filePath, 'utf8');
+          console.log(`Executing migration (${path.basename(migrationsDir)}): ${file}...`);
+          await client.query(sql);
+          console.log(`✓ Migration ${file} applied successfully.`);
+        }
       }
     }
 

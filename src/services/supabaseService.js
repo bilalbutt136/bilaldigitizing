@@ -1390,6 +1390,27 @@ export async function createCustomOffer(offerPayload) {
   }
 }
 
+export async function createOfferCheckoutSession(offerId, options = {}) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/checkout', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        type: 'custom_offer',
+        offerId,
+        amount: options.amount,
+        clientEmail: options.clientEmail,
+        conversationId: options.conversationId,
+        title: options.title
+      })
+    });
+    return await res.json();
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
 export async function acceptCustomOffer(offerId) {
   try {
     broadcastOfferStatusChange(offerId, 'accepted');

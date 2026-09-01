@@ -18,15 +18,16 @@ import {
   ExternalLink,
   DollarSign,
   Ban,
-  Check
+  Check,
+  CreditCard
 } from 'lucide-react';
-import { acceptCustomOffer, declineCustomOffer, cancelCustomOffer } from '../../services/supabaseService';
+import { acceptCustomOffer, declineCustomOffer, cancelCustomOffer, createOfferCheckoutSession } from '../../services/supabaseService';
 import { playNotificationSound } from '../../utils/audioNotification';
 import { useAppState } from '../../context/StateContext';
 
 /**
  * Custom Offer Card Message rendered inside Chat Feeds
- * Supports Customer & Admin views with persistent database state synchronization.
+ * Supports Customer & Admin views with persistent database state synchronization and Stripe Card Checkout.
  */
 export default function OfferCardMessage({
   offer,
@@ -39,6 +40,7 @@ export default function OfferCardMessage({
   const { showToast: contextShowToast } = useAppState() || {};
   const showToast = propShowToast || contextShowToast || (() => {});
 
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const [isDeclining, setIsDeclining] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -54,7 +56,7 @@ export default function OfferCardMessage({
   // Realtime & cross-tab offer status listener
   useEffect(() => {
     const handleStatusEvent = (e) => {
-      const { offerId, status: newStatus, offer: freshOffer } = e.detail || {};
+      const { offerId, status: newStatus } = e.detail || {};
       const myOfferId = offer?.id || offer?.offer_id;
       if (offerId && (offerId === myOfferId || offerId === messageId)) {
         if (newStatus) {
@@ -69,7 +71,7 @@ export default function OfferCardMessage({
   if (!offer) return null;
 
   const status = localStatus || offer.status || 'sent';
-  const isExpired = (status === 'sent' || status === 'viewed') && offer.expires_at && new Date(offer.expires_at).getTime() < Date.now();
+  const isExpired = (status === 'sent' || status === 'viewed' || status === 'pending') && offer.expires_at && new Date(offer.expires_at).getTime() < Date.now();
   const currentStatus = isExpired ? 'expired' : status;
 
   const price = parseFloat(offer.final_price ?? offer.price ?? 0);
@@ -85,6 +87,7 @@ export default function OfferCardMessage({
 
   const getStatusBadge = () => {
     switch (currentStatus) {
+      case 'paid':
       case 'accepted':
         return (
           <span style={{
@@ -99,7 +102,7 @@ export default function OfferCardMessage({
             border: '1px solid rgba(16, 185, 129, 0.5)',
             color: '#34d399'
           }}>
-            <CheckCircle2 size={12} /> Completed / Accepted
+            <CheckCircle2 size={12} /> {currentStatus === 'paid' ? 'Paid (In Production)' : 'Completed / Accepted'}
           </span>
         );
       case 'declined':
@@ -175,10 +178,33 @@ export default function OfferCardMessage({
     }
   };
 
-  const isPending = !['accepted', 'declined', 'rejected', 'expired', 'cancelled', 'withdrawn'].includes(currentStatus);
+  const isPending = !['paid', 'accepted', 'declined', 'rejected', 'expired', 'cancelled', 'withdrawn'].includes(currentStatus);
+
+  const handleStripeCheckout = async () => {
+    if (isCheckingOut || isAccepting || !isPending) return;
+    setIsCheckingOut(true);
+    try {
+      const res = await createOfferCheckoutSession(offer.id, {
+        amount: price,
+        clientEmail: offer.client_email,
+        conversationId: offer.conversation_id || offer.thread_id,
+        title: offer.title
+      });
+
+      if (res.url) {
+        window.location.href = res.url;
+      } else {
+        showToast(res.error || 'Failed to initiate card checkout session', 'error');
+      }
+    } catch {
+      showToast('Stripe checkout service temporarily unavailable', 'error');
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
 
   const handleDirectAccept = async () => {
-    if (isAccepting || !isPending) return;
+    if (isAccepting || isCheckingOut || !isPending) return;
     setIsAccepting(true);
     try {
       const res = await acceptCustomOffer(offer.id);
@@ -189,7 +215,7 @@ export default function OfferCardMessage({
         showToast('✓ Offer accepted! Production order created.', 'success');
         try { playNotificationSound('success'); } catch {}
       }
-    } catch (err) {
+    } catch {
       showToast('Failed to accept offer. Please try again.', 'error');
     } finally {
       setIsAccepting(false);
@@ -197,7 +223,7 @@ export default function OfferCardMessage({
   };
 
   const handleDecline = async () => {
-    if (isDeclining || !isPending) return;
+    if (isDeclining || isCheckingOut || isAccepting || !isPending) return;
     setIsDeclining(true);
     try {
       const res = await declineCustomOffer(offer.id);
@@ -330,8 +356,8 @@ export default function OfferCardMessage({
           </div>
         </div>
 
-        {/* Accepted Offer State (Clean Green Banner + Price + Linked Order) */}
-        {currentStatus === 'accepted' && (
+        {/* Accepted / Paid Offer State (Clean Green Banner + Price + Linked Order) */}
+        {(currentStatus === 'accepted' || currentStatus === 'paid') && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <div style={{
               display: 'flex',
@@ -348,7 +374,7 @@ export default function OfferCardMessage({
               boxShadow: '0 4px 14px rgba(16, 185, 129, 0.15)'
             }}>
               <CheckCircle2 size={18} className="text-emerald-400" />
-              <span>✓ Offer Accepted • ${price.toFixed(2)}</span>
+              <span>✓ {currentStatus === 'paid' ? 'Paid via Stripe' : 'Offer Accepted'} • ${price.toFixed(2)}</span>
             </div>
 
             {offer.order_id && (
@@ -449,79 +475,107 @@ export default function OfferCardMessage({
         {/* Action Controls for Customer (Active Offer) */}
         {isPending && !isAdmin && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {/* Primary Action: Stripe Card Checkout */}
             <button
               type="button"
-              onClick={handleDirectAccept}
-              disabled={isAccepting || isDeclining}
+              onClick={handleStripeCheckout}
+              disabled={isCheckingOut || isAccepting || isDeclining}
               style={{
                 width: '100%',
-                padding: '0.7rem 1rem',
+                padding: '0.75rem 1rem',
                 borderRadius: '10px',
-                background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
                 border: 'none',
                 color: '#ffffff',
                 fontWeight: 800,
                 fontSize: '0.88rem',
-                cursor: (isAccepting || isDeclining) ? 'not-allowed' : 'pointer',
+                cursor: (isCheckingOut || isAccepting || isDeclining) ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+                boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)',
                 transition: 'transform 0.15s ease, opacity 0.15s ease'
               }}
             >
-              {isAccepting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-              {isAccepting ? 'Processing Acceptance...' : `Accept Offer • $${price.toFixed(2)}`}
+              {isCheckingOut ? <Loader2 size={16} className="animate-spin" /> : <CreditCard size={16} />}
+              {isCheckingOut ? 'Opening Stripe Checkout...' : `💳 Pay with Card • $${price.toFixed(2)}`}
             </button>
 
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {/* Secondary Action Row: Instant Accept & Details */}
+            <div style={{ display: 'flex', gap: '0.45rem' }}>
+              <button
+                type="button"
+                onClick={handleDirectAccept}
+                disabled={isCheckingOut || isAccepting || isDeclining}
+                style={{
+                  flex: 1.2,
+                  padding: '0.55rem',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  fontSize: '0.78rem',
+                  cursor: (isCheckingOut || isAccepting || isDeclining) ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {isAccepting ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                {isAccepting ? 'Accepting...' : '✓ Instant Accept'}
+              </button>
+
               <button
                 type="button"
                 onClick={handleDecline}
-                disabled={isAccepting || isDeclining}
+                disabled={isCheckingOut || isAccepting || isDeclining}
                 style={{
-                  flex: 1,
+                  flex: 0.8,
                   padding: '0.55rem',
                   borderRadius: '8px',
                   background: 'rgba(244, 63, 94, 0.12)',
                   border: '1.5px solid rgba(244, 63, 94, 0.35)',
                   color: '#fb7185',
                   fontWeight: 800,
-                  fontSize: '0.8rem',
-                  cursor: (isAccepting || isDeclining) ? 'not-allowed' : 'pointer',
+                  fontSize: '0.78rem',
+                  cursor: (isCheckingOut || isAccepting || isDeclining) ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '6px',
+                  gap: '4px',
                   transition: 'all 0.15s ease'
                 }}
               >
                 {isDeclining ? <Loader2 size={13} className="animate-spin" /> : <XCircle size={13} />}
-                {isDeclining ? 'Rejecting...' : 'Reject Offer'}
+                {isDeclining ? 'Rejecting...' : 'Reject'}
               </button>
+
               <button
                 type="button"
                 onClick={() => setIsDetailsOpen(true)}
                 style={{
-                  flex: 1,
-                  padding: '0.55rem',
+                  padding: '0.55rem 0.65rem',
                   borderRadius: '8px',
                   background: 'rgba(255, 255, 255, 0.06)',
                   border: '1px solid rgba(255, 255, 255, 0.12)',
                   color: '#cbd5e1',
                   fontWeight: 700,
-                  fontSize: '0.8rem',
+                  fontSize: '0.78rem',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '6px',
+                  gap: '4px',
                   transition: 'all 0.15s ease'
                 }}
               >
                 <Eye size={13} />
-                View Details
+                Details
               </button>
             </div>
           </div>
