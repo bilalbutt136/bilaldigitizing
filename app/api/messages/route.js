@@ -74,6 +74,16 @@ export async function GET(request) {
         .select('*');
       const rawConvs = allConvs || [];
 
+      // 5. Fetch custom offers to ensure authoritative status (accepted, declined, etc.) is never overwritten
+      const { data: allCustomOffers } = await supabase
+        .from('custom_offers')
+        .select('*');
+      const rawCustomOffers = allCustomOffers || [];
+      const offersMap = new Map();
+      rawCustomOffers.forEach(off => {
+        if (off?.id) offersMap.set(off.id, off);
+      });
+
       // Map helpers
       const ordersByEmail = new Map();
       const orderToEmailMap = new Map();
@@ -214,6 +224,19 @@ export async function GET(request) {
 
         const thread = getOrCreateThread(cId, matchedEmail, isSupport, clientSenderName);
 
+        let resolvedOfferData = m.offer_data || m.offerData || null;
+        if (typeof resolvedOfferData === 'string') {
+          try { resolvedOfferData = JSON.parse(resolvedOfferData); } catch {}
+        }
+        const resolvedOfferId = m.offer_id || m.offerId || resolvedOfferData?.id || null;
+        if (resolvedOfferId && offersMap.has(resolvedOfferId)) {
+          const authOffer = offersMap.get(resolvedOfferId);
+          resolvedOfferData = {
+            ...(typeof resolvedOfferData === 'object' && resolvedOfferData ? resolvedOfferData : {}),
+            ...authOffer
+          };
+        }
+
         const mappedMsg = {
           id: m.id,
           conversation_id: thread.id,
@@ -227,8 +250,8 @@ export async function GET(request) {
           attachment_size: m.attachment_size || null,
           attachment_type: m.attachment_type || null,
           reply_to: m.reply_to || null,
-          offer_id: m.offer_id || m.offerId || null,
-          offer_data: m.offer_data || m.offerData || null,
+          offer_id: resolvedOfferId,
+          offer_data: resolvedOfferData,
           is_read: m.is_read === true || m.is_read === 'true',
           timestamp: m.timestamp || m.created_at
         };
@@ -384,25 +407,49 @@ export async function GET(request) {
         console.error('[fetchMessages query error]:', err);
       }
 
-      const mappedMessages = (rawMessages || []).map(m => ({
-        id: m.id,
-        conversation_id: m.conversation_id || chatId,
-        client_email: m.client_email || targetEmail || null,
-        sender: m.sender,
-        senderName: m.sender === 'admin' ? 'Support' : (m.sender_name || 'Client'),
-        sender_name: m.sender_name,
-        text: m.text,
-        attachment: m.attachment,
-        attachment_url: m.attachment_url || null,
-        attachment_name: m.attachment_name || m.attachment || null,
-        attachment_size: m.attachment_size || null,
-        attachment_type: m.attachment_type || null,
-        reply_to: m.reply_to || null,
-        offer_id: m.offer_id || m.offerId || null,
-        offer_data: m.offer_data || m.offerData || null,
-        is_read: m.is_read === true || m.is_read === 'true',
-        timestamp: m.timestamp || m.created_at
-      }));
+      // Fetch custom offers to hydrate offer_data authoritatively
+      const { data: convCustomOffers } = await supabase
+        .from('custom_offers')
+        .select('*');
+      const convOffersMap = new Map();
+      (convCustomOffers || []).forEach(off => {
+        if (off?.id) convOffersMap.set(off.id, off);
+      });
+
+      const mappedMessages = (rawMessages || []).map(m => {
+        let resolvedOfferData = m.offer_data || m.offerData || null;
+        if (typeof resolvedOfferData === 'string') {
+          try { resolvedOfferData = JSON.parse(resolvedOfferData); } catch {}
+        }
+        const resolvedOfferId = m.offer_id || m.offerId || resolvedOfferData?.id || null;
+        if (resolvedOfferId && convOffersMap.has(resolvedOfferId)) {
+          const authOffer = convOffersMap.get(resolvedOfferId);
+          resolvedOfferData = {
+            ...(typeof resolvedOfferData === 'object' && resolvedOfferData ? resolvedOfferData : {}),
+            ...authOffer
+          };
+        }
+
+        return {
+          id: m.id,
+          conversation_id: m.conversation_id || chatId,
+          client_email: m.client_email || targetEmail || null,
+          sender: m.sender,
+          senderName: m.sender === 'admin' ? 'Support' : (m.sender_name || 'Client'),
+          sender_name: m.sender_name,
+          text: m.text,
+          attachment: m.attachment,
+          attachment_url: m.attachment_url || null,
+          attachment_name: m.attachment_name || m.attachment || null,
+          attachment_size: m.attachment_size || null,
+          attachment_type: m.attachment_type || null,
+          reply_to: m.reply_to || null,
+          offer_id: resolvedOfferId,
+          offer_data: resolvedOfferData,
+          is_read: m.is_read === true || m.is_read === 'true',
+          timestamp: m.timestamp || m.created_at
+        };
+      });
 
       mappedMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
       

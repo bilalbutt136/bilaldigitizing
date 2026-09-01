@@ -342,26 +342,53 @@ export async function POST(request) {
         console.error('Order creation error during offer accept:', ordErr.message);
       }
 
-      // 3. Update offer status to accepted
-      const updatedOffer = {
+      // 3. Atomically update custom_offers table
+      let dbUpdatedOffer = null;
+      try {
+        const { data: updatedRow, error: updateErr } = await supabase
+          .from('custom_offers')
+          .update({
+            status: 'accepted',
+            accepted_at: nowIso,
+            order_id: generatedOrderId,
+            updated_at: nowIso
+          })
+          .eq('id', offerId)
+          .select('*')
+          .single();
+
+        if (updatedRow) {
+          dbUpdatedOffer = updatedRow;
+        } else if (updateErr) {
+          console.warn('custom_offers accept update notice:', updateErr.message);
+        }
+      } catch (err) {
+        console.warn('custom_offers accept mutation error:', err.message);
+      }
+
+      const finalOfferData = dbUpdatedOffer || {
         ...offer,
         status: 'accepted',
+        accepted_at: nowIso,
         order_id: generatedOrderId,
         updated_at: nowIso
       };
 
-      try {
-        await supabase.from('custom_offers').update({
-          status: 'accepted',
-          order_id: generatedOrderId,
-          updated_at: nowIso
-        }).eq('id', offerId);
-      } catch {}
-
-      // 4. Update messages containing this offer_id
+      // 4. Update messages containing this offer_id or serialized JSON
       try {
         await supabase.from('messages').update({
-          offer_data: updatedOffer
+          offer_data: finalOfferData,
+          attachment: JSON.stringify(finalOfferData),
+          text: `📋 Custom Offer: ${finalOfferData.title} ($${parseFloat(finalOfferData.final_price || finalOfferData.price || 0).toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(finalOfferData)}]`
+        }).or(`offer_id.eq.${offerId},id.eq.${offerId}`);
+      } catch (mErr) {
+        console.warn('messages offer_data update notice:', mErr.message);
+      }
+
+      // Also update order_messages if this is an order thread
+      try {
+        await supabase.from('order_messages').update({
+          offer_data: finalOfferData
         }).eq('offer_id', offerId);
       } catch {}
 
@@ -399,7 +426,7 @@ export async function POST(request) {
 
       return NextResponse.json({
         success: true,
-        offer: updatedOffer,
+        offer: finalOfferData,
         order: orderPayload,
         message: confirmMessage
       });

@@ -262,6 +262,51 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
     };
   }, [canonicalChatId, clientEmail, clientName, activeChannel]);
 
+  // Real-time listener for offer status changes across tabs and WebSocket broadcasts
+  useEffect(() => {
+    const handleOfferStatusEvent = (e) => {
+      const { offerId, status: newStatus, offer: freshOffer } = e.detail || {};
+      if (!offerId || !newStatus) return;
+
+      setMessages(prev => {
+        const safePrev = Array.isArray(prev) ? prev : [];
+        let hasModified = false;
+        const nextMsgs = safePrev.map(m => {
+          const mOfferId = m.offer_id || m.offer_data?.id || m.offer?.id;
+          if (mOfferId === offerId || m.id === offerId) {
+            hasModified = true;
+            const prevOfferData = typeof m.offer_data === 'object' && m.offer_data ? m.offer_data : {};
+            const mergedOffer = {
+              ...prevOfferData,
+              ...(freshOffer || {}),
+              status: newStatus,
+              updated_at: new Date().toISOString()
+            };
+            return {
+              ...m,
+              offer_data: mergedOffer,
+              offer: mergedOffer
+            };
+          }
+          return m;
+        });
+
+        if (hasModified) {
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem(`bdigi_client_msgs_${canonicalChatId}`, JSON.stringify(nextMsgs));
+            } catch {}
+          }
+          return nextMsgs;
+        }
+        return safePrev;
+      });
+    };
+
+    window.addEventListener('bdigi_offer_status_change', handleOfferStatusEvent);
+    return () => window.removeEventListener('bdigi_offer_status_change', handleOfferStatusEvent);
+  }, [canonicalChatId]);
+
   // Auto-expanding textarea height adjustment logic (min 40px, max 150px)
   const adjustTextareaHeight = () => {
     if (textareaRef.current) {

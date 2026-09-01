@@ -18,7 +18,7 @@ import {
   ExternalLink,
   DollarSign,
   Ban,
-  Undo2
+  Check
 } from 'lucide-react';
 import { acceptCustomOffer, declineCustomOffer, cancelCustomOffer } from '../../services/supabaseService';
 import { playNotificationSound } from '../../utils/audioNotification';
@@ -26,6 +26,7 @@ import { useAppState } from '../../context/StateContext';
 
 /**
  * Custom Offer Card Message rendered inside Chat Feeds
+ * Supports Customer & Admin views with persistent database state synchronization.
  */
 export default function OfferCardMessage({
   offer,
@@ -35,7 +36,7 @@ export default function OfferCardMessage({
   onOrderClick = () => {},
   showToast: propShowToast = null
 }) {
-  const { setCheckoutSession, setIsCheckoutModalOpen, showToast: contextShowToast } = useAppState() || {};
+  const { showToast: contextShowToast } = useAppState() || {};
   const showToast = propShowToast || contextShowToast || (() => {});
 
   const [isAccepting, setIsAccepting] = useState(false);
@@ -50,9 +51,10 @@ export default function OfferCardMessage({
     }
   }, [offer?.status]);
 
+  // Realtime & cross-tab offer status listener
   useEffect(() => {
     const handleStatusEvent = (e) => {
-      const { offerId, status: newStatus } = e.detail || {};
+      const { offerId, status: newStatus, offer: freshOffer } = e.detail || {};
       const myOfferId = offer?.id || offer?.offer_id;
       if (offerId && (offerId === myOfferId || offerId === messageId)) {
         if (newStatus) {
@@ -67,11 +69,11 @@ export default function OfferCardMessage({
   if (!offer) return null;
 
   const status = localStatus || offer.status || 'sent';
-  const isExpired = (status === 'sent' || status === 'viewed') && new Date(offer.expires_at).getTime() < Date.now();
+  const isExpired = (status === 'sent' || status === 'viewed') && offer.expires_at && new Date(offer.expires_at).getTime() < Date.now();
   const currentStatus = isExpired ? 'expired' : status;
 
-  const price = parseFloat(offer.final_price || offer.price || 0);
-  const originalPrice = parseFloat(offer.price || 0);
+  const price = parseFloat(offer.final_price ?? offer.price ?? 0);
+  const originalPrice = parseFloat(offer.price ?? 0);
   const hasDiscount = parseFloat(offer.discount_amount || 0) > 0 && originalPrice > price;
 
   const getServiceIcon = (svc) => {
@@ -93,11 +95,11 @@ export default function OfferCardMessage({
             fontWeight: 800,
             padding: '3px 10px',
             borderRadius: '999px',
-            background: 'rgba(16, 185, 129, 0.15)',
-            border: '1px solid rgba(16, 185, 129, 0.4)',
-            color: '#10b981'
+            background: 'rgba(16, 185, 129, 0.2)',
+            border: '1px solid rgba(16, 185, 129, 0.5)',
+            color: '#34d399'
           }}>
-            <CheckCircle2 size={12} /> Accepted
+            <CheckCircle2 size={12} /> Completed / Accepted
           </span>
         );
       case 'declined':
@@ -173,25 +175,10 @@ export default function OfferCardMessage({
     }
   };
 
-  const isPending = !['accepted', 'declined', 'expired', 'cancelled'].includes(currentStatus);
-
-  const handleLaunchPayment = () => {
-    if (setCheckoutSession && setIsCheckoutModalOpen) {
-      setCheckoutSession({
-        amount: price,
-        orderId: offer.order_id || `off-${offer.id}`,
-        offerId: offer.id,
-        serviceTitle: `Custom Offer: ${offer.title}`,
-        offerData: offer
-      });
-      setIsCheckoutModalOpen(true);
-    } else {
-      handleDirectAccept();
-    }
-  };
+  const isPending = !['accepted', 'declined', 'rejected', 'expired', 'cancelled', 'withdrawn'].includes(currentStatus);
 
   const handleDirectAccept = async () => {
-    if (isAccepting) return;
+    if (isAccepting || !isPending) return;
     setIsAccepting(true);
     try {
       const res = await acceptCustomOffer(offer.id);
@@ -199,9 +186,10 @@ export default function OfferCardMessage({
         showToast(res.error, 'error');
       } else {
         setLocalStatus('accepted');
-        showToast('Offer accepted! Production order created.', 'success');
+        showToast('✓ Offer accepted! Production order created.', 'success');
+        try { playNotificationSound('success'); } catch {}
       }
-    } catch {
+    } catch (err) {
       showToast('Failed to accept offer. Please try again.', 'error');
     } finally {
       setIsAccepting(false);
@@ -227,7 +215,7 @@ export default function OfferCardMessage({
   };
 
   const handleCancel = async () => {
-    if (isCancelling) return;
+    if (isCancelling || !isPending) return;
     setIsCancelling(true);
     try {
       const res = await cancelCustomOffer(offer.id);
@@ -235,7 +223,7 @@ export default function OfferCardMessage({
         showToast(res.error, 'error');
       } else {
         setLocalStatus('cancelled');
-        showToast('Offer cancelled.', 'info');
+        showToast('Offer withdrawn.', 'info');
       }
     } catch {
       showToast('Failed to cancel offer.', 'error');
@@ -247,13 +235,15 @@ export default function OfferCardMessage({
   return (
     <div style={{
       width: '100%',
-      maxWidth: '380px',
+      maxWidth: '390px',
       borderRadius: '16px',
-      background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95))',
+      background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98))',
       border: currentStatus === 'accepted'
-        ? '1px solid rgba(16, 185, 129, 0.4)'
+        ? '1.5px solid rgba(16, 185, 129, 0.5)'
         : '1px solid rgba(255, 255, 255, 0.12)',
-      boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4)',
+      boxShadow: currentStatus === 'accepted' 
+        ? '0 8px 30px rgba(16, 185, 129, 0.15)' 
+        : '0 8px 30px rgba(0, 0, 0, 0.4)',
       overflow: 'hidden',
       margin: '0.4rem 0',
       color: '#f8fafc',
@@ -266,8 +256,8 @@ export default function OfferCardMessage({
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0.75rem 1rem',
-        background: 'rgba(0, 0, 0, 0.25)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+        background: currentStatus === 'accepted' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(0, 0, 0, 0.25)',
+        borderBottom: currentStatus === 'accepted' ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(255, 255, 255, 0.08)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {getServiceIcon(offer.service_type)}
@@ -340,11 +330,128 @@ export default function OfferCardMessage({
           </div>
         </div>
 
-        {/* Action Controls for Customer */}
+        {/* Accepted Offer State (Clean Green Banner + Price + Linked Order) */}
+        {currentStatus === 'accepted' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              padding: '0.75rem 1rem',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.18) 0%, rgba(5, 150, 105, 0.25) 100%)',
+              border: '1.5px solid rgba(16, 185, 129, 0.45)',
+              color: '#34d399',
+              fontWeight: 800,
+              fontSize: '0.9rem',
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.15)'
+            }}>
+              <CheckCircle2 size={18} className="text-emerald-400" />
+              <span>✓ Offer Accepted • ${price.toFixed(2)}</span>
+            </div>
+
+            {offer.order_id && (
+              <div style={{
+                padding: '0.55rem 0.85rem',
+                borderRadius: '8px',
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.25)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <span style={{ fontSize: '0.75rem', color: '#a7f3d0' }}>
+                  Linked Order: <strong>#{offer.order_id}</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onOrderClick(offer.order_id)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#34d399',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  View Order <ChevronRight size={13} />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Declined / Rejected State Banner */}
+        {(currentStatus === 'declined' || currentStatus === 'rejected') && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            padding: '0.65rem 1rem',
+            borderRadius: '10px',
+            background: 'rgba(244, 63, 94, 0.12)',
+            border: '1px solid rgba(244, 63, 94, 0.3)',
+            color: '#fb7185',
+            fontWeight: 700,
+            fontSize: '0.82rem'
+          }}>
+            <XCircle size={15} />
+            <span>Offer Rejected</span>
+          </div>
+        )}
+
+        {/* Cancelled / Withdrawn State Banner */}
+        {(currentStatus === 'cancelled' || currentStatus === 'withdrawn') && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            padding: '0.65rem 1rem',
+            borderRadius: '10px',
+            background: 'rgba(239, 68, 68, 0.12)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            color: '#f87171',
+            fontWeight: 700,
+            fontSize: '0.82rem'
+          }}>
+            <Ban size={15} />
+            <span>Offer Withdrawn by Studio</span>
+          </div>
+        )}
+
+        {/* Expired State Banner */}
+        {currentStatus === 'expired' && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            padding: '0.65rem 1rem',
+            borderRadius: '10px',
+            background: 'rgba(245, 158, 11, 0.12)',
+            border: '1px solid rgba(245, 158, 11, 0.3)',
+            color: '#fbbf24',
+            fontWeight: 700,
+            fontSize: '0.82rem'
+          }}>
+            <Clock size={15} />
+            <span>Offer Expired</span>
+          </div>
+        )}
+
+        {/* Action Controls for Customer (Active Offer) */}
         {isPending && !isAdmin && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <button
-              onClick={handleLaunchPayment}
+              type="button"
+              onClick={handleDirectAccept}
               disabled={isAccepting || isDeclining}
               style={{
                 width: '100%',
@@ -365,11 +472,12 @@ export default function OfferCardMessage({
               }}
             >
               {isAccepting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-              {isAccepting ? 'Processing...' : `Accept Offer • $${price.toFixed(2)}`}
+              {isAccepting ? 'Processing Acceptance...' : `Accept Offer • $${price.toFixed(2)}`}
             </button>
 
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
+                type="button"
                 onClick={handleDecline}
                 disabled={isAccepting || isDeclining}
                 style={{
@@ -393,6 +501,7 @@ export default function OfferCardMessage({
                 {isDeclining ? 'Rejecting...' : 'Reject Offer'}
               </button>
               <button
+                type="button"
                 onClick={() => setIsDetailsOpen(true)}
                 style={{
                   flex: 1,
@@ -422,6 +531,7 @@ export default function OfferCardMessage({
         {isAdmin && isPending && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginTop: '0.2rem' }}>
             <button
+              type="button"
               onClick={handleCancel}
               disabled={isCancelling}
               style={{
@@ -447,39 +557,6 @@ export default function OfferCardMessage({
             <div style={{ textAlign: 'center', fontSize: '0.7rem', color: '#94a3b8' }}>
               Awaiting client response • You can withdraw before acceptance
             </div>
-          </div>
-        )}
-
-        {/* Accepted Order Direct Link */}
-        {currentStatus === 'accepted' && offer.order_id && (
-          <div style={{
-            padding: '0.5rem 0.75rem',
-            borderRadius: '8px',
-            background: 'rgba(16, 185, 129, 0.1)',
-            border: '1px solid rgba(16, 185, 129, 0.25)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <span style={{ fontSize: '0.75rem', color: '#a7f3d0' }}>
-              Linked Order: <strong>#{offer.order_id}</strong>
-            </span>
-            <button
-              onClick={() => onOrderClick(offer.order_id)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#34d399',
-                fontSize: '0.75rem',
-                fontWeight: 800,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              View <ChevronRight size={13} />
-            </button>
           </div>
         )}
       </div>
@@ -510,6 +587,7 @@ export default function OfferCardMessage({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#ffffff' }}>Offer Specifications</h3>
               <button
+                type="button"
                 onClick={() => setIsDetailsOpen(false)}
                 style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '1.2rem' }}
               >
@@ -517,18 +595,19 @@ export default function OfferCardMessage({
               </button>
             </div>
 
-            <div style={{ spaceY: '0.75rem', fontSize: '0.85rem' }}>
-              <p><strong>Service:</strong> {offer.service_type}</p>
-              <p><strong>Title:</strong> {offer.title}</p>
-              <p><strong>Deliverables:</strong> {offer.description}</p>
-              <p><strong>Price:</strong> ${price.toFixed(2)}</p>
-              <p><strong>Turnaround:</strong> {offer.delivery_time_text}</p>
-              <p><strong>Revisions:</strong> {offer.revisions_allowed}</p>
-              <p><strong>Requirements Required:</strong> {offer.requires_requirements ? 'Yes (Submit artwork files)' : 'No'}</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.85rem' }}>
+              <p style={{ margin: 0 }}><strong>Service:</strong> {offer.service_type}</p>
+              <p style={{ margin: 0 }}><strong>Title:</strong> {offer.title}</p>
+              <p style={{ margin: 0 }}><strong>Deliverables:</strong> {offer.description}</p>
+              <p style={{ margin: 0 }}><strong>Price:</strong> ${price.toFixed(2)}</p>
+              <p style={{ margin: 0 }}><strong>Turnaround:</strong> {offer.delivery_time_text}</p>
+              <p style={{ margin: 0 }}><strong>Revisions:</strong> {offer.revisions_allowed}</p>
+              <p style={{ margin: 0 }}><strong>Requirements Required:</strong> {offer.requires_requirements ? 'Yes (Submit artwork files)' : 'No'}</p>
             </div>
 
             <div style={{ marginTop: '1.5rem', textAlign: 'right' }}>
               <button
+                type="button"
                 onClick={() => setIsDetailsOpen(false)}
                 style={{
                   padding: '0.5rem 1.25rem',
