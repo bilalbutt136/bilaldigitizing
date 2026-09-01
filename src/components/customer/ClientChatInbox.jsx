@@ -788,7 +788,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
             setIsInputFocused(false);
             setTimeout(() => scrollToBottom('smooth'), 150);
           }}
-          placeholder={replyingTo ? 'Type a reply... (Alt + Enter to send)' : 'Type a message... (Alt + Enter to send)'}
+          placeholder={replyingTo ? 'Type a reply...' : 'Type a message...'}
           className="chat-message-input"
           style={{
             flex: 1,
