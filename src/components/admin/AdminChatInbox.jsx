@@ -305,7 +305,9 @@ export const AdminChatInbox = () => {
       // 2. Natural human typing delay (2.2 seconds)
       await new Promise(r => setTimeout(r, 2200));
 
-      // 3. Call AI endpoint with full context
+      const attachedImageUrl = newMsg.attachment_url || (typeof newMsg.attachment === 'string' && newMsg.attachment.startsWith('http') ? newMsg.attachment : null);
+
+      // 3. Call AI endpoint with full context & vision support
       const response = await fetch('/api/ai/generate-reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -313,6 +315,8 @@ export const AdminChatInbox = () => {
           latestMessage: newMsg.text,
           customerName: customerName,
           clientName: customerName,
+          imageUrl: attachedImageUrl,
+          attachment_url: attachedImageUrl,
           messages: targetConv?.messages || [newMsg],
           conversationHistory: targetConv?.messages || [newMsg],
           serviceCategory: targetConv?.orderTitle || 'Embroidery Digitizing'
@@ -979,6 +983,8 @@ export const AdminChatInbox = () => {
     const latestMessageText = lastCustomerMsg ? String(lastCustomerMsg.text || '').trim() : String(threadMsgs[threadMsgs.length - 1]?.text || '').trim();
     const clientDisplayName = activeInfo?.customerName || activeChat?.clientName || 'Client';
 
+    const lastAttachedImg = lastCustomerMsg?.attachment_url || (typeof lastCustomerMsg?.attachment === 'string' && lastCustomerMsg.attachment.startsWith('http') ? lastCustomerMsg.attachment : null);
+
     try {
       setIsGeneratingSmartReply(true);
       const currentDraft = (replyInput || '').trim();
@@ -993,6 +999,8 @@ export const AdminChatInbox = () => {
           latestMessage: latestMessageText,
           customerName: clientDisplayName,
           clientName: clientDisplayName,
+          imageUrl: lastAttachedImg,
+          attachment_url: lastAttachedImg,
           serviceCategory: activeInfo?.serviceCategory || 'Embroidery Digitizing'
         })
       });
