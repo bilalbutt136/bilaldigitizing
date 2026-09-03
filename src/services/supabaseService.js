@@ -1532,17 +1532,19 @@ export async function addChatMessage(chatIdOrObj, messageObj = null) {
 
 export function getAdminThreadUnreadCount(conv, activeChatId = null) {
   if (!conv) return 0;
-  if (activeChatId && conv.id === activeChatId) return 0;
+  if (activeChatId && (conv.id === activeChatId || (conv.clientEmail && activeChatId.includes(conv.clientEmail)))) return 0;
 
-  const msgs = conv.messages || [];
-  const clientUnreadMsgs = msgs.filter(m => 
-    (m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin') && 
-    m.is_read !== true && 
-    m.is_read !== 'true'
-  );
+  const msgs = Array.isArray(conv.messages) ? conv.messages : [];
+  if (msgs.length > 0) {
+    const clientUnreadMsgs = msgs.filter(m => 
+      (m.sender === 'client' || m.sender === 'customer' || (m.sender && m.sender !== 'admin' && m.sender !== 'support')) && 
+      m.is_read !== true && 
+      m.is_read !== 'true'
+    );
+    return clientUnreadMsgs.length;
+  }
 
-  if (clientUnreadMsgs.length > 0) return clientUnreadMsgs.length;
-  return conv.adminUnreadCount ?? conv.admin_unread_count ?? conv.unreadCount ?? conv.unread_count ?? 0;
+  return Number(conv.adminUnreadCount ?? conv.admin_unread_count ?? conv.unreadCount ?? conv.unread_count ?? 0);
 }
 
 export async function markConversationAsRead(chatId, role = 'admin', clientEmail = '') {

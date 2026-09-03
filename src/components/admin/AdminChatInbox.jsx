@@ -580,14 +580,20 @@ export const AdminChatInbox = () => {
               } else {
                 nextMsgs = [...currentMsgs, newMsg];
               }
-              nextMsgs.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
               
               const isCurrentlyOpen = activeChatId === conv.id;
+              if (isCurrentlyOpen && (newMsg.sender === 'client' || newMsg.sender === 'customer')) {
+                markConversationAsRead(conv.id, 'admin', conv.clientEmail);
+                nextMsgs = nextMsgs.map(m => (m.id === newMsg.id ? { ...m, is_read: true } : m));
+              }
+              nextMsgs.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+
               return {
                 ...conv,
                 clientName: conv.clientName || newMsg.senderName,
                 unreadCount: isCurrentlyOpen ? 0 : (conv.unreadCount || 0) + (newMsg.sender === 'client' ? 1 : 0),
                 adminUnreadCount: isCurrentlyOpen ? 0 : (conv.adminUnreadCount || 0) + (newMsg.sender === 'client' ? 1 : 0),
+                admin_unread_count: isCurrentlyOpen ? 0 : (conv.admin_unread_count || 0) + (newMsg.sender === 'client' ? 1 : 0),
                 messages: nextMsgs,
                 lastMessageTime: Date.now(),
                 updatedAt: new Date().toISOString()
@@ -819,7 +825,7 @@ export const AdminChatInbox = () => {
     const targetConv = conversations.find(c => c.id === chatId);
     const email = targetConv?.clientEmail || '';
 
-    // 1. Instant optimistic local UI update
+    // 1. Instant optimistic local UI update: mark all messages in active thread as read
     setConversations(prev => {
       const updated = prev.map(c => 
         (c.id === chatId || (email && c.clientEmail === email))
@@ -827,6 +833,7 @@ export const AdminChatInbox = () => {
               ...c,
               unreadCount: 0,
               adminUnreadCount: 0,
+              admin_unread_count: 0,
               messages: (c.messages || []).map(m => (m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin') ? { ...m, is_read: true } : m)
             } 
           : c
@@ -853,8 +860,10 @@ export const AdminChatInbox = () => {
                 const msgMap = new Map();
                 (c.messages || []).forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
                 freshMsgs.forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
-                const merged = Array.from(msgMap.values()).sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
-                return { ...c, messages: merged };
+                const merged = Array.from(msgMap.values())
+                  .map(m => (m.sender !== 'admin' ? { ...m, is_read: true } : m))
+                  .sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+                return { ...c, messages: merged, unreadCount: 0, adminUnreadCount: 0, admin_unread_count: 0 };
               }
               return c;
             });
