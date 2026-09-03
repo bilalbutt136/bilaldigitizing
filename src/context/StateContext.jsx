@@ -143,6 +143,14 @@ export const StateProvider = ({ children }) => {
     return 'dashboard';
   });
 
+  // Strict Session Guard: If an active authenticated session exists, ensure the login modal stays closed
+  useEffect(() => {
+    const isUserActive = isAuthenticated || Boolean(authUser?.email);
+    if (isUserActive && authModalMode !== 'update_password') {
+      setIsAuthModalOpen(false);
+    }
+  }, [isAuthenticated, authUser, authModalMode]);
+
   const activeAdminTab = activeAdminTabState;
   const setActiveAdminTab = (tab) => {
     setActiveAdminTabState(tab);

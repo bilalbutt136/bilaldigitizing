@@ -81,7 +81,7 @@ export const HeaderNav = () => {
 
   const isDark = theme === 'dark';
   const safeCurrentView = mounted ? currentView : 'public';
-  const safeIsAuthenticated = mounted ? isAuthenticated : false;
+  const safeIsAuthenticated = mounted ? Boolean(isAuthenticated || authUser?.email) : false;
   const safeAuthUser = mounted ? authUser : null;
   const currentPath = mounted ? (location?.pathname || '') : '';
   const isAdmin = mounted && (safeAuthUser?.role === 'admin' || currentPath.includes('admin') || safeCurrentView === 'admin');

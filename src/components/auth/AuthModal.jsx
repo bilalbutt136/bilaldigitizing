@@ -27,6 +27,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     setIsAuthModalOpen,
     authModalMode,
     setAuthModalMode,
+    authUser,
+    isAuthenticated,
     login,
     loginWithGoogle,
     loginWithApple,
@@ -38,6 +40,28 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     orderWizardInitialData,
     authModalTarget
   } = useAppState();
+
+  const isUserLoggedIn = Boolean(
+    isAuthenticated || 
+    authUser?.email || 
+    (typeof window !== 'undefined' && (() => {
+      try {
+        const saved = localStorage.getItem('bdigi_auth_user');
+        return Boolean(saved && JSON.parse(saved)?.email);
+      } catch { return false; }
+    })())
+  );
+
+  // Auto-dismiss and prevent rendering if user is already authenticated (unless performing password recovery)
+  React.useEffect(() => {
+    if (isUserLoggedIn && authModalMode !== 'update_password') {
+      setIsAuthModalOpen(false);
+      if (isStandalonePage) {
+        const targetRoute = (authUser?.role === 'admin') ? '/admin-portal' : '/client-portal';
+        navigate(targetRoute);
+      }
+    }
+  }, [isUserLoggedIn, isStandalonePage, authModalMode, authUser?.role, setIsAuthModalOpen, navigate]);
 
   // Sync initial mode if provided
   React.useEffect(() => {
@@ -122,7 +146,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     };
   }, [isAuthModalOpen, isStandalonePage, legalModalType, errorModalText]);
 
-  if (!isStandalonePage && !isAuthModalOpen) return null;
+  if (!isStandalonePage && (!isAuthModalOpen || (isUserLoggedIn && authModalMode !== 'update_password'))) return null;
+  if (isStandalonePage && isUserLoggedIn && authModalMode !== 'update_password') return null;
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
