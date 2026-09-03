@@ -183,15 +183,21 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
       const record = payload.new || payload.record || payload;
       if (!record) return;
 
-      const recordConvId = String(record.conversation_id || '').toLowerCase().trim();
+      const recordConvId = String(record.conversation_id || record.thread_id || '').toLowerCase().trim();
+      const recordThreadId = String(record.thread_id || record.conversation_id || '').toLowerCase().trim();
       const recordEmail = String(record.client_email || '').toLowerCase().trim();
       const cleanCustomerEmail = (clientEmail || '').toLowerCase().trim();
+      const targetChatIdLower = String(canonicalChatId || '').toLowerCase().trim();
 
       const isForThisCustomer = 
         (cleanCustomerEmail && recordEmail && recordEmail === cleanCustomerEmail) ||
-        (cleanCustomerEmail && recordConvId.includes(cleanCustomerEmail)) ||
-        (recordConvId === String(canonicalChatId || '').toLowerCase().trim()) ||
-        (!cleanCustomerEmail && (recordConvId === 'general-support' || recordConvId === 'support-guest' || recordConvId === 'inbox-client'));
+        (cleanCustomerEmail && (recordConvId.includes(cleanCustomerEmail) || recordThreadId.includes(cleanCustomerEmail))) ||
+        (recordConvId === targetChatIdLower || recordThreadId === targetChatIdLower) ||
+        (!cleanCustomerEmail && (
+          recordConvId === 'general-support' || recordConvId === 'support-guest' || recordConvId === 'inbox-client' ||
+          recordConvId.startsWith('support-guest_') || recordThreadId.startsWith('support-guest_') ||
+          recordConvId === targetChatIdLower || recordThreadId === targetChatIdLower
+        ));
 
       if (isForThisCustomer) {
         const formattedRecord = {

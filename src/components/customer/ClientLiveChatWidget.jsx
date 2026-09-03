@@ -214,14 +214,17 @@ export const ClientLiveChatWidget = () => {
         const record = msgPayload.new || msgPayload.record;
         if (!record) return;
 
-        const recordConvId = String(record.conversation_id || '').toLowerCase();
+        const recordConvId = String(record.conversation_id || record.thread_id || '').toLowerCase().trim();
+        const recordThreadId = String(record.thread_id || record.conversation_id || '').toLowerCase().trim();
         const recordEmail = String(record.client_email || '').toLowerCase().trim();
         const cleanCustomerEmail = (clientEmail || '').toLowerCase().trim();
+        const targetConvIdLower = String(targetConvId || '').toLowerCase().trim();
 
         const isForThisUser = (cleanCustomerEmail && recordEmail && recordEmail === cleanCustomerEmail) ||
-          (cleanCustomerEmail && recordConvId.includes(cleanCustomerEmail)) ||
-          (recordConvId === String(targetConvId || '').toLowerCase()) ||
-          isSupportId(recordConvId);
+          (cleanCustomerEmail && (recordConvId.includes(cleanCustomerEmail) || recordThreadId.includes(cleanCustomerEmail))) ||
+          (recordConvId === targetConvIdLower || recordThreadId === targetConvIdLower) ||
+          isSupportId(recordConvId) ||
+          isSupportId(recordThreadId);
 
         if (!isForThisUser) {
           return;

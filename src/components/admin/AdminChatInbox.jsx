@@ -370,6 +370,8 @@ export const AdminChatInbox = () => {
         const autoMsg = {
           id: 'msg-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
           conversation_id: newMsg.conversation_id,
+          thread_id: newMsg.conversation_id,
+          client_email: targetConv?.clientEmail || newMsg.client_email || '',
           sender: 'admin',
           senderName: isHelpDesk ? '24/7 Live Support' : 'Studio Digitizer',
           sender_name: isHelpDesk ? '24/7 Live Support' : 'Studio Digitizer',
@@ -406,16 +408,10 @@ export const AdminChatInbox = () => {
           return deduplicated;
         });
 
-        // Persist message to Supabase
+        // Persist message to Supabase & broadcast live to customer
         if (isSupabaseConfigured) {
-          addChatMessage({
-            conversation_id: newMsg.conversation_id,
-            sender: 'admin',
-            senderName: 'Studio Support',
-            text: replyText,
-            is_read: false,
-            is_autopilot: true
-          }).catch(err => console.warn('[Auto-Pilot DB] Failed to save chat message:', err));
+          addChatMessage(newMsg.conversation_id, autoMsg)
+            .catch(err => console.warn('[Auto-Pilot DB] Failed to save chat message:', err));
         }
 
         // Auto-Create Custom Offer if AI determined requirements are complete
@@ -423,8 +419,9 @@ export const AdminChatInbox = () => {
           try {
             const offerPayload = {
               conversation_id: newMsg.conversation_id,
+              thread_id: newMsg.conversation_id,
               client_name: customerName,
-              client_email: targetConv?.clientEmail || '',
+              client_email: targetConv?.clientEmail || newMsg.client_email || '',
               title: String(data.offerDetails.title).trim(),
               description: String(data.offerDetails.description || 'Production-ready embroidery or vector files crafted to exact technical specifications.').trim(),
               service_type: data.offerDetails.service_type || 'Embroidery Digitizing',
@@ -448,8 +445,8 @@ export const AdminChatInbox = () => {
           }
         } else {
           playNotificationSound('send');
-          showToast(`🤖 Auto-Pilot replied to ${customerName}!`, 'success');
         }
+        showToast(`🤖 Auto-Pilot replied to ${customerName}!`, 'success');
       }
     } catch (err) {
       console.error('Auto-Pilot execution error:', err);

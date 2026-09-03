@@ -1493,14 +1493,27 @@ export async function fetchCustomOffer(offerId) {
   }
 }
 
-export async function addChatMessage(chatId, messageObj) {
+export async function addChatMessage(chatIdOrObj, messageObj = null) {
+  let targetChatId = '';
+  let payload = {};
+
+  if (typeof chatIdOrObj === 'object' && chatIdOrObj !== null && !messageObj) {
+    // Called with single object: addChatMessage({ conversation_id: '...', text: '...' })
+    payload = { ...chatIdOrObj };
+    targetChatId = String(payload.conversation_id || payload.thread_id || payload.chatId || '');
+  } else {
+    // Called with (chatId, messageObj): addChatMessage('inbox-...', { text: '...' })
+    targetChatId = typeof chatIdOrObj === 'string' ? chatIdOrObj : String(chatIdOrObj?.conversation_id || '');
+    payload = { ...(messageObj || {}) };
+  }
+
   const fullMsg = {
-    ...messageObj,
-    conversation_id: chatId,
-    thread_id: chatId,
-    type: messageObj.type || (messageObj.offer_id || messageObj.offer_data ? 'custom_offer' : 'text'),
-    metadata: messageObj.metadata || {},
-    timestamp: messageObj.timestamp || new Date().toISOString()
+    ...payload,
+    conversation_id: targetChatId,
+    thread_id: targetChatId,
+    type: payload.type || (payload.offer_id || payload.offer_data ? 'custom_offer' : 'text'),
+    metadata: payload.metadata || {},
+    timestamp: payload.timestamp || new Date().toISOString()
   };
 
   // Instant broadcast across all active browser windows

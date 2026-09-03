@@ -229,6 +229,7 @@ export async function POST(request) {
       const standardMessageRow = {
         id: msgId,
         conversation_id: conversation_id,
+        thread_id: conversation_id,
         sender: 'admin',
         sender_name: 'Studio Support',
         text: textWithOffer,
@@ -241,6 +242,7 @@ export async function POST(request) {
       // Try inserting with offer columns (type, metadata, offer_id, offer_data) first, fallback to standard text/attachment
       let insertedMessage = { 
         ...standardMessageRow, 
+        thread_id: conversation_id,
         type: 'custom_offer',
         metadata: offerDbRow,
         offer_id: offerId, 
