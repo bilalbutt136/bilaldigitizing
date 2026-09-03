@@ -263,8 +263,8 @@ export const AdminChatInbox = () => {
   const textareaRef = useRef(null);
 
   // Independent Auto-Pilot settings per channel/department
-  // Channel 1: 'helpdesk' (24/7 Help Desk) -> Defaults to ON
-  // Channel 2: 'digitizer' (Studio Digitizer) -> Defaults to OFF
+  // Channel 1: 'helpdesk' (24/7 Help Desk) -> Autonomous AI Auto-Pilot (Defaults to ON)
+  // Channel 2: 'digitizer' (Studio Digitizer / Direct Inbox) -> 100% MANUAL Mode (Auto-Pilot ALWAYS Disabled)
   const DEFAULT_CHANNEL_AUTOPILOT = {
     helpdesk: true,
     digitizer: false
@@ -278,7 +278,7 @@ export const AdminChatInbox = () => {
           const parsed = JSON.parse(saved);
           return {
             helpdesk: parsed.helpdesk ?? true,
-            digitizer: parsed.digitizer ?? false
+            digitizer: false // Strict enforcement: Direct inbox is always manual
           };
         }
       } catch {}
@@ -312,15 +312,24 @@ export const AdminChatInbox = () => {
     if (!newMsg.text || !String(newMsg.text).trim()) return;
 
     const targetConv = (conversationsRef.current || []).find(c => c.id === newMsg.conversation_id);
-    const isHelpDesk = newMsg.conversation_id === 'general-support' || 
-                       newMsg.conversation_id === 'support-guest' ||
-                       String(newMsg.conversation_id).startsWith('support-') || 
-                       targetConv?.isSupport === true;
-    const msgChannelType = isHelpDesk ? 'helpdesk' : 'digitizer';
+    const convIdStr = String(newMsg.conversation_id || '').toLowerCase().trim();
+    const isHelpDeskThread = convIdStr === 'general-support' || 
+                             convIdStr === 'support-guest' ||
+                             convIdStr.startsWith('support-') || 
+                             targetConv?.isSupport === true ||
+                             targetConv?.channel === 'helpdesk' ||
+                             targetConv?.channel === 'support';
 
-    // Check independent Auto-Pilot state for this specific channel
-    if (!channelAutoPilotRef.current[msgChannelType]) {
-      return; // Auto-Pilot is disabled for this channel
+    // STRICT GUARD RULE: NEVER auto-reply in regular direct customer inbox / studio digitizer
+    if (!isHelpDeskThread) {
+      console.log('Direct Studio Inbox: Auto-Pilot disabled. Manual handling only.');
+      return; // Stop here. Do not call AI generate-reply under any circumstances.
+    }
+
+    // Check independent 24/7 Help Desk Auto-Pilot switch state (default ON)
+    if (!channelAutoPilotRef.current.helpdesk) {
+      console.log('24/7 Help Desk: Auto-Pilot disabled by admin.');
+      return;
     }
 
     const msgKey = newMsg.id || `${newMsg.conversation_id}-${newMsg.text}-${newMsg.timestamp}`;
@@ -328,7 +337,7 @@ export const AdminChatInbox = () => {
     processedAutoRepliesRef.current.add(msgKey);
 
     const customerName = newMsg.senderName || targetConv?.clientName || 'Customer';
-    const channelName = isHelpDesk ? '24/7 Help Desk' : 'Studio Digitizer';
+    const channelName = '24/7 Help Desk';
 
     try {
       // 1. Broadcast typing indicator to simulate natural response
@@ -338,9 +347,7 @@ export const AdminChatInbox = () => {
       await new Promise(r => setTimeout(r, 2200));
 
       const threadMessages = targetConv?.messages || [newMsg];
-      const attachedImageUrl = newMsg.attachment_url || (typeof newMsg.attachment === 'string' && newMsg.attachment.startsWith('http') ? newMsg.attachment : null);
-
-      // 3. Call AI endpoint with channel-specific prompt & vision support
+      // 3. Call AI endpoint with 24/7 Help Desk system prompt & vision support
       const response = await fetch('/api/ai/generate-reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -354,8 +361,8 @@ export const AdminChatInbox = () => {
           customerName: customerName,
           latestMessage: newMsg.text,
           imageUrl: attachedImageUrl,
-          channelType: msgChannelType,
-          isSupport: isHelpDesk
+          channelType: 'helpdesk',
+          isSupport: true
         })
       });
 
@@ -363,7 +370,7 @@ export const AdminChatInbox = () => {
       const replyText = data?.replyText || data?.smartReply;
 
       // Turn off typing indicator
-      broadcastTypingStatus(newMsg.conversation_id, 'Studio Support', 'admin', false);
+      broadcastTypingStatus(newMsg.conversation_id, '24/7 Live Support', 'admin', false);
 
       if (response.ok && replyText) {
         const nowIso = new Date().toISOString();
@@ -939,17 +946,17 @@ export const AdminChatInbox = () => {
 
   // Current active channel ('helpdesk' vs 'digitizer')
   const currentChannelType = (activeChat?.isSupport || isSupportThread(activeChat) || activeSection === 'support') ? 'helpdesk' : 'digitizer';
-  const isCurrentAutoPilotOn = Boolean(channelAutoPilot[currentChannelType]);
+  const isHelpDeskActive = currentChannelType === 'helpdesk';
+  const isHelpDeskAutoPilotOn = Boolean(channelAutoPilot.helpdesk);
 
-  const toggleChannelAutoPilot = (channelOverride) => {
-    const targetChannel = channelOverride || currentChannelType;
-    const nextVal = !channelAutoPilot[targetChannel];
+  const toggleHelpDeskAutoPilot = () => {
+    const nextVal = !channelAutoPilot.helpdesk;
     setChannelAutoPilot(prev => ({
       ...prev,
-      [targetChannel]: nextVal
+      helpdesk: nextVal,
+      digitizer: false
     }));
-    const channelName = targetChannel === 'helpdesk' ? '24/7 Help Desk' : 'Studio Digitizer';
-    showToast(`🤖 ${channelName} Auto-Pilot ${nextVal ? 'enabled (Auto-Replying)' : 'disabled (Manual Mode)'}`, nextVal ? 'success' : 'info');
+    showToast(`🤖 24/7 Help Desk Auto-Pilot ${nextVal ? 'enabled (Autonomous AI Mode)' : 'disabled (Manual Mode)'}`, nextVal ? 'success' : 'info');
   };
 
   const handleKeyDown = (e) => {
@@ -1300,13 +1307,10 @@ export const AdminChatInbox = () => {
                   gap: '0.35rem',
                   transition: 'all 0.15s ease'
                 }}
-                title={`Studio Digitizer Inbox (Auto-Pilot: ${channelAutoPilot.digitizer ? 'ON' : 'OFF'})`}
+                title="Studio Digitizer Direct Inbox (100% Manual Admin Mode)"
               >
                 <Inbox size={13} />
                 <span>Inbox ({inboxConversationsCount})</span>
-                {channelAutoPilot.digitizer && (
-                  <span style={{ fontSize: '0.65rem' }} title="Auto-Pilot Active">🤖</span>
-                )}
                 {inboxUnreadTotal > 0 && (
                   <span style={{
                     background: '#ef4444',
@@ -1619,47 +1623,72 @@ export const AdminChatInbox = () => {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
-                {/* 🤖 Auto-Pilot AI Toggle Switch (Per-Channel Aware) */}
-                <button
-                  type="button"
-                  onClick={() => toggleChannelAutoPilot()}
-                  title={`Auto-Pilot for ${currentChannelType === 'helpdesk' ? '24/7 Help Desk' : 'Studio Digitizer'} (${isCurrentAutoPilotOn ? 'ON' : 'OFF'}). When enabled, incoming inquiries in this channel will be answered automatically by AI.`}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    background: isCurrentAutoPilotOn ? '#ecfdf5' : '#f8fafc',
-                    border: isCurrentAutoPilotOn ? '1.5px solid #10b981' : '1.5px solid #cbd5e1',
-                    borderRadius: '20px',
-                    padding: '0.22rem 0.55rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    boxShadow: isCurrentAutoPilotOn ? '0 1px 4px rgba(16, 185, 129, 0.2)' : 'none'
-                  }}
-                >
-                  <Bot size={13} className={isCurrentAutoPilotOn ? 'text-emerald-600' : 'text-slate-400'} />
-                  <span style={{ 
-                    fontSize: '0.72rem', 
-                    fontWeight: 800, 
-                    color: isCurrentAutoPilotOn ? '#065f46' : '#64748b' 
-                  }}>
-                    Auto-Pilot
-                  </span>
-                  <span style={{
-                    fontSize: '0.62rem',
-                    fontWeight: 800,
-                    padding: '1px 6px',
-                    borderRadius: '10px',
-                    background: isCurrentAutoPilotOn ? '#10b981' : '#e2e8f0',
-                    color: isCurrentAutoPilotOn ? '#ffffff' : '#64748b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '3px'
-                  }}>
-                    {isCurrentAutoPilotOn && <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#ffffff', animation: 'pulse 1.5s infinite' }} />}
-                    {isCurrentAutoPilotOn ? 'ON' : 'OFF'}
-                  </span>
-                </button>
+                {/* 🤖 24/7 Help Desk Auto-Pilot AI Toggle Switch */}
+                {isHelpDeskActive ? (
+                  <button
+                    type="button"
+                    onClick={toggleHelpDeskAutoPilot}
+                    title={`24/7 Help Desk Auto-Pilot (${isHelpDeskAutoPilotOn ? 'ON' : 'OFF'}). When enabled, incoming customer inquiries in 24/7 Live Support are answered autonomously by AI.`}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      background: isHelpDeskAutoPilotOn ? '#ecfdf5' : '#f8fafc',
+                      border: isHelpDeskAutoPilotOn ? '1.5px solid #10b981' : '1.5px solid #cbd5e1',
+                      borderRadius: '20px',
+                      padding: '0.22rem 0.55rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: isHelpDeskAutoPilotOn ? '0 1px 4px rgba(16, 185, 129, 0.2)' : 'none'
+                    }}
+                  >
+                    <Bot size={13} className={isHelpDeskAutoPilotOn ? 'text-emerald-600' : 'text-slate-400'} />
+                    <span style={{ 
+                      fontSize: '0.72rem', 
+                      fontWeight: 800, 
+                      color: isHelpDeskAutoPilotOn ? '#065f46' : '#64748b' 
+                    }}>
+                      Auto-Pilot
+                    </span>
+                    <span style={{
+                      fontSize: '0.62rem',
+                      fontWeight: 800,
+                      padding: '1px 6px',
+                      borderRadius: '10px',
+                      background: isHelpDeskAutoPilotOn ? '#10b981' : '#e2e8f0',
+                      color: isHelpDeskAutoPilotOn ? '#ffffff' : '#64748b',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '3px'
+                    }}>
+                      {isHelpDeskAutoPilotOn && <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#ffffff', animation: 'pulse 1.5s infinite' }} />}
+                      {isHelpDeskAutoPilotOn ? 'ON' : 'OFF'}
+                    </span>
+                  </button>
+                ) : (
+                  <div
+                    title="Studio Digitizer Direct Inbox: 100% Manual Mode. Auto-Pilot is disabled for direct customer threads so digitizers have complete manual control over quotes and replies."
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '20px',
+                      padding: '0.22rem 0.55rem',
+                      userSelect: 'none'
+                    }}
+                  >
+                    <span style={{ fontSize: '0.72rem' }}>🛡️</span>
+                    <span style={{ 
+                      fontSize: '0.7rem', 
+                      fontWeight: 700, 
+                      color: '#64748b' 
+                    }}>
+                      Manual Mode
+                    </span>
+                  </div>
+                )}
 
                 {/* View Customer Orders dropdown / trigger */}
                 {activeChat.orders && activeChat.orders.length > 0 && (
