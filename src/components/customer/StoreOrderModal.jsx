@@ -536,7 +536,7 @@ export const StoreOrderModal = () => {
               rows={2}
               className="form-control"
               style={{ marginTop: '0.4rem', fontSize: '0.85rem' }}
-              placeholder="e.g., Left chest logo (3.5 inches wide), back collar text in white thread..."
+              placeholder="Type instructions..."
               value={placementNotes}
               onChange={(e) => setPlacementNotes(e.target.value)}
             />

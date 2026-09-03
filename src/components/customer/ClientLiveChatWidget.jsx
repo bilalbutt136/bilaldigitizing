@@ -1103,7 +1103,7 @@ export const ClientLiveChatWidget = () => {
                     ref={textareaRef}
                     rows={1}
                     className="form-control"
-                    placeholder={replyingTo ? 'Type a reply...' : 'Type a message...'}
+                    placeholder="Type message..."
                     value={messageInput}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}

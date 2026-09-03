@@ -1526,7 +1526,7 @@ export const OrderWizardModal = () => {
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Provide stitch density details, thread color codes (Madeira/Isacord), Pantone PMS numbers, backing preferences, or production deadlines..."
+                    placeholder="Type instructions..."
                     rows={3}
                     style={{
                       width: '100%',

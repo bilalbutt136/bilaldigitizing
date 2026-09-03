@@ -1096,7 +1096,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                                 <input
                                   type="text"
                                   className="form-control"
-                                  placeholder="e.g. Max width 3.8 inches, Navy thread match, extra underlay..."
+                                  placeholder="Type instructions..."
                                   value={item.specificNotes}
                                   onChange={(e) => updatePlacementItem(item.id, 'specificNotes', e.target.value)}
                                   style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem' }}
@@ -1546,7 +1546,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
               {/* Special Notes */}
               <div style={{ marginTop: '1.25rem' }}>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>Special Instructions</label>
-                <textarea rows={2} className="form-control" placeholder="Specify color codes, thread type, or special requests..." value={notes} onChange={(e) => setNotes(e.target.value)} style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)' }} />
+                <textarea rows={2} className="form-control" placeholder="Type instructions..." value={notes} onChange={(e) => setNotes(e.target.value)} style={{ background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)' }} />
               </div>
             </div>
 

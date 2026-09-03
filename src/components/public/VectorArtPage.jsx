@@ -755,7 +755,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
                           <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Specific Instructions for this Design</label>
                           <input
                             type="text"
-                            placeholder="e.g. Remove background, change red to navy blue, keep typography vector clean..."
+                            placeholder="Type instructions..."
                             value={item.notes}
                             onChange={(e) => updateVectorItem(item.id, 'notes', e.target.value)}
                             className="form-control"

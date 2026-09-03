@@ -2094,7 +2094,7 @@ export const AdminChatInbox = () => {
                   ref={textareaRef}
                   className="chat-message-input"
                   rows={1}
-                  placeholder={replyingTo ? 'Type a reply...' : 'Type a message...'}
+                  placeholder="Type message..."
                   value={replyInput}
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}

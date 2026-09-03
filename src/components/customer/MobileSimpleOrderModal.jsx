@@ -1526,7 +1526,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Specific colors, stitch densities, dimensions, backing instructions, or rush deadlines..."
+                  placeholder="Type instructions..."
                   rows={3}
                   style={{
                     width: '100%',

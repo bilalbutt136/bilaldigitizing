@@ -342,7 +342,7 @@ export default function AdminCreateOfferModal({
             <textarea
               required
               rows={3}
-              placeholder="Describe the exact deliverables, stitch count estimates, formats, colorways, etc."
+              placeholder="Type instructions..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               style={{

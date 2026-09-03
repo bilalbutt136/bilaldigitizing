@@ -913,7 +913,7 @@ export const OrderTrackerDrawer = () => {
                   <textarea
                     className="form-control"
                     rows="2"
-                    placeholder="Write a message (e.g., Stitch count: 11,400 stitches, tested for pique cotton polo, .DST, .PES and Wilcom .EMB attached)..."
+                    placeholder="Type message..."
                     value={deliveryMessage}
                     onChange={(e) => setDeliveryMessage(e.target.value)}
                     style={{ fontSize: '0.85rem' }}
@@ -1442,7 +1442,7 @@ export const OrderTrackerDrawer = () => {
                   <textarea 
                     className="form-control" 
                     rows="2" 
-                    placeholder="Explain what you would like modified (e.g. increase satin stitch width on border, change height to 3.2 inches, change blue thread to navy)..." 
+                    placeholder="Type instructions..." 
                     value={revisionNote} 
                     onChange={e => setRevisionNote(e.target.value)} 
                     style={{ fontSize: '0.85rem' }}
@@ -1545,7 +1545,7 @@ export const OrderTrackerDrawer = () => {
               <textarea 
                 rows={1}
                 className="form-control" 
-                placeholder="Type a message..." 
+                placeholder="Type message..." 
                 value={chatMessageText} 
                 onChange={e => setChatMessageText(e.target.value)} 
                 onKeyDown={handleKeyDown}
