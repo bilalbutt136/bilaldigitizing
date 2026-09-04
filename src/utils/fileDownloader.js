@@ -22,13 +22,38 @@ export function getCleanCloudinaryViewUrl(url) {
 }
 
 /**
+ * Unwraps nested /api/download?url=... proxies to avoid double encoding loops
+ */
+export function unwrapProxyUrl(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== 'string') return rawUrl;
+  let current = rawUrl.trim();
+  let iterations = 0;
+  while (iterations < 5 && current.includes('/api/download?')) {
+    try {
+      const qIndex = current.indexOf('?');
+      const params = new URLSearchParams(current.substring(qIndex + 1));
+      const inner = params.get('url');
+      if (inner && inner !== current) {
+        current = decodeURIComponent(inner).trim();
+        iterations++;
+      } else {
+        break;
+      }
+    } catch {
+      break;
+    }
+  }
+  return current;
+}
+
+/**
  * Downloads any file (PDF, Image, DST, PES, EMB, AI, EPS, ZIP, CDR, DOC) directly to user's device
  * Uses server-side proxy to eliminate CORS, then Blob URL anchor to guarantee browser save
  */
 export async function downloadFileDirectly(url, filename = 'download') {
   if (!url) return;
 
-  let resolvedUrl = url;
+  let resolvedUrl = unwrapProxyUrl(url);
   let cleanFilename = filename || 'download';
 
   // If url is a JSON object or stringified JSON
@@ -191,7 +216,7 @@ export async function downloadFileDirectly(url, filename = 'download') {
 export async function openPdfInNewTab(url, filename = 'document.pdf') {
   if (!url) return;
 
-  let resolvedUrl = url;
+  let resolvedUrl = unwrapProxyUrl(url);
   let cleanFilename = filename || 'document.pdf';
 
   if (typeof resolvedUrl === 'string' && resolvedUrl.trim().startsWith('{')) {

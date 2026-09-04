@@ -182,8 +182,17 @@ export const OrderTrackerDrawer = () => {
   const isAdmin = (authUser?.role === 'admin' && isCurrentlyOnAdminPortal) || currentView === 'admin';
 
   // Collect all uploaded artwork / logo files across all placements and attachments
+  let notesFiles = [];
+  try {
+    if (ord.notes && typeof ord.notes === 'string' && ord.notes.trim().startsWith('{')) {
+      const parsed = JSON.parse(ord.notes);
+      notesFiles = parsed.uploadedFiles || parsed.placementItems?.[0]?.files || [];
+    }
+  } catch {}
+
   const clientArtworkFiles = [
     ...(Array.isArray(ord.uploadedFiles) ? ord.uploadedFiles : []),
+    ...(Array.isArray(notesFiles) ? notesFiles : []),
     ...(Array.isArray(ord.placementItems) ? ord.placementItems.flatMap(p => (Array.isArray(p?.files) ? p.files : []).map(f => ({ ...f, placementName: p?.placement || p?.name }))) : []),
     ...(Array.isArray(ord.patchItems) ? ord.patchItems.flatMap(p => (Array.isArray(p?.files) ? p.files : []).map(f => ({ ...f, placementName: p?.tier || p?.name }))) : []),
     ...(Array.isArray(ord.vectorItems) ? ord.vectorItems.flatMap(v => (Array.isArray(v?.files) ? v.files : []).map(f => ({ ...f, placementName: v?.name }))) : [])
@@ -200,12 +209,24 @@ export const OrderTrackerDrawer = () => {
   }
 
   const primaryArtworkSrc = 
+    ord.artwork_url || 
     ord.artworkUrl || 
     ord.image_url || 
     ord.logo || 
+    ord.file_url || 
     uniqueArtworkFiles[0]?.url || 
     uniqueArtworkFiles[0]?.public_url || 
+    (ord.file_path && ord.file_path.startsWith('http') ? ord.file_path : null) || 
     'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
+
+  if (uniqueArtworkFiles.length === 0 && primaryArtworkSrc && !primaryArtworkSrc.includes('images.unsplash.com')) {
+    const inferredExt = (primaryArtworkSrc.split('.').pop()?.split('?')[0] || 'png').toLowerCase();
+    uniqueArtworkFiles.push({
+      url: primaryArtworkSrc,
+      name: `${(ord.title || 'Artwork').replace(/\s+/g, '_')}_source.${inferredExt}`,
+      format: inferredExt
+    });
+  }
 
   const formattedSubmissionDate = ord.createdAt || ord.created_at ? (() => {
     try {

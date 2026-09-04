@@ -519,9 +519,11 @@ export const OrderManagementTable = () => {
             ) : (
               paginatedOrders.map((ord) => {
                 const artworkImg = 
+                  ord.artwork_url || 
                   ord.artworkUrl || 
                   ord.image_url || 
                   ord.logo || 
+                  ord.file_url || 
                   ord.uploadedFiles?.[0]?.url || 
                   ord.uploadedFiles?.[0]?.public_url || 
                   ord.placementItems?.[0]?.files?.[0]?.url || 
@@ -529,9 +531,12 @@ export const OrderManagementTable = () => {
                   ord.vectorItems?.[0]?.files?.[0]?.url || 
                   ord.order_files?.[0]?.public_url || 
                   ord.order_files?.[0]?.file_url || 
-                  ord.file_path || 
-                  ord.file_url || 
+                  (ord.file_path && ord.file_path.startsWith('http') ? ord.file_path : null) || 
                   'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
+
+                const thumbnailSrc = (artworkImg.includes('cloudinary.com') && artworkImg.toLowerCase().includes('.pdf'))
+                  ? artworkImg.replace(/\.pdf(\?.*)?$/i, '.jpg$1')
+                  : artworkImg;
                 
                 return (
                   <tr 
@@ -605,11 +610,11 @@ export const OrderManagementTable = () => {
                     <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
                       <div 
                         style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}
-                        onClick={() => setLightboxOrder(ord)}
+                        onClick={() => setLightboxOrder({ ...ord, artwork_url: artworkImg, artworkUrl: artworkImg })}
                         title="Inspect full resolution artwork"
                       >
                         <img 
-                          src={artworkImg} 
+                          src={thumbnailSrc} 
                           alt={ord.title} 
                           loading="lazy"
                           decoding="async"

@@ -141,4 +141,128 @@ describe('File Handling & Universal Storage Pipeline', () => {
     assert.ok(!cleanName.includes('<'));
     assert.ok(!cleanName.includes('>'));
   });
+
+  test('unwraps nested /api/download proxy URLs cleanly', () => {
+    function unwrapProxyUrl(rawUrl) {
+      if (!rawUrl || typeof rawUrl !== 'string') return rawUrl;
+      let current = rawUrl.trim();
+      let iterations = 0;
+      while (iterations < 5 && current.includes('/api/download?')) {
+        try {
+          const qIndex = current.indexOf('?');
+          const params = new URLSearchParams(current.substring(qIndex + 1));
+          const inner = params.get('url');
+          if (inner && inner !== current) {
+            current = decodeURIComponent(inner).trim();
+            iterations++;
+          } else {
+            break;
+          }
+        } catch {
+          break;
+        }
+      }
+      return current;
+    }
+
+    const directUrl = 'https://res.cloudinary.com/df2k7p7jx/image/upload/v1787938128/artwork/agmpwusnzygi4micdqnp.pdf';
+    const singleProxy = `/api/download?url=${encodeURIComponent(directUrl)}&filename=test.pdf`;
+    const doubleProxy = `/api/download?url=${encodeURIComponent(singleProxy)}&filename=test.pdf`;
+
+    assert.equal(unwrapProxyUrl(directUrl), directUrl);
+    assert.equal(unwrapProxyUrl(singleProxy), directUrl);
+    assert.equal(unwrapProxyUrl(doubleProxy), directUrl);
+  });
+
+  test('generates valid PDF binary wrapping JPEG image data', () => {
+    // Minimal JPEG header simulation with SOF0 marker
+    // Marker 0xFF 0xC0, length 0x00 0x11 (17), precision 8, height 600 (0x02 0x58), width 800 (0x03 0x20)
+    const dummyJpeg = Buffer.from([
+      0xFF, 0xD8, // SOI
+      0xFF, 0xC0, // SOF0
+      0x00, 0x11, // length 17
+      0x08,       // precision
+      0x02, 0x58, // height: 600
+      0x03, 0x20, // width: 800
+      0x03,       // components
+      0x01, 0x22, 0x00, 0x02, 0x11, 0x01, 0x03, 0x11, 0x01,
+      0xFF, 0xD9  // EOI
+    ]);
+
+    function getJpegDimensions(buffer) {
+      let offset = 2;
+      while (offset < buffer.length) {
+        if (buffer[offset] !== 0xFF) break;
+        const marker = buffer[offset + 1];
+        if (marker >= 0xC0 && marker <= 0xC3 && marker !== 0xC4) {
+          const height = buffer.readUInt16BE(offset + 5);
+          const width = buffer.readUInt16BE(offset + 7);
+          return { width, height };
+        }
+        const len = buffer.readUInt16BE(offset + 2);
+        offset += 2 + len;
+      }
+      return { width: 612, height: 792 };
+    }
+
+    function wrapJpegToPdf(jpegBuffer) {
+      const { width, height } = getJpegDimensions(jpegBuffer);
+      const pageWidth = Math.max(width, 100);
+      const pageHeight = Math.max(height, 100);
+
+      const obj1 = '<< /Type /Catalog /Pages 3 0 R >>';
+      const obj2 = '<< /Type /Outlines /Count 0 >>';
+      const obj3 = '<< /Type /Pages /Count 1 /Kids [4 0 R] >>';
+      const obj4 = `<< /Type /Page /Parent 3 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Contents 5 0 R /Resources << /XObject << /Im1 6 0 R >> >> >>`;
+      const contentStream = `q ${pageWidth} 0 0 ${pageHeight} 0 0 cm /Im1 Do Q`;
+      const obj5 = `<< /Length ${contentStream.length} >>\nstream\n${contentStream}\nendstream`;
+      const imageHeader = `<< /Type /XObject /Subtype /Image /Width ${width} /Height ${height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBuffer.length} >>\nstream\n`;
+      const imageFooter = '\nendstream';
+
+      const parts = [Buffer.from('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n')];
+      const offsets = [];
+      let currentOffset = parts[0].length;
+
+      function pushObj(num, bodyBuffer) {
+        offsets.push(currentOffset);
+        const head = Buffer.from(`${num} 0 obj\n`);
+        const tail = Buffer.from('\nendobj\n');
+        parts.push(head, bodyBuffer, tail);
+        currentOffset += head.length + bodyBuffer.length + tail.length;
+      }
+
+      pushObj(1, Buffer.from(obj1));
+      pushObj(2, Buffer.from(obj2));
+      pushObj(3, Buffer.from(obj3));
+      pushObj(4, Buffer.from(obj4));
+      pushObj(5, Buffer.from(obj5));
+
+      offsets.push(currentOffset);
+      const imgHead = Buffer.from(`6 0 obj\n${imageHeader}`);
+      const imgTail = Buffer.from(`${imageFooter}\nendobj\n`);
+      parts.push(imgHead, jpegBuffer, imgTail);
+      currentOffset += imgHead.length + jpegBuffer.length + imgTail.length;
+
+      const xrefOffset = currentOffset;
+      let xref = 'xref\n0 7\n0000000000 65535 f \n';
+      for (const off of offsets) {
+        xref += String(off).padStart(10, '0') + ' 00000 n \n';
+      }
+      xref += `trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
+      parts.push(Buffer.from(xref));
+
+      return Buffer.concat(parts);
+    }
+
+    const dims = getJpegDimensions(dummyJpeg);
+    assert.equal(dims.width, 800);
+    assert.equal(dims.height, 600);
+
+    const pdfBuffer = wrapJpegToPdf(dummyJpeg);
+    const pdfString = pdfBuffer.toString('utf-8');
+    assert.ok(pdfString.startsWith('%PDF-1.4'));
+    assert.ok(pdfString.includes('/DCTDecode'));
+    assert.ok(pdfString.includes('/Width 800 /Height 600'));
+    assert.ok(pdfString.includes('%%EOF'));
+  });
 });

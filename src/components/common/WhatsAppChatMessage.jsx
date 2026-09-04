@@ -213,14 +213,18 @@ export default function WhatsAppChatMessage({
 
   fileName = String(fileName || 'document.pdf').replace(/[/\\?%*:|"<>]/g, '_').trim();
 
-  let fileUrl = message.attachment_url || parsedAttach?.file_url || parsedAttach?.url || (typeof message.attachment === 'string' && (message.attachment.startsWith('http') || message.attachment.startsWith('data:') || message.attachment.startsWith('blob:')) ? message.attachment : null);
+  let fileUrl = 
+    message.attachment_url || 
+    parsedAttach?.file_url || 
+    parsedAttach?.url || 
+    (typeof message.attachment === 'string' && !message.attachment.trim().startsWith('{') ? message.attachment.trim() : null);
 
   const rawSize = message.attachment_size || parsedAttach?.file_size || parsedAttach?.size;
   const fileSize = rawSize ? (typeof rawSize === 'number' ? `${Math.round(rawSize / 1024)} KB` : (String(rawSize).match(/^\d+$/) ? `${Math.round(Number(rawSize) / 1024)} KB` : rawSize)) : 'PDF Document';
   const fileCategory = getFileCategory(fileName, fileUrl);
   const replyTo = message.reply_to;
 
-  const effectiveUrl = fileUrl || (fileName ? `/api/download?url=${encodeURIComponent(fileName)}&filename=${encodeURIComponent(fileName)}` : null);
+  const effectiveUrl = fileUrl || null;
 
   const handleDownload = (e, customUrl, customName) => {
     e?.stopPropagation();

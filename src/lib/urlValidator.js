@@ -32,9 +32,22 @@ const TRUSTED_DOMAINS = [
   'storage.googleapis.com',
   'firebasestorage.googleapis.com',
   'images.unsplash.com',
+  'api.cloudinary.com',
   'bilaldigitizing.vercel.app',
   'vercel.app',
 ];
+
+/**
+ * Returns a guaranteed absolute origin with protocol (e.g. https://bilaldigitizing.vercel.app)
+ */
+function getBaseSiteOrigin() {
+  let site = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
+  site = String(site || 'https://bilaldigitizing.vercel.app').trim();
+  if (!site.startsWith('http://') && !site.startsWith('https://')) {
+    site = `https://${site}`;
+  }
+  return site.replace(/\/+$/, '');
+}
 
 /**
  * Validates if a URL is safe for server-side proxy fetching
@@ -48,10 +61,34 @@ export function validateSafeUrl(rawUrl) {
 
   let trimmed = rawUrl.trim();
 
-  // Allow same-origin relative URLs by resolving with default origin
-  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
-    const baseSite = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
-    trimmed = new URL(trimmed, baseSite).toString();
+  // Reject placeholder and invalid values
+  const lower = trimmed.toLowerCase();
+  if (['undefined', 'null', '[object object]', 'none', 'false', 'true', ''].includes(lower)) {
+    return { valid: false, error: 'Invalid URL parameter provided.' };
+  }
+
+  // Handle URL-encoded strings
+  if (trimmed.includes('%3A') || trimmed.includes('%2F')) {
+    try {
+      const decoded = decodeURIComponent(trimmed);
+      if (decoded.startsWith('http://') || decoded.startsWith('https://')) {
+        trimmed = decoded;
+      }
+    } catch {}
+  }
+
+  const baseOrigin = getBaseSiteOrigin();
+
+  // Allow same-origin relative URLs or local storage paths by resolving against default site origin
+  // Only treat as relative if it doesn't already have an explicit URI scheme (e.g. ftp:, file:, javascript:)
+  const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed);
+  if (!hasScheme && !trimmed.startsWith('//')) {
+    const cleanRelative = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+    try {
+      trimmed = new URL(cleanRelative, baseOrigin).toString();
+    } catch {
+      return { valid: false, error: 'Invalid URL format.' };
+    }
   }
 
   if (trimmed.startsWith('//')) {

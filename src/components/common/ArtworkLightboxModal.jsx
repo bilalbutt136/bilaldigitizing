@@ -24,17 +24,38 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
 
   if (!order) return null;
 
+  let notesFiles = [];
+  try {
+    if (order.notes && typeof order.notes === 'string' && order.notes.trim().startsWith('{')) {
+      const parsed = JSON.parse(order.notes);
+      notesFiles = parsed.uploadedFiles || parsed.placementItems?.[0]?.files || [];
+    }
+  } catch {}
+
   const imageSrc = 
+    order.artwork_url || 
     order.artworkUrl || 
     order.image_url || 
     order.logo || 
-    order.url || 
+    order.file_url || 
     order.public_url || 
+    order.url || 
     order.uploadedFiles?.[0]?.url || 
     order.uploadedFiles?.[0]?.public_url || 
+    notesFiles[0]?.url || 
+    notesFiles[0]?.public_url || 
+    (order.file_path && order.file_path.startsWith('http') ? order.file_path : null) || 
     'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
 
-  const rawFileName = order.artworkFileName || order.name || `${(order.title || 'Artwork').replace(/\s+/g, '_')}_source.png`;
+  const rawFileName = 
+    order.artworkFileName || 
+    order.fileName || 
+    order.name || 
+    order.file_name || 
+    notesFiles[0]?.name || 
+    (typeof imageSrc === 'string' && imageSrc.startsWith('http') ? decodeURIComponent(imageSrc.split('/').pop()?.split('?')[0] || '') : null) || 
+    `${(order.title || 'Artwork').replace(/\s+/g, '_')}_source.png`;
+
   const isPdf = Boolean(
     rawFileName.toLowerCase().endsWith('.pdf') ||
     (typeof imageSrc === 'string' && (imageSrc.toLowerCase().includes('.pdf') || imageSrc.startsWith('data:application/pdf')))
