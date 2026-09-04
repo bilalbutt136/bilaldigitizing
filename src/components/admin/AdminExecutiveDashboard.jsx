@@ -797,11 +797,11 @@ export const AdminExecutiveDashboard = ({
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
               {filteredQueue.slice(0, 7).map((ord) => {
                 const statusBadge = getStatusBadgeStyle(ord.status);
                 const catBadge = getCategoryBadgeStyle(ord.serviceCategory, ord.type);
-                const artworkImg = ord.artworkUrl || ord.artwork_url || ord.image_url || ord.logo || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
+                const artworkImg = ord.artworkUrl || ord.artwork_url || ord.image_url || ord.logo || null;
                 const isPaid = ord.payment_status === 'paid';
                 const cleanId = String(ord.id || '').replace(/^#+/, '');
 
@@ -811,137 +811,156 @@ export const AdminExecutiveDashboard = ({
                     style={{
                       background: 'var(--bg-surface, #ffffff)',
                       border: '1.5px solid var(--border-color, #e2e8f0)',
-                      borderRadius: '12px',
-                      padding: '0.75rem 0.95rem',
+                      borderRadius: '14px',
+                      padding: '0.85rem 1rem',
                       display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '0.85rem',
-                      flexWrap: 'wrap',
-                      transition: 'all 0.15s ease',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+                      flexDirection: 'column',
+                      gap: '0.65rem',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                      transition: 'all 0.15s ease'
                     }}
                   >
-                    {/* Artwork Preview + Title + Details */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0, flex: 1 }}>
-                      <div 
-                        style={{ position: 'relative', flexShrink: 0, cursor: 'pointer' }}
-                        onClick={() => setLightboxOrder(ord)}
-                        title="Click to view full artwork preview"
-                      >
-                        <img
-                          src={artworkImg}
-                          alt={ord.title || 'Order artwork'}
-                          style={{
-                            width: '46px',
-                            height: '46px',
-                            borderRadius: '10px',
-                            objectFit: 'cover',
-                            border: '1.5px solid var(--border-color, #cbd5e1)',
-                            background: '#0f172a'
-                          }}
-                        />
-                        <div style={{
-                          position: 'absolute',
-                          bottom: '-2px',
-                          right: '-2px',
-                          background: '#0f172a',
-                          color: '#ffffff',
-                          borderRadius: '4px',
-                          padding: '1px 3px',
-                          fontSize: '0.55rem',
-                          fontWeight: 800
-                        }}>
-                          <Maximize2 size={8} />
-                        </div>
-                      </div>
-
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.15rem', flexWrap: 'wrap' }}>
-                          <span style={{
-                            fontSize: '0.72rem',
-                            fontWeight: 900,
-                            color: 'var(--navy-900, #0f172a)',
-                            background: 'var(--bg-subtle, #f1f5f9)',
-                            padding: '0.08rem 0.4rem',
-                            borderRadius: '5px',
-                            border: '1px solid #cbd5e1'
-                          }}>
-                            #{cleanId}
-                          </span>
-                          <span style={{
-                            fontSize: '0.68rem',
-                            fontWeight: 800,
-                            background: catBadge.bg,
-                            color: catBadge.color,
-                            border: `1px solid ${catBadge.border}`,
-                            padding: '0.08rem 0.4rem',
-                            borderRadius: '5px'
-                          }}>
-                            {catBadge.icon} {catBadge.label}
-                          </span>
-                        </div>
-
-                        <div style={{
-                          fontWeight: 800,
-                          fontSize: '0.875rem',
-                          color: 'var(--text-main, #0f172a)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}>
-                          {ord.title || 'Custom Studio Order'}
-                        </div>
-
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #64748b)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                          <span style={{ fontWeight: 700, color: 'var(--text-main, #334155)' }}>
-                            {ord.clientName || ord.client_name || 'Client'}
-                          </span>
-                          {ord.clientEmail && (
-                            <>
-                              <span>•</span>
-                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px', whiteSpace: 'nowrap' }}>
-                                {ord.clientEmail}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Price + Status + Quick Action Buttons */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexShrink: 0 }}>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontWeight: 900, fontSize: '0.95rem', color: 'var(--text-main, #0f172a)' }}>
-                          ${parseFloat(ord.price || 0).toFixed(2)}
-                        </div>
+                    {/* Top Header Row: Order ID, Category Badge, Price, Payment Status & Production Status */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                         <span style={{
-                          fontSize: '0.62rem',
-                          fontWeight: 800,
-                          textTransform: 'uppercase',
-                          color: isPaid ? '#15803d' : '#b45309',
-                          background: isPaid ? '#dcfce7' : '#fef3c7',
-                          padding: '0.05rem 0.35rem',
-                          borderRadius: '4px'
+                          fontSize: '0.75rem',
+                          fontWeight: 900,
+                          color: 'var(--navy-900, #0f172a)',
+                          background: 'var(--bg-subtle, #f1f5f9)',
+                          padding: '0.12rem 0.5rem',
+                          borderRadius: '6px',
+                          border: '1px solid #cbd5e1'
                         }}>
-                          {isPaid ? 'Paid' : 'Unpaid'}
+                          #{cleanId}
+                        </span>
+                        <span style={{
+                          fontSize: '0.7rem',
+                          fontWeight: 800,
+                          background: catBadge.bg,
+                          color: catBadge.color,
+                          border: `1px solid ${catBadge.border}`,
+                          padding: '0.12rem 0.5rem',
+                          borderRadius: '6px'
+                        }}>
+                          {catBadge.icon} {catBadge.label}
                         </span>
                       </div>
 
-                      <span style={{
-                        fontSize: '0.7rem',
-                        fontWeight: 800,
-                        background: statusBadge.bg,
-                        color: statusBadge.color,
-                        border: `1px solid ${statusBadge.border}`,
-                        padding: '0.25rem 0.55rem',
-                        borderRadius: '6px'
-                      }}>
-                        {statusBadge.label}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                        {/* Price & Paid Pill */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <span style={{ fontWeight: 900, fontSize: '0.95rem', color: 'var(--text-main, #0f172a)' }}>
+                            ${parseFloat(ord.price || 0).toFixed(2)}
+                          </span>
+                          <span style={{
+                            fontSize: '0.62rem',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            color: isPaid ? '#15803d' : '#b45309',
+                            background: isPaid ? '#dcfce7' : '#fef3c7',
+                            border: `1px solid ${isPaid ? '#bbf7d0' : '#fde68a'}`,
+                            padding: '0.08rem 0.35rem',
+                            borderRadius: '4px'
+                          }}>
+                            {isPaid ? 'Paid' : 'Unpaid'}
+                          </span>
+                        </div>
 
-                      {/* Action buttons */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        {/* Production Status */}
+                        <span style={{
+                          fontSize: '0.7rem',
+                          fontWeight: 800,
+                          background: statusBadge.bg,
+                          color: statusBadge.color,
+                          border: `1px solid ${statusBadge.border}`,
+                          padding: '0.15rem 0.55rem',
+                          borderRadius: '6px',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {statusBadge.label}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Bottom Row: Thumbnail, Title, Client Info & Actions */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+                      {/* Left: Artwork Box + Title + Client Name */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0, flex: 1 }}>
+                        {/* Fixed 42x42 Artwork Thumbnail Box with Safe Fallback */}
+                        <div
+                          style={{
+                            width: '42px',
+                            minWidth: '42px',
+                            maxWidth: '42px',
+                            height: '42px',
+                            minHeight: '42px',
+                            maxHeight: '42px',
+                            borderRadius: '10px',
+                            border: '1.5px solid var(--border-color, #cbd5e1)',
+                            background: catBadge.bg,
+                            color: catBadge.color,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            flexShrink: 0,
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => setLightboxOrder(ord)}
+                          title="Click to view artwork"
+                        >
+                          {artworkImg && typeof artworkImg === 'string' && artworkImg.startsWith('http') ? (
+                            <img
+                              src={artworkImg}
+                              alt={ord.title || 'Artwork'}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                display: 'block'
+                              }}
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <span style={{ fontSize: '1.25rem' }}>{catBadge.icon}</span>
+                          )}
+                        </div>
+
+                        {/* Title & Client details */}
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{
+                            fontWeight: 800,
+                            fontSize: '0.88rem',
+                            color: 'var(--text-main, #0f172a)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            lineHeight: 1.25
+                          }}>
+                            {ord.title || 'Custom Studio Order'}
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #64748b)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <span style={{ fontWeight: 700, color: 'var(--text-main, #334155)' }}>
+                              {ord.clientName || ord.client_name || 'Client'}
+                            </span>
+                            {ord.clientEmail && (
+                              <>
+                                <span>•</span>
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '160px', whiteSpace: 'nowrap' }}>
+                                  {ord.clientEmail}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Action Buttons */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
                         {ord.clientEmail && (
                           <button
                             type="button"
@@ -952,13 +971,17 @@ export const AdminExecutiveDashboard = ({
                               border: '1px solid #bfdbfe',
                               color: '#2563eb',
                               borderRadius: '8px',
-                              padding: '0.35rem 0.5rem',
+                              padding: '0.35rem 0.55rem',
                               cursor: 'pointer',
                               display: 'flex',
-                              alignItems: 'center'
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              fontSize: '0.75rem',
+                              fontWeight: 700
                             }}
                           >
                             <MessageSquare size={13} />
+                            <span>Chat</span>
                           </button>
                         )}
 
@@ -976,7 +999,8 @@ export const AdminExecutiveDashboard = ({
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.25rem'
+                            gap: '0.25rem',
+                            whiteSpace: 'nowrap'
                           }}
                         >
                           Manage ➔
