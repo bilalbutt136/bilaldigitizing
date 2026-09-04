@@ -8,6 +8,7 @@ import { StudioServicesManager } from './StudioServicesManager';
 import { SystemSettingsManager } from './SystemSettingsManager';
 
 import { AdminChatInbox } from './AdminChatInbox';
+import { AdminExecutiveDashboard } from './AdminExecutiveDashboard';
 import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
 import { PortfolioManager } from './PortfolioManager';
@@ -733,7 +734,7 @@ export const AdminDashboard = () => {
         display: activeTab === 'chat' ? 'flex' : 'block',
         flexDirection: 'column'
       }}>
-        {activeTab !== 'chat' && (
+        {activeTab !== 'chat' && activeTab !== 'dashboard' && (
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -783,258 +784,16 @@ export const AdminDashboard = () => {
         )}
 
         {activeTab === 'dashboard' && (
-          <div>
-            {/* Top KPI Metrics Cards */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-              gap: '0.65rem',
-              marginBottom: '0.75rem'
-            }}>
-              <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid var(--color-primary)', background: 'var(--bg-card)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Revenue</span>
-                  <div style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
-                    <TrendingUp size={14} />
-                  </div>
-                </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0' }}>
-                  ${totalRevenue.toFixed(2)}
-                </div>
-                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Verified Studio Inflows</div>
-              </div>
-
-              <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid #3b82f6', background: 'var(--bg-card)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Jobs in Pipeline</span>
-                  <div style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
-                    <ClipboardList size={14} />
-                  </div>
-                </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0' }}>
-                  {activeJobsCount}
-                </div>
-                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>In Digitizing / Vector / Patches</div>
-              </div>
-
-              <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid #10b981', background: 'var(--bg-card)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Completed Files</span>
-                  <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
-                    <Layers size={14} />
-                  </div>
-                </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0' }}>
-                  {completedJobsCount}
-                </div>
-                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Delivered & Client Accepted</div>
-              </div>
-
-              <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid #8b5cf6', background: 'var(--bg-card)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Registered Clients</span>
-                  <div style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
-                    <Users size={14} />
-                  </div>
-                </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0' }}>
-                  {safeClients.length}
-                </div>
-                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Active Client Accounts</div>
-              </div>
-            </div>
-
-            {/* Quick Orders Banner Action */}
-            <div style={{
-              background: 'linear-gradient(135deg, #090d16 0%, #1e1b4b 100%)',
-              borderRadius: '16px',
-              padding: '1.75rem 2rem',
-              color: '#ffffff',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '1.25rem',
-              marginBottom: '1.75rem',
-              boxShadow: '0 10px 25px rgba(15, 23, 42, 0.15)',
-              border: '1.5px solid rgba(249, 115, 22, 0.3)'
-            }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                  <span style={{ background: 'rgba(249, 115, 22, 0.2)', color: 'var(--orange-400)', padding: '0.2rem 0.6rem', borderRadius: '9999px', fontSize: '0.725rem', fontWeight: 800, border: '1px solid rgba(249, 115, 22, 0.4)' }}>
-                    PRODUCTION PIPELINE
-                  </span>
-                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                    {activeJobsCount} Active Tasks Queued
-                  </span>
-                </div>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, color: '#ffffff' }}>
-                  Orders & Production Management Center
-                </h3>
-                <p style={{ color: '#cbd5e1', fontSize: '0.875rem', margin: '0.35rem 0 0', maxWidth: '600px' }}>
-                  Access the dedicated orders table with live filtering, multi-format artwork preview, machine file uploads, and status transitions.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-primary-orange"
-                onClick={() => setActiveTab('orders')}
-                style={{ padding: '0.75rem 1.5rem', fontWeight: 800, fontSize: '0.9rem', gap: '0.5rem', boxShadow: '0 4px 14px rgba(249, 115, 22, 0.4)' }}
-              >
-                <ClipboardList size={18} /> Open Dedicated Orders Page ➔
-              </button>
-            </div>
-
-            {/* Service Category Pipeline Breakdown */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '1.25rem',
-              marginBottom: '1.75rem'
-            }}>
-              <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <strong style={{ color: 'var(--text-main)', fontSize: '0.95rem' }}>🧵 Embroidery Digitizing</strong>
-                  <span className="badge badge-assigned" style={{ fontSize: '0.75rem' }}>
-                    {safeOrders.filter(o => o?.type === 'embroidery' || o?.type === 'digitizing' || (!o?.type && !o?.serviceCategory?.toLowerCase().includes('vector') && !o?.serviceCategory?.toLowerCase().includes('patch'))).length} Total
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.45, margin: '0 0 1rem' }}>
-                  Commercial machine embroidery files (.DST, .PES, .EMB) with stitch simulation & density optimization.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('orders')}
-                  className="btn btn-outline btn-sm"
-                  style={{ width: '100%', justifyContent: 'center', fontSize: '0.8rem' }}
-                >
-                  Manage Digitizing Jobs ➔
-                </button>
-              </div>
-
-              <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <strong style={{ color: 'var(--text-main)', fontSize: '0.95rem' }}>✒️ Vector Art Tracing</strong>
-                  <span className="badge badge-assigned" style={{ fontSize: '0.75rem' }}>
-                    {safeOrders.filter(o => o?.type === 'vector' || o?.serviceCategory?.toLowerCase().includes('vector')).length} Total
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.45, margin: '0 0 1rem' }}>
-                  Precision vector redraws (.AI, .EPS, .SVG, .PDF) for screen printing, vinyl cutting, and engraving.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('orders')}
-                  className="btn btn-outline btn-sm"
-                  style={{ width: '100%', justifyContent: 'center', fontSize: '0.8rem' }}
-                >
-                  Manage Vector Jobs ➔
-                </button>
-              </div>
-
-              <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <strong style={{ color: 'var(--text-main)', fontSize: '0.95rem' }}>🏷️ Custom Physical Patches</strong>
-                  <span className="badge badge-assigned" style={{ fontSize: '0.75rem' }}>
-                    {safeOrders.filter(o => o?.type === 'patch' || o?.type === 'patches' || o?.serviceCategory?.toLowerCase().includes('patch')).length} Total
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.45, margin: '0 0 1rem' }}>
-                  Embroidered, PVC, woven, and leather patches with velcro, iron-on, or adhesive backing.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('orders')}
-                  className="btn btn-outline btn-sm"
-                  style={{ width: '100%', justifyContent: 'center', fontSize: '0.8rem' }}
-                >
-                  Manage Patch Production ➔
-                </button>
-              </div>
-            </div>
-
-            {/* Recent Orders Quick Snapshot */}
-            <div className="card" style={{ padding: '1.5rem', background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                <div>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-                    Recent Orders Snapshot
-                  </h4>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Latest submissions across all services</span>
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-outline btn-sm"
-                  onClick={() => setActiveTab('orders')}
-                  style={{ fontSize: '0.8rem', fontWeight: 700 }}
-                >
-                  View All Orders ({safeOrders.length}) ➔
-                </button>
-              </div>
-
-              {safeOrders.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                  No orders recorded yet.
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {safeOrders.slice(0, 5).map((ord) => (
-                    <div
-                      key={ord.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '0.85rem 1rem',
-                        background: '#f8fafc',
-                        borderRadius: '10px',
-                        border: '1px solid var(--border-color)',
-                        flexWrap: 'wrap',
-                        gap: '0.75rem'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                        <img
-                          src={ord.artworkUrl || ord.image_url || ord.logo || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=80&q=80'}
-                          alt={ord.title}
-                          style={{ width: '42px', height: '42px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--orange-500)', background: '#fff' }}
-                        />
-                        <div>
-                          <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.875rem' }}>
-                            {ord.title || 'Untitled Order'}
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                            {ord.clientName || 'Client'} • {ord.serviceCategory || ord.type || 'Embroidery'}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <span style={{ fontWeight: 800, color: 'var(--navy-950)', fontSize: '0.9rem' }}>
-                          ${parseFloat(ord.price || 0).toFixed(2)}
-                        </span>
-                        <span className="badge badge-assigned" style={{ fontSize: '0.7rem', textTransform: 'capitalize' }}>
-                          {ord.status || 'Submitted'}
-                        </span>
-                        <button
-                          type="button"
-                          className="btn btn-outline btn-sm"
-                          onClick={() => {
-                            setActiveTab('orders');
-                            setSelectedOrderForDrawer(ord);
-                          }}
-                          style={{ fontSize: '0.75rem', padding: '0.3rem 0.65rem' }}
-                        >
-                          Manage
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          <AdminExecutiveDashboard
+            orders={orders}
+            clients={clients}
+            adminUnreadCount={adminUnreadCount}
+            setActiveTab={setActiveTab}
+            setSelectedOrderForDrawer={setSelectedOrderForDrawer}
+            setIsPricingSettingsOpen={setIsPricingSettingsOpen}
+            resetAllData={resetAllData}
+            showToast={showToast}
+          />
         )}
 
         {/* DEDICATED SEPARATE ORDERS & PRODUCTION MANAGEMENT PAGE */}
