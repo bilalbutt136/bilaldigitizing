@@ -198,6 +198,17 @@ export default function WhatsAppChatMessage({
     parsedAttach = rawCandidate;
   }
 
+  // Determine if there is a real file attachment (not just a fallback)
+  const hasAttachment = Boolean(
+    message.attachment_url ||
+    message.attachment_name ||
+    parsedAttach?.file_url ||
+    parsedAttach?.url ||
+    parsedAttach?.file_name ||
+    parsedAttach?.name ||
+    (typeof message.attachment === 'string' && message.attachment.trim().length > 0)
+  );
+
   let fileName = '';
   if (message.attachment_name && typeof message.attachment_name === 'string' && !message.attachment_name.trim().startsWith('{')) {
     fileName = message.attachment_name;
@@ -207,11 +218,12 @@ export default function WhatsAppChatMessage({
     fileName = decodeURIComponent(message.attachment.split('/').pop()?.split('?')[0] || '');
   } else if (typeof message.attachment === 'string' && !message.attachment.trim().startsWith('{')) {
     fileName = message.attachment;
-  } else {
+  } else if (hasAttachment) {
+    // Only fall back to 'document.pdf' when we know there's an actual attachment
     fileName = 'document.pdf';
   }
 
-  fileName = String(fileName || 'document.pdf').replace(/[/\\?%*:|"<>]/g, '_').trim();
+  fileName = String(fileName || '').replace(/[/\\?%*:|"<>]/g, '_').trim();
 
   let fileUrl = 
     message.attachment_url || 
@@ -221,10 +233,11 @@ export default function WhatsAppChatMessage({
 
   const rawSize = message.attachment_size || parsedAttach?.file_size || parsedAttach?.size;
   const fileSize = rawSize ? (typeof rawSize === 'number' ? `${Math.round(rawSize / 1024)} KB` : (String(rawSize).match(/^\d+$/) ? `${Math.round(Number(rawSize) / 1024)} KB` : rawSize)) : 'PDF Document';
-  const fileCategory = getFileCategory(fileName, fileUrl);
+  const fileCategory = hasAttachment ? getFileCategory(fileName, fileUrl) : 'none';
   const replyTo = message.reply_to;
 
   const effectiveUrl = fileUrl || null;
+
 
   const handleDownload = (e, customUrl, customName) => {
     e?.stopPropagation();
