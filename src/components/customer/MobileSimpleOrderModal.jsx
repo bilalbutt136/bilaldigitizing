@@ -1354,7 +1354,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                   style={{ display: 'none' }}
                   onChange={handleMultipleFiles}
                   multiple
-                  accept="image/*,.pdf,.ai,.eps,.svg,.cdr,.dst,.pes,.emb"
+                  accept="*/*"
                 />
 
                 {/* Dropzone Container */}

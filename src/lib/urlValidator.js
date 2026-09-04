@@ -19,12 +19,21 @@ const BLOCKED_HOST_PATTERNS = [
   /instance-data/i,
 ];
 
-// Whitelist of trusted file/storage hosts
+// Whitelist of trusted file/storage hosts and CDNs
 const TRUSTED_DOMAINS = [
   'supabase.co',
+  'supabase.in',
+  'supabase.net',
   'res.cloudinary.com',
+  'cloudinary.com',
+  'amazonaws.com',
+  'r2.cloudflarestorage.com',
+  'r2.dev',
+  'storage.googleapis.com',
+  'firebasestorage.googleapis.com',
   'images.unsplash.com',
   'bilaldigitizing.vercel.app',
+  'vercel.app',
 ];
 
 /**
@@ -38,6 +47,13 @@ export function validateSafeUrl(rawUrl) {
   }
 
   let trimmed = rawUrl.trim();
+
+  // Allow same-origin relative URLs by resolving with default origin
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+    const baseSite = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
+    trimmed = new URL(trimmed, baseSite).toString();
+  }
+
   if (trimmed.startsWith('//')) {
     trimmed = `https:${trimmed}`;
   }
@@ -63,13 +79,23 @@ export function validateSafeUrl(rawUrl) {
     }
   }
 
-  // Ensure target host matches allowed trusted domains or ends with trusted domain
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  const siteHost = siteUrl ? new URL(siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`).hostname.toLowerCase() : null;
+  // Dynamic environment hosts
+  const dynamicHosts = [];
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    try { dynamicHosts.push(new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname.toLowerCase()); } catch {}
+  }
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    try { dynamicHosts.push(new URL(process.env.NEXT_PUBLIC_SITE_URL.startsWith('http') ? process.env.NEXT_PUBLIC_SITE_URL : `https://${process.env.NEXT_PUBLIC_SITE_URL}`).hostname.toLowerCase()); } catch {}
+  }
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    try { dynamicHosts.push(new URL(process.env.NEXT_PUBLIC_APP_URL.startsWith('http') ? process.env.NEXT_PUBLIC_APP_URL : `https://${process.env.NEXT_PUBLIC_APP_URL}`).hostname.toLowerCase()); } catch {}
+  }
 
   const isAllowedHost = TRUSTED_DOMAINS.some(domain =>
     hostname === domain || hostname.endsWith(`.${domain}`)
-  ) || (siteHost && (hostname === siteHost || hostname.endsWith(`.${siteHost}`)));
+  ) || dynamicHosts.some(host =>
+    hostname === host || hostname.endsWith(`.${host}`)
+  );
 
   if (!isAllowedHost) {
     return { valid: false, error: `Domain "${hostname}" is not an authorized asset source.` };

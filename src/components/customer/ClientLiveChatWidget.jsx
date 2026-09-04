@@ -1074,7 +1074,7 @@ export const ClientLiveChatWidget = () => {
                     ref={fileInputRef}
                     onChange={handleFileAttach}
                     style={{ display: 'none' }}
-                    accept=".png,.jpg,.jpeg,.webp,.gif,.svg,.pdf,.ai,.eps,.dst,.pes,.emb,.zip,.rar"
+                    accept="*/*"
                   />
 
                   <button

@@ -1356,7 +1356,7 @@ export const OrderWizardModal = () => {
                     style={{ display: 'none' }}
                     onChange={handleMultipleFiles}
                     multiple
-                    accept="image/*,.pdf,.ai,.eps,.svg,.cdr,.dst,.pes,.emb,.zip,.psd"
+                    accept="*/*"
                   />
 
                   <div

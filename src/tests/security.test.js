@@ -15,6 +15,18 @@ describe('SSRF Protection & URL Validation', () => {
     assert.equal(res.valid, true);
   });
 
+  test('allows trusted AWS S3, Cloudflare R2, and Google Cloud Storage URLs', () => {
+    assert.equal(validateSafeUrl('https://my-bucket.s3.amazonaws.com/embroidery/order.pdf').valid, true);
+    assert.equal(validateSafeUrl('https://pub-xyz.r2.dev/artwork.dst').valid, true);
+    assert.equal(validateSafeUrl('https://storage.googleapis.com/bdigi-assets/logo.ai').valid, true);
+    assert.equal(validateSafeUrl('https://firebasestorage.googleapis.com/v0/b/app/patch.png').valid, true);
+  });
+
+  test('allows same-origin relative URLs', () => {
+    const res = validateSafeUrl('/uploads/artwork_sample.zip');
+    assert.equal(res.valid, true);
+  });
+
   test('blocks SSRF to localhost and loopback IPs', () => {
     assert.equal(validateSafeUrl('http://localhost:3000/api/admin').valid, false);
     assert.equal(validateSafeUrl('http://127.0.0.1:8080/secret').valid, false);

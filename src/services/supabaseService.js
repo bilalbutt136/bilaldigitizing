@@ -2023,8 +2023,16 @@ export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-u
     serverFormData.append('folder', folderPath);
     serverFormData.append('bucket', bucketName || 'client-uploads');
 
+    const authHeaders = await getAuthHeaders().catch(() => ({}));
+    const headers = {};
+    if (authHeaders.Authorization) {
+      headers.Authorization = authHeaders.Authorization;
+    }
+
     const serverRes = await fetch('/api/cloudinary/upload', {
       method: 'POST',
+      headers,
+      credentials: 'same-origin',
       body: serverFormData
     });
 

@@ -1450,8 +1450,8 @@ export const OrderTrackerDrawer = () => {
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                     <label style={{ fontSize: '0.78rem', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '0.4rem 0.8rem', borderRadius: '8px', fontWeight: 600 }}>
-                      📎 {revisionImage ? revisionImage.name : 'Attach Reference Image / Screenshot'}
-                      <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => { if(e.target.files && e.target.files[0]) setRevisionImage(e.target.files[0]); }} />
+                      📎 {revisionImage ? revisionImage.name : 'Attach Reference File (Image, PDF, Document)'}
+                      <input type="file" style={{ display: 'none' }} accept="*/*" onChange={(e) => { if(e.target.files && e.target.files[0]) setRevisionImage(e.target.files[0]); }} />
                     </label>
 
                     <button 

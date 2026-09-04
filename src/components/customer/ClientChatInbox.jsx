@@ -806,7 +806,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           ref={fileInputRef} 
           style={{ display: 'none' }} 
           onChange={handleFileUpload}
-          accept="image/*,.pdf,.dst,.pes,.emb,.exp,.jef,.ai,.eps,.svg,.cdr"
+          accept="*/*"
         />
 
         {/* Attachment Button */}
