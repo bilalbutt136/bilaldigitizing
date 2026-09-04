@@ -235,4 +235,62 @@ describe('Messaging Reliability & Custom Offer State Machine', () => {
     assert.equal(activeMessages[1].id, 'msg-3');
     assert.equal(activeMessages.some(m => m.id === 'msg-2'), false);
   });
+
+  test('Plain text messages without attachment URL must NOT have hasAttachment or default to document.pdf', () => {
+    // Helper function mirroring resolveAttachmentLogic in WhatsAppChatMessage
+    const resolveAttachment = (msg) => {
+      let parsedAttach = null;
+      if (typeof msg.attachment === 'string' && msg.attachment.trim().startsWith('{')) {
+        try { parsedAttach = JSON.parse(msg.attachment); } catch {}
+      } else if (typeof msg.attachment === 'object') {
+        parsedAttach = msg.attachment;
+      }
+
+      let fileUrl = 
+        msg.attachment_url || 
+        parsedAttach?.file_url || 
+        parsedAttach?.url || 
+        (typeof msg.attachment === 'string' && (msg.attachment.startsWith('http') || msg.attachment.startsWith('/api/') || msg.attachment.startsWith('blob:') || msg.attachment.startsWith('data:')) ? msg.attachment.trim() : null);
+
+      let fileName = '';
+      if (msg.attachment_name && typeof msg.attachment_name === 'string' && !msg.attachment_name.trim().startsWith('{') && !msg.attachment_name.startsWith('http')) {
+        fileName = msg.attachment_name;
+      } else if (parsedAttach?.file_name || parsedAttach?.name || parsedAttach?.filename) {
+        fileName = parsedAttach.file_name || parsedAttach.name || parsedAttach.filename;
+      } else if (fileUrl) {
+        fileName = decodeURIComponent(fileUrl.split('/').pop()?.split('?')[0] || '');
+      }
+
+      fileName = String(fileName || '').replace(/[/\\?%*:|"<>]/g, '_').trim();
+      const isGenericPlaceholder = !fileUrl && (fileName.toLowerCase() === 'document.pdf' || fileName.toLowerCase() === 'download.pdf' || fileName === '');
+      const hasAttachment = Boolean(fileUrl && String(fileUrl).trim().length > 0) && !isGenericPlaceholder;
+
+      return { hasAttachment, fileUrl, fileName };
+    };
+
+    // 1. Regular text message
+    const textOnlyMsg = { id: 'msg-1', text: 'ge', sender: 'client' };
+    const r1 = resolveAttachment(textOnlyMsg);
+    assert.equal(r1.hasAttachment, false);
+    assert.equal(r1.fileUrl, null);
+
+    // 2. Text message with legacy ghost attachment_name = 'document.pdf'
+    const ghostPdfMsg = { id: 'msg-2', text: 'hello there', sender: 'admin', attachment_name: 'document.pdf' };
+    const r2 = resolveAttachment(ghostPdfMsg);
+    assert.equal(r2.hasAttachment, false);
+    assert.equal(r2.fileUrl, null);
+
+    // 3. Real message with genuine uploaded PDF attachment
+    const realPdfMsg = { 
+      id: 'msg-3', 
+      text: 'Here is the file', 
+      attachment_url: 'https://example.supabase.co/storage/v1/object/public/order_files/artwork.pdf',
+      attachment_name: 'artwork.pdf'
+    };
+    const r3 = resolveAttachment(realPdfMsg);
+    assert.equal(r3.hasAttachment, true);
+    assert.equal(r3.fileName, 'artwork.pdf');
+    assert.ok(r3.fileUrl.endsWith('.pdf'));
+  });
 });
+

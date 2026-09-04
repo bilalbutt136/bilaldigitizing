@@ -549,10 +549,10 @@ export const AdminChatInbox = () => {
           attachObj = record.attachment;
         }
 
-        const attachUrl = record.attachment_url || attachObj?.file_url || attachObj?.url || (typeof record.attachment === 'string' && record.attachment.startsWith('http') ? record.attachment : null);
-        let attachName = record.attachment_name || attachObj?.file_name || attachObj?.name || (extractedOffer ? `Custom Offer: ${extractedOffer.title}` : (typeof record.attachment === 'string' && !record.attachment.trim().startsWith('{') ? record.attachment : null));
+        const attachUrl = record.attachment_url || attachObj?.file_url || attachObj?.url || (typeof record.attachment === 'string' && (record.attachment.startsWith('http') || record.attachment.startsWith('/api/') || record.attachment.startsWith('blob:') || record.attachment.startsWith('data:')) ? record.attachment : null);
+        let attachName = record.attachment_name || attachObj?.file_name || attachObj?.name || (extractedOffer ? `Custom Offer: ${extractedOffer.title}` : (typeof record.attachment === 'string' && !record.attachment.trim().startsWith('{') && !record.attachment.startsWith('http') ? record.attachment : null));
         if (!attachName || attachName.trim().startsWith('{')) {
-          attachName = attachUrl ? decodeURIComponent(attachUrl.split('/').pop()?.split('?')[0] || 'document.pdf') : 'document.pdf';
+          attachName = attachUrl ? decodeURIComponent(attachUrl.split('/').pop()?.split('?')[0] || '') : null;
         }
         const attachSize = record.attachment_size || attachObj?.file_size || attachObj?.size || null;
         const attachType = extractedOffer ? 'custom_offer' : (record.attachment_type || attachObj?.mime_type || attachObj?.type || attachObj?.format || null);

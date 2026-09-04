@@ -245,10 +245,10 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
 
         const resolvedOfferId = record.offer_id || extractedOffer?.id || (record.text && record.text.includes('off-') ? record.text.match(/off-[0-9a-z_-]+/i)?.[0] : null);
 
-        const attachUrl = record.attachment_url || attachObj?.file_url || attachObj?.url || (typeof record.attachment === 'string' && record.attachment.startsWith('http') ? record.attachment : null);
-        let attachName = record.attachment_name || attachObj?.file_name || attachObj?.name || (extractedOffer ? `Custom Offer: ${extractedOffer.title}` : (typeof record.attachment === 'string' && !record.attachment.trim().startsWith('{') ? record.attachment : null));
+        const attachUrl = record.attachment_url || attachObj?.file_url || attachObj?.url || (typeof record.attachment === 'string' && (record.attachment.startsWith('http') || record.attachment.startsWith('/api/') || record.attachment.startsWith('blob:') || record.attachment.startsWith('data:')) ? record.attachment : null);
+        let attachName = record.attachment_name || attachObj?.file_name || attachObj?.name || (extractedOffer ? `Custom Offer: ${extractedOffer.title}` : (typeof record.attachment === 'string' && !record.attachment.trim().startsWith('{') && !record.attachment.startsWith('http') ? record.attachment : null));
         if (!attachName || attachName.trim().startsWith('{')) {
-          attachName = attachUrl ? decodeURIComponent(attachUrl.split('/').pop()?.split('?')[0] || 'document.pdf') : 'document.pdf';
+          attachName = attachUrl ? decodeURIComponent(attachUrl.split('/').pop()?.split('?')[0] || '') : null;
         }
         const attachSize = record.attachment_size || attachObj?.file_size || attachObj?.size || null;
         const attachType = extractedOffer ? 'custom_offer' : (record.attachment_type || attachObj?.mime_type || attachObj?.type || attachObj?.format || null);

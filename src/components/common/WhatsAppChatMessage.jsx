@@ -198,45 +198,36 @@ export default function WhatsAppChatMessage({
     parsedAttach = rawCandidate;
   }
 
-  // Determine if there is a real file attachment (not just a fallback)
-  const hasAttachment = Boolean(
-    message.attachment_url ||
-    message.attachment_name ||
-    parsedAttach?.file_url ||
-    parsedAttach?.url ||
-    parsedAttach?.file_name ||
-    parsedAttach?.name ||
-    (typeof message.attachment === 'string' && message.attachment.trim().length > 0)
-  );
-
-  let fileName = '';
-  if (message.attachment_name && typeof message.attachment_name === 'string' && !message.attachment_name.trim().startsWith('{')) {
-    fileName = message.attachment_name;
-  } else if (parsedAttach?.file_name || parsedAttach?.name || parsedAttach?.filename) {
-    fileName = parsedAttach.file_name || parsedAttach.name || parsedAttach.filename;
-  } else if (typeof message.attachment === 'string' && message.attachment.startsWith('http')) {
-    fileName = decodeURIComponent(message.attachment.split('/').pop()?.split('?')[0] || '');
-  } else if (typeof message.attachment === 'string' && !message.attachment.trim().startsWith('{')) {
-    fileName = message.attachment;
-  } else if (hasAttachment) {
-    // Only fall back to 'document.pdf' when we know there's an actual attachment
-    fileName = 'document.pdf';
-  }
-
-  fileName = String(fileName || '').replace(/[/\\?%*:|"<>]/g, '_').trim();
-
+  // Extract file URL strictly from actual URL fields
   let fileUrl = 
     message.attachment_url || 
     parsedAttach?.file_url || 
     parsedAttach?.url || 
-    (typeof message.attachment === 'string' && !message.attachment.trim().startsWith('{') ? message.attachment.trim() : null);
+    (typeof message.attachment === 'string' && (message.attachment.startsWith('http') || message.attachment.startsWith('/api/') || message.attachment.startsWith('blob:') || message.attachment.startsWith('data:')) ? message.attachment.trim() : null);
+
+  // Extract file name
+  let fileName = '';
+  if (message.attachment_name && typeof message.attachment_name === 'string' && !message.attachment_name.trim().startsWith('{') && !message.attachment_name.startsWith('http')) {
+    fileName = message.attachment_name;
+  } else if (parsedAttach?.file_name || parsedAttach?.name || parsedAttach?.filename) {
+    fileName = parsedAttach.file_name || parsedAttach.name || parsedAttach.filename;
+  } else if (fileUrl) {
+    fileName = decodeURIComponent(fileUrl.split('/').pop()?.split('?')[0] || '');
+  }
+
+  fileName = String(fileName || '').replace(/[/\\?%*:|"<>]/g, '_').trim();
+
+  // Strict check: A message ONLY has an attachment if there is an actual valid fileUrl
+  // Never show an attachment card for plain text messages
+  const isGenericPlaceholder = !fileUrl && (fileName.toLowerCase() === 'document.pdf' || fileName.toLowerCase() === 'download.pdf' || fileName === '');
+  const hasAttachment = Boolean(fileUrl && String(fileUrl).trim().length > 0) && !isGenericPlaceholder;
 
   const rawSize = message.attachment_size || parsedAttach?.file_size || parsedAttach?.size;
-  const fileSize = rawSize ? (typeof rawSize === 'number' ? `${Math.round(rawSize / 1024)} KB` : (String(rawSize).match(/^\d+$/) ? `${Math.round(Number(rawSize) / 1024)} KB` : rawSize)) : 'PDF Document';
+  const fileSize = rawSize ? (typeof rawSize === 'number' ? `${Math.round(rawSize / 1024)} KB` : (String(rawSize).match(/^\d+$/) ? `${Math.round(Number(rawSize) / 1024)} KB` : rawSize)) : (hasAttachment ? 'Document' : null);
   const fileCategory = hasAttachment ? getFileCategory(fileName, fileUrl) : 'none';
   const replyTo = message.reply_to;
 
-  const effectiveUrl = fileUrl || null;
+  const effectiveUrl = (hasAttachment && fileUrl) ? fileUrl : null;
 
 
   const handleDownload = (e, customUrl, customName) => {
@@ -433,7 +424,7 @@ export default function WhatsAppChatMessage({
         )}
 
         {/* 3. DEDICATED PDF CARD PREVIEW (WhatsApp Style) */}
-        {fileCategory === 'pdf' && (
+        {hasAttachment && fileCategory === 'pdf' && effectiveUrl && (
           <div
             style={{
               background: resolvedIsMe ? 'rgba(0, 0, 0, 0.12)' : 'var(--bg-subtle, #f8fafc)',
@@ -530,7 +521,7 @@ export default function WhatsAppChatMessage({
         )}
 
         {/* 4. OTHER ATTACHMENT TYPES (Embroidery, Vector, Zip, etc.) */}
-        {fileCategory !== 'image' && fileCategory !== 'pdf' && fileName && !fileName.trim().startsWith('{') && (!fileUrl || !fileUrl.startsWith('{')) && (
+        {hasAttachment && fileCategory !== 'image' && fileCategory !== 'pdf' && fileCategory !== 'none' && effectiveUrl && fileName && !fileName.trim().startsWith('{') && (!fileUrl || !fileUrl.startsWith('{')) && (
           <div
             style={{
               background: resolvedIsMe ? 'rgba(0, 0, 0, 0.12)' : 'var(--bg-subtle, #f8fafc)',

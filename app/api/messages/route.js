@@ -871,9 +871,9 @@ export async function POST(request) {
       const { data: insData, error: insError } = await supabase.from('messages').insert([dbPayload]).select();
       if (insError) {
         let coreAttachment = null;
-        const targetAttachUrl = dbPayload.attachment_url || (typeof dbPayload.attachment === 'string' && (dbPayload.attachment.startsWith('http') || dbPayload.attachment.startsWith('data:') || dbPayload.attachment.startsWith('blob:')) ? dbPayload.attachment : null);
+        const targetAttachUrl = dbPayload.attachment_url || (typeof dbPayload.attachment === 'string' && (dbPayload.attachment.startsWith('http') || dbPayload.attachment.startsWith('/api/') || dbPayload.attachment.startsWith('data:') || dbPayload.attachment.startsWith('blob:')) ? dbPayload.attachment : null);
 
-        if (targetAttachUrl || dbPayload.attachment) {
+        if (targetAttachUrl || (dbPayload.attachment && typeof dbPayload.attachment === 'string' && dbPayload.attachment.trim().startsWith('{') && (dbPayload.attachment.includes('"url"') || dbPayload.attachment.includes('"file_url"')))) {
           let parsedExisting = null;
           if (typeof dbPayload.attachment === 'string' && dbPayload.attachment.trim().startsWith('{')) {
             try { parsedExisting = JSON.parse(dbPayload.attachment); } catch {}
@@ -882,27 +882,29 @@ export async function POST(request) {
           }
 
           const fileUrl = targetAttachUrl || parsedExisting?.file_url || parsedExisting?.url || null;
-          const rawFileName = parsedExisting?.file_name || parsedExisting?.name || dbPayload.attachment_name || (typeof dbPayload.attachment === 'string' && !dbPayload.attachment.trim().startsWith('{') ? dbPayload.attachment : 'document.pdf');
-          const cleanFileName = rawFileName.replace(/["\r\n\\]/g, '').trim() || 'document.pdf';
-          const ext = cleanFileName.split('.').pop()?.toLowerCase() || 'pdf';
-          const mimeType = parsedExisting?.mime_type || (ext === 'pdf' ? 'application/pdf' : 'application/octet-stream');
-          const fileId = payload.file_id || parsedExisting?.file_id || `file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+          if (fileUrl) {
+            const rawFileName = parsedExisting?.file_name || parsedExisting?.name || dbPayload.attachment_name || (typeof dbPayload.attachment === 'string' && !dbPayload.attachment.trim().startsWith('{') && !dbPayload.attachment.startsWith('http') ? dbPayload.attachment : 'document.pdf');
+            const cleanFileName = rawFileName ? rawFileName.replace(/["\r\n\\]/g, '').trim() : 'document.pdf';
+            const ext = cleanFileName.split('.').pop()?.toLowerCase() || 'pdf';
+            const mimeType = parsedExisting?.mime_type || (ext === 'pdf' ? 'application/pdf' : 'application/octet-stream');
+            const fileId = payload.file_id || parsedExisting?.file_id || `file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 
-          coreAttachment = JSON.stringify({
-            file_id: fileId,
-            id: fileId,
-            sender_id: actualSender,
-            receiver_id: targetEmail || 'support',
-            name: cleanFileName,
-            file_name: cleanFileName,
-            url: fileUrl,
-            file_url: fileUrl,
-            size: dbPayload.attachment_size || parsedExisting?.size || null,
-            file_size: dbPayload.attachment_size || parsedExisting?.file_size || null,
-            type: ext,
-            mime_type: mimeType,
-            created_at: nowIso
-          });
+            coreAttachment = JSON.stringify({
+              file_id: fileId,
+              id: fileId,
+              sender_id: actualSender,
+              receiver_id: targetEmail || 'support',
+              name: cleanFileName,
+              file_name: cleanFileName,
+              url: fileUrl,
+              file_url: fileUrl,
+              size: dbPayload.attachment_size || parsedExisting?.size || null,
+              file_size: dbPayload.attachment_size || parsedExisting?.file_size || null,
+              type: ext,
+              mime_type: mimeType,
+              created_at: nowIso
+            });
+          }
         }
         const corePayload = {
           id: dbPayload.id,
