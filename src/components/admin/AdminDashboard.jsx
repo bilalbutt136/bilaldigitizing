@@ -54,7 +54,9 @@ export const AdminDashboard = () => {
     setActiveAdminTab,
     openOrderTrackerDrawer,
     setSelectedOrderForDrawer,
-    showToast
+    showToast,
+    refreshOrders,
+    refreshClients
   } = useAppState();
 
   const [activeTabState, setActiveTabState] = useState(activeAdminTab || 'dashboard');
@@ -178,6 +180,14 @@ export const AdminDashboard = () => {
 
   const configuredAdminEmail = (siteSettings?.adminEmail || authUser?.email || '').toLowerCase().trim();
   const isMasterAdmin = mounted && isAuthenticated && authUser?.role === 'admin';
+
+  // Ensure live orders & client directory are freshly synchronized upon accessing Operations Desk
+  React.useEffect(() => {
+    if (mounted && isMasterAdmin) {
+      if (refreshOrders) refreshOrders();
+      if (refreshClients) refreshClients();
+    }
+  }, [mounted, isMasterAdmin]);
 
   if (!mounted) {
     return (

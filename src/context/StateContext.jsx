@@ -823,6 +823,16 @@ export const StateProvider = ({ children }) => {
                 setAdminUsers(adminList.map(a => ({ email: a.email, name: a.name || a.email })));
               }
             });
+            fetchClientsFromSupabase().then(dbClients => {
+              if (!cancelled && dbClients?.length) {
+                setClients(dbClients);
+              }
+            });
+            fetchOrdersFromSupabase().then(dbOrders => {
+              if (!cancelled && dbOrders) {
+                setOrders(dbOrders);
+              }
+            });
           } else {
             setCurrentView('customer');
           }
@@ -1153,6 +1163,12 @@ export const StateProvider = ({ children }) => {
 
             const balance = await fetchWalletBalanceFromSupabase(session.user.email);
             if (!cancelled) setWalletBalance(balance);
+
+            if (role === 'admin') {
+              fetchClientsFromSupabase().then(freshClients => {
+                if (!cancelled && freshClients && freshClients.length > 0) setClients(freshClients);
+              });
+            }
 
             fetchOrdersFromSupabase().then(freshOrders => {
               if (!cancelled && freshOrders) setOrders(freshOrders);
@@ -1846,30 +1862,34 @@ export const StateProvider = ({ children }) => {
 
   const refreshOrders = async () => {
     try {
-      const email = authUser?.email || currentUser?.email || null;
+      const isAdminUser = authUser?.role === 'admin';
+      const email = isAdminUser ? null : (authUser?.email || currentUser?.email || null);
       let localIds = [];
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && !isAdminUser) {
         try {
           localIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
         } catch {}
       }
       const freshOrders = await fetchOrdersFromSupabase(email, localIds.length > 0 ? localIds.join(',') : null);
       if (freshOrders && Array.isArray(freshOrders)) {
-        setOrders(prev => {
-          const freshMap = new Map(freshOrders.map(o => [String(o.id).trim().replace(/^#+/, ''), o]));
-          const merged = [...freshOrders];
-          for (const prevOrd of prev) {
-            const cleanId = String(prevOrd?.id || '').trim().replace(/^#+/, '');
-            if (cleanId && !freshMap.has(cleanId)) {
-              merged.push(prevOrd);
-            }
-          }
-          return merged;
-        });
+        setOrders(freshOrders);
         return freshOrders;
       }
     } catch (err) {
       console.warn('refreshOrders error:', err);
+    }
+    return [];
+  };
+
+  const refreshClients = async () => {
+    try {
+      const freshClients = await fetchClientsFromSupabase();
+      if (freshClients && Array.isArray(freshClients)) {
+        setClients(freshClients);
+        return freshClients;
+      }
+    } catch (err) {
+      console.warn('refreshClients error:', err);
     }
     return [];
   };
@@ -2098,10 +2118,18 @@ export const StateProvider = ({ children }) => {
         setAdminUsers(adminList.map(a => ({ email: a.email, name: a.name || a.email })));
       }
 
-      showToast('Catalog refreshed from the live database.', 'success');
+      // Reload fresh orders and registered clients from database
+      const [freshOrders, freshClients] = await Promise.all([
+        fetchOrdersFromSupabase(),
+        fetchClientsFromSupabase()
+      ]);
+      if (freshOrders && Array.isArray(freshOrders)) setOrders(freshOrders);
+      if (freshClients && Array.isArray(freshClients)) setClients(freshClients);
+
+      showToast('Catalog & Admin records refreshed from live database.', 'success');
       return { success: true };
     } catch (err) {
-      showToast('Failed to refresh catalog from the database.', 'error');
+      showToast('Failed to refresh data from the database.', 'error');
       return { success: false, error: err.message };
     }
   };
@@ -2240,8 +2268,7 @@ export const StateProvider = ({ children }) => {
       notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead, unreadNotificationsCount, refreshNotifications,
       unreadChatCount, setUnreadChatCount, refreshUnreadChatCount,
       createOrder, updateOrderStatus, addRevisionRequest, addOrderMessage, cancelOrder,
-      completeOrder, deleteOrder, ORDER_STATUSES, assignDigitizer,
-      fetchUserWalletBalance, refreshOrders,
+      fetchUserWalletBalance, refreshOrders, refreshClients,
       mobileMode, setMobileMode, isStandaloneApp
     }}>
       {children}

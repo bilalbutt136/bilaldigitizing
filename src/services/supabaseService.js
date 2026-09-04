@@ -218,7 +218,10 @@ export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds
       try {
         const authSaved = JSON.parse(localStorage.getItem('bdigi_auth_user') || 'null');
         const clientSaved = JSON.parse(localStorage.getItem('bdigi_client_user') || 'null');
-        resolvedEmail = authSaved?.email || clientSaved?.email || localStorage.getItem('bdigi_user_email') || null;
+        // Do NOT auto-restrict to admin email: admin views all orders across the studio
+        if (authSaved?.role !== 'admin') {
+          resolvedEmail = authSaved?.email || clientSaved?.email || localStorage.getItem('bdigi_user_email') || null;
+        }
       } catch {}
     }
     if (resolvedEmail) params.append('email', resolvedEmail);
@@ -226,9 +229,13 @@ export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds
     let resolvedOrderIds = customOrderIds;
     if (!resolvedOrderIds && typeof window !== 'undefined') {
       try {
-        const localIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
-        if (Array.isArray(localIds) && localIds.length > 0) {
-          resolvedOrderIds = localIds.join(',');
+        const authSaved = JSON.parse(localStorage.getItem('bdigi_auth_user') || 'null');
+        // Admin does not restrict to local guest order IDs
+        if (authSaved?.role !== 'admin') {
+          const localIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
+          if (Array.isArray(localIds) && localIds.length > 0) {
+            resolvedOrderIds = localIds.join(',');
+          }
         }
       } catch {}
     }

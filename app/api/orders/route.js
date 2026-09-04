@@ -13,13 +13,27 @@ export async function GET(request) {
 
     if (action === 'fetchAll') {
       const emailParam = searchParams.get('email');
+      const clientEmailFilter = searchParams.get('clientEmail');
       const orderIdsParam = searchParams.get('orderIds');
       
-      // Strict auth isolation: If logged in, client can strictly query their own session email.
-      // Unauthenticated visitors CANNOT query by arbitrary email; they may only look up specific guest order IDs.
+      const configuredAdmins = [
+        process.env.MASTER_ADMIN_EMAIL,
+        process.env.ADMIN_EMAIL,
+        process.env.NEXT_PUBLIC_ADMIN_EMAIL
+      ].filter(Boolean).map(e => e.toLowerCase().trim());
+
       let targetEmail = null;
       if (isAdmin) {
-        targetEmail = (emailParam || '').toLowerCase().trim();
+        // Admin sees all orders across the studio by default.
+        // Only filter by targetEmail if an explicit client filter was provided (and not the admin's own email).
+        const requestedFilter = (clientEmailFilter || emailParam || '').toLowerCase().trim();
+        const isSelfAdmin = requestedFilter && (
+          (user?.email && requestedFilter === user.email.toLowerCase().trim()) ||
+          configuredAdmins.includes(requestedFilter)
+        );
+        if (requestedFilter && !isSelfAdmin) {
+          targetEmail = requestedFilter;
+        }
       } else if (user?.email) {
         targetEmail = user.email.toLowerCase().trim();
       }
@@ -41,15 +55,9 @@ export async function GET(request) {
       let data = null;
       try {
         let query = supabase.from('orders').select('*, order_files(*), order_messages(*)').order('created_at', { ascending: false });
-        if (!isAdmin) {
-          if (targetEmail) {
-            query = query.ilike('client_email', targetEmail);
-          } else if (parsedOrderIds.length > 0) {
-            query = query.in('id', parsedOrderIds);
-          }
-        } else if (targetEmail) {
+        if (targetEmail) {
           query = query.ilike('client_email', targetEmail);
-        } else if (parsedOrderIds.length > 0) {
+        } else if (!isAdmin && parsedOrderIds.length > 0) {
           query = query.in('id', parsedOrderIds);
         }
         const res = await query;
@@ -58,15 +66,9 @@ export async function GET(request) {
       } catch (nestedErr) {
         console.warn('Nested orders query fallback notice:', nestedErr);
         let fallbackQuery = supabase.from('orders').select('*').order('created_at', { ascending: false });
-        if (!isAdmin) {
-          if (targetEmail) {
-            fallbackQuery = fallbackQuery.ilike('client_email', targetEmail);
-          } else if (parsedOrderIds.length > 0) {
-            fallbackQuery = fallbackQuery.in('id', parsedOrderIds);
-          }
-        } else if (targetEmail) {
+        if (targetEmail) {
           fallbackQuery = fallbackQuery.ilike('client_email', targetEmail);
-        } else if (parsedOrderIds.length > 0) {
+        } else if (!isAdmin && parsedOrderIds.length > 0) {
           fallbackQuery = fallbackQuery.in('id', parsedOrderIds);
         }
         const fallbackRes = await fallbackQuery;

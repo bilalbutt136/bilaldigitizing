@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { supabaseAdmin, hasServiceRole } from '../supabaseAdmin';
+import { createAdminClient } from './admin';
 
 /**
  * Retrieves and validates the authenticated user and admin status server-side.
@@ -17,10 +18,25 @@ export async function getServerAuthUser(request) {
     const authHeader = request?.headers?.get('Authorization') || request?.headers?.get('authorization');
     if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
       const token = authHeader.substring(7).trim();
-      if (token && hasServiceRole && supabaseAdmin) {
-        const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
-        if (!userError && userData?.user) {
-          user = userData.user;
+      if (token) {
+        if (hasServiceRole && supabaseAdmin) {
+          try {
+            const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
+            if (!userError && userData?.user) {
+              user = userData.user;
+            }
+          } catch {}
+        }
+        if (!user) {
+          try {
+            const adminSb = createAdminClient();
+            if (adminSb) {
+              const { data: fallbackUserData, error: fallbackError } = await adminSb.auth.getUser(token);
+              if (!fallbackError && fallbackUserData?.user) {
+                user = fallbackUserData.user;
+              }
+            }
+          } catch {}
         }
       }
     }
@@ -82,27 +98,32 @@ export async function getServerAuthUser(request) {
       return { user, isAdmin: true, error: null };
     }
 
-    // 5. Database Admins Whitelist Check using service role
-    if (hasServiceRole && supabaseAdmin) {
-      const { data: adminRecord } = await supabaseAdmin
-        .from('admins')
-        .select('email')
-        .ilike('email', email)
-        .maybeSingle();
+    // 5. Database Admins Whitelist Check using service role or admin client
+    const dbClient = (hasServiceRole && supabaseAdmin) ? supabaseAdmin : createAdminClient();
+    if (dbClient) {
+      try {
+        const { data: adminRecord } = await dbClient
+          .from('admins')
+          .select('email')
+          .ilike('email', email)
+          .maybeSingle();
 
-      if (adminRecord) {
-        return { user, isAdmin: true, error: null };
-      }
+        if (adminRecord) {
+          return { user, isAdmin: true, error: null };
+        }
 
-      // Also check clients table if role === 'admin' or 'staff'
-      const { data: clientRecord } = await supabaseAdmin
-        .from('clients')
-        .select('role')
-        .ilike('email', email)
-        .maybeSingle();
+        // Also check clients table if role === 'admin' or 'staff'
+        const { data: clientRecord } = await dbClient
+          .from('clients')
+          .select('role')
+          .ilike('email', email)
+          .maybeSingle();
 
-      if (clientRecord && (clientRecord.role === 'admin' || clientRecord.role === 'staff')) {
-        return { user, isAdmin: true, error: null };
+        if (clientRecord && (clientRecord.role === 'admin' || clientRecord.role === 'staff')) {
+          return { user, isAdmin: true, error: null };
+        }
+      } catch (dbErr) {
+        console.warn('[getServerAuthUser DB Check Warning]:', dbErr?.message);
       }
     }
 

@@ -14,7 +14,8 @@ import {
   PackageCheck,
   PackageOpen,
   Package,
-  FileText
+  FileText,
+  RefreshCw
 } from 'lucide-react';
 
 const getNextStatuses = (currentStatus) => {
@@ -51,7 +52,8 @@ export const OrderManagementTable = () => {
     orders = [], 
     setSelectedOrderForDrawer,
     ORDER_STATUSES,
-    updateOrderStatus
+    updateOrderStatus,
+    refreshOrders
   } = useAppState();
 
   const [filterStatus, setFilterStatus] = useState('all');
@@ -59,6 +61,26 @@ export const OrderManagementTable = () => {
   const [filterPayment, setFilterPayment] = useState('all'); // 'all' | 'paid' | 'pending'
   const [searchTerm, setSearchTerm] = useState('');
   const [lightboxOrder, setLightboxOrder] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Auto-refresh orders from Supabase on mount
+  React.useEffect(() => {
+    if (refreshOrders) {
+      refreshOrders();
+    }
+  }, []);
+
+  const handleManualRefresh = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      if (refreshOrders) {
+        await refreshOrders();
+      }
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -421,6 +443,30 @@ export const OrderManagementTable = () => {
               }}
             />
           </div>
+
+          {/* Manual Refresh Button */}
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            style={{
+              height: '32px',
+              padding: '0 0.65rem',
+              fontSize: '0.78rem',
+              fontWeight: 800,
+              borderRadius: '6px',
+              flex: '0 0 auto',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              whiteSpace: 'nowrap'
+            }}
+            title="Refresh orders from live database"
+          >
+            <RefreshCw size={13} className={isRefreshing ? 'spin-icon' : ''} />
+            <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
         </div>
       </div>
 
