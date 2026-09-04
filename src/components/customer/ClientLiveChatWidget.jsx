@@ -220,7 +220,32 @@ export const ClientLiveChatWidget = () => {
         const cleanCustomerEmail = (clientEmail || '').toLowerCase().trim();
         const targetConvIdLower = String(targetConvId || '').toLowerCase().trim();
 
-        const offerEmail = String(record.offer_data?.client_email || record.metadata?.client_email || '').toLowerCase().trim();
+        // Extract offer data from any serialized container (offer_data, attachment, or text)
+        let extractedOffer = record.offer_data || record.offerData || record.offer || null;
+        if (typeof extractedOffer === 'string') {
+          try { extractedOffer = JSON.parse(extractedOffer); } catch { extractedOffer = null; }
+        }
+        if (!extractedOffer && record.metadata) {
+          const meta = typeof record.metadata === 'string' ? (() => { try { return JSON.parse(record.metadata); } catch { return null; } })() : record.metadata;
+          if (meta?.offer_data) extractedOffer = meta.offer_data;
+          else if (meta?.offer) extractedOffer = meta.offer;
+          else if (meta?.id && String(meta.id).startsWith('off-')) extractedOffer = meta;
+        }
+        if (!extractedOffer && record.attachment && typeof record.attachment === 'string') {
+          const trimmed = record.attachment.trim();
+          if (trimmed.startsWith('{') && (trimmed.includes('"title"') || trimmed.includes('"price"'))) {
+            try { extractedOffer = JSON.parse(trimmed); } catch {}
+          }
+        }
+        if (!extractedOffer && record.text && record.text.includes('[OFFER_DATA:')) {
+          try {
+            const match = record.text.match(/\[OFFER_DATA:(\{.*?\})\]/s);
+            if (match && match[1]) extractedOffer = JSON.parse(match[1]);
+          } catch {}
+        }
+        const resolvedOfferId = record.offer_id || record.offerId || extractedOffer?.id || (record.text && record.text.includes('off-') ? record.text.match(/off-[0-9a-z_-]+/i)?.[0] : null);
+
+        const offerEmail = String(extractedOffer?.client_email || record.client_email || record.metadata?.client_email || '').toLowerCase().trim();
         const isForThisUser = (cleanCustomerEmail && recordEmail && recordEmail === cleanCustomerEmail) ||
           (cleanCustomerEmail && offerEmail && offerEmail === cleanCustomerEmail) ||
           (cleanCustomerEmail && (recordConvId.includes(cleanCustomerEmail) || recordThreadId.includes(cleanCustomerEmail))) ||
@@ -235,18 +260,20 @@ export const ClientLiveChatWidget = () => {
         const newMsg = {
           id: record.id,
           conversation_id: record.conversation_id,
+          type: extractedOffer ? 'custom_offer' : (record.type || 'text'),
           sender: record.sender,
           senderName: record.sender === 'admin' ? 'Support' : (record.sender_name || cleanName),
           sender_name: record.sender_name,
           text: record.text,
           attachment: record.attachment,
           attachment_url: record.attachment_url || null,
-          attachment_name: record.attachment_name || record.attachment || null,
+          attachment_name: record.attachment_name || (extractedOffer ? `Custom Offer: ${extractedOffer.title}` : record.attachment) || null,
           attachment_size: record.attachment_size || null,
-          attachment_type: record.attachment_type || null,
+          attachment_type: extractedOffer ? 'custom_offer' : (record.attachment_type || null),
           reply_to: record.reply_to || null,
-          offer_id: record.offer_id || record.offerId || null,
-          offer_data: record.offer_data || record.offerData || null,
+          offer_id: resolvedOfferId,
+          offer_data: extractedOffer,
+          offer: extractedOffer,
           is_read: record.is_read || false,
           timestamp: record.timestamp || record.created_at || new Date().toISOString()
         };

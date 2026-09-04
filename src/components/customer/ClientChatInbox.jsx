@@ -189,8 +189,32 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
       const cleanCustomerEmail = (clientEmail || '').toLowerCase().trim();
       const targetChatIdLower = String(canonicalChatId || '').toLowerCase().trim();
 
+      // Extract offer data from any serialized container (offer_data, attachment, or text)
+      let extractedOffer = record.offer_data || record.offer || null;
+      if (typeof extractedOffer === 'string') {
+        try { extractedOffer = JSON.parse(extractedOffer); } catch { extractedOffer = null; }
+      }
+      if (!extractedOffer && record.metadata) {
+        const meta = typeof record.metadata === 'string' ? (() => { try { return JSON.parse(record.metadata); } catch { return null; } })() : record.metadata;
+        if (meta?.offer_data) extractedOffer = meta.offer_data;
+        else if (meta?.offer) extractedOffer = meta.offer;
+        else if (meta?.id && String(meta.id).startsWith('off-')) extractedOffer = meta;
+      }
+      if (!extractedOffer && record.attachment && typeof record.attachment === 'string') {
+        const trimmed = record.attachment.trim();
+        if (trimmed.startsWith('{') && (trimmed.includes('"title"') || trimmed.includes('"price"'))) {
+          try { extractedOffer = JSON.parse(trimmed); } catch {}
+        }
+      }
+      if (!extractedOffer && record.text && record.text.includes('[OFFER_DATA:')) {
+        try {
+          const match = record.text.match(/\[OFFER_DATA:(\{.*?\})\]/s);
+          if (match && match[1]) extractedOffer = JSON.parse(match[1]);
+        } catch {}
+      }
+
       // Check offer_data or metadata for client_email
-      const offerEmail = String(record.offer_data?.client_email || record.metadata?.client_email || '').toLowerCase().trim();
+      const offerEmail = String(extractedOffer?.client_email || record.client_email || record.metadata?.client_email || '').toLowerCase().trim();
       const matchesClientOrder = Array.isArray(orders) && orders.some(o => {
         const oId = String(o.id || '').toLowerCase().trim();
         return recordConvId === oId || recordConvId === `order-${oId}` || recordThreadId === oId || recordThreadId === `order-${oId}`;
@@ -209,21 +233,24 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
         ));
 
       if (isForThisCustomer) {
+        const resolvedOfferId = record.offer_id || extractedOffer?.id || (record.text && record.text.includes('off-') ? record.text.match(/off-[0-9a-z_-]+/i)?.[0] : null);
         const formattedRecord = {
           id: record.id,
           conversation_id: canonicalChatId,
+          type: extractedOffer ? 'custom_offer' : (record.type || 'text'),
           sender: record.sender,
           senderName: record.sender_name || (record.sender === 'admin' ? 'Support' : clientName),
           sender_name: record.sender_name,
           text: record.text,
           attachment: record.attachment,
           attachment_url: record.attachment_url,
-          attachment_name: record.attachment_name || record.attachment,
+          attachment_name: record.attachment_name || (extractedOffer ? `Custom Offer: ${extractedOffer.title}` : record.attachment),
           attachment_size: record.attachment_size,
-          attachment_type: record.attachment_type,
+          attachment_type: extractedOffer ? 'custom_offer' : record.attachment_type,
           reply_to: record.reply_to,
-          offer_id: record.offer_id,
-          offer_data: record.offer_data,
+          offer_id: resolvedOfferId,
+          offer_data: extractedOffer,
+          offer: extractedOffer,
           is_read: record.is_read || false,
           timestamp: record.timestamp || record.created_at || new Date().toISOString()
         };

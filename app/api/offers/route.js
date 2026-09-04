@@ -4,6 +4,104 @@ import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 
 export const dynamic = 'force-dynamic';
 
+function extractOfferFromMessage(msgRow) {
+  if (!msgRow) return null;
+  let off = msgRow.offer_data || msgRow.offer;
+  if (typeof off === 'string') {
+    try { off = JSON.parse(off); } catch { off = null; }
+  }
+  if (!off && msgRow.attachment && typeof msgRow.attachment === 'string') {
+    const trimmed = msgRow.attachment.trim();
+    if (trimmed.startsWith('{') && (trimmed.includes('"title"') || trimmed.includes('"price"') || trimmed.includes('"id"'))) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (parsed && (parsed.id || parsed.title || parsed.price)) {
+          off = parsed;
+        }
+      } catch {}
+    }
+  }
+  if (!off && msgRow.text && msgRow.text.includes('[OFFER_DATA:')) {
+    try {
+      const match = msgRow.text.match(/\[OFFER_DATA:(\{.*?\})\]/s);
+      if (match && match[1]) off = JSON.parse(match[1]);
+    } catch {}
+  }
+  if (off && !off.conversation_id && msgRow.conversation_id) {
+    off.conversation_id = msgRow.conversation_id;
+  }
+  return off;
+}
+
+// Safely insert chat message using guaranteed PostgreSQL core columns with extended fallback
+async function insertChatMessage(supabase, messageObj) {
+  const coreRow = {
+    id: messageObj.id || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    conversation_id: messageObj.conversation_id,
+    sender: messageObj.sender || 'admin',
+    sender_name: messageObj.sender_name || 'Studio Support',
+    text: messageObj.text || '',
+    attachment: messageObj.attachment ? (typeof messageObj.attachment === 'string' ? messageObj.attachment : JSON.stringify(messageObj.attachment)) : null,
+    timestamp: messageObj.timestamp || new Date().toISOString(),
+    created_at: messageObj.created_at || new Date().toISOString(),
+    is_read: messageObj.is_read || false
+  };
+
+  try {
+    const extendedRow = { ...coreRow };
+    if (messageObj.type) extendedRow.type = messageObj.type;
+    if (messageObj.metadata) extendedRow.metadata = messageObj.metadata;
+    if (messageObj.offer_id) extendedRow.offer_id = messageObj.offer_id;
+    if (messageObj.offer_data) extendedRow.offer_data = messageObj.offer_data;
+    if (messageObj.client_email) extendedRow.client_email = messageObj.client_email;
+    if (messageObj.thread_id) extendedRow.thread_id = messageObj.thread_id;
+
+    const { data: insData, error: insErr } = await supabase.from('messages').insert([extendedRow]).select();
+    if (!insErr && insData && insData[0]) {
+      return insData[0];
+    }
+  } catch {}
+
+  const { data: coreData, error: coreErr } = await supabase.from('messages').insert([coreRow]).select();
+  if (coreErr) {
+    console.error('[insertChatMessage core error]:', coreErr.message);
+  }
+  return (coreData && coreData[0]) ? coreData[0] : coreRow;
+}
+
+// Safely update all message rows containing this offer across all schema variants
+async function updateOfferInMessages(supabase, targetOfferId, updatedOffer) {
+  if (!targetOfferId || !updatedOffer) return;
+  const serializedOffer = JSON.stringify(updatedOffer);
+  const updatedOfferText = `📋 Custom Offer: ${updatedOffer.title} ($${parseFloat(updatedOffer.final_price || updatedOffer.price || 0).toFixed(2)})\n\n[OFFER_DATA:${serializedOffer}]`;
+
+  try {
+    const { data: matchedMsgs } = await supabase
+      .from('messages')
+      .select('id, text, attachment')
+      .or(`text.ilike.%${targetOfferId}%,attachment.ilike.%${targetOfferId}%`);
+
+    if (Array.isArray(matchedMsgs) && matchedMsgs.length > 0) {
+      for (const m of matchedMsgs) {
+        let nextText = updatedOfferText;
+        if (m.text && m.text.includes('[OFFER_DATA:')) {
+          nextText = m.text.replace(/\[OFFER_DATA:(.*?)\]/s, `[OFFER_DATA:${serializedOffer}]`);
+        }
+        await supabase.from('messages').update({
+          attachment: serializedOffer,
+          text: nextText
+        }).eq('id', m.id);
+
+        try {
+          await supabase.from('messages').update({ offer_data: updatedOffer }).eq('id', m.id);
+        } catch {}
+      }
+    }
+  } catch (err) {
+    console.warn('[updateOfferInMessages notice]:', err.message);
+  }
+}
+
 async function findOffer(supabase, offerId, fallbackOffer = null) {
   if (!offerId && !fallbackOffer) return null;
 
@@ -12,49 +110,47 @@ async function findOffer(supabase, offerId, fallbackOffer = null) {
   if (offerId) {
     // 1. Check custom_offers table by id, stripe_session_id, or order_id
     try {
-      const { data: offData } = await supabase
+      const { data: offData, error: offErr } = await supabase
         .from('custom_offers')
         .select('*')
         .or(`id.eq.${offerId},stripe_session_id.eq.${offerId},order_id.eq.${offerId}`)
         .maybeSingle();
-      if (offData) offer = offData;
+      if (!offErr && offData) offer = offData;
     } catch {}
 
-    // 2. Check messages table by offer_id, id, or embedded [OFFER_DATA:...] JSON
+    // 2. Check messages table by id or text/attachment
     if (!offer) {
       try {
         const { data: msgRow } = await supabase
           .from('messages')
           .select('*')
-          .or(`offer_id.eq.${offerId},id.eq.${offerId}`)
+          .eq('id', offerId)
           .maybeSingle();
-        if (msgRow?.offer_data) {
-          offer = typeof msgRow.offer_data === 'string' ? JSON.parse(msgRow.offer_data) : msgRow.offer_data;
-          if (!offer.conversation_id && msgRow.conversation_id) {
-            offer.conversation_id = msgRow.conversation_id;
-          }
-        } else if (msgRow?.text && msgRow.text.includes('[OFFER_DATA:')) {
-          const match = msgRow.text.match(/\[OFFER_DATA:(\{.*?\})\]/s);
-          if (match && match[1]) {
-            offer = JSON.parse(match[1]);
-            if (!offer.conversation_id && msgRow.conversation_id) {
-              offer.conversation_id = msgRow.conversation_id;
-            }
-          }
-        }
+        if (msgRow) offer = extractOfferFromMessage(msgRow);
       } catch {}
+
+      if (!offer) {
+        try {
+          const { data: msgRows } = await supabase
+            .from('messages')
+            .select('*')
+            .or(`text.ilike.%${offerId}%,attachment.ilike.%${offerId}%`)
+            .limit(1);
+          if (msgRows && msgRows[0]) offer = extractOfferFromMessage(msgRows[0]);
+        } catch {}
+      }
     }
 
     // 3. Check order_messages table
     if (!offer) {
       try {
-        const { data: ordMsg } = await supabase
+        const { data: ordMsgs } = await supabase
           .from('order_messages')
           .select('*')
-          .or(`offer_id.eq.${offerId},id.eq.${offerId}`)
-          .maybeSingle();
-        if (ordMsg?.offer_data) {
-          offer = typeof ordMsg.offer_data === 'string' ? JSON.parse(ordMsg.offer_data) : ordMsg.offer_data;
+          .or(`id.eq.${offerId},message.ilike.%${offerId}%`)
+          .limit(1);
+        if (ordMsgs && ordMsgs[0]) {
+          offer = ordMsgs[0].offer_data || extractOfferFromMessage(ordMsgs[0]);
         }
       } catch {}
     }
@@ -339,45 +435,25 @@ export async function POST(request) {
       const offerSerialized = JSON.stringify(offerDbRow);
       const textWithOffer = `📋 Custom Offer: ${offerDbRow.title} ($${finalPrice.toFixed(2)})\n\n[OFFER_DATA:${offerSerialized}]`;
 
-      const standardMessageRow = {
+      const coreMessageRow = {
         id: msgId,
-        idempotency_key: idempotency_key || null,
         conversation_id: conversation_id,
-        thread_id: conversation_id,
-        client_email: cleanClientEmail || null,
         sender: 'admin',
         sender_name: 'Studio Support',
         text: textWithOffer,
         attachment: offerSerialized,
-        attachment_name: `Custom Offer: ${offerDbRow.title}`,
-        attachment_type: 'custom_offer',
         timestamp: nowIso,
         created_at: nowIso,
         is_read: false
       };
 
-      // Try inserting with offer columns (type, metadata, offer_id, offer_data) first, fallback to standard text/attachment
-      let insertedMessage = { 
-        ...standardMessageRow, 
-        thread_id: conversation_id,
-        client_email: cleanClientEmail || null,
+      const insertedMessage = await insertChatMessage(supabase, {
+        ...coreMessageRow,
         type: 'custom_offer',
         metadata: offerDbRow,
-        offer_id: offerId, 
-        offer_data: offerDbRow 
-      };
-      try {
-        const { error: msgErr } = await supabase.from('messages').insert([insertedMessage]);
-        if (msgErr) {
-          console.warn('Full offer message insert fallback:', msgErr.message);
-          const { error: stdErr } = await supabase.from('messages').insert([standardMessageRow]);
-          if (stdErr) console.error('Standard offer message insert failed:', stdErr.message);
-          insertedMessage = standardMessageRow;
-        }
-      } catch {
-        await supabase.from('messages').insert([standardMessageRow]);
-        insertedMessage = standardMessageRow;
-      }
+        offer_id: offerId,
+        offer_data: offerDbRow
+      });
 
       // Mirror to order_messages if this is an order conversation
       const cIdLower = conversation_id.toLowerCase();
@@ -586,27 +662,9 @@ export async function POST(request) {
       }
 
       // 4. Update messages containing this offer_id or serialized JSON
-      const updatedOfferText = `📋 Custom Offer: ${finalOfferData.title} ($${parseFloat(finalOfferData.final_price || finalOfferData.price || 0).toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(finalOfferData)}]`;
-      try {
-        await supabase.from('messages').update({
-          offer_data: finalOfferData,
-          attachment: JSON.stringify(finalOfferData),
-          text: updatedOfferText
-        }).or(`offer_id.eq.${targetOfferId},id.eq.${targetOfferId},offer_id.eq.${offerId},id.eq.${offerId}`);
-
-        // Also update any message whose text includes the offerId
-        const { data: matchedTextMsgs } = await supabase.from('messages').select('id, text').ilike('text', `%${targetOfferId}%`);
-        if (Array.isArray(matchedTextMsgs) && matchedTextMsgs.length > 0) {
-          for (const tm of matchedTextMsgs) {
-            await supabase.from('messages').update({
-              offer_data: finalOfferData,
-              attachment: JSON.stringify(finalOfferData),
-              text: updatedOfferText
-            }).eq('id', tm.id);
-          }
-        }
-      } catch (mErr) {
-        console.warn('messages offer_data update notice:', mErr.message);
+      await updateOfferInMessages(supabase, targetOfferId, finalOfferData);
+      if (offerId && offerId !== targetOfferId) {
+        await updateOfferInMessages(supabase, offerId, finalOfferData);
       }
 
       // Also update order_messages if this is an order thread
@@ -621,8 +679,6 @@ export async function POST(request) {
       const confirmMessage = {
         id: confirmMsgId,
         conversation_id: conversationId,
-        thread_id: conversationId,
-        client_email: cleanEmail,
         sender: 'admin',
         sender_name: 'Studio System',
         text: `🎉 Custom Offer Accepted! Order #${generatedOrderId} has been created. Please complete checkout ($${parseFloat(offer.final_price || offer.price || 0).toFixed(2)}) to send your order into production. Delivery: ${offer.delivery_time_text || '1 Day'}.`,
@@ -630,10 +686,7 @@ export async function POST(request) {
         created_at: nowIso,
         is_read: false
       };
-
-      try {
-        await supabase.from('messages').insert([confirmMessage]);
-      } catch {}
+      await insertChatMessage(supabase, confirmMessage);
 
       // 6. Notify Admin
       try {
@@ -686,25 +739,10 @@ export async function POST(request) {
       } catch {}
 
       // 2. Update in messages table
-      const declinedOfferText = `📋 Custom Offer: ${updatedOffer.title} ($${parseFloat(updatedOffer.final_price || updatedOffer.price || 0).toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(updatedOffer)}]`;
-      try {
-        await supabase.from('messages').update({ 
-          offer_data: updatedOffer,
-          attachment: JSON.stringify(updatedOffer),
-          text: declinedOfferText
-        }).or(`offer_id.eq.${targetOfferId},id.eq.${targetOfferId},offer_id.eq.${offerId},id.eq.${offerId}`);
-
-        const { data: matchedTextMsgs } = await supabase.from('messages').select('id, text').ilike('text', `%${targetOfferId}%`);
-        if (Array.isArray(matchedTextMsgs) && matchedTextMsgs.length > 0) {
-          for (const tm of matchedTextMsgs) {
-            await supabase.from('messages').update({
-              offer_data: updatedOffer,
-              attachment: JSON.stringify(updatedOffer),
-              text: declinedOfferText
-            }).eq('id', tm.id);
-          }
-        }
-      } catch {}
+      await updateOfferInMessages(supabase, targetOfferId, updatedOffer);
+      if (offerId && offerId !== targetOfferId) {
+        await updateOfferInMessages(supabase, offerId, updatedOffer);
+      }
 
       // 3. Update in order_messages table if applicable
       try {
@@ -725,9 +763,7 @@ export async function POST(request) {
           created_at: nowIso,
           is_read: false
         };
-        try {
-          await supabase.from('messages').insert([declineMsg]);
-        } catch {}
+        await insertChatMessage(supabase, declineMsg);
 
         try {
           await supabase.from('notifications').insert([{
@@ -778,25 +814,10 @@ export async function POST(request) {
       } catch {}
 
       // 2. Update offer_data in messages table
-      const cancelledOfferText = `📋 Custom Offer: ${updatedOffer.title} ($${parseFloat(updatedOffer.final_price || updatedOffer.price || 0).toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(updatedOffer)}]`;
-      try {
-        await supabase.from('messages').update({ 
-          offer_data: updatedOffer,
-          attachment: JSON.stringify(updatedOffer),
-          text: cancelledOfferText
-        }).or(`offer_id.eq.${targetOfferId},id.eq.${targetOfferId},offer_id.eq.${offerId},id.eq.${offerId}`);
-
-        const { data: matchedTextMsgs } = await supabase.from('messages').select('id, text').ilike('text', `%${targetOfferId}%`);
-        if (Array.isArray(matchedTextMsgs) && matchedTextMsgs.length > 0) {
-          for (const tm of matchedTextMsgs) {
-            await supabase.from('messages').update({
-              offer_data: updatedOffer,
-              attachment: JSON.stringify(updatedOffer),
-              text: cancelledOfferText
-            }).eq('id', tm.id);
-          }
-        }
-      } catch {}
+      await updateOfferInMessages(supabase, targetOfferId, updatedOffer);
+      if (offerId && offerId !== targetOfferId) {
+        await updateOfferInMessages(supabase, offerId, updatedOffer);
+      }
 
       // 3. Update in order_messages table if applicable
       try {
@@ -818,9 +839,7 @@ export async function POST(request) {
           created_at: nowIso,
           is_read: false
         };
-        try {
-          await supabase.from('messages').insert([cancelMsg]);
-        } catch {}
+        await insertChatMessage(supabase, cancelMsg);
       }
 
       return NextResponse.json({ success: true, status: 'cancelled', offer: updatedOffer, message: cancelMsg });
@@ -875,25 +894,10 @@ export async function POST(request) {
       }
 
       // 3. Update messages containing this offer
-      const paidOfferText = `📋 Custom Offer: ${updatedOffer.title} ($${parseFloat(updatedOffer.final_price || updatedOffer.price || 0).toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(updatedOffer)}]`;
-      try {
-        await supabase.from('messages').update({
-          offer_data: updatedOffer,
-          attachment: JSON.stringify(updatedOffer),
-          text: paidOfferText
-        }).or(`offer_id.eq.${targetOfferId},id.eq.${targetOfferId},offer_id.eq.${offerId},id.eq.${offerId}`);
-
-        const { data: matchedTextMsgs } = await supabase.from('messages').select('id, text').ilike('text', `%${targetOfferId}%`);
-        if (Array.isArray(matchedTextMsgs) && matchedTextMsgs.length > 0) {
-          for (const tm of matchedTextMsgs) {
-            await supabase.from('messages').update({
-              offer_data: updatedOffer,
-              attachment: JSON.stringify(updatedOffer),
-              text: paidOfferText
-            }).eq('id', tm.id);
-          }
-        }
-      } catch {}
+      await updateOfferInMessages(supabase, targetOfferId, updatedOffer);
+      if (offerId && offerId !== targetOfferId) {
+        await updateOfferInMessages(supabase, offerId, updatedOffer);
+      }
 
       // 4. Post chat confirmation
       const paidMsg = {
@@ -908,9 +912,7 @@ export async function POST(request) {
         created_at: nowIso,
         is_read: false
       };
-      try {
-        await supabase.from('messages').insert([paidMsg]);
-      } catch {}
+      await insertChatMessage(supabase, paidMsg);
 
       return NextResponse.json({ success: true, offer: updatedOffer, message: paidMsg });
     }

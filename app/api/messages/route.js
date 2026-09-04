@@ -468,11 +468,15 @@ export async function GET(request) {
             .in('conversation_id', targetIds)
             .order('created_at', { ascending: true });
 
-          const { data: emailMsgs } = await supabase
-            .from('messages')
-            .select('*')
-            .ilike('client_email', targetEmail)
-            .order('created_at', { ascending: true });
+          let emailMsgs = [];
+          try {
+            const { data: em } = await supabase
+              .from('messages')
+              .select('*')
+              .ilike('client_email', targetEmail)
+              .order('created_at', { ascending: true });
+            emailMsgs = em || [];
+          } catch {}
 
           // Also check custom offers belonging to this client to ensure offer messages are always retained
           let offerMsgList = [];
@@ -493,7 +497,7 @@ export async function GET(request) {
           } catch {}
 
           const msgMap = new Map();
-          for (const m of [...(convMsgs || []), ...(emailMsgs || []), ...offerMsgList]) {
+          for (const m of [...(convMsgs || []), ...emailMsgs, ...offerMsgList]) {
             // Filter out soft-deleted messages
             if (m && m.id && !m.deleted_at) msgMap.set(m.id, m);
           }
@@ -511,9 +515,13 @@ export async function GET(request) {
       }
 
       // Fetch custom offers to hydrate offer_data authoritatively
-      const { data: convCustomOffers } = await supabase
-        .from('custom_offers')
-        .select('*');
+      let convCustomOffers = [];
+      try {
+        const { data: cco } = await supabase
+          .from('custom_offers')
+          .select('*');
+        convCustomOffers = cco || [];
+      } catch {}
       const convOffersMap = new Map();
       (convCustomOffers || []).forEach(off => {
         if (off?.id) convOffersMap.set(off.id, off);
@@ -947,10 +955,12 @@ export async function POST(request) {
             .neq('sender', 'admin');
 
           if (targetEmail) {
-            await supabase.from('messages')
-              .update({ is_read: true })
-              .ilike('client_email', targetEmail)
-              .neq('sender', 'admin');
+            try {
+              await supabase.from('messages')
+                .update({ is_read: true })
+                .ilike('client_email', targetEmail)
+                .neq('sender', 'admin');
+            } catch {}
           }
         } else {
           // Client read admin/support's messages
@@ -970,10 +980,12 @@ export async function POST(request) {
             .eq('sender', 'admin');
 
           if (targetEmail) {
-            await supabase.from('messages')
-              .update({ is_read: true })
-              .ilike('client_email', targetEmail)
-              .eq('sender', 'admin');
+            try {
+              await supabase.from('messages')
+                .update({ is_read: true })
+                .ilike('client_email', targetEmail)
+                .eq('sender', 'admin');
+            } catch {}
           }
         }
       }
@@ -988,27 +1000,23 @@ export async function POST(request) {
         id: notif.id || `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         user_id: user?.id || null,
         recipient_role: notif.recipient_role || notif.recipientRole || (isAdmin ? 'admin' : 'client'),
-        recipient_email: notif.recipient_email || notif.recipientEmail || null,
-        title: notif.title || 'System Notification',
-        message: notif.message || '',
+        recipient_email: notif.recipient_email || notif.recipientEmail || notif.client_email || notif.clientEmail || null,
+        title: notif.title || 'Notification',
+        message: notif.message || notif.text || '',
         type: notif.type || 'info',
-        link: notif.link || null,
+        link: notif.link || notif.url || null,
         order_id: notif.order_id || notif.orderId || null,
         read: false,
-        created_at: nowIso,
-        updated_at: nowIso
+        created_at: nowIso
       };
 
-      const { data: insertedNotif, error: notifInsertErr } = await supabase
-        .from('notifications')
-        .insert([notifRow])
-        .select();
-
-      if (notifInsertErr) {
-        console.warn('createNotification DB notice:', notifInsertErr.message);
+      try {
+        await supabase.from('notifications').insert([notifRow]);
+      } catch (err) {
+        console.warn('Create notification notice:', err.message);
       }
 
-      return NextResponse.json({ success: true, notification: insertedNotif ? insertedNotif[0] : notifRow });
+      return NextResponse.json({ success: true, notification: notifRow });
     }
 
     if (action === 'markNotificationRead') {
@@ -1068,8 +1076,7 @@ export async function POST(request) {
       const nowIso = new Date().toISOString();
       let query = supabase.from('messages').update({ deleted_at: nowIso }).eq('id', messageId);
       if (!isAdmin && user?.email) {
-        const cleanAuthEmail = normalizeEmail(user.email);
-        query = query.or(`client_email.ilike.${cleanAuthEmail},sender.eq.client`);
+        query = query.eq('sender', 'client');
       }
 
       const { error: delErr } = await query;
