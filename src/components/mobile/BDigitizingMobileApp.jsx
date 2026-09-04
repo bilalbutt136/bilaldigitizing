@@ -1428,12 +1428,12 @@ export const BDigitizingMobileApp = () => {
           {/* Top Brand Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff', padding: '0.75rem 1rem', borderRadius: '16px', border: '1.5px solid #cbd5e1', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <span style={{ fontSize: '1.45rem', fontWeight: 900, color: '#047857', letterSpacing: '-0.03em' }}>
-                bdigitizing<span style={{ color: '#10b981' }}>.</span>
+              <span style={{ fontSize: '1.45rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.03em' }}>
+                bdigitizing<span style={{ color: '#ea580c' }}>.</span>
               </span>
-              {isVipMode && (
+              {isAuthenticated && (
                 <span style={{
-                  background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                  background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
                   color: '#ffffff',
                   fontSize: '0.62rem',
                   fontWeight: 900,
@@ -1441,7 +1441,7 @@ export const BDigitizingMobileApp = () => {
                   borderRadius: '6px',
                   letterSpacing: '0.04em'
                 }}>
-                  VIP CLIENT
+                  STUDIO
                 </span>
               )}
             </div>
@@ -2853,25 +2853,29 @@ export const BDigitizingMobileApp = () => {
           SCREEN 5: PROFILE, SETTINGS & SUPPORT
           ========================================================================= */}
       {mobileTab === 'profile' && (
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', background: '#ffffff' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', background: '#f8fafc', paddingBottom: '2.5rem' }}>
           
-          {/* Top Brand Green Header */}
+          {/* Top Brand Executive Header */}
           <div style={{
-            background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)',
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #334155 100%)',
             color: '#ffffff',
             padding: '1.25rem 1.25rem 2.25rem',
             position: 'relative'
           }}>
-            {/* Top Bar with Bell */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+            {/* Top Bar with Notifications */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Client Operations Portal
+              </span>
               <button
                 type="button"
                 onClick={() => setIsNotifDrawerOpen(true)}
-                style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', position: 'relative' }}
+                style={{ background: 'rgba(255, 255, 255, 0.12)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '10px', padding: '0.4rem', color: '#ffffff', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                aria-label="Notifications"
               >
-                <Bell size={22} />
+                <Bell size={18} />
                 {unreadNotifCount > 0 && (
-                  <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
+                  <span style={{ position: 'absolute', top: '-3px', right: '-3px', width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
                 )}
               </button>
             </div>
@@ -2879,7 +2883,7 @@ export const BDigitizingMobileApp = () => {
             {/* User Avatar + Name + Balance (Or Guest Sign-In) */}
             {isAuthenticated ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                <div style={{ position: 'relative' }}>
+                <div style={{ position: 'relative', flexShrink: 0 }}>
                   <div style={{
                     width: '56px',
                     height: '56px',
@@ -2891,8 +2895,8 @@ export const BDigitizingMobileApp = () => {
                     justifyContent: 'center',
                     fontSize: '1.35rem',
                     fontWeight: 900,
-                    border: '2px solid #ffffff',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                    border: '2px solid rgba(255, 255, 255, 0.4)',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.3)'
                   }}>
                     {userInitial}
                   </div>
@@ -2903,29 +2907,29 @@ export const BDigitizingMobileApp = () => {
                     width: '12px',
                     height: '12px',
                     borderRadius: '50%',
-                    background: '#10b981',
-                    border: '2px solid #ffffff'
+                    background: '#22c55e',
+                    border: '2px solid #0f172a'
                   }} />
                 </div>
 
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#ffffff' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {userName}
                   </h3>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
-                    <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
-                      Personal balance: <strong style={{ color: '#ffffff', fontWeight: 800 }}>${walletBalance.toFixed(2)}</strong>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.825rem', color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
+                      Wallet Balance: <strong style={{ color: '#ffffff', fontWeight: 900 }}>${walletBalance.toFixed(2)}</strong>
                     </span>
                     <button
                       type="button"
                       onClick={() => setIsDepositModalOpen(true)}
                       style={{
-                        background: 'rgba(255,255,255,0.2)',
-                        border: '1px solid rgba(255,255,255,0.4)',
-                        borderRadius: '12px',
-                        padding: '0.1rem 0.45rem',
-                        color: '#ffffff',
-                        fontSize: '0.68rem',
+                        background: 'rgba(234, 88, 12, 0.25)',
+                        border: '1px solid #ea580c',
+                        borderRadius: '8px',
+                        padding: '0.15rem 0.5rem',
+                        color: '#ffedd5',
+                        fontSize: '0.7rem',
                         fontWeight: 800,
                         cursor: 'pointer'
                       }}
@@ -2939,23 +2943,23 @@ export const BDigitizingMobileApp = () => {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.85rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                   <div style={{
-                    width: '56px',
-                    height: '56px',
+                    width: '54px',
+                    height: '54px',
                     borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.2)',
+                    background: 'rgba(255,255,255,0.15)',
                     color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    border: '2px solid #ffffff'
+                    border: '2px solid rgba(255, 255, 255, 0.3)'
                   }}>
-                    <User size={28} />
+                    <User size={26} />
                   </div>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#ffffff' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#ffffff' }}>
                       Guest Visitor
                     </h3>
-                    <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.85)', display: 'block', marginTop: '0.1rem' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.8)', display: 'block', marginTop: '0.1rem' }}>
                       Sign in to track orders & balance
                     </span>
                   </div>
@@ -2968,15 +2972,15 @@ export const BDigitizingMobileApp = () => {
                     setMobileTab('login');
                   }}
                   style={{
-                    background: '#ffffff',
-                    color: '#047857',
+                    background: '#ea580c',
+                    color: '#ffffff',
                     border: 'none',
                     borderRadius: '10px',
-                    padding: '0.45rem 0.85rem',
+                    padding: '0.5rem 0.95rem',
                     fontWeight: 900,
-                    fontSize: '0.8rem',
+                    fontSize: '0.825rem',
                     cursor: 'pointer',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    boxShadow: '0 4px 12px rgba(234, 88, 12, 0.4)'
                   }}
                 >
                   Sign In
@@ -2986,127 +2990,163 @@ export const BDigitizingMobileApp = () => {
 
           </div>
 
-          {/* Floating Card: VIP Studio Mode Toggle */}
-          <div style={{ padding: '0 1.25rem', marginTop: '-18px' }}>
-            <div 
-              onClick={handleToggleVipMode}
-              style={{
-                background: '#ffffff',
-                borderRadius: '14px',
-                padding: '0.85rem 1.15rem',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                border: isVipMode ? '1.5px solid #f59e0b' : '1px solid #e2e8f0',
-                cursor: 'pointer'
-              }}
-            >
-              <div>
-                <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <span>Client VIP Mode</span>
-                  {isVipMode && <Sparkles size={14} style={{ color: '#d97706' }} />}
-                </div>
-                <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                  {isVipMode ? 'Priority master digitizer queue active' : 'Enable for expedited turnaround & direct line'}
-                </span>
-              </div>
-
-              <div style={{
-                width: '42px',
-                height: '24px',
-                borderRadius: '12px',
-                background: isVipMode ? '#059669' : '#cbd5e1',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: isVipMode ? 'flex-end' : 'flex-start',
-                padding: '2px',
-                boxSizing: 'border-box',
-                transition: 'background 0.2s ease'
-              }}>
-                <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
-              </div>
-            </div>
-          </div>
-
-          {/* Invite friends row */}
-          <div style={{ padding: '1.25rem 1.25rem 0.5rem' }}>
-            <div 
-              onClick={() => {
-                if (typeof navigator !== 'undefined' && navigator.share) {
-                  navigator.share({ title: 'BDigitizing Studio', url: window.location.origin });
-                } else {
-                  showToast('Studio link copied to clipboard! 📋', 'success');
-                }
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.85rem',
-                cursor: 'pointer',
-                padding: '0.5rem 0'
-              }}
-            >
-              <Share2 size={20} style={{ color: '#64748b' }} />
-              <span style={{ fontSize: '0.92rem', fontWeight: 600, color: '#0f172a' }}>
-                Invite friends & colleagues
-              </span>
-            </div>
-          </div>
-
-          {/* SETTINGS SECTION */}
-          <div style={{ padding: '0.75rem 1.25rem 0.5rem' }}>
-            <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 900, color: '#0f172a' }}>
-              Settings & Preferences
-            </h4>
-
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {/* Preferences */}
-              <div 
-                onClick={() => setIsPreferencesModalOpen(true)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '0.85rem 0',
-                  borderBottom: '1px solid #f1f5f9',
-                  cursor: 'pointer'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <Settings size={20} style={{ color: '#64748b' }} />
+          {/* Floating Commercial Account & Production Guarantees Card */}
+          <div style={{ padding: '0 1.25rem', marginTop: '-20px' }}>
+            <div style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              padding: '1.15rem',
+              boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+              border: '1.5px solid #e2e8f0',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.85rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ background: 'rgba(234, 88, 12, 0.12)', color: '#ea580c', padding: '0.45rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <ShieldCheck size={18} />
+                  </div>
                   <div>
-                    <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0f172a', display: 'block' }}>Preferences</span>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Themes, sound alerts & default file formats</span>
+                    <div style={{ fontSize: '0.92rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.2 }}>
+                      {isAuthenticated ? 'Commercial Partner Account' : 'Bilal Studio Production Guarantees'}
+                    </div>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                      {isAuthenticated ? 'Verified Commercial Production Access' : '25+ Years Master Embroidery Craftsmanship'}
+                    </span>
                   </div>
                 </div>
-                <ChevronRight size={18} style={{ color: '#94a3b8' }} />
+
+                {isAuthenticated ? (
+                  <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#dcfce7', color: '#15803d', padding: '0.2rem 0.6rem', borderRadius: '9999px', border: '1px solid #bbf7d0' }}>
+                    ● Active
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileAuthMode('login');
+                      setMobileTab('login');
+                    }}
+                    style={{
+                      background: '#ea580c',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.3rem 0.65rem',
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Sign In ➔
+                  </button>
+                )}
               </div>
 
+              {/* 3 Pillars of Commercial Production */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid #f1f5f9' }}>
+                <div style={{ textAlign: 'center', background: '#f8fafc', padding: '0.6rem 0.25rem', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
+                  <span style={{ fontSize: '0.95rem', display: 'block' }}>⚡</span>
+                  <strong style={{ fontSize: '0.74rem', color: '#0f172a', display: 'block', marginTop: '2px' }}>8-12h Express</strong>
+                  <span style={{ fontSize: '0.62rem', color: '#64748b' }}>Turnaround</span>
+                </div>
+                <div style={{ textAlign: 'center', background: '#f8fafc', padding: '0.6rem 0.25rem', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
+                  <span style={{ fontSize: '0.95rem', display: 'block' }}>🧵</span>
+                  <strong style={{ fontSize: '0.74rem', color: '#0f172a', display: 'block', marginTop: '2px' }}>100% Tested</strong>
+                  <span style={{ fontSize: '0.62rem', color: '#64748b' }}>Sew-Out QA</span>
+                </div>
+                <div style={{ textAlign: 'center', background: '#f8fafc', padding: '0.6rem 0.25rem', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
+                  <span style={{ fontSize: '0.95rem', display: 'block' }}>💬</span>
+                  <strong style={{ fontSize: '0.74rem', color: '#0f172a', display: 'block', marginTop: '2px' }}>24/7 Desk</strong>
+                  <span style={{ fontSize: '0.62rem', color: '#64748b' }}>Master Support</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 1: ACCOUNT & ORDERS */}
+          <div style={{ padding: '1.25rem 1.25rem 0.35rem' }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.65rem' }}>
+              Account & Orders
+            </div>
+
+            <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
               {/* Account Profile */}
               <div 
                 onClick={() => {
                   if (isAuthenticated) {
                     setIsAccountModalOpen(true);
                   } else {
-                    setAuthModalMode('login');
-                    setIsAuthModalOpen(true);
+                    setMobileAuthMode('login');
+                    setMobileTab('login');
                   }
                 }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '0.85rem 0',
+                  padding: '0.9rem 1.15rem',
                   borderBottom: '1px solid #f1f5f9',
                   cursor: 'pointer'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <User size={20} style={{ color: '#64748b' }} />
+                  <div style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', padding: '0.45rem', borderRadius: '10px' }}>
+                    <User size={18} />
+                  </div>
                   <div>
-                    <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0f172a', display: 'block' }}>Account & Profile</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>Account & Profile</span>
                     <span style={{ fontSize: '0.72rem', color: '#64748b' }}>{isAuthenticated ? `Signed in as ${userEmail}` : 'Sign in to sync your profile'}</span>
+                  </div>
+                </div>
+                <ChevronRight size={18} style={{ color: '#94a3b8' }} />
+              </div>
+
+              {/* Wallet & Balance */}
+              <div 
+                onClick={() => setIsDepositModalOpen(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.9rem 1.15rem',
+                  borderBottom: '1px solid #f1f5f9',
+                  cursor: 'pointer'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', padding: '0.45rem', borderRadius: '10px' }}>
+                    <CreditCard size={18} />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>Wallet & Payments</span>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Balance: ${walletBalance.toFixed(2)} • Deposit via Stripe</span>
+                  </div>
+                </div>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#15803d', background: '#dcfce7', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
+                  + Deposit
+                </span>
+              </div>
+
+              {/* Orders History */}
+              <div 
+                onClick={() => setMobileTab('orders')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.9rem 1.15rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <div style={{ background: 'rgba(234, 88, 12, 0.12)', color: '#ea580c', padding: '0.45rem', borderRadius: '10px' }}>
+                    <ClipboardList size={18} />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>Production Orders & Files</span>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Track live jobs, download DST & proof files</span>
                   </div>
                 </div>
                 <ChevronRight size={18} style={{ color: '#94a3b8' }} />
@@ -3114,52 +3154,80 @@ export const BDigitizingMobileApp = () => {
             </div>
           </div>
 
-          {/* RESOURCES & SUPPORT SECTION */}
-          <div style={{ padding: '0.75rem 1.25rem 0.5rem' }}>
-            <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 900, color: '#0f172a' }}>
-              Support & Help Desk
-            </h4>
+          {/* SECTION 2: STUDIO SUPPORT & POLICIES */}
+          <div style={{ padding: '0.75rem 1.25rem 0.35rem' }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.65rem' }}>
+              Studio Support & Guarantees
+            </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {/* Support & Help Desk */}
+            <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+              {/* 24/7 Support Desk */}
               <div 
                 onClick={() => setIsSupportModalOpen(true)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '0.85rem 0',
+                  padding: '0.9rem 1.15rem',
                   borderBottom: '1px solid #f1f5f9',
                   cursor: 'pointer'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <HelpCircle size={20} style={{ color: '#059669' }} />
+                  <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#16a34a', padding: '0.45rem', borderRadius: '10px' }}>
+                    <HelpCircle size={18} />
+                  </div>
                   <div>
-                    <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0f172a', display: 'block' }}>24/7 Support & Help Desk</span>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>WhatsApp, live chat & FAQs</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>24/7 Support & Help Desk</span>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>WhatsApp direct, live chat & FAQs</span>
                   </div>
                 </div>
                 <ChevronRight size={18} style={{ color: '#94a3b8' }} />
               </div>
 
-              {/* Community & Legal */}
+              {/* Service Rates & Tiers */}
+              <div 
+                onClick={() => setMobileTab('categories')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.9rem 1.15rem',
+                  borderBottom: '1px solid #f1f5f9',
+                  cursor: 'pointer'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <div style={{ background: 'rgba(168, 85, 247, 0.12)', color: '#a855f7', padding: '0.45rem', borderRadius: '10px' }}>
+                    <Tag size={18} />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>Service Rates & Tiers</span>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Embroidery from $12 • Vector from $10</span>
+                  </div>
+                </div>
+                <ChevronRight size={18} style={{ color: '#94a3b8' }} />
+              </div>
+
+              {/* Quality Guarantee & Terms */}
               <div 
                 onClick={() => setIsLegalModalOpen(true)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '0.85rem 0',
+                  padding: '0.9rem 1.15rem',
                   borderBottom: '1px solid #f1f5f9',
                   cursor: 'pointer'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <ShieldCheck size={20} style={{ color: '#64748b' }} />
+                  <div style={{ background: 'rgba(100, 116, 139, 0.12)', color: '#475569', padding: '0.45rem', borderRadius: '10px' }}>
+                    <ShieldCheck size={18} />
+                  </div>
                   <div>
-                    <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0f172a', display: 'block' }}>Community & Legal Terms</span>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Quality guarantee, IP safety & policies</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>Quality Guarantee & Terms</span>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Sew-out guarantee, free edits & IP safety</span>
                   </div>
                 </div>
                 <ChevronRight size={18} style={{ color: '#94a3b8' }} />
@@ -3172,16 +3240,50 @@ export const BDigitizingMobileApp = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '0.85rem 0',
+                  padding: '0.9rem 1.15rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <div style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b', padding: '0.45rem', borderRadius: '10px' }}>
+                    <Star size={18} />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>Share Feedback</span>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Rate studio experience & send suggestions</span>
+                  </div>
+                </div>
+                <ChevronRight size={18} style={{ color: '#94a3b8' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 3: APP PREFERENCES */}
+          <div style={{ padding: '0.75rem 1.25rem 0.35rem' }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.65rem' }}>
+              App Preferences
+            </div>
+
+            <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+              {/* Preferences */}
+              <div 
+                onClick={() => setIsPreferencesModalOpen(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.9rem 1.15rem',
                   borderBottom: '1px solid #f1f5f9',
                   cursor: 'pointer'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <Star size={20} style={{ color: '#f59e0b' }} />
+                  <div style={{ background: 'rgba(100, 116, 139, 0.12)', color: '#475569', padding: '0.45rem', borderRadius: '10px' }}>
+                    <Settings size={18} />
+                  </div>
                   <div>
-                    <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0f172a', display: 'block' }}>Share Feedback</span>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Rate your experience & give suggestions</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>Display & File Preferences</span>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Themes, audio alerts & default machine formats</span>
                   </div>
                 </div>
                 <ChevronRight size={18} style={{ color: '#94a3b8' }} />
@@ -3197,16 +3299,17 @@ export const BDigitizingMobileApp = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '0.85rem 0',
-                  borderBottom: '1px solid #f1f5f9',
+                  padding: '0.9rem 1.15rem',
                   cursor: 'pointer'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <Globe size={20} style={{ color: '#64748b' }} />
+                  <div style={{ background: 'rgba(6, 182, 212, 0.12)', color: '#06b6d4', padding: '0.45rem', borderRadius: '10px' }}>
+                    <Globe size={18} />
+                  </div>
                   <div>
-                    <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0f172a', display: 'block' }}>Switch to Website View</span>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Browse full desktop/mobile layout</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>Switch to Website View</span>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Browse full desktop layout</span>
                   </div>
                 </div>
                 <ChevronRight size={18} style={{ color: '#94a3b8' }} />
@@ -3214,10 +3317,40 @@ export const BDigitizingMobileApp = () => {
             </div>
           </div>
 
+          {/* Invite friends row */}
+          <div style={{ padding: '0.75rem 1.25rem 0.5rem' }}>
+            <div 
+              onClick={() => {
+                if (typeof navigator !== 'undefined' && navigator.share) {
+                  navigator.share({ title: 'BDigitizing Studio', url: window.location.origin });
+                } else {
+                  showToast('Studio link copied to clipboard! 📋', 'success');
+                }
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.65rem',
+                cursor: 'pointer',
+                padding: '0.75rem',
+                background: '#ffffff',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
+                color: '#0f172a',
+                fontSize: '0.875rem',
+                fontWeight: 700
+              }}
+            >
+              <Share2 size={16} style={{ color: '#ea580c' }} />
+              <span>Invite Friends & Colleagues</span>
+            </div>
+          </div>
+
           {/* App Version Tag + Sign Out */}
-          <div style={{ padding: '1.5rem 1.25rem', textAlign: 'center' }}>
-            <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '1rem' }}>
-              v4.5.0 • BDigitizing Pro Studio
+          <div style={{ padding: '1rem 1.25rem 0', textAlign: 'center' }}>
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginBottom: '0.85rem' }}>
+              v4.5.0 • Bilal Digitizing Pro Studio
             </span>
 
             {isAuthenticated ? (
@@ -3231,8 +3364,8 @@ export const BDigitizingMobileApp = () => {
                   background: '#fef2f2',
                   color: '#dc2626',
                   border: '1px solid #fecaca',
-                  borderRadius: '10px',
-                  padding: '0.65rem 1.5rem',
+                  borderRadius: '12px',
+                  padding: '0.65rem 1.75rem',
                   fontSize: '0.85rem',
                   fontWeight: 800,
                   cursor: 'pointer',
@@ -3251,17 +3384,18 @@ export const BDigitizingMobileApp = () => {
                   setMobileTab('login');
                 }}
                 style={{
-                  background: '#047857',
+                  background: '#0f172a',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: '10px',
-                  padding: '0.65rem 1.5rem',
-                  fontSize: '0.85rem',
+                  borderRadius: '12px',
+                  padding: '0.75rem 2rem',
+                  fontSize: '0.88rem',
                   fontWeight: 800,
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.4rem'
+                  gap: '0.45rem',
+                  boxShadow: '0 4px 14px rgba(15, 23, 42, 0.2)'
                 }}
               >
                 <User size={16} /> Sign In to Studio Account
