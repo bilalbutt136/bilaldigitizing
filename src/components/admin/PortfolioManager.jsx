@@ -920,6 +920,9 @@ export const PortfolioManager = () => {
               </div>
 
             </form>
+          </div>
+        </div>
+      )}
 
       {/* 5. INTERACTIVE FULL-SCREEN ARTWORK LIGHTBOX MODAL */}
       {lightboxItem && (
