@@ -418,6 +418,13 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
     const tempMsgId = `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     const msgText = messageInput.trim();
 
+    const serializedAttachment = attachedFile ? (attachedFile.url ? JSON.stringify({
+      url: attachedFile.url,
+      name: attachedFile.name,
+      size: attachedFile.size,
+      type: attachedFile.format
+    }) : attachedFile.name) : null;
+
     const newMsg = {
       id: tempMsgId,
       conversation_id: canonicalChatId,
@@ -426,7 +433,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
       senderName: clientName,
       sender_name: clientName,
       text: msgText,
-      attachment: attachedFile ? attachedFile.name : null,
+      attachment: serializedAttachment,
       attachment_url: attachedFile ? attachedFile.url : null,
       attachment_name: attachedFile ? attachedFile.name : null,
       attachment_size: attachedFile ? attachedFile.size : null,

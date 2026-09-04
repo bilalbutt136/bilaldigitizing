@@ -1036,6 +1036,13 @@ export const AdminChatInbox = () => {
     const targetCustomerEmail = (activeInfo?.customerEmail || activeChat?.clientEmail || (currentActiveChatId ? currentActiveChatId.replace('support-', '').replace('inbox-', '').replace('direct-', '').replace('chat-', '') : '')).toLowerCase().trim();
 
     const nowIso = new Date().toISOString();
+    const serializedAttachment = attachedFile ? (attachedFile.url ? JSON.stringify({
+      url: attachedFile.url,
+      name: attachedFile.name,
+      size: attachedFile.size,
+      type: attachedFile.format
+    }) : attachedFile.name) : null;
+
     const newMsg = {
       id: 'msg-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
       conversation_id: currentActiveChatId,
@@ -1044,7 +1051,7 @@ export const AdminChatInbox = () => {
       senderName: 'Support',
       sender_name: 'Support',
       text: replyInput.trim(),
-      attachment: attachedFile ? attachedFile.name : null,
+      attachment: serializedAttachment,
       attachment_url: attachedFile ? attachedFile.url : null,
       attachment_name: attachedFile ? attachedFile.name : null,
       attachment_size: attachedFile ? attachedFile.size : null,

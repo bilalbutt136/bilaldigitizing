@@ -48,10 +48,40 @@ export async function downloadFileDirectly(url, filename = 'download') {
     }
   }
 
-  // 2. High-speed, CORS-free server-side proxy URL
+  // 2. If it's a data URL, convert to Blob URL to guarantee direct browser download
+  if (url.startsWith('data:')) {
+    try {
+      const parts = url.split(',');
+      const mimeMatch = parts[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+      const bstr = atob(parts[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], { type: mime });
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = blobUrl;
+      a.download = cleanFilename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+        if (a.parentNode) a.parentNode.removeChild(a);
+      }, 2000);
+      return;
+    } catch (dataErr) {
+      console.warn('[FileDownloader] Data URL conversion error:', dataErr);
+    }
+  }
+
+  // 3. High-speed, CORS-free server-side proxy URL
   const proxyDownloadUrl = `/api/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(cleanFilename)}`;
 
-  // 3. Reliable Blob fetch download (forces download without CORS or navigation freeze)
+  // 4. Reliable Blob fetch download (forces download without CORS or navigation freeze)
   try {
     const response = await fetch(proxyDownloadUrl);
     if (response.ok) {
@@ -73,7 +103,7 @@ export async function downloadFileDirectly(url, filename = 'download') {
     console.warn('[FileDownloader] Blob fetch proxy notice, attempting anchor fallback:', fetchErr?.message);
   }
 
-  // 4. Secondary fallback: Direct anchor download tag via proxy
+  // 5. Secondary fallback: Direct anchor download tag via proxy
   try {
     const a = document.createElement('a');
     a.style.display = 'none';
@@ -91,7 +121,7 @@ export async function downloadFileDirectly(url, filename = 'download') {
     console.warn('[FileDownloader] Proxy anchor error, trying direct fetch:', err);
   }
 
-  // 5. Tertiary fallback: Direct file fetch as Blob
+  // 6. Tertiary fallback: Direct file fetch as Blob
   try {
     const directUrl = getCleanCloudinaryDownloadUrl(url);
     const response = await fetch(directUrl, { mode: 'cors' });
@@ -114,7 +144,7 @@ export async function downloadFileDirectly(url, filename = 'download') {
     console.warn('[FileDownloader] Direct fetch error:', err.message);
   }
 
-  // 6. Last-resort fallback: Direct navigation
+  // 7. Last-resort fallback: Direct navigation
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
@@ -126,18 +156,39 @@ export async function openPdfInNewTab(url, filename = 'document.pdf') {
 
   const cleanFilename = filename || 'document.pdf';
 
-  // 1. If it's a blob/data URL
-  if (url.startsWith('blob:') || url.startsWith('data:')) {
+  // 1. If it's a blob URL
+  if (url.startsWith('blob:')) {
     window.open(url, '_blank', 'noopener,noreferrer');
     return;
   }
 
-  // 2. High-speed server-side stream preview (/api/download?preview=true)
+  // 2. If it's a data URL, convert to Blob URL to avoid top-level window navigation security block
+  if (url.startsWith('data:')) {
+    try {
+      const parts = url.split(',');
+      const mimeMatch = parts[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : 'application/pdf';
+      const bstr = atob(parts[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], { type: mime });
+      const blobUrl = window.URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank', 'noopener,noreferrer');
+      return;
+    } catch (dataErr) {
+      console.warn('[FileDownloader] PDF data URL conversion error:', dataErr);
+    }
+  }
+
+  // 3. High-speed server-side stream preview (/api/download?preview=true)
   const previewProxyUrl = `/api/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(cleanFilename)}&preview=true`;
   const newTab = window.open(previewProxyUrl, '_blank', 'noopener,noreferrer');
   if (newTab) return;
 
-  // 3. Fallback to blob fetch if pop-up was blocked
+  // 4. Fallback to blob fetch if pop-up was blocked
   try {
     const response = await fetch(previewProxyUrl);
     if (response.ok) {
@@ -151,7 +202,7 @@ export async function openPdfInNewTab(url, filename = 'document.pdf') {
     console.warn('[FileDownloader] PDF blob open fallback:', err.message);
   }
 
-  // 4. Fallback direct open
+  // 5. Fallback direct open
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 

@@ -530,6 +530,30 @@ export async function GET(request) {
       const mappedMessages = (rawMessages || []).map(m => {
         const { offerId: resolvedOfferId, offerData: resolvedOfferData } = extractAndHydrateOffer(m, convOffersMap);
 
+        // Safely parse serialized attachment if stored as JSON or direct URL
+        let attachUrl = m.attachment_url || null;
+        let attachName = m.attachment_name || m.attachment || null;
+        let attachSize = m.attachment_size || null;
+        let attachType = m.attachment_type || null;
+
+        if (m.attachment && typeof m.attachment === 'string' && !resolvedOfferData) {
+          const trimmed = m.attachment.trim();
+          if (trimmed.startsWith('{') && (trimmed.includes('"url"') || trimmed.includes('"name"'))) {
+            try {
+              const parsed = JSON.parse(trimmed);
+              if (parsed.url) attachUrl = parsed.url;
+              if (parsed.name) attachName = parsed.name;
+              if (parsed.size) attachSize = parsed.size;
+              if (parsed.type || parsed.format) attachType = parsed.type || parsed.format;
+            } catch {}
+          } else if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+            attachUrl = trimmed;
+            if (!attachName || attachName === trimmed) {
+              attachName = decodeURIComponent(trimmed.split('/').pop()?.split('?')[0] || 'file');
+            }
+          }
+        }
+
         return {
           id: m.id,
           conversation_id: m.conversation_id || m.thread_id || chatId,
@@ -542,10 +566,10 @@ export async function GET(request) {
           sender_name: m.sender_name,
           text: resolvedOfferData ? `📋 Custom Offer: ${resolvedOfferData.title} ($${parseFloat(resolvedOfferData.final_price || resolvedOfferData.price || 0).toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(resolvedOfferData)}]` : m.text,
           attachment: resolvedOfferData ? JSON.stringify(resolvedOfferData) : m.attachment,
-          attachment_url: m.attachment_url || null,
-          attachment_name: m.attachment_name || (resolvedOfferData ? `Custom Offer: ${resolvedOfferData.title}` : m.attachment) || null,
-          attachment_size: m.attachment_size || null,
-          attachment_type: resolvedOfferData ? 'custom_offer' : (m.attachment_type || null),
+          attachment_url: attachUrl,
+          attachment_name: attachName || (resolvedOfferData ? `Custom Offer: ${resolvedOfferData.title}` : m.attachment) || null,
+          attachment_size: attachSize,
+          attachment_type: resolvedOfferData ? 'custom_offer' : (attachType || m.attachment_type || null),
           reply_to: m.reply_to || null,
           offer_id: resolvedOfferId,
           offer_data: resolvedOfferData,
@@ -817,13 +841,22 @@ export async function POST(request) {
       const { data: insData, error: insError } = await supabase.from('messages').insert([dbPayload]).select();
       if (insError) {
         console.warn('[Messages API insert notice]:', insError.message, '- inserting standard core columns');
+        let coreAttachment = dbPayload.attachment || dbPayload.attachment_url || null;
+        if (dbPayload.attachment_url && (!coreAttachment || (typeof coreAttachment === 'string' && !coreAttachment.startsWith('http') && !coreAttachment.startsWith('{')))) {
+          coreAttachment = JSON.stringify({
+            url: dbPayload.attachment_url,
+            name: dbPayload.attachment_name || dbPayload.attachment || 'file',
+            size: dbPayload.attachment_size || null,
+            type: dbPayload.attachment_type || null
+          });
+        }
         const corePayload = {
           id: dbPayload.id,
           conversation_id: dbPayload.conversation_id,
           sender: dbPayload.sender,
           sender_name: dbPayload.sender_name,
           text: dbPayload.text || '',
-          attachment: dbPayload.attachment || dbPayload.attachment_url || null,
+          attachment: coreAttachment,
           timestamp: dbPayload.timestamp,
           created_at: dbPayload.created_at
         };

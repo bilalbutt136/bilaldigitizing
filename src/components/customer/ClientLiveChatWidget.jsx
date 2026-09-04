@@ -615,15 +615,23 @@ export const ClientLiveChatWidget = () => {
       }, custRole);
     }).catch(() => {});
 
+    const msgId = 'msg-client-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
+    const serializedAttachment = attachedFile ? (attachedFile.url ? JSON.stringify({
+      url: attachedFile.url,
+      name: attachedFile.name,
+      size: attachedFile.size,
+      type: attachedFile.format
+    }) : attachedFile.name) : null;
+
     const newMsg = {
-      id: 'msg-client-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+      id: msgId,
       conversation_id: convId,
       sender: 'client',
       senderName: cleanName,
       sender_name: cleanName,
       client_email: clientEmail,
       text: messageInput.trim(),
-      attachment: attachedFile ? attachedFile.name : null,
+      attachment: serializedAttachment,
       attachment_url: attachedFile ? attachedFile.url : null,
       attachment_name: attachedFile ? attachedFile.name : null,
       attachment_size: attachedFile ? attachedFile.size : null,

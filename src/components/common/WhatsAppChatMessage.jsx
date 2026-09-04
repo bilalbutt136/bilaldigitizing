@@ -185,8 +185,18 @@ export default function WhatsAppChatMessage({
     );
   }
 
-  const fileName = message.attachment_name || message.attachment || '';
-  const fileUrl = message.attachment_url || (typeof message.attachment === 'string' && message.attachment.startsWith('http') ? message.attachment : null);
+  let parsedAttach = null;
+  if (message.attachment && typeof message.attachment === 'string') {
+    const trimmed = message.attachment.trim();
+    if (trimmed.startsWith('{') && (trimmed.includes('"url"') || trimmed.includes('"name"'))) {
+      try { parsedAttach = JSON.parse(trimmed); } catch {}
+    }
+  }
+
+  const fileName = message.attachment_name || parsedAttach?.name || (typeof message.attachment === 'string' && message.attachment.startsWith('http') ? decodeURIComponent(message.attachment.split('/').pop()?.split('?')[0] || '') : message.attachment) || '';
+  const fileUrl = message.attachment_url || parsedAttach?.url || (typeof message.attachment === 'string' && (message.attachment.startsWith('http') || message.attachment.startsWith('data:') || message.attachment.startsWith('blob:')) ? message.attachment : null);
+  const rawSize = message.attachment_size || parsedAttach?.size;
+  const fileSize = rawSize ? (typeof rawSize === 'number' ? `${Math.round(rawSize / 1024)} KB` : (String(rawSize).match(/^\d+$/) ? `${Math.round(Number(rawSize) / 1024)} KB` : rawSize)) : 'PDF Document';
   const fileCategory = getFileCategory(fileName, fileUrl);
   const replyTo = message.reply_to;
 
@@ -428,7 +438,7 @@ export default function WhatsAppChatMessage({
                   color: isMe ? 'rgba(255,255,255,0.75)' : 'var(--color-text-muted, #64748b)',
                   marginTop: '0.1rem'
                 }}>
-                  {message.attachment_size || 'PDF Document'}
+                  {fileSize || 'PDF Document'}
                 </div>
               </div>
             </div>

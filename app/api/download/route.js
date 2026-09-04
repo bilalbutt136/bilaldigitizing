@@ -102,12 +102,14 @@ export async function GET(request) {
 
         if (!downloadError && fileBlob) {
           const arrayBuffer = await fileBlob.arrayBuffer();
-          const detectedType = fileBlob.type || contentType;
+          const detectedType = (ext === 'pdf' || fileBlob.type === 'application/pdf') ? 'application/pdf' : (fileBlob.type || contentType);
+          const safeFilename = filename.replace(/["\r\n\\]/g, '');
+          const contentDisposition = isPreview ? `inline; filename="${safeFilename}"` : `attachment; filename="${safeFilename}"`;
           return new NextResponse(Buffer.from(arrayBuffer), {
             status: 200,
             headers: {
               'Content-Type': detectedType,
-              'Content-Disposition': `${disposition}; filename="${encodeURIComponent(filename)}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+              'Content-Disposition': contentDisposition,
               'Content-Length': String(arrayBuffer.byteLength),
               'Cache-Control': 'public, max-age=31536000, immutable',
               'Access-Control-Allow-Origin': '*'
@@ -144,13 +146,17 @@ export async function GET(request) {
     }
 
     const arrayBuffer = await response.arrayBuffer();
-    const serverContentType = response.headers.get('content-type') || contentType;
+    const serverContentType = (ext === 'pdf' || response.headers.get('content-type')?.includes('pdf')) 
+      ? 'application/pdf' 
+      : (response.headers.get('content-type') || contentType);
+    const safeFilename = filename.replace(/["\r\n\\]/g, '');
+    const contentDisposition = isPreview ? `inline; filename="${safeFilename}"` : `attachment; filename="${safeFilename}"`;
 
     return new NextResponse(Buffer.from(arrayBuffer), {
       status: 200,
       headers: {
         'Content-Type': serverContentType,
-        'Content-Disposition': `${disposition}; filename="${encodeURIComponent(filename)}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+        'Content-Disposition': contentDisposition,
         'Content-Length': String(arrayBuffer.byteLength),
         'Cache-Control': 'public, max-age=31536000, immutable',
         'Access-Control-Allow-Origin': '*'
