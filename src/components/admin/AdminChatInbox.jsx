@@ -657,19 +657,30 @@ export const AdminChatInbox = () => {
           let hasModified = false;
           const nextMsgs = (conv.messages || []).map(m => {
             const mOfferId = m.offer_id || m.offer_data?.id || m.offer?.id;
-            if (mOfferId === offerId || m.id === offerId) {
+            const textMatches = typeof m.text === 'string' && m.text.includes(offerId);
+            const attachMatches = typeof m.attachment === 'string' && m.attachment.includes(offerId);
+            if (mOfferId === offerId || m.id === offerId || textMatches || attachMatches) {
               hasModified = true;
-              const prevOfferData = typeof m.offer_data === 'object' ? (m.offer_data || {}) : {};
+              const prevOfferData = typeof m.offer_data === 'object' && m.offer_data ? m.offer_data : {};
               const mergedOffer = {
                 ...prevOfferData,
                 ...(freshOffer || {}),
+                id: offerId,
                 status: newStatus,
+                payment_status: freshOffer?.payment_status || (newStatus === 'paid' ? 'paid' : (prevOfferData.payment_status || (newStatus === 'accepted' ? 'pending' : 'unpaid'))),
+                order_id: freshOffer?.order_id || prevOfferData.order_id || null,
                 updated_at: new Date().toISOString()
               };
+              let updatedText = m.text || '';
+              if (updatedText.includes('[OFFER_DATA:')) {
+                updatedText = updatedText.replace(/\[OFFER_DATA:(.*?)\]/, `[OFFER_DATA:${JSON.stringify(mergedOffer)}]`);
+              }
               return {
                 ...m,
+                offer_id: offerId,
                 offer_data: mergedOffer,
-                offer: mergedOffer
+                offer: mergedOffer,
+                text: updatedText
               };
             }
             return m;
@@ -2221,28 +2232,42 @@ export const AdminChatInbox = () => {
           clientName={activeInfo.customerName || 'Customer'}
           clientEmail={activeInfo.customerEmail || activeChat?.clientEmail || ''}
           onOfferCreated={(newOffer, newMsg) => {
-            if (newMsg) {
+            if (newMsg || newOffer) {
+              const incomingOfferId = newOffer?.id || newMsg?.offer_id || newMsg?.offer_data?.id;
+              const hydratedMsg = newMsg ? {
+                ...newMsg,
+                offer_id: incomingOfferId,
+                offer_data: newOffer || newMsg?.offer_data,
+                offer: newOffer || newMsg?.offer_data
+              } : null;
+
               setConversations(prev => {
                 const safePrev = Array.isArray(prev) ? prev : [];
-                const incomingOfferId = newOffer?.id || newMsg?.offer_id || newMsg?.offer_data?.id;
                 const updated = safePrev.map(conv => {
-                  if (conv.id === currentActiveChatId) {
-                    const currentMsgs = conv.messages || [];
-                    const exists = currentMsgs.some(m => 
-                      (m.id && newMsg.id && m.id === newMsg.id) ||
-                      (incomingOfferId && (m.offer_id === incomingOfferId || m.offer_data?.id === incomingOfferId))
-                    );
+                  const matchesId = conv.id === currentActiveChatId || (hydratedMsg?.conversation_id && conv.id === hydratedMsg.conversation_id) || (newOffer?.conversation_id && conv.id === newOffer.conversation_id);
+                  const matchesEmail = conv.clientEmail && (newOffer?.client_email === conv.clientEmail || hydratedMsg?.client_email === conv.clientEmail);
 
+                  if (matchesId || matchesEmail) {
+                    const currentMsgs = conv.messages || [];
                     let nextMsgs;
-                    if (exists) {
-                      nextMsgs = currentMsgs.map(m => {
-                        if ((m.id && newMsg.id && m.id === newMsg.id) || (incomingOfferId && (m.offer_id === incomingOfferId || m.offer_data?.id === incomingOfferId))) {
-                          return { ...m, ...newMsg };
-                        }
-                        return m;
-                      });
+                    if (hydratedMsg) {
+                      const exists = currentMsgs.some(m => 
+                        (m.id && hydratedMsg.id && m.id === hydratedMsg.id) ||
+                        (incomingOfferId && (m.offer_id === incomingOfferId || m.offer_data?.id === incomingOfferId))
+                      );
+
+                      if (exists) {
+                        nextMsgs = currentMsgs.map(m => {
+                          if ((m.id && hydratedMsg.id && m.id === hydratedMsg.id) || (incomingOfferId && (m.offer_id === incomingOfferId || m.offer_data?.id === incomingOfferId))) {
+                            return { ...m, ...hydratedMsg };
+                          }
+                          return m;
+                        });
+                      } else {
+                        nextMsgs = [...currentMsgs, hydratedMsg];
+                      }
                     } else {
-                      nextMsgs = [...currentMsgs, newMsg];
+                      nextMsgs = currentMsgs;
                     }
 
                     return {
@@ -2262,6 +2287,13 @@ export const AdminChatInbox = () => {
                 }
                 return deduplicated;
               });
+
+              if (typeof window !== 'undefined' && newOffer) {
+                window.dispatchEvent(new CustomEvent('bdigi_offer_status_change', {
+                  detail: { offerId: incomingOfferId, status: newOffer.status || 'pending', offer: newOffer }
+                }));
+              }
+
               scrollToBottom('smooth');
             }
           }}

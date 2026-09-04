@@ -1335,6 +1335,34 @@ export function broadcastOfferStatusChange(offerId, status, offerObj = null) {
   } catch {}
 }
 
+export function broadcastLiveOrder(order, eventType = 'INSERT') {
+  if (!order) return;
+  if (typeof window !== 'undefined') {
+    const detail = { order, eventType };
+    window.dispatchEvent(new CustomEvent('bdigi_order_change', { detail }));
+    try {
+      const bc = new BroadcastChannel('bdigi_chat_sync');
+      bc.postMessage({ type: 'order_change', ...detail });
+      bc.close();
+    } catch {}
+  }
+
+  try {
+    const channel = getSharedChatChannel();
+    if (channel) {
+      channel.send({
+        type: 'broadcast',
+        event: 'order_change',
+        payload: { order, eventType }
+      });
+    }
+  } catch {}
+
+  orderListeners.forEach(listener => {
+    try { listener({ eventType, new: order, record: order }); } catch (err) {}
+  });
+}
+
 export async function createCustomOffer(offerPayload) {
   try {
     const headers = await getAuthHeaders();
@@ -1346,6 +1374,9 @@ export async function createCustomOffer(offerPayload) {
     const data = await res.json();
     if (data.message) {
       broadcastLiveMessage(data.message);
+    }
+    if (data.offer) {
+      broadcastOfferStatusChange(data.offer.id, data.offer.status || 'pending', data.offer);
     }
     return data;
   } catch (err) {
@@ -1391,6 +1422,9 @@ export async function acceptCustomOffer(offerId, fallbackOffer = null) {
     }
     if (data.offer) {
       broadcastOfferStatusChange(offerId, data.offer.status || 'accepted', data.offer);
+    }
+    if (data.order) {
+      broadcastLiveOrder(data.order, 'INSERT');
     }
     return data;
   } catch (err) {
@@ -1457,6 +1491,9 @@ export async function payCustomOffer(offerId, orderId = null) {
     }
     if (data.offer) {
       broadcastOfferStatusChange(offerId, 'paid', data.offer);
+    }
+    if (data.order) {
+      broadcastLiveOrder(data.order, 'UPDATE');
     }
     return data;
   } catch (err) {
@@ -1705,6 +1742,17 @@ export function getSharedChatChannel() {
     globalChatChannel.on('broadcast', { event: 'offer_status_change' }, (event) => {
       if (event.payload && event.payload.offerId && typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('bdigi_offer_status_change', { detail: event.payload }));
+      }
+    });
+
+    globalChatChannel.on('broadcast', { event: 'order_change' }, (event) => {
+      if (event.payload && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('bdigi_order_change', { detail: event.payload }));
+        if (event.payload.order) {
+          orderListeners.forEach(listener => {
+            try { listener({ eventType: event.payload.eventType || 'INSERT', new: event.payload.order, record: event.payload.order }); } catch (err) {}
+          });
+        }
       }
     });
 

@@ -757,6 +757,76 @@ export const StateProvider = ({ children }) => {
     };
   }, [isAuthenticated, authUser, refreshUnreadChatCount, refreshNotifications]);
 
+  // 4. Real-time synchronization for orders across tabs & events (e.g., custom offer acceptances)
+  useEffect(() => {
+    let orderBc = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        orderBc = new BroadcastChannel('bdigi_orders_sync');
+      }
+    } catch {}
+
+    const handleLiveOrderEvent = (orderPayload) => {
+      if (!orderPayload) return;
+      const incomingOrder = orderPayload.order || orderPayload;
+      if (!incomingOrder || !incomingOrder.id) return;
+
+      // Also persist to localStorage bdigi_my_order_ids if customer
+      if (typeof window !== 'undefined') {
+        try {
+          const localIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
+          if (!localIds.includes(incomingOrder.id)) {
+            localIds.push(incomingOrder.id);
+            localStorage.setItem('bdigi_my_order_ids', JSON.stringify(localIds));
+          }
+        } catch {}
+      }
+
+      setOrders(prev => {
+        const safePrev = Array.isArray(prev) ? prev : [];
+        const index = safePrev.findIndex(o => o.id === incomingOrder.id);
+        if (index >= 0) {
+          const updated = [...safePrev];
+          updated[index] = { ...updated[index], ...incomingOrder };
+          return updated;
+        } else {
+          return [incomingOrder, ...safePrev];
+        }
+      });
+    };
+
+    const handleCustomEvent = (e) => {
+      if (e.detail) {
+        handleLiveOrderEvent(e.detail);
+      }
+    };
+
+    const handleBcMessage = (e) => {
+      if (e.data && e.data.order) {
+        handleLiveOrderEvent(e.data.order);
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('bdigi_order_change', handleCustomEvent);
+      if (orderBc) {
+        orderBc.addEventListener('message', handleBcMessage);
+      }
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('bdigi_order_change', handleCustomEvent);
+      }
+      if (orderBc) {
+        try {
+          orderBc.removeEventListener('message', handleBcMessage);
+          orderBc.close();
+        } catch {}
+      }
+    };
+  }, []);
+
   const showToast = (message, type = 'info', playSound = false) => {
     setToast({ message, type, id: Date.now() });
     if (playSound) {

@@ -298,21 +298,31 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
         let hasModified = false;
         const nextMsgs = safePrev.map(m => {
           const mOfferId = m.offer_id || m.offer_data?.id || m.offer?.id;
-          if (mOfferId === offerId || m.id === offerId) {
+          const textMatches = typeof m.text === 'string' && m.text.includes(offerId);
+          const attachMatches = typeof m.attachment === 'string' && m.attachment.includes(offerId);
+          if (mOfferId === offerId || m.id === offerId || textMatches || attachMatches) {
             hasModified = true;
             const prevOfferData = typeof m.offer_data === 'object' && m.offer_data ? m.offer_data : {};
             const paymentStatus = freshOffer?.payment_status || (newStatus === 'paid' ? 'paid' : (prevOfferData.payment_status || (newStatus === 'accepted' ? 'pending' : 'unpaid')));
             const mergedOffer = {
               ...prevOfferData,
               ...(freshOffer || {}),
+              id: offerId,
               status: newStatus,
               payment_status: paymentStatus,
+              order_id: freshOffer?.order_id || prevOfferData.order_id || null,
               updated_at: new Date().toISOString()
             };
+            let updatedText = m.text || '';
+            if (updatedText.includes('[OFFER_DATA:')) {
+              updatedText = updatedText.replace(/\[OFFER_DATA:(.*?)\]/, `[OFFER_DATA:${JSON.stringify(mergedOffer)}]`);
+            }
             return {
               ...m,
+              offer_id: offerId,
               offer_data: mergedOffer,
-              offer: mergedOffer
+              offer: mergedOffer,
+              text: updatedText
             };
           }
           return m;

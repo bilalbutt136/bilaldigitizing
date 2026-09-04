@@ -35,7 +35,8 @@ export default function OfferCardMessage({
     setCheckoutSession, 
     setIsCheckoutModalOpen,
     authUser,
-    currentUser 
+    currentUser,
+    setOrders
   } = useAppState() || {};
   const showToast = propShowToast || contextShowToast || (() => {});
 
@@ -43,6 +44,7 @@ export default function OfferCardMessage({
   const [isCancelling, setIsCancelling] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [localStatus, setLocalStatus] = useState(offer?.status || 'sent');
+  const [linkedOrderId, setLinkedOrderId] = useState(offer?.order_id || null);
   const [isAccepting, setIsAccepting] = useState(false);
 
   useEffect(() => {
@@ -51,14 +53,29 @@ export default function OfferCardMessage({
     }
   }, [offer?.status]);
 
+  useEffect(() => {
+    if (offer?.order_id) {
+      setLinkedOrderId(offer.order_id);
+    }
+  }, [offer?.order_id]);
+
   // Realtime & cross-tab offer status listener
   useEffect(() => {
     const handleStatusEvent = (e) => {
-      const { offerId, status: newStatus } = e.detail || {};
+      const { offerId, status: newStatus, offer: freshOffer } = e.detail || {};
       const myOfferId = offer?.id || offer?.offer_id;
-      if (offerId && (offerId === myOfferId || offerId === messageId)) {
+      const match = offerId && (
+        offerId === myOfferId || 
+        offerId === messageId || 
+        (myOfferId && String(offerId).includes(String(myOfferId))) || 
+        (messageId && String(offerId).includes(String(messageId)))
+      );
+      if (match) {
         if (newStatus) {
           setLocalStatus(newStatus);
+        }
+        if (freshOffer?.order_id) {
+          setLinkedOrderId(freshOffer.order_id);
         }
       }
     };
@@ -204,16 +221,17 @@ export default function OfferCardMessage({
     if (isPaid || isAccepting) return;
     const targetOfferId = offer.id || offer.offer_id || messageId;
 
+    const activeOrderId = linkedOrderId || offer.order_id;
     // If offer is already accepted and just needs payment, open checkout immediately
-    if (isAcceptedUnpaid && (offer.order_id || targetOfferId)) {
+    if (isAcceptedUnpaid && (activeOrderId || targetOfferId)) {
       if (setCheckoutSession && setIsCheckoutModalOpen) {
         setCheckoutSession({
           amount: price,
           price: price,
           totalPrice: price,
           offerId: targetOfferId,
-          id: offer.order_id || targetOfferId,
-          orderId: offer.order_id || null,
+          id: activeOrderId || targetOfferId,
+          orderId: activeOrderId || null,
           title: offer.title || 'Custom Design Order',
           orderTitle: offer.title || 'Custom Design Order',
           clientEmail: offer.client_email || authUser?.email || currentUser?.email,
@@ -238,15 +256,28 @@ export default function OfferCardMessage({
       } else {
         const createdOrder = res?.order;
         setLocalStatus('accepted');
+        if (createdOrder?.id) {
+          setLinkedOrderId(createdOrder.id);
+          if (typeof setOrders === 'function') {
+            setOrders(prev => {
+              const safe = Array.isArray(prev) ? prev : [];
+              if (safe.some(o => o.id === createdOrder.id)) {
+                return safe.map(o => o.id === createdOrder.id ? { ...o, ...createdOrder } : o);
+              }
+              return [createdOrder, ...safe];
+            });
+          }
+        }
         showToast('Offer accepted! Opening payment checkout...', 'success');
         if (setCheckoutSession && setIsCheckoutModalOpen) {
+          const effectiveOrderId = createdOrder?.id || activeOrderId || targetOfferId;
           setCheckoutSession({
             amount: price,
             price: price,
             totalPrice: price,
             offerId: targetOfferId,
-            id: createdOrder?.id || offer.order_id || targetOfferId,
-            orderId: createdOrder?.id || offer.order_id || null,
+            id: effectiveOrderId,
+            orderId: createdOrder?.id || activeOrderId || null,
             title: offer.title || 'Custom Design Order',
             orderTitle: offer.title || 'Custom Design Order',
             clientEmail: offer.client_email || authUser?.email || currentUser?.email,
@@ -425,7 +456,7 @@ export default function OfferCardMessage({
               <span>✓ Paid & In Production • ${price.toFixed(2)}</span>
             </div>
 
-            {offer.order_id && (
+            {(linkedOrderId || offer.order_id) && (
               <div style={{
                 padding: '0.55rem 0.85rem',
                 borderRadius: '8px',
@@ -436,11 +467,11 @@ export default function OfferCardMessage({
                 alignItems: 'center'
               }}>
                 <span style={{ fontSize: '0.75rem', color: '#a7f3d0' }}>
-                  Linked Order: <strong>#{offer.order_id}</strong>
+                  Linked Order: <strong>#{linkedOrderId || offer.order_id}</strong>
                 </span>
                 <button
                   type="button"
-                  onClick={() => onOrderClick(offer.order_id)}
+                  onClick={() => onOrderClick(linkedOrderId || offer.order_id)}
                   style={{
                     background: 'none',
                     border: 'none',
@@ -480,7 +511,7 @@ export default function OfferCardMessage({
               <span>Offer Accepted • Payment Pending</span>
             </div>
 
-            {offer.order_id && (
+            {(linkedOrderId || offer.order_id) && (
               <div style={{
                 padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
@@ -491,11 +522,11 @@ export default function OfferCardMessage({
                 alignItems: 'center'
               }}>
                 <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                  Linked Order: <strong style={{ color: '#f8fafc' }}>#{offer.order_id}</strong>
+                  Linked Order: <strong style={{ color: '#f8fafc' }}>#{linkedOrderId || offer.order_id}</strong>
                 </span>
                 <button
                   type="button"
-                  onClick={() => onOrderClick(offer.order_id)}
+                  onClick={() => onOrderClick(linkedOrderId || offer.order_id)}
                   style={{
                     background: 'none',
                     border: 'none',

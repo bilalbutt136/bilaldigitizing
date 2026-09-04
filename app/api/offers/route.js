@@ -175,8 +175,40 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Invalid offer parameters. Title, description and positive price are required.' }, { status: 400 });
       }
 
-      const cleanClientEmail = (client_email || '').toLowerCase().trim();
-      const cleanClientName = client_name || 'Valued Client';
+      // Auto-resolve client email from conversation_id or orders if missing/generic
+      let cleanClientEmail = (client_email || payload.customer_email || '').toLowerCase().trim();
+      if (!cleanClientEmail || cleanClientEmail === 'client@studio.com' || cleanClientEmail.includes('guest@bdigitizing.pro')) {
+        const cLower = String(conversation_id || '').toLowerCase().trim();
+        if (cLower.startsWith('inbox-') && !cLower.startsWith('inbox-guest')) {
+          cleanClientEmail = cLower.replace('inbox-', '').trim();
+        } else if (cLower.startsWith('support-') && !cLower.startsWith('support-guest')) {
+          cleanClientEmail = cLower.replace('support-', '').trim();
+        } else if (cLower.startsWith('direct-')) {
+          cleanClientEmail = cLower.replace('direct-', '').trim();
+        } else if (cLower.startsWith('chat-')) {
+          cleanClientEmail = cLower.replace('chat-', '').trim();
+        } else if (cLower.startsWith('thread-') || cLower.startsWith('thread_')) {
+          cleanClientEmail = cLower.replace(/^thread[-_]/, '').trim();
+        } else if (cLower.startsWith('order-') || cLower.startsWith('ord-') || cLower.startsWith('#')) {
+          const rawOrdId = cLower.replace(/^order-/, '').replace(/^#+/, '');
+          try {
+            const { data: ordRow } = await supabase.from('orders').select('client_email, client_name').or(`id.eq.${rawOrdId},id.eq.#${rawOrdId}`).maybeSingle();
+            if (ordRow?.client_email) {
+              cleanClientEmail = ordRow.client_email.toLowerCase().trim();
+            }
+          } catch {}
+        }
+      }
+
+      let cleanClientName = (client_name || payload.customer_name || '').trim();
+      if (!cleanClientName || cleanClientName === 'Valued Client' || cleanClientName === 'Customer') {
+        if (cleanClientEmail && cleanClientEmail !== 'client@studio.com' && !cleanClientEmail.includes('guest@bdigitizing.pro')) {
+          cleanClientName = cleanClientEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        } else {
+          cleanClientName = 'Valued Client';
+        }
+      }
+
       const numPrice = parseFloat(price);
       const numDiscount = Math.max(0, parseFloat(discount_amount || 0));
       const finalPrice = Math.max(0, numPrice - numDiscount);
@@ -251,7 +283,7 @@ export async function POST(request) {
         customer_id: payload.customer_id || null,
         created_by: user?.email || 'admin',
         client_name: cleanClientName,
-        client_email: cleanClientEmail,
+        client_email: cleanClientEmail || 'client@studio.com',
         title: title.trim(),
         description: description.trim(),
         service_type: service_type,
@@ -276,6 +308,27 @@ export async function POST(request) {
         const { error: insertOfferErr } = await supabase.from('custom_offers').insert([offerDbRow]);
         if (insertOfferErr) {
           console.warn('custom_offers insert notice:', insertOfferErr.message);
+          // Fallback to core columns in case newer schema columns are not present
+          const coreOfferRow = {
+            id: offerId,
+            conversation_id: conversation_id,
+            client_name: cleanClientName,
+            client_email: cleanClientEmail || 'client@studio.com',
+            title: title.trim(),
+            description: description.trim(),
+            service_type: service_type,
+            price: numPrice,
+            discount_amount: numDiscount,
+            final_price: finalPrice,
+            delivery_time_text: delivery_time_text,
+            delivery_days: parseInt(delivery_days, 10) || 1,
+            revisions_allowed: String(revisions_allowed),
+            expires_at: expiresAt,
+            status: 'pending',
+            created_at: nowIso,
+            updated_at: nowIso
+          };
+          await supabase.from('custom_offers').insert([coreOfferRow]);
         }
       } catch (err) {
         console.warn('custom_offers table insert fallback:', err.message);
@@ -291,11 +344,13 @@ export async function POST(request) {
         idempotency_key: idempotency_key || null,
         conversation_id: conversation_id,
         thread_id: conversation_id,
-        client_email: cleanClientEmail,
+        client_email: cleanClientEmail || null,
         sender: 'admin',
         sender_name: 'Studio Support',
         text: textWithOffer,
         attachment: offerSerialized,
+        attachment_name: `Custom Offer: ${offerDbRow.title}`,
+        attachment_type: 'custom_offer',
         timestamp: nowIso,
         created_at: nowIso,
         is_read: false
@@ -305,7 +360,7 @@ export async function POST(request) {
       let insertedMessage = { 
         ...standardMessageRow, 
         thread_id: conversation_id,
-        client_email: cleanClientEmail,
+        client_email: cleanClientEmail || null,
         type: 'custom_offer',
         metadata: offerDbRow,
         offer_id: offerId, 
@@ -325,8 +380,9 @@ export async function POST(request) {
       }
 
       // Mirror to order_messages if this is an order conversation
-      if (conversation_id.startsWith('order-')) {
-        const rawOrdId = conversation_id.replace('order-', '');
+      const cIdLower = conversation_id.toLowerCase();
+      if (cIdLower.startsWith('order-') || cIdLower.startsWith('ord-') || cIdLower.startsWith('#')) {
+        const rawOrdId = conversation_id.replace(/^order-/, '').replace(/^#+/, '').trim();
         try {
           await supabase.from('order_messages').insert([{
             order_id: rawOrdId,
@@ -431,12 +487,16 @@ export async function POST(request) {
       const svcCategory = offer.service_type || 'Embroidery Digitizing';
       const svcType = svcCategory.toLowerCase().includes('vector') ? 'vector' : (svcCategory.toLowerCase().includes('patch') ? 'patches' : 'digitizing');
       const targetOfferId = offer.id || offerId || `off-${Date.now()}`;
-      const conversationId = offer.conversation_id || offer.thread_id || 'general-support';
+      const conversationId = offer.conversation_id || offer.thread_id || (cleanEmail ? `inbox-${cleanEmail}` : 'general-support');
 
-      const orderPayload = {
+      // UUID validation for user_id to prevent Postgres invalid syntax errors
+      const isValidUuid = user?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id);
+      const safeUserId = isValidUuid ? user.id : null;
+
+      const baseOrderPayload = {
         id: generatedOrderId,
         title: offer.title || 'Custom Design Order',
-        client_name: offer.client_name || user?.user_metadata?.full_name || 'Client',
+        client_name: offer.client_name || user?.user_metadata?.full_name || (cleanEmail ? cleanEmail.split('@')[0] : 'Client'),
         client_email: cleanEmail,
         service_category: svcCategory,
         service_type: svcType,
@@ -444,24 +504,43 @@ export async function POST(request) {
         cost: parseFloat(offer.final_price || offer.price || 0),
         status: 'pending',
         payment_status: 'pending',
-        turnaround_time: offer.delivery_time_text || `${offer.delivery_days || 1} Day`,
         is_rush: (offer.delivery_time_text || '').toLowerCase().includes('express') || (offer.delivery_time_text || '').toLowerCase().includes('12 hour'),
-        revisions_allowed: String(offer.revisions_allowed || '2'),
+        user_id: safeUserId,
         notes: JSON.stringify({
           source: 'custom_offer',
           offer_id: targetOfferId,
-          description: offer.description,
-          requires_requirements: offer.requires_requirements
+          description: offer.description || '',
+          delivery_time_text: offer.delivery_time_text || `${offer.delivery_days || 1} Day`,
+          delivery_days: offer.delivery_days || 1,
+          revisions_allowed: String(offer.revisions_allowed || '2'),
+          requires_requirements: offer.requires_requirements ?? true
         }),
-        user_id: user?.id || null,
         created_at: nowIso,
         updated_at: nowIso
       };
 
+      let orderPayload = {
+        ...baseOrderPayload,
+        turnaround_time: offer.delivery_time_text || `${offer.delivery_days || 1} Day`,
+        revisions_allowed: String(offer.revisions_allowed || '2')
+      };
+
       try {
-        await supabase.from('orders').insert([orderPayload]);
-      } catch (ordErr) {
-        console.error('Order creation error during offer accept:', ordErr.message);
+        const { error: ordErr } = await supabase.from('orders').insert([orderPayload]);
+        if (ordErr) {
+          console.warn('Extended order insert notice, falling back to base schema:', ordErr.message);
+          const { error: baseErr } = await supabase.from('orders').insert([baseOrderPayload]);
+          if (baseErr) {
+            console.error('Base order creation error during offer accept:', baseErr.message);
+          }
+          orderPayload = baseOrderPayload;
+        }
+      } catch (err) {
+        console.error('Order creation exception:', err.message);
+        try {
+          await supabase.from('orders').insert([baseOrderPayload]);
+          orderPayload = baseOrderPayload;
+        } catch {}
       }
 
       // 3. Atomically upsert custom_offers table
@@ -507,12 +586,25 @@ export async function POST(request) {
       }
 
       // 4. Update messages containing this offer_id or serialized JSON
+      const updatedOfferText = `📋 Custom Offer: ${finalOfferData.title} ($${parseFloat(finalOfferData.final_price || finalOfferData.price || 0).toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(finalOfferData)}]`;
       try {
         await supabase.from('messages').update({
           offer_data: finalOfferData,
           attachment: JSON.stringify(finalOfferData),
-          text: `📋 Custom Offer: ${finalOfferData.title} ($${parseFloat(finalOfferData.final_price || finalOfferData.price || 0).toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(finalOfferData)}]`
+          text: updatedOfferText
         }).or(`offer_id.eq.${targetOfferId},id.eq.${targetOfferId},offer_id.eq.${offerId},id.eq.${offerId}`);
+
+        // Also update any message whose text includes the offerId
+        const { data: matchedTextMsgs } = await supabase.from('messages').select('id, text').ilike('text', `%${targetOfferId}%`);
+        if (Array.isArray(matchedTextMsgs) && matchedTextMsgs.length > 0) {
+          for (const tm of matchedTextMsgs) {
+            await supabase.from('messages').update({
+              offer_data: finalOfferData,
+              attachment: JSON.stringify(finalOfferData),
+              text: updatedOfferText
+            }).eq('id', tm.id);
+          }
+        }
       } catch (mErr) {
         console.warn('messages offer_data update notice:', mErr.message);
       }
@@ -594,8 +686,24 @@ export async function POST(request) {
       } catch {}
 
       // 2. Update in messages table
+      const declinedOfferText = `📋 Custom Offer: ${updatedOffer.title} ($${parseFloat(updatedOffer.final_price || updatedOffer.price || 0).toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(updatedOffer)}]`;
       try {
-        await supabase.from('messages').update({ offer_data: updatedOffer }).or(`offer_id.eq.${targetOfferId},id.eq.${targetOfferId},offer_id.eq.${offerId},id.eq.${offerId}`);
+        await supabase.from('messages').update({ 
+          offer_data: updatedOffer,
+          attachment: JSON.stringify(updatedOffer),
+          text: declinedOfferText
+        }).or(`offer_id.eq.${targetOfferId},id.eq.${targetOfferId},offer_id.eq.${offerId},id.eq.${offerId}`);
+
+        const { data: matchedTextMsgs } = await supabase.from('messages').select('id, text').ilike('text', `%${targetOfferId}%`);
+        if (Array.isArray(matchedTextMsgs) && matchedTextMsgs.length > 0) {
+          for (const tm of matchedTextMsgs) {
+            await supabase.from('messages').update({
+              offer_data: updatedOffer,
+              attachment: JSON.stringify(updatedOffer),
+              text: declinedOfferText
+            }).eq('id', tm.id);
+          }
+        }
       } catch {}
 
       // 3. Update in order_messages table if applicable
@@ -670,8 +778,24 @@ export async function POST(request) {
       } catch {}
 
       // 2. Update offer_data in messages table
+      const cancelledOfferText = `📋 Custom Offer: ${updatedOffer.title} ($${parseFloat(updatedOffer.final_price || updatedOffer.price || 0).toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(updatedOffer)}]`;
       try {
-        await supabase.from('messages').update({ offer_data: updatedOffer }).or(`offer_id.eq.${targetOfferId},id.eq.${targetOfferId},offer_id.eq.${offerId},id.eq.${offerId}`);
+        await supabase.from('messages').update({ 
+          offer_data: updatedOffer,
+          attachment: JSON.stringify(updatedOffer),
+          text: cancelledOfferText
+        }).or(`offer_id.eq.${targetOfferId},id.eq.${targetOfferId},offer_id.eq.${offerId},id.eq.${offerId}`);
+
+        const { data: matchedTextMsgs } = await supabase.from('messages').select('id, text').ilike('text', `%${targetOfferId}%`);
+        if (Array.isArray(matchedTextMsgs) && matchedTextMsgs.length > 0) {
+          for (const tm of matchedTextMsgs) {
+            await supabase.from('messages').update({
+              offer_data: updatedOffer,
+              attachment: JSON.stringify(updatedOffer),
+              text: cancelledOfferText
+            }).eq('id', tm.id);
+          }
+        }
       } catch {}
 
       // 3. Update in order_messages table if applicable
@@ -751,11 +875,24 @@ export async function POST(request) {
       }
 
       // 3. Update messages containing this offer
+      const paidOfferText = `📋 Custom Offer: ${updatedOffer.title} ($${parseFloat(updatedOffer.final_price || updatedOffer.price || 0).toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(updatedOffer)}]`;
       try {
         await supabase.from('messages').update({
           offer_data: updatedOffer,
-          attachment: JSON.stringify(updatedOffer)
-        }).or(`offer_id.eq.${targetOfferId},id.eq.${targetOfferId}`);
+          attachment: JSON.stringify(updatedOffer),
+          text: paidOfferText
+        }).or(`offer_id.eq.${targetOfferId},id.eq.${targetOfferId},offer_id.eq.${offerId},id.eq.${offerId}`);
+
+        const { data: matchedTextMsgs } = await supabase.from('messages').select('id, text').ilike('text', `%${targetOfferId}%`);
+        if (Array.isArray(matchedTextMsgs) && matchedTextMsgs.length > 0) {
+          for (const tm of matchedTextMsgs) {
+            await supabase.from('messages').update({
+              offer_data: updatedOffer,
+              attachment: JSON.stringify(updatedOffer),
+              text: paidOfferText
+            }).eq('id', tm.id);
+          }
+        }
       } catch {}
 
       // 4. Post chat confirmation

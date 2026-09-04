@@ -36,6 +36,71 @@ const parseMessageTime = (msg) => {
   return isNaN(parsed) ? 0 : parsed;
 };
 
+const extractAndHydrateOffer = (m, offersMap) => {
+  if (!m) return { offerId: null, offerData: null };
+
+  let offerData = m.offer_data || m.offerData || null;
+  if (typeof offerData === 'string') {
+    try { offerData = JSON.parse(offerData); } catch { offerData = null; }
+  }
+
+  // 1. Check metadata
+  if (!offerData && m.metadata) {
+    const meta = typeof m.metadata === 'string' ? (() => { try { return JSON.parse(m.metadata); } catch { return null; } })() : m.metadata;
+    if (meta?.offer_data) offerData = meta.offer_data;
+    else if (meta?.offer) offerData = meta.offer;
+    else if (meta?.id && String(meta.id).startsWith('off-')) offerData = meta;
+  }
+
+  // 2. Check embedded [OFFER_DATA:...] in text
+  if (!offerData && m.text && m.text.includes('[OFFER_DATA:')) {
+    try {
+      const match = m.text.match(/\[OFFER_DATA:(\{.*?\})\]/s);
+      if (match && match[1]) {
+        offerData = JSON.parse(match[1]);
+      }
+    } catch {}
+  }
+
+  // 3. Check serialized JSON in attachment
+  if (!offerData && m.attachment && typeof m.attachment === 'string') {
+    const trimmed = m.attachment.trim();
+    if (trimmed.startsWith('{') && (trimmed.includes('"title"') || trimmed.includes('"price"'))) {
+      try {
+        offerData = JSON.parse(trimmed);
+      } catch {}
+    }
+  }
+
+  // 4. Fallback offerId search
+  let offerId = m.offer_id || m.offerId || offerData?.id || null;
+  if (!offerId && m.text && m.text.includes('Custom Offer:')) {
+    const idMatch = m.text.match(/off-[0-9a-z_-]+/i);
+    if (idMatch) offerId = idMatch[0];
+  }
+
+  // 5. Authoritative hydration from custom_offers table
+  if (offerId && offersMap && offersMap.has(offerId)) {
+    const authOffer = offersMap.get(offerId);
+    offerData = {
+      ...(typeof offerData === 'object' && offerData ? offerData : {}),
+      ...authOffer
+    };
+  }
+
+  // 6. Check auto-expiry if still in pending/sent/viewed state
+  if (offerData && (offerData.status === 'sent' || offerData.status === 'viewed' || offerData.status === 'pending')) {
+    if (offerData.expires_at && new Date(offerData.expires_at).getTime() < Date.now()) {
+      offerData.status = 'expired';
+    }
+  }
+
+  return {
+    offerId: offerId || offerData?.id || null,
+    offerData: offerData || null
+  };
+};
+
 export async function GET(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
@@ -227,34 +292,23 @@ export async function GET(request) {
 
         const thread = getOrCreateThread(cId, matchedEmail, isSupport, clientSenderName);
 
-        let resolvedOfferData = m.offer_data || m.offerData || null;
-        if (typeof resolvedOfferData === 'string') {
-          try { resolvedOfferData = JSON.parse(resolvedOfferData); } catch {}
-        }
-        const resolvedOfferId = m.offer_id || m.offerId || resolvedOfferData?.id || null;
-        if (resolvedOfferId && offersMap.has(resolvedOfferId)) {
-          const authOffer = offersMap.get(resolvedOfferId);
-          resolvedOfferData = {
-            ...(typeof resolvedOfferData === 'object' && resolvedOfferData ? resolvedOfferData : {}),
-            ...authOffer
-          };
-        }
+        const { offerId: resolvedOfferId, offerData: resolvedOfferData } = extractAndHydrateOffer(m, offersMap);
 
         const mappedMsg = {
           id: m.id,
           conversation_id: thread.id,
           thread_id: thread.id,
           type: m.type || (resolvedOfferId || resolvedOfferData ? 'custom_offer' : 'text'),
-          metadata: m.metadata || {},
+          metadata: resolvedOfferData ? { ...m.metadata, offer_id: resolvedOfferId, offer_data: resolvedOfferData } : (m.metadata || {}),
           sender: m.sender,
           senderName: m.sender === 'admin' ? 'Support' : (m.sender_name || thread.clientName),
           sender_name: m.sender_name,
-          text: m.text,
-          attachment: m.attachment,
+          text: resolvedOfferData ? `📋 Custom Offer: ${resolvedOfferData.title} ($${parseFloat(resolvedOfferData.final_price || resolvedOfferData.price || 0).toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(resolvedOfferData)}]` : m.text,
+          attachment: resolvedOfferData ? JSON.stringify(resolvedOfferData) : m.attachment,
           attachment_url: m.attachment_url || null,
-          attachment_name: m.attachment_name || m.attachment || null,
+          attachment_name: m.attachment_name || (resolvedOfferData ? `Custom Offer: ${resolvedOfferData.title}` : m.attachment) || null,
           attachment_size: m.attachment_size || null,
-          attachment_type: m.attachment_type || null,
+          attachment_type: resolvedOfferData ? 'custom_offer' : (m.attachment_type || null),
           reply_to: m.reply_to || null,
           offer_id: resolvedOfferId,
           offer_data: resolvedOfferData,
@@ -466,35 +520,24 @@ export async function GET(request) {
       });
 
       const mappedMessages = (rawMessages || []).map(m => {
-        let resolvedOfferData = m.offer_data || m.offerData || null;
-        if (typeof resolvedOfferData === 'string') {
-          try { resolvedOfferData = JSON.parse(resolvedOfferData); } catch {}
-        }
-        const resolvedOfferId = m.offer_id || m.offerId || resolvedOfferData?.id || null;
-        if (resolvedOfferId && convOffersMap.has(resolvedOfferId)) {
-          const authOffer = convOffersMap.get(resolvedOfferId);
-          resolvedOfferData = {
-            ...(typeof resolvedOfferData === 'object' && resolvedOfferData ? resolvedOfferData : {}),
-            ...authOffer
-          };
-        }
+        const { offerId: resolvedOfferId, offerData: resolvedOfferData } = extractAndHydrateOffer(m, convOffersMap);
 
         return {
           id: m.id,
           conversation_id: m.conversation_id || m.thread_id || chatId,
           thread_id: m.thread_id || m.conversation_id || chatId,
           type: m.type || (resolvedOfferId || resolvedOfferData ? 'custom_offer' : 'text'),
-          metadata: m.metadata || {},
+          metadata: resolvedOfferData ? { ...m.metadata, offer_id: resolvedOfferId, offer_data: resolvedOfferData } : (m.metadata || {}),
           client_email: m.client_email || targetEmail || null,
           sender: m.sender,
           senderName: m.sender === 'admin' ? 'Support' : (m.sender_name || 'Client'),
           sender_name: m.sender_name,
-          text: m.text,
-          attachment: m.attachment,
+          text: resolvedOfferData ? `📋 Custom Offer: ${resolvedOfferData.title} ($${parseFloat(resolvedOfferData.final_price || resolvedOfferData.price || 0).toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(resolvedOfferData)}]` : m.text,
+          attachment: resolvedOfferData ? JSON.stringify(resolvedOfferData) : m.attachment,
           attachment_url: m.attachment_url || null,
-          attachment_name: m.attachment_name || m.attachment || null,
+          attachment_name: m.attachment_name || (resolvedOfferData ? `Custom Offer: ${resolvedOfferData.title}` : m.attachment) || null,
           attachment_size: m.attachment_size || null,
-          attachment_type: m.attachment_type || null,
+          attachment_type: resolvedOfferData ? 'custom_offer' : (m.attachment_type || null),
           reply_to: m.reply_to || null,
           offer_id: resolvedOfferId,
           offer_data: resolvedOfferData,
@@ -502,6 +545,47 @@ export async function GET(request) {
           timestamp: m.timestamp || m.created_at
         };
       });
+
+      // Ensure any custom offers for this conversation or client are always represented in messages
+      const existingOfferIds = new Set(mappedMessages.map(m => m.offer_id).filter(Boolean));
+      for (const [offId, authOffer] of convOffersMap.entries()) {
+        if (!existingOfferIds.has(offId)) {
+          const offEmail = normalizeEmail(authOffer.client_email);
+          const offConvId = String(authOffer.conversation_id || authOffer.thread_id || '').toLowerCase().trim();
+          const targetChatIdLower = String(chatId || '').toLowerCase().trim();
+          const matchesTarget = (targetEmail && offEmail === targetEmail) ||
+                                (offConvId === targetChatIdLower) ||
+                                (targetIds.some(tId => tId && (offConvId === String(tId).toLowerCase().trim() || offConvId.includes(String(tId).toLowerCase().trim()))));
+          if (matchesTarget) {
+            const price = parseFloat(authOffer.final_price || authOffer.price || 0);
+            const offerText = `📋 Custom Offer: ${authOffer.title} ($${price.toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(authOffer)}]`;
+            mappedMessages.push({
+              id: `msg-${offId}`,
+              conversation_id: chatId,
+              thread_id: chatId,
+              type: 'custom_offer',
+              metadata: {
+                offer_id: offId,
+                offer_data: authOffer
+              },
+              client_email: offEmail || targetEmail || null,
+              sender: 'admin',
+              senderName: 'Support',
+              sender_name: 'Support',
+              text: offerText,
+              attachment: JSON.stringify(authOffer),
+              attachment_name: `Custom Offer: ${authOffer.title}`,
+              attachment_type: 'custom_offer',
+              reply_to: null,
+              offer_id: offId,
+              offer_data: authOffer,
+              is_read: true,
+              timestamp: authOffer.created_at || new Date().toISOString()
+            });
+            existingOfferIds.add(offId);
+          }
+        }
+      }
 
       mappedMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
       

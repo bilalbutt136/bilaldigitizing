@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Sparkles, 
   X, 
@@ -15,7 +15,9 @@ import {
   Layers,
   ShieldCheck,
   Zap,
-  Tag
+  Tag,
+  User,
+  Mail
 } from 'lucide-react';
 import { createCustomOffer } from '../../services/supabaseService';
 
@@ -29,6 +31,28 @@ export default function AdminCreateOfferModal({
   showToast = () => {}
 }) {
   const isSubmittingRef = useRef(false);
+
+  // Auto-detect recipient email from conversationId if clientEmail is generic or empty
+  const detectedEmail = useMemo(() => {
+    let email = (clientEmail || '').trim();
+    if (!email || email === 'client@studio.com' || email.includes('guest@bdigitizing.pro')) {
+      const cLower = String(conversationId || '').toLowerCase().trim();
+      if (cLower.startsWith('inbox-') && !cLower.startsWith('inbox-guest')) {
+        email = cLower.replace('inbox-', '');
+      } else if (cLower.startsWith('support-') && !cLower.startsWith('support-guest')) {
+        email = cLower.replace('support-', '');
+      } else if (cLower.startsWith('direct-')) {
+        email = cLower.replace('direct-', '');
+      } else if (cLower.startsWith('chat-')) {
+        email = cLower.replace('chat-', '');
+      }
+    }
+    return email;
+  }, [clientEmail, conversationId]);
+
+  const [targetEmail, setTargetEmail] = useState(detectedEmail);
+  const [targetName, setTargetName] = useState(clientName || 'Customer');
+
   const [title, setTitle] = useState('');
   const [serviceType, setServiceType] = useState('Embroidery Digitizing');
   const [description, setDescription] = useState('');
@@ -45,8 +69,13 @@ export default function AdminCreateOfferModal({
     if (!isOpen) {
       isSubmittingRef.current = false;
       setIsSubmitting(false);
+    } else {
+      setTargetEmail(detectedEmail);
+      if (clientName && clientName !== 'Customer') {
+        setTargetName(clientName);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, detectedEmail, clientName]);
 
   if (!isOpen) return null;
 
@@ -133,8 +162,8 @@ export default function AdminCreateOfferModal({
       const idempotencyKey = `idemp-off-${conversationId}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
       const payload = {
         conversation_id: conversationId,
-        client_name: clientName,
-        client_email: clientEmail,
+        client_name: (targetName || clientName || 'Customer').trim(),
+        client_email: (targetEmail || clientEmail || '').trim(),
         title: title.trim(),
         description: description.trim(),
         service_type: serviceType,
@@ -150,13 +179,16 @@ export default function AdminCreateOfferModal({
       };
 
       const res = await createCustomOffer(payload);
-      if (res.error) {
+      if (res?.error) {
         showToast(res.error, 'error');
         isSubmittingRef.current = false;
         setIsSubmitting(false);
       } else {
-        showToast(`Custom offer sent to ${clientName}!`, 'success');
-        onOfferCreated(res.offer, res.message);
+        const recipientDisplay = payload.client_name || payload.client_email || 'Customer';
+        showToast(`Custom offer sent to ${recipientDisplay}!`, 'success');
+        if (typeof onOfferCreated === 'function') {
+          onOfferCreated(res.offer, res.message);
+        }
         onClose();
       }
     } catch {
@@ -216,7 +248,7 @@ export default function AdminCreateOfferModal({
             <div>
               <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#ffffff' }}>Create Custom Offer</h3>
               <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>
-                Sending to <strong style={{ color: '#60a5fa' }}>{clientName}</strong> ({clientEmail || 'Chat Customer'})
+                Sending to <strong style={{ color: '#60a5fa' }}>{targetName || clientName || 'Customer'}</strong> ({targetEmail || clientEmail || 'No email detected'})
               </p>
             </div>
           </div>
@@ -242,6 +274,53 @@ export default function AdminCreateOfferModal({
 
         {/* Modal Body */}
         <form onSubmit={handleSubmit} style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+          {/* Customer / Recipient Info */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', background: 'rgba(15, 23, 42, 0.5)', padding: '0.75rem', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.25rem' }}>
+                Recipient Email *
+              </label>
+              <input
+                type="email"
+                required
+                value={targetEmail}
+                onChange={(e) => setTargetEmail(e.target.value)}
+                placeholder="customer@example.com"
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  borderRadius: '8px',
+                  background: 'rgba(15, 23, 42, 0.9)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#ffffff',
+                  fontSize: '0.82rem',
+                  outline: 'none'
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.25rem' }}>
+                Customer Name
+              </label>
+              <input
+                type="text"
+                value={targetName}
+                onChange={(e) => setTargetName(e.target.value)}
+                placeholder="Customer Name"
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  borderRadius: '8px',
+                  background: 'rgba(15, 23, 42, 0.9)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#ffffff',
+                  fontSize: '0.82rem',
+                  outline: 'none'
+                }}
+              />
+            </div>
+          </div>
+
           {/* Quick Presets */}
           <div>
             <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
