@@ -294,6 +294,32 @@ export async function GET(request) {
 
         const { offerId: resolvedOfferId, offerData: resolvedOfferData } = extractAndHydrateOffer(m, offersMap);
 
+        // Safely parse serialized attachment if stored as JSON or direct URL
+        let attachUrl = m.attachment_url || null;
+        let attachName = m.attachment_name || (typeof m.attachment === 'string' && !m.attachment.trim().startsWith('{') ? m.attachment : null);
+        let attachSize = m.attachment_size || null;
+        let attachType = m.attachment_type || null;
+        let fileId = null;
+
+        if (m.attachment && typeof m.attachment === 'string' && !resolvedOfferData) {
+          const trimmed = m.attachment.trim();
+          if (trimmed.startsWith('{') && (trimmed.includes('"url"') || trimmed.includes('"name"') || trimmed.includes('"file_url"'))) {
+            try {
+              const parsed = JSON.parse(trimmed);
+              if (parsed.url || parsed.file_url) attachUrl = parsed.file_url || parsed.url;
+              if (parsed.name || parsed.file_name) attachName = parsed.file_name || parsed.name;
+              if (parsed.size || parsed.file_size) attachSize = parsed.file_size || parsed.size;
+              if (parsed.type || parsed.mime_type || parsed.format) attachType = parsed.mime_type || parsed.type || parsed.format;
+              if (parsed.file_id || parsed.id) fileId = parsed.file_id || parsed.id;
+            } catch {}
+          } else if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+            attachUrl = trimmed;
+            if (!attachName || attachName === trimmed) {
+              attachName = decodeURIComponent(trimmed.split('/').pop()?.split('?')[0] || 'file');
+            }
+          }
+        }
+
         const mappedMsg = {
           id: m.id,
           conversation_id: thread.id,
@@ -305,10 +331,11 @@ export async function GET(request) {
           sender_name: m.sender_name,
           text: resolvedOfferData ? `📋 Custom Offer: ${resolvedOfferData.title} ($${parseFloat(resolvedOfferData.final_price || resolvedOfferData.price || 0).toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(resolvedOfferData)}]` : m.text,
           attachment: resolvedOfferData ? JSON.stringify(resolvedOfferData) : m.attachment,
-          attachment_url: m.attachment_url || null,
-          attachment_name: m.attachment_name || (resolvedOfferData ? `Custom Offer: ${resolvedOfferData.title}` : m.attachment) || null,
-          attachment_size: m.attachment_size || null,
-          attachment_type: resolvedOfferData ? 'custom_offer' : (m.attachment_type || null),
+          attachment_url: attachUrl,
+          attachment_name: attachName || (resolvedOfferData ? `Custom Offer: ${resolvedOfferData.title}` : (typeof m.attachment === 'string' && !m.attachment.trim().startsWith('{') ? m.attachment : 'document.pdf')),
+          attachment_size: attachSize,
+          attachment_type: resolvedOfferData ? 'custom_offer' : (attachType || m.attachment_type || null),
+          file_id: fileId,
           reply_to: m.reply_to || null,
           offer_id: resolvedOfferId,
           offer_data: resolvedOfferData,
@@ -532,19 +559,21 @@ export async function GET(request) {
 
         // Safely parse serialized attachment if stored as JSON or direct URL
         let attachUrl = m.attachment_url || null;
-        let attachName = m.attachment_name || m.attachment || null;
+        let attachName = m.attachment_name || (typeof m.attachment === 'string' && !m.attachment.trim().startsWith('{') ? m.attachment : null);
         let attachSize = m.attachment_size || null;
         let attachType = m.attachment_type || null;
+        let fileId = null;
 
         if (m.attachment && typeof m.attachment === 'string' && !resolvedOfferData) {
           const trimmed = m.attachment.trim();
-          if (trimmed.startsWith('{') && (trimmed.includes('"url"') || trimmed.includes('"name"'))) {
+          if (trimmed.startsWith('{') && (trimmed.includes('"url"') || trimmed.includes('"name"') || trimmed.includes('"file_url"'))) {
             try {
               const parsed = JSON.parse(trimmed);
-              if (parsed.url) attachUrl = parsed.url;
-              if (parsed.name) attachName = parsed.name;
-              if (parsed.size) attachSize = parsed.size;
-              if (parsed.type || parsed.format) attachType = parsed.type || parsed.format;
+              if (parsed.url || parsed.file_url) attachUrl = parsed.file_url || parsed.url;
+              if (parsed.name || parsed.file_name) attachName = parsed.file_name || parsed.name;
+              if (parsed.size || parsed.file_size) attachSize = parsed.file_size || parsed.size;
+              if (parsed.type || parsed.mime_type || parsed.format) attachType = parsed.mime_type || parsed.type || parsed.format;
+              if (parsed.file_id || parsed.id) fileId = parsed.file_id || parsed.id;
             } catch {}
           } else if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
             attachUrl = trimmed;
@@ -567,9 +596,10 @@ export async function GET(request) {
           text: resolvedOfferData ? `📋 Custom Offer: ${resolvedOfferData.title} ($${parseFloat(resolvedOfferData.final_price || resolvedOfferData.price || 0).toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(resolvedOfferData)}]` : m.text,
           attachment: resolvedOfferData ? JSON.stringify(resolvedOfferData) : m.attachment,
           attachment_url: attachUrl,
-          attachment_name: attachName || (resolvedOfferData ? `Custom Offer: ${resolvedOfferData.title}` : m.attachment) || null,
+          attachment_name: attachName || (resolvedOfferData ? `Custom Offer: ${resolvedOfferData.title}` : (typeof m.attachment === 'string' && !m.attachment.trim().startsWith('{') ? m.attachment : 'document.pdf')),
           attachment_size: attachSize,
           attachment_type: resolvedOfferData ? 'custom_offer' : (attachType || m.attachment_type || null),
+          file_id: fileId,
           reply_to: m.reply_to || null,
           offer_id: resolvedOfferId,
           offer_data: resolvedOfferData,
@@ -840,14 +870,38 @@ export async function POST(request) {
       let finalInsertedMsg = dbPayload;
       const { data: insData, error: insError } = await supabase.from('messages').insert([dbPayload]).select();
       if (insError) {
-        console.warn('[Messages API insert notice]:', insError.message, '- inserting standard core columns');
-        let coreAttachment = dbPayload.attachment || dbPayload.attachment_url || null;
-        if (dbPayload.attachment_url && (!coreAttachment || (typeof coreAttachment === 'string' && !coreAttachment.startsWith('http') && !coreAttachment.startsWith('{')))) {
+        let coreAttachment = null;
+        const targetAttachUrl = dbPayload.attachment_url || (typeof dbPayload.attachment === 'string' && (dbPayload.attachment.startsWith('http') || dbPayload.attachment.startsWith('data:') || dbPayload.attachment.startsWith('blob:')) ? dbPayload.attachment : null);
+
+        if (targetAttachUrl || dbPayload.attachment) {
+          let parsedExisting = null;
+          if (typeof dbPayload.attachment === 'string' && dbPayload.attachment.trim().startsWith('{')) {
+            try { parsedExisting = JSON.parse(dbPayload.attachment); } catch {}
+          } else if (typeof dbPayload.attachment === 'object' && dbPayload.attachment !== null) {
+            parsedExisting = dbPayload.attachment;
+          }
+
+          const fileUrl = targetAttachUrl || parsedExisting?.file_url || parsedExisting?.url || null;
+          const rawFileName = parsedExisting?.file_name || parsedExisting?.name || dbPayload.attachment_name || (typeof dbPayload.attachment === 'string' && !dbPayload.attachment.trim().startsWith('{') ? dbPayload.attachment : 'document.pdf');
+          const cleanFileName = rawFileName.replace(/["\r\n\\]/g, '').trim() || 'document.pdf';
+          const ext = cleanFileName.split('.').pop()?.toLowerCase() || 'pdf';
+          const mimeType = parsedExisting?.mime_type || (ext === 'pdf' ? 'application/pdf' : 'application/octet-stream');
+          const fileId = payload.file_id || parsedExisting?.file_id || `file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+
           coreAttachment = JSON.stringify({
-            url: dbPayload.attachment_url,
-            name: dbPayload.attachment_name || dbPayload.attachment || 'file',
-            size: dbPayload.attachment_size || null,
-            type: dbPayload.attachment_type || null
+            file_id: fileId,
+            id: fileId,
+            sender_id: actualSender,
+            receiver_id: targetEmail || 'support',
+            name: cleanFileName,
+            file_name: cleanFileName,
+            url: fileUrl,
+            file_url: fileUrl,
+            size: dbPayload.attachment_size || parsedExisting?.size || null,
+            file_size: dbPayload.attachment_size || parsedExisting?.file_size || null,
+            type: ext,
+            mime_type: mimeType,
+            created_at: nowIso
           });
         }
         const corePayload = {

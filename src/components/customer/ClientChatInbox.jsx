@@ -233,7 +233,26 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
         ));
 
       if (isForThisCustomer) {
+        let attachObj = null;
+        if (record.attachment && typeof record.attachment === 'string') {
+          const trimmed = record.attachment.trim();
+          if (trimmed.startsWith('{')) {
+            try { attachObj = JSON.parse(trimmed); } catch {}
+          }
+        } else if (record.attachment && typeof record.attachment === 'object') {
+          attachObj = record.attachment;
+        }
+
         const resolvedOfferId = record.offer_id || extractedOffer?.id || (record.text && record.text.includes('off-') ? record.text.match(/off-[0-9a-z_-]+/i)?.[0] : null);
+
+        const attachUrl = record.attachment_url || attachObj?.file_url || attachObj?.url || (typeof record.attachment === 'string' && record.attachment.startsWith('http') ? record.attachment : null);
+        let attachName = record.attachment_name || attachObj?.file_name || attachObj?.name || (extractedOffer ? `Custom Offer: ${extractedOffer.title}` : (typeof record.attachment === 'string' && !record.attachment.trim().startsWith('{') ? record.attachment : null));
+        if (!attachName || attachName.trim().startsWith('{')) {
+          attachName = attachUrl ? decodeURIComponent(attachUrl.split('/').pop()?.split('?')[0] || 'document.pdf') : 'document.pdf';
+        }
+        const attachSize = record.attachment_size || attachObj?.file_size || attachObj?.size || null;
+        const attachType = extractedOffer ? 'custom_offer' : (record.attachment_type || attachObj?.mime_type || attachObj?.type || attachObj?.format || null);
+
         const formattedRecord = {
           id: record.id,
           conversation_id: canonicalChatId,
@@ -243,10 +262,11 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           sender_name: record.sender_name,
           text: record.text,
           attachment: record.attachment,
-          attachment_url: record.attachment_url,
-          attachment_name: record.attachment_name || (extractedOffer ? `Custom Offer: ${extractedOffer.title}` : record.attachment),
-          attachment_size: record.attachment_size,
-          attachment_type: extractedOffer ? 'custom_offer' : record.attachment_type,
+          attachment_url: attachUrl,
+          attachment_name: attachName,
+          attachment_size: attachSize,
+          attachment_type: attachType,
+          file_id: attachObj?.file_id || record.file_id || null,
           reply_to: record.reply_to,
           offer_id: resolvedOfferId,
           offer_data: extractedOffer,
@@ -419,9 +439,14 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
     const msgText = messageInput.trim();
 
     const serializedAttachment = attachedFile ? (attachedFile.url ? JSON.stringify({
+      file_id: attachedFile.file_id || null,
+      file_url: attachedFile.url,
       url: attachedFile.url,
+      file_name: attachedFile.name,
       name: attachedFile.name,
+      file_size: attachedFile.size,
       size: attachedFile.size,
+      mime_type: attachedFile.format === 'pdf' ? 'application/pdf' : (attachedFile.mime_type || attachedFile.format),
       type: attachedFile.format
     }) : attachedFile.name) : null;
 
@@ -437,7 +462,8 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
       attachment_url: attachedFile ? attachedFile.url : null,
       attachment_name: attachedFile ? attachedFile.name : null,
       attachment_size: attachedFile ? attachedFile.size : null,
-      attachment_type: attachedFile ? attachedFile.format : null,
+      attachment_type: attachedFile ? (attachedFile.format === 'pdf' ? 'application/pdf' : attachedFile.format) : null,
+      file_id: attachedFile ? (attachedFile.file_id || null) : null,
       reply_to: replyingTo ? {
         id: replyingTo.id,
         sender_name: replyingTo.senderName || replyingTo.sender_name || 'Support',
@@ -482,12 +508,14 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
     setIsUploadingAttachment(true);
     try {
       const uploadRes = await uploadFileToCloudinaryFull(file);
-      if (uploadRes && (uploadRes.url || uploadRes.secure_url)) {
+      const fileUrl = uploadRes?.file_url || uploadRes?.secure_url || uploadRes?.url;
+      if (uploadRes && fileUrl) {
         setAttachedFile({
-          name: file.name,
-          url: uploadRes.secure_url || uploadRes.url,
-          size: file.size,
-          format: file.name.split('.').pop().toLowerCase()
+          name: uploadRes.file_name || uploadRes.name || file.name,
+          url: fileUrl,
+          size: uploadRes.file_size || file.size,
+          format: uploadRes.mime_type || uploadRes.format || file.name.split('.').pop().toLowerCase(),
+          file_id: uploadRes.file_id || uploadRes.id || null
         });
         if (showToast) showToast(`Attached ${file.name}`, 'success');
       } else {

@@ -539,7 +539,23 @@ export const AdminChatInbox = () => {
             if (match && match[1]) extractedOffer = JSON.parse(match[1]);
           } catch {}
         }
-        const resolvedOfferId = record.offer_id || record.offerId || extractedOffer?.id || (record.text && record.text.includes('off-') ? record.text.match(/off-[0-9a-z_-]+/i)?.[0] : null);
+        let attachObj = null;
+        if (record.attachment && typeof record.attachment === 'string') {
+          const trimmed = record.attachment.trim();
+          if (trimmed.startsWith('{')) {
+            try { attachObj = JSON.parse(trimmed); } catch {}
+          }
+        } else if (record.attachment && typeof record.attachment === 'object') {
+          attachObj = record.attachment;
+        }
+
+        const attachUrl = record.attachment_url || attachObj?.file_url || attachObj?.url || (typeof record.attachment === 'string' && record.attachment.startsWith('http') ? record.attachment : null);
+        let attachName = record.attachment_name || attachObj?.file_name || attachObj?.name || (extractedOffer ? `Custom Offer: ${extractedOffer.title}` : (typeof record.attachment === 'string' && !record.attachment.trim().startsWith('{') ? record.attachment : null));
+        if (!attachName || attachName.trim().startsWith('{')) {
+          attachName = attachUrl ? decodeURIComponent(attachUrl.split('/').pop()?.split('?')[0] || 'document.pdf') : 'document.pdf';
+        }
+        const attachSize = record.attachment_size || attachObj?.file_size || attachObj?.size || null;
+        const attachType = extractedOffer ? 'custom_offer' : (record.attachment_type || attachObj?.mime_type || attachObj?.type || attachObj?.format || null);
 
         const newMsg = {
           id: record.id,
@@ -549,10 +565,11 @@ export const AdminChatInbox = () => {
           senderName: record.sender_name,
           text: record.text,
           attachment: record.attachment,
-          attachment_url: record.attachment_url,
-          attachment_name: record.attachment_name || (extractedOffer ? `Custom Offer: ${extractedOffer.title}` : record.attachment),
-          attachment_size: record.attachment_size,
-          attachment_type: extractedOffer ? 'custom_offer' : record.attachment_type,
+          attachment_url: attachUrl,
+          attachment_name: attachName,
+          attachment_size: attachSize,
+          attachment_type: attachType,
+          file_id: attachObj?.file_id || record.file_id || null,
           reply_to: record.reply_to,
           offer_id: resolvedOfferId,
           offer_data: extractedOffer,
@@ -1037,9 +1054,14 @@ export const AdminChatInbox = () => {
 
     const nowIso = new Date().toISOString();
     const serializedAttachment = attachedFile ? (attachedFile.url ? JSON.stringify({
+      file_id: attachedFile.file_id || null,
+      file_url: attachedFile.url,
       url: attachedFile.url,
+      file_name: attachedFile.name,
       name: attachedFile.name,
+      file_size: attachedFile.size,
       size: attachedFile.size,
+      mime_type: attachedFile.format === 'pdf' ? 'application/pdf' : (attachedFile.mime_type || attachedFile.format),
       type: attachedFile.format
     }) : attachedFile.name) : null;
 
@@ -1055,7 +1077,8 @@ export const AdminChatInbox = () => {
       attachment_url: attachedFile ? attachedFile.url : null,
       attachment_name: attachedFile ? attachedFile.name : null,
       attachment_size: attachedFile ? attachedFile.size : null,
-      attachment_type: attachedFile ? attachedFile.format : null,
+      attachment_type: attachedFile ? (attachedFile.format === 'pdf' ? 'application/pdf' : attachedFile.format) : null,
+      file_id: attachedFile ? (attachedFile.file_id || null) : null,
       reply_to: replyingTo ? {
         id: replyingTo.id,
         sender_name: replyingTo.senderName || replyingTo.sender_name || (activeInfo?.customerName || 'Customer'),
@@ -1269,12 +1292,14 @@ export const AdminChatInbox = () => {
     showToast(`Uploading ${file.name}...`, 'info');
     try {
       const uploaded = await uploadFileToCloudinaryFull(file, 'admin-deliveries', 'chat-attachments');
-      if (uploaded && uploaded.url) {
+      const fileUrl = uploaded?.file_url || uploaded?.secure_url || uploaded?.url;
+      if (uploaded && fileUrl) {
         setAttachedFile({
-          name: file.name,
-          url: uploaded.url,
-          size: uploaded.size || (file.size / 1024).toFixed(1) + ' KB',
-          format: uploaded.format || file.name.split('.').pop()
+          name: uploaded.file_name || uploaded.name || file.name,
+          url: fileUrl,
+          size: uploaded.file_size || uploaded.size || (file.size / 1024).toFixed(1) + ' KB',
+          format: uploaded.mime_type || uploaded.format || file.name.split('.').pop(),
+          file_id: uploaded.file_id || uploaded.id || null
         });
         showToast(`Ready to send: ${file.name}`, 'success');
       } else {

@@ -135,6 +135,30 @@ async function handleFileRequest(request, isHead = false) {
 
     fileUrl = fileUrl.trim();
 
+    // Auto-deserialize if fileUrl itself was passed as a JSON serialized string
+    if (fileUrl.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(fileUrl);
+        if (parsed.file_url || parsed.url) {
+          fileUrl = (parsed.file_url || parsed.url).trim();
+          if (!filename || filename === 'file') {
+            filename = parsed.file_name || parsed.name || filename;
+          }
+        }
+      } catch {}
+    }
+
+    // Auto-deserialize if filename was passed as a JSON serialized string
+    if (typeof filename === 'string' && filename.trim().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(filename);
+        filename = parsed.file_name || parsed.name || parsed.filename || 'file';
+      } catch {}
+    }
+
+    // Sanitize filename of filesystem-illegal characters
+    filename = String(filename).replace(/[/\\?%*:|"<>]/g, '_').trim() || 'file';
+
     // 1. Direct Support for Data URLs (Local/Fallback base64 assets)
     if (fileUrl.startsWith('data:')) {
       const match = fileUrl.match(/^data:([^;]+);base64,(.+)$/);

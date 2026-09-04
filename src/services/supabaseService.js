@@ -2134,11 +2134,18 @@ export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-u
           window.dispatchEvent(new CustomEvent('upload:end', { detail: { fileName: fileObj.name, success: true } }));
         }
         return {
+          file_id: serverData.file_id || `file-${Date.now()}`,
           name: fileObj.name,
+          file_name: fileObj.name,
           url: serverData.url || serverData.secure_url,
+          file_url: serverData.url || serverData.secure_url,
           public_id: serverData.public_id || serverData.url,
-          size: `${(fileObj.size / (1024 * 1024)).toFixed(2)} MB`,
-          format: fileObj.name?.split('.').pop() || 'png'
+          size: fileObj.size,
+          file_size: fileObj.size,
+          formattedSize: `${(fileObj.size / (1024 * 1024)).toFixed(2)} MB`,
+          mime_type: serverData.mime_type || (fileObj.name?.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream'),
+          format: fileObj.name?.split('.').pop() || 'png',
+          created_at: serverData.created_at || new Date().toISOString()
         };
       }
     }

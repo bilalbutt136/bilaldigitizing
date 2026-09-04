@@ -57,7 +57,8 @@ const ALLOWED_BUCKETS = new Set([
 ]);
 
 const PUBLIC_UPLOAD_BUCKETS = new Set([
-  'client-uploads', 'chat-attachments', 'order-files', 'customer-assets', 'orders'
+  'client-uploads', 'chat-attachments', 'order-files', 'customer-assets', 'orders',
+  'admin-deliveries', 'finished-packages', 'portfolio-images', 'deliveries'
 ]);
 
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
@@ -171,14 +172,24 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Failed to generate public URL for uploaded file.' }, { status: 500 });
     }
 
+    const fileId = `file-${Date.now()}-${uuidv4().substring(0, 8)}`;
     return NextResponse.json({
       success: true,
+      file_id: fileId,
+      id: fileId,
       url: publicUrlData.publicUrl,
       secure_url: publicUrlData.publicUrl,
+      file_url: publicUrlData.publicUrl,
       public_id: uniqueFilename,
       filename: originalName,
+      file_name: originalName,
+      name: originalName,
       size: file.size,
-      contentType: resolvedContentType
+      file_size: file.size,
+      contentType: resolvedContentType,
+      mime_type: resolvedContentType,
+      format: fileExt,
+      created_at: new Date().toISOString()
     });
   } catch (error) {
     console.error('[Upload API Error]', error);

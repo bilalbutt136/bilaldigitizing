@@ -28,14 +28,48 @@ export function getCleanCloudinaryViewUrl(url) {
 export async function downloadFileDirectly(url, filename = 'download') {
   if (!url) return;
 
-  const cleanFilename = filename || 'download';
+  let resolvedUrl = url;
+  let cleanFilename = filename || 'download';
+
+  // If url is a JSON object or stringified JSON
+  if (typeof resolvedUrl === 'string' && resolvedUrl.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(resolvedUrl);
+      if (parsed.file_url || parsed.url) {
+        resolvedUrl = parsed.file_url || parsed.url;
+        cleanFilename = parsed.file_name || parsed.name || cleanFilename;
+      }
+    } catch {}
+  }
+
+  // If filename is stringified JSON
+  if (typeof cleanFilename === 'string' && cleanFilename.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(cleanFilename);
+      cleanFilename = parsed.file_name || parsed.name || parsed.filename || 'download';
+    } catch {}
+  }
+
+  cleanFilename = String(cleanFilename || 'download')
+    .replace(/[/\\?%*:|"<>]/g, '_')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // Ensure extension for PDFs
+  const isPdf = resolvedUrl.toLowerCase().includes('.pdf') || 
+                resolvedUrl.toLowerCase().includes('application/pdf') || 
+                cleanFilename.toLowerCase().endsWith('.pdf');
+
+  if (isPdf && !cleanFilename.toLowerCase().endsWith('.pdf')) {
+    cleanFilename += '.pdf';
+  }
 
   // 1. If it's already a local blob URL
-  if (url.startsWith('blob:')) {
+  if (resolvedUrl.startsWith('blob:')) {
     try {
       const a = document.createElement('a');
       a.style.display = 'none';
-      a.href = url;
+      a.href = resolvedUrl;
       a.download = cleanFilename;
       document.body.appendChild(a);
       a.click();
@@ -49,9 +83,9 @@ export async function downloadFileDirectly(url, filename = 'download') {
   }
 
   // 2. If it's a data URL, convert to Blob URL to guarantee direct browser download
-  if (url.startsWith('data:')) {
+  if (resolvedUrl.startsWith('data:')) {
     try {
-      const parts = url.split(',');
+      const parts = resolvedUrl.split(',');
       const mimeMatch = parts[0].match(/:(.*?);/);
       const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
       const bstr = atob(parts[1]);
@@ -79,7 +113,7 @@ export async function downloadFileDirectly(url, filename = 'download') {
   }
 
   // 3. High-speed, CORS-free server-side proxy URL
-  const proxyDownloadUrl = `/api/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(cleanFilename)}`;
+  const proxyDownloadUrl = `/api/download?url=${encodeURIComponent(resolvedUrl)}&filename=${encodeURIComponent(cleanFilename)}`;
 
   // 4. Reliable Blob fetch download (forces download without CORS or navigation freeze)
   try {
@@ -126,7 +160,7 @@ export async function downloadFileDirectly(url, filename = 'download') {
 
   // 6. Tertiary fallback: Direct file fetch as Blob
   try {
-    const directUrl = getCleanCloudinaryDownloadUrl(url);
+    const directUrl = getCleanCloudinaryDownloadUrl(resolvedUrl);
     const response = await fetch(directUrl, { mode: 'cors' });
     if (response.ok) {
       const blob = await response.blob();
@@ -148,7 +182,7 @@ export async function downloadFileDirectly(url, filename = 'download') {
   }
 
   // 7. Last-resort fallback: Direct navigation
-  window.open(url, '_blank', 'noopener,noreferrer');
+  window.open(resolvedUrl, '_blank', 'noopener,noreferrer');
 }
 
 /**
@@ -157,12 +191,39 @@ export async function downloadFileDirectly(url, filename = 'download') {
 export async function openPdfInNewTab(url, filename = 'document.pdf') {
   if (!url) return;
 
-  const cleanFilename = filename || 'document.pdf';
+  let resolvedUrl = url;
+  let cleanFilename = filename || 'document.pdf';
+
+  if (typeof resolvedUrl === 'string' && resolvedUrl.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(resolvedUrl);
+      if (parsed.file_url || parsed.url) {
+        resolvedUrl = parsed.file_url || parsed.url;
+        cleanFilename = parsed.file_name || parsed.name || cleanFilename;
+      }
+    } catch {}
+  }
+
+  if (typeof cleanFilename === 'string' && cleanFilename.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(cleanFilename);
+      cleanFilename = parsed.file_name || parsed.name || parsed.filename || 'document.pdf';
+    } catch {}
+  }
+
+  cleanFilename = String(cleanFilename || 'document.pdf')
+    .replace(/[/\\?%*:|"<>]/g, '_')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!cleanFilename.toLowerCase().endsWith('.pdf')) {
+    cleanFilename += '.pdf';
+  }
 
   // 1. If it's a blob URL
-  if (url.startsWith('blob:')) {
+  if (resolvedUrl.startsWith('blob:')) {
     const a = document.createElement('a');
-    a.href = url;
+    a.href = resolvedUrl;
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
     document.body.appendChild(a);
@@ -172,9 +233,9 @@ export async function openPdfInNewTab(url, filename = 'document.pdf') {
   }
 
   // 2. If it's a data URL, convert to Blob URL to avoid top-level window navigation security block
-  if (url.startsWith('data:')) {
+  if (resolvedUrl.startsWith('data:')) {
     try {
-      const parts = url.split(',');
+      const parts = resolvedUrl.split(',');
       const mimeMatch = parts[0].match(/:(.*?);/);
       const mime = mimeMatch ? mimeMatch[1] : 'application/pdf';
       const bstr = atob(parts[1]);
@@ -202,7 +263,7 @@ export async function openPdfInNewTab(url, filename = 'document.pdf') {
   }
 
   // 3. High-speed server-side stream preview (/api/download?preview=true)
-  const previewProxyUrl = `/api/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(cleanFilename)}&preview=true`;
+  const previewProxyUrl = `/api/download?url=${encodeURIComponent(resolvedUrl)}&filename=${encodeURIComponent(cleanFilename)}&preview=true`;
 
   try {
     const a = document.createElement('a');

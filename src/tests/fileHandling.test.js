@@ -107,4 +107,38 @@ describe('File Handling & Universal Storage Pipeline', () => {
     assert.ok(buf.toString('utf-8').startsWith('%PDF-'));
     assert.ok(buf.toString('utf-8').includes('%%EOF'));
   });
+
+  test('safely parses stringified JSON in filename and extracts real filename', () => {
+    const rawJsonFilename = JSON.stringify({
+      file_id: 'upload-12345',
+      file_url: 'https://xyz.supabase.co/storage/v1/object/public/client-uploads/invoice.pdf',
+      file_name: 'Custom_Quotation_Turbide.pdf',
+      file_size: 154200,
+      mime_type: 'application/pdf'
+    });
+
+    let resolvedName = rawJsonFilename;
+    if (typeof resolvedName === 'string' && resolvedName.trim().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(resolvedName);
+        resolvedName = parsed.file_name || parsed.name || 'document.pdf';
+      } catch {}
+    }
+    resolvedName = resolvedName.replace(/[/\\?%*:|"<>]/g, '_').trim();
+
+    assert.equal(resolvedName, 'Custom_Quotation_Turbide.pdf');
+    assert.ok(!resolvedName.includes('{'));
+    assert.ok(!resolvedName.includes('"'));
+  });
+
+  test('safely sanitizes illegal filesystem characters from download filenames', () => {
+    const dirtyName = 'Turbide: Invoice/Quotation *FINAL* <v1.2>.pdf';
+    const cleanName = dirtyName.replace(/[/\\?%*:|"<>]/g, '_').trim();
+    assert.equal(cleanName, 'Turbide_ Invoice_Quotation _FINAL_ _v1.2_.pdf');
+    assert.ok(!cleanName.includes(':'));
+    assert.ok(!cleanName.includes('/'));
+    assert.ok(!cleanName.includes('*'));
+    assert.ok(!cleanName.includes('<'));
+    assert.ok(!cleanName.includes('>'));
+  });
 });

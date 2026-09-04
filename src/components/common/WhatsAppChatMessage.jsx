@@ -188,16 +188,34 @@ export default function WhatsAppChatMessage({
   }
 
   let parsedAttach = null;
-  if (message.attachment && typeof message.attachment === 'string') {
-    const trimmed = message.attachment.trim();
-    if (trimmed.startsWith('{') && (trimmed.includes('"url"') || trimmed.includes('"name"'))) {
+  const rawCandidate = message.attachment || (typeof message.attachment_name === 'string' && message.attachment_name.trim().startsWith('{') ? message.attachment_name : null);
+  if (rawCandidate && typeof rawCandidate === 'string') {
+    const trimmed = rawCandidate.trim();
+    if (trimmed.startsWith('{')) {
       try { parsedAttach = JSON.parse(trimmed); } catch {}
     }
+  } else if (rawCandidate && typeof rawCandidate === 'object') {
+    parsedAttach = rawCandidate;
   }
 
-  const fileName = message.attachment_name || parsedAttach?.name || (typeof message.attachment === 'string' && message.attachment.startsWith('http') ? decodeURIComponent(message.attachment.split('/').pop()?.split('?')[0] || '') : message.attachment) || '';
-  const fileUrl = message.attachment_url || parsedAttach?.url || (typeof message.attachment === 'string' && (message.attachment.startsWith('http') || message.attachment.startsWith('data:') || message.attachment.startsWith('blob:')) ? message.attachment : null);
-  const rawSize = message.attachment_size || parsedAttach?.size;
+  let fileName = '';
+  if (message.attachment_name && typeof message.attachment_name === 'string' && !message.attachment_name.trim().startsWith('{')) {
+    fileName = message.attachment_name;
+  } else if (parsedAttach?.file_name || parsedAttach?.name || parsedAttach?.filename) {
+    fileName = parsedAttach.file_name || parsedAttach.name || parsedAttach.filename;
+  } else if (typeof message.attachment === 'string' && message.attachment.startsWith('http')) {
+    fileName = decodeURIComponent(message.attachment.split('/').pop()?.split('?')[0] || '');
+  } else if (typeof message.attachment === 'string' && !message.attachment.trim().startsWith('{')) {
+    fileName = message.attachment;
+  } else {
+    fileName = 'document.pdf';
+  }
+
+  fileName = String(fileName || 'document.pdf').replace(/[/\\?%*:|"<>]/g, '_').trim();
+
+  let fileUrl = message.attachment_url || parsedAttach?.file_url || parsedAttach?.url || (typeof message.attachment === 'string' && (message.attachment.startsWith('http') || message.attachment.startsWith('data:') || message.attachment.startsWith('blob:')) ? message.attachment : null);
+
+  const rawSize = message.attachment_size || parsedAttach?.file_size || parsedAttach?.size;
   const fileSize = rawSize ? (typeof rawSize === 'number' ? `${Math.round(rawSize / 1024)} KB` : (String(rawSize).match(/^\d+$/) ? `${Math.round(Number(rawSize) / 1024)} KB` : rawSize)) : 'PDF Document';
   const fileCategory = getFileCategory(fileName, fileUrl);
   const replyTo = message.reply_to;
@@ -207,7 +225,7 @@ export default function WhatsAppChatMessage({
   const handleDownload = (e, customUrl, customName) => {
     e?.stopPropagation();
     const targetUrl = customUrl || effectiveUrl;
-    const targetName = customName || fileName || 'download';
+    const targetName = customName || fileName || 'download.pdf';
     if (!targetUrl) return;
     downloadFileDirectly(targetUrl, targetName);
   };
@@ -401,8 +419,8 @@ export default function WhatsAppChatMessage({
         {fileCategory === 'pdf' && (
           <div
             style={{
-              background: isMe ? 'rgba(0, 0, 0, 0.12)' : 'var(--bg-subtle, #f8fafc)',
-              border: `1.5px solid ${isMe ? 'rgba(255,255,255,0.2)' : 'var(--color-border, #e2e8f0)'}`,
+              background: resolvedIsMe ? 'rgba(0, 0, 0, 0.12)' : 'var(--bg-subtle, #f8fafc)',
+              border: `1.5px solid ${resolvedIsMe ? 'rgba(255,255,255,0.2)' : 'var(--color-border, #e2e8f0)'}`,
               borderRadius: '12px',
               padding: '0.65rem 0.75rem',
               display: 'flex',
@@ -430,7 +448,7 @@ export default function WhatsAppChatMessage({
                 <div style={{
                   fontWeight: 800,
                   fontSize: '0.82rem',
-                  color: isMe ? '#ffffff' : 'var(--color-text-primary, #0f172a)',
+                  color: resolvedIsMe ? '#ffffff' : 'var(--color-text-primary, #0f172a)',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap'
@@ -439,7 +457,7 @@ export default function WhatsAppChatMessage({
                 </div>
                 <div style={{
                   fontSize: '0.7rem',
-                  color: isMe ? 'rgba(255,255,255,0.75)' : 'var(--color-text-muted, #64748b)',
+                  color: resolvedIsMe ? 'rgba(255,255,255,0.75)' : 'var(--color-text-muted, #64748b)',
                   marginTop: '0.1rem'
                 }}>
                   {fileSize || 'PDF Document'}
@@ -449,15 +467,15 @@ export default function WhatsAppChatMessage({
 
             {/* Actions for PDF */}
             <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
-              {fileUrl && (
+              {effectiveUrl && (
                 <button
                   type="button"
                   onClick={handleOpenPdf}
-                  title="Open PDF in new tab"
+                  title="Open PDF preview"
                   style={{
-                    background: isMe ? 'rgba(255,255,255,0.2)' : '#ffffff',
-                    color: isMe ? '#ffffff' : 'var(--color-primary, #ea580c)',
-                    border: `1px solid ${isMe ? 'rgba(255,255,255,0.3)' : 'var(--color-border, #e2e8f0)'}`,
+                    background: resolvedIsMe ? 'rgba(255,255,255,0.2)' : '#ffffff',
+                    color: resolvedIsMe ? '#ffffff' : 'var(--color-primary, #ea580c)',
+                    border: `1px solid ${resolvedIsMe ? 'rgba(255,255,255,0.3)' : 'var(--color-border, #e2e8f0)'}`,
                     borderRadius: '6px',
                     padding: '0.35rem 0.6rem',
                     fontSize: '0.72rem',
@@ -476,8 +494,8 @@ export default function WhatsAppChatMessage({
                 onClick={(e) => handleDownload(e)}
                 title="Download PDF"
                 style={{
-                  background: isMe ? '#ffffff' : 'var(--color-primary, #ff7a00)',
-                  color: isMe ? 'var(--color-primary, #ea580c)' : '#ffffff',
+                  background: resolvedIsMe ? '#ffffff' : 'var(--color-primary, #ff7a00)',
+                  color: resolvedIsMe ? 'var(--color-primary, #ea580c)' : '#ffffff',
                   border: 'none',
                   borderRadius: '6px',
                   padding: '0.35rem 0.55rem',
@@ -498,8 +516,8 @@ export default function WhatsAppChatMessage({
         {fileCategory !== 'image' && fileCategory !== 'pdf' && fileName && !fileName.trim().startsWith('{') && (!fileUrl || !fileUrl.startsWith('{')) && (
           <div
             style={{
-              background: isMe ? 'rgba(0, 0, 0, 0.12)' : 'var(--bg-subtle, #f8fafc)',
-              border: `1.5px solid ${isMe ? 'rgba(255,255,255,0.2)' : 'var(--color-border, #e2e8f0)'}`,
+              background: resolvedIsMe ? 'rgba(0, 0, 0, 0.12)' : 'var(--bg-subtle, #f8fafc)',
+              border: `1.5px solid ${resolvedIsMe ? 'rgba(255,255,255,0.2)' : 'var(--color-border, #e2e8f0)'}`,
               borderRadius: '12px',
               padding: '0.65rem 0.75rem',
               display: 'flex',
