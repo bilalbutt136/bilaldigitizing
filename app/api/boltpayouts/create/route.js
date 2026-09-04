@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
+import { checkRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
 
 function formatBoltAmount(amt) {
   const num = parseFloat(amt);
@@ -90,6 +91,15 @@ function extractLightningInvoice(url, boltData = {}) {
 
 export async function POST(request) {
   try {
+    const ip = getClientIp(request);
+    const rateLimit = checkRateLimit(`boltpayouts-create:${ip}`, 25, 60000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { success: false, error: 'Too many payment requests. Please wait a moment.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimit) }
+      );
+    }
+
     const { user } = await getServerAuthUser(request);
 
     if (!hasServiceRole || !supabaseAdmin) {

@@ -1,9 +1,25 @@
 import { GoogleGenAI } from '@google/genai';
+import { checkRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
+import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
   try {
+    const ip = getClientIp(req);
+    const rateLimit = checkRateLimit(`ai-refine:${ip}`, 30, 60000);
+    if (!rateLimit.success) {
+      return Response.json(
+        { error: 'Rate limit exceeded. Please wait a moment before sending another request.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimit) }
+      );
+    }
+
+    const { user, isAdmin } = await getServerAuthUser(req);
+    if (!user || !isAdmin) {
+      return Response.json({ error: 'Unauthorized: Admin privileges required.' }, { status: 403 });
+    }
+
     const apiKey = (
       process.env.GEMINI_API_KEY ||
       process.env.GOOGLE_AI_API_KEY ||

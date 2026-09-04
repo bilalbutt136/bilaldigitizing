@@ -1,4 +1,5 @@
 import { GoogleGenAI, Type } from '@google/genai';
+import { checkRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +24,14 @@ async function fetchImageAsBase64(url) {
 
 export async function POST(req) {
   try {
+    const ip = getClientIp(req);
+    const rateLimit = checkRateLimit(`ai-reply:${ip}`, 20, 60000);
+    if (!rateLimit.success) {
+      return Response.json(
+        { error: 'Rate limit exceeded. Please wait a moment before sending another AI request.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimit) }
+      );
+    }
     const apiKey = (
       process.env.GEMINI_API_KEY ||
       process.env.GOOGLE_AI_API_KEY ||

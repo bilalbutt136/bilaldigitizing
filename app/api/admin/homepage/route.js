@@ -38,7 +38,7 @@ export async function GET() {
       supabase.from('trust_features').select('*').order('sort_order', { ascending: true }),
       supabase.from('workflow_steps').select('*').order('sort_order', { ascending: true }),
       supabase.from('pricing_static_cards').select('*').order('sort_order', { ascending: true }),
-      supabase.from('pricing_tiers').select('*').order('sort_order', { ascending: true })
+      supabase.from('pricing_tiers').select('*').order('display_order', { ascending: true })
     ]);
 
     // Format settings into a simple key-value object

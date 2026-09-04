@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { validateSafeUrl } from '../../../src/lib/urlValidator';
 
 const MIME_TYPES = {
   pdf: 'application/pdf',
@@ -56,6 +57,12 @@ export async function GET(request) {
     if (fetchUrl.startsWith('//')) {
       fetchUrl = `https:${fetchUrl}`;
     }
+
+    const validation = validateSafeUrl(fetchUrl);
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error || 'Access to this URL is blocked.' }, { status: 403 });
+    }
+    fetchUrl = validation.sanitizedUrl;
 
     // Fetch the remote file server-side (bypassing browser CORS completely)
     const response = await fetch(fetchUrl, {

@@ -49,7 +49,7 @@ export const metadata = {
     '3D Puff Embroidery',
     'Cap Embroidery'
   ],
-  authors: [{ name: 'B Digitizing Studio', url: 'https://bdigitizing.pro' }],
+  authors: [{ name: 'B Digitizing Studio', url: '/' }],
   creator: 'B Digitizing Studio',
   publisher: 'B Digitizing Studio',
   formatDetection: {
@@ -60,15 +60,24 @@ export const metadata = {
   openGraph: {
     title: 'B Digitizing & Vector Studio | Custom Embroidery & Vector Art',
     description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.',
-    url: 'https://bdigitizing.pro',
+    url: '/',
     siteName: 'B Digitizing Studio',
     locale: 'en_US',
-    type: 'website'
+    type: 'website',
+    images: [
+      {
+        url: '/icon.svg',
+        width: 512,
+        height: 512,
+        alt: 'B Digitizing Studio Logo',
+      }
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'B Digitizing & Vector Studio | Custom Embroidery & Vector Art',
-    description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.'
+    description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.',
+    images: ['/icon.svg'],
   },
   robots: {
     index: true,

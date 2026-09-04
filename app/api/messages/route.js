@@ -47,7 +47,10 @@ export async function GET(request) {
     const supabase = createAdminClient();
 
     if (action === 'fetchConversations') {
-      const cleanUserEmail = normalizeEmail(user?.email || emailParam || '');
+      // Strict auth isolation: unauthenticated visitors can never access email-based threads
+      const cleanUserEmail = isAdmin 
+        ? normalizeEmail(emailParam || user?.email || '')
+        : (user?.email ? normalizeEmail(user.email) : '');
 
       // 1. Fetch all messages
       const { data: allMessages } = await supabase
@@ -338,12 +341,10 @@ export async function GET(request) {
         return NextResponse.json({ error: 'Missing chatId' }, { status: 400 });
       }
 
-      const cleanUserEmail = normalizeEmail(user?.email || emailParam || '');
-      let targetEmail = cleanUserEmail;
-      
       const cId = String(chatId).toLowerCase().trim();
       const isSupport = isSupportConversation(cId);
 
+      let targetEmail = '';
       if (cId.startsWith('support-') && !cId.startsWith('support-guest_')) {
         targetEmail = normalizeEmail(cId.replace('support-', ''));
       } else if (cId.startsWith('inbox-') && !cId.startsWith('inbox-guest_')) {
@@ -352,6 +353,24 @@ export async function GET(request) {
         targetEmail = normalizeEmail(cId.replace('direct-', ''));
       } else if (cId.startsWith('chat-')) {
         targetEmail = normalizeEmail(cId.replace('chat-', ''));
+      }
+
+      // Security verification: non-admins cannot access other users' conversations
+      if (!isAdmin) {
+        if (!user) {
+          const isGuestThread = cId.startsWith('support-guest_') || cId.startsWith('inbox-guest_') || cId === 'general-support' || cId === 'support-guest';
+          if (!isGuestThread) {
+            return NextResponse.json({ error: 'Unauthorized: Authentication required to view client messages.' }, { status: 401 });
+          }
+        } else {
+          const authEmail = normalizeEmail(user.email);
+          if (targetEmail && targetEmail !== authEmail) {
+            return NextResponse.json({ error: 'Forbidden: Cannot access another user\'s messages.' }, { status: 403 });
+          }
+          if (!targetEmail) {
+            targetEmail = authEmail;
+          }
+        }
       }
 
       let orderIds = [];

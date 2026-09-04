@@ -65,8 +65,15 @@ export async function getServerAuthUser(request) {
     const email = user.email.toLowerCase().trim();
 
     // 3. Master Admin & Configured Admin Email Check
-    const masterAdmin = (process.env.MASTER_ADMIN_EMAIL || process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'bilalbutt136@gmail.com').toLowerCase().trim();
-    if (masterAdmin && (email === masterAdmin || email === 'bilaldigitizing@gmail.com' || email === 'bilalbutt136@gmail.com')) {
+    const configuredAdmins = [
+      process.env.MASTER_ADMIN_EMAIL,
+      process.env.ADMIN_EMAIL,
+      process.env.NEXT_PUBLIC_ADMIN_EMAIL
+    ]
+      .filter(Boolean)
+      .map(e => e.toLowerCase().trim());
+
+    if (configuredAdmins.length > 0 && configuredAdmins.includes(email)) {
       return { user, isAdmin: true, error: null };
     }
 

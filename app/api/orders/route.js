@@ -14,9 +14,27 @@ export async function GET(request) {
     if (action === 'fetchAll') {
       const emailParam = searchParams.get('email');
       const orderIdsParam = searchParams.get('orderIds');
-      const targetEmail = (user?.email || emailParam || '').toLowerCase().trim();
+      
+      // Strict auth isolation: If logged in, client can strictly query their own session email.
+      // Unauthenticated visitors CANNOT query by arbitrary email; they may only look up specific guest order IDs.
+      let targetEmail = null;
+      if (isAdmin) {
+        targetEmail = (emailParam || '').toLowerCase().trim();
+      } else if (user?.email) {
+        targetEmail = user.email.toLowerCase().trim();
+      }
 
-      if (!isAdmin && !targetEmail && !orderIdsParam) {
+      // Guest order ID lookup: sanitize and cap to max 10 IDs
+      let parsedOrderIds = [];
+      if (orderIdsParam) {
+        parsedOrderIds = orderIdsParam
+          .split(',')
+          .map(id => id.trim())
+          .filter(id => id.length >= 3 && id.length <= 100)
+          .slice(0, 10);
+      }
+
+      if (!isAdmin && !targetEmail && parsedOrderIds.length === 0) {
         return NextResponse.json({ orders: [] });
       }
       
@@ -26,14 +44,13 @@ export async function GET(request) {
         if (!isAdmin) {
           if (targetEmail) {
             query = query.ilike('client_email', targetEmail);
-          } else if (orderIdsParam) {
-            const idList = orderIdsParam.split(',').map(id => id.trim()).filter(Boolean);
-            if (idList.length > 0) {
-              query = query.in('id', idList);
-            } else {
-              return NextResponse.json({ orders: [] });
-            }
+          } else if (parsedOrderIds.length > 0) {
+            query = query.in('id', parsedOrderIds);
           }
+        } else if (targetEmail) {
+          query = query.ilike('client_email', targetEmail);
+        } else if (parsedOrderIds.length > 0) {
+          query = query.in('id', parsedOrderIds);
         }
         const res = await query;
         if (res.error) throw res.error;
@@ -44,14 +61,13 @@ export async function GET(request) {
         if (!isAdmin) {
           if (targetEmail) {
             fallbackQuery = fallbackQuery.ilike('client_email', targetEmail);
-          } else if (orderIdsParam) {
-            const idList = orderIdsParam.split(',').map(id => id.trim()).filter(Boolean);
-            if (idList.length > 0) {
-              fallbackQuery = fallbackQuery.in('id', idList);
-            } else {
-              return NextResponse.json({ orders: [] });
-            }
+          } else if (parsedOrderIds.length > 0) {
+            fallbackQuery = fallbackQuery.in('id', parsedOrderIds);
           }
+        } else if (targetEmail) {
+          fallbackQuery = fallbackQuery.ilike('client_email', targetEmail);
+        } else if (parsedOrderIds.length > 0) {
+          fallbackQuery = fallbackQuery.in('id', parsedOrderIds);
         }
         const fallbackRes = await fallbackQuery;
         if (fallbackRes.error) throw fallbackRes.error;

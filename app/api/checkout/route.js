@@ -2,9 +2,19 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
+import { checkRateLimit, getClientIp, getRateLimitHeaders } from '../../../src/lib/rateLimit';
 
 export async function POST(req) {
   try {
+    const ip = getClientIp(req);
+    const rateLimit = checkRateLimit(`checkout:${ip}`, 25, 60000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { success: false, error: 'Too many checkout attempts. Please wait a moment.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimit) }
+      );
+    }
+
     const stripeKey = process.env.STRIPE_SECRET_KEY;
     if (!stripeKey) {
       return NextResponse.json({ 

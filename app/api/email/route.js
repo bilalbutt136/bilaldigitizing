@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
+import { checkRateLimit, getClientIp, getRateLimitHeaders } from '../../../src/lib/rateLimit';
 
 export async function POST(req) {
   try {
+    const ip = getClientIp(req);
+    const rateLimit = checkRateLimit(`email-dispatch:${ip}`, 10, 60000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { success: false, error: 'Too many email requests. Please try again shortly.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimit) }
+      );
+    }
+
     const { user, isAdmin } = await getServerAuthUser(req);
     const body = await req.json().catch(() => ({}));
     const { 
