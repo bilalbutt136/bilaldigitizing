@@ -3286,7 +3286,6 @@ export const BDigitizingMobileApp = () => {
           height: '66px',
           background: '#ffffff',
           borderTop: '1.5px solid #cbd5e1',
-          display: 'grid',
           gridTemplateColumns: 'repeat(5, 1fr)',
           alignItems: 'center',
           zIndex: isOrderModalOpen ? -1 : 800,

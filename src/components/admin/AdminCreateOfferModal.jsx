@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Sparkles, 
   X, 
@@ -28,6 +28,7 @@ export default function AdminCreateOfferModal({
   onOfferCreated = () => {},
   showToast = () => {}
 }) {
+  const isSubmittingRef = useRef(false);
   const [title, setTitle] = useState('');
   const [serviceType, setServiceType] = useState('Embroidery Digitizing');
   const [description, setDescription] = useState('');
@@ -39,6 +40,13 @@ export default function AdminCreateOfferModal({
   const [expiresInHours, setExpiresInHours] = useState(24);
   const [requiresRequirements, setRequiresRequirements] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -104,6 +112,8 @@ export default function AdminCreateOfferModal({
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
+    if (isSubmitting || isSubmittingRef.current) return;
+
     if (!title.trim()) {
       showToast('Please enter an offer title.', 'error');
       return;
@@ -117,8 +127,10 @@ export default function AdminCreateOfferModal({
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
+      const idempotencyKey = `idemp-off-${conversationId}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
       const payload = {
         conversation_id: conversationId,
         client_name: clientName,
@@ -133,12 +145,15 @@ export default function AdminCreateOfferModal({
         delivery_days: deliveryDays,
         revisions_allowed: revisionsAllowed,
         expires_in_hours: expiresInHours,
-        requires_requirements: requiresRequirements
+        requires_requirements: requiresRequirements,
+        idempotency_key: idempotencyKey
       };
 
       const res = await createCustomOffer(payload);
       if (res.error) {
         showToast(res.error, 'error');
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
       } else {
         showToast(`Custom offer sent to ${clientName}!`, 'success');
         onOfferCreated(res.offer, res.message);
@@ -146,7 +161,7 @@ export default function AdminCreateOfferModal({
       }
     } catch {
       showToast('Failed to create offer. Please try again.', 'error');
-    } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };

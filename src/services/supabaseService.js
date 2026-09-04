@@ -1435,6 +1435,42 @@ export async function cancelCustomOffer(offerId, fallbackOffer = null) {
   }
 }
 
+export async function payCustomOffer(offerId, orderId = null) {
+  try {
+    broadcastOfferStatusChange(offerId, 'paid');
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/offers', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ action: 'payOffer', payload: { offerId, orderId } })
+    });
+    const data = await res.json();
+    if (data.message) {
+      broadcastLiveMessage(data.message);
+    }
+    if (data.offer) {
+      broadcastOfferStatusChange(offerId, 'paid', data.offer);
+    }
+    return data;
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+export async function softDeleteChatMessage(messageId) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/messages', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ action: 'deleteMessage', payload: { messageId } })
+    });
+    return await res.json();
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
 export async function fetchCustomOffer(offerId) {
   try {
     const headers = await getAuthHeaders();

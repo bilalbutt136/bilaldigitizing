@@ -16,7 +16,7 @@ import {
   Ban, 
   X 
 } from 'lucide-react';
-import { declineCustomOffer, cancelCustomOffer } from '../../services/supabaseService';
+import { acceptCustomOffer, declineCustomOffer, cancelCustomOffer } from '../../services/supabaseService';
 import { useAppState } from '../../context/StateContext';
 
 /**
@@ -43,6 +43,7 @@ export default function OfferCardMessage({
   const [isCancelling, setIsCancelling] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [localStatus, setLocalStatus] = useState(offer?.status || 'sent');
+  const [isAccepting, setIsAccepting] = useState(false);
 
   useEffect(() => {
     if (offer?.status) {
@@ -75,6 +76,10 @@ export default function OfferCardMessage({
   const originalPrice = parseFloat(offer.price ?? 0);
   const hasDiscount = parseFloat(offer.discount_amount || 0) > 0 && originalPrice > price;
 
+  const isPaid = currentStatus === 'paid' || offer.payment_status === 'paid' || offer.status === 'paid';
+  const isAcceptedUnpaid = (currentStatus === 'accepted' || offer.status === 'accepted') && !isPaid;
+  const isPending = !isPaid && !isAcceptedUnpaid && !['declined', 'rejected', 'expired', 'cancelled', 'withdrawn'].includes(currentStatus);
+
   const getServiceIcon = (svc) => {
     const s = (svc || '').toLowerCase();
     if (s.includes('vector')) return <Layers size={14} className="text-cyan-400" />;
@@ -83,25 +88,45 @@ export default function OfferCardMessage({
   };
 
   const getStatusBadge = () => {
+    if (isPaid) {
+      return (
+        <span style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          fontSize: '0.72rem',
+          fontWeight: 800,
+          padding: '3px 10px',
+          borderRadius: '999px',
+          background: 'rgba(16, 185, 129, 0.2)',
+          border: '1px solid rgba(16, 185, 129, 0.5)',
+          color: '#34d399'
+        }}>
+          <CheckCircle2 size={12} /> Paid & In Production
+        </span>
+      );
+    }
+
+    if (isAcceptedUnpaid) {
+      return (
+        <span style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          fontSize: '0.72rem',
+          fontWeight: 800,
+          padding: '3px 10px',
+          borderRadius: '999px',
+          background: 'rgba(245, 158, 11, 0.18)',
+          border: '1px solid rgba(245, 158, 11, 0.5)',
+          color: '#fbbf24'
+        }}>
+          <Clock size={12} /> Accepted • Payment Pending
+        </span>
+      );
+    }
+
     switch (currentStatus) {
-      case 'paid':
-      case 'accepted':
-        return (
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '4px',
-            fontSize: '0.72rem',
-            fontWeight: 800,
-            padding: '3px 10px',
-            borderRadius: '999px',
-            background: 'rgba(16, 185, 129, 0.2)',
-            border: '1px solid rgba(16, 185, 129, 0.5)',
-            color: '#34d399'
-          }}>
-            <CheckCircle2 size={12} /> {currentStatus === 'paid' ? 'Paid & In Production' : 'Completed / Accepted'}
-          </span>
-        );
       case 'declined':
       case 'rejected':
         return (
@@ -175,30 +200,68 @@ export default function OfferCardMessage({
     }
   };
 
-  const isPending = !['paid', 'accepted', 'declined', 'rejected', 'expired', 'cancelled', 'withdrawn'].includes(currentStatus);
-
-  const handleAcceptOffer = () => {
-    if (!isPending) return;
+  const handleAcceptOffer = async () => {
+    if (isPaid || isAccepting) return;
     const targetOfferId = offer.id || offer.offer_id || messageId;
-    if (setCheckoutSession && setIsCheckoutModalOpen) {
-      setCheckoutSession({
-        amount: price,
-        price: price,
-        totalPrice: price,
-        offerId: targetOfferId,
-        id: offer.order_id || targetOfferId,
-        orderId: offer.order_id || null,
-        title: offer.title || 'Custom Design Order',
-        orderTitle: offer.title || 'Custom Design Order',
-        clientEmail: offer.client_email || authUser?.email || currentUser?.email,
-        serviceType: offer.service_type || 'Embroidery Digitizing',
-        conversationId: offer.conversation_id || offer.thread_id,
-        isCustomOffer: true,
-        offerData: offer
-      });
-      setIsCheckoutModalOpen(true);
-    } else {
-      showToast('Opening payment checkout...', 'info');
+
+    // If offer is already accepted and just needs payment, open checkout immediately
+    if (isAcceptedUnpaid && (offer.order_id || targetOfferId)) {
+      if (setCheckoutSession && setIsCheckoutModalOpen) {
+        setCheckoutSession({
+          amount: price,
+          price: price,
+          totalPrice: price,
+          offerId: targetOfferId,
+          id: offer.order_id || targetOfferId,
+          orderId: offer.order_id || null,
+          title: offer.title || 'Custom Design Order',
+          orderTitle: offer.title || 'Custom Design Order',
+          clientEmail: offer.client_email || authUser?.email || currentUser?.email,
+          serviceType: offer.service_type || 'Embroidery Digitizing',
+          conversationId: offer.conversation_id || offer.thread_id,
+          isCustomOffer: true,
+          offerData: offer
+        });
+        setIsCheckoutModalOpen(true);
+      } else {
+        showToast('Opening payment checkout...', 'info');
+      }
+      return;
+    }
+
+    // Otherwise accept offer first, creating pending order, then open checkout
+    setIsAccepting(true);
+    try {
+      const res = await acceptCustomOffer(targetOfferId, offer);
+      if (res?.error) {
+        showToast(res.error, 'error');
+      } else {
+        const createdOrder = res?.order;
+        setLocalStatus('accepted');
+        showToast('Offer accepted! Opening payment checkout...', 'success');
+        if (setCheckoutSession && setIsCheckoutModalOpen) {
+          setCheckoutSession({
+            amount: price,
+            price: price,
+            totalPrice: price,
+            offerId: targetOfferId,
+            id: createdOrder?.id || offer.order_id || targetOfferId,
+            orderId: createdOrder?.id || offer.order_id || null,
+            title: offer.title || 'Custom Design Order',
+            orderTitle: offer.title || 'Custom Design Order',
+            clientEmail: offer.client_email || authUser?.email || currentUser?.email,
+            serviceType: offer.service_type || 'Embroidery Digitizing',
+            conversationId: offer.conversation_id || offer.thread_id,
+            isCustomOffer: true,
+            offerData: res?.offer || offer
+          });
+          setIsCheckoutModalOpen(true);
+        }
+      }
+    } catch {
+      showToast('Failed to accept offer. Please try again.', 'error');
+    } finally {
+      setIsAccepting(false);
     }
   };
 
@@ -341,8 +404,8 @@ export default function OfferCardMessage({
           </div>
         </div>
 
-        {/* Accepted / Paid Offer State */}
-        {(currentStatus === 'accepted' || currentStatus === 'paid') && (
+        {/* Paid Offer State */}
+        {isPaid && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <div style={{
               display: 'flex',
@@ -359,7 +422,7 @@ export default function OfferCardMessage({
               boxShadow: '0 4px 14px rgba(16, 185, 129, 0.15)'
             }}>
               <CheckCircle2 size={18} className="text-emerald-400" />
-              <span>✓ {currentStatus === 'paid' ? 'Paid & In Production' : 'Offer Accepted'} • ${price.toFixed(2)}</span>
+              <span>✓ Paid & In Production • ${price.toFixed(2)}</span>
             </div>
 
             {offer.order_id && (
@@ -393,6 +456,89 @@ export default function OfferCardMessage({
                   View Order <ChevronRight size={13} />
                 </button>
               </div>
+            )}
+          </div>
+        )}
+
+        {/* Accepted But Payment Pending State */}
+        {isAcceptedUnpaid && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              padding: '0.65rem 1rem',
+              borderRadius: '10px',
+              background: 'rgba(245, 158, 11, 0.12)',
+              border: '1.5px solid rgba(245, 158, 11, 0.35)',
+              color: '#fbbf24',
+              fontWeight: 800,
+              fontSize: '0.85rem'
+            }}>
+              <Clock size={16} />
+              <span>Offer Accepted • Payment Pending</span>
+            </div>
+
+            {offer.order_id && (
+              <div style={{
+                padding: '0.5rem 0.75rem',
+                borderRadius: '8px',
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                  Linked Order: <strong style={{ color: '#f8fafc' }}>#{offer.order_id}</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onOrderClick(offer.order_id)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#60a5fa',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  View Order <ChevronRight size={13} />
+                </button>
+              </div>
+            )}
+
+            {!isAdmin && (
+              <button
+                type="button"
+                onClick={handleAcceptOffer}
+                disabled={isAccepting}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  fontSize: '0.88rem',
+                  cursor: isAccepting ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {isAccepting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                <span>Complete Payment • ${price.toFixed(2)}</span>
+              </button>
             )}
           </div>
         )}
@@ -464,7 +610,7 @@ export default function OfferCardMessage({
             <button
               type="button"
               onClick={handleAcceptOffer}
-              disabled={isDeclining}
+              disabled={isDeclining || isAccepting}
               style={{
                 width: '100%',
                 padding: '0.75rem 1rem',
@@ -474,7 +620,7 @@ export default function OfferCardMessage({
                 color: '#ffffff',
                 fontWeight: 800,
                 fontSize: '0.88rem',
-                cursor: isDeclining ? 'not-allowed' : 'pointer',
+                cursor: (isDeclining || isAccepting) ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -483,8 +629,8 @@ export default function OfferCardMessage({
                 transition: 'transform 0.15s ease, opacity 0.15s ease'
               }}
             >
-              <CheckCircle2 size={16} />
-              <span>Accept Offer • ${price.toFixed(2)}</span>
+              {isAccepting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+              <span>{isAccepting ? 'Accepting Offer...' : `Accept Offer • $${price.toFixed(2)}`}</span>
             </button>
 
             {/* Secondary Action Row: Reject & Details */}

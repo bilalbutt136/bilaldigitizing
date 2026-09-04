@@ -263,6 +263,7 @@ export async function POST(request) {
               delivery_days: parseInt(matchedOffer.delivery_days, 10) || 1,
               revisions_allowed: String(matchedOffer.revisions_allowed || '2'),
               status: 'paid',
+              payment_status: 'paid',
               stripe_session_id: boltOrderId,
               payment_intent_id: boltOrderId,
               accepted_at: nowIso,
@@ -276,6 +277,7 @@ export async function POST(request) {
           const updatedOfferData = {
             ...matchedOffer,
             status: 'paid',
+            payment_status: 'paid',
             accepted_at: nowIso,
             order_id: generatedOrderId,
             bolt_order_id: boltOrderId
@@ -294,6 +296,8 @@ export async function POST(request) {
             const confirmMsg = {
               id: `msg-bolt-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
               conversation_id: targetChatId,
+              thread_id: targetChatId,
+              client_email: clientEmail,
               sender: 'admin',
               sender_name: 'Studio System',
               text: `🎉 Custom Offer Paid ($${amount.toFixed(2)}) via BoltPayouts! Order #${generatedOrderId} is now active and in production.`,

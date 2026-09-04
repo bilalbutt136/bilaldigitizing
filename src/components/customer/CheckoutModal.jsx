@@ -16,7 +16,7 @@ import {
   ArrowRight,
   ChevronRight
 } from 'lucide-react';
-import { getAuthHeaders, acceptCustomOffer } from '../../services/supabaseService';
+import { getAuthHeaders, acceptCustomOffer, payCustomOffer } from '../../services/supabaseService';
 
 // Authentic Branded Payment Method SVG Components
 const WalletBrandIcon = () => (
@@ -282,8 +282,9 @@ export const CheckoutModal = () => {
           if (checkoutSession?.offerId) {
             try {
               await acceptCustomOffer(checkoutSession.offerId);
+              await payCustomOffer(checkoutSession.offerId, orderId);
             } catch (offErr) {
-              console.warn('Custom offer accept on wallet checkout notice:', offErr);
+              console.warn('Custom offer accept/pay on wallet checkout notice:', offErr);
             }
           }
 
@@ -404,8 +405,9 @@ export const CheckoutModal = () => {
             if (checkoutSession?.offerId) {
               try {
                 await acceptCustomOffer(checkoutSession.offerId);
+                await payCustomOffer(checkoutSession.offerId, checkoutSession.orderId);
               } catch (offErr) {
-                console.warn('Custom offer accept on gateway checkout notice:', offErr);
+                console.warn('Custom offer accept/pay on gateway checkout notice:', offErr);
               }
             }
 

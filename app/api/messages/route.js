@@ -378,7 +378,15 @@ export async function GET(request) {
         try {
           const { data: customerOrders } = await supabase.from('orders').select('id').ilike('client_email', targetEmail);
           if (Array.isArray(customerOrders)) {
-            orderIds = customerOrders.map(o => `order-${o.id}`);
+            customerOrders.forEach(o => {
+              const raw = String(o.id || '');
+              const clean = raw.replace(/^#+/, '').replace(/^order-/, '');
+              orderIds.push(raw);
+              orderIds.push(`order-${raw}`);
+              orderIds.push(`order-${clean}`);
+              orderIds.push(`ord-${clean}`);
+              orderIds.push(`#${clean}`);
+            });
           }
         } catch {}
       }
@@ -412,9 +420,28 @@ export async function GET(request) {
             .ilike('client_email', targetEmail)
             .order('created_at', { ascending: true });
 
+          // Also check custom offers belonging to this client to ensure offer messages are always retained
+          let offerMsgList = [];
+          try {
+            const { data: clientOffers } = await supabase
+              .from('custom_offers')
+              .select('id')
+              .ilike('client_email', targetEmail);
+            
+            if (Array.isArray(clientOffers) && clientOffers.length > 0) {
+              const offerIds = clientOffers.map(o => o.id);
+              const { data: offMsgs } = await supabase
+                .from('messages')
+                .select('*')
+                .in('offer_id', offerIds);
+              offerMsgList = offMsgs || [];
+            }
+          } catch {}
+
           const msgMap = new Map();
-          for (const m of [...(convMsgs || []), ...(emailMsgs || [])]) {
-            if (m && m.id) msgMap.set(m.id, m);
+          for (const m of [...(convMsgs || []), ...(emailMsgs || []), ...offerMsgList]) {
+            // Filter out soft-deleted messages
+            if (m && m.id && !m.deleted_at) msgMap.set(m.id, m);
           }
           rawMessages = Array.from(msgMap.values());
         } else {
@@ -423,7 +450,7 @@ export async function GET(request) {
             .select('*')
             .in('conversation_id', targetIds)
             .order('created_at', { ascending: true });
-          rawMessages = data || [];
+          rawMessages = (data || []).filter(m => !m.deleted_at);
         }
       } catch (err) {
         console.error('[fetchMessages query error]:', err);
@@ -641,9 +668,38 @@ export async function POST(request) {
         ? (payload.sender_name || 'Support')
         : (payload.sender_name || payload.senderName || (user?.user_metadata?.full_name || (user?.email ? user.email.split('@')[0] : 'Client')));
 
+      // 1. Check idempotency if idempotency_key is provided
+      if (payload.idempotency_key) {
+        try {
+          const { data: existingMsg } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('idempotency_key', payload.idempotency_key)
+            .maybeSingle();
+          if (existingMsg) {
+            return NextResponse.json({ success: true, is_duplicate: true, message: existingMsg });
+          }
+        } catch {}
+      }
+
+      // 2. Check if message with same ID already exists to prevent duplicate inserts
+      if (payload.id) {
+        try {
+          const { data: existingMsg } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('id', payload.id)
+            .maybeSingle();
+          if (existingMsg) {
+            return NextResponse.json({ success: true, is_duplicate: true, message: existingMsg });
+          }
+        } catch {}
+      }
+
       const nowIso = new Date().toISOString();
       const dbPayload = {
         id: payload.id || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        idempotency_key: payload.idempotency_key || null,
         conversation_id: canonicalConvId,
         thread_id: canonicalConvId,
         type: payload.type || (payload.offer_id || payload.offer_data ? 'custom_offer' : 'text'),
@@ -917,6 +973,27 @@ export async function POST(request) {
         console.warn('markAllNotificationsRead DB notice:', err.message);
       }
       return NextResponse.json({ success: true });
+    }
+
+    if (action === 'deleteMessage' || action === 'softDeleteMessage') {
+      const { messageId } = payload;
+      if (!messageId) {
+        return NextResponse.json({ error: 'Missing messageId' }, { status: 400 });
+      }
+
+      const nowIso = new Date().toISOString();
+      let query = supabase.from('messages').update({ deleted_at: nowIso }).eq('id', messageId);
+      if (!isAdmin && user?.email) {
+        const cleanAuthEmail = normalizeEmail(user.email);
+        query = query.or(`client_email.ilike.${cleanAuthEmail},sender.eq.client`);
+      }
+
+      const { error: delErr } = await query;
+      if (delErr) {
+        return NextResponse.json({ error: delErr.message }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, messageId, deleted_at: nowIso });
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });

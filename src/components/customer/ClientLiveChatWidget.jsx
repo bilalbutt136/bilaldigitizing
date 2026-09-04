@@ -220,7 +220,9 @@ export const ClientLiveChatWidget = () => {
         const cleanCustomerEmail = (clientEmail || '').toLowerCase().trim();
         const targetConvIdLower = String(targetConvId || '').toLowerCase().trim();
 
+        const offerEmail = String(record.offer_data?.client_email || record.metadata?.client_email || '').toLowerCase().trim();
         const isForThisUser = (cleanCustomerEmail && recordEmail && recordEmail === cleanCustomerEmail) ||
+          (cleanCustomerEmail && offerEmail && offerEmail === cleanCustomerEmail) ||
           (cleanCustomerEmail && (recordConvId.includes(cleanCustomerEmail) || recordThreadId.includes(cleanCustomerEmail))) ||
           (recordConvId === targetConvIdLower || recordThreadId === targetConvIdLower) ||
           isSupportId(recordConvId) ||
@@ -282,7 +284,12 @@ export const ClientLiveChatWidget = () => {
             nextChats = safePrev.map(c => {
               if (isTargetConv(c)) {
                 const currentMsgs = c.messages || [];
-                const existsIndex = currentMsgs.findIndex(m => m.id === newMsg.id || (m.text === newMsg.text && Math.abs(parseMessageTime(m) - parseMessageTime(newMsg)) < 5000));
+                const incomingOfferId = newMsg.offer_id || newMsg.offer_data?.id;
+                const existsIndex = currentMsgs.findIndex(m => 
+                  (m.id && newMsg.id && m.id === newMsg.id) ||
+                  (incomingOfferId && (m.offer_id === incomingOfferId || m.offer_data?.id === incomingOfferId)) ||
+                  (m.text === newMsg.text && Math.abs(parseMessageTime(m) - parseMessageTime(newMsg)) < 5000)
+                );
                 let nextMsgs;
                 if (existsIndex >= 0) {
                   nextMsgs = [...currentMsgs];

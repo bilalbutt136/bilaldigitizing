@@ -566,9 +566,10 @@ export const AdminChatInbox = () => {
 
           const updated = safePrev.map(conv => {
             if (conv.id === newMsg.conversation_id) {
-              const currentMsgs = conv.messages || [];
+              const incomingOfferId = newMsg.offer_id || newMsg.offer_data?.id;
               const existsIndex = currentMsgs.findIndex(m => 
                 (m.id && newMsg.id && m.id === newMsg.id) || 
+                (incomingOfferId && (m.offer_id === incomingOfferId || m.offer_data?.id === incomingOfferId)) ||
                 (m.id && String(m.id).startsWith('msg-') && m.text === newMsg.text && m.sender === newMsg.sender && Math.abs(parseMessageTime(m) - parseMessageTime(newMsg)) < 15000) ||
                 (m.text && newMsg.text && m.text === newMsg.text && m.sender === newMsg.sender && Math.abs(parseMessageTime(m) - parseMessageTime(newMsg)) < 10000)
               );
@@ -2217,15 +2218,35 @@ export const AdminChatInbox = () => {
           onClose={() => setIsOfferModalOpen(false)}
           conversationId={currentActiveChatId}
           clientName={activeInfo.customerName || 'Customer'}
-          clientEmail={activeInfo.customerEmail || ''}
+          clientEmail={activeInfo.customerEmail || activeChat?.clientEmail || ''}
           onOfferCreated={(newOffer, newMsg) => {
             if (newMsg) {
               setConversations(prev => {
-                const updated = prev.map(conv => {
+                const safePrev = Array.isArray(prev) ? prev : [];
+                const incomingOfferId = newOffer?.id || newMsg?.offer_id || newMsg?.offer_data?.id;
+                const updated = safePrev.map(conv => {
                   if (conv.id === currentActiveChatId) {
+                    const currentMsgs = conv.messages || [];
+                    const exists = currentMsgs.some(m => 
+                      (m.id && newMsg.id && m.id === newMsg.id) ||
+                      (incomingOfferId && (m.offer_id === incomingOfferId || m.offer_data?.id === incomingOfferId))
+                    );
+
+                    let nextMsgs;
+                    if (exists) {
+                      nextMsgs = currentMsgs.map(m => {
+                        if ((m.id && newMsg.id && m.id === newMsg.id) || (incomingOfferId && (m.offer_id === incomingOfferId || m.offer_data?.id === incomingOfferId))) {
+                          return { ...m, ...newMsg };
+                        }
+                        return m;
+                      });
+                    } else {
+                      nextMsgs = [...currentMsgs, newMsg];
+                    }
+
                     return {
                       ...conv,
-                      messages: [...(conv.messages || []), newMsg],
+                      messages: nextMsgs,
                       updatedAt: new Date().toISOString(),
                       lastMessageTime: Date.now()
                     };

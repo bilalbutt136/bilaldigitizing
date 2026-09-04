@@ -116,6 +116,7 @@ export async function POST(req) {
               delivery_days: parseInt(offer?.delivery_days, 10) || 1,
               revisions_allowed: String(offer?.revisions_allowed || '2'),
               status: 'paid',
+              payment_status: 'paid',
               stripe_session_id: session.id,
               accepted_at: nowIso,
               updated_at: nowIso
@@ -129,6 +130,7 @@ export async function POST(req) {
         const updatedOfferData = {
           ...(offer || {}),
           status: 'paid',
+          payment_status: 'paid',
           accepted_at: nowIso,
           order_id: generatedOrderId,
           stripe_session_id: session.id
@@ -153,6 +155,8 @@ export async function POST(req) {
           const confirmMessage = {
             id: confirmMsgId,
             conversation_id: targetChatId,
+            thread_id: targetChatId,
+            client_email: targetEmail,
             sender: 'admin',
             sender_name: 'Studio System',
             text: `🎉 Custom Offer Paid ($${amountInDollars.toFixed(2)}) via Stripe! Order #${generatedOrderId} is now active and in production.`,

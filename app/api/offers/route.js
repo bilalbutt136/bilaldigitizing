@@ -167,7 +167,8 @@ export async function POST(request) {
         delivery_days = 1,
         revisions_allowed = '2',
         expires_in_hours = 24,
-        requires_requirements = true
+        requires_requirements = true,
+        idempotency_key = null
       } = payload;
 
       if (!conversation_id || !title || !description || parseFloat(price) <= 0) {
@@ -182,10 +183,68 @@ export async function POST(request) {
       const hours = parseInt(expires_in_hours, 10) || 24;
       const expiresAt = new Date(Date.now() + (hours * 3600 * 1000)).toISOString();
 
+      // 1. Check idempotency if key provided
+      if (idempotency_key) {
+        try {
+          const { data: existingOffer } = await supabase
+            .from('custom_offers')
+            .select('*')
+            .eq('idempotency_key', idempotency_key)
+            .maybeSingle();
+          if (existingOffer) {
+            return NextResponse.json({
+              success: true,
+              is_duplicate: true,
+              offer: existingOffer,
+              message: {
+                id: `msg-${existingOffer.id}`,
+                conversation_id: existingOffer.conversation_id,
+                thread_id: existingOffer.conversation_id,
+                client_email: existingOffer.client_email,
+                type: 'custom_offer',
+                offer_id: existingOffer.id,
+                offer_data: existingOffer
+              }
+            });
+          }
+        } catch {}
+      }
+
+      // 2. Check recent duplicate offer in same conversation within 15 seconds
+      try {
+        const fifteenSecsAgo = new Date(Date.now() - 15000).toISOString();
+        const { data: recentDuplicate } = await supabase
+          .from('custom_offers')
+          .select('*')
+          .eq('conversation_id', conversation_id)
+          .eq('title', title.trim())
+          .eq('final_price', finalPrice)
+          .gte('created_at', fifteenSecsAgo)
+          .maybeSingle();
+
+        if (recentDuplicate) {
+          return NextResponse.json({
+            success: true,
+            is_duplicate: true,
+            offer: recentDuplicate,
+            message: {
+              id: `msg-${recentDuplicate.id}`,
+              conversation_id: recentDuplicate.conversation_id,
+              thread_id: recentDuplicate.conversation_id,
+              client_email: recentDuplicate.client_email,
+              type: 'custom_offer',
+              offer_id: recentDuplicate.id,
+              offer_data: recentDuplicate
+            }
+          });
+        }
+      } catch {}
+
       const offerId = `off-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 
       const offerDbRow = {
         id: offerId,
+        idempotency_key: idempotency_key || null,
         conversation_id: conversation_id,
         thread_id: conversation_id,
         order_id: null,
@@ -206,6 +265,7 @@ export async function POST(request) {
         expires_at: expiresAt,
         requires_requirements: Boolean(requires_requirements),
         status: 'pending',
+        payment_status: 'unpaid',
         stripe_session_id: null,
         created_at: nowIso,
         updated_at: nowIso
@@ -228,8 +288,10 @@ export async function POST(request) {
 
       const standardMessageRow = {
         id: msgId,
+        idempotency_key: idempotency_key || null,
         conversation_id: conversation_id,
         thread_id: conversation_id,
+        client_email: cleanClientEmail,
         sender: 'admin',
         sender_name: 'Studio Support',
         text: textWithOffer,
@@ -243,6 +305,7 @@ export async function POST(request) {
       let insertedMessage = { 
         ...standardMessageRow, 
         thread_id: conversation_id,
+        client_email: cleanClientEmail,
         type: 'custom_offer',
         metadata: offerDbRow,
         offer_id: offerId, 
@@ -379,8 +442,8 @@ export async function POST(request) {
         service_type: svcType,
         price: parseFloat(offer.final_price || offer.price || 0),
         cost: parseFloat(offer.final_price || offer.price || 0),
-        status: 'in_progress',
-        payment_status: 'paid',
+        status: 'pending',
+        payment_status: 'pending',
         turnaround_time: offer.delivery_time_text || `${offer.delivery_days || 1} Day`,
         is_rush: (offer.delivery_time_text || '').toLowerCase().includes('express') || (offer.delivery_time_text || '').toLowerCase().includes('12 hour'),
         revisions_allowed: String(offer.revisions_allowed || '2'),
@@ -409,6 +472,7 @@ export async function POST(request) {
         thread_id: conversationId,
         order_id: generatedOrderId,
         status: 'accepted',
+        payment_status: 'pending',
         accepted_at: nowIso,
         updated_at: nowIso
       };
@@ -434,6 +498,7 @@ export async function POST(request) {
           revisions_allowed: String(offer.revisions_allowed || '2'),
           expires_at: offer.expires_at || new Date(Date.now() + 86400000).toISOString(),
           status: 'accepted',
+          payment_status: 'pending',
           accepted_at: nowIso,
           updated_at: nowIso
         }]);
@@ -464,9 +529,11 @@ export async function POST(request) {
       const confirmMessage = {
         id: confirmMsgId,
         conversation_id: conversationId,
+        thread_id: conversationId,
+        client_email: cleanEmail,
         sender: 'admin',
         sender_name: 'Studio System',
-        text: `🎉 Custom Offer Accepted! Order #${generatedOrderId} has been created and assigned to our master digitizers. Delivery: ${offer.delivery_time_text || '1 Day'}.`,
+        text: `🎉 Custom Offer Accepted! Order #${generatedOrderId} has been created. Please complete checkout ($${parseFloat(offer.final_price || offer.price || 0).toFixed(2)}) to send your order into production. Delivery: ${offer.delivery_time_text || '1 Day'}.`,
         timestamp: nowIso,
         created_at: nowIso,
         is_read: false
@@ -482,8 +549,8 @@ export async function POST(request) {
           id: `notif-admin-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           recipient_role: 'admin',
           title: 'Custom Offer Accepted!',
-          message: `${offer.client_name || 'Customer'} accepted the custom offer "${offer.title}" ($${parseFloat(offer.final_price || offer.price || 0).toFixed(2)}). Order #${generatedOrderId} is now in progress.`,
-          type: 'success',
+          message: `${offer.client_name || 'Customer'} accepted the custom offer "${offer.title}" ($${parseFloat(offer.final_price || offer.price || 0).toFixed(2)}). Order #${generatedOrderId} is awaiting payment.`,
+          type: 'info',
           order_id: generatedOrderId,
           link: `/admin-portal?tab=chat&chatId=${conversationId}`,
           read: false,
@@ -513,6 +580,7 @@ export async function POST(request) {
 
       const targetOfferId = offer.id || offerId;
       const conversationId = offer.conversation_id || offer.thread_id;
+      const cleanEmail = (offer.client_email || user?.email || '').toLowerCase().trim();
 
       const updatedOffer = {
         ...offer,
@@ -540,6 +608,8 @@ export async function POST(request) {
         declineMsg = {
           id: `msg-dec-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           conversation_id: conversationId,
+          thread_id: conversationId,
+          client_email: cleanEmail,
           sender: 'client',
           sender_name: offer.client_name || user?.user_metadata?.full_name || 'Client',
           text: `❌ Declined custom offer: "${offer.title || 'Custom Offer'}".`,
@@ -586,6 +656,7 @@ export async function POST(request) {
 
       const targetOfferId = offer.id || offerId;
       const conversationId = offer.conversation_id || offer.thread_id;
+      const cleanEmail = (offer.client_email || '').toLowerCase().trim();
 
       const updatedOffer = {
         ...offer,
@@ -609,10 +680,13 @@ export async function POST(request) {
       } catch {}
 
       // 4. Post announcement in conversation that offer was withdrawn
+      let cancelMsg = null;
       if (conversationId) {
-        const cancelMsg = {
+        cancelMsg = {
           id: `msg-can-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           conversation_id: conversationId,
+          thread_id: conversationId,
+          client_email: cleanEmail,
           sender: 'admin',
           sender_name: 'Studio Support',
           text: `🚫 Offer "${offer.title || 'Custom Offer'}" was withdrawn by Studio Support.`,
@@ -625,7 +699,83 @@ export async function POST(request) {
         } catch {}
       }
 
-      return NextResponse.json({ success: true, status: 'cancelled', offer: updatedOffer });
+      return NextResponse.json({ success: true, status: 'cancelled', offer: updatedOffer, message: cancelMsg });
+    }
+
+    // 5. ACTION: PAY OFFER / MARK AS PAID
+    if (action === 'payOffer' || action === 'markOfferPaid') {
+      const { offerId, orderId } = payload;
+      if (!offerId && !orderId) {
+        return NextResponse.json({ error: 'Missing offerId or orderId' }, { status: 400 });
+      }
+
+      const offer = await findOffer(supabase, offerId || orderId);
+      if (!offer) {
+        return NextResponse.json({ error: 'Offer not found' }, { status: 404 });
+      }
+
+      const targetOfferId = offer.id || offerId;
+      const targetOrderId = orderId || offer.order_id;
+      const conversationId = offer.conversation_id || offer.thread_id || 'general-support';
+      const cleanEmail = (offer.client_email || user?.email || '').toLowerCase().trim();
+
+      // 1. Update order
+      if (targetOrderId) {
+        try {
+          await supabase.from('orders').update({
+            status: 'in_progress',
+            payment_status: 'paid',
+            updated_at: nowIso
+          }).or(`id.eq.${targetOrderId},id.eq.#${targetOrderId}`);
+        } catch (ordErr) {
+          console.warn('Order status update notice:', ordErr.message);
+        }
+      }
+
+      // 2. Update custom_offers
+      const updatedOffer = {
+        ...offer,
+        status: 'paid',
+        payment_status: 'paid',
+        updated_at: nowIso
+      };
+
+      try {
+        await supabase.from('custom_offers').update({
+          status: 'paid',
+          payment_status: 'paid',
+          updated_at: nowIso
+        }).eq('id', targetOfferId);
+      } catch (offErr) {
+        console.warn('custom_offers pay update notice:', offErr.message);
+      }
+
+      // 3. Update messages containing this offer
+      try {
+        await supabase.from('messages').update({
+          offer_data: updatedOffer,
+          attachment: JSON.stringify(updatedOffer)
+        }).or(`offer_id.eq.${targetOfferId},id.eq.${targetOfferId}`);
+      } catch {}
+
+      // 4. Post chat confirmation
+      const paidMsg = {
+        id: `msg-paid-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        conversation_id: conversationId,
+        thread_id: conversationId,
+        client_email: cleanEmail,
+        sender: 'admin',
+        sender_name: 'Studio System',
+        text: `💳 Payment confirmed for Order #${targetOrderId || targetOfferId}! Your project is now in production with our master digitizers.`,
+        timestamp: nowIso,
+        created_at: nowIso,
+        is_read: false
+      };
+      try {
+        await supabase.from('messages').insert([paidMsg]);
+      } catch {}
+
+      return NextResponse.json({ success: true, offer: updatedOffer, message: paidMsg });
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });

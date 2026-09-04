@@ -189,9 +189,18 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
       const cleanCustomerEmail = (clientEmail || '').toLowerCase().trim();
       const targetChatIdLower = String(canonicalChatId || '').toLowerCase().trim();
 
+      // Check offer_data or metadata for client_email
+      const offerEmail = String(record.offer_data?.client_email || record.metadata?.client_email || '').toLowerCase().trim();
+      const matchesClientOrder = Array.isArray(orders) && orders.some(o => {
+        const oId = String(o.id || '').toLowerCase().trim();
+        return recordConvId === oId || recordConvId === `order-${oId}` || recordThreadId === oId || recordThreadId === `order-${oId}`;
+      });
+
       const isForThisCustomer = 
         (cleanCustomerEmail && recordEmail && recordEmail === cleanCustomerEmail) ||
+        (cleanCustomerEmail && offerEmail && offerEmail === cleanCustomerEmail) ||
         (cleanCustomerEmail && (recordConvId.includes(cleanCustomerEmail) || recordThreadId.includes(cleanCustomerEmail))) ||
+        (cleanCustomerEmail && matchesClientOrder) ||
         (recordConvId === targetChatIdLower || recordThreadId === targetChatIdLower) ||
         (!cleanCustomerEmail && (
           recordConvId === 'general-support' || recordConvId === 'support-guest' || recordConvId === 'inbox-client' ||
@@ -223,13 +232,23 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           const map = new Map();
           (prev || []).forEach(m => { if (m && m.id) map.set(m.id, m); });
 
-          // Remove optimistic match if exists
+          // Check if an offer with same offer_id or offer_data.id exists in thread
+          const incomingOfferId = formattedRecord.offer_id || formattedRecord.offer_data?.id;
+
           for (const [k, v] of map.entries()) {
+            // Remove optimistic match if exists
             if (
               k.startsWith('msg-') &&
               v.sender === formattedRecord.sender &&
               v.text === formattedRecord.text &&
               Math.abs(parseMessageTime(v) - parseMessageTime(formattedRecord)) < 15000
+            ) {
+              map.delete(k);
+            }
+            // If incoming is custom offer and an offer message with same offerId exists, replace it
+            else if (
+              incomingOfferId &&
+              (v.offer_id === incomingOfferId || v.offer_data?.id === incomingOfferId)
             ) {
               map.delete(k);
             }
@@ -282,10 +301,12 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           if (mOfferId === offerId || m.id === offerId) {
             hasModified = true;
             const prevOfferData = typeof m.offer_data === 'object' && m.offer_data ? m.offer_data : {};
+            const paymentStatus = freshOffer?.payment_status || (newStatus === 'paid' ? 'paid' : (prevOfferData.payment_status || (newStatus === 'accepted' ? 'pending' : 'unpaid')));
             const mergedOffer = {
               ...prevOfferData,
               ...(freshOffer || {}),
               status: newStatus,
+              payment_status: paymentStatus,
               updated_at: new Date().toISOString()
             };
             return {
