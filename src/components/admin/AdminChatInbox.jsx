@@ -571,7 +571,7 @@ export const AdminChatInbox = () => {
           attachment_type: attachType,
           file_id: attachObj?.file_id || record.file_id || null,
           reply_to: record.reply_to,
-          offer_id: resolvedOfferId,
+          offer_id: extractedOffer?.id || record.offer_id || null,
           offer_data: extractedOffer,
           offer: extractedOffer,
           is_read: record.is_read || false,
@@ -590,14 +590,18 @@ export const AdminChatInbox = () => {
           const exists = safePrev.some(c => c.id === newMsg.conversation_id);
           if (!exists) {
             // New conversation thread initiated - prepend locally
+            const newConvId = String(newMsg.conversation_id || '').toLowerCase();
+            const isNewSupport = newConvId === 'general-support' || newConvId === 'support-guest' || newConvId.startsWith('support-');
+            const newClientName = newMsg.senderName || 'Customer';
             const newThread = {
               id: newMsg.conversation_id,
-              clientName: newMsg.senderName || 'Customer',
+              clientName: newClientName,
               clientEmail: '',
-              clientCompany: 'Customer',
-              orderId: 'Support',
-              orderTitle: 'Live Support',
-              avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
+              clientCompany: isNewSupport ? 'Live Support' : 'Studio Client',
+              orderId: isNewSupport ? 'Support' : 'Direct Chat',
+              orderTitle: isNewSupport ? 'Live Support' : 'Direct Inbox',
+              isSupport: isNewSupport,
+              avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(newClientName)}&background=0f172a&color=fff&bold=true`,
               status: 'online',
               unreadCount: newMsg.sender === 'client' ? 1 : 0,
               adminUnreadCount: newMsg.sender === 'client' ? 1 : 0,
