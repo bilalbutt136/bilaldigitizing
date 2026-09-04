@@ -566,6 +566,7 @@ export const AdminChatInbox = () => {
 
           const updated = safePrev.map(conv => {
             if (conv.id === newMsg.conversation_id) {
+              const currentMsgs = conv.messages || [];
               const incomingOfferId = newMsg.offer_id || newMsg.offer_data?.id;
               const existsIndex = currentMsgs.findIndex(m => 
                 (m.id && newMsg.id && m.id === newMsg.id) || 
