@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import { useAppState, formatOrderId, formatDimensions, formatFabric } from '../../context/StateContext';
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
 import { ProductionWorksheetModal } from '../common/ProductionWorksheetModal';
+import { PdfPreviewModal } from '../common/PdfPreviewModal';
 import { triggerFileDownload, openPdfInNewTab } from '../../utils/fileDownloader';
 import { 
   X, 
@@ -91,6 +92,7 @@ export const OrderTrackerDrawer = () => {
   const [showLightbox, setShowLightbox] = useState(false);
   const [lightboxArtwork, setLightboxArtwork] = useState(null);
   const [showWorksheetModal, setShowWorksheetModal] = useState(false);
+  const [activePdfPreview, setActivePdfPreview] = useState(null);
 
   // Admin Multiple File Upload Array State
   const [adminFilesList, setAdminFilesList] = useState([]);
@@ -1016,7 +1018,7 @@ export const OrderTrackerDrawer = () => {
                                     {f.url && (
                                       <button
                                         type="button"
-                                        onClick={() => openPdfInNewTab(f.url, f.name || 'document.pdf')}
+                                        onClick={() => setActivePdfPreview({ url: f.url, name: f.name || 'document.pdf' })}
                                         className="btn btn-outline btn-sm"
                                         style={{ flex: 1, gap: '0.2rem', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700, padding: '0.3rem 0.35rem' }}
                                       >
@@ -1084,7 +1086,7 @@ export const OrderTrackerDrawer = () => {
                                   {f.url && (
                                     <button
                                       type="button"
-                                      onClick={() => openPdfInNewTab(f.url, f.name || 'document.pdf')}
+                                      onClick={() => setActivePdfPreview({ url: f.url, name: f.name || 'document.pdf' })}
                                       className="btn btn-outline btn-sm"
                                       style={{ flex: 1, gap: '0.25rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}
                                     >
@@ -1704,6 +1706,16 @@ export const OrderTrackerDrawer = () => {
         <ProductionWorksheetModal
           order={ord}
           onClose={() => setShowWorksheetModal(false)}
+        />
+      )}
+
+      {/* In-App PDF Preview Modal */}
+      {activePdfPreview && (
+        <PdfPreviewModal
+          isOpen={Boolean(activePdfPreview)}
+          fileUrl={activePdfPreview.url}
+          fileName={activePdfPreview.name}
+          onClose={() => setActivePdfPreview(null)}
         />
       )}
     </div>

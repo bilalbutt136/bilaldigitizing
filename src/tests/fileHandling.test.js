@@ -73,12 +73,38 @@ describe('File Handling & Universal Storage Pipeline', () => {
   });
 
   test('formats Content-Disposition correctly for inline preview and download attachment', () => {
-    const filename = 'embroidery_worksheet.pdf';
-    const attachmentDisposition = `attachment; filename="${encodeURIComponent(filename)}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
+    const filename = 'Turbide Avocat Print.pdf';
+    const safeAscii = filename.replace(/["\r\n\\]/g, '').replace(/[^\x20-\x7E]/g, '_');
+    const utf8Encoded = encodeURIComponent(filename);
+    const attachmentDisposition = `attachment; filename="${safeAscii}"; filename*=UTF-8''${utf8Encoded}`;
     assert.ok(attachmentDisposition.startsWith('attachment;'));
-    assert.ok(attachmentDisposition.includes(encodeURIComponent(filename)));
+    assert.ok(attachmentDisposition.includes('filename*=UTF-8\'\'Turbide%20Avocat%20Print.pdf'));
 
-    const inlineDisposition = `inline; filename="${encodeURIComponent(filename)}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
+    const inlineDisposition = `inline; filename="${safeAscii}"; filename*=UTF-8''${utf8Encoded}`;
     assert.ok(inlineDisposition.startsWith('inline;'));
+  });
+
+  test('correctly parses Range header and slices buffer for Chromium PDFium', () => {
+    const totalBytes = 1000;
+    const dummyBuffer = Buffer.alloc(totalBytes, 0x41); // 'A' repeated
+    const rangeHeader = 'bytes=100-199';
+    const match = rangeHeader.match(/bytes=(\d+)-(\d*)/);
+    assert.ok(match);
+
+    const start = parseInt(match[1], 10);
+    const end = parseInt(match[2], 10);
+    assert.equal(start, 100);
+    assert.equal(end, 199);
+
+    const chunk = dummyBuffer.subarray(start, end + 1);
+    assert.equal(chunk.byteLength, 100);
+    assert.equal(`bytes ${start}-${end}/${totalBytes}`, 'bytes 100-199/1000');
+  });
+
+  test('validates generated PDF binary structure with %PDF header and %%EOF trailer', () => {
+    const validPdf = '%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\nxref\n0 1\n0000000000 65535 f\ntrailer<</Size 1/Root 1 0 R>>\nstartxref\n50\n%%EOF';
+    const buf = Buffer.from(validPdf);
+    assert.ok(buf.toString('utf-8').startsWith('%PDF-'));
+    assert.ok(buf.toString('utf-8').includes('%%EOF'));
   });
 });

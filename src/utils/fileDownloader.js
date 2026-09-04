@@ -86,7 +86,10 @@ export async function downloadFileDirectly(url, filename = 'download') {
     const response = await fetch(proxyDownloadUrl);
     if (response.ok) {
       const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
+      const ext = cleanFilename.split('.').pop()?.toLowerCase() || '';
+      const mime = ext === 'pdf' ? 'application/pdf' : (blob.type || 'application/octet-stream');
+      const safeBlob = new Blob([blob], { type: mime });
+      const blobUrl = window.URL.createObjectURL(safeBlob);
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = blobUrl;
@@ -96,7 +99,7 @@ export async function downloadFileDirectly(url, filename = 'download') {
       setTimeout(() => {
         window.URL.revokeObjectURL(blobUrl);
         if (a.parentNode) a.parentNode.removeChild(a);
-      }, 2000);
+      }, 3000);
       return;
     }
   } catch (fetchErr) {
@@ -158,7 +161,13 @@ export async function openPdfInNewTab(url, filename = 'document.pdf') {
 
   // 1. If it's a blob URL
   if (url.startsWith('blob:')) {
-    window.open(url, '_blank', 'noopener,noreferrer');
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { if (a.parentNode) a.parentNode.removeChild(a); }, 1000);
     return;
   }
 
@@ -176,7 +185,16 @@ export async function openPdfInNewTab(url, filename = 'document.pdf') {
       }
       const blob = new Blob([u8arr], { type: mime });
       const blobUrl = window.URL.createObjectURL(blob);
-      window.open(blobUrl, '_blank', 'noopener,noreferrer');
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (a.parentNode) a.parentNode.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+      }, 60000);
       return;
     } catch (dataErr) {
       console.warn('[FileDownloader] PDF data URL conversion error:', dataErr);
@@ -185,25 +203,22 @@ export async function openPdfInNewTab(url, filename = 'document.pdf') {
 
   // 3. High-speed server-side stream preview (/api/download?preview=true)
   const previewProxyUrl = `/api/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(cleanFilename)}&preview=true`;
-  const newTab = window.open(previewProxyUrl, '_blank', 'noopener,noreferrer');
-  if (newTab) return;
 
-  // 4. Fallback to blob fetch if pop-up was blocked
   try {
-    const response = await fetch(previewProxyUrl);
-    if (response.ok) {
-      const blob = await response.blob();
-      const pdfBlob = new Blob([blob], { type: 'application/pdf' });
-      const blobUrl = window.URL.createObjectURL(pdfBlob);
-      window.open(blobUrl, '_blank', 'noopener,noreferrer');
-      return;
-    }
-  } catch (err) {
-    console.warn('[FileDownloader] PDF blob open fallback:', err.message);
+    const a = document.createElement('a');
+    a.href = previewProxyUrl;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      if (a.parentNode) a.parentNode.removeChild(a);
+    }, 1000);
+    return;
+  } catch (clickErr) {
+    const newTab = window.open(previewProxyUrl, '_blank');
+    if (newTab) newTab.opener = null;
   }
-
-  // 5. Fallback direct open
-  window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 // Backward compatibility alias

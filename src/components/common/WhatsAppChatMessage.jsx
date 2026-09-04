@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { downloadFileDirectly, openPdfInNewTab } from '../../utils/fileDownloader';
 import OfferCardMessage from './OfferCardMessage';
+import { PdfPreviewModal } from './PdfPreviewModal';
 
 /**
  * Determines file category from URL or filename
@@ -73,6 +74,7 @@ export default function WhatsAppChatMessage({
   onOrderClick = () => {}
 }) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [showPdfModal, setShowPdfModal] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
   if (!message) return null;
@@ -200,9 +202,11 @@ export default function WhatsAppChatMessage({
   const fileCategory = getFileCategory(fileName, fileUrl);
   const replyTo = message.reply_to;
 
+  const effectiveUrl = fileUrl || (fileName ? `/api/download?url=${encodeURIComponent(fileName)}&filename=${encodeURIComponent(fileName)}` : null);
+
   const handleDownload = (e, customUrl, customName) => {
     e?.stopPropagation();
-    const targetUrl = customUrl || fileUrl;
+    const targetUrl = customUrl || effectiveUrl;
     const targetName = customName || fileName || 'download';
     if (!targetUrl) return;
     downloadFileDirectly(targetUrl, targetName);
@@ -211,8 +215,8 @@ export default function WhatsAppChatMessage({
   const handleOpenPdf = (e) => {
     e?.preventDefault();
     e?.stopPropagation();
-    if (!fileUrl) return;
-    openPdfInNewTab(fileUrl, fileName || 'document.pdf');
+    if (!effectiveUrl) return;
+    setShowPdfModal(true);
   };
 
   return (
@@ -783,6 +787,16 @@ export default function WhatsAppChatMessage({
             )}
           </div>
         </div>
+      )}
+
+      {showPdfModal && effectiveUrl && (
+        <PdfPreviewModal
+          isOpen={showPdfModal}
+          fileUrl={effectiveUrl}
+          fileName={fileName || 'Document.pdf'}
+          fileSize={fileSize}
+          onClose={() => setShowPdfModal(false)}
+        />
       )}
     </div>
   );
