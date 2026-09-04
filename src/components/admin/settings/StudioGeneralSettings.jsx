@@ -69,6 +69,7 @@ export const StudioGeneralSettings = () => {
         studioAddress: studioAddress.trim(),
         businessHours: businessHours.trim(),
         contactInfo: {
+          ...(siteSettings?.contactInfo || {}),
           phone: supportPhone.trim(),
           email: supportEmail.trim(),
           whatsapp: whatsappNumber.trim(),

@@ -37,6 +37,8 @@ export const PortfolioManager = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [lightboxItem, setLightboxItem] = useState(null);
+  const [lightboxMode, setLightboxMode] = useState('after');
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingMain, setIsUploadingMain] = useState(false);
   const [isUploadingBefore, setIsUploadingBefore] = useState(false);
@@ -456,8 +458,15 @@ export const PortfolioManager = () => {
                 }}
               >
                 <div>
-                  {/* Image Container with Preview */}
-                  <div style={{ position: 'relative', width: '100%', height: '210px', background: 'var(--color-surface-elevated, #f1f5f9)', overflow: 'hidden' }}>
+                  {/* Image Container with Preview & Inspect Trigger */}
+                  <div 
+                    style={{ position: 'relative', width: '100%', height: '210px', background: 'var(--color-surface-elevated, #f1f5f9)', overflow: 'hidden', cursor: 'pointer' }}
+                    onClick={() => {
+                      setLightboxItem(item);
+                      setLightboxMode('after');
+                    }}
+                    title="Click to inspect full-resolution artwork"
+                  >
                     {displayImg ? (
                       <img
                         src={displayImg}
@@ -471,7 +480,7 @@ export const PortfolioManager = () => {
                     )}
 
                     {/* Category Pill Over Image */}
-                    <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
+                    <div style={{ position: 'absolute', top: '10px', left: '10px' }} onClick={(e) => e.stopPropagation()}>
                       <span style={{
                         background: badgeBg,
                         color: badgeColor,
@@ -489,7 +498,7 @@ export const PortfolioManager = () => {
                     </div>
 
                     {/* Active Status Over Image */}
-                    <div style={{ position: 'absolute', top: '10px', right: '10px' }}>
+                    <div style={{ position: 'absolute', top: '10px', right: '10px' }} onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         onClick={() => handleToggleActive(item)}
@@ -512,6 +521,27 @@ export const PortfolioManager = () => {
                         {item.is_active !== false ? <Eye size={12} /> : <EyeOff size={12} />}
                         <span>{item.is_active !== false ? 'Live' : 'Hidden'}</span>
                       </button>
+                    </div>
+
+                    {/* Bottom Right Inspect Badge */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '8px',
+                      right: '8px',
+                      background: 'rgba(15, 23, 42, 0.75)',
+                      backdropFilter: 'blur(4px)',
+                      color: '#ffffff',
+                      borderRadius: '6px',
+                      padding: '0.2rem 0.45rem',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      pointerEvents: 'none'
+                    }}>
+                      <Maximize2 size={11} />
+                      <span>Inspect</span>
                     </div>
                   </div>
 
@@ -891,6 +921,214 @@ export const PortfolioManager = () => {
 
             </form>
 
+      {/* 5. INTERACTIVE FULL-SCREEN ARTWORK LIGHTBOX MODAL */}
+      {lightboxItem && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.88)',
+            backdropFilter: 'blur(10px)',
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem',
+            overflowY: 'auto'
+          }}
+          onClick={() => setLightboxItem(null)}
+        >
+          <div
+            style={{
+              background: 'var(--bg-card, #ffffff)',
+              borderRadius: '24px',
+              maxWidth: '900px',
+              width: '100%',
+              overflow: 'hidden',
+              boxShadow: '0 30px 80px rgba(0,0,0,0.5)',
+              border: '1px solid var(--border-color)',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Lightbox Header */}
+            <div style={{
+              padding: '1.25rem 1.5rem',
+              borderBottom: '1px solid var(--border-color)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              background: 'var(--color-subtle, #f8fafc)',
+              flexWrap: 'wrap',
+              gap: '0.75rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <span style={{
+                  background: (lightboxItem.category || '').toLowerCase().includes('vector') ? 'rgba(6, 182, 212, 0.15)' : (lightboxItem.category || '').toLowerCase().includes('patch') ? 'rgba(168, 85, 247, 0.15)' : 'rgba(249, 115, 22, 0.15)',
+                  color: (lightboxItem.category || '').toLowerCase().includes('vector') ? '#06b6d4' : (lightboxItem.category || '').toLowerCase().includes('patch') ? '#a855f7' : '#f97316',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  padding: '0.25rem 0.65rem',
+                  borderRadius: '9999px',
+                  textTransform: 'uppercase'
+                }}>
+                  {lightboxItem.category || 'Embroidery'}
+                </span>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--color-text-primary)', margin: 0 }}>
+                  {lightboxItem.title || 'Artwork Inspection'}
+                </h3>
+              </div>
+
+              {/* Before/After Switcher (if original_image exists) & Close */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                {lightboxItem.original_image && (
+                  <div style={{ display: 'flex', background: 'var(--bg-surface, #e2e8f0)', padding: '0.25rem', borderRadius: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setLightboxMode('after')}
+                      style={{
+                        padding: '0.35rem 0.75rem',
+                        borderRadius: '7px',
+                        border: 'none',
+                        background: lightboxMode === 'after' ? 'var(--bg-card, #ffffff)' : 'transparent',
+                        color: lightboxMode === 'after' ? 'var(--orange-600, #ea580c)' : 'var(--text-muted, #64748b)',
+                        fontWeight: 800,
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        boxShadow: lightboxMode === 'after' ? 'var(--shadow-sm)' : 'none'
+                      }}
+                    >
+                      ✨ Finished Sew-Out
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLightboxMode('before')}
+                      style={{
+                        padding: '0.35rem 0.75rem',
+                        borderRadius: '7px',
+                        border: 'none',
+                        background: lightboxMode === 'before' ? 'var(--bg-card, #ffffff)' : 'transparent',
+                        color: lightboxMode === 'before' ? 'var(--orange-600, #ea580c)' : 'var(--text-muted, #64748b)',
+                        fontWeight: 800,
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        boxShadow: lightboxMode === 'before' ? 'var(--shadow-sm)' : 'none'
+                      }}
+                    >
+                      🖼️ Original Artwork
+                    </button>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setLightboxItem(null)}
+                  style={{
+                    background: 'var(--bg-surface, #e2e8f0)',
+                    color: 'var(--color-text-primary)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.4rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  title="Close Inspector"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Lightbox Main Image Display */}
+            <div style={{
+              background: '#090d16',
+              padding: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '360px',
+              maxHeight: '60vh',
+              overflow: 'hidden',
+              position: 'relative'
+            }}>
+              {(() => {
+                const targetImg = lightboxMode === 'before' && lightboxItem.original_image 
+                  ? lightboxItem.original_image 
+                  : (lightboxItem.digitized_image || lightboxItem.digitizedImage || lightboxItem.afterImg || lightboxItem.image || lightboxItem.original_image);
+
+                return targetImg ? (
+                  <img
+                    src={targetImg}
+                    alt={lightboxItem.title}
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '55vh',
+                      objectFit: 'contain',
+                      borderRadius: '12px',
+                      boxShadow: '0 8px 30px rgba(0,0,0,0.6)'
+                    }}
+                  />
+                ) : (
+                  <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>No image preview available</div>
+                );
+              })()}
+            </div>
+
+            {/* Lightbox Footer & Specs */}
+            <div style={{
+              padding: '1.25rem 1.5rem',
+              background: 'var(--bg-card)',
+              borderTop: '1px solid var(--border-color)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '1rem'
+            }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+                {lightboxItem.stitch_count && (
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, background: 'var(--color-subtle)', color: 'var(--color-text-primary)', padding: '0.25rem 0.65rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    ⚡ {lightboxItem.stitch_count}
+                  </span>
+                )}
+                {lightboxItem.formats && (
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, background: 'var(--color-subtle)', color: 'var(--color-text-primary)', padding: '0.25rem 0.65rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    📁 {typeof lightboxItem.formats === 'string' ? lightboxItem.formats : Array.isArray(lightboxItem.formats) ? lightboxItem.formats.join(', ') : ''}
+                  </span>
+                )}
+                {lightboxItem.client_type && (
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, background: 'var(--color-subtle)', color: 'var(--color-text-primary)', padding: '0.25rem 0.65rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    🏢 {lightboxItem.client_type}
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => {
+                    const itm = lightboxItem;
+                    setLightboxItem(null);
+                    openEditModal(itm);
+                  }}
+                  style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                >
+                  <Edit3 size={14} /> Edit Project Details
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-navy btn-sm"
+                  onClick={() => setLightboxItem(null)}
+                  style={{ fontWeight: 800 }}
+                >
+                  Done
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
