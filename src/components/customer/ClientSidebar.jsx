@@ -25,7 +25,7 @@ export const ClientSidebar = ({
   digitizingCount = 0,
   vectorCount = 0,
   patchCount = 0,
-  _storeCount = 0,
+  unreadOrdersCount = 0,
   unreadChatCount = 0,
   unreadNotifCount = 0,
   unpaidCount = 0,
@@ -57,7 +57,7 @@ export const ClientSidebar = ({
           id: 'orders',
           label: 'My Orders',
           icon: ClipboardList,
-          badge: (digitizingCount + vectorCount + patchCount) > 0 ? (digitizingCount + vectorCount + patchCount) : null
+          badge: unreadOrdersCount > 0 ? unreadOrdersCount : null
         },
         { 
           id: 'inbox', 

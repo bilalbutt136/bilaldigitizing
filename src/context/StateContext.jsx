@@ -568,6 +568,61 @@ export const StateProvider = ({ children }) => {
 
   const unreadNotificationsCount = Array.isArray(notifications) ? notifications.filter(n => !n.read && !n.is_read).length : 0;
 
+  // Unread Orders tracking (Badge clears once customer views Orders tab/screen)
+  const [lastOrdersViewedTime, setLastOrdersViewedTime] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const email = authUser?.email || 'guest';
+      const saved = localStorage.getItem(`bdigi_last_orders_viewed_${email}`);
+      return saved ? parseInt(saved, 10) || 0 : 0;
+    }
+    return 0;
+  });
+
+  const [unreadOrdersCount, setUnreadOrdersCount] = useState(0);
+
+  const markOrdersAsRead = React.useCallback(() => {
+    const now = Date.now();
+    setLastOrdersViewedTime(now);
+    setUnreadOrdersCount(0);
+    if (typeof window !== 'undefined') {
+      const email = authUser?.email || 'guest';
+      localStorage.setItem(`bdigi_last_orders_viewed_${email}`, String(now));
+      window.dispatchEvent(new CustomEvent('bdigi_orders_read_sync', { detail: { time: now } }));
+    }
+  }, [authUser]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const email = authUser?.email || 'guest';
+    const saved = localStorage.getItem(`bdigi_last_orders_viewed_${email}`);
+    const viewedTime = saved ? parseInt(saved, 10) || 0 : 0;
+    setLastOrdersViewedTime(viewedTime);
+
+    if (!viewedTime) {
+      // First session: initialize with 0 unread orders to avoid showing stale badges
+      setUnreadOrdersCount(0);
+    } else if (Array.isArray(orders)) {
+      const unread = orders.filter(o => {
+        if (!o) return false;
+        const orderTime = o.updated_at ? new Date(o.updated_at).getTime() : (o.created_at ? new Date(o.created_at).getTime() : 0);
+        return orderTime > viewedTime;
+      }).length;
+      setUnreadOrdersCount(unread);
+    }
+  }, [orders, authUser]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleOrdersReadSync = (e) => {
+      if (e.detail?.time) {
+        setLastOrdersViewedTime(e.detail.time);
+        setUnreadOrdersCount(0);
+      }
+    };
+    window.addEventListener('bdigi_orders_read_sync', handleOrdersReadSync);
+    return () => window.removeEventListener('bdigi_orders_read_sync', handleOrdersReadSync);
+  }, []);
+
   // Global Chat Unread Counter (Synced across customer and admin for Inbox badge)
   const [unreadChatCount, setUnreadChatCount] = useState(0);
 
@@ -2322,6 +2377,7 @@ export const StateProvider = ({ children }) => {
       colorTheme, setColorTheme, availableThemes: THEME_PRESETS,
       customBrandColors, setCustomBrandColors,
       notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead, unreadNotificationsCount, refreshNotifications,
+      unreadOrdersCount, markOrdersAsRead, lastOrdersViewedTime,
       unreadChatCount, setUnreadChatCount, refreshUnreadChatCount,
       createOrder, updateOrderStatus, addRevisionRequest, addOrderMessage, cancelOrder,
       fetchUserWalletBalance, refreshOrders, refreshClients,

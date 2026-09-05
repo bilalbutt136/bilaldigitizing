@@ -109,6 +109,8 @@ export const BDigitizingMobileApp = () => {
     notifications: globalNotifications = [],
     markNotificationAsRead: markGlobalNotificationAsRead,
     refreshOrders,
+    unreadOrdersCount = 0,
+    markOrdersAsRead,
     siteSettings = {}
   } = useAppState();
 
@@ -388,7 +390,10 @@ export const BDigitizingMobileApp = () => {
     if (typeof refreshOrders === 'function') {
       refreshOrders().catch(err => console.warn('Order sync note:', err));
     }
-  }, [mobileTab, userEmail]);
+    if (mobileTab === 'orders' && typeof markOrdersAsRead === 'function') {
+      markOrdersAsRead();
+    }
+  }, [mobileTab, userEmail, markOrdersAsRead]);
 
   // Listen for global tab switch events (e.g. clicking Client Dashboard, Inbox, or Notifications from header)
   useEffect(() => {
@@ -3582,12 +3587,12 @@ export const BDigitizingMobileApp = () => {
             transition: 'all 0.2s ease'
           }}>
             <ClipboardList size={20} strokeWidth={mobileTab === 'orders' ? 2.5 : 1.75} />
-            {(unpaidOrders.length > 0 || activeOrders.length > 0) && (
+            {unreadOrdersCount > 0 && (
               <span style={{
                 position: 'absolute',
                 top: '-1px',
                 right: '-1px',
-                background: unpaidOrders.length > 0 ? '#ea580c' : '#047857',
+                background: '#ea580c',
                 color: '#ffffff',
                 fontSize: '0.55rem',
                 fontWeight: 900,
@@ -3598,7 +3603,7 @@ export const BDigitizingMobileApp = () => {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                {unpaidOrders.length > 0 ? unpaidOrders.length : activeOrders.length}
+                {unreadOrdersCount}
               </span>
             )}
           </div>

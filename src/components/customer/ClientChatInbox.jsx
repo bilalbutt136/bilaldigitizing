@@ -149,6 +149,9 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
 
   useEffect(() => {
     setMounted(true);
+    if (typeof document !== 'undefined') {
+      document.body.classList.add('chat-inbox-open');
+    }
     loadChatHistory();
     if (canonicalChatId) {
       if (typeof window !== 'undefined') {
@@ -156,6 +159,12 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
       }
       markConversationAsRead(canonicalChatId, 'client', clientEmail);
     }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove('chat-inbox-open');
+        document.body.classList.remove('chat-keyboard-active');
+      }
+    };
   }, [canonicalChatId, clientEmail]);
 
   // Sync if initialOrderId prop changes
@@ -878,20 +887,18 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
         onSubmit={handleSendMessage}
         className="chat-input-bar-container"
         style={{
-          padding: '0.65rem 1rem 0.5rem',
+          padding: '0.65rem 0.85rem calc(0.65rem + env(safe-area-inset-bottom, 0px))',
           background: '#ffffff',
-          borderTop: '1px solid #e2e8f0',
+          borderTop: '1.5px solid #e2e8f0',
           display: 'flex',
           alignItems: 'flex-end',
           gap: '0.45rem',
           flexShrink: 0,
-          boxShadow: '0 -2px 12px rgba(0, 0, 0, 0.04)',
+          boxShadow: '0 -2px 12px rgba(0, 0, 0, 0.05)',
           boxSizing: 'border-box',
           width: '100%',
-          position: 'sticky',
-          bottom: keyboardOffset > 0 ? `${keyboardOffset}px` : 0,
-          zIndex: 30,
-          transition: 'bottom 0.15s ease-out'
+          position: 'relative',
+          zIndex: 50
         }}
       >
         <input 
@@ -935,11 +942,18 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           onKeyDown={handleKeyDown}
           onFocus={() => {
             setIsInputFocused(true);
+            if (typeof document !== 'undefined') {
+              document.body.classList.add('chat-keyboard-active');
+            }
             setTimeout(() => scrollToBottom('smooth'), 100);
-            setTimeout(() => scrollToBottom('smooth'), 300);
+            setTimeout(() => scrollToBottom('smooth'), 250);
+            setTimeout(() => scrollToBottom('smooth'), 450);
           }}
           onBlur={() => {
             setIsInputFocused(false);
+            if (typeof document !== 'undefined') {
+              document.body.classList.remove('chat-keyboard-active');
+            }
             setTimeout(() => scrollToBottom('smooth'), 150);
           }}
           placeholder="Type message..."
@@ -996,17 +1010,20 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
         </button>
       </form>
 
-      {/* Keyboard Shortcut Hint Footer */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '0.25rem 1.25rem 0.5rem',
-        background: '#ffffff',
-        borderTop: 'none',
-        fontSize: '0.68rem',
-        color: '#64748b'
-      }}>
+      {/* Keyboard Shortcut Hint Footer (Desktop Only) */}
+      <div 
+        className="chat-desktop-hint desktop-only"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '0.25rem 1.25rem 0.5rem',
+          background: '#ffffff',
+          borderTop: 'none',
+          fontSize: '0.68rem',
+          color: '#64748b'
+        }}
+      >
         <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
           ⌨️ Press <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Enter</kbd> to send
         </span>

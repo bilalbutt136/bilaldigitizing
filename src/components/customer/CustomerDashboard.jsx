@@ -81,6 +81,8 @@ export const CustomerDashboard = () => {
     unreadNotificationsCount = 0,
     markAllNotificationsAsRead,
     refreshNotifications,
+    unreadOrdersCount = 0,
+    markOrdersAsRead,
     unreadChatCount = 0,
     setUnreadChatCount,
     refreshUnreadChatCount
@@ -298,7 +300,12 @@ export const CustomerDashboard = () => {
         markAllNotificationsAsRead();
       }
     }
-  }, [activeTab, setUnreadChatCount, markAllNotificationsAsRead]);
+    if (activeTab === 'orders' || activeTab === 'digitizing' || activeTab === 'vector' || activeTab === 'patches') {
+      if (typeof markOrdersAsRead === 'function') {
+        markOrdersAsRead();
+      }
+    }
+  }, [activeTab, setUnreadChatCount, markAllNotificationsAsRead, markOrdersAsRead]);
 
   // Live Notifications Count Loader & Real-time Subscription
   React.useEffect(() => {
@@ -756,24 +763,26 @@ export const CustomerDashboard = () => {
         @media (max-width: 768px) {
           .client-inbox-fullscreen-mobile {
             position: fixed !important;
-            top: 56px !important;
+            top: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            bottom: 64px !important;
-            height: auto !important;
+            bottom: 0 !important;
+            height: 100dvh !important;
+            max-height: 100dvh !important;
             width: 100% !important;
             border-radius: 0 !important;
             border: none !important;
-            z-index: 9980 !important;
+            z-index: 99999 !important;
             margin: 0 !important;
             background: #ffffff !important;
             display: flex !important;
             flex-direction: column !important;
             overflow: hidden !important;
-            transition: bottom 0.15s ease-out !important;
           }
 
-          body.chat-keyboard-active .mobile-bottom-nav {
+          body.chat-keyboard-active .mobile-bottom-nav,
+          body.chat-inbox-open .mobile-bottom-nav {
+            display: none !important;
             transform: translateY(100%) !important;
             pointer-events: none !important;
             opacity: 0 !important;
@@ -902,6 +911,7 @@ export const CustomerDashboard = () => {
             vectorCount={vectorOrders.length}
             patchCount={patchOrders.length}
             storeCount={storeOrders.length}
+            unreadOrdersCount={unreadOrdersCount}
             unreadChatCount={unreadChatCount}
             unreadNotifCount={unreadNotificationsCount}
             unpaidCount={unpaidOrders.length}
@@ -1213,9 +1223,9 @@ export const CustomerDashboard = () => {
                         <ClipboardList size={20} />
                       </div>
                       <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>My Orders</span>
-                      {activeOrders.length > 0 && (
+                      {unreadOrdersCount > 0 && (
                         <span style={{ position: 'absolute', top: '4px', right: '4px', background: '#0284c7', color: '#fff', fontSize: '0.55rem', fontWeight: 900, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {activeOrders.length}
+                          {unreadOrdersCount}
                         </span>
                       )}
                     </button>
@@ -2397,7 +2407,7 @@ export const CustomerDashboard = () => {
                   background: '#ffffff'
                 }}
               >
-                <ClientChatInbox initialOrderId="inbox" />
+                <ClientChatInbox initialOrderId="inbox" onBack={() => setActiveTab('dashboard')} />
               </div>
             )}
 
@@ -2417,7 +2427,7 @@ export const CustomerDashboard = () => {
                   background: '#ffffff'
                 }}
               >
-                <ClientChatInbox initialOrderId="help-support" />
+                <ClientChatInbox initialOrderId="help-support" onBack={() => setActiveTab('dashboard')} />
               </div>
             )}
 
@@ -2572,7 +2582,7 @@ export const CustomerDashboard = () => {
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
           borderTop: '1px solid rgba(226, 232, 240, 0.95)',
-          display: 'grid',
+          display: (['inbox', 'support', 'help-support'].includes(activeTab)) ? 'none' : 'grid',
           gridTemplateColumns: 'repeat(5, 1fr)',
           alignItems: 'center',
           height: '64px',
@@ -2649,7 +2659,7 @@ export const CustomerDashboard = () => {
             position: 'relative'
           }}>
             <ClipboardList size={19} style={{ color: activeTab === 'orders' ? 'var(--orange-600)' : '#64748b' }} />
-            {activeOrders.length > 0 && (
+            {unreadOrdersCount > 0 && (
               <span style={{
                 position: 'absolute',
                 top: '-2px',
@@ -2664,7 +2674,7 @@ export const CustomerDashboard = () => {
                 textAlign: 'center',
                 lineHeight: 1.2
               }}>
-                {activeOrders.length}
+                {unreadOrdersCount}
               </span>
             )}
           </div>
