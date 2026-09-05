@@ -276,10 +276,10 @@ export const ServicesSection = () => {
               style={{
                 position: 'relative',
                 padding: 'clamp(1.5rem, 2.8vw, 2rem)',
-                background: 'linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)',
+                background: 'var(--color-surface, #ffffff)',
                 borderRadius: '24px',
-                border: '1.5px solid rgba(234, 88, 12, 0.28)',
-                boxShadow: '0 8px 30px -4px rgba(234, 88, 12, 0.08), 0 2px 10px rgba(0, 0, 0, 0.03)',
+                border: '1.5px solid rgba(234, 88, 12, 0.32)',
+                boxShadow: 'var(--shadow-md, 0 8px 30px -4px rgba(234, 88, 12, 0.08))',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
@@ -288,13 +288,13 @@ export const ServicesSection = () => {
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-8px)';
-                e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(234, 88, 12, 0.2), 0 4px 16px rgba(0,0,0,0.05)';
+                e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(234, 88, 12, 0.25), 0 4px 16px rgba(0,0,0,0.1)';
                 e.currentTarget.style.borderColor = 'var(--orange-500, #ea580c)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 8px 30px -4px rgba(234, 88, 12, 0.08), 0 2px 10px rgba(0, 0, 0, 0.03)';
-                e.currentTarget.style.borderColor = 'rgba(234, 88, 12, 0.28)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-md, 0 8px 30px -4px rgba(234, 88, 12, 0.08))';
+                e.currentTarget.style.borderColor = 'rgba(234, 88, 12, 0.32)';
               }}
             >
               {/* Top Accent Gradient Bar */}
@@ -357,7 +357,7 @@ export const ServicesSection = () => {
                 <h3 style={{
                   fontSize: '1.38rem',
                   fontWeight: 900,
-                  color: 'var(--navy-950, #0f172a)',
+                  color: 'var(--color-text-primary, var(--navy-950, #0f172a))',
                   margin: '0 0 0.45rem 0',
                   lineHeight: 1.25,
                   fontFamily: 'var(--font-heading)'
@@ -366,7 +366,7 @@ export const ServicesSection = () => {
                 </h3>
 
                 <p style={{
-                  color: 'var(--text-muted, #64748b)',
+                  color: 'var(--color-text-muted, #64748b)',
                   fontSize: '0.9rem',
                   lineHeight: 1.55,
                   margin: '0 0 1.2rem 0'
@@ -376,8 +376,8 @@ export const ServicesSection = () => {
 
                 {/* Production Packages & Tiers Box */}
                 <div style={{
-                  background: 'rgba(15, 23, 42, 0.03)',
-                  border: '1px solid rgba(15, 23, 42, 0.07)',
+                  background: 'var(--color-subtle, rgba(15, 23, 42, 0.03))',
+                  border: '1px solid var(--color-border, rgba(15, 23, 42, 0.07))',
                   borderRadius: '14px',
                   padding: '0.8rem 0.9rem',
                   marginBottom: '1.25rem'
@@ -387,7 +387,7 @@ export const ServicesSection = () => {
                     fontWeight: 800,
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
-                    color: 'var(--text-muted, #64748b)',
+                    color: 'var(--color-text-muted, #64748b)',
                     marginBottom: '0.5rem',
                     display: 'flex',
                     alignItems: 'center',
@@ -403,15 +403,15 @@ export const ServicesSection = () => {
                         style={{
                           fontSize: '0.78rem',
                           fontWeight: 700,
-                          background: '#ffffff',
-                          color: 'var(--navy-900, #0f172a)',
-                          border: '1px solid rgba(15, 23, 42, 0.1)',
+                          background: 'var(--color-surface, #ffffff)',
+                          color: 'var(--color-text-primary, var(--navy-900, #0f172a))',
+                          border: '1px solid var(--color-border, rgba(15, 23, 42, 0.1))',
                           padding: '0.28rem 0.65rem',
                           borderRadius: '8px',
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '0.35rem',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                          boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.04))'
                         }}
                       >
                         <span>{tier.name}</span>
@@ -430,7 +430,7 @@ export const ServicesSection = () => {
                   flexDirection: 'column',
                   gap: '0.6rem',
                   fontSize: '0.86rem',
-                  color: 'var(--navy-800, #1e293b)'
+                  color: 'var(--color-text-secondary, var(--navy-800, #1e293b))'
                 }}>
                   <li style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
                     <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -460,9 +460,9 @@ export const ServicesSection = () => {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   paddingTop: '0.95rem',
-                  borderTop: '1px solid rgba(15, 23, 42, 0.08)',
+                  borderTop: '1px solid var(--color-border, rgba(15, 23, 42, 0.08))',
                   fontSize: '0.82rem',
-                  color: 'var(--navy-700, #334155)',
+                  color: 'var(--color-text-secondary, var(--navy-700, #334155))',
                   marginBottom: '1.25rem'
                 }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
@@ -514,9 +514,9 @@ export const ServicesSection = () => {
                   <button 
                     type="button"
                     style={{
-                      background: '#ffffff',
-                      color: 'var(--navy-800, #1e293b)',
-                      border: '1.5px solid var(--border-color, #e2e8f0)',
+                      background: 'var(--color-surface, #ffffff)',
+                      color: 'var(--color-text-primary, var(--navy-800, #1e293b))',
+                      border: '1.5px solid var(--color-border, #e2e8f0)',
                       borderRadius: '12px',
                       padding: '0.8rem 0.95rem',
                       fontWeight: 800,
@@ -524,8 +524,8 @@ export const ServicesSection = () => {
                       cursor: 'pointer',
                       transition: 'all 0.2s ease'
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = 'var(--navy-400, #94a3b8)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.borderColor = 'var(--border-color, #e2e8f0)'; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-subtle, #f8fafc)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-surface, #ffffff)'; }}
                     onClick={() => handleSelectTabAndScrollToPackages('embroidery')}
                   >
                     Details
@@ -540,10 +540,10 @@ export const ServicesSection = () => {
               style={{
                 position: 'relative',
                 padding: 'clamp(1.5rem, 2.8vw, 2rem)',
-                background: 'linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)',
+                background: 'var(--color-surface, #ffffff)',
                 borderRadius: '24px',
-                border: '1.5px solid rgba(37, 99, 235, 0.24)',
-                boxShadow: '0 8px 30px -4px rgba(37, 99, 235, 0.08), 0 2px 10px rgba(0, 0, 0, 0.03)',
+                border: '1.5px solid rgba(37, 99, 235, 0.32)',
+                boxShadow: 'var(--shadow-md, 0 8px 30px -4px rgba(37, 99, 235, 0.08))',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
@@ -552,13 +552,13 @@ export const ServicesSection = () => {
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-8px)';
-                e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(37, 99, 235, 0.18), 0 4px 16px rgba(0,0,0,0.05)';
+                e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(37, 99, 235, 0.25), 0 4px 16px rgba(0,0,0,0.1)';
                 e.currentTarget.style.borderColor = '#2563eb';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 8px 30px -4px rgba(37, 99, 235, 0.08), 0 2px 10px rgba(0, 0, 0, 0.03)';
-                e.currentTarget.style.borderColor = 'rgba(37, 99, 235, 0.24)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-md, 0 8px 30px -4px rgba(37, 99, 235, 0.08))';
+                e.currentTarget.style.borderColor = 'rgba(37, 99, 235, 0.32)';
               }}
             >
               {/* Top Accent Gradient Bar */}
@@ -621,7 +621,7 @@ export const ServicesSection = () => {
                 <h3 style={{
                   fontSize: '1.38rem',
                   fontWeight: 900,
-                  color: 'var(--navy-950, #0f172a)',
+                  color: 'var(--color-text-primary, var(--navy-950, #0f172a))',
                   margin: '0 0 0.45rem 0',
                   lineHeight: 1.25,
                   fontFamily: 'var(--font-heading)'
@@ -630,7 +630,7 @@ export const ServicesSection = () => {
                 </h3>
 
                 <p style={{
-                  color: 'var(--text-muted, #64748b)',
+                  color: 'var(--color-text-muted, #64748b)',
                   fontSize: '0.9rem',
                   lineHeight: 1.55,
                   margin: '0 0 1.2rem 0'
@@ -640,8 +640,8 @@ export const ServicesSection = () => {
 
                 {/* Production Packages & Tiers Box */}
                 <div style={{
-                  background: 'rgba(15, 23, 42, 0.03)',
-                  border: '1px solid rgba(15, 23, 42, 0.07)',
+                  background: 'var(--color-subtle, rgba(15, 23, 42, 0.03))',
+                  border: '1px solid var(--color-border, rgba(15, 23, 42, 0.07))',
                   borderRadius: '14px',
                   padding: '0.8rem 0.9rem',
                   marginBottom: '1.25rem'
@@ -651,7 +651,7 @@ export const ServicesSection = () => {
                     fontWeight: 800,
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
-                    color: 'var(--text-muted, #64748b)',
+                    color: 'var(--color-text-muted, #64748b)',
                     marginBottom: '0.5rem',
                     display: 'flex',
                     alignItems: 'center',
@@ -667,15 +667,15 @@ export const ServicesSection = () => {
                         style={{
                           fontSize: '0.78rem',
                           fontWeight: 700,
-                          background: '#ffffff',
-                          color: 'var(--navy-900, #0f172a)',
-                          border: '1px solid rgba(15, 23, 42, 0.1)',
+                          background: 'var(--color-surface, #ffffff)',
+                          color: 'var(--color-text-primary, var(--navy-900, #0f172a))',
+                          border: '1px solid var(--color-border, rgba(15, 23, 42, 0.1))',
                           padding: '0.28rem 0.65rem',
                           borderRadius: '8px',
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '0.35rem',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                          boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.04))'
                         }}
                       >
                         <span>{tier.name}</span>
@@ -694,7 +694,7 @@ export const ServicesSection = () => {
                   flexDirection: 'column',
                   gap: '0.6rem',
                   fontSize: '0.86rem',
-                  color: 'var(--navy-800, #1e293b)'
+                  color: 'var(--color-text-secondary, var(--navy-800, #1e293b))'
                 }}>
                   <li style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
                     <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -724,9 +724,9 @@ export const ServicesSection = () => {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   paddingTop: '0.95rem',
-                  borderTop: '1px solid rgba(15, 23, 42, 0.08)',
+                  borderTop: '1px solid var(--color-border, rgba(15, 23, 42, 0.08))',
                   fontSize: '0.82rem',
-                  color: 'var(--navy-700, #334155)',
+                  color: 'var(--color-text-secondary, var(--navy-700, #334155))',
                   marginBottom: '1.25rem'
                 }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
@@ -778,9 +778,9 @@ export const ServicesSection = () => {
                   <button 
                     type="button"
                     style={{
-                      background: '#ffffff',
-                      color: 'var(--navy-800, #1e293b)',
-                      border: '1.5px solid var(--border-color, #e2e8f0)',
+                      background: 'var(--color-surface, #ffffff)',
+                      color: 'var(--color-text-primary, var(--navy-800, #1e293b))',
+                      border: '1.5px solid var(--color-border, #e2e8f0)',
                       borderRadius: '12px',
                       padding: '0.8rem 0.95rem',
                       fontWeight: 800,
@@ -788,8 +788,8 @@ export const ServicesSection = () => {
                       cursor: 'pointer',
                       transition: 'all 0.2s ease'
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = 'var(--navy-400, #94a3b8)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.borderColor = 'var(--border-color, #e2e8f0)'; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-subtle, #f8fafc)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-surface, #ffffff)'; }}
                     onClick={() => handleSelectTabAndScrollToPackages('vector-art')}
                   >
                     Details
@@ -804,10 +804,10 @@ export const ServicesSection = () => {
               style={{
                 position: 'relative',
                 padding: 'clamp(1.5rem, 2.8vw, 2rem)',
-                background: 'linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)',
+                background: 'var(--color-surface, #ffffff)',
                 borderRadius: '24px',
-                border: '1.5px solid rgba(5, 150, 105, 0.24)',
-                boxShadow: '0 8px 30px -4px rgba(5, 150, 105, 0.08), 0 2px 10px rgba(0, 0, 0, 0.03)',
+                border: '1.5px solid rgba(5, 150, 105, 0.32)',
+                boxShadow: 'var(--shadow-md, 0 8px 30px -4px rgba(5, 150, 105, 0.08))',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
@@ -816,13 +816,13 @@ export const ServicesSection = () => {
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-8px)';
-                e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(5, 150, 105, 0.18), 0 4px 16px rgba(0,0,0,0.05)';
+                e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(5, 150, 105, 0.25), 0 4px 16px rgba(0,0,0,0.1)';
                 e.currentTarget.style.borderColor = '#059669';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 8px 30px -4px rgba(5, 150, 105, 0.08), 0 2px 10px rgba(0, 0, 0, 0.03)';
-                e.currentTarget.style.borderColor = 'rgba(5, 150, 105, 0.24)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-md, 0 8px 30px -4px rgba(5, 150, 105, 0.08))';
+                e.currentTarget.style.borderColor = 'rgba(5, 150, 105, 0.32)';
               }}
             >
               {/* Top Accent Gradient Bar */}
@@ -885,7 +885,7 @@ export const ServicesSection = () => {
                 <h3 style={{
                   fontSize: '1.38rem',
                   fontWeight: 900,
-                  color: 'var(--navy-950, #0f172a)',
+                  color: 'var(--color-text-primary, var(--navy-950, #0f172a))',
                   margin: '0 0 0.45rem 0',
                   lineHeight: 1.25,
                   fontFamily: 'var(--font-heading)'
@@ -894,7 +894,7 @@ export const ServicesSection = () => {
                 </h3>
 
                 <p style={{
-                  color: 'var(--text-muted, #64748b)',
+                  color: 'var(--color-text-muted, #64748b)',
                   fontSize: '0.9rem',
                   lineHeight: 1.55,
                   margin: '0 0 1.2rem 0'
@@ -904,8 +904,8 @@ export const ServicesSection = () => {
 
                 {/* Production Packages & Tiers Box */}
                 <div style={{
-                  background: 'rgba(15, 23, 42, 0.03)',
-                  border: '1px solid rgba(15, 23, 42, 0.07)',
+                  background: 'var(--color-subtle, rgba(15, 23, 42, 0.03))',
+                  border: '1px solid var(--color-border, rgba(15, 23, 42, 0.07))',
                   borderRadius: '14px',
                   padding: '0.8rem 0.9rem',
                   marginBottom: '1.25rem'
@@ -915,7 +915,7 @@ export const ServicesSection = () => {
                     fontWeight: 800,
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
-                    color: 'var(--text-muted, #64748b)',
+                    color: 'var(--color-text-muted, #64748b)',
                     marginBottom: '0.5rem',
                     display: 'flex',
                     alignItems: 'center',
@@ -931,15 +931,15 @@ export const ServicesSection = () => {
                         style={{
                           fontSize: '0.78rem',
                           fontWeight: 700,
-                          background: '#ffffff',
-                          color: 'var(--navy-900, #0f172a)',
-                          border: '1px solid rgba(15, 23, 42, 0.1)',
+                          background: 'var(--color-surface, #ffffff)',
+                          color: 'var(--color-text-primary, var(--navy-900, #0f172a))',
+                          border: '1px solid var(--color-border, rgba(15, 23, 42, 0.1))',
                           padding: '0.28rem 0.65rem',
                           borderRadius: '8px',
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '0.35rem',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                          boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.04))'
                         }}
                       >
                         <span>{tier.name}</span>
@@ -958,7 +958,7 @@ export const ServicesSection = () => {
                   flexDirection: 'column',
                   gap: '0.6rem',
                   fontSize: '0.86rem',
-                  color: 'var(--navy-800, #1e293b)'
+                  color: 'var(--color-text-secondary, var(--navy-800, #1e293b))'
                 }}>
                   <li style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
                     <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -988,9 +988,9 @@ export const ServicesSection = () => {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   paddingTop: '0.95rem',
-                  borderTop: '1px solid rgba(15, 23, 42, 0.08)',
+                  borderTop: '1px solid var(--color-border, rgba(15, 23, 42, 0.08))',
                   fontSize: '0.82rem',
-                  color: 'var(--navy-700, #334155)',
+                  color: 'var(--color-text-secondary, var(--navy-700, #334155))',
                   marginBottom: '1.25rem'
                 }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
@@ -1042,9 +1042,9 @@ export const ServicesSection = () => {
                   <button 
                     type="button"
                     style={{
-                      background: '#ffffff',
-                      color: 'var(--navy-800, #1e293b)',
-                      border: '1.5px solid var(--border-color, #e2e8f0)',
+                      background: 'var(--color-surface, #ffffff)',
+                      color: 'var(--color-text-primary, var(--navy-800, #1e293b))',
+                      border: '1.5px solid var(--color-border, #e2e8f0)',
                       borderRadius: '12px',
                       padding: '0.8rem 0.95rem',
                       fontWeight: 800,
@@ -1052,8 +1052,8 @@ export const ServicesSection = () => {
                       cursor: 'pointer',
                       transition: 'all 0.2s ease'
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = 'var(--navy-400, #94a3b8)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.borderColor = 'var(--border-color, #e2e8f0)'; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-subtle, #f8fafc)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-surface, #ffffff)'; }}
                     onClick={() => handleSelectTabAndScrollToPackages('patches')}
                   >
                     Details

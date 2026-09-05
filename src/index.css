@@ -1067,7 +1067,36 @@ body.dark-mode thead, body.dark-mode th {
   background-color: rgba(255, 255, 255, 0.04) !important;
 }
 
+/* Capability Cards (Complete Studio Capabilities) */
+.capability-card {
+  background: var(--color-surface, #ffffff);
+  border-color: var(--color-border, rgba(0, 0, 0, 0.1));
+  color: var(--color-text-primary, #090d16);
+}
+
+[data-theme="dark"] .capability-card,
+.dark .capability-card,
+body.dark-mode .capability-card {
+  background: var(--color-surface, #111827) !important;
+  background-color: var(--color-surface, #111827) !important;
+  color: var(--color-text-primary, #ffffff) !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="dark"] .capability-card:hover,
+.dark .capability-card:hover,
+body.dark-mode .capability-card:hover {
+  background: var(--color-surface-elevated, #1e293b) !important;
+  box-shadow: 0 20px 45px -8px rgba(0, 0, 0, 0.8) !important;
+}
+
 /* 5. Defensive Overrides for Hardcoded Light/White Backgrounds */
+[data-theme="dark"] [style*="linear-gradient"][style*="#ffffff"],
+[data-theme="dark"] [style*="linear-gradient"][style*="#fafbfc"],
+.dark [style*="linear-gradient"][style*="#ffffff"],
+.dark [style*="linear-gradient"][style*="#fafbfc"],
+body.dark-mode [style*="linear-gradient"][style*="#ffffff"],
+body.dark-mode [style*="linear-gradient"][style*="#fafbfc"],
 [data-theme="dark"] [style*="background: #ffffff"],
 [data-theme="dark"] [style*="background:#ffffff"],
 [data-theme="dark"] [style*="background: #fff"],
