@@ -24,11 +24,11 @@ export const StudioGeneralSettings = () => {
   // Business Identity
   const [studioName, setStudioName] = useState(siteSettings?.studioName || 'Bilal Digitizing Studio');
   const [studioTagline, setStudioTagline] = useState(siteSettings?.studioTagline || 'Premier Commercial Embroidery Digitizing & Vector Art Lab');
-  const [supportPhone, setSupportPhone] = useState(siteSettings?.contactInfo?.phone || siteSettings?.contactPhone || '+1 (347) 915-4498');
-  const [supportEmail, setSupportEmail] = useState(siteSettings?.contactInfo?.email || siteSettings?.supportEmail || 'orders@bdigitizing-pro.com');
-  const [whatsappNumber, setWhatsappNumber] = useState(siteSettings?.contactInfo?.whatsapp || siteSettings?.whatsapp || '+1 (347) 915-4498');
-  const [studioAddress, setStudioAddress] = useState(siteSettings?.contactInfo?.address || siteSettings?.studioAddress || '100 Craftsmanship Way, New York, NY 10001, USA');
-  const [businessHours, setBusinessHours] = useState(siteSettings?.contactInfo?.businessHours || siteSettings?.businessHours || '24/7 Global Production Support');
+  const [supportPhone, setSupportPhone] = useState(siteSettings?.contactInfo?.phone !== undefined ? siteSettings.contactInfo.phone : (siteSettings?.contactPhone || siteSettings?.supportPhone || ''));
+  const [supportEmail, setSupportEmail] = useState(siteSettings?.contactInfo?.email !== undefined ? siteSettings.contactInfo.email : (siteSettings?.supportEmail || siteSettings?.contactEmail || ''));
+  const [whatsappNumber, setWhatsappNumber] = useState(siteSettings?.contactInfo?.whatsapp !== undefined ? siteSettings.contactInfo.whatsapp : (siteSettings?.whatsapp || ''));
+  const [studioAddress, setStudioAddress] = useState(siteSettings?.contactInfo?.address !== undefined ? siteSettings.contactInfo.address : (siteSettings?.studioAddress || ''));
+  const [businessHours, setBusinessHours] = useState(siteSettings?.contactInfo?.businessHours !== undefined ? siteSettings.contactInfo.businessHours : (siteSettings?.businessHours || ''));
 
   // Operations & Invoice Defaults
   const [currencySymbol, setCurrencySymbol] = useState(siteSettings?.currencySymbol || '$');
@@ -40,19 +40,29 @@ export const StudioGeneralSettings = () => {
 
   useEffect(() => {
     if (siteSettings) {
-      if (siteSettings.studioName) setStudioName(siteSettings.studioName);
-      if (siteSettings.studioTagline) setStudioTagline(siteSettings.studioTagline);
-      if (siteSettings.contactPhone || siteSettings.contactInfo?.phone) setSupportPhone(siteSettings.contactPhone || siteSettings.contactInfo?.phone);
-      if (siteSettings.supportEmail || siteSettings.contactInfo?.email) setSupportEmail(siteSettings.supportEmail || siteSettings.contactInfo?.email);
-      if (siteSettings.whatsapp || siteSettings.contactInfo?.whatsapp) setWhatsappNumber(siteSettings.whatsapp || siteSettings.contactInfo?.whatsapp);
-      if (siteSettings.studioAddress || siteSettings.contactInfo?.address) setStudioAddress(siteSettings.studioAddress || siteSettings.contactInfo?.address);
-      if (siteSettings.businessHours || siteSettings.contactInfo?.businessHours) setBusinessHours(siteSettings.businessHours || siteSettings.contactInfo?.businessHours);
-      if (siteSettings.currencySymbol) setCurrencySymbol(siteSettings.currencySymbol);
-      if (siteSettings.currencyCode) setCurrencyCode(siteSettings.currencyCode);
-      if (siteSettings.standardTurnaround) setStandardTurnaround(siteSettings.standardTurnaround);
-      if (siteSettings.rushTurnaround) setRushTurnaround(siteSettings.rushTurnaround);
-      if (siteSettings.maxUploadSize) setMaxUploadSize(siteSettings.maxUploadSize);
-      if (siteSettings.invoiceFooterNote) setInvoiceFooterNote(siteSettings.invoiceFooterNote);
+      if (siteSettings.studioName !== undefined) setStudioName(siteSettings.studioName);
+      if (siteSettings.studioTagline !== undefined) setStudioTagline(siteSettings.studioTagline);
+      if (siteSettings.contactInfo?.phone !== undefined) setSupportPhone(siteSettings.contactInfo.phone);
+      else if (siteSettings.contactPhone || siteSettings.supportPhone) setSupportPhone(siteSettings.contactPhone || siteSettings.supportPhone);
+
+      if (siteSettings.contactInfo?.email !== undefined) setSupportEmail(siteSettings.contactInfo.email);
+      else if (siteSettings.supportEmail || siteSettings.contactEmail) setSupportEmail(siteSettings.supportEmail || siteSettings.contactEmail);
+
+      if (siteSettings.contactInfo?.whatsapp !== undefined) setWhatsappNumber(siteSettings.contactInfo.whatsapp);
+      else if (siteSettings.whatsapp) setWhatsappNumber(siteSettings.whatsapp);
+
+      if (siteSettings.contactInfo?.address !== undefined) setStudioAddress(siteSettings.contactInfo.address);
+      else if (siteSettings.studioAddress) setStudioAddress(siteSettings.studioAddress);
+
+      if (siteSettings.contactInfo?.businessHours !== undefined) setBusinessHours(siteSettings.contactInfo.businessHours);
+      else if (siteSettings.businessHours) setBusinessHours(siteSettings.businessHours);
+
+      if (siteSettings.currencySymbol !== undefined) setCurrencySymbol(siteSettings.currencySymbol);
+      if (siteSettings.currencyCode !== undefined) setCurrencyCode(siteSettings.currencyCode);
+      if (siteSettings.standardTurnaround !== undefined) setStandardTurnaround(siteSettings.standardTurnaround);
+      if (siteSettings.rushTurnaround !== undefined) setRushTurnaround(siteSettings.rushTurnaround);
+      if (siteSettings.maxUploadSize !== undefined) setMaxUploadSize(siteSettings.maxUploadSize);
+      if (siteSettings.invoiceFooterNote !== undefined) setInvoiceFooterNote(siteSettings.invoiceFooterNote);
     }
   }, [siteSettings]);
 

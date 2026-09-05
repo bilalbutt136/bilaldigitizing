@@ -108,8 +108,15 @@ export const BDigitizingMobileApp = () => {
     dynamicPricingTiers = [],
     notifications: globalNotifications = [],
     markNotificationAsRead: markGlobalNotificationAsRead,
-    refreshOrders
+    refreshOrders,
+    siteSettings = {}
   } = useAppState();
+
+  const mobileCi = siteSettings?.contactInfo || {};
+  const mobileWhatsapp = (mobileCi.whatsapp !== undefined ? mobileCi.whatsapp : (siteSettings?.whatsapp || '')).trim();
+  const cleanMobileWa = mobileWhatsapp.replace(/[^0-9]/g, '');
+  const mobilePhone = (mobileCi.phone !== undefined ? mobileCi.phone : (siteSettings?.contactPhone || siteSettings?.supportPhone || '')).trim();
+  const mobileEmail = (mobileCi.email !== undefined ? mobileCi.email : (siteSettings?.supportEmail || siteSettings?.contactEmail || '')).trim();
 
   // Active Tab: 'home' | 'inbox' | 'categories' | 'orders' | 'profile' | 'login' | 'signup' | 'auth'
   const getInitialMobileTab = () => {
@@ -4081,34 +4088,62 @@ export const BDigitizingMobileApp = () => {
               <ChevronRight size={18} style={{ color: '#059669' }} />
             </button>
 
-            {/* Action 2: WhatsApp Direct */}
-            <a
-              href="https://wa.me/923000000000?text=Hello%20BDigitizing%20Studio%2C%20I%20need%20support%20with%20my%20order."
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                padding: '0.95rem 1rem',
-                borderRadius: '14px',
-                border: '1.5px solid #cbd5e1',
-                background: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer',
-                textDecoration: 'none'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#22c55e', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <MessageCircle size={20} />
+            {/* Action 2: WhatsApp Direct or Phone Direct (Dynamic Auto-Fit) */}
+            {cleanMobileWa ? (
+              <a
+                href={`https://wa.me/${cleanMobileWa}?text=Hello%20BDigitizing%20Studio%2C%20I%20need%20support%20with%20my%20order.`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: '0.95rem 1rem',
+                  borderRadius: '14px',
+                  border: '1.5px solid #cbd5e1',
+                  background: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  textDecoration: 'none'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#22c55e', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <MessageCircle size={20} />
+                  </div>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: '#0f172a' }}>WhatsApp Master Desk</h4>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Chat with master digitizers directly</span>
+                  </div>
                 </div>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: '#0f172a' }}>WhatsApp Master Desk</h4>
-                  <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Chat with master digitizers directly</span>
+                <ExternalLink size={18} style={{ color: '#64748b' }} />
+              </a>
+            ) : mobilePhone ? (
+              <a
+                href={`tel:${mobilePhone.replace(/[^0-9+]/g, '')}`}
+                style={{
+                  padding: '0.95rem 1rem',
+                  borderRadius: '14px',
+                  border: '1.5px solid #cbd5e1',
+                  background: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  textDecoration: 'none'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--orange-500)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Phone size={20} />
+                  </div>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: '#0f172a' }}>Studio Direct Line</h4>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>{mobilePhone}</span>
+                  </div>
                 </div>
-              </div>
-              <ExternalLink size={18} style={{ color: '#64748b' }} />
-            </a>
+                <ExternalLink size={18} style={{ color: '#64748b' }} />
+              </a>
+            ) : null}
 
             {/* FAQ Accordion Summary */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem' }}>

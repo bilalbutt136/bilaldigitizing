@@ -49,20 +49,20 @@ export const ContactInfoManager = () => {
     if (siteSettings) {
       const ci = siteSettings.contactInfo || {};
       setFormData({
-        email: ci.email || siteSettings.supportEmail || siteSettings.contactEmail || 'orders@bdigitizing-pro.com',
-        phone: ci.phone || siteSettings.contactPhone || siteSettings.supportPhone || '+1 (347) 915-4498',
-        whatsapp: ci.whatsapp || siteSettings.whatsapp || '+1 (347) 915-4498',
-        address: ci.address || siteSettings.studioAddress || '100 Craftsmanship Way, New York, NY 10001, USA',
-        businessHours: ci.businessHours || siteSettings.businessHours || '24/7 Global Production Support (Mon - Sun)',
+        email: ci.email !== undefined ? ci.email : (siteSettings.supportEmail || siteSettings.contactEmail || ''),
+        phone: ci.phone !== undefined ? ci.phone : (siteSettings.contactPhone || siteSettings.supportPhone || ''),
+        whatsapp: ci.whatsapp !== undefined ? ci.whatsapp : (siteSettings.whatsapp || ''),
+        address: ci.address !== undefined ? ci.address : (siteSettings.studioAddress || ''),
+        businessHours: ci.businessHours !== undefined ? ci.businessHours : (siteSettings.businessHours || ''),
         socials: {
-          facebook: ci.socials?.facebook || 'https://facebook.com/bilaldigitizing',
-          instagram: ci.socials?.instagram || 'https://instagram.com/bilaldigitizing',
-          twitter: ci.socials?.twitter || 'https://x.com/bilaldigitizing',
-          linkedin: ci.socials?.linkedin || 'https://linkedin.com/company/bilaldigitizing',
-          youtube: ci.socials?.youtube || '',
-          tiktok: ci.socials?.tiktok || '',
-          pinterest: ci.socials?.pinterest || '',
-          behance: ci.socials?.behance || ''
+          facebook: ci.socials?.facebook !== undefined ? ci.socials.facebook : '',
+          instagram: ci.socials?.instagram !== undefined ? ci.socials.instagram : '',
+          twitter: ci.socials?.twitter !== undefined ? ci.socials.twitter : '',
+          linkedin: ci.socials?.linkedin !== undefined ? ci.socials.linkedin : '',
+          youtube: ci.socials?.youtube !== undefined ? ci.socials.youtube : '',
+          tiktok: ci.socials?.tiktok !== undefined ? ci.socials.tiktok : '',
+          pinterest: ci.socials?.pinterest !== undefined ? ci.socials.pinterest : '',
+          behance: ci.socials?.behance !== undefined ? ci.socials.behance : ''
         }
       });
     }
@@ -258,13 +258,15 @@ export const ContactInfoManager = () => {
               <label style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
                 Direct Voice / Support Phone
               </label>
-              {formData.phone && (
+              {formData.phone ? (
                 <a
                   href={`tel:${formData.phone}`}
                   style={{ color: 'var(--color-primary)', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '0.2rem', textDecoration: 'none', fontWeight: 700 }}
                 >
                   <Phone size={11} /> Test Call
                 </a>
+              ) : (
+                <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 700 }}>Optional • Auto-hides if empty</span>
               )}
             </div>
             <input
@@ -272,7 +274,7 @@ export const ContactInfoManager = () => {
               className="form-control"
               value={formData.phone}
               onChange={(e) => handleChange('phone', e.target.value)}
-              placeholder="e.g. +1 (347) 915-4498"
+              placeholder="Leave empty or enter phone: e.g. +1 (347) 915-4498"
               style={{ fontSize: '0.875rem' }}
             />
           </div>
@@ -283,7 +285,7 @@ export const ContactInfoManager = () => {
               <label style={{ fontSize: '0.825rem', fontWeight: 700, color: '#16a34a', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                 <MessageSquare size={14} color="#16a34a" /> WhatsApp Instant Order Number
               </label>
-              {waTestUrl && (
+              {waTestUrl ? (
                 <a
                   href={waTestUrl}
                   target="_blank"
@@ -292,6 +294,8 @@ export const ContactInfoManager = () => {
                 >
                   <ExternalLink size={11} /> Open WhatsApp Chat
                 </a>
+              ) : (
+                <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 700 }}>Optional • Auto-hides if empty</span>
               )}
             </div>
             <input
@@ -299,24 +303,29 @@ export const ContactInfoManager = () => {
               className="form-control"
               value={formData.whatsapp}
               onChange={(e) => handleChange('whatsapp', e.target.value)}
-              placeholder="e.g. +1 (347) 915-4498"
+              placeholder="Leave empty or enter WhatsApp number"
               style={{ fontSize: '0.875rem' }}
             />
             <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginTop: '0.25rem', display: 'block' }}>
-              Used by the floating WhatsApp badge and instant quote inquiries.
+              If kept empty, public website buttons route directly to instant 24/7 Studio Live Chat.
             </span>
           </div>
 
           {/* Studio Physical Address */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.35rem' }}>
-              Physical Studio / Office Address
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+              <label style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                Physical Studio / Office Address
+              </label>
+              {!formData.address && (
+                <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 700 }}>Optional • Auto-hides if empty</span>
+              )}
+            </div>
             <textarea
               className="form-control"
               value={formData.address}
               onChange={(e) => handleChange('address', e.target.value)}
-              placeholder="Full business address..."
+              placeholder="Leave empty or enter studio street address..."
               rows={2}
               style={{ fontSize: '0.875rem', resize: 'vertical' }}
             />
@@ -324,9 +333,14 @@ export const ContactInfoManager = () => {
 
           {/* Business Hours */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.35rem' }}>
-              Business & Turnaround Hours
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+              <label style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                Business & Turnaround Hours
+              </label>
+              {!formData.businessHours && (
+                <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 700 }}>Optional • Auto-hides if empty</span>
+              )}
+            </div>
             <input
               type="text"
               className="form-control"
@@ -525,19 +539,33 @@ export const ContactInfoManager = () => {
 
           {/* Quick Live Preview Bar */}
           <div style={{ marginTop: 'auto', padding: '1rem', background: 'var(--color-subtle)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.4rem' }}>
-              Customer Live Footer Preview
-            </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-              {formData.socials.facebook && <span style={{ fontSize: '0.78rem', color: '#1877f2', fontWeight: 700 }}>Facebook</span>}
-              {formData.socials.instagram && <span style={{ fontSize: '0.78rem', color: '#e1306c', fontWeight: 700 }}>Instagram</span>}
-              {formData.socials.twitter && <span style={{ fontSize: '0.78rem', color: 'var(--color-text-primary)', fontWeight: 700 }}>X (Twitter)</span>}
-              {formData.socials.linkedin && <span style={{ fontSize: '0.78rem', color: '#0a66c2', fontWeight: 700 }}>LinkedIn</span>}
-              {formData.socials.youtube && <span style={{ fontSize: '0.78rem', color: '#ef4444', fontWeight: 700 }}>YouTube</span>}
-              {formData.socials.tiktok && <span style={{ fontSize: '0.78rem', color: 'var(--color-text-primary)', fontWeight: 700 }}>TikTok</span>}
-              {formData.socials.pinterest && <span style={{ fontSize: '0.78rem', color: '#e60023', fontWeight: 700 }}>Pinterest</span>}
-              {formData.socials.behance && <span style={{ fontSize: '0.78rem', color: '#0057ff', fontWeight: 700 }}>Behance</span>}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Customer Live Footer Preview
+              </span>
+              <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 700 }}>
+                {Object.values(formData.socials || {}).filter(Boolean).length > 0 
+                  ? `${Object.values(formData.socials || {}).filter(Boolean).length} Active Link(s)` 
+                  : 'Auto-Clean Mode (Hidden)'}
+              </span>
             </div>
+            
+            {Object.values(formData.socials || {}).filter(Boolean).length > 0 ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                {formData.socials.facebook && <span style={{ fontSize: '0.75rem', background: 'rgba(24, 119, 242, 0.1)', color: '#1877f2', padding: '0.2rem 0.55rem', borderRadius: '6px', fontWeight: 700 }}>Facebook</span>}
+                {formData.socials.instagram && <span style={{ fontSize: '0.75rem', background: 'rgba(225, 48, 108, 0.1)', color: '#e1306c', padding: '0.2rem 0.55rem', borderRadius: '6px', fontWeight: 700 }}>Instagram</span>}
+                {formData.socials.twitter && <span style={{ fontSize: '0.75rem', background: 'rgba(255, 255, 255, 0.1)', color: 'var(--color-text-primary)', padding: '0.2rem 0.55rem', borderRadius: '6px', fontWeight: 700 }}>X (Twitter)</span>}
+                {formData.socials.linkedin && <span style={{ fontSize: '0.75rem', background: 'rgba(10, 102, 194, 0.1)', color: '#0a66c2', padding: '0.2rem 0.55rem', borderRadius: '6px', fontWeight: 700 }}>LinkedIn</span>}
+                {formData.socials.youtube && <span style={{ fontSize: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '0.2rem 0.55rem', borderRadius: '6px', fontWeight: 700 }}>YouTube</span>}
+                {formData.socials.tiktok && <span style={{ fontSize: '0.75rem', background: 'rgba(0, 242, 254, 0.1)', color: 'var(--color-text-primary)', padding: '0.2rem 0.55rem', borderRadius: '6px', fontWeight: 700 }}>TikTok</span>}
+                {formData.socials.pinterest && <span style={{ fontSize: '0.75rem', background: 'rgba(230, 0, 35, 0.1)', color: '#e60023', padding: '0.2rem 0.55rem', borderRadius: '6px', fontWeight: 700 }}>Pinterest</span>}
+                {formData.socials.behance && <span style={{ fontSize: '0.75rem', background: 'rgba(0, 87, 255, 0.1)', color: '#0057ff', padding: '0.2rem 0.55rem', borderRadius: '6px', fontWeight: 700 }}>Behance</span>}
+              </div>
+            ) : (
+              <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.45 }}>
+                ✨ <em>All social links are empty. The public website footer will cleanly omit the social bar without empty gaps or broken icons until you add links.</em>
+              </p>
+            )}
           </div>
 
         </div>
