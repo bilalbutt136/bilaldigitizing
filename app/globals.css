@@ -120,9 +120,10 @@ body.dark-mode .text-description {
 body.dark-mode .vip-card,
 body.dark-mode .studio-card,
 body.dark-mode .clean-card {
-  background-color: #0f172a !important; /* dark:bg-slate-900 */
-  border-color: rgba(30, 41, 59, 0.8) !important; /* dark:border-slate-800 */
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+  background-color: var(--color-surface, #111827) !important;
+  border-color: var(--color-border, rgba(255, 255, 255, 0.16)) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55) !important;
+  color: #f8fafc !important;
 }
 
 /* 4. Buttons & Primary CTAs */

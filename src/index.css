@@ -612,39 +612,39 @@ h1, h2, h3, h4, h5, h6 {
 [data-theme="dark"], body.dark-mode {
   /* Dynamic tokens are injected by applyThemePresetToDOM into :root.
      Default obsidian fallback values below: */
-  --color-background: #0a0e17;
+  --color-background: #090d16;
   --color-surface: #111827;
-  --color-surface-elevated: #1a2234;
-  --color-subtle: #141d2f;
-  --color-input: #162035;
+  --color-surface-elevated: #1e293b;
+  --color-subtle: #1e293b;
+  --color-input: #1e293b;
 
-  --color-border: rgba(255, 255, 255, 0.14);
-  --color-border-hover: rgba(255, 255, 255, 0.28);
+  --color-border: rgba(255, 255, 255, 0.16);
+  --color-border-hover: rgba(255, 255, 255, 0.32);
 
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #cbd5e1;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #e2e8f0;
   --color-text-muted: #94a3b8;
-  --color-text-on-primary: #0a0e17;
+  --color-text-on-primary: #ffffff;
 
   /* Status colors adjusted for dark mode contrast */
   --color-success: #34d399;
-  --color-success-bg: rgba(52, 211, 153, 0.14);
-  --color-success-border: rgba(52, 211, 153, 0.32);
+  --color-success-bg: rgba(52, 211, 153, 0.16);
+  --color-success-border: rgba(52, 211, 153, 0.36);
   --color-success-text: #6ee7b7;
 
   --color-warning: #fbbf24;
-  --color-warning-bg: rgba(251, 191, 36, 0.14);
-  --color-warning-border: rgba(251, 191, 36, 0.32);
+  --color-warning-bg: rgba(251, 191, 36, 0.16);
+  --color-warning-border: rgba(251, 191, 36, 0.36);
   --color-warning-text: #fde68a;
 
   --color-error: #f87171;
-  --color-error-bg: rgba(248, 113, 113, 0.14);
-  --color-error-border: rgba(248, 113, 113, 0.32);
+  --color-error-bg: rgba(248, 113, 113, 0.16);
+  --color-error-border: rgba(248, 113, 113, 0.36);
   --color-error-text: #fca5a5;
 
   --color-info: #60a5fa;
-  --color-info-bg: rgba(96, 165, 250, 0.14);
-  --color-info-border: rgba(96, 165, 250, 0.32);
+  --color-info-bg: rgba(96, 165, 250, 0.16);
+  --color-info-border: rgba(96, 165, 250, 0.36);
   --color-info-text: #93c5fd;
 
   /* Surface Mapping Aliases */
@@ -659,15 +659,15 @@ h1, h2, h3, h4, h5, h6 {
   --text-main: var(--color-text-primary);
   --text-heading: var(--color-text-primary);
   --text-muted: var(--color-text-muted);
-  --text-light: #64748b;
+  --text-light: #94a3b8;
 
   /* Navy aliases flipped for dark mode */
-  --navy-950: #f8fafc;
-  --navy-900: #f1f5f9;
-  --navy-850: #e2e8f0;
-  --navy-800: #cbd5e1;
-  --navy-700: #94a3b8;
-  --navy-600: #64748b;
+  --navy-950: #ffffff;
+  --navy-900: #f8fafc;
+  --navy-850: #f1f5f9;
+  --navy-800: #e2e8f0;
+  --navy-700: #cbd5e1;
+  --navy-600: #94a3b8;
   --navy-100: var(--color-subtle);
 
   --border-color: var(--color-border);
@@ -930,22 +930,70 @@ body.dark-mode th {
 }
 
 /* ==========================================================================
-   THEME-LIGHT-ENFORCED: 100% Guaranteed High-Contrast Modals & Cards
+   HIGH-CONTRAST DARK MODE ENHANCEMENTS & UNIVERSAL CLARITY SYSTEM
    ========================================================================== */
-.theme-light-enforced,
-[data-theme="dark"] .theme-light-enforced,
-body.dark-mode .theme-light-enforced {
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  color: #0f172a !important;
+
+/* Universal Dark Mode Headings & Text Contrast Overrides */
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3,
+[data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] h6,
+body.dark-mode h1, body.dark-mode h2, body.dark-mode h3,
+body.dark-mode h4, body.dark-mode h5, body.dark-mode h6 {
+  color: #ffffff !important;
 }
 
-.theme-light-enforced h1,
-.theme-light-enforced h2,
-.theme-light-enforced h3,
-.theme-light-enforced h4,
-.theme-light-enforced h5,
-.theme-light-enforced h6,
+[data-theme="dark"] p, body.dark-mode p {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .text-muted, body.dark-mode .text-muted,
+[data-theme="dark"] span.text-muted, body.dark-mode span.text-muted {
+  color: #94a3b8 !important;
+}
+
+/* Intelligent overrides for components with hardcoded dark slate inline styles */
+[data-theme="dark"] [style*="color: #0f172a"],
+[data-theme="dark"] [style*="color:#0f172a"],
+[data-theme="dark"] [style*="color: #090d16"],
+[data-theme="dark"] [style*="color:#090d16"],
+[data-theme="dark"] [style*="color: rgb(15, 23, 42)"],
+[data-theme="dark"] [style*="color: rgb(9, 13, 22)"],
+body.dark-mode [style*="color: #0f172a"],
+body.dark-mode [style*="color:#0f172a"],
+body.dark-mode [style*="color: #090d16"],
+body.dark-mode [style*="color:#090d16"] {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] [style*="color: #1e293b"],
+[data-theme="dark"] [style*="color:#1e293b"],
+[data-theme="dark"] [style*="color: rgb(30, 41, 59)"],
+body.dark-mode [style*="color: #1e293b"],
+body.dark-mode [style*="color:#1e293b"] {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] [style*="color: #334155"],
+[data-theme="dark"] [style*="color:#334155"],
+[data-theme="dark"] [style*="color: #475569"],
+[data-theme="dark"] [style*="color:#475569"],
+[data-theme="dark"] [style*="color: rgb(51, 65, 85)"],
+[data-theme="dark"] [style*="color: rgb(71, 85, 105)"],
+body.dark-mode [style*="color: #334155"],
+body.dark-mode [style*="color:#334155"],
+body.dark-mode [style*="color: #475569"],
+body.dark-mode [style*="color:#475569"] {
+  color: #cbd5e1 !important;
+}
+
+/* Universal Dark Mode Surface Overrides for Hardcoded White Backgrounds */
+[data-theme="dark"] .theme-light-enforced,
+body.dark-mode .theme-light-enforced {
+  background: var(--color-surface, #111827) !important;
+  background-color: var(--color-surface, #111827) !important;
+  color: #f8fafc !important;
+  border-color: var(--color-border, rgba(255, 255, 255, 0.16)) !important;
+}
+
 [data-theme="dark"] .theme-light-enforced h1,
 [data-theme="dark"] .theme-light-enforced h2,
 [data-theme="dark"] .theme-light-enforced h3,
@@ -958,37 +1006,19 @@ body.dark-mode .theme-light-enforced h3,
 body.dark-mode .theme-light-enforced h4,
 body.dark-mode .theme-light-enforced h5,
 body.dark-mode .theme-light-enforced h6 {
-  color: #0f172a !important;
+  color: #ffffff !important;
 }
 
-.theme-light-enforced p,
 [data-theme="dark"] .theme-light-enforced p,
 body.dark-mode .theme-light-enforced p {
-  color: #475569 !important;
+  color: #cbd5e1 !important;
 }
 
-.theme-light-enforced span.text-muted,
-.theme-light-enforced .text-muted,
-[data-theme="dark"] .theme-light-enforced span.text-muted,
-body.dark-mode .theme-light-enforced span.text-muted {
-  color: #64748b !important;
-}
-
-.theme-light-enforced input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
-.theme-light-enforced textarea,
-.theme-light-enforced select,
-.theme-light-enforced .form-control,
-.client-chat-inbox input,
-.client-chat-inbox textarea,
-.client-chat-inbox .form-control,
-.mobile-app-root input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
-.mobile-app-root textarea,
-.mobile-app-root .form-control,
-.chat-message-input,
-[data-theme="dark"] .theme-light-enforced input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
-[data-theme="dark"] .theme-light-enforced textarea,
-[data-theme="dark"] .theme-light-enforced select,
-[data-theme="dark"] .theme-light-enforced .form-control,
+/* Form Controls & Inputs in Dark Mode */
+[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+[data-theme="dark"] textarea,
+[data-theme="dark"] select,
+[data-theme="dark"] .form-control,
 [data-theme="dark"] .client-chat-inbox input,
 [data-theme="dark"] .client-chat-inbox textarea,
 [data-theme="dark"] .client-chat-inbox .form-control,
@@ -996,10 +1026,10 @@ body.dark-mode .theme-light-enforced span.text-muted {
 [data-theme="dark"] .mobile-app-root textarea,
 [data-theme="dark"] .mobile-app-root .form-control,
 [data-theme="dark"] .chat-message-input,
-body.dark-mode .theme-light-enforced input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
-body.dark-mode .theme-light-enforced textarea,
-body.dark-mode .theme-light-enforced select,
-body.dark-mode .theme-light-enforced .form-control,
+body.dark-mode input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+body.dark-mode textarea,
+body.dark-mode select,
+body.dark-mode .form-control,
 body.dark-mode .client-chat-inbox input,
 body.dark-mode .client-chat-inbox textarea,
 body.dark-mode .client-chat-inbox .form-control,
@@ -1007,47 +1037,65 @@ body.dark-mode .mobile-app-root input:not([type="checkbox"]):not([type="radio"])
 body.dark-mode .mobile-app-root textarea,
 body.dark-mode .mobile-app-root .form-control,
 body.dark-mode .chat-message-input {
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-  border: 1.5px solid #cbd5e1 !important;
+  background: var(--color-input, #1e293b) !important;
+  background-color: var(--color-input, #1e293b) !important;
+  color: #ffffff !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.18) !important;
 }
 
-.theme-light-enforced input::placeholder,
-.theme-light-enforced textarea::placeholder,
-.client-chat-inbox input::placeholder,
-.client-chat-inbox textarea::placeholder,
-.mobile-app-root input::placeholder,
-.mobile-app-root textarea::placeholder,
-.chat-message-input::placeholder,
-[data-theme="dark"] .theme-light-enforced input::placeholder,
-[data-theme="dark"] .theme-light-enforced textarea::placeholder,
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus,
+body.dark-mode input:focus,
+body.dark-mode textarea:focus,
+body.dark-mode select:focus {
+  border-color: var(--color-primary, #f97316) !important;
+  box-shadow: 0 0 0 3px var(--color-primary-glow) !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder,
+[data-theme="dark"] select::placeholder,
 [data-theme="dark"] .client-chat-inbox input::placeholder,
 [data-theme="dark"] .client-chat-inbox textarea::placeholder,
 [data-theme="dark"] .mobile-app-root input::placeholder,
 [data-theme="dark"] .mobile-app-root textarea::placeholder,
 [data-theme="dark"] .chat-message-input::placeholder,
-body.dark-mode .theme-light-enforced input::placeholder,
-body.dark-mode .theme-light-enforced textarea::placeholder,
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder,
+body.dark-mode select::placeholder,
 body.dark-mode .client-chat-inbox input::placeholder,
 body.dark-mode .client-chat-inbox textarea::placeholder,
 body.dark-mode .mobile-app-root input::placeholder,
 body.dark-mode .mobile-app-root textarea::placeholder,
 body.dark-mode .chat-message-input::placeholder {
-  color: #64748b !important;
+  color: #94a3b8 !important;
   opacity: 1 !important;
 }
 
-/* Mobile App Navigation & Headers */
-[data-theme="dark"] .mobile-bottom-nav, body.dark-mode .mobile-bottom-nav {
-  background: #ffffff !important;
-  border-top: 1.5px solid #cbd5e1 !important;
-  color: #0f172a !important;
+/* Mobile App Navigation & Headers in Dark Mode */
+[data-theme="dark"] .mobile-bottom-nav, 
+body.dark-mode .mobile-bottom-nav {
+  background: rgba(17, 24, 39, 0.95) !important;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.14) !important;
+  color: #f8fafc !important;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.6) !important;
 }
-[data-theme="dark"] .mobile-app-header, body.dark-mode .mobile-app-header {
-  background: #ffffff !important;
-  border-bottom: 1.5px solid #cbd5e1 !important;
-  color: #0f172a !important;
+
+[data-theme="dark"] .mobile-app-header, 
+body.dark-mode .mobile-app-header {
+  background: rgba(17, 24, 39, 0.95) !important;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.14) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .mobile-order-card,
+body.dark-mode .mobile-order-card {
+  background: var(--color-surface, #111827) !important;
+  border: 1.5px solid var(--color-border, rgba(255, 255, 255, 0.16)) !important;
+  color: #f8fafc !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
 }
 
 /* Scrollbar in dark mode */
@@ -1069,7 +1117,7 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ==========================================================================
+/* ==========================================================================
    MOBILE & TABLET RESPONSIVENESS SYSTEM
    ========================================================================== */
 
