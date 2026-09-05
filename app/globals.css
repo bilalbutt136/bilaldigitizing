@@ -154,3 +154,39 @@ body.dark-mode .clean-card {
 .btn-vip-pill {
   border-radius: 9999px !important; /* rounded-full */
 }
+
+/* ==========================================================================
+   PORTFOLIO HIGH-DPI ARTWORK CLARITY & AUTO-FIT FRAMES
+   ========================================================================== */
+.sharp-portfolio-img,
+.portfolio-sample-img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+.portfolio-display-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background-color: #f8fafc; /* neutral light slate-50 background for transparent PNG clarity */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem; /* p-4 padding prevents samples from touching borders */
+  overflow: hidden;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.portfolio-display-frame img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.08));
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+

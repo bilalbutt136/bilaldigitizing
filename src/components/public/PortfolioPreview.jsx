@@ -1,17 +1,26 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Layers, PenTool, Hexagon, Sparkles } from 'lucide-react';
+import { ArrowRight, Layers, PenTool, Hexagon, Sparkles, Maximize2 } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
 import { normalizeCategory } from '../../utils/categoryUtils';
+import { PortfolioLightboxModal } from '../common/PortfolioLightboxModal';
 
 import { supabase } from '../../lib/supabase/client';
 
 export const PortfolioPreview = () => {
-  const { portfolioSamples = [], setPortfolioSamples, activeHomeServiceTab, homePageConfig = {} } = useAppState();
+  const { 
+    portfolioSamples = [], 
+    setPortfolioSamples, 
+    activeHomeServiceTab, 
+    homePageConfig = {},
+    openOrderWizard,
+    protectedNavigate 
+  } = useAppState();
   
   const [localItems, setLocalItems] = useState(portfolioSamples);
+  const [lightboxItem, setLightboxItem] = useState(null);
   const dbSettings = homePageConfig?.settings || {};
   const badgeText = dbSettings.portfolio_badge || 'Our Work';
   const titleText = dbSettings.portfolio_title || 'Crafted with Precision';
@@ -88,6 +97,23 @@ export const PortfolioPreview = () => {
     ? combinedItems
     : combinedItems.filter(item => item.mappedCategory === activeCategory);
 
+  const handleStartOrder = (item) => {
+    setLightboxItem(null);
+    const cat = (item.mappedCategory || item.category || '').toLowerCase();
+    const serviceType = cat.includes('patch') ? 'patch' : cat.includes('vector') ? 'vector' : 'embroidery';
+    if (openOrderWizard) {
+      openOrderWizard({
+        type: serviceType,
+        category: item.mappedCategory || item.category || 'Embroidery',
+        title: item.title
+      });
+    } else if (protectedNavigate) {
+      protectedNavigate('customer', true, { type: serviceType });
+    } else {
+      navigate('/order');
+    }
+  };
+
   return (
     <section style={{ backgroundColor: 'var(--bg-main)', padding: '5.5rem 0', fontFamily: 'var(--font-body, "Inter", sans-serif)', borderTop: '1px solid var(--border-color)' }}>
       <div className="container">
@@ -124,116 +150,170 @@ export const PortfolioPreview = () => {
 
         {/* Grid using Pure CSS Responsive Grid */}
         <div className="grid-responsive-3" style={{ marginBottom: '3.5rem' }}>
-          {filteredItems.slice(0, 6).map((item) => {
+          {filteredItems.slice(0, 6).map((item, idx) => {
             const isHovered = hoveredId === item.id;
             return (
               <div
-                key={item.id}
+                key={item.id || idx}
+                className="card"
                 onMouseEnter={() => setHoveredId(item.id)}
                 onMouseLeave={() => setHoveredId(null)}
-                onClick={() => navigate(`/portfolio`)}
+                onClick={() => setLightboxItem(item)}
                 style={{
-                  position: 'relative',
-                  borderRadius: '16px',
+                  background: 'var(--color-surface, #ffffff)',
+                  border: isHovered ? '1px solid var(--orange-400)' : '1px solid var(--border-color, #e2e8f0)',
+                  borderRadius: '20px',
                   overflow: 'hidden',
-                  aspectRatio: '4/3',
-                  boxShadow: isHovered 
-                    ? 'var(--shadow-xl)' 
-                    : 'var(--shadow-sm)',
-                  transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  boxShadow: isHovered ? 'var(--shadow-xl)' : 'var(--shadow-sm)',
+                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                   transform: isHovered ? 'translateY(-6px)' : 'none',
-                  cursor: 'pointer',
-                  border: isHovered ? '1px solid var(--orange-400)' : '1px solid var(--border-color)',
-                  background: '#0f172a'
+                  cursor: 'pointer'
                 }}
               >
-                {/* Background Image */}
-                <img 
-                  src={item.image} 
-                  alt={item.title}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    transition: 'transform 0.7s ease',
-                    transform: isHovered ? 'scale(1.08)' : 'scale(1)',
-                  }}
-                />
+                <div>
+                  {/* Image Box - Dynamic Auto-Fitting Frame with Neutral Slate-50 Background */}
+                  <div
+                    className="portfolio-display-frame"
+                    style={{
+                      position: 'relative',
+                      width: '100%',
+                      aspectRatio: '4/3',
+                      backgroundColor: '#f8fafc',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '1rem',
+                      borderBottom: '1px solid var(--border-color, #e2e8f0)'
+                    }}
+                  >
+                    <img 
+                      src={item.image} 
+                      alt={item.title}
+                      loading="lazy"
+                      decoding="async"
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        width: 'auto',
+                        height: 'auto',
+                        objectFit: 'contain',
+                        objectPosition: 'center',
+                        imageRendering: '-webkit-optimize-contrast',
+                        filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.08))',
+                        transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                        transform: isHovered ? 'scale(1.05)' : 'scale(1)'
+                      }}
+                      className="sharp-portfolio-img"
+                    />
 
-                {/* Overlays */}
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: isHovered 
-                    ? 'linear-gradient(to top, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.4) 50%, rgba(15, 23, 42, 0.1) 100%)' 
-                    : 'linear-gradient(to top, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0) 60%)',
-                  transition: 'background 0.4s ease',
-                  zIndex: 1,
-                  pointerEvents: 'none'
-                }} />
+                    {/* Category Badge (Top Left) */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '12px',
+                      left: '12px',
+                      zIndex: 2,
+                      padding: '4px 10px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.94)',
+                      backdropFilter: 'blur(8px)',
+                      borderRadius: '8px',
+                      fontSize: '0.725rem',
+                      fontWeight: '800',
+                      color: 'var(--navy-950, #0f172a)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+                    }}>
+                      {item.mappedCategory === 'Embroidery' && <Layers size={13} style={{ color: 'var(--orange-500)' }} />}
+                      {item.mappedCategory === 'Vector Art' && <PenTool size={13} style={{ color: 'var(--orange-500)' }} />}
+                      {item.mappedCategory === 'Custom Patches' && <Hexagon size={13} style={{ color: 'var(--orange-500)' }} />}
+                      {item.mappedCategory}
+                    </div>
 
-                {/* Category Badge (Top Left) */}
-                <div style={{
-                  position: 'absolute',
-                  top: '14px',
-                  left: '14px',
-                  zIndex: 2,
-                  padding: '5px 12px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.92)',
-                  backdropFilter: 'blur(8px)',
-                  borderRadius: '8px',
-                  fontSize: '0.75rem',
-                  fontWeight: '800',
-                  color: 'var(--navy-950, #0f172a)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                  pointerEvents: 'none'
-                }}>
-                  {item.mappedCategory === 'Embroidery' && <Layers size={13} style={{ color: 'var(--orange-500)' }} />}
-                  {item.mappedCategory === 'Vector Art' && <PenTool size={13} style={{ color: 'var(--orange-500)' }} />}
-                  {item.mappedCategory === 'Custom Patches' && <Hexagon size={13} style={{ color: 'var(--orange-500)' }} />}
-                  {item.mappedCategory}
+                    {/* Quick Inspect Button (Top Right) */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLightboxItem(item);
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: '12px',
+                        right: '12px',
+                        background: 'rgba(15, 23, 42, 0.75)',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '32px',
+                        height: '32px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backdropFilter: 'blur(6px)',
+                        cursor: 'pointer',
+                        zIndex: 3,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.1)';
+                        e.currentTarget.style.background = 'var(--orange-500)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.background = 'rgba(15, 23, 42, 0.75)';
+                      }}
+                      title="Inspect sample in high-res"
+                      aria-label="Inspect sample in high-res"
+                    >
+                      <Maximize2 size={14} />
+                    </button>
+                  </div>
+
+                  {/* Title and Details (Bottom) */}
+                  <div style={{ padding: '1.25rem' }}>
+                    <h3 style={{
+                      color: 'var(--color-text-primary, #0f172a)',
+                      fontFamily: 'var(--font-heading)',
+                      fontSize: '1.1rem',
+                      fontWeight: '800',
+                      marginBottom: '0.35rem',
+                      lineHeight: 1.3
+                    }}>
+                      {item.title}
+                    </h3>
+                    
+                    <p style={{
+                      color: 'var(--color-text-muted, #64748b)',
+                      fontSize: '0.825rem',
+                      lineHeight: 1.5,
+                      margin: 0
+                    }}>
+                      {item.description || (item.stitch_count ? `⚡ ${item.stitch_count}` : 'Verified commercial digitizing sample.')}
+                    </p>
+                  </div>
                 </div>
 
-                {/* Title and Details (Bottom) */}
+                {/* Card Action Bar */}
                 <div style={{
-                  position: 'absolute',
-                  bottom: '0',
-                  left: '0',
-                  right: '0',
-                  padding: '20px',
-                  zIndex: 2,
-                  transform: isHovered ? 'translateY(0)' : 'translateY(12px)',
-                  transition: 'transform 0.3s ease',
-                  pointerEvents: 'none'
+                  padding: '0.85rem 1.25rem',
+                  borderTop: '1px solid var(--border-color, #e2e8f0)',
+                  background: 'var(--color-subtle, #f8fafc)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
                 }}>
-                  <h3 style={{
-                    color: '#ffffff',
-                    fontFamily: 'var(--font-heading)',
-                    fontSize: '1.15rem',
-                    fontWeight: '800',
-                    marginBottom: '4px',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-                    margin: 0
-                  }}>
-                    {item.title}
-                  </h3>
-                  
-                  <div style={{
-                    opacity: isHovered ? 1 : 0.8,
-                    transition: 'opacity 0.3s ease',
-                    color: '#cbd5e1',
-                    fontSize: '0.85rem',
-                    fontWeight: '600',
-                    marginTop: '4px'
-                  }}>
-                    {item.details || 'Precision Production'}
-                  </div>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-text-muted, #64748b)' }}>
+                    {item.client_type || item.clientType || 'Commercial Grade'}
+                  </span>
+                  <span style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--color-primary, #ea580c)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    Inspect Artwork <ArrowRight size={13} />
+                  </span>
                 </div>
               </div>
             );
@@ -266,6 +346,20 @@ export const PortfolioPreview = () => {
         )}
 
       </div>
+
+      {/* Lightbox Inspector for Home Page Portfolio Preview */}
+      {lightboxItem && (
+        <PortfolioLightboxModal
+          item={lightboxItem}
+          items={filteredItems}
+          currentIndex={filteredItems.findIndex(i => i.id === lightboxItem.id)}
+          onNavigate={(newIdx) => {
+            if (filteredItems[newIdx]) setLightboxItem(filteredItems[newIdx]);
+          }}
+          onClose={() => setLightboxItem(null)}
+          onOrder={handleStartOrder}
+        />
+      )}
     </section>
   );
 };

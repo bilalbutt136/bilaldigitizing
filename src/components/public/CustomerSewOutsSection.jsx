@@ -2,17 +2,21 @@
 
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Maximize2 } from 'lucide-react';
+import { PortfolioLightboxModal } from '../common/PortfolioLightboxModal';
 
 export const CustomerSewOutsSection = () => {
   const { 
     activeHomeServiceTab = 'embroidery', 
     serviceCmsContent = {},
     sewOuts = [],
-    portfolioSamples = []
+    portfolioSamples = [],
+    openOrderWizard,
+    protectedNavigate
   } = useAppState();
   
   const [isMounted, setIsMounted] = useState(false);
+  const [lightboxItem, setLightboxItem] = useState(null);
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -73,6 +77,21 @@ export const CustomerSewOutsSection = () => {
 
   const samplesList = combinedDbSamples;
 
+  const handleStartOrder = (item) => {
+    setLightboxItem(null);
+    const cat = (item.category || '').toLowerCase();
+    const serviceType = cat.includes('patch') ? 'patch' : cat.includes('vector') ? 'vector' : 'embroidery';
+    if (openOrderWizard) {
+      openOrderWizard({
+        type: serviceType,
+        category: item.category || 'Embroidery',
+        title: item.title
+      });
+    } else if (protectedNavigate) {
+      protectedNavigate('customer', true, { type: serviceType });
+    }
+  };
+
   return (
     <section id="sew-outs" style={{ padding: '5rem 0', background: 'var(--bg-main)', borderBottom: '1px solid var(--border-color)' }}>
       <div className="container">
@@ -116,6 +135,7 @@ export const CustomerSewOutsSection = () => {
           {samplesList.map((item) => (
             <div 
               key={item.id}
+              onClick={() => setLightboxItem(item)}
               style={{
                 background: 'var(--bg-card, #ffffff)',
                 border: '1px solid var(--border-color, #e2e8f0)',
@@ -142,12 +162,40 @@ export const CustomerSewOutsSection = () => {
                 if (img) img.style.transform = 'scale(1)';
               }}
             >
-              <div style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden', backgroundColor: 'var(--navy-950)' }}>
+              {/* Image Box - Auto-Fit Container with Neutral Light Slate-50 Background */}
+              <div 
+                className="portfolio-display-frame"
+                style={{ 
+                  position: 'relative', 
+                  width: '100%',
+                  aspectRatio: '4/3', 
+                  overflow: 'hidden', 
+                  backgroundColor: '#f8fafc',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '1rem',
+                  borderBottom: '1px solid var(--border-color, #e2e8f0)'
+                }}
+              >
                 {item.image ? (
                   <img 
                     src={item.image} 
                     alt={item.title || 'Work Showcase Sample'}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)' }}
+                    loading="lazy"
+                    decoding="async"
+                    style={{ 
+                      maxWidth: '100%', 
+                      maxHeight: '100%', 
+                      width: 'auto',
+                      height: 'auto',
+                      objectFit: 'contain', 
+                      objectPosition: 'center',
+                      imageRendering: '-webkit-optimize-contrast',
+                      filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.08))',
+                      transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)' 
+                    }}
+                    className="sharp-portfolio-img"
                   />
                 ) : (
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
@@ -155,20 +203,12 @@ export const CustomerSewOutsSection = () => {
                   </div>
                 )}
                 
-                {/* Overlay gradient for premium feel */}
-                <div style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(to top, rgba(15, 23, 42, 0.4) 0%, transparent 40%)',
-                  pointerEvents: 'none'
-                }} />
-
                 {/* Category Badge Top Right */}
                 <div style={{
                   position: 'absolute',
                   top: '1rem',
                   right: '1rem',
-                  background: 'var(--bg-card, #ffffff)',
+                  background: 'rgba(255, 255, 255, 0.95)',
                   color: 'var(--navy-950)',
                   fontSize: '0.75rem',
                   fontWeight: 700,
@@ -183,17 +223,36 @@ export const CustomerSewOutsSection = () => {
                   <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--orange-500)' }} />
                   {item.category}
                 </div>
+
+                {/* Inspect Button Top Left */}
+                <div style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  left: '1rem',
+                  background: 'rgba(15, 23, 42, 0.75)',
+                  color: '#ffffff',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backdropFilter: 'blur(6px)',
+                  zIndex: 2
+                }}>
+                  <Maximize2 size={14} />
+                </div>
               </div>
 
               <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
                 <h3 style={{ 
                   fontSize: '1.125rem', 
                   fontWeight: 800, 
-                  color: 'var(--navy-950)', 
-                  margin: '0 0 0.75rem 0',
+                  color: 'var(--navy-900)', 
+                  marginBottom: '0.5rem',
                   lineHeight: 1.3
                 }}>
-                  {item.title}
+                  {item.title || 'Masterwork Sample'}
                 </h3>
                 
                 <div style={{ 
@@ -227,6 +286,20 @@ export const CustomerSewOutsSection = () => {
           ))}
         </div>
       </div>
+
+      {/* Lightbox Modal */}
+      {lightboxItem && (
+        <PortfolioLightboxModal
+          item={lightboxItem}
+          items={samplesList}
+          currentIndex={samplesList.findIndex(i => i.id === lightboxItem.id)}
+          onNavigate={(newIdx) => {
+            if (samplesList[newIdx]) setLightboxItem(samplesList[newIdx]);
+          }}
+          onClose={() => setLightboxItem(null)}
+          onOrder={handleStartOrder}
+        />
+      )}
     </section>
   );
 };

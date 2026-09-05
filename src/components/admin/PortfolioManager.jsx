@@ -458,9 +458,22 @@ export const PortfolioManager = () => {
                 }}
               >
                 <div>
-                  {/* Image Container with Preview & Inspect Trigger */}
+                  {/* Image Container with Dynamic Auto-Fitting & Preview */}
                   <div 
-                    style={{ position: 'relative', width: '100%', height: '210px', background: 'var(--color-surface-elevated, #f1f5f9)', overflow: 'hidden', cursor: 'pointer' }}
+                    className="portfolio-display-frame"
+                    style={{ 
+                      position: 'relative', 
+                      width: '100%', 
+                      aspectRatio: '4/3', 
+                      backgroundColor: '#f8fafc', 
+                      overflow: 'hidden', 
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '1rem',
+                      borderBottom: '1px solid var(--border-color, #e2e8f0)'
+                    }}
                     onClick={() => {
                       setLightboxItem(item);
                       setLightboxMode('after');
@@ -471,7 +484,20 @@ export const PortfolioManager = () => {
                       <img
                         src={displayImg}
                         alt={item.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+                        loading="lazy"
+                        decoding="async"
+                        style={{ 
+                          maxWidth: '100%', 
+                          maxHeight: '100%', 
+                          width: 'auto', 
+                          height: 'auto', 
+                          objectFit: 'contain', 
+                          objectPosition: 'center', 
+                          imageRendering: '-webkit-optimize-contrast',
+                          filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.08))',
+                          display: 'block' 
+                        }}
+                        className="sharp-portfolio-img"
                       />
                     ) : (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '0.85rem' }}>
@@ -1047,7 +1073,7 @@ export const PortfolioManager = () => {
 
             {/* Lightbox Main Image Display */}
             <div style={{
-              background: '#090d16',
+              background: '#f8fafc',
               padding: '1.5rem',
               display: 'flex',
               alignItems: 'center',
@@ -1069,10 +1095,14 @@ export const PortfolioManager = () => {
                     style={{
                       maxWidth: '100%',
                       maxHeight: '55vh',
+                      width: 'auto',
+                      height: 'auto',
                       objectFit: 'contain',
+                      imageRendering: '-webkit-optimize-contrast',
                       borderRadius: '12px',
-                      boxShadow: '0 8px 30px rgba(0,0,0,0.6)'
+                      filter: 'drop-shadow(0 10px 24px rgba(0,0,0,0.15))'
                     }}
+                    className="sharp-portfolio-img"
                   />
                 ) : (
                   <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>No image preview available</div>
