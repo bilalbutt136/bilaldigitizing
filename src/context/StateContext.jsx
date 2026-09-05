@@ -2169,6 +2169,12 @@ export const StateProvider = ({ children }) => {
     if (newSettings.promoCodes) {
       await saveCmsConfigToSupabase('promoCodes', newSettings.promoCodes);
     }
+    if (newSettings.admin_notification_email) {
+      await saveCmsConfigToSupabase('admin_notification_email', newSettings.admin_notification_email);
+    }
+    if (newSettings.notification_settings) {
+      await saveCmsConfigToSupabase('notification_settings', newSettings.notification_settings);
+    }
   };
 
   const saveCmsData = (key, value) => {

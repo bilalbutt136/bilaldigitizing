@@ -1159,6 +1159,27 @@ export async function POST(request) {
         }
       }
 
+      // 4. Non-blocking asynchronous email notification for customer messages
+      if (actualSender === 'client' && !payload.is_autopilot && !payload.auto_pilot) {
+        try {
+          const siteBase = process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
+          fetch(`${siteBase}/api/email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'NEW_MESSAGE',
+              clientEmail: targetEmail,
+              senderName: actualSenderName || 'Customer',
+              messageText: payload.text || payload.attachment_name || 'Customer sent an inquiry or file asset.',
+              channel: isSupport ? '24/7 Live Support' : (passedId ? `Thread ${passedId}` : 'Customer Inbox'),
+              orderId: passedId?.startsWith('order-') ? passedId.replace('order-', '') : null
+            })
+          }).catch(err => console.warn('[Messages Route Email Dispatch Notice]:', err?.message));
+        } catch (e) {
+          console.warn('[Message Email Async Dispatch Error]:', e?.message);
+        }
+      }
+
       return NextResponse.json({
         success: true,
         message: {

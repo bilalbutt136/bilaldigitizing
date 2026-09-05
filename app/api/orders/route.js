@@ -281,6 +281,31 @@ export async function POST(request) {
         console.warn('Auto notification insert notice:', notifErr.message);
       }
 
+      // Non-blocking asynchronous email notifications for new order
+      try {
+        const siteBase = process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
+        fetch(`${siteBase}/api/email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'NEW_ORDER',
+            orderId: mappedDbRow.id,
+            clientEmail: mappedDbRow.client_email,
+            clientName: mappedDbRow.client_name,
+            serviceName: mappedDbRow.service_category || mappedDbRow.title,
+            amount: mappedDbRow.price,
+            orderDetails: {
+              ...mappedDbRow,
+              dimensions: primaryDbRow?.patchWidth && primaryDbRow?.patchHeight ? `${primaryDbRow.patchWidth}" × ${primaryDbRow.patchHeight}"` : (primaryDbRow?.dimensions || 'Standard'),
+              placement: primaryDbRow?.placement || primaryDbRow?.patchStyle || 'Chest / Cap',
+              instructions: primaryDbRow?.notes || ''
+            }
+          })
+        }).catch(err => console.warn('[Orders Route Email Dispatch Notice]:', err?.message));
+      } catch (e) {
+        console.warn('[Order Email Async Dispatch Error]:', e?.message);
+      }
+
       return NextResponse.json({ success: true, order: insertedOrder[0] });
     }
 
