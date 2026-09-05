@@ -561,9 +561,9 @@ export const HeroSection = () => {
             max-width: 100% !important;
           }
           .hero-showcase-image-box {
-            min-height: 180px !important;
-            max-height: 280px !important;
-            aspect-ratio: 16/10 !important;
+            min-height: 200px !important;
+            max-height: 380px !important;
+            aspect-ratio: 4/3 !important;
           }
         }
       `}} />
@@ -833,7 +833,7 @@ export const HeroSection = () => {
             >
               
               {/* Header Title & Slide Index Counter */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.55rem', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.55rem', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.35rem', letterSpacing: '0.06em' }}>
                     <span className="blinking-green-dot" /> LIVE SHOWCASE
@@ -843,34 +843,58 @@ export const HeroSection = () => {
                   </div>
                 </div>
 
-                {hasMultipleImages && (
-                  <span style={{
-                    fontSize: '0.72rem',
-                    fontWeight: 800,
-                    background: 'var(--color-primary-light)',
-                    border: '1px solid var(--color-border)',
-                    padding: '0.2rem 0.55rem',
-                    borderRadius: '9999px',
-                    color: 'var(--color-primary)',
-                    flexShrink: 0
-                  }}>
-                    {currentSlideIdx + 1} / {activeShowcaseImages.length}
-                  </span>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+                  {/* Live Specs / Stitch Count Badge (in header to never cover design) */}
+                  {Boolean(currentImage?.stitchCount || currentImage?.formats) && (
+                    <span style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      background: 'rgba(249, 115, 22, 0.12)',
+                      color: 'var(--orange-600, #ea580c)',
+                      border: '1px solid rgba(249, 115, 22, 0.25)',
+                      padding: '0.2rem 0.6rem',
+                      borderRadius: '9999px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.3rem'
+                    }}>
+                      <span style={{ color: '#ea580c' }}>★</span>
+                      {currentImage.stitchCount && <span>{currentImage.stitchCount}</span>}
+                      {currentImage.formats && (
+                        <span style={{ opacity: 0.9 }}>{currentImage.stitchCount ? '· ' : ''}{currentImage.formats}</span>
+                      )}
+                    </span>
+                  )}
+
+                  {hasMultipleImages && (
+                    <span style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      background: 'var(--color-primary-light)',
+                      border: '1px solid var(--color-border)',
+                      padding: '0.2rem 0.55rem',
+                      borderRadius: '9999px',
+                      color: 'var(--color-primary)',
+                      flexShrink: 0
+                    }}>
+                      {currentSlideIdx + 1} / {activeShowcaseImages.length}
+                    </span>
+                  )}
+                </div>
               </div>
 
-              {/* Full, Clear Showcase Image Container (Auto-changes every 5s - Auto-Adjusted Full Image) */}
+              {/* Full, Clear Showcase Image Container (1200x900 / 4:3 Ratio - Shows Completely Edge-to-Edge) */}
               <div 
                 className="hero-showcase-image-box"
                 style={{
                   position: 'relative',
                   width: '100%',
-                  aspectRatio: '16/10',
-                  minHeight: '220px',
-                  maxHeight: '360px',
+                  aspectRatio: '4/3',
+                  minHeight: '240px',
+                  maxHeight: '440px',
                   borderRadius: '16px',
                   overflow: 'hidden',
-                  background: 'var(--color-surface-elevated, #f1f5f9)',
+                  background: 'var(--color-surface-elevated, #f8fafc)',
                   opacity: isFading ? 0.35 : 1,
                   transition: 'opacity 0.25s ease-in-out',
                   border: '1px solid var(--color-border, #e2e8f0)',
@@ -881,50 +905,21 @@ export const HeroSection = () => {
               >
                 {/* Full, Auto-Adjusted Showcase Image or Empty State */}
                 {currentImage?.imageUrl ? (
-                  <>
-                    <img 
-                      src={currentImage.imageUrl} 
-                      alt={currentImage?.title || "Studio Showcase"} 
-                      style={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        objectFit: 'cover', 
-                        objectPosition: 'center', 
-                        display: 'block',
-                        transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
-                      }} 
-                      draggable="false" 
-                    />
-
-                    {/* Live Specs / Stitch Count Badge Overlay */}
-                    {Boolean(currentImage?.stitchCount || currentImage?.formats) && (
-                      <div style={{
-                        position: 'absolute',
-                        bottom: '12px',
-                        left: '12px',
-                        background: 'rgba(15, 23, 42, 0.88)',
-                        border: '1px solid rgba(255, 255, 255, 0.18)',
-                        borderRadius: '9999px',
-                        padding: '0.3rem 0.75rem',
-                        fontSize: '0.74rem',
-                        fontWeight: 800,
-                        color: '#ffffff',
-                        backdropFilter: 'blur(10px)',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        zIndex: 5,
-                        pointerEvents: 'none'
-                      }}>
-                        <span style={{ color: '#fb923c' }}>★</span>
-                        {currentImage.stitchCount && <span>{currentImage.stitchCount}</span>}
-                        {currentImage.formats && (
-                          <span style={{ opacity: 0.85 }}>{currentImage.stitchCount ? '· ' : ''}{currentImage.formats}</span>
-                        )}
-                      </div>
-                    )}
-                  </>
+                  <img 
+                    src={currentImage.imageUrl} 
+                    alt={currentImage?.title || "Studio Showcase"} 
+                    loading="lazy"
+                    decoding="async"
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'contain', 
+                      objectPosition: 'center', 
+                      display: 'block',
+                      transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+                    }} 
+                    draggable="false" 
+                  />
                 ) : (
                   <div style={{
                     display: 'flex',

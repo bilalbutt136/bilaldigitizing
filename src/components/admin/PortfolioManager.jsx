@@ -734,16 +734,16 @@ export const PortfolioManager = () => {
                     Finished Design / Sew-Out Image *
                   </label>
                   <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--orange-600)', background: 'rgba(249, 115, 22, 0.1)', padding: '0.2rem 0.55rem', borderRadius: '6px', border: '1px solid rgba(249, 115, 22, 0.2)' }}>
-                    📐 Recommended: 1200 × 900 px (4:3) or 1000 × 1000 px (1:1)
+                    📐 Exact Size: 1200 × 900 px (4:3 Aspect Ratio)
                   </span>
                 </div>
                 <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.65rem' }}>
-                  The primary high-resolution finished sew-out or vector image (Format: PNG, JPG, WEBP • Max 5MB).
+                  The primary high-resolution finished sew-out or vector image. Upload at 1200 × 900 px so it displays completely without cropping (Format: PNG, JPG, WEBP • Max 5MB).
                 </p>
 
                 {formState.digitized_image && (
-                  <div style={{ width: '100%', height: '180px', borderRadius: '10px', overflow: 'hidden', background: '#f1f5f9', marginBottom: '0.75rem', border: '1px solid #e2e8f0' }}>
-                    <img src={formState.digitized_image} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+                  <div style={{ width: '100%', aspectRatio: '4/3', maxHeight: '220px', borderRadius: '10px', overflow: 'hidden', background: '#f8fafc', marginBottom: '0.75rem', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.35rem' }}>
+                    <img src={formState.digitized_image} alt="Preview" style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain', objectPosition: 'center' }} />
                   </div>
                 )}
 
@@ -784,7 +784,7 @@ export const PortfolioManager = () => {
                     Original Artwork / Before Image (Optional)
                   </label>
                   <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--navy-700)', background: '#f1f5f9', padding: '0.2rem 0.55rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                    📐 Recommended: 1200 × 900 px (4:3)
+                    📐 Exact Size: 1200 × 900 px (4:3 Aspect Ratio)
                   </span>
                 </div>
                 <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.65rem' }}>
@@ -792,8 +792,8 @@ export const PortfolioManager = () => {
                 </p>
 
                 {formState.original_image && (
-                  <div style={{ width: '100%', height: '140px', borderRadius: '10px', overflow: 'hidden', background: '#f1f5f9', marginBottom: '0.75rem', border: '1px solid #e2e8f0' }}>
-                    <img src={formState.original_image} alt="Before Preview" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+                  <div style={{ width: '100%', aspectRatio: '4/3', maxHeight: '200px', borderRadius: '10px', overflow: 'hidden', background: '#f8fafc', marginBottom: '0.75rem', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.35rem' }}>
+                    <img src={formState.original_image} alt="Before Preview" style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain', objectPosition: 'center' }} />
                   </div>
                 )}
 

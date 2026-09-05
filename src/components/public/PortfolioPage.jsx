@@ -345,12 +345,12 @@ export const PortfolioPage = () => {
                     }}
                   >
                     <div>
-                      {/* Image Box */}
+                      {/* Image Box (4:3 / 1200x900 - Fits completely without cropping) */}
                       <div style={{
                         position: 'relative',
                         width: '100%',
-                        height: '240px',
-                        background: 'var(--color-surface-elevated, #f1f5f9)',
+                        aspectRatio: '4/3',
+                        background: '#f8fafc',
                         overflow: 'hidden',
                         display: 'flex',
                         alignItems: 'center',
@@ -362,7 +362,7 @@ export const PortfolioPage = () => {
                           style={{
                             width: '100%',
                             height: '100%',
-                            objectFit: 'cover',
+                            objectFit: 'contain',
                             objectPosition: 'center',
                             transition: 'transform 0.4s ease'
                           }}
