@@ -89,6 +89,7 @@ export const CustomerDashboard = () => {
   } = useAppState();
 
   const unreadNotifCount = unreadNotificationsCount;
+  const isDark = theme === 'dark';
 
   const [activeTab, setActiveTabLocal] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -1179,8 +1180,8 @@ export const CustomerDashboard = () => {
                         setIsServiceSelectorOpen(true);
                       }}
                       style={{
-                        background: '#ffffff',
-                        border: '1.5px solid #e2e8f0',
+                        background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
                         borderRadius: '14px',
                         padding: '0.65rem 0.15rem',
                         display: 'flex',
@@ -1196,7 +1197,7 @@ export const CustomerDashboard = () => {
                       <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--color-primary-light)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <PlusCircle size={20} />
                       </div>
-                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>New Order</span>
+                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>New Order</span>
                     </button>
 
                     {/* 2. My Orders */}
@@ -1204,8 +1205,8 @@ export const CustomerDashboard = () => {
                       type="button"
                       onClick={() => setActiveTab('orders')}
                       style={{
-                        background: '#ffffff',
-                        border: '1.5px solid #e2e8f0',
+                        background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
                         borderRadius: '14px',
                         padding: '0.65rem 0.15rem',
                         display: 'flex',
@@ -1222,7 +1223,7 @@ export const CustomerDashboard = () => {
                       <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#e0f2fe', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <ClipboardList size={20} />
                       </div>
-                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>My Orders</span>
+                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>My Orders</span>
                       {unreadOrdersCount > 0 && (
                         <span style={{ position: 'absolute', top: '4px', right: '4px', background: '#0284c7', color: '#fff', fontSize: '0.55rem', fontWeight: 900, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {unreadOrdersCount}
@@ -1235,8 +1236,8 @@ export const CustomerDashboard = () => {
                       type="button"
                       onClick={() => setActiveTab('inbox')}
                       style={{
-                        background: '#ffffff',
-                        border: '1.5px solid #e2e8f0',
+                        background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
                         borderRadius: '14px',
                         padding: '0.65rem 0.15rem',
                         display: 'flex',
@@ -1253,7 +1254,7 @@ export const CustomerDashboard = () => {
                       <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <MessageSquare size={20} />
                       </div>
-                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>Messages</span>
+                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>Messages</span>
                       {unreadChatCount > 0 && (
                         <span style={{ position: 'absolute', top: '4px', right: '4px', background: '#ef4444', color: '#fff', fontSize: '0.55rem', fontWeight: 900, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {unreadChatCount}
@@ -1266,8 +1267,8 @@ export const CustomerDashboard = () => {
                       type="button"
                       onClick={() => setActiveTab('notifications')}
                       style={{
-                        background: '#ffffff',
-                        border: '1.5px solid #e2e8f0',
+                        background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
                         borderRadius: '14px',
                         padding: '0.65rem 0.15rem',
                         display: 'flex',
@@ -1284,7 +1285,7 @@ export const CustomerDashboard = () => {
                       <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f1f5f9', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Bell size={20} />
                       </div>
-                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>Alerts</span>
+                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>Alerts</span>
                       {unreadNotifCount > 0 && (
                         <span style={{ position: 'absolute', top: '4px', right: '4px', background: '#f97316', color: '#fff', fontSize: '0.55rem', fontWeight: 900, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {unreadNotifCount}
@@ -1297,8 +1298,8 @@ export const CustomerDashboard = () => {
                       type="button"
                       onClick={() => setActiveTab('profile')}
                       style={{
-                        background: '#ffffff',
-                        border: '1.5px solid #e2e8f0',
+                        background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
                         borderRadius: '14px',
                         padding: '0.65rem 0.15rem',
                         display: 'flex',
@@ -1314,15 +1315,15 @@ export const CustomerDashboard = () => {
                       <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <User size={20} />
                       </div>
-                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>Profile</span>
+                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>Profile</span>
                     </button>
                   </div>
 
                   {/* Active Orders Live Progress Snapshot (if any active order) */}
                   {activeOrders.length > 0 && (
                     <div style={{
-                      background: '#ffffff',
-                      border: '1.5px solid #e2e8f0',
+                      background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                      border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
                       borderRadius: '16px',
                       padding: '1rem',
                       marginBottom: '1rem',
@@ -1331,7 +1332,7 @@ export const CustomerDashboard = () => {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                           <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
-                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                             Active Order In Production
                           </h4>
                         </div>
@@ -2034,8 +2035,8 @@ export const CustomerDashboard = () => {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       padding: '0.85rem 1.25rem',
-                      background: '#ffffff',
-                      border: '1px solid var(--border-color)',
+                      background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                      border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid var(--border-color)',
                       borderTop: 'none',
                       borderRadius: '0 0 12px 12px',
                       flexWrap: 'wrap',
@@ -2114,7 +2115,7 @@ export const CustomerDashboard = () => {
             {/* TAB 4: ACCOUNT & PROFILE */}
             {activeTab === 'profile' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div className="card" style={{ padding: '2rem', background: '#ffffff', border: '1.5px solid var(--border-color)', borderRadius: '16px' }}>
+                <div className="card" style={{ padding: '2rem', background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid var(--border-color)', borderRadius: '16px' }}>
                   <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
                     Client Profile & Studio Account
                   </h2>
@@ -2297,8 +2298,8 @@ export const CustomerDashboard = () => {
                           <div
                             key={ord.id}
                             style={{
-                              background: '#ffffff',
-                              border: '1.5px solid var(--border-color)',
+                              background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                              border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid var(--border-color)',
                               borderRadius: '16px',
                               padding: '1.15rem',
                               display: 'flex',
@@ -2403,8 +2404,8 @@ export const CustomerDashboard = () => {
                   flexDirection: 'column', 
                   overflow: 'hidden',
                   borderRadius: '16px',
-                  border: '1.5px solid var(--border-color)',
-                  background: '#ffffff'
+                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid var(--border-color)',
+                  background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
                 }}
               >
                 <ClientChatInbox initialOrderId="inbox" onBack={() => setActiveTab('dashboard')} />
@@ -2423,8 +2424,8 @@ export const CustomerDashboard = () => {
                   flexDirection: 'column', 
                   overflow: 'hidden',
                   borderRadius: '16px',
-                  border: '1.5px solid var(--border-color)',
-                  background: '#ffffff'
+                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid var(--border-color)',
+                  background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
                 }}
               >
                 <ClientChatInbox initialOrderId="help-support" onBack={() => setActiveTab('dashboard')} />

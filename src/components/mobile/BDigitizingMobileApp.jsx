@@ -114,6 +114,8 @@ export const BDigitizingMobileApp = () => {
     siteSettings = {}
   } = useAppState();
 
+  const isDark = theme === 'dark';
+
   const mobileCi = siteSettings?.contactInfo || {};
   const mobileWhatsapp = (mobileCi.whatsapp !== undefined ? mobileCi.whatsapp : (siteSettings?.whatsapp || '')).trim();
   const cleanMobileWa = mobileWhatsapp.replace(/[^0-9]/g, '');
@@ -717,7 +719,7 @@ export const BDigitizingMobileApp = () => {
       <div style={{
         minHeight: '100dvh',
         width: '100vw',
-        background: '#ffffff',
+        background: isDark ? 'var(--color-background, #090d16)' : '#ffffff',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -740,23 +742,23 @@ export const BDigitizingMobileApp = () => {
           <span style={{ fontSize: '2rem', fontWeight: 900, color: '#ffffff' }}>B</span>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>
+          <div style={{ fontSize: '1.35rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', letterSpacing: '-0.02em' }}>
             BDigitizing<span style={{ color: '#059669' }}>.PRO</span>
           </div>
-          <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, marginTop: '0.25rem' }}>
+          <div style={{ fontSize: '0.8rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', fontWeight: 600, marginTop: '0.25rem' }}>
             Embroidery Digitizing & Vector Art Studio
           </div>
         </div>
-        <div style={{ width: '28px', height: '28px', border: '3px solid #e2e8f0', borderTopColor: '#059669', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginTop: '0.5rem' }} />
+        <div style={{ width: '28px', height: '28px', border: isDark ? '3px solid var(--color-border, #334155)' : '3px solid #e2e8f0', borderTopColor: '#059669', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginTop: '0.5rem' }} />
       </div>
     );
   }
 
   return (
     <div 
-      className="mobile-app-root theme-light-enforced"
+      className="mobile-app-root"
       style={{
-        background: '#ffffff',
+        background: 'var(--color-background, #ffffff)',
         minHeight: '100vh',
         maxWidth: '100vw',
         display: 'flex',
@@ -776,7 +778,7 @@ export const BDigitizingMobileApp = () => {
         <div style={{
           minHeight: '100dvh',
           width: '100%',
-          background: '#ffffff',
+          background: isDark ? 'var(--color-background, #090d16)' : '#ffffff',
           display: 'flex',
           flexDirection: 'column',
           boxSizing: 'border-box'
@@ -787,8 +789,8 @@ export const BDigitizingMobileApp = () => {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '0.85rem 1rem',
-            borderBottom: '1.5px solid #e2e8f0',
-            background: '#ffffff',
+            borderBottom: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
+            background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
             position: 'sticky',
             top: 0,
             zIndex: 10
@@ -797,8 +799,8 @@ export const BDigitizingMobileApp = () => {
               type="button"
               onClick={() => setMobileTab('home')}
               style={{
-                background: '#f8fafc',
-                border: '1px solid #cbd5e1',
+                background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
+                border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1',
                 borderRadius: '10px',
                 padding: '0.45rem 0.75rem',
                 display: 'flex',
@@ -806,7 +808,7 @@ export const BDigitizingMobileApp = () => {
                 gap: '0.35rem',
                 fontSize: '0.82rem',
                 fontWeight: 800,
-                color: '#0f172a',
+                color: isDark ? '#ffffff' : '#0f172a',
                 cursor: 'pointer'
               }}
             >
@@ -823,7 +825,7 @@ export const BDigitizingMobileApp = () => {
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#64748b',
+                color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b',
                 fontSize: '0.82rem',
                 fontWeight: 700,
                 cursor: 'pointer'
@@ -851,10 +853,10 @@ export const BDigitizingMobileApp = () => {
               }}>
                 <Lock size={26} />
               </div>
-              <h2 style={{ margin: '0 0 0.25rem', fontSize: '1.45rem', fontWeight: 900, color: '#0f172a' }}>
+              <h2 style={{ margin: '0 0 0.25rem', fontSize: '1.45rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                 {mobileAuthMode === 'signup' ? 'Create Studio Account' : mobileAuthMode === 'forgot' ? 'Reset Password' : 'Sign In to Studio'}
               </h2>
-              <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.4 }}>
+              <p style={{ margin: 0, fontSize: '0.82rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', lineHeight: 1.4 }}>
                 {mobileAuthMode === 'signup' 
                   ? 'Join thousands of apparel brands and get instant access to 4–12h turnaround digitizing.' 
                   : mobileAuthMode === 'forgot'
@@ -868,7 +870,7 @@ export const BDigitizingMobileApp = () => {
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
-                background: '#f1f5f9',
+                background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9',
                 borderRadius: '12px',
                 padding: '4px',
                 gap: '4px'
@@ -884,8 +886,8 @@ export const BDigitizingMobileApp = () => {
                     padding: '0.65rem',
                     borderRadius: '10px',
                     border: 'none',
-                    background: mobileAuthMode === 'login' ? '#ffffff' : 'transparent',
-                    color: mobileAuthMode === 'login' ? '#047857' : '#64748b',
+                    background: mobileAuthMode === 'login' ? (isDark ? 'var(--color-surface, #111827)' : '#ffffff') : 'transparent',
+                    color: mobileAuthMode === 'login' ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
                     fontWeight: 900,
                     fontSize: '0.85rem',
                     cursor: 'pointer',
@@ -906,8 +908,8 @@ export const BDigitizingMobileApp = () => {
                     padding: '0.65rem',
                     borderRadius: '10px',
                     border: 'none',
-                    background: mobileAuthMode === 'signup' ? '#ffffff' : 'transparent',
-                    color: mobileAuthMode === 'signup' ? '#047857' : '#64748b',
+                    background: mobileAuthMode === 'signup' ? (isDark ? 'var(--color-surface, #111827)' : '#ffffff') : 'transparent',
+                    color: mobileAuthMode === 'signup' ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
                     fontWeight: 900,
                     fontSize: '0.85rem',
                     cursor: 'pointer',
@@ -962,7 +964,7 @@ export const BDigitizingMobileApp = () => {
             {mobileAuthMode === 'login' && (
               <form onSubmit={handleMobileLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.3rem' }}>
                     Email Address
                   </label>
                   <div style={{ position: 'relative' }}>
@@ -979,10 +981,10 @@ export const BDigitizingMobileApp = () => {
                         height: '46px',
                         padding: '0 0.85rem 0 2.5rem',
                         borderRadius: '12px',
-                        border: '1.5px solid #cbd5e1',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                         fontSize: '16px',
-                        color: '#0f172a',
-                        background: '#ffffff',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                         boxSizing: 'border-box',
                         outline: 'none'
                       }}
@@ -992,13 +994,13 @@ export const BDigitizingMobileApp = () => {
 
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                       Password
                     </label>
                     <button
                       type="button"
                       onClick={() => setMobileAuthMode('forgot')}
-                      style={{ background: 'none', border: 'none', color: '#047857', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer' }}
+                      style={{ background: 'none', border: 'none', color: isDark ? '#34d399' : '#047857', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer' }}
                     >
                       Forgot password?
                     </button>
@@ -1017,10 +1019,10 @@ export const BDigitizingMobileApp = () => {
                         height: '46px',
                         padding: '0 2.5rem 0 2.5rem',
                         borderRadius: '12px',
-                        border: '1.5px solid #cbd5e1',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                         fontSize: '16px',
-                        color: '#0f172a',
-                        background: '#ffffff',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                         boxSizing: 'border-box',
                         outline: 'none'
                       }}
@@ -1086,7 +1088,7 @@ export const BDigitizingMobileApp = () => {
             {mobileAuthMode === 'signup' && (
               <form onSubmit={handleMobileSignupSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.3rem' }}>
                     Full Name *
                   </label>
                   <div style={{ position: 'relative' }}>
@@ -1103,10 +1105,10 @@ export const BDigitizingMobileApp = () => {
                         height: '44px',
                         padding: '0 0.85rem 0 2.5rem',
                         borderRadius: '12px',
-                        border: '1.5px solid #cbd5e1',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                         fontSize: '16px',
-                        color: '#0f172a',
-                        background: '#ffffff',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                         boxSizing: 'border-box',
                         outline: 'none'
                       }}
@@ -1115,7 +1117,7 @@ export const BDigitizingMobileApp = () => {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.3rem' }}>
                     Business Email *
                   </label>
                   <div style={{ position: 'relative' }}>
@@ -1132,10 +1134,10 @@ export const BDigitizingMobileApp = () => {
                         height: '44px',
                         padding: '0 0.85rem 0 2.5rem',
                         borderRadius: '12px',
-                        border: '1.5px solid #cbd5e1',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                         fontSize: '16px',
-                        color: '#0f172a',
-                        background: '#ffffff',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                         boxSizing: 'border-box',
                         outline: 'none'
                       }}
@@ -1144,7 +1146,7 @@ export const BDigitizingMobileApp = () => {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.3rem' }}>
                     Create Password * (Min 6 chars)
                   </label>
                   <div style={{ position: 'relative' }}>
@@ -1161,10 +1163,10 @@ export const BDigitizingMobileApp = () => {
                         height: '44px',
                         padding: '0 2.5rem 0 2.5rem',
                         borderRadius: '12px',
-                        border: '1.5px solid #cbd5e1',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                         fontSize: '16px',
-                        color: '#0f172a',
-                        background: '#ffffff',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                         boxSizing: 'border-box',
                         outline: 'none'
                       }}
@@ -1193,7 +1195,7 @@ export const BDigitizingMobileApp = () => {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.3rem' }}>
                     Company / Brand Name (Optional)
                   </label>
                   <div style={{ position: 'relative' }}>
@@ -1209,10 +1211,10 @@ export const BDigitizingMobileApp = () => {
                         height: '44px',
                         padding: '0 0.85rem 0 2.5rem',
                         borderRadius: '12px',
-                        border: '1.5px solid #cbd5e1',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                         fontSize: '16px',
-                        color: '#0f172a',
-                        background: '#ffffff',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                         boxSizing: 'border-box',
                         outline: 'none'
                       }}
@@ -1258,7 +1260,7 @@ export const BDigitizingMobileApp = () => {
             {mobileAuthMode === 'forgot' && (
               <form onSubmit={handleMobileForgotSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.3rem' }}>
                     Registered Email Address
                   </label>
                   <div style={{ position: 'relative' }}>
@@ -1275,10 +1277,10 @@ export const BDigitizingMobileApp = () => {
                         height: '46px',
                         padding: '0 0.85rem 0 2.5rem',
                         borderRadius: '12px',
-                        border: '1.5px solid #cbd5e1',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                         fontSize: '16px',
-                        color: '#0f172a',
-                        background: '#ffffff',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                         boxSizing: 'border-box',
                         outline: 'none'
                       }}
@@ -1324,7 +1326,7 @@ export const BDigitizingMobileApp = () => {
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: '#047857',
+                    color: isDark ? '#34d399' : '#047857',
                     fontWeight: 800,
                     fontSize: '0.85rem',
                     cursor: 'pointer',
@@ -1435,12 +1437,12 @@ export const BDigitizingMobileApp = () => {
           SCREEN 1: HOME TAB
           ========================================================================= */}
       {mobileTab === 'home' && (
-        <div style={{ padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', background: '#f8fafc' }}>
+        <div style={{ padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', background: isDark ? 'var(--color-background, #090d16)' : '#f8fafc' }}>
           
           {/* Top Brand Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff', padding: '0.75rem 1rem', borderRadius: '16px', border: '1.5px solid #cbd5e1', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', padding: '0.75rem 1rem', borderRadius: '16px', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <span style={{ fontSize: '1.45rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.03em' }}>
+              <span style={{ fontSize: '1.45rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', letterSpacing: '-0.03em' }}>
                 bdigitizing<span style={{ color: '#ea580c' }}>.</span>
               </span>
               {isAuthenticated && (
@@ -1463,11 +1465,11 @@ export const BDigitizingMobileApp = () => {
                 type="button"
                 onClick={() => setIsNotifDrawerOpen(true)}
                 style={{
-                  background: '#f8fafc',
-                  border: '1.5px solid #cbd5e1',
+                  background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
+                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                   borderRadius: '10px',
                   padding: '0.5rem',
-                  color: '#0f172a',
+                  color: isDark ? '#ffffff' : '#0f172a',
                   cursor: 'pointer',
                   position: 'relative',
                   display: 'flex',
@@ -1493,11 +1495,11 @@ export const BDigitizingMobileApp = () => {
                 type="button"
                 onClick={() => setMobileTab('categories')}
                 style={{
-                  background: '#f8fafc',
-                  border: '1.5px solid #cbd5e1',
+                  background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
+                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                   borderRadius: '10px',
                   padding: '0.5rem',
-                  color: '#0f172a',
+                  color: isDark ? '#ffffff' : '#0f172a',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -1516,8 +1518,8 @@ export const BDigitizingMobileApp = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '0.65rem',
-              background: '#ffffff',
-              border: '1.5px solid #cbd5e1',
+              background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+              border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
               borderRadius: '14px',
               padding: '0.75rem 1rem',
               cursor: 'pointer',
@@ -1525,7 +1527,7 @@ export const BDigitizingMobileApp = () => {
             }}
           >
             <Search size={18} style={{ color: '#047857' }} />
-            <span style={{ fontSize: '0.88rem', color: '#64748b', fontWeight: 600 }}>
+            <span style={{ fontSize: '0.88rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', fontWeight: 600 }}>
               Search services (Embroidery, Vector, Patches...)
             </span>
           </div>
@@ -1575,14 +1577,14 @@ export const BDigitizingMobileApp = () => {
           {/* Unpaid / Waiting for Payment Widget */}
           {unpaidOrders.length > 0 && (
             <div style={{
-              background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-              border: '1.5px solid #fde68a',
+              background: isDark ? 'rgba(234, 88, 12, 0.15)' : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+              border: isDark ? '1.5px solid rgba(234, 88, 12, 0.4)' : '1.5px solid #fde68a',
               borderRadius: '16px',
               padding: '0.9rem 1rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              boxShadow: '0 4px 14px rgba(245, 158, 11, 0.12)'
+              boxShadow: isDark ? '0 4px 14px rgba(0, 0, 0, 0.25)' : '0 4px 14px rgba(245, 158, 11, 0.12)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                 <div style={{
@@ -1599,10 +1601,10 @@ export const BDigitizingMobileApp = () => {
                   <CreditCard size={20} />
                 </div>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: '#0f172a' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                     {unpaidOrders.length} Order{unpaidOrders.length > 1 ? 's' : ''} Waiting for Payment
                   </h4>
-                  <span style={{ fontSize: '0.74rem', color: '#c2410c', fontWeight: 700 }}>
+                  <span style={{ fontSize: '0.74rem', color: isDark ? '#fb923c' : '#c2410c', fontWeight: 700 }}>
                     Complete payment to start master digitizing
                   </span>
                 </div>
@@ -1634,14 +1636,14 @@ export const BDigitizingMobileApp = () => {
           {/* Active Orders Widget */}
           {activeOrders.length > 0 && (
             <div style={{
-              background: '#f0fdf4',
-              border: '1.5px solid #86efac',
+              background: isDark ? 'rgba(16, 185, 129, 0.12)' : '#f0fdf4',
+              border: isDark ? '1.5px solid rgba(16, 185, 129, 0.35)' : '1.5px solid #86efac',
               borderRadius: '16px',
               padding: '0.9rem 1rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.08)'
+              boxShadow: isDark ? '0 4px 14px rgba(0, 0, 0, 0.2)' : '0 4px 14px rgba(16, 185, 129, 0.08)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                 <div style={{
@@ -1657,10 +1659,10 @@ export const BDigitizingMobileApp = () => {
                   <Zap size={20} />
                 </div>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: '#0f172a' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                     {activeOrders.length} Order{activeOrders.length > 1 ? 's' : ''} in Production
                   </h4>
-                  <span style={{ fontSize: '0.74rem', color: '#047857', fontWeight: 700 }}>
+                  <span style={{ fontSize: '0.74rem', color: isDark ? '#34d399' : '#047857', fontWeight: 700 }}>
                     Master digitizers are testing stitch pathing
                   </span>
                 </div>
@@ -1670,13 +1672,13 @@ export const BDigitizingMobileApp = () => {
                 type="button"
                 onClick={() => setMobileTab('orders')}
                 style={{
-                  background: '#ffffff',
-                  border: '1.5px solid #86efac',
+                  background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                  border: isDark ? '1.5px solid #059669' : '1.5px solid #86efac',
                   borderRadius: '8px',
                   padding: '0.45rem 0.85rem',
                   fontSize: '0.78rem',
                   fontWeight: 800,
-                  color: '#047857',
+                  color: isDark ? '#34d399' : '#047857',
                   cursor: 'pointer'
                 }}
               >
@@ -1688,13 +1690,13 @@ export const BDigitizingMobileApp = () => {
           {/* Popular Services Section (Horizontal Slider) */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#0f172a' }}>
+              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                 Our 3 Core Services
               </h3>
               <button
                 type="button"
                 onClick={() => setMobileTab('categories')}
-                style={{ background: 'none', border: 'none', color: '#047857', fontSize: '0.82rem', fontWeight: 800, cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: isDark ? '#34d399' : '#047857', fontSize: '0.82rem', fontWeight: 800, cursor: 'pointer' }}
               >
                 View All →
               </button>
@@ -1714,12 +1716,12 @@ export const BDigitizingMobileApp = () => {
                 style={{
                   minWidth: '155px',
                   width: '155px',
-                  background: '#ffffff',
+                  background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
                   borderRadius: '16px',
-                  border: '1.5px solid #cbd5e1',
+                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                   overflow: 'hidden',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+                  boxShadow: isDark ? '0 2px 10px rgba(0,0,0,0.2)' : '0 2px 10px rgba(0,0,0,0.03)',
                   flexShrink: 0
                 }}
               >
@@ -1734,10 +1736,10 @@ export const BDigitizingMobileApp = () => {
                   <Layers size={42} strokeWidth={2} />
                 </div>
                 <div style={{ padding: '0.75rem 0.85rem' }}>
-                  <div style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
+                  <div style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', lineHeight: 1.25 }}>
                     Embroidery Digitizing
                   </div>
-                  <span style={{ fontSize: '0.8rem', color: '#047857', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
+                  <span style={{ fontSize: '0.8rem', color: isDark ? '#34d399' : '#047857', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
                     From $10.00
                   </span>
                 </div>
@@ -1749,12 +1751,12 @@ export const BDigitizingMobileApp = () => {
                 style={{
                   minWidth: '155px',
                   width: '155px',
-                  background: '#ffffff',
+                  background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
                   borderRadius: '16px',
-                  border: '1.5px solid #cbd5e1',
+                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                   overflow: 'hidden',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+                  boxShadow: isDark ? '0 2px 10px rgba(0,0,0,0.2)' : '0 2px 10px rgba(0,0,0,0.03)',
                   flexShrink: 0
                 }}
               >
@@ -1769,10 +1771,10 @@ export const BDigitizingMobileApp = () => {
                   <PenTool size={42} strokeWidth={2} />
                 </div>
                 <div style={{ padding: '0.75rem 0.85rem' }}>
-                  <div style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
+                  <div style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', lineHeight: 1.25 }}>
                     Vector Art Tracing
                   </div>
-                  <span style={{ fontSize: '0.8rem', color: '#ea580c', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
+                  <span style={{ fontSize: '0.8rem', color: isDark ? '#fb923c' : '#ea580c', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
                     From $15.00
                   </span>
                 </div>
@@ -1784,12 +1786,12 @@ export const BDigitizingMobileApp = () => {
                 style={{
                   minWidth: '155px',
                   width: '155px',
-                  background: '#ffffff',
+                  background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
                   borderRadius: '16px',
-                  border: '1.5px solid #cbd5e1',
+                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                   overflow: 'hidden',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+                  boxShadow: isDark ? '0 2px 10px rgba(0,0,0,0.2)' : '0 2px 10px rgba(0,0,0,0.03)',
                   flexShrink: 0
                 }}
               >
@@ -1804,10 +1806,10 @@ export const BDigitizingMobileApp = () => {
                   <Package size={42} strokeWidth={2} />
                 </div>
                 <div style={{ padding: '0.75rem 0.85rem' }}>
-                  <div style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
+                  <div style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', lineHeight: 1.25 }}>
                     Custom Patches
                   </div>
-                  <span style={{ fontSize: '0.8rem', color: '#0284c7', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
+                  <span style={{ fontSize: '0.8rem', color: isDark ? '#38bdf8' : '#0284c7', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
                     From $1.50 / pc
                   </span>
                 </div>
@@ -1819,12 +1821,12 @@ export const BDigitizingMobileApp = () => {
                 style={{
                   minWidth: '155px',
                   width: '155px',
-                  background: '#ffffff',
+                  background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
                   borderRadius: '16px',
-                  border: '1.5px solid #cbd5e1',
+                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                   overflow: 'hidden',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+                  boxShadow: isDark ? '0 2px 10px rgba(0,0,0,0.2)' : '0 2px 10px rgba(0,0,0,0.03)',
                   flexShrink: 0
                 }}
               >
@@ -1839,10 +1841,10 @@ export const BDigitizingMobileApp = () => {
                   <Zap size={42} strokeWidth={2} />
                 </div>
                 <div style={{ padding: '0.75rem 0.85rem' }}>
-                  <div style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
+                  <div style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', lineHeight: 1.25 }}>
                     Express 2–6h Rush
                   </div>
-                  <span style={{ fontSize: '0.8rem', color: '#d97706', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
+                  <span style={{ fontSize: '0.8rem', color: isDark ? '#fbbf24' : '#d97706', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
                     +$10 Speed Fee
                   </span>
                 </div>
@@ -1895,7 +1897,7 @@ export const BDigitizingMobileApp = () => {
           right: 0,
           bottom: 0,
           zIndex: 9999,
-          background: '#ffffff'
+          background: isDark ? 'var(--color-background, #090d16)' : '#ffffff'
         }}>
           {/* Render Full Client Chat Inbox with built-in channels and complete scrolling */}
           <div style={{ flex: 1, minHeight: 0, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -1914,10 +1916,10 @@ export const BDigitizingMobileApp = () => {
           {/* Categories Top Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#0f172a' }}>
+              <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                 Services & Packages
               </h2>
-              <p style={{ margin: '0.15rem 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+              <p style={{ margin: '0.15rem 0 0', fontSize: '0.75rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>
                 Select any package to start instant order configuration
               </p>
             </div>
@@ -1948,12 +1950,12 @@ export const BDigitizingMobileApp = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '0.65rem',
-            background: '#f8fafc',
-            border: '1.5px solid #cbd5e1',
+            background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc',
+            border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
             borderRadius: '12px',
             padding: '0.65rem 0.95rem'
           }}>
-            <Search size={18} style={{ color: '#64748b' }} />
+            <Search size={18} style={{ color: isDark ? '#94a3b8' : '#64748b' }} />
             <input
               type="text"
               value={searchQuery}
@@ -1965,7 +1967,7 @@ export const BDigitizingMobileApp = () => {
                 outline: 'none',
                 width: '100%',
                 fontSize: '0.88rem',
-                color: '#0f172a',
+                color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
                 fontFamily: 'inherit'
               }}
             />
@@ -1995,9 +1997,9 @@ export const BDigitizingMobileApp = () => {
                 style={{
                   padding: '0.4rem 0.85rem',
                   borderRadius: '20px',
-                  border: activeCategoryFilter === f.id ? '1.5px solid #059669' : '1px solid #cbd5e1',
-                  background: activeCategoryFilter === f.id ? '#059669' : '#ffffff',
-                  color: activeCategoryFilter === f.id ? '#ffffff' : '#475569',
+                  border: activeCategoryFilter === f.id ? '1.5px solid #059669' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1'),
+                  background: activeCategoryFilter === f.id ? '#059669' : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
+                  color: activeCategoryFilter === f.id ? '#ffffff' : (isDark ? '#94a3b8' : '#475569'),
                   fontSize: '0.78rem',
                   fontWeight: 800,
                   cursor: 'pointer',
@@ -2012,12 +2014,12 @@ export const BDigitizingMobileApp = () => {
           {/* Filtered Services List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {filteredServices.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem 1rem', background: '#f8fafc', borderRadius: '14px' }}>
+              <div style={{ textAlign: 'center', padding: '2rem 1rem', background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc', borderRadius: '14px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0' }}>
                 <Search size={32} style={{ color: '#94a3b8', margin: '0 auto 0.5rem', opacity: 0.5 }} />
-                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>
+                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                   No services matching "{searchQuery}"
                 </h4>
-                <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+                <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>
                   Try searching for "embroidery", "vector", "puff", or "patches".
                 </p>
               </div>
@@ -2031,13 +2033,13 @@ export const BDigitizingMobileApp = () => {
                     style={{
                       padding: '1rem',
                       borderRadius: '14px',
-                      border: '1.5px solid #e2e8f0',
-                      background: '#ffffff',
+                      border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
+                      background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.85rem',
                       cursor: 'pointer',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                      boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.03)',
                       transition: 'all 0.15s ease'
                     }}
                   >
@@ -2045,8 +2047,8 @@ export const BDigitizingMobileApp = () => {
                       width: '46px',
                       height: '46px',
                       borderRadius: '12px',
-                      background: '#f8fafc',
-                      border: '1px solid #e2e8f0',
+                      background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
+                      border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -2058,21 +2060,21 @@ export const BDigitizingMobileApp = () => {
 
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: '#0f172a' }}>
+                        <div style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                           {svc.title}
                         </div>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#047857' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
                           {svc.startingPrice}
                         </span>
                       </div>
-                      <p style={{ margin: '0.2rem 0 0', fontSize: '0.74rem', color: '#64748b', lineHeight: 1.3 }}>
+                      <p style={{ margin: '0.2rem 0 0', fontSize: '0.74rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', lineHeight: 1.3 }}>
                         {svc.subtitle}
                       </p>
                       <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.35rem', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <span style={{ fontSize: '0.65rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
                           <Clock size={11} /> {svc.eta}
                         </span>
-                        <span style={{ fontSize: '0.65rem', color: '#059669', fontWeight: 800, marginLeft: 'auto' }}>
+                        <span style={{ fontSize: '0.65rem', color: isDark ? '#34d399' : '#059669', fontWeight: 800, marginLeft: 'auto' }}>
                           Start Order →
                         </span>
                       </div>
@@ -2091,13 +2093,13 @@ export const BDigitizingMobileApp = () => {
           SCREEN 4: MANAGE ORDERS WITH LIVE DATA STATISTICS & KPI DASHBOARD
           ========================================================================= */}
       {mobileTab === 'orders' && (
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', background: '#f8fafc' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', background: isDark ? 'var(--color-background, #090d16)' : '#f8fafc' }}>
           
           {/* Manage Orders Top Bar */}
           <div style={{
             padding: '0.65rem 0.85rem',
-            background: '#ffffff',
-            borderBottom: '1px solid #f1f5f9',
+            background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+            borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -2106,10 +2108,10 @@ export const BDigitizingMobileApp = () => {
             zIndex: 30
           }}>
             <div>
-              <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#0f172a' }}>
+              <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                 Manage Orders
               </h2>
-              <div style={{ fontSize: '0.66rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.05rem' }}>
+              <div style={{ fontSize: '0.66rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.05rem' }}>
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
                 <span>{myOrders.length} total orders recorded</span>
               </div>
@@ -2121,11 +2123,11 @@ export const BDigitizingMobileApp = () => {
                 onClick={handleManualRefreshOrders}
                 disabled={isRefreshingOrders}
                 style={{
-                  background: '#f8fafc',
-                  border: '1px solid #cbd5e1',
+                  background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
+                  border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1',
                   borderRadius: '8px',
                   padding: '0.35rem',
-                  color: '#0f172a',
+                  color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
                   cursor: isRefreshingOrders ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -2140,11 +2142,11 @@ export const BDigitizingMobileApp = () => {
                 type="button"
                 onClick={() => setIsNotifDrawerOpen(true)}
                 style={{
-                  background: '#f8fafc',
-                  border: '1px solid #cbd5e1',
+                  background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
+                  border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1',
                   borderRadius: '8px',
                   padding: '0.35rem',
-                  color: '#0f172a',
+                  color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
                   cursor: 'pointer',
                   position: 'relative',
                   display: 'flex',
@@ -2186,11 +2188,11 @@ export const BDigitizingMobileApp = () => {
               ========================================================================= */}
           <div style={{ padding: '0.45rem 0.75rem 0.15rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                 <Activity size={13} style={{ color: '#059669' }} />
                 <span>Live Studio Statistics</span>
               </div>
-              <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 600 }}>
+              <span style={{ fontSize: '0.65rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', fontWeight: 600 }}>
                 Tap metric to filter
               </span>
             </div>
@@ -2201,9 +2203,9 @@ export const BDigitizingMobileApp = () => {
               <div 
                 onClick={() => setOrderFilter('all')}
                 style={{
-                  background: orderFilter === 'all' ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' : '#ffffff',
-                  color: orderFilter === 'all' ? '#ffffff' : '#0f172a',
-                  border: orderFilter === 'all' ? '1.5px solid #0f172a' : '1px solid #e2e8f0',
+                  background: orderFilter === 'all' ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
+                  color: orderFilter === 'all' ? '#ffffff' : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'),
+                  border: orderFilter === 'all' ? '1.5px solid #38bdf8' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0'),
                   borderRadius: '10px',
                   padding: '0.55rem 0.4rem',
                   display: 'flex',
@@ -2212,15 +2214,15 @@ export const BDigitizingMobileApp = () => {
                   justifyContent: 'center',
                   textAlign: 'center',
                   cursor: 'pointer',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                  boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.03)',
                   transition: 'all 0.15s ease'
                 }}
               >
-                <ClipboardList size={16} style={{ color: orderFilter === 'all' ? '#38bdf8' : '#64748b', marginBottom: '0.15rem' }} />
+                <ClipboardList size={16} style={{ color: orderFilter === 'all' ? '#38bdf8' : (isDark ? '#94a3b8' : '#64748b'), marginBottom: '0.15rem' }} />
                 <div style={{ fontSize: '1.05rem', fontWeight: 900, lineHeight: 1 }}>
                   {totalOrdersCount}
                 </div>
-                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: orderFilter === 'all' ? '#cbd5e1' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: orderFilter === 'all' ? '#cbd5e1' : (isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b'), marginTop: '0.15rem', textTransform: 'uppercase' }}>
                   Total Orders
                 </div>
               </div>
@@ -2229,9 +2231,9 @@ export const BDigitizingMobileApp = () => {
               <div 
                 onClick={() => setOrderFilter('awaiting_payment')}
                 style={{
-                  background: orderFilter === 'awaiting_payment' ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : '#ffffff',
-                  color: orderFilter === 'awaiting_payment' ? '#ffffff' : '#0f172a',
-                  border: orderFilter === 'awaiting_payment' ? '1.5px solid #ea580c' : (unpaidOrdersCount > 0 ? '1px solid #fdba74' : '1px solid #e2e8f0'),
+                  background: orderFilter === 'awaiting_payment' ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
+                  color: orderFilter === 'awaiting_payment' ? '#ffffff' : (isDark ? '#fb923c' : '#0f172a'),
+                  border: orderFilter === 'awaiting_payment' ? '1.5px solid #ea580c' : (unpaidOrdersCount > 0 ? (isDark ? '1px solid #ea580c' : '1px solid #fdba74') : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0')),
                   borderRadius: '10px',
                   padding: '0.55rem 0.4rem',
                   display: 'flex',
@@ -2240,15 +2242,15 @@ export const BDigitizingMobileApp = () => {
                   justifyContent: 'center',
                   textAlign: 'center',
                   cursor: 'pointer',
-                  boxShadow: unpaidOrdersCount > 0 ? '0 2px 8px rgba(234, 88, 12, 0.15)' : '0 1px 4px rgba(0,0,0,0.03)',
+                  boxShadow: unpaidOrdersCount > 0 ? '0 2px 8px rgba(234, 88, 12, 0.2)' : (isDark ? '0 1px 4px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.03)'),
                   transition: 'all 0.15s ease'
                 }}
               >
                 <CreditCard size={16} style={{ color: orderFilter === 'awaiting_payment' ? '#fef08a' : '#ea580c', marginBottom: '0.15rem' }} />
-                <div style={{ fontSize: '1.05rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'awaiting_payment' ? '#ffffff' : '#c2410c' }}>
+                <div style={{ fontSize: '1.05rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'awaiting_payment' ? '#ffffff' : (isDark ? '#fb923c' : '#c2410c') }}>
                   {unpaidOrdersCount}
                 </div>
-                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: orderFilter === 'awaiting_payment' ? '#fed7aa' : '#c2410c', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: orderFilter === 'awaiting_payment' ? '#fed7aa' : (isDark ? '#fb923c' : '#c2410c'), marginTop: '0.15rem', textTransform: 'uppercase' }}>
                   Waiting Pay
                 </div>
               </div>
@@ -2257,9 +2259,9 @@ export const BDigitizingMobileApp = () => {
               <div 
                 onClick={() => setOrderFilter('active')}
                 style={{
-                  background: orderFilter === 'active' ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : '#ffffff',
-                  color: orderFilter === 'active' ? '#ffffff' : '#0f172a',
-                  border: orderFilter === 'active' ? '1.5px solid #0284c7' : '1px solid #bae6fd',
+                  background: orderFilter === 'active' ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
+                  color: orderFilter === 'active' ? '#ffffff' : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'),
+                  border: orderFilter === 'active' ? '1.5px solid #0284c7' : (isDark ? '1px solid rgba(2, 132, 199, 0.4)' : '1px solid #bae6fd'),
                   borderRadius: '10px',
                   padding: '0.55rem 0.4rem',
                   display: 'flex',
@@ -2268,15 +2270,15 @@ export const BDigitizingMobileApp = () => {
                   justifyContent: 'center',
                   textAlign: 'center',
                   cursor: 'pointer',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                  boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.03)',
                   transition: 'all 0.15s ease'
                 }}
               >
                 <Zap size={16} style={{ color: orderFilter === 'active' ? '#bae6fd' : '#0284c7', marginBottom: '0.15rem' }} />
-                <div style={{ fontSize: '1.05rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'active' ? '#ffffff' : '#0369a1' }}>
+                <div style={{ fontSize: '1.05rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'active' ? '#ffffff' : (isDark ? '#38bdf8' : '#0369a1') }}>
                   {activeOrdersCount}
                 </div>
-                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: orderFilter === 'active' ? '#e0f2fe' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: orderFilter === 'active' ? '#e0f2fe' : (isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b'), marginTop: '0.15rem', textTransform: 'uppercase' }}>
                   In Production
                 </div>
               </div>
@@ -2285,9 +2287,9 @@ export const BDigitizingMobileApp = () => {
               <div 
                 onClick={() => setOrderFilter('delivered')}
                 style={{
-                  background: orderFilter === 'delivered' ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : '#ffffff',
-                  color: orderFilter === 'delivered' ? '#ffffff' : '#0f172a',
-                  border: orderFilter === 'delivered' ? '1.5px solid #059669' : '1px solid #a7f3d0',
+                  background: orderFilter === 'delivered' ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
+                  color: orderFilter === 'delivered' ? '#ffffff' : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'),
+                  border: orderFilter === 'delivered' ? '1.5px solid #059669' : (isDark ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid #a7f3d0'),
                   borderRadius: '10px',
                   padding: '0.55rem 0.4rem',
                   display: 'flex',
@@ -2296,15 +2298,15 @@ export const BDigitizingMobileApp = () => {
                   justifyContent: 'center',
                   textAlign: 'center',
                   cursor: 'pointer',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                  boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.03)',
                   transition: 'all 0.15s ease'
                 }}
               >
                 <Package size={16} style={{ color: orderFilter === 'delivered' ? '#a7f3d0' : '#059669', marginBottom: '0.15rem' }} />
-                <div style={{ fontSize: '1.05rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'delivered' ? '#ffffff' : '#047857' }}>
+                <div style={{ fontSize: '1.05rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'delivered' ? '#ffffff' : (isDark ? '#34d399' : '#047857') }}>
                   {deliveredOrdersCount}
                 </div>
-                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: orderFilter === 'delivered' ? '#d1fae5' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: orderFilter === 'delivered' ? '#d1fae5' : (isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b'), marginTop: '0.15rem', textTransform: 'uppercase' }}>
                   Delivered
                 </div>
               </div>
@@ -2313,9 +2315,9 @@ export const BDigitizingMobileApp = () => {
               <div 
                 onClick={() => setOrderFilter('completed')}
                 style={{
-                  background: orderFilter === 'completed' ? 'linear-gradient(135deg, #334155 0%, #1e293b 100%)' : '#ffffff',
-                  color: orderFilter === 'completed' ? '#ffffff' : '#0f172a',
-                  border: orderFilter === 'completed' ? '1.5px solid #334155' : '1px solid #e2e8f0',
+                  background: orderFilter === 'completed' ? 'linear-gradient(135deg, #334155 0%, #1e293b 100%)' : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
+                  color: orderFilter === 'completed' ? '#ffffff' : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'),
+                  border: orderFilter === 'completed' ? '1.5px solid #64748b' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0'),
                   borderRadius: '10px',
                   padding: '0.55rem 0.4rem',
                   display: 'flex',
@@ -2324,15 +2326,15 @@ export const BDigitizingMobileApp = () => {
                   justifyContent: 'center',
                   textAlign: 'center',
                   cursor: 'pointer',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                  boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.03)',
                   transition: 'all 0.15s ease'
                 }}
               >
-                <CheckCircle2 size={16} style={{ color: orderFilter === 'completed' ? '#94a3b8' : '#64748b', marginBottom: '0.15rem' }} />
+                <CheckCircle2 size={16} style={{ color: orderFilter === 'completed' ? '#94a3b8' : (isDark ? '#94a3b8' : '#64748b'), marginBottom: '0.15rem' }} />
                 <div style={{ fontSize: '1.05rem', fontWeight: 900, lineHeight: 1 }}>
                   {completedOrdersCount}
                 </div>
-                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: orderFilter === 'completed' ? '#cbd5e1' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: orderFilter === 'completed' ? '#cbd5e1' : (isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b'), marginTop: '0.15rem', textTransform: 'uppercase' }}>
                   Completed
                 </div>
               </div>
@@ -2340,8 +2342,8 @@ export const BDigitizingMobileApp = () => {
               {/* Total Spend Pill */}
               <div 
                 style={{
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
+                  background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc',
+                  border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0',
                   borderRadius: '10px',
                   padding: '0.55rem 0.4rem',
                   display: 'flex',
@@ -2352,10 +2354,10 @@ export const BDigitizingMobileApp = () => {
                 }}
               >
                 <DollarSign size={16} style={{ color: '#059669', marginBottom: '0.15rem' }} />
-                <div style={{ fontSize: '1.02rem', fontWeight: 900, lineHeight: 1, color: '#059669' }}>
+                <div style={{ fontSize: '1.02rem', fontWeight: 900, lineHeight: 1, color: isDark ? '#34d399' : '#059669' }}>
                   ${totalValueSpent.toFixed(0)}
                 </div>
-                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
                   Total Value
                 </div>
               </div>
@@ -2364,15 +2366,15 @@ export const BDigitizingMobileApp = () => {
             {/* Action Required Alert Banner for Unpaid Orders */}
             {unpaidOrdersCount > 0 && (
               <div style={{
-                background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-                border: '1px solid #fde68a',
+                background: isDark ? 'rgba(234, 88, 12, 0.15)' : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                border: isDark ? '1px solid rgba(234, 88, 12, 0.4)' : '1px solid #fde68a',
                 borderRadius: '10px',
                 padding: '0.55rem 0.75rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: '0.5rem',
-                boxShadow: '0 2px 8px rgba(245, 158, 11, 0.12)'
+                boxShadow: isDark ? '0 2px 8px rgba(0, 0, 0, 0.2)' : '0 2px 8px rgba(245, 158, 11, 0.12)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
                   <div style={{
@@ -2389,10 +2391,10 @@ export const BDigitizingMobileApp = () => {
                     <CreditCard size={15} />
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 900, color: '#9a3412', lineHeight: 1.2 }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 900, color: isDark ? '#fb923c' : '#9a3412', lineHeight: 1.2 }}>
                       {unpaidOrdersCount} Order{unpaidOrdersCount > 1 ? 's' : ''} Awaiting Payment
                     </div>
-                    <div style={{ fontSize: '0.68rem', color: '#c2410c', marginTop: '1px' }}>
+                    <div style={{ fontSize: '0.68rem', color: isDark ? '#fed7aa' : '#c2410c', marginTop: '1px' }}>
                       Complete payment to start master digitizing
                     </div>
                   </div>
@@ -2433,22 +2435,22 @@ export const BDigitizingMobileApp = () => {
               { id: 'completed', label: `✓ Done (${completedOrders.length})` }
             ].map(f => {
               const isSelected = orderFilter === f.id;
-              let bg = '#ffffff';
-              let color = '#475569';
-              let border = '1px solid #cbd5e1';
+              let bg = isDark ? 'var(--color-surface, #111827)' : '#ffffff';
+              let color = isDark ? 'var(--color-text-secondary, #94a3b8)' : '#475569';
+              let border = isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1';
 
               if (isSelected) {
-                bg = f.unpaid ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : '#0f172a';
+                bg = f.unpaid ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : (isDark ? 'linear-gradient(135deg, #1e293b 0%, #334155 100%)' : '#0f172a');
                 color = '#ffffff';
-                border = f.unpaid ? '1.5px solid #ea580c' : '1.5px solid #0f172a';
+                border = f.unpaid ? '1.5px solid #ea580c' : (isDark ? '1.5px solid #475569' : '1.5px solid #0f172a');
               } else if (f.unpaid && f.highlight) {
-                bg = '#fff7ed';
-                color = '#c2410c';
-                border = '1.5px solid #fdba74';
+                bg = isDark ? 'rgba(234, 88, 12, 0.18)' : '#fff7ed';
+                color = isDark ? '#fb923c' : '#c2410c';
+                border = isDark ? '1.5px solid #ea580c' : '1.5px solid #fdba74';
               } else if (f.highlight) {
-                bg = '#ecfdf5';
-                color = '#047857';
-                border = '1.5px solid #10b981';
+                bg = isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5';
+                color = isDark ? '#34d399' : '#047857';
+                border = isDark ? '1.5px solid #059669' : '1.5px solid #10b981';
               }
 
               return (
@@ -2480,8 +2482,8 @@ export const BDigitizingMobileApp = () => {
           <div style={{ padding: '0.45rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
             {(!isAuthenticated && !userEmail && myOrders.length > 0) && (
               <div style={{
-                background: '#eff6ff',
-                border: '1px solid #bfdbfe',
+                background: isDark ? 'rgba(37, 99, 235, 0.15)' : '#eff6ff',
+                border: isDark ? '1px solid rgba(37, 99, 235, 0.4)' : '1px solid #bfdbfe',
                 borderRadius: '8px',
                 padding: '0.45rem 0.65rem',
                 display: 'flex',
@@ -2490,7 +2492,7 @@ export const BDigitizingMobileApp = () => {
                 gap: '0.4rem',
                 marginBottom: '0.15rem'
               }}>
-                <div style={{ fontSize: '0.7rem', color: '#1e40af', fontWeight: 600 }}>
+                <div style={{ fontSize: '0.7rem', color: isDark ? '#93c5fd' : '#1e40af', fontWeight: 600 }}>
                   Showing orders placed on this device. Sign in to sync across all devices.
                 </div>
                 <button
@@ -2520,18 +2522,18 @@ export const BDigitizingMobileApp = () => {
               if (!isAuthenticated && !userEmail && myOrders.length === 0) {
                 return (
                   <div style={{
-                    background: '#ffffff',
-                    border: '1px solid #e2e8f0',
+                    background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                    border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0',
                     borderRadius: '12px',
                     padding: '2rem 1.25rem',
                     textAlign: 'center',
                     marginTop: '0.35rem'
                   }}>
                     <Lock size={30} style={{ color: '#94a3b8', margin: '0 auto 0.5rem' }} />
-                    <h4 style={{ margin: '0 0 0.25rem', fontSize: '0.92rem', fontWeight: 900, color: '#0f172a' }}>
+                    <h4 style={{ margin: '0 0 0.25rem', fontSize: '0.92rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                       Sign In to View Orders
                     </h4>
-                    <p style={{ margin: '0 0 1rem', fontSize: '0.74rem', color: '#64748b', lineHeight: 1.4 }}>
+                    <p style={{ margin: '0 0 1rem', fontSize: '0.74rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', lineHeight: 1.4 }}>
                       Sign in with your studio account to track real-time machine stitch test runs and download files.
                     </p>
                     <button
@@ -2588,18 +2590,18 @@ export const BDigitizingMobileApp = () => {
               if (filtered.length === 0) {
                 return (
                   <div style={{
-                    background: '#ffffff',
-                    border: '1px solid #e2e8f0',
+                    background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                    border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0',
                     borderRadius: '12px',
                     padding: '2.25rem 1.25rem',
                     textAlign: 'center',
                     marginTop: '0.35rem'
                   }}>
                     <ClipboardList size={30} style={{ color: '#94a3b8', margin: '0 auto 0.5rem', opacity: 0.5 }} />
-                    <h4 style={{ margin: '0 0 0.2rem', fontSize: '0.92rem', fontWeight: 800, color: '#0f172a' }}>
+                    <h4 style={{ margin: '0 0 0.2rem', fontSize: '0.92rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                       No Orders Found
                     </h4>
-                    <p style={{ margin: '0 0 0.85rem', fontSize: '0.74rem', color: '#64748b' }}>
+                    <p style={{ margin: '0 0 0.85rem', fontSize: '0.74rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>
                       {orderFilter === 'awaiting_payment'
                         ? 'No unpaid orders pending payment.'
                         : orderFilter === 'delivered'
@@ -2638,15 +2640,40 @@ export const BDigitizingMobileApp = () => {
                 const isCompleted = s === 'completed';
                 const isRevision = s === 'revision' || s === 'modification';
 
-                let badgeInfo = { label: 'IN PRODUCTION', bg: '#eff6ff', border: '#bae6fd', color: '#0284c7' };
+                let badgeInfo = { 
+                  label: 'IN PRODUCTION', 
+                  bg: isDark ? 'rgba(2, 132, 199, 0.15)' : '#eff6ff', 
+                  border: isDark ? 'rgba(2, 132, 199, 0.4)' : '#bae6fd', 
+                  color: isDark ? '#38bdf8' : '#0284c7' 
+                };
                 if (isUnpaid) {
-                  badgeInfo = { label: '⏳ WAITING FOR PAYMENT', bg: '#fff7ed', border: '#fdba74', color: '#c2410c' };
+                  badgeInfo = { 
+                    label: '⏳ WAITING FOR PAYMENT', 
+                    bg: isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed', 
+                    border: isDark ? 'rgba(234, 88, 12, 0.4)' : '#fdba74', 
+                    color: isDark ? '#fb923c' : '#c2410c' 
+                  };
                 } else if (isDelivered) {
-                  badgeInfo = { label: '📦 DELIVERED', bg: '#ecfdf5', border: '#86efac', color: '#047857' };
+                  badgeInfo = { 
+                    label: '📦 DELIVERED', 
+                    bg: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5', 
+                    border: isDark ? 'rgba(16, 185, 129, 0.4)' : '#86efac', 
+                    color: isDark ? '#34d399' : '#047857' 
+                  };
                 } else if (isCompleted) {
-                  badgeInfo = { label: '✓ COMPLETED', bg: '#f1f5f9', border: '#cbd5e1', color: '#334155' };
+                  badgeInfo = { 
+                    label: '✓ COMPLETED', 
+                    bg: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9', 
+                    border: isDark ? 'var(--color-border, #334155)' : '#cbd5e1', 
+                    color: isDark ? '#94a3b8' : '#334155' 
+                  };
                 } else if (isRevision) {
-                  badgeInfo = { label: '🔄 REVISION', bg: '#fff7ed', border: '#fdba74', color: '#ea580c' };
+                  badgeInfo = { 
+                    label: '🔄 REVISION', 
+                    bg: isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed', 
+                    border: isDark ? 'rgba(234, 88, 12, 0.4)' : '#fdba74', 
+                    color: isDark ? '#fb923c' : '#ea580c' 
+                  };
                 }
 
                 const priceVal = Number(ord.totalPrice || ord.price || 15).toFixed(2);
@@ -2657,14 +2684,14 @@ export const BDigitizingMobileApp = () => {
                     key={ord.id}
                     onClick={() => setSelectedOrderForDrawer(ord)}
                     style={{
-                      background: '#ffffff',
-                      border: isUnpaid ? '1.5px solid #fdba74' : (isDelivered ? '1.5px solid #86efac' : '1px solid #e2e8f0'),
+                      background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                      border: isUnpaid ? (isDark ? '1.5px solid #ea580c' : '1.5px solid #fdba74') : (isDelivered ? (isDark ? '1.5px solid #059669' : '1.5px solid #86efac') : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0')),
                       borderRadius: '12px',
                       padding: '0.8rem 0.9rem',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '0.55rem',
-                      boxShadow: isUnpaid ? '0 2px 8px rgba(234, 88, 12, 0.08)' : (isDelivered ? '0 2px 8px rgba(16, 185, 129, 0.08)' : '0 1px 4px rgba(0,0,0,0.03)'),
+                      boxShadow: isUnpaid ? '0 2px 8px rgba(234, 88, 12, 0.12)' : (isDelivered ? '0 2px 8px rgba(16, 185, 129, 0.12)' : (isDark ? '0 1px 4px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.03)')),
                       cursor: 'pointer'
                     }}
                   >
@@ -2682,24 +2709,24 @@ export const BDigitizingMobileApp = () => {
                           height: '48px',
                           borderRadius: '8px',
                           objectFit: 'cover',
-                          border: isUnpaid ? '1.5px solid #fb923c' : (isDelivered ? '1.5px solid #10b981' : '1px solid #cbd5e1'),
+                          border: isUnpaid ? '1.5px solid #fb923c' : (isDelivered ? '1.5px solid #10b981' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1')),
                           flexShrink: 0
                         }}
                       />
 
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: isUnpaid ? '#c2410c' : '#059669' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: isUnpaid ? (isDark ? '#fb923c' : '#c2410c') : (isDark ? '#34d399' : '#059669') }}>
                             {formatOrderId(ord.id)}
                           </span>
-                          <span style={{ fontSize: '1.02rem', fontWeight: 900, color: '#0f172a' }}>
+                          <span style={{ fontSize: '1.02rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                             ${priceVal}
                           </span>
                         </div>
                         <p style={{
                           margin: '0.15rem 0 0',
                           fontSize: '0.86rem',
-                          color: '#1e293b',
+                          color: isDark ? 'var(--color-text-primary, #ffffff)' : '#1e293b',
                           fontWeight: 750,
                           lineHeight: 1.3,
                           overflow: 'hidden',
@@ -2718,8 +2745,8 @@ export const BDigitizingMobileApp = () => {
                           width: '20px',
                           height: '20px',
                           borderRadius: '50%',
-                          background: isUnpaid ? '#fff7ed' : '#ecfdf5',
-                          color: isUnpaid ? '#c2410c' : '#047857',
+                          background: isUnpaid ? (isDark ? 'rgba(234, 88, 12, 0.2)' : '#fff7ed') : (isDark ? 'rgba(16, 185, 129, 0.2)' : '#ecfdf5'),
+                          color: isUnpaid ? (isDark ? '#fb923c' : '#c2410c') : (isDark ? '#34d399' : '#047857'),
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -2728,7 +2755,7 @@ export const BDigitizingMobileApp = () => {
                         }}>
                           BD
                         </div>
-                        <span style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 600 }}>
+                        <span style={{ fontSize: '0.74rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', fontWeight: 600 }}>
                           BDigitizing Studio
                         </span>
                       </div>
@@ -2753,23 +2780,23 @@ export const BDigitizingMobileApp = () => {
                     {/* Prominent Unpaid / Waiting for Payment Action Bar */}
                     {isUnpaid && (
                       <div style={{
-                        background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-                        border: '1px solid #fde68a',
+                        background: isDark ? 'rgba(234, 88, 12, 0.15)' : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                        border: isDark ? '1px solid rgba(234, 88, 12, 0.4)' : '1px solid #fde68a',
                         borderRadius: '8px',
                         padding: '0.5rem 0.75rem',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         gap: '0.5rem',
-                        boxShadow: '0 1px 6px rgba(245, 158, 11, 0.1)'
+                        boxShadow: isDark ? '0 1px 6px rgba(0, 0, 0, 0.2)' : '0 1px 6px rgba(245, 158, 11, 0.1)'
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
                           <span style={{ fontSize: '1rem', flexShrink: 0 }}>⏳</span>
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: '0.76rem', fontWeight: 900, color: '#92400e', lineHeight: 1.2 }}>
+                            <div style={{ fontSize: '0.76rem', fontWeight: 900, color: isDark ? '#fb923c' : '#92400e', lineHeight: 1.2 }}>
                               Waiting for Payment to Start
                             </div>
-                            <div style={{ fontSize: '0.65rem', color: '#b45309', fontWeight: 600 }}>
+                            <div style={{ fontSize: '0.65rem', color: isDark ? '#fed7aa' : '#b45309', fontWeight: 600 }}>
                               Production starts immediately upon payment
                             </div>
                           </div>
@@ -2805,8 +2832,8 @@ export const BDigitizingMobileApp = () => {
                     {/* Delivered Quick Review Bar */}
                     {isDelivered && (
                       <div style={{
-                        background: '#f0fdf4',
-                        border: '1px dashed #86efac',
+                        background: isDark ? 'rgba(16, 185, 129, 0.12)' : '#f0fdf4',
+                        border: isDark ? '1px dashed #059669' : '1px dashed #86efac',
                         borderRadius: '8px',
                         padding: '0.4rem 0.75rem',
                         display: 'flex',
@@ -2814,7 +2841,7 @@ export const BDigitizingMobileApp = () => {
                         justifyContent: 'space-between',
                         fontSize: '0.74rem',
                         fontWeight: 800,
-                        color: '#047857'
+                        color: isDark ? '#34d399' : '#047857'
                       }}>
                         <span>📦 Files Ready for Download</span>
                         <span style={{ textDecoration: 'underline' }}>Review & Download →</span>
@@ -2826,11 +2853,11 @@ export const BDigitizingMobileApp = () => {
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      borderTop: '1px solid #f1f5f9',
+                      borderTop: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9',
                       paddingTop: '0.45rem',
                       marginTop: '0.1rem'
                     }}>
-                      <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b' }}>
+                      <span style={{ fontSize: '0.74rem', fontWeight: 700, color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>
                         {dateStr}
                       </span>
 
@@ -2843,7 +2870,7 @@ export const BDigitizingMobileApp = () => {
                         style={{
                           background: 'none',
                           border: 'none',
-                          color: '#0f172a',
+                          color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
                           cursor: 'pointer',
                           padding: '0.15rem'
                         }}
@@ -2865,7 +2892,7 @@ export const BDigitizingMobileApp = () => {
           SCREEN 5: PROFILE, SETTINGS & SUPPORT
           ========================================================================= */}
       {mobileTab === 'profile' && (
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', background: '#f8fafc', paddingBottom: '2.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', background: isDark ? 'var(--color-background, #090d16)' : '#f8fafc', paddingBottom: '2.5rem' }}>
           
           {/* Top Brand Executive Header */}
           <div style={{
@@ -3005,11 +3032,11 @@ export const BDigitizingMobileApp = () => {
           {/* Floating Commercial Account & Production Guarantees Card */}
           <div style={{ padding: '0 1.25rem', marginTop: '-20px' }}>
             <div style={{
-              background: '#ffffff',
+              background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
               borderRadius: '16px',
               padding: '1.15rem',
-              boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
-              border: '1.5px solid #e2e8f0',
+              boxShadow: isDark ? '0 8px 24px rgba(0, 0, 0, 0.3)' : '0 8px 24px rgba(15, 23, 42, 0.08)',
+              border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
               display: 'flex',
               flexDirection: 'column',
               gap: '0.85rem'
@@ -3020,17 +3047,17 @@ export const BDigitizingMobileApp = () => {
                     <ShieldCheck size={18} />
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.92rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.2 }}>
+                    <div style={{ fontSize: '0.92rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', lineHeight: 1.2 }}>
                       {isAuthenticated ? 'Commercial Partner Account' : 'Bilal Studio Production Guarantees'}
                     </div>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>
                       {isAuthenticated ? 'Verified Commercial Production Access' : '11+ Years Master Embroidery Craftsmanship'}
                     </span>
                   </div>
                 </div>
 
                 {isAuthenticated ? (
-                  <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#dcfce7', color: '#15803d', padding: '0.2rem 0.6rem', borderRadius: '9999px', border: '1px solid #bbf7d0' }}>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 800, background: isDark ? 'rgba(16, 185, 129, 0.15)' : '#dcfce7', color: isDark ? '#34d399' : '#15803d', padding: '0.2rem 0.6rem', borderRadius: '9999px', border: isDark ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid #bbf7d0' }}>
                     ● Active
                   </span>
                 ) : (
@@ -3057,21 +3084,21 @@ export const BDigitizingMobileApp = () => {
               </div>
 
               {/* 3 Pillars of Commercial Production */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid #f1f5f9' }}>
-                <div style={{ textAlign: 'center', background: '#f8fafc', padding: '0.6rem 0.25rem', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', paddingTop: '0.75rem', borderTop: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9' }}>
+                <div style={{ textAlign: 'center', background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', padding: '0.6rem 0.25rem', borderRadius: '10px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9' }}>
                   <span style={{ fontSize: '0.95rem', display: 'block' }}>⚡</span>
-                  <strong style={{ fontSize: '0.74rem', color: '#0f172a', display: 'block', marginTop: '2px' }}>8-12h Express</strong>
-                  <span style={{ fontSize: '0.62rem', color: '#64748b' }}>Turnaround</span>
+                  <strong style={{ fontSize: '0.74rem', color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block', marginTop: '2px' }}>8-12h Express</strong>
+                  <span style={{ fontSize: '0.62rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Turnaround</span>
                 </div>
-                <div style={{ textAlign: 'center', background: '#f8fafc', padding: '0.6rem 0.25rem', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
+                <div style={{ textAlign: 'center', background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', padding: '0.6rem 0.25rem', borderRadius: '10px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9' }}>
                   <span style={{ fontSize: '0.95rem', display: 'block' }}>🧵</span>
-                  <strong style={{ fontSize: '0.74rem', color: '#0f172a', display: 'block', marginTop: '2px' }}>100% Tested</strong>
-                  <span style={{ fontSize: '0.62rem', color: '#64748b' }}>Sew-Out QA</span>
+                  <strong style={{ fontSize: '0.74rem', color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block', marginTop: '2px' }}>100% Tested</strong>
+                  <span style={{ fontSize: '0.62rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Sew-Out QA</span>
                 </div>
-                <div style={{ textAlign: 'center', background: '#f8fafc', padding: '0.6rem 0.25rem', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
+                <div style={{ textAlign: 'center', background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', padding: '0.6rem 0.25rem', borderRadius: '10px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9' }}>
                   <span style={{ fontSize: '0.95rem', display: 'block' }}>💬</span>
-                  <strong style={{ fontSize: '0.74rem', color: '#0f172a', display: 'block', marginTop: '2px' }}>24/7 Desk</strong>
-                  <span style={{ fontSize: '0.62rem', color: '#64748b' }}>Master Support</span>
+                  <strong style={{ fontSize: '0.74rem', color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block', marginTop: '2px' }}>24/7 Desk</strong>
+                  <span style={{ fontSize: '0.62rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Master Support</span>
                 </div>
               </div>
             </div>
@@ -3079,11 +3106,11 @@ export const BDigitizingMobileApp = () => {
 
           {/* SECTION 1: ACCOUNT & ORDERS */}
           <div style={{ padding: '1.25rem 1.25rem 0.35rem' }}>
-            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.65rem' }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.65rem' }}>
               Account & Orders
             </div>
 
-            <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+            <div style={{ background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', borderRadius: '16px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', overflow: 'hidden', boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.02)' }}>
               {/* Account Profile */}
               <div 
                 onClick={() => {
@@ -3099,7 +3126,7 @@ export const BDigitizingMobileApp = () => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '0.9rem 1.15rem',
-                  borderBottom: '1px solid #f1f5f9',
+                  borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9',
                   cursor: 'pointer'
                 }}
               >
@@ -3108,11 +3135,11 @@ export const BDigitizingMobileApp = () => {
                     <User size={18} />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>Account & Profile</span>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>{isAuthenticated ? `Signed in as ${userEmail}` : 'Sign in to sync your profile'}</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>Account & Profile</span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>{isAuthenticated ? `Signed in as ${userEmail}` : 'Sign in to sync your profile'}</span>
                   </div>
                 </div>
-                <ChevronRight size={18} style={{ color: '#94a3b8' }} />
+                <ChevronRight size={18} style={{ color: isDark ? '#94a3b8' : '#94a3b8' }} />
               </div>
 
               {/* Wallet & Balance */}
@@ -3123,7 +3150,7 @@ export const BDigitizingMobileApp = () => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '0.9rem 1.15rem',
-                  borderBottom: '1px solid #f1f5f9',
+                  borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9',
                   cursor: 'pointer'
                 }}
               >
@@ -3132,11 +3159,11 @@ export const BDigitizingMobileApp = () => {
                     <CreditCard size={18} />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>Wallet & Payments</span>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Balance: ${walletBalance.toFixed(2)} • Deposit via Stripe</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>Wallet & Payments</span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Balance: ${walletBalance.toFixed(2)} • Deposit via Stripe</span>
                   </div>
                 </div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#15803d', background: '#dcfce7', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: isDark ? '#34d399' : '#15803d', background: isDark ? 'rgba(16, 185, 129, 0.15)' : '#dcfce7', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
                   + Deposit
                 </span>
               </div>
@@ -3157,22 +3184,22 @@ export const BDigitizingMobileApp = () => {
                     <ClipboardList size={18} />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>Production Orders & Files</span>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Track live jobs, download DST & proof files</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>Production Orders & Files</span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Track live jobs, download DST & proof files</span>
                   </div>
                 </div>
-                <ChevronRight size={18} style={{ color: '#94a3b8' }} />
+                <ChevronRight size={18} style={{ color: isDark ? '#94a3b8' : '#94a3b8' }} />
               </div>
             </div>
           </div>
 
           {/* SECTION 2: STUDIO SUPPORT & POLICIES */}
           <div style={{ padding: '0.75rem 1.25rem 0.35rem' }}>
-            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.65rem' }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.65rem' }}>
               Studio Support & Guarantees
             </div>
 
-            <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+            <div style={{ background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', borderRadius: '16px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', overflow: 'hidden', boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.02)' }}>
               {/* 24/7 Support Desk */}
               <div 
                 onClick={() => setIsSupportModalOpen(true)}
@@ -3181,7 +3208,7 @@ export const BDigitizingMobileApp = () => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '0.9rem 1.15rem',
-                  borderBottom: '1px solid #f1f5f9',
+                  borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9',
                   cursor: 'pointer'
                 }}
               >
@@ -3190,11 +3217,11 @@ export const BDigitizingMobileApp = () => {
                     <HelpCircle size={18} />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>24/7 Support & Help Desk</span>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>WhatsApp direct, live chat & FAQs</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>24/7 Support & Help Desk</span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>WhatsApp direct, live chat & FAQs</span>
                   </div>
                 </div>
-                <ChevronRight size={18} style={{ color: '#94a3b8' }} />
+                <ChevronRight size={18} style={{ color: isDark ? '#94a3b8' : '#94a3b8' }} />
               </div>
 
               {/* Service Rates & Tiers */}
@@ -3205,7 +3232,7 @@ export const BDigitizingMobileApp = () => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '0.9rem 1.15rem',
-                  borderBottom: '1px solid #f1f5f9',
+                  borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9',
                   cursor: 'pointer'
                 }}
               >
@@ -3214,11 +3241,11 @@ export const BDigitizingMobileApp = () => {
                     <Tag size={18} />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>Service Rates & Tiers</span>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Embroidery from $12 • Vector from $10</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>Service Rates & Tiers</span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Embroidery from $12 • Vector from $10</span>
                   </div>
                 </div>
-                <ChevronRight size={18} style={{ color: '#94a3b8' }} />
+                <ChevronRight size={18} style={{ color: isDark ? '#94a3b8' : '#94a3b8' }} />
               </div>
 
               {/* Quality Guarantee & Terms */}
@@ -3229,7 +3256,7 @@ export const BDigitizingMobileApp = () => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '0.9rem 1.15rem',
-                  borderBottom: '1px solid #f1f5f9',
+                  borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9',
                   cursor: 'pointer'
                 }}
               >
@@ -3238,11 +3265,11 @@ export const BDigitizingMobileApp = () => {
                     <ShieldCheck size={18} />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>Quality Guarantee & Terms</span>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Sew-out guarantee, free edits & IP safety</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>Quality Guarantee & Terms</span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Sew-out guarantee, free edits & IP safety</span>
                   </div>
                 </div>
-                <ChevronRight size={18} style={{ color: '#94a3b8' }} />
+                <ChevronRight size={18} style={{ color: isDark ? '#94a3b8' : '#94a3b8' }} />
               </div>
 
               {/* Share Feedback */}
@@ -3261,22 +3288,22 @@ export const BDigitizingMobileApp = () => {
                     <Star size={18} />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>Share Feedback</span>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Rate studio experience & send suggestions</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>Share Feedback</span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Rate studio experience & send suggestions</span>
                   </div>
                 </div>
-                <ChevronRight size={18} style={{ color: '#94a3b8' }} />
+                <ChevronRight size={18} style={{ color: isDark ? '#94a3b8' : '#94a3b8' }} />
               </div>
             </div>
           </div>
 
           {/* SECTION 3: APP PREFERENCES */}
           <div style={{ padding: '0.75rem 1.25rem 0.35rem' }}>
-            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.65rem' }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.65rem' }}>
               App Preferences
             </div>
 
-            <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+            <div style={{ background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', borderRadius: '16px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', overflow: 'hidden', boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.02)' }}>
               {/* Preferences */}
               <div 
                 onClick={() => setIsPreferencesModalOpen(true)}
@@ -3285,7 +3312,7 @@ export const BDigitizingMobileApp = () => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '0.9rem 1.15rem',
-                  borderBottom: '1px solid #f1f5f9',
+                  borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9',
                   cursor: 'pointer'
                 }}
               >
@@ -3294,11 +3321,11 @@ export const BDigitizingMobileApp = () => {
                     <Settings size={18} />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>Display & File Preferences</span>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Themes, audio alerts & default machine formats</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>Display & File Preferences</span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Themes, audio alerts & default machine formats</span>
                   </div>
                 </div>
-                <ChevronRight size={18} style={{ color: '#94a3b8' }} />
+                <ChevronRight size={18} style={{ color: isDark ? '#94a3b8' : '#94a3b8' }} />
               </div>
 
               {/* Switch to Website View */}
@@ -3320,11 +3347,11 @@ export const BDigitizingMobileApp = () => {
                     <Globe size={18} />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>Switch to Website View</span>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Browse full desktop layout</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>Switch to Website View</span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Browse full desktop layout</span>
                   </div>
                 </div>
-                <ChevronRight size={18} style={{ color: '#94a3b8' }} />
+                <ChevronRight size={18} style={{ color: isDark ? '#94a3b8' : '#94a3b8' }} />
               </div>
             </div>
           </div>
@@ -3346,10 +3373,10 @@ export const BDigitizingMobileApp = () => {
                 gap: '0.65rem',
                 cursor: 'pointer',
                 padding: '0.75rem',
-                background: '#ffffff',
+                background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
                 borderRadius: '12px',
-                border: '1px solid #e2e8f0',
-                color: '#0f172a',
+                border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0',
+                color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
                 fontSize: '0.875rem',
                 fontWeight: 700
               }}
@@ -3373,9 +3400,9 @@ export const BDigitizingMobileApp = () => {
                   showToast('Signed out successfully', 'info');
                 }}
                 style={{
-                  background: '#fef2f2',
-                  color: '#dc2626',
-                  border: '1px solid #fecaca',
+                  background: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2',
+                  color: isDark ? '#f87171' : '#dc2626',
+                  border: isDark ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid #fecaca',
                   borderRadius: '12px',
                   padding: '0.65rem 1.75rem',
                   fontSize: '0.85rem',
@@ -3396,7 +3423,7 @@ export const BDigitizingMobileApp = () => {
                   setMobileTab('login');
                 }}
                 style={{
-                  background: '#0f172a',
+                  background: isDark ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : '#0f172a',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '12px',
@@ -3430,14 +3457,14 @@ export const BDigitizingMobileApp = () => {
           right: 0,
           width: '100%',
           height: '66px',
-          background: '#ffffff',
-          borderTop: '1.5px solid #cbd5e1',
+          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+          borderTop: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
           gridTemplateColumns: 'repeat(5, 1fr)',
           alignItems: 'center',
           zIndex: isOrderModalOpen ? -1 : 800,
           display: (isOrderModalOpen || ['inbox', 'login', 'signup', 'auth', 'forgot'].includes(mobileTab)) ? 'none' : 'grid',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          boxShadow: '0 -4px 16px rgba(0,0,0,0.06)'
+          boxShadow: isDark ? '0 -4px 16px rgba(0,0,0,0.35)' : '0 -4px 16px rgba(0,0,0,0.06)'
         }}
       >
         {/* Tab 1: Home */}
@@ -3456,12 +3483,12 @@ export const BDigitizingMobileApp = () => {
             border: 'none',
             cursor: 'pointer',
             padding: '0.25rem 0',
-            color: mobileTab === 'home' ? '#047857' : '#64748b',
+            color: mobileTab === 'home' ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
             gap: '0.18rem'
           }}
         >
           <div style={{
-            background: mobileTab === 'home' ? '#ecfdf5' : 'transparent',
+            background: mobileTab === 'home' ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : 'transparent',
             borderRadius: '12px',
             padding: '0.25rem 0.65rem',
             display: 'flex',
@@ -3491,12 +3518,12 @@ export const BDigitizingMobileApp = () => {
             cursor: 'pointer',
             padding: '0.25rem 0',
             position: 'relative',
-            color: mobileTab === 'inbox' ? '#047857' : '#64748b',
+            color: mobileTab === 'inbox' ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
             gap: '0.18rem'
           }}
         >
           <div style={{
-            background: mobileTab === 'inbox' ? '#ecfdf5' : 'transparent',
+            background: mobileTab === 'inbox' ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : 'transparent',
             borderRadius: '12px',
             padding: '0.25rem 0.65rem',
             display: 'flex',
@@ -3537,12 +3564,12 @@ export const BDigitizingMobileApp = () => {
             border: 'none',
             cursor: 'pointer',
             padding: '0.25rem 0',
-            color: mobileTab === 'categories' ? '#047857' : '#64748b',
+            color: mobileTab === 'categories' ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
             gap: '0.18rem'
           }}
         >
           <div style={{
-            background: mobileTab === 'categories' ? '#ecfdf5' : 'transparent',
+            background: mobileTab === 'categories' ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : 'transparent',
             borderRadius: '12px',
             padding: '0.25rem 0.65rem',
             display: 'flex',
@@ -3572,12 +3599,12 @@ export const BDigitizingMobileApp = () => {
             cursor: 'pointer',
             padding: '0.25rem 0',
             position: 'relative',
-            color: mobileTab === 'orders' ? '#047857' : '#64748b',
+            color: mobileTab === 'orders' ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
             gap: '0.18rem'
           }}
         >
           <div style={{
-            background: mobileTab === 'orders' ? '#ecfdf5' : 'transparent',
+            background: mobileTab === 'orders' ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : 'transparent',
             borderRadius: '12px',
             padding: '0.25rem 0.65rem',
             display: 'flex',
@@ -3626,12 +3653,12 @@ export const BDigitizingMobileApp = () => {
             border: 'none',
             cursor: 'pointer',
             padding: '0.25rem 0',
-            color: mobileTab === 'profile' ? '#047857' : '#64748b',
+            color: mobileTab === 'profile' ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
             gap: '0.18rem'
           }}
         >
           <div style={{
-            background: mobileTab === 'profile' ? '#ecfdf5' : 'transparent',
+            background: mobileTab === 'profile' ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : 'transparent',
             borderRadius: '12px',
             padding: '0.25rem 0.65rem',
             display: 'flex',
@@ -3665,7 +3692,8 @@ export const BDigitizingMobileApp = () => {
         >
           <div
             style={{
-              background: '#ffffff',
+              background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+              border: isDark ? '1px solid var(--color-border, #334155)' : 'none',
               width: '100%',
               maxWidth: '500px',
               borderRadius: '24px 24px 0 0',
@@ -3678,15 +3706,15 @@ export const BDigitizingMobileApp = () => {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                 <Settings size={20} style={{ color: '#059669' }} />
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#0f172a' }}>Studio Preferences</h3>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Studio Preferences</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsPreferencesModalOpen(false)}
-                style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9', color: isDark ? '#ffffff' : '#0f172a', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               >
                 <X size={16} />
               </button>
@@ -3694,7 +3722,7 @@ export const BDigitizingMobileApp = () => {
 
             {/* Color Theme Selector */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.35rem' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
                 Color Theme Preset
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
@@ -3710,9 +3738,9 @@ export const BDigitizingMobileApp = () => {
                       style={{
                         padding: '0.65rem 0.75rem',
                         borderRadius: '10px',
-                        border: isSelected ? '2px solid #059669' : '1px solid #cbd5e1',
-                        background: isSelected ? '#ecfdf5' : '#ffffff',
-                        color: '#0f172a',
+                        border: isSelected ? '2px solid #059669' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1'),
+                        background: isSelected ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
+                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
                         fontWeight: 800,
                         fontSize: '0.78rem',
                         textAlign: 'left',
@@ -3731,18 +3759,18 @@ export const BDigitizingMobileApp = () => {
             </div>
 
             {/* Audio Alerts */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderTop: '1px solid #f1f5f9' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderTop: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9' }}>
               <div>
-                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a', display: 'block' }}>Audio Notifications</span>
-                <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Play chime on live digitizer messages & delivery</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>Audio Notifications</span>
+                <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Play chime on live digitizer messages & delivery</span>
               </div>
               <button
                 type="button"
                 onClick={() => setSoundEnabled(!soundEnabled)}
                 style={{
-                  background: soundEnabled ? '#ecfdf5' : '#f1f5f9',
-                  color: soundEnabled ? '#047857' : '#64748b',
-                  border: soundEnabled ? '1.5px solid #86efac' : '1px solid #cbd5e1',
+                  background: soundEnabled ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : (isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9'),
+                  color: soundEnabled ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
+                  border: soundEnabled ? '1.5px solid #86efac' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1'),
                   borderRadius: '10px',
                   padding: '0.4rem 0.75rem',
                   fontSize: '0.75rem',
@@ -3760,7 +3788,7 @@ export const BDigitizingMobileApp = () => {
 
             {/* Default Embroidery Format */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.35rem' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
                 Default Embroidery Format
               </label>
               <select
@@ -3770,11 +3798,11 @@ export const BDigitizingMobileApp = () => {
                   width: '100%',
                   padding: '0.65rem 0.85rem',
                   borderRadius: '10px',
-                  border: '1.5px solid #cbd5e1',
+                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                   fontSize: '0.85rem',
                   fontWeight: 700,
-                  color: '#0f172a',
-                  background: '#ffffff'
+                  color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                  background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'
                 }}
               >
                 <option value="DST">Tajima (.DST) - Universal Commercial Format</option>
@@ -3788,7 +3816,7 @@ export const BDigitizingMobileApp = () => {
 
             {/* Currency Preference */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.35rem' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
                 Currency Display
               </label>
               <select
@@ -3798,11 +3826,11 @@ export const BDigitizingMobileApp = () => {
                   width: '100%',
                   padding: '0.65rem 0.85rem',
                   borderRadius: '10px',
-                  border: '1.5px solid #cbd5e1',
+                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                   fontSize: '0.85rem',
                   fontWeight: 700,
-                  color: '#0f172a',
-                  background: '#ffffff'
+                  color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                  background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'
                 }}
               >
                 <option value="USD">USD ($) - United States Dollar</option>
@@ -3854,7 +3882,8 @@ export const BDigitizingMobileApp = () => {
         >
           <div
             style={{
-              background: '#ffffff',
+              background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+              border: isDark ? '1px solid var(--color-border, #334155)' : 'none',
               width: '100%',
               maxWidth: '500px',
               borderRadius: '24px 24px 0 0',
@@ -3867,15 +3896,15 @@ export const BDigitizingMobileApp = () => {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                 <User size={20} style={{ color: '#059669' }} />
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#0f172a' }}>Account Profile</h3>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Account Profile</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAccountModalOpen(false)}
-                style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9', color: isDark ? '#ffffff' : '#0f172a', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               >
                 <X size={16} />
               </button>
@@ -3883,7 +3912,7 @@ export const BDigitizingMobileApp = () => {
 
             <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.3rem' }}>
                   Full Name
                 </label>
                 <input
@@ -3895,16 +3924,17 @@ export const BDigitizingMobileApp = () => {
                     width: '100%',
                     padding: '0.65rem 0.85rem',
                     borderRadius: '10px',
-                    border: '1.5px solid #cbd5e1',
+                    border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
+                    background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                     fontSize: '0.85rem',
-                    color: '#0f172a',
+                    color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
                     boxSizing: 'border-box'
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.3rem' }}>
                   Company / Brand Name
                 </label>
                 <input
@@ -3916,16 +3946,17 @@ export const BDigitizingMobileApp = () => {
                     width: '100%',
                     padding: '0.65rem 0.85rem',
                     borderRadius: '10px',
-                    border: '1.5px solid #cbd5e1',
+                    border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
+                    background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                     fontSize: '0.85rem',
-                    color: '#0f172a',
+                    color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
                     boxSizing: 'border-box'
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.3rem' }}>
                   Phone / WhatsApp Number
                 </label>
                 <input
@@ -3937,16 +3968,17 @@ export const BDigitizingMobileApp = () => {
                     width: '100%',
                     padding: '0.65rem 0.85rem',
                     borderRadius: '10px',
-                    border: '1.5px solid #cbd5e1',
+                    border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
+                    background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                     fontSize: '0.85rem',
-                    color: '#0f172a',
+                    color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
                     boxSizing: 'border-box'
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.3rem' }}>
                   Email Address
                 </label>
                 <input
@@ -3957,20 +3989,20 @@ export const BDigitizingMobileApp = () => {
                     width: '100%',
                     padding: '0.65rem 0.85rem',
                     borderRadius: '10px',
-                    border: '1.5px solid #e2e8f0',
+                    border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
                     fontSize: '0.85rem',
-                    color: '#64748b',
-                    background: '#f8fafc',
+                    color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b',
+                    background: isDark ? 'rgba(30, 41, 59, 0.5)' : '#f8fafc',
                     boxSizing: 'border-box'
                   }}
                 />
               </div>
 
               {/* Wallet Summary */}
-              <div style={{ background: '#f0fdf4', border: '1px solid #a7f3d0', borderRadius: '12px', padding: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ background: isDark ? 'rgba(16, 185, 129, 0.12)' : '#f0fdf4', border: isDark ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid #a7f3d0', borderRadius: '12px', padding: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <span style={{ fontSize: '0.72rem', color: '#047857', fontWeight: 800 }}>Prepaid Studio Balance</span>
-                  <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0f172a' }}>${walletBalance.toFixed(2)}</div>
+                  <span style={{ fontSize: '0.72rem', color: isDark ? '#34d399' : '#047857', fontWeight: 800 }}>Prepaid Studio Balance</span>
+                  <div style={{ fontSize: '1.15rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>${walletBalance.toFixed(2)}</div>
                 </div>
                 <button
                   type="button"
@@ -4035,7 +4067,7 @@ export const BDigitizingMobileApp = () => {
         >
           <div
             style={{
-              background: '#ffffff',
+              background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
               width: '100%',
               maxWidth: '500px',
               borderRadius: '24px 24px 0 0',
@@ -4044,19 +4076,20 @@ export const BDigitizingMobileApp = () => {
               flexDirection: 'column',
               gap: '1rem',
               maxHeight: '85vh',
-              overflowY: 'auto'
+              overflowY: 'auto',
+              borderTop: isDark ? '1px solid var(--color-border, #334155)' : 'none'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                 <HelpCircle size={20} style={{ color: '#059669' }} />
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#0f172a' }}>24/7 Support Desk</h3>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>24/7 Support Desk</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsSupportModalOpen(false)}
-                style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9', color: isDark ? '#ffffff' : '#0f172a', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               >
                 <X size={16} />
               </button>
@@ -4072,8 +4105,8 @@ export const BDigitizingMobileApp = () => {
               style={{
                 padding: '0.95rem 1rem',
                 borderRadius: '14px',
-                border: '1.5px solid #86efac',
-                background: '#f0fdf4',
+                border: isDark ? '1.5px solid rgba(16, 185, 129, 0.4)' : '1.5px solid #86efac',
+                background: isDark ? 'rgba(16, 185, 129, 0.1)' : '#f0fdf4',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -4086,8 +4119,8 @@ export const BDigitizingMobileApp = () => {
                   <MessageSquare size={20} />
                 </div>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: '#0f172a' }}>Live Support Chat</h4>
-                  <span style={{ fontSize: '0.72rem', color: '#047857', fontWeight: 700 }}>● Online • Response in &lt; 5 mins</span>
+                  <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Live Support Chat</h4>
+                  <span style={{ fontSize: '0.72rem', color: isDark ? '#34d399' : '#047857', fontWeight: 700 }}>● Online • Response in &lt; 5 mins</span>
                 </div>
               </div>
               <ChevronRight size={18} style={{ color: '#059669' }} />
@@ -4102,8 +4135,8 @@ export const BDigitizingMobileApp = () => {
                 style={{
                   padding: '0.95rem 1rem',
                   borderRadius: '14px',
-                  border: '1.5px solid #cbd5e1',
-                  background: '#ffffff',
+                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
+                  background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -4116,11 +4149,11 @@ export const BDigitizingMobileApp = () => {
                     <MessageCircle size={20} />
                   </div>
                   <div>
-                    <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: '#0f172a' }}>WhatsApp Master Desk</h4>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Chat with master digitizers directly</span>
+                    <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>WhatsApp Master Desk</h4>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Chat with master digitizers directly</span>
                   </div>
                 </div>
-                <ExternalLink size={18} style={{ color: '#64748b' }} />
+                <ExternalLink size={18} style={{ color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }} />
               </a>
             ) : mobilePhone ? (
               <a
@@ -4128,8 +4161,8 @@ export const BDigitizingMobileApp = () => {
                 style={{
                   padding: '0.95rem 1rem',
                   borderRadius: '14px',
-                  border: '1.5px solid #cbd5e1',
-                  background: '#ffffff',
+                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
+                  background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -4142,17 +4175,17 @@ export const BDigitizingMobileApp = () => {
                     <Phone size={20} />
                   </div>
                   <div>
-                    <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: '#0f172a' }}>Studio Direct Line</h4>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>{mobilePhone}</span>
+                    <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Studio Direct Line</h4>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>{mobilePhone}</span>
                   </div>
                 </div>
-                <ExternalLink size={18} style={{ color: '#64748b' }} />
+                <ExternalLink size={18} style={{ color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }} />
               </a>
             ) : null}
 
             {/* FAQ Accordion Summary */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', textTransform: 'uppercase' }}>
                 Common Questions
               </span>
               {[
@@ -4160,9 +4193,9 @@ export const BDigitizingMobileApp = () => {
                 { q: 'What machine formats are provided?', a: 'Tajima (.DST), Wilcom (.EMB), Brother (.PES), Melco (.EXP), Janome (.JEF) & PDF worksheet.' },
                 { q: 'Are revisions really free?', a: 'Yes, unlimited free revisions are included on all orders until your machine stitches flawlessly.' }
               ].map((faq, idx) => (
-                <div key={idx} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.65rem 0.85rem' }}>
-                  <strong style={{ fontSize: '0.8rem', color: '#0f172a', display: 'block', marginBottom: '0.15rem' }}>{faq.q}</strong>
-                  <p style={{ margin: 0, fontSize: '0.74rem', color: '#64748b', lineHeight: 1.35 }}>{faq.a}</p>
+                <div key={idx} style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', borderRadius: '10px', padding: '0.65rem 0.85rem' }}>
+                  <strong style={{ fontSize: '0.8rem', color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block', marginBottom: '0.15rem' }}>{faq.q}</strong>
+                  <p style={{ margin: 0, fontSize: '0.74rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', lineHeight: 1.35 }}>{faq.a}</p>
                 </div>
               ))}
             </div>
@@ -4191,7 +4224,7 @@ export const BDigitizingMobileApp = () => {
         >
           <div
             style={{
-              background: '#ffffff',
+              background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
               width: '100%',
               maxWidth: '500px',
               borderRadius: '24px 24px 0 0',
@@ -4200,19 +4233,20 @@ export const BDigitizingMobileApp = () => {
               flexDirection: 'column',
               gap: '1rem',
               maxHeight: '85vh',
-              overflowY: 'auto'
+              overflowY: 'auto',
+              borderTop: isDark ? '1px solid var(--color-border, #334155)' : 'none'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                 <Star size={20} style={{ color: '#f59e0b' }} />
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#0f172a' }}>Rate Your Experience</h3>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Rate Your Experience</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsFeedbackModalOpen(false)}
-                style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9', color: isDark ? '#ffffff' : '#0f172a', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               >
                 <X size={16} />
               </button>
@@ -4237,19 +4271,19 @@ export const BDigitizingMobileApp = () => {
                       <Star
                         size={32}
                         fill={star <= feedbackRating ? '#f59e0b' : 'none'}
-                        style={{ color: star <= feedbackRating ? '#f59e0b' : '#cbd5e1' }}
+                        style={{ color: star <= feedbackRating ? '#f59e0b' : (isDark ? '#475569' : '#cbd5e1') }}
                       />
                     </button>
                   ))}
                 </div>
-                <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', display: 'block', marginTop: '0.35rem' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block', marginTop: '0.35rem' }}>
                   {feedbackRating === 5 ? '⭐⭐⭐⭐⭐ Outstanding & Flawless' : feedbackRating === 4 ? '⭐⭐⭐⭐ Great Experience' : feedbackRating === 3 ? '⭐⭐⭐ Good Quality' : 'Needs Improvement'}
                 </span>
               </div>
 
               {/* Feedback Category */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.3rem' }}>
                   Topic Category
                 </label>
                 <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
@@ -4261,9 +4295,9 @@ export const BDigitizingMobileApp = () => {
                       style={{
                         padding: '0.35rem 0.65rem',
                         borderRadius: '8px',
-                        border: feedbackCategory === cat ? '1.5px solid #059669' : '1px solid #cbd5e1',
-                        background: feedbackCategory === cat ? '#ecfdf5' : '#ffffff',
-                        color: feedbackCategory === cat ? '#047857' : '#475569',
+                        border: feedbackCategory === cat ? (isDark ? '1.5px solid #10b981' : '1.5px solid #059669') : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1'),
+                        background: feedbackCategory === cat ? (isDark ? 'rgba(16, 185, 129, 0.2)' : '#ecfdf5') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
+                        color: feedbackCategory === cat ? (isDark ? '#34d399' : '#047857') : (isDark ? 'var(--color-text-secondary, #94a3b8)' : '#475569'),
                         fontSize: '0.75rem',
                         fontWeight: 800,
                         cursor: 'pointer'
@@ -4277,7 +4311,7 @@ export const BDigitizingMobileApp = () => {
 
               {/* Commentary */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.3rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.3rem' }}>
                   Your Comments & Suggestions
                 </label>
                 <textarea
@@ -4289,9 +4323,10 @@ export const BDigitizingMobileApp = () => {
                     width: '100%',
                     padding: '0.65rem 0.85rem',
                     borderRadius: '10px',
-                    border: '1.5px solid #cbd5e1',
+                    border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
+                    background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                     fontSize: '0.85rem',
-                    color: '#0f172a',
+                    color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
                     boxSizing: 'border-box',
                     resize: 'none'
                   }}
@@ -4340,7 +4375,7 @@ export const BDigitizingMobileApp = () => {
         >
           <div
             style={{
-              background: '#ffffff',
+              background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
               width: '100%',
               maxWidth: '500px',
               borderRadius: '24px 24px 0 0',
@@ -4349,37 +4384,38 @@ export const BDigitizingMobileApp = () => {
               flexDirection: 'column',
               gap: '1rem',
               maxHeight: '85vh',
-              overflowY: 'auto'
+              overflowY: 'auto',
+              borderTop: isDark ? '1px solid var(--color-border, #334155)' : 'none'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                 <ShieldCheck size={20} style={{ color: '#059669' }} />
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#0f172a' }}>Community & Legal</h3>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Community & Legal</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsLegalModalOpen(false)}
-                style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9', color: isDark ? '#ffffff' : '#0f172a', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               >
                 <X size={16} />
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.82rem', color: '#334155', lineHeight: 1.5 }}>
-              <div style={{ background: '#f8fafc', padding: '0.85rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <strong style={{ color: '#0f172a', display: 'block', marginBottom: '0.2rem' }}>100% Quality & Machine Sew-Out Guarantee</strong>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.82rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#334155', lineHeight: 1.5 }}>
+              <div style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', padding: '0.85rem', borderRadius: '12px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0' }}>
+                <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block', marginBottom: '0.2rem' }}>100% Quality & Machine Sew-Out Guarantee</strong>
                 Every digitized embroidery design is tested on physical commercial machinery. We guarantee zero unnecessary thread breaks and proper underlay pull-compensation.
               </div>
 
-              <div style={{ background: '#f8fafc', padding: '0.85rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <strong style={{ color: '#0f172a', display: 'block', marginBottom: '0.2rem' }}>Intellectual Property & Non-Disclosure</strong>
+              <div style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', padding: '0.85rem', borderRadius: '12px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0' }}>
+                <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block', marginBottom: '0.2rem' }}>Intellectual Property & Non-Disclosure</strong>
                 You retain 100% full commercial ownership of all uploaded artwork, source files, and final stitch outputs. We never resell, license, or share your proprietary designs.
               </div>
 
-              <div style={{ background: '#f8fafc', padding: '0.85rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <strong style={{ color: '#0f172a', display: 'block', marginBottom: '0.2rem' }}>Unlimited Free Revisions Policy</strong>
+              <div style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', padding: '0.85rem', borderRadius: '12px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0' }}>
+                <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block', marginBottom: '0.2rem' }}>Unlimited Free Revisions Policy</strong>
                 Modifications for density, size adjustment, thread sequence, machine format conversions, and minor artwork changes are performed 100% free of charge.
               </div>
             </div>
@@ -4388,9 +4424,9 @@ export const BDigitizingMobileApp = () => {
               type="button"
               onClick={() => setIsLegalModalOpen(false)}
               style={{
-                background: '#0f172a',
+                background: isDark ? 'var(--color-subtle, #1e293b)' : '#0f172a',
                 color: '#ffffff',
-                border: 'none',
+                border: isDark ? '1px solid var(--color-border, #334155)' : 'none',
                 borderRadius: '12px',
                 padding: '0.75rem',
                 fontWeight: 800,
@@ -4424,7 +4460,7 @@ export const BDigitizingMobileApp = () => {
         >
           <div
             style={{
-              background: '#ffffff',
+              background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
               width: '100%',
               maxWidth: '500px',
               borderRadius: '20px 20px 0 0',
@@ -4432,23 +4468,24 @@ export const BDigitizingMobileApp = () => {
               display: 'flex',
               flexDirection: 'column',
               gap: '0.5rem',
-              animation: 'slideUp 0.2s ease-out'
+              animation: 'slideUp 0.2s ease-out',
+              borderTop: isDark ? '1px solid var(--color-border, #334155)' : 'none'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem', marginBottom: '0.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', paddingBottom: '0.75rem', marginBottom: '0.25rem' }}>
               <div>
                 <span style={{ fontSize: '0.7rem', fontWeight: 900, color: '#059669' }}>
                   {formatOrderId(isOrderActionMenuOpen.id)}
                 </span>
-                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>
+                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                   {isOrderActionMenuOpen.title}
                 </h4>
               </div>
               <button
                 type="button"
                 onClick={() => setIsOrderActionMenuOpen(null)}
-                style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9', color: isDark ? '#ffffff' : '#0f172a', border: 'none', borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               >
                 <X size={16} />
               </button>
@@ -4463,11 +4500,11 @@ export const BDigitizingMobileApp = () => {
               style={{
                 padding: '0.85rem',
                 borderRadius: '10px',
-                border: '1px solid #e2e8f0',
-                background: '#f8fafc',
+                border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0',
+                background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
                 fontSize: '0.88rem',
                 fontWeight: 800,
-                color: '#0f172a',
+                color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.65rem',
@@ -4487,11 +4524,11 @@ export const BDigitizingMobileApp = () => {
               style={{
                 padding: '0.85rem',
                 borderRadius: '10px',
-                border: '1px solid #e2e8f0',
-                background: '#f8fafc',
+                border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0',
+                background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
                 fontSize: '0.88rem',
                 fontWeight: 800,
-                color: '#0f172a',
+                color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.65rem',
@@ -4520,7 +4557,7 @@ export const BDigitizingMobileApp = () => {
         >
           <div
             style={{
-              background: '#ffffff',
+              background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
               width: '85%',
               maxWidth: '380px',
               height: '100%',
@@ -4528,19 +4565,20 @@ export const BDigitizingMobileApp = () => {
               display: 'flex',
               flexDirection: 'column',
               gap: '1rem',
-              overflowY: 'auto'
+              overflowY: 'auto',
+              borderLeft: isDark ? '1px solid var(--color-border, #334155)' : 'none'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                 <Bell size={18} style={{ color: '#059669' }} />
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#0f172a' }}>Notifications</h3>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Notifications</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsNotifDrawerOpen(false)}
-                style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9', color: isDark ? '#ffffff' : '#0f172a', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               >
                 <X size={16} />
               </button>
@@ -4548,7 +4586,7 @@ export const BDigitizingMobileApp = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
               {combinedNotifications.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#94a3b8' }}>
+                <div style={{ textAlign: 'center', padding: '2rem 1rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#94a3b8' }}>
                   <Bell size={32} style={{ margin: '0 auto 0.5rem', opacity: 0.4 }} />
                   <p style={{ margin: 0, fontSize: '0.85rem' }}>No new notifications</p>
                 </div>
@@ -4579,16 +4617,16 @@ export const BDigitizingMobileApp = () => {
                     style={{
                       padding: '0.85rem',
                       borderRadius: '12px',
-                      background: (n.is_read || n.read) ? '#f8fafc' : '#fff7ed',
-                      border: (n.is_read || n.read) ? '1px solid #e2e8f0' : '1.5px solid #fdba74',
+                      background: (n.is_read || n.read) ? (isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc') : (isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed'),
+                      border: (n.is_read || n.read) ? (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0') : (isDark ? '1.5px solid rgba(251, 146, 60, 0.5)' : '1.5px solid #fdba74'),
                       cursor: 'pointer',
                       boxShadow: (n.is_read || n.read) ? 'none' : '0 2px 8px rgba(234, 88, 12, 0.12)'
                     }}
                   >
-                    <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>
+                    <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                       {n.title || 'Studio Notification'}
                     </h5>
-                    <p style={{ margin: '0.2rem 0 0', fontSize: '0.78rem', color: '#475569' }}>
+                    <p style={{ margin: '0.2rem 0 0', fontSize: '0.78rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#475569' }}>
                       {n.message || n.body}
                     </p>
                   </div>

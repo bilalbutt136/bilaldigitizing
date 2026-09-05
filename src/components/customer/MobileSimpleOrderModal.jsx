@@ -254,8 +254,11 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
     setIsCheckoutModalOpen,
     setCheckoutSession,
     dynamicPricingTiers = [],
-    refreshOrders
+    refreshOrders,
+    theme
   } = useAppState();
+
+  const isDark = theme === 'dark';
 
   // Wizard Step (1: Service, 2: Package & Quantity, 3: Upload Artwork & Notes, 4: Specs, 5: Review, 6: Confirmation)
   const [step, setStep] = useState(1);
@@ -721,9 +724,9 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
       onClick={onClose}
     >
       <div 
-        className="theme-light-enforced"
+        className="mobile-order-dialog modal-content"
         style={{
-          background: '#ffffff',
+          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
           width: '100%',
           maxWidth: '560px',
           height: '92dvh',
@@ -743,11 +746,11 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         {/* TOP MODAL HEADER */}
         <div style={{
           padding: '1rem 1.25rem',
-          borderBottom: '1.5px solid #e2e8f0',
+          borderBottom: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: '#ffffff'
+          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
         }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
@@ -762,7 +765,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               }}>
                 STEP {step} OF 5
               </span>
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#0f172a' }}>
+              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                 {step === 1 && 'Choose Studio Service'}
                 {step === 2 && 'Select Package & Quantity'}
                 {step === 3 && 'Upload Artwork & Details'}
@@ -771,7 +774,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 {step === 6 && 'Order Successfully Placed!'}
               </h3>
             </div>
-            <p style={{ margin: '0.15rem 0 0', fontSize: '0.74rem', color: '#475569' }}>
+            <p style={{ margin: '0.15rem 0 0', fontSize: '0.74rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569' }}>
               {step === 1 && 'Select from our 3 primary professional digitizing services.'}
               {step === 2 && 'Select transparent studio packages & customize quantity.'}
               {step === 3 && 'Attach multiple reference files, artwork & special instructions.'}
@@ -785,7 +788,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
             type="button"
             onClick={onClose}
             style={{
-              background: '#f1f5f9',
+              background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9',
               border: 'none',
               borderRadius: '50%',
               width: '32px',
@@ -793,7 +796,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#0f172a',
+              color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
               cursor: 'pointer'
             }}
           >
@@ -802,7 +805,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         </div>
 
         {/* STEP PROGRESS BAR */}
-        <div style={{ width: '100%', height: '4px', background: '#f1f5f9' }}>
+        <div style={{ width: '100%', height: '4px', background: isDark ? 'var(--color-border, #334155)' : '#f1f5f9' }}>
           <div style={{
             height: '100%',
             width: `${Math.min(100, (step / 5) * 100)}%`,
@@ -821,7 +824,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
           display: 'flex', 
           flexDirection: 'column', 
           gap: '1rem', 
-          background: '#ffffff' 
+          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff' 
         }}>
           
           {/* =========================================================================
@@ -830,13 +833,13 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ textAlign: 'center', marginBottom: '0.2rem' }}>
-                <span style={{ fontSize: '0.72rem', fontWeight: 900, color: '#047857', background: '#ecfdf5', padding: '0.2rem 0.65rem', borderRadius: '999px', border: '1px solid #a7f3d0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857', background: isDark ? 'rgba(5, 150, 105, 0.15)' : '#ecfdf5', padding: '0.2rem 0.65rem', borderRadius: '999px', border: isDark ? '1px solid rgba(5, 150, 105, 0.3)' : '1px solid #a7f3d0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Step 1: Choose Service
                 </span>
-                <h3 style={{ margin: '0.45rem 0 0.15rem', fontSize: '1.25rem', fontWeight: 900, color: '#0f172a' }}>
+                <h3 style={{ margin: '0.45rem 0 0.15rem', fontSize: '1.25rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                   What would you like created?
                 </h3>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: '#475569' }}>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569' }}>
                   Select a professional service below, then tap Continue to configure
                 </p>
               </div>
@@ -851,8 +854,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                     setStep(2);
                   }}
                   style={{
-                    border: selectedService === 'embroidery' ? '2.5px solid #059669' : '1.5px solid #cbd5e1',
-                    background: selectedService === 'embroidery' ? '#f0fdf4' : '#ffffff',
+                    border: selectedService === 'embroidery' ? '2.5px solid #059669' : (isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1'),
+                    background: selectedService === 'embroidery' ? (isDark ? 'rgba(5, 150, 105, 0.15)' : '#f0fdf4') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
                     borderRadius: '18px',
                     padding: '1.15rem',
                     cursor: 'pointer',
@@ -881,26 +884,26 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'embroidery' ? '#064e3b' : '#0f172a', letterSpacing: '-0.01em' }}>
+                      <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'embroidery' ? (isDark ? '#34d399' : '#064e3b') : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'), letterSpacing: '-0.01em' }}>
                         Embroidery Digitizing
                       </h4>
-                      <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#047857', background: '#ecfdf5', padding: '0.15rem 0.5rem', borderRadius: '6px', border: '1px solid #86efac' }}>
+                      <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857', background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(5, 150, 105, 0.4)' : '1px solid #86efac' }}>
                         From $10.00
                       </span>
                     </div>
 
-                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: '#475569', lineHeight: 1.35, fontWeight: 500 }}>
+                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', lineHeight: 1.35, fontWeight: 500 }}>
                       Commercial stitch files for Left Chest, Caps, 3D Puff Foam & Jacket Backs (.DST, .PES, .EMB)
                     </p>
 
                     <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#047857', background: '#ecfdf5', padding: '0.12rem 0.45rem', borderRadius: '4px', border: '1px solid #86efac' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857', background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', padding: '0.12rem 0.45rem', borderRadius: '4px', border: isDark ? '1px solid rgba(5, 150, 105, 0.4)' : '1px solid #86efac' }}>
                         ⚡ 4–12H Delivery
                       </span>
-                      <span style={{ fontSize: '0.68rem', color: '#065f46', fontWeight: 700 }}>
+                      <span style={{ fontSize: '0.68rem', color: isDark ? '#a7f3d0' : '#065f46', fontWeight: 700 }}>
                         Machine Tested
                       </span>
-                      <span style={{ fontSize: '0.78rem', color: '#047857', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+                      <span style={{ fontSize: '0.78rem', color: isDark ? '#34d399' : '#047857', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
                         {selectedService === 'embroidery' ? '✓ Selected' : 'Select'} <ArrowRight size={14} />
                       </span>
                     </div>
@@ -914,8 +917,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                     setStep(2);
                   }}
                   style={{
-                    border: selectedService === 'vector' ? '2.5px solid #ea580c' : '1.5px solid #cbd5e1',
-                    background: selectedService === 'vector' ? '#fff7ed' : '#ffffff',
+                    border: selectedService === 'vector' ? '2.5px solid #ea580c' : (isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1'),
+                    background: selectedService === 'vector' ? (isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
                     borderRadius: '18px',
                     padding: '1.15rem',
                     cursor: 'pointer',
@@ -944,26 +947,26 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'vector' ? '#7c2d12' : '#0f172a', letterSpacing: '-0.01em' }}>
+                      <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'vector' ? (isDark ? '#fb923c' : '#7c2d12') : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'), letterSpacing: '-0.01em' }}>
                         Vector Art Tracing
                       </h4>
-                      <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#ea580c', background: '#fff7ed', padding: '0.15rem 0.5rem', borderRadius: '6px', border: '1px solid #fdba74' }}>
+                      <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? '#fb923c' : '#ea580c', background: isDark ? 'rgba(234, 88, 12, 0.2)' : '#fff7ed', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(234, 88, 12, 0.4)' : '1px solid #fdba74' }}>
                         From $15.00
                       </span>
                     </div>
 
-                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: '#475569', lineHeight: 1.35, fontWeight: 500 }}>
+                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', lineHeight: 1.35, fontWeight: 500 }}>
                       Logo Redraw, Screen Print Color Separation & Raster-to-Vector (.AI, .EPS, .SVG, .PDF)
                     </p>
 
                     <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#c2410c', background: '#fff7ed', padding: '0.12rem 0.45rem', borderRadius: '4px', border: '1px solid #fdba74' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 900, color: isDark ? '#fb923c' : '#c2410c', background: isDark ? 'rgba(234, 88, 12, 0.2)' : '#fff7ed', padding: '0.12rem 0.45rem', borderRadius: '4px', border: isDark ? '1px solid rgba(234, 88, 12, 0.4)' : '1px solid #fdba74' }}>
                         ⚡ 6–12H Delivery
                       </span>
-                      <span style={{ fontSize: '0.68rem', color: '#9a3412', fontWeight: 700 }}>
+                      <span style={{ fontSize: '0.68rem', color: isDark ? '#fed7aa' : '#9a3412', fontWeight: 700 }}>
                         Pantone PMS Match
                       </span>
-                      <span style={{ fontSize: '0.78rem', color: '#ea580c', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+                      <span style={{ fontSize: '0.78rem', color: isDark ? '#fb923c' : '#ea580c', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
                         {selectedService === 'vector' ? '✓ Selected' : 'Select'} <ArrowRight size={14} />
                       </span>
                     </div>
@@ -977,8 +980,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                     setStep(2);
                   }}
                   style={{
-                    border: selectedService === 'patch' ? '2.5px solid #0284c7' : '1.5px solid #cbd5e1',
-                    background: selectedService === 'patch' ? '#f0f9ff' : '#ffffff',
+                    border: selectedService === 'patch' ? '2.5px solid #0284c7' : (isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1'),
+                    background: selectedService === 'patch' ? (isDark ? 'rgba(2, 132, 199, 0.15)' : '#f0f9ff') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
                     borderRadius: '18px',
                     padding: '1.15rem',
                     cursor: 'pointer',
@@ -1007,26 +1010,26 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'patch' ? '#0c4a6e' : '#0f172a', letterSpacing: '-0.01em' }}>
+                      <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'patch' ? (isDark ? '#38bdf8' : '#0c4a6e') : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'), letterSpacing: '-0.01em' }}>
                         Custom Patches
                       </h4>
-                      <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#0284c7', background: '#f0f9ff', padding: '0.15rem 0.5rem', borderRadius: '6px', border: '1px solid #7dd3fc' }}>
+                      <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? '#38bdf8' : '#0284c7', background: isDark ? 'rgba(2, 132, 199, 0.2)' : '#f0f9ff', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(2, 132, 199, 0.4)' : '1px solid #7dd3fc' }}>
                         From $1.50 / pc
                       </span>
                     </div>
 
-                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: '#475569', lineHeight: 1.35, fontWeight: 500 }}>
+                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', lineHeight: 1.35, fontWeight: 500 }}>
                       Embroidered, 3D Molded PVC Rubber, Woven & Leather Patches with physical shipment
                     </p>
 
                     <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#0369a1', background: '#f0f9ff', padding: '0.12rem 0.45rem', borderRadius: '4px', border: '1px solid #7dd3fc' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 900, color: isDark ? '#38bdf8' : '#0369a1', background: isDark ? 'rgba(2, 132, 199, 0.2)' : '#f0f9ff', padding: '0.12rem 0.45rem', borderRadius: '4px', border: isDark ? '1px solid rgba(2, 132, 199, 0.4)' : '1px solid #7dd3fc' }}>
                         📦 3–7 Days Delivery
                       </span>
-                      <span style={{ fontSize: '0.68rem', color: '#075985', fontWeight: 700 }}>
+                      <span style={{ fontSize: '0.68rem', color: isDark ? '#bae6fd' : '#075985', fontWeight: 700 }}>
                         50 Pcs Min Order
                       </span>
-                      <span style={{ fontSize: '0.78rem', color: '#0284c7', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+                      <span style={{ fontSize: '0.78rem', color: isDark ? '#38bdf8' : '#0284c7', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
                         {selectedService === 'patch' ? '✓ Selected' : 'Select'} <ArrowRight size={14} />
                       </span>
                     </div>
@@ -1044,7 +1047,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
               
               {/* Category Switcher Tabs */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', background: '#f8fafc', padding: '0.35rem', borderRadius: '12px', border: '1.5px solid #cbd5e1' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', padding: '0.35rem', borderRadius: '12px', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1' }}>
                 {SERVICE_TABS.map(tab => {
                   const isSelected = selectedService === tab.id;
                   return (
@@ -1056,8 +1059,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         padding: '0.6rem 0.35rem',
                         borderRadius: '9px',
                         border: isSelected ? '1.5px solid #059669' : '1px solid transparent',
-                        background: isSelected ? '#ffffff' : 'transparent',
-                        color: isSelected ? '#047857' : '#475569',
+                        background: isSelected ? (isDark ? 'var(--color-surface, #111827)' : '#ffffff') : 'transparent',
+                        color: isSelected ? (isDark ? '#34d399' : '#047857') : (isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569'),
                         fontWeight: isSelected ? 900 : 700,
                         fontSize: '0.8rem',
                         display: 'flex',
@@ -1077,8 +1080,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
               {/* QUANTITY SELECTOR WIDGET */}
               <div style={{
-                background: '#f8fafc',
-                border: '1.5px solid #cbd5e1',
+                background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
+                border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                 borderRadius: '16px',
                 padding: '0.95rem 1rem',
                 display: 'flex',
@@ -1087,16 +1090,16 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#0f172a' }}>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                       {selectedService === 'patch' ? 'Patch Order Quantity (Pcs)' : 'Design Order Quantity'}
                     </span>
-                    <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>
+                    <span style={{ fontSize: '0.7rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', display: 'block' }}>
                       {selectedService === 'patch' ? 'Minimum 50 pcs • Factory wholesale pricing' : 'Add multiple designs to get volume discounts'}
                     </span>
                   </div>
 
                   {/* Quantity Stepper */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '10px', padding: '0.2rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1', borderRadius: '10px', padding: '0.2rem' }}>
                     <button
                       type="button"
                       disabled={selectedService === 'patch' && quantity <= 50}
@@ -1106,8 +1109,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         height: '32px',
                         borderRadius: '8px',
                         border: 'none',
-                        background: '#f1f5f9',
-                        color: (selectedService === 'patch' && quantity <= 50) ? '#94a3b8' : '#0f172a',
+                        background: isDark ? 'var(--color-border, #334155)' : '#f1f5f9',
+                        color: (selectedService === 'patch' && quantity <= 50) ? '#94a3b8' : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'),
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1128,7 +1131,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         textAlign: 'center',
                         fontWeight: 900,
                         fontSize: '0.95rem',
-                        color: (selectedService === 'patch' && quantity < 50) ? '#dc2626' : '#0f172a',
+                        color: (selectedService === 'patch' && quantity < 50) ? '#dc2626' : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'),
                         border: 'none',
                         background: 'transparent',
                         outline: 'none'
@@ -1143,8 +1146,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         height: '32px',
                         borderRadius: '8px',
                         border: 'none',
-                        background: '#ecfdf5',
-                        color: '#047857',
+                        background: isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5',
+                        color: isDark ? '#34d399' : '#047857',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1188,9 +1191,9 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                       style={{
                         padding: '0.25rem 0.65rem',
                         borderRadius: '6px',
-                        border: quantity === preset ? '1.5px solid #059669' : '1px solid #cbd5e1',
-                        background: quantity === preset ? '#ecfdf5' : '#ffffff',
-                        color: quantity === preset ? '#047857' : '#475569',
+                        border: quantity === preset ? '1.5px solid #059669' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1'),
+                        background: quantity === preset ? (isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5') : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
+                        color: quantity === preset ? (isDark ? '#34d399' : '#047857') : (isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569'),
                         fontWeight: 800,
                         fontSize: '0.75rem',
                         cursor: 'pointer',
@@ -1204,9 +1207,9 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
                 {/* Real-time Dynamic Price Breakdown Banner */}
                 <div style={{
-                  background: '#ffffff',
+                  background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
                   borderRadius: '10px',
-                  border: '1px solid #e2e8f0',
+                  border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0',
                   padding: '0.55rem 0.75rem',
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -1214,15 +1217,15 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                   fontSize: '0.78rem'
                 }}>
                   <div>
-                    <span style={{ color: '#64748b' }}>Rate: </span>
-                    <strong style={{ color: '#0f172a' }}>${unitPrice.toFixed(2)}</strong> × <strong style={{ color: '#0f172a' }}>{quantity} {selectedService === 'patch' ? 'pcs' : 'qty'}</strong>
+                    <span style={{ color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>Rate: </span>
+                    <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>${unitPrice.toFixed(2)}</strong> × <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>{quantity} {selectedService === 'patch' ? 'pcs' : 'qty'}</strong>
                     {volumeDiscountPercent > 0 && (
-                      <span style={{ marginLeft: '0.4rem', color: '#059669', fontWeight: 900, background: '#ecfdf5', padding: '0.05rem 0.35rem', borderRadius: '4px' }}>
+                      <span style={{ marginLeft: '0.4rem', color: isDark ? '#34d399' : '#059669', fontWeight: 900, background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', padding: '0.05rem 0.35rem', borderRadius: '4px' }}>
                         -{volumeDiscountPercent}% Vol Discount
                       </span>
                     )}
                   </div>
-                  <div style={{ fontSize: '1rem', fontWeight: 900, color: '#047857' }}>
+                  <div style={{ fontSize: '1rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
                     Total: ${totalPrice.toFixed(2)}
                   </div>
                 </div>
@@ -1230,7 +1233,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
               {/* Package Tier Cards List */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Choose Package Tier ({currentPackages.length})
                 </span>
 
@@ -1241,8 +1244,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                       key={pkg.id || idx}
                       onClick={() => handleSelectPackage(pkg)}
                       style={{
-                        border: isSelected ? '2px solid #059669' : '1.5px solid #cbd5e1',
-                        background: isSelected ? '#f0fdf4' : '#ffffff',
+                        border: isSelected ? '2px solid #059669' : (isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1'),
+                        background: isSelected ? (isDark ? 'rgba(5, 150, 105, 0.15)' : '#f0fdf4') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
                         borderRadius: '16px',
                         padding: '1rem',
                         cursor: 'pointer',
@@ -1257,11 +1260,11 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                             width: '20px',
                             height: '20px',
                             borderRadius: '50%',
-                            border: isSelected ? '5px solid #059669' : '2px solid #cbd5e1',
-                            background: '#ffffff',
+                            border: isSelected ? '5px solid #059669' : (isDark ? '2px solid var(--color-border, #475569)' : '2px solid #cbd5e1'),
+                            background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
                             flexShrink: 0
                           }} />
-                          <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 900, color: '#0f172a' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                             {pkg.title}
                           </h4>
                         </div>
@@ -1269,28 +1272,28 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         <div style={{ textAlign: 'right' }}>
                           <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', justifyContent: 'flex-end' }}>
                             {pkg.original_price && (
-                              <span style={{ fontSize: '0.78rem', color: '#94a3b8', textDecoration: 'line-through' }}>
+                              <span style={{ fontSize: '0.78rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', textDecoration: 'line-through' }}>
                                 ${Number(pkg.original_price).toFixed(2)}
                               </span>
                             )}
-                            <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#047857' }}>
+                            <span style={{ fontSize: '1.2rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
                               ${Number(pkg.price).toFixed(pkg.price % 1 === 0 ? 0 : 2)}
                             </span>
                           </div>
-                          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b', display: 'block' }}>
+                          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', display: 'block' }}>
                             {selectedService === 'patch' ? '/ piece' : 'flat rate'}
                           </span>
                         </div>
                       </div>
 
-                      <p style={{ margin: '0.45rem 0 0.5rem', fontSize: '0.78rem', color: '#475569', lineHeight: 1.35 }}>
+                      <p style={{ margin: '0.45rem 0 0.5rem', fontSize: '0.78rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', lineHeight: 1.35 }}>
                         {pkg.subtitle}
                       </p>
 
                       {Array.isArray(pkg.features) && pkg.features.length > 0 && (
-                        <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '0.5rem', display: 'grid', gridTemplateColumns: '1fr', gap: '0.25rem' }}>
+                        <div style={{ borderTop: isDark ? '1px dashed var(--color-border, #334155)' : '1px dashed #cbd5e1', paddingTop: '0.5rem', display: 'grid', gridTemplateColumns: '1fr', gap: '0.25rem' }}>
                           {pkg.features.slice(0, 3).map((feat, fIdx) => (
-                            <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: '#334155' }}>
+                            <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#334155' }}>
                               <CheckCircle2 size={13} style={{ color: '#059669', flexShrink: 0 }} />
                               <span>{feat}</span>
                             </div>
@@ -1312,25 +1315,25 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               
               {/* Selected Package & Live Price Banner */}
-              <div style={{ background: '#f0fdf4', border: '1.5px solid #a7f3d0', borderRadius: '14px', padding: '0.85rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ background: isDark ? 'rgba(5, 150, 105, 0.15)' : '#f0fdf4', border: isDark ? '1.5px solid rgba(5, 150, 105, 0.3)' : '1.5px solid #a7f3d0', borderRadius: '14px', padding: '0.85rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#047857', textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 800, color: isDark ? '#34d399' : '#047857', textTransform: 'uppercase' }}>
                     Selected Service & Tier
                   </span>
-                  <div style={{ fontSize: '0.92rem', fontWeight: 900, color: '#0f172a' }}>
+                  <div style={{ fontSize: '0.92rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                     {activePkg?.title}
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: '#047857', fontWeight: 700 }}>
+                  <div style={{ fontSize: '0.72rem', color: isDark ? '#34d399' : '#047857', fontWeight: 700 }}>
                     Qty: {quantity} {selectedService === 'patch' ? 'pcs' : 'design(s)'}
                   </div>
                 </div>
 
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#047857' }}>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
                     ${totalPrice.toFixed(2)}
                   </div>
                   {volumeDiscountPercent > 0 && (
-                    <span style={{ fontSize: '0.65rem', color: '#059669', fontWeight: 800 }}>
+                    <span style={{ fontSize: '0.65rem', color: isDark ? '#34d399' : '#059669', fontWeight: 800 }}>
                       (-{volumeDiscountPercent}% Saved)
                     </span>
                   )}
@@ -1340,10 +1343,10 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               {/* Multiple Artwork Upload Area */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                  <label style={{ fontSize: '0.82rem', fontWeight: 900, color: '#0f172a' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                     Attach Artwork & Reference Files <span style={{ color: '#ef4444' }}>*</span>
                   </label>
-                  <span style={{ fontSize: '0.7rem', color: '#047857', fontWeight: 800 }}>
+                  <span style={{ fontSize: '0.7rem', color: isDark ? '#34d399' : '#047857', fontWeight: 800 }}>
                     Multiple files supported
                   </span>
                 </div>
@@ -1365,7 +1368,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                     borderRadius: '16px',
                     padding: '1.4rem 1rem',
                     textAlign: 'center',
-                    background: '#f8fafc',
+                    background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
@@ -1378,8 +1381,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                     width: '46px',
                     height: '46px',
                     borderRadius: '50%',
-                    background: '#ecfdf5',
-                    color: '#059669',
+                    background: isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5',
+                    color: isDark ? '#34d399' : '#059669',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
@@ -1387,10 +1390,10 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                     {isUploading ? <Loader2 size={22} className="animate-spin" /> : <Upload size={22} />}
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.92rem', fontWeight: 900, color: '#0f172a' }}>
+                    <div style={{ fontSize: '0.92rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                       {isUploading ? 'Uploading and verifying files...' : 'Tap to Browse or Drop Multiple Files'}
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.15rem' }}>
+                    <div style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#64748b', marginTop: '0.15rem' }}>
                       PNG, JPG, PDF, AI, EPS, SVG, CDR up to 50MB each
                     </div>
                   </div>
@@ -1431,7 +1434,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 {uploadedFiles.length > 0 && (
                   <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0f172a' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                         Attached Files ({uploadedFiles.length})
                       </span>
                       <button
@@ -1440,7 +1443,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         style={{
                           background: 'none',
                           border: 'none',
-                          color: '#047857',
+                          color: isDark ? '#34d399' : '#047857',
                           fontSize: '0.75rem',
                           fontWeight: 800,
                           cursor: 'pointer',
@@ -1458,8 +1461,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         <div
                           key={file.id || fIdx}
                           style={{
-                            border: '1.5px solid #cbd5e1',
-                            background: '#f8fafc',
+                            border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
+                            background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
                             borderRadius: '12px',
                             padding: '0.65rem 0.85rem',
                             display: 'flex',
@@ -1473,8 +1476,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                               width: '32px',
                               height: '32px',
                               borderRadius: '8px',
-                              background: '#ecfdf5',
-                              color: '#047857',
+                              background: isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5',
+                              color: isDark ? '#34d399' : '#047857',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -1483,11 +1486,11 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                               <FileCheck size={18} />
                             </div>
                             <div style={{ minWidth: 0 }}>
-                              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                                 {file.name}
                               </div>
-                              <div style={{ fontSize: '0.68rem', color: '#64748b' }}>
-                                {file.size} • <span style={{ color: '#059669', fontWeight: 700 }}>{file.format} Verified</span>
+                              <div style={{ fontSize: '0.68rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>
+                                {file.size} • <span style={{ color: isDark ? '#34d399' : '#059669', fontWeight: 700 }}>{file.format} Verified</span>
                               </div>
                             </div>
                           </div>
@@ -1520,7 +1523,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
               {/* Special Instructions & Notes Textarea */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.35rem' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
                   Special Instructions / Production Notes
                 </label>
                 <textarea
@@ -1532,10 +1535,10 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                     width: '100%',
                     padding: '0.75rem 0.95rem',
                     borderRadius: '12px',
-                    border: '1.5px solid #cbd5e1',
+                    border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                     fontSize: '0.85rem',
-                    color: '#0f172a',
-                    background: '#ffffff',
+                    color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                    background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                     outline: 'none',
                     boxSizing: 'border-box',
                     resize: 'none'
@@ -1554,12 +1557,12 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               
               {/* Dimensions: Width & Height */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.35rem' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
                   Target Dimensions (Inches)
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
                   <div>
-                    <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>Width</span>
+                    <span style={{ fontSize: '0.7rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', fontWeight: 700 }}>Width</span>
                     <input
                       type="text"
                       value={widthInches}
@@ -1569,17 +1572,17 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         width: '100%',
                         padding: '0.65rem 0.85rem',
                         borderRadius: '10px',
-                        border: '1.5px solid #cbd5e1',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                         fontSize: '0.85rem',
                         fontWeight: 700,
-                        color: '#0f172a',
-                        background: '#ffffff',
+                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                         boxSizing: 'border-box'
                       }}
                     />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>Height</span>
+                    <span style={{ fontSize: '0.7rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', fontWeight: 700 }}>Height</span>
                     <input
                       type="text"
                       value={heightInches}
@@ -1589,11 +1592,11 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         width: '100%',
                         padding: '0.65rem 0.85rem',
                         borderRadius: '10px',
-                        border: '1.5px solid #cbd5e1',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                         fontSize: '0.85rem',
                         fontWeight: 700,
-                        color: '#0f172a',
-                        background: '#ffffff',
+                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                         boxSizing: 'border-box'
                       }}
                     />
@@ -1605,7 +1608,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               {selectedService === 'embroidery' && (
                 <>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.35rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
                       Embroidery Placement
                     </label>
                     <select
@@ -1615,10 +1618,10 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         width: '100%',
                         padding: '0.7rem 0.85rem',
                         borderRadius: '10px',
-                        border: '1.5px solid #cbd5e1',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                         fontSize: '0.85rem',
-                        color: '#0f172a',
-                        background: '#ffffff',
+                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                         boxSizing: 'border-box'
                       }}
                     >
@@ -1632,7 +1635,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.35rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
                       Fabric Type Calibration
                     </label>
                     <select
@@ -1642,10 +1645,10 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         width: '100%',
                         padding: '0.7rem 0.85rem',
                         borderRadius: '10px',
-                        border: '1.5px solid #cbd5e1',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                         fontSize: '0.85rem',
-                        color: '#0f172a',
-                        background: '#ffffff',
+                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                         boxSizing: 'border-box'
                       }}
                     >
@@ -1663,7 +1666,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               {selectedService === 'patch' && (
                 <>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.35rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
                       Patch Style
                     </label>
                     <select
@@ -1673,10 +1676,10 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         width: '100%',
                         padding: '0.7rem 0.85rem',
                         borderRadius: '10px',
-                        border: '1.5px solid #cbd5e1',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                         fontSize: '0.85rem',
-                        color: '#0f172a',
-                        background: '#ffffff',
+                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                         boxSizing: 'border-box'
                       }}
                     >
@@ -1688,7 +1691,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.35rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
                       Backing Attachment
                     </label>
                     <select
@@ -1698,10 +1701,10 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         width: '100%',
                         padding: '0.7rem 0.85rem',
                         borderRadius: '10px',
-                        border: '1.5px solid #cbd5e1',
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                         fontSize: '0.85rem',
-                        color: '#0f172a',
-                        background: '#ffffff',
+                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
                         boxSizing: 'border-box'
                       }}
                     >
@@ -1716,7 +1719,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
               {/* Target File Formats */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.35rem' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
                   Target Deliverable Formats
                 </label>
                 <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
@@ -1735,9 +1738,9 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         style={{
                           padding: '0.35rem 0.65rem',
                           borderRadius: '8px',
-                          border: isChecked ? '1.5px solid #059669' : '1px solid #cbd5e1',
-                          background: isChecked ? '#ecfdf5' : '#ffffff',
-                          color: isChecked ? '#047857' : '#475569',
+                          border: isChecked ? '1.5px solid #059669' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1'),
+                          background: isChecked ? (isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5') : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
+                          color: isChecked ? (isDark ? '#34d399' : '#047857') : (isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569'),
                           fontWeight: 800,
                           fontSize: '0.75rem',
                           display: 'flex',
@@ -1758,8 +1761,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               <div 
                 onClick={() => setIsRush(!isRush)}
                 style={{
-                  border: isRush ? '1.5px solid #f59e0b' : '1px solid #cbd5e1',
-                  background: isRush ? '#fffbeb' : '#ffffff',
+                  border: isRush ? '1.5px solid #f59e0b' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1'),
+                  background: isRush ? (isDark ? 'rgba(245, 158, 11, 0.15)' : '#fffbeb') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
                   borderRadius: '12px',
                   padding: '0.75rem 1rem',
                   display: 'flex',
@@ -1773,8 +1776,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                     width: '34px',
                     height: '34px',
                     borderRadius: '8px',
-                    background: isRush ? '#fef3c7' : '#f1f5f9',
-                    color: isRush ? '#d97706' : '#64748b',
+                    background: isRush ? (isDark ? 'rgba(245, 158, 11, 0.25)' : '#fef3c7') : (isDark ? 'var(--color-border, #334155)' : '#f1f5f9'),
+                    color: isRush ? '#f59e0b' : (isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b'),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
@@ -1782,17 +1785,17 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                     <Zap size={18} />
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#0f172a' }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                       Express Rush Delivery
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                    <div style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#64748b' }}>
                       Jump to front of queue (2–6 Hours)
                     </div>
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#d97706' }}>+$10.00</div>
-                  <div style={{ fontSize: '0.65rem', color: isRush ? '#059669' : '#94a3b8', fontWeight: 800 }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#f59e0b' }}>+$10.00</div>
+                  <div style={{ fontSize: '0.65rem', color: isRush ? '#10b981' : (isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8'), fontWeight: 800 }}>
                     {isRush ? 'ACTIVE' : 'OFF'}
                   </div>
                 </div>
@@ -1808,62 +1811,62 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               
               {/* Order Summary Card */}
-              <div style={{ background: '#f8fafc', border: '1.5px solid #cbd5e1', borderRadius: '16px', padding: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.65rem', marginBottom: '0.65rem' }}>
+              <div style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1', borderRadius: '16px', padding: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', paddingBottom: '0.65rem', marginBottom: '0.65rem' }}>
                   <div>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Service & Tier</span>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#0f172a' }}>{activePkg?.title}</div>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', textTransform: 'uppercase' }}>Service & Tier</span>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>{activePkg?.title}</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Category</span>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#059669', textTransform: 'capitalize' }}>{selectedService}</div>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', textTransform: 'uppercase' }}>Category</span>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 800, color: isDark ? '#34d399' : '#059669', textTransform: 'capitalize' }}>{selectedService}</div>
                   </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.78rem' }}>
                   <div>
-                    <span style={{ color: '#64748b' }}>Quantity: </span>
-                    <strong style={{ color: '#0f172a' }}>{quantity} {selectedService === 'patch' ? 'pcs' : 'item(s)'}</strong>
+                    <span style={{ color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>Quantity: </span>
+                    <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>{quantity} {selectedService === 'patch' ? 'pcs' : 'item(s)'}</strong>
                   </div>
                   <div>
-                    <span style={{ color: '#64748b' }}>Files Attached: </span>
-                    <strong style={{ color: '#0f172a' }}>{uploadedFiles.length} file(s)</strong>
+                    <span style={{ color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>Files Attached: </span>
+                    <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>{uploadedFiles.length} file(s)</strong>
                   </div>
                   <div>
-                    <span style={{ color: '#64748b' }}>Dimensions: </span>
-                    <strong style={{ color: '#0f172a' }}>{widthInches}" × {heightInches}"</strong>
+                    <span style={{ color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>Dimensions: </span>
+                    <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>{widthInches}" × {heightInches}"</strong>
                   </div>
                   <div>
-                    <span style={{ color: '#64748b' }}>Speed: </span>
-                    <strong style={{ color: isRush ? '#d97706' : '#059669' }}>{isRush ? '⚡ Express 2-6H' : 'Standard 12-24H'}</strong>
+                    <span style={{ color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>Speed: </span>
+                    <strong style={{ color: isRush ? '#f59e0b' : (isDark ? '#34d399' : '#059669') }}>{isRush ? '⚡ Express 2-6H' : 'Standard 12-24H'}</strong>
                   </div>
                 </div>
               </div>
 
               {/* Price Calculation Box */}
-              <div style={{ background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '16px', padding: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '0.35rem', color: '#475569' }}>
+              <div style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1', borderRadius: '16px', padding: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '0.35rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569' }}>
                   <span>Base Rate ({quantity} × ${unitPrice.toFixed(2)})</span>
                   <span>${baseSubtotal.toFixed(2)}</span>
                 </div>
 
                 {volumeDiscountAmount > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '0.35rem', color: '#059669' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '0.35rem', color: isDark ? '#34d399' : '#059669' }}>
                     <span>Volume Discount ({volumeDiscountPercent}% OFF)</span>
                     <span>-${volumeDiscountAmount.toFixed(2)}</span>
                   </div>
                 )}
 
                 {isRush && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '0.35rem', color: '#d97706' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '0.35rem', color: '#f59e0b' }}>
                     <span>Express Rush Queue</span>
                     <span>+$10.00</span>
                   </div>
                 )}
 
-                <div style={{ borderTop: '1px dashed #cbd5e1', marginTop: '0.5rem', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#0f172a' }}>Total Amount</span>
-                  <span style={{ fontSize: '1.4rem', fontWeight: 900, color: '#047857' }}>
+                <div style={{ borderTop: isDark ? '1px dashed var(--color-border, #334155)' : '1px dashed #cbd5e1', marginTop: '0.5rem', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Total Amount</span>
+                  <span style={{ fontSize: '1.4rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
                     ${totalPrice.toFixed(2)}
                   </span>
                 </div>
@@ -1872,8 +1875,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               {/* Guest Authentication Card (Google, Apple & Email) */}
               {!isAuthenticated && !authUser && (
                 <div style={{
-                  background: '#ffffff',
-                  border: '1.5px solid #cbd5e1',
+                  background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
+                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                   borderRadius: '16px',
                   padding: '1rem',
                   display: 'flex',
@@ -1882,10 +1885,10 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <div style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f172a' }}>
+                      <div style={{ fontSize: '0.88rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                         Studio Account / Sign In
                       </div>
-                      <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                      <div style={{ fontSize: '0.7rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>
                         Sign in to track orders and download live deliverables.
                       </div>
                     </div>
@@ -1894,8 +1897,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         type="button"
                         onClick={() => setGuestAuthMode('signup')}
                         style={{
-                          background: guestAuthMode === 'signup' ? '#059669' : '#f1f5f9',
-                          color: guestAuthMode === 'signup' ? '#ffffff' : '#475569',
+                          background: guestAuthMode === 'signup' ? '#059669' : (isDark ? 'var(--color-border, #334155)' : '#f1f5f9'),
+                          color: guestAuthMode === 'signup' ? '#ffffff' : (isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569'),
                           border: 'none',
                           borderRadius: '6px',
                           padding: '0.25rem 0.6rem',
@@ -1910,8 +1913,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         type="button"
                         onClick={() => setGuestAuthMode('login')}
                         style={{
-                          background: guestAuthMode === 'login' ? '#059669' : '#f1f5f9',
-                          color: guestAuthMode === 'login' ? '#ffffff' : '#475569',
+                          background: guestAuthMode === 'login' ? '#059669' : (isDark ? 'var(--color-border, #334155)' : '#f1f5f9'),
+                          color: guestAuthMode === 'login' ? '#ffffff' : (isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569'),
                           border: 'none',
                           borderRadius: '6px',
                           padding: '0.25rem 0.6rem',
@@ -1944,7 +1947,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         height: '40px',
                         padding: '0 1rem',
                         borderRadius: '10px',
-                        border: '1.5px solid #000000',
+                        border: isDark ? '1.5px solid var(--color-border, #475569)' : '1.5px solid #000000',
                         background: '#000000',
                         color: '#ffffff',
                         fontSize: '0.82rem',
@@ -1966,11 +1969,11 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
                   {/* Divider */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.1rem 0' }}>
-                    <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
-                    <span style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>
+                    <div style={{ flex: 1, height: '1px', background: isDark ? 'var(--color-border, #334155)' : '#e2e8f0' }} />
+                    <span style={{ fontSize: '0.68rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>
                       or with email
                     </span>
-                    <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+                    <div style={{ flex: 1, height: '1px', background: isDark ? 'var(--color-border, #334155)' : '#e2e8f0' }} />
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -1983,8 +1986,10 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         style={{
                           padding: '0.5rem 0.75rem',
                           borderRadius: '8px',
-                          border: '1.5px solid #cbd5e1',
-                          fontSize: '0.8rem'
+                          border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
+                          fontSize: '0.8rem',
+                          color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
                         }}
                       />
                     )}
@@ -1996,8 +2001,10 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                       style={{
                         padding: '0.5rem 0.75rem',
                         borderRadius: '8px',
-                        border: '1.5px solid #cbd5e1',
-                        fontSize: '0.8rem'
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
+                        fontSize: '0.8rem',
+                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                        background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
                       }}
                     />
                     <input
@@ -2008,8 +2015,10 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                       style={{
                         padding: '0.5rem 0.75rem',
                         borderRadius: '8px',
-                        border: '1.5px solid #cbd5e1',
-                        fontSize: '0.8rem'
+                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
+                        fontSize: '0.8rem',
+                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                        background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
                       }}
                     />
                     {guestAuthMode === 'signup' && (
@@ -2021,8 +2030,10 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         style={{
                           padding: '0.5rem 0.75rem',
                           borderRadius: '8px',
-                          border: '1.5px solid #cbd5e1',
-                          fontSize: '0.8rem'
+                          border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
+                          fontSize: '0.8rem',
+                          color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
                         }}
                       />
                     )}
@@ -2043,8 +2054,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 width: '64px',
                 height: '64px',
                 borderRadius: '50%',
-                background: '#ecfdf5',
-                color: '#059669',
+                background: isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5',
+                color: isDark ? '#34d399' : '#059669',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -2053,18 +2064,18 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 <CheckCircle2 size={36} />
               </div>
 
-              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: '#0f172a' }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                 Order Successfully Placed!
               </h3>
               
-              <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '0.65rem 1rem', display: 'inline-block' }}>
-                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Order Identifier: </span>
-                <strong style={{ fontSize: '0.85rem', color: '#059669' }}>
+              <div style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1', borderRadius: '12px', padding: '0.65rem 1rem', display: 'inline-block' }}>
+                <span style={{ fontSize: '0.75rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>Order Identifier: </span>
+                <strong style={{ fontSize: '0.85rem', color: isDark ? '#34d399' : '#059669' }}>
                   {createdOrderObj?.id || 'Pending'}
                 </strong>
               </div>
 
-              <p style={{ margin: 0, fontSize: '0.8rem', color: '#475569', lineHeight: 1.4, maxWidth: '380px' }}>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', lineHeight: 1.4, maxWidth: '380px' }}>
                 Our master digitizers are reviewing your artwork specifications. You will receive production stitch test updates straight to your dashboard.
               </p>
 
@@ -2095,9 +2106,9 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                     onClose();
                   }}
                   style={{
-                    background: '#f8fafc',
-                    color: '#0f172a',
-                    border: '1.5px solid #cbd5e1',
+                    background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
+                    color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                    border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                     borderRadius: '12px',
                     padding: '0.75rem',
                     fontWeight: 800,
@@ -2121,8 +2132,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
             position: 'sticky',
             bottom: 0,
             padding: '0.85rem 1.25rem calc(0.85rem + env(safe-area-inset-bottom, 0px)) 1.25rem',
-            borderTop: '1.5px solid #cbd5e1',
-            background: '#ffffff',
+            borderTop: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
+            background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -2135,13 +2146,13 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 type="button"
                 onClick={() => setStep(step - 1)}
                 style={{
-                  background: '#f8fafc',
-                  border: '1.5px solid #cbd5e1',
+                  background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
+                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                   borderRadius: '10px',
                   padding: '0.65rem 1rem',
                   fontSize: '0.82rem',
                   fontWeight: 800,
-                  color: '#0f172a',
+                  color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.35rem',

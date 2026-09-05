@@ -29,8 +29,11 @@ export const StoreOrderModal = () => {
     setAuthModalMode,
     setIsCheckoutModalOpen,
     setCheckoutSession,
-    showToast 
+    showToast,
+    theme
   } = useAppState();
+
+  const isDark = theme === 'dark';
 
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
@@ -233,18 +236,19 @@ export const StoreOrderModal = () => {
       <div 
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: '#ffffff',
+          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
           width: '100%',
           maxWidth: '680px',
           maxHeight: '90vh',
-        borderRadius: 'var(--radius-lg)',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        position: 'relative',
-        animation: 'fadeIn 0.2s ease-out'
-      }}>
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          position: 'relative',
+          border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1',
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
 
         {/* Modal Header */}
         <div style={{
@@ -287,14 +291,14 @@ export const StoreOrderModal = () => {
         </div>
 
         {/* Modal Body */}
-        <div style={{ padding: '1.75rem', overflowY: 'auto', flex: 1 }}>
+        <div style={{ padding: '1.75rem', overflowY: 'auto', flex: 1, background: isDark ? 'var(--color-surface, #111827)' : '#ffffff' }}>
           
           {/* Selected Product Banner */}
           <div style={{
             display: 'flex',
             gap: '1.25rem',
-            background: '#f8fafc',
-            border: '1.5px solid var(--border-color)',
+            background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
+            border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid var(--border-color)',
             padding: '1.15rem',
             borderRadius: 'var(--radius-md)',
             marginBottom: '1.5rem',
@@ -310,14 +314,14 @@ export const StoreOrderModal = () => {
                 <span style={{ fontSize: '0.7rem', fontWeight: 800, background: 'var(--orange-500)', color: '#ffffff', padding: '0.15rem 0.6rem', borderRadius: '9999px', textTransform: 'uppercase' }}>
                   {selectedStoreItem.badge || 'STORE ITEM'}
                 </span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                <span style={{ fontSize: '0.75rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : 'var(--text-muted)', fontWeight: 600 }}>
                   Unit: {selectedStoreItem.price}
                 </span>
               </div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0 0 0.35rem' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)', margin: '0 0 0.35rem' }}>
                 {selectedStoreItem.title}
               </h3>
-              <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
+              <p style={{ fontSize: '0.825rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
                 {selectedStoreItem.description}
               </p>
             </div>
@@ -328,7 +332,7 @@ export const StoreOrderModal = () => {
             
             {/* Size Selector */}
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)' }}>
                 Select Size / Specification:
               </label>
               <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
@@ -342,9 +346,9 @@ export const StoreOrderModal = () => {
                       borderRadius: 'var(--radius-sm)',
                       fontSize: '0.825rem',
                       fontWeight: 700,
-                      border: selectedSize === sz ? '2px solid var(--orange-500)' : '1px solid var(--border-color)',
-                      background: selectedSize === sz ? '#fff7ed' : '#ffffff',
-                      color: selectedSize === sz ? 'var(--orange-600)' : 'var(--navy-800)',
+                      border: selectedSize === sz ? '2px solid var(--orange-500)' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid var(--border-color)'),
+                      background: selectedSize === sz ? (isDark ? 'rgba(249, 115, 22, 0.2)' : '#fff7ed') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
+                      color: selectedSize === sz ? 'var(--orange-500)' : (isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-800)'),
                       cursor: 'pointer'
                     }}
                   >
@@ -356,7 +360,7 @@ export const StoreOrderModal = () => {
 
             {/* Color Variant Selector */}
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)' }}>
                 Select Color / Backing Type:
               </label>
               <select
@@ -375,8 +379,8 @@ export const StoreOrderModal = () => {
 
           {/* Quantity Counter & Price Calculation */}
           <div style={{
-            background: 'var(--navy-50)',
-            border: '1.5px solid var(--orange-200)',
+            background: isDark ? 'var(--color-subtle, #1e293b)' : 'var(--navy-50)',
+            border: isDark ? '1.5px solid rgba(249, 115, 22, 0.4)' : '1.5px solid var(--orange-200)',
             padding: '1.25rem',
             borderRadius: 'var(--radius-md)',
             marginBottom: '1.5rem',
@@ -387,7 +391,7 @@ export const StoreOrderModal = () => {
             gap: '1rem'
           }}>
             <div>
-              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)' }}>
                 Order Quantity (Dropdown & Manual Entry - Min. {minQty} pcs):
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
@@ -420,8 +424,9 @@ export const StoreOrderModal = () => {
                       width: '36px',
                       height: '38px',
                       borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-color)',
-                      background: '#ffffff',
+                      border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid var(--border-color)',
+                      background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                      color: isDark ? 'var(--color-text-primary, #ffffff)' : 'inherit',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -442,8 +447,9 @@ export const StoreOrderModal = () => {
                       textAlign: 'center',
                       fontWeight: 800,
                       borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-color)',
-                      background: '#ffffff'
+                      border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid var(--border-color)',
+                      background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                      color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'
                     }}
                   />
 
@@ -454,8 +460,9 @@ export const StoreOrderModal = () => {
                       width: '36px',
                       height: '38px',
                       borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-color)',
-                      background: '#ffffff',
+                      border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid var(--border-color)',
+                      background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                      color: isDark ? 'var(--color-text-primary, #ffffff)' : 'inherit',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -470,13 +477,13 @@ export const StoreOrderModal = () => {
 
             {/* Calculated Total Price Banner */}
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>
+              <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: isDark ? 'var(--color-text-muted, #94a3b8)' : 'var(--text-muted)', fontWeight: 700 }}>
                 Total Order Amount
               </div>
-              <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--orange-600)', lineHeight: 1 }}>
+              <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--orange-500)', lineHeight: 1 }}>
                 ${totalPrice}
               </div>
-              <div style={{ fontSize: '0.725rem', color: 'var(--navy-700)', marginTop: '0.2rem', fontWeight: 600 }}>
+              <div style={{ fontSize: '0.725rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : 'var(--navy-700)', marginTop: '0.2rem', fontWeight: 600 }}>
                 (${unitPrice.toFixed(2)} x {quantity} pcs)
               </div>
             </div>
@@ -484,37 +491,37 @@ export const StoreOrderModal = () => {
 
           {/* Logo / Artwork Upload Section */}
           <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-            <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)', display: 'block', marginBottom: '0.4rem' }}>
+            <label style={{ fontSize: '0.825rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)', display: 'block', marginBottom: '0.4rem' }}>
               Upload Logo / Artwork for Merchandise Embroidery:
             </label>
             
             <div style={{
-              border: '2px dashed var(--orange-300)',
+              border: isDark ? '2px dashed rgba(249, 115, 22, 0.45)' : '2px dashed var(--orange-300)',
               borderRadius: 'var(--radius-md)',
               padding: '1.25rem',
               textAlign: 'center',
-              background: uploadedArtwork ? '#f0fdf4' : '#f8fafc',
+              background: uploadedArtwork ? (isDark ? 'rgba(22, 163, 74, 0.15)' : '#f0fdf4') : (isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc'),
               cursor: 'pointer'
             }}>
               {uploadedArtwork ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.85rem' }}>
                   <FileCheck size={32} style={{ color: '#16a34a' }} />
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--navy-900)' }}>
+                    <div style={{ fontWeight: 800, fontSize: '0.9rem', color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)' }}>
                       {uploadedArtwork.name}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    <div style={{ fontSize: '0.75rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : 'var(--text-muted)' }}>
                       Size: {uploadedArtwork.size} | Attached Successfully
                     </div>
                   </div>
                 </div>
               ) : (
                 <label style={{ cursor: 'pointer', display: 'block' }}>
-                  <Upload size={28} style={{ color: 'var(--orange-600)', marginBottom: '0.35rem' }} />
-                  <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--navy-900)' }}>
+                  <Upload size={28} style={{ color: 'var(--orange-500)', marginBottom: '0.35rem' }} />
+                  <div style={{ fontSize: '0.875rem', fontWeight: 700, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)' }}>
                     Click to upload logo artwork file
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                  <div style={{ fontSize: '0.75rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : 'var(--text-muted)', marginTop: '0.2rem' }}>
                     Supports PNG, JPG, PDF, AI, EPS, SVG (Any file format & long filename)
                   </div>
                   <input 
@@ -529,7 +536,7 @@ export const StoreOrderModal = () => {
 
           {/* Embroidery Placement / Notes */}
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+            <label style={{ fontSize: '0.825rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)' }}>
               Embroidery Placement & Custom Instructions:
             </label>
             <textarea 
@@ -547,8 +554,8 @@ export const StoreOrderModal = () => {
         {/* Modal Footer / Checkout Buttons */}
         <div style={{
           padding: '1.25rem 1.75rem',
-          background: '#f8fafc',
-          borderTop: '1px solid var(--border-color)',
+          background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc',
+          borderTop: isDark ? '1px solid var(--color-border, #334155)' : '1px solid var(--border-color)',
           display: 'flex',
           flexDirection: 'column',
           gap: '0.75rem'
@@ -562,8 +569,8 @@ export const StoreOrderModal = () => {
               onClick={() => handleCompleteStoreOrder('wallet')}
               className="btn btn-outline"
               style={{
-                borderColor: hasEnoughWallet ? 'var(--orange-500)' : '#cbd5e1',
-                color: hasEnoughWallet ? 'var(--orange-600)' : '#94a3b8',
+                borderColor: hasEnoughWallet ? 'var(--orange-500)' : (isDark ? 'var(--color-border, #334155)' : '#cbd5e1'),
+                color: hasEnoughWallet ? 'var(--orange-500)' : (isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8'),
                 fontWeight: 800,
                 justifyContent: 'center',
                 padding: '0.75rem 1rem'
@@ -589,7 +596,7 @@ export const StoreOrderModal = () => {
           </div>
 
           {!hasEnoughWallet && isAuthenticated && (
-            <div style={{ fontSize: '0.75rem', color: '#d97706', display: 'flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'center' }}>
+            <div style={{ fontSize: '0.75rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'center' }}>
               <AlertCircle size={14} /> Wallet balance is lower than total (${totalPrice}). Select BoltPayouts or top up wallet in client portal.
             </div>
           )}

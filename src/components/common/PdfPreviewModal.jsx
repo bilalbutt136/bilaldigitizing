@@ -92,13 +92,13 @@ export const PdfPreviewModal = ({
           width: '100%',
           maxWidth: '1000px',
           height: '92vh',
-          background: '#ffffff',
+          background: 'var(--color-surface, #ffffff)',
           borderRadius: '16px',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
           overflow: 'hidden',
-          border: '1px solid #334155'
+          border: '1px solid var(--color-border, #334155)'
         }}
       >
         {/* Modal Top Header Bar */}
@@ -236,7 +236,7 @@ export const PdfPreviewModal = ({
           flex: 1,
           width: '100%',
           height: '100%',
-          background: '#f1f5f9',
+          background: 'var(--color-subtle, #f1f5f9)',
           overflow: 'hidden'
         }}>
           {isLoading && (
@@ -250,12 +250,12 @@ export const PdfPreviewModal = ({
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              background: '#ffffff',
+              background: 'var(--color-surface, #ffffff)',
               zIndex: 10,
               gap: '0.75rem'
             }}>
               <Loader2 size={36} className="animate-spin" style={{ color: '#ea580c' }} />
-              <div style={{ fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
+              <div style={{ fontWeight: 600, color: 'var(--color-text-primary, #334155)', fontSize: '0.9rem' }}>
                 Rendering PDF Preview...
               </div>
             </div>
@@ -271,13 +271,13 @@ export const PdfPreviewModal = ({
               padding: '2rem',
               textAlign: 'center',
               gap: '1rem',
-              background: '#ffffff'
+              background: 'var(--color-surface, #ffffff)'
             }}>
               <AlertCircle size={48} style={{ color: '#ef4444' }} />
-              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a' }}>
+              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-text-primary, #0f172a)' }}>
                 In-App Preview Unavailable
               </div>
-              <p style={{ color: '#64748b', maxWidth: '420px', fontSize: '0.88rem', margin: 0 }}>
+              <p style={{ color: 'var(--color-text-muted, #64748b)', maxWidth: '420px', fontSize: '0.88rem', margin: 0 }}>
                 This browser does not support inline embedding for this file type, or the document is protected.
               </p>
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>

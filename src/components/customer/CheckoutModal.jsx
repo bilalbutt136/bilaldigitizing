@@ -157,8 +157,11 @@ export const CheckoutModal = () => {
     fetchUserWalletBalance,
     authUser,
     currentUser,
-    protectedNavigate
+    protectedNavigate,
+    theme
   } = useAppState();
+
+  const isDark = theme === 'dark';
 
   const [isPaid, setIsPaid] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState(null);
@@ -488,8 +491,8 @@ export const CheckoutModal = () => {
         className="modal-dialog"
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: '#ffffff',
-          border: '1px solid #cbd5e1',
+          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+          border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1',
           borderRadius: 'clamp(14px, 3vw, 24px)',
           width: '100%',
           maxWidth: '520px',
@@ -614,12 +617,12 @@ export const CheckoutModal = () => {
           width: '100%', 
           display: 'flex', 
           flexDirection: 'column', 
-          background: '#f8fafc', 
+          background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc', 
           overflowY: 'auto', 
           flex: '1 1 auto', 
           minHeight: 0, 
           WebkitOverflowScrolling: 'touch',
-          color: '#0f172a'
+          color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'
         }}>
           
           {isPaid ? (
@@ -627,11 +630,11 @@ export const CheckoutModal = () => {
             <div style={{ 
               flex: 1, display: 'flex', flexDirection: 'column', 
               alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem', textAlign: 'center',
-              background: '#ffffff'
+              background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
             }}>
               <CheckCircle size={64} style={{ color: '#059669', marginBottom: '1.5rem' }} />
-              <h2 style={{ color: '#0f172a', fontSize: '1.6rem', fontWeight: 900, marginBottom: '0.5rem' }}>Payment Confirmed!</h2>
-              <p style={{ color: '#475569', fontSize: '0.925rem', marginBottom: '2rem', maxWidth: '340px' }}>
+              <h2 style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', fontSize: '1.6rem', fontWeight: 900, marginBottom: '0.5rem' }}>Payment Confirmed!</h2>
+              <p style={{ color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', fontSize: '0.925rem', marginBottom: '2rem', maxWidth: '340px' }}>
                 We've received your payment. Your design order has been assigned to our master digitizing desk.
               </p>
               <button 
@@ -657,35 +660,35 @@ export const CheckoutModal = () => {
 
           ) : activeView === 'card' ? (
             /* 1. CREDIT / DEBIT CARD ONLY: 2-Step Instruction View */
-            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1, background: '#f8fafc' }}>
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1, background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc' }}>
               <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
                 <div style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.35rem',
-                  background: '#ecfdf5',
-                  color: '#047857',
+                  background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5',
+                  color: isDark ? '#34d399' : '#047857',
                   fontSize: '0.75rem',
                   fontWeight: 800,
                   padding: '0.25rem 0.75rem',
                   borderRadius: '999px',
-                  border: '1.5px solid #a7f3d0',
+                  border: isDark ? '1.5px solid rgba(5, 150, 105, 0.4)' : '1.5px solid #a7f3d0',
                   marginBottom: '0.5rem'
                 }}>
                   <ShieldCheck size={14} /> Card Checkout Initialized
                 </div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', margin: '0 0 0.2rem' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', margin: '0 0 0.2rem' }}>
                   Complete in 2 Easy Steps
                 </h3>
-                <p style={{ fontSize: '0.85rem', color: '#475569', margin: 0 }}>
-                  Amount: <strong style={{ color: '#047857', fontSize: '1.1rem' }}>{formattedSessionAmount}</strong>
+                <p style={{ fontSize: '0.85rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', margin: 0 }}>
+                  Amount: <strong style={{ color: isDark ? '#34d399' : '#047857', fontSize: '1.1rem' }}>{formattedSessionAmount}</strong>
                 </p>
               </div>
 
               {/* Step 1 */}
               <div style={{
-                background: '#ffffff',
-                border: '1.5px solid #cbd5e1',
+                background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
+                border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                 borderRadius: '14px',
                 padding: '1rem',
                 marginBottom: '0.85rem',
@@ -704,14 +707,14 @@ export const CheckoutModal = () => {
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}>1</span>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f172a' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                     Copy Your Receiving Address:
                   </span>
                 </div>
 
                 <div style={{
-                  background: '#f1f5f9',
-                  border: '1.5px solid #cbd5e1',
+                  background: isDark ? 'var(--color-surface, #111827)' : '#f1f5f9',
+                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                   borderRadius: '10px',
                   padding: '0.65rem 0.85rem',
                   display: 'flex',
@@ -723,7 +726,7 @@ export const CheckoutModal = () => {
                     fontFamily: 'monospace',
                     fontSize: '0.8rem',
                     fontWeight: 800,
-                    color: '#0f172a',
+                    color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
                     wordBreak: 'break-all',
                     lineHeight: 1.3
                   }}>
@@ -733,7 +736,7 @@ export const CheckoutModal = () => {
                     type="button"
                     onClick={() => copyToClipboard(extractedSolana || checkoutSession?.url, 'Address')}
                     style={{
-                      background: hasCopied ? '#059669' : '#0f172a',
+                      background: hasCopied ? '#059669' : (isDark ? 'var(--color-border, #334155)' : '#0f172a'),
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '8px',
@@ -755,8 +758,8 @@ export const CheckoutModal = () => {
 
               {/* Step 2 */}
               <div style={{
-                background: '#ffffff',
-                border: '1.5px solid #cbd5e1',
+                background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
+                border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                 borderRadius: '14px',
                 padding: '1rem',
                 marginBottom: '1rem',
@@ -767,7 +770,7 @@ export const CheckoutModal = () => {
                     width: '24px',
                     height: '24px',
                     borderRadius: '50%',
-                    background: '#0f172a',
+                    background: isDark ? 'var(--color-border, #334155)' : '#0f172a',
                     color: '#ffffff',
                     fontSize: '0.78rem',
                     fontWeight: 900,
@@ -775,12 +778,12 @@ export const CheckoutModal = () => {
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}>2</span>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f172a' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                     Paste on Checkout Portal:
                   </span>
                 </div>
-                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.82rem', color: '#334155', lineHeight: 1.6 }}>
-                  <li>Tap <strong style={{ color: '#0f172a' }}>Proceed to Payment</strong> below to open the card portal.</li>
+                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.82rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#334155', lineHeight: 1.6 }}>
+                  <li>Tap <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Proceed to Payment</strong> below to open the card portal.</li>
                   <li>Paste this address when asked to finalize your card payment.</li>
                 </ul>
               </div>
@@ -815,9 +818,9 @@ export const CheckoutModal = () => {
                   style={{
                     width: '100%',
                     padding: '0.75rem',
-                    background: '#ffffff',
-                    color: '#0f172a',
-                    border: '1.5px solid #cbd5e1',
+                    background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
+                    color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                    border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                     borderRadius: '12px',
                     fontSize: '0.88rem',
                     fontWeight: 800,
@@ -835,7 +838,7 @@ export const CheckoutModal = () => {
                 </button>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.78rem', color: '#64748b' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.78rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>
                 <Loader2 size={14} className="animate-spin" style={{ color: '#059669' }} />
                 Awaiting payment confirmation...
               </div>
@@ -843,41 +846,41 @@ export const CheckoutModal = () => {
 
           ) : activeView === 'cashapp' ? (
             /* 2. CASH APP ONLY: Lightning Deep-Linking & Instant Invoice */
-            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1, background: '#f8fafc' }}>
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1, background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc' }}>
               <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
                 <div style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.35rem',
-                  background: '#f0fdf4',
-                  color: '#16a34a',
+                  background: isDark ? 'rgba(0, 214, 50, 0.15)' : '#f0fdf4',
+                  color: isDark ? '#4ade80' : '#16a34a',
                   fontSize: '0.75rem',
                   fontWeight: 800,
                   padding: '0.25rem 0.75rem',
                   borderRadius: '999px',
-                  border: '1.5px solid #bbf7d0',
+                  border: isDark ? '1.5px solid rgba(0, 214, 50, 0.3)' : '1.5px solid #bbf7d0',
                   marginBottom: '0.5rem'
                 }}>
                   <Zap size={14} /> Bitcoin Lightning Enabled
                 </div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', margin: '0 0 0.2rem' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', margin: '0 0 0.2rem' }}>
                   Pay with Cash App
                 </h3>
-                <p style={{ fontSize: '0.85rem', color: '#475569', margin: 0 }}>
-                  Amount: <strong style={{ color: '#16a34a', fontSize: '1.1rem' }}>{formattedSessionAmount}</strong>
+                <p style={{ fontSize: '0.85rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', margin: 0 }}>
+                  Amount: <strong style={{ color: isDark ? '#4ade80' : '#16a34a', fontSize: '1.1rem' }}>{formattedSessionAmount}</strong>
                 </p>
               </div>
 
               {/* Instructions */}
               <div style={{
-                background: '#ffffff',
-                border: '1.5px solid #cbd5e1',
+                background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
+                border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                 borderRadius: '14px',
                 padding: '1.15rem',
                 marginBottom: '1rem',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
               }}>
-                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.85rem', color: '#1e293b', lineHeight: 1.65 }}>
+                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.85rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#1e293b', lineHeight: 1.65 }}>
                   <li>Tap <strong style={{ color: '#00D632' }}>Launch Cash App ⚡</strong> below to open Cash App via instant Bitcoin Lightning.</li>
                   <li>Confirm the transaction in Cash App to finalize your order immediately.</li>
                 </ul>
@@ -886,8 +889,8 @@ export const CheckoutModal = () => {
               {/* Lightning Invoice (Copy backup) */}
               {extractedLightning && (
                 <div style={{
-                  background: '#f1f5f9',
-                  border: '1.5px solid #cbd5e1',
+                  background: isDark ? 'var(--color-surface, #111827)' : '#f1f5f9',
+                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                   borderRadius: '10px',
                   padding: '0.65rem 0.85rem',
                   marginBottom: '1rem',
@@ -897,8 +900,8 @@ export const CheckoutModal = () => {
                   gap: '0.5rem'
                 }}>
                   <div style={{ overflow: 'hidden' }}>
-                    <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Lightning Invoice</div>
-                    <code style={{ fontFamily: 'monospace', fontSize: '0.78rem', fontWeight: 800, color: '#0f172a', wordBreak: 'break-all', lineHeight: 1.2 }}>
+                    <div style={{ fontSize: '0.68rem', fontWeight: 800, color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', textTransform: 'uppercase' }}>Lightning Invoice</div>
+                    <code style={{ fontFamily: 'monospace', fontSize: '0.78rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', wordBreak: 'break-all', lineHeight: 1.2 }}>
                       {extractedLightning.slice(0, 28)}...
                     </code>
                   </div>
@@ -906,7 +909,7 @@ export const CheckoutModal = () => {
                     type="button"
                     onClick={() => copyToClipboard(extractedLightning, 'Lightning Invoice')}
                     style={{
-                      background: hasCopied ? '#16a34a' : '#0f172a',
+                      background: hasCopied ? '#16a34a' : (isDark ? 'var(--color-border, #334155)' : '#0f172a'),
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '8px',
@@ -956,9 +959,9 @@ export const CheckoutModal = () => {
                   style={{
                     width: '100%',
                     padding: '0.75rem',
-                    background: '#ffffff',
-                    color: '#0f172a',
-                    border: '1.5px solid #cbd5e1',
+                    background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
+                    color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                    border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                     borderRadius: '12px',
                     fontSize: '0.88rem',
                     fontWeight: 800,
@@ -976,7 +979,7 @@ export const CheckoutModal = () => {
                 </button>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.78rem', color: '#64748b' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.78rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>
                 <Loader2 size={14} className="animate-spin" style={{ color: '#00D632' }} />
                 Listening for Cash App Lightning confirmation...
               </div>
@@ -984,35 +987,35 @@ export const CheckoutModal = () => {
 
           ) : activeView === 'paypal' ? (
             /* 3. PAYPAL ONLY: PYUSD Instructions View */
-            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1, background: '#f8fafc' }}>
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1, background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc' }}>
               <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
                 <div style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.35rem',
-                  background: '#eff6ff',
-                  color: '#1d4ed8',
+                  background: isDark ? 'rgba(59, 130, 246, 0.15)' : '#eff6ff',
+                  color: isDark ? '#60a5fa' : '#1d4ed8',
                   fontSize: '0.75rem',
                   fontWeight: 800,
                   padding: '0.25rem 0.75rem',
                   borderRadius: '999px',
-                  border: '1.5px solid #bfdbfe',
+                  border: isDark ? '1.5px solid rgba(59, 130, 246, 0.3)' : '1.5px solid #bfdbfe',
                   marginBottom: '0.5rem'
                 }}>
                   <Coins size={14} /> PayPal PYUSD Gateway
                 </div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', margin: '0 0 0.2rem' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', margin: '0 0 0.2rem' }}>
                   Pay with PayPal PYUSD
                 </h3>
-                <p style={{ fontSize: '0.85rem', color: '#475569', margin: 0 }}>
-                  Amount: <strong style={{ color: '#003087', fontSize: '1.1rem' }}>{formattedSessionAmount}</strong>
+                <p style={{ fontSize: '0.85rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', margin: 0 }}>
+                  Amount: <strong style={{ color: isDark ? '#60a5fa' : '#003087', fontSize: '1.1rem' }}>{formattedSessionAmount}</strong>
                 </p>
               </div>
 
               {/* Step 1 */}
               <div style={{
-                background: '#ffffff',
-                border: '1.5px solid #cbd5e1',
+                background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
+                border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                 borderRadius: '14px',
                 padding: '1rem',
                 marginBottom: '0.85rem',
@@ -1023,7 +1026,7 @@ export const CheckoutModal = () => {
                     width: '24px',
                     height: '24px',
                     borderRadius: '50%',
-                    background: '#003087',
+                    background: isDark ? '#2563eb' : '#003087',
                     color: '#ffffff',
                     fontSize: '0.78rem',
                     fontWeight: 900,
@@ -1031,14 +1034,14 @@ export const CheckoutModal = () => {
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}>1</span>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f172a' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                     Copy Receiving Address:
                   </span>
                 </div>
 
                 <div style={{
-                  background: '#f1f5f9',
-                  border: '1.5px solid #cbd5e1',
+                  background: isDark ? 'var(--color-surface, #111827)' : '#f1f5f9',
+                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                   borderRadius: '10px',
                   padding: '0.65rem 0.85rem',
                   display: 'flex',
@@ -1050,7 +1053,7 @@ export const CheckoutModal = () => {
                     fontFamily: 'monospace',
                     fontSize: '0.8rem',
                     fontWeight: 800,
-                    color: '#0f172a',
+                    color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
                     wordBreak: 'break-all',
                     lineHeight: 1.3
                   }}>
@@ -1060,7 +1063,7 @@ export const CheckoutModal = () => {
                     type="button"
                     onClick={() => copyToClipboard(extractedSolana || checkoutSession?.url, 'PYUSD Address')}
                     style={{
-                      background: hasCopied ? '#059669' : '#003087',
+                      background: hasCopied ? '#059669' : (isDark ? '#2563eb' : '#003087'),
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '8px',
@@ -1081,8 +1084,8 @@ export const CheckoutModal = () => {
 
               {/* Step 2 */}
               <div style={{
-                background: '#ffffff',
-                border: '1.5px solid #cbd5e1',
+                background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
+                border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                 borderRadius: '14px',
                 padding: '1rem',
                 marginBottom: '1rem',
@@ -1093,7 +1096,7 @@ export const CheckoutModal = () => {
                     width: '24px',
                     height: '24px',
                     borderRadius: '50%',
-                    background: '#0f172a',
+                    background: isDark ? 'var(--color-border, #334155)' : '#0f172a',
                     color: '#ffffff',
                     fontSize: '0.78rem',
                     fontWeight: 900,
@@ -1101,13 +1104,13 @@ export const CheckoutModal = () => {
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}>2</span>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f172a' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                     Send from PayPal App:
                   </span>
                 </div>
-                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.82rem', color: '#334155', lineHeight: 1.6 }}>
-                  <li>Open your <strong style={{ color: '#003087' }}>PayPal App</strong> and navigate to <strong style={{ color: '#003087' }}>Crypto</strong>.</li>
-                  <li>Select <strong style={{ color: '#003087' }}>PYUSD</strong> (or Solana), tap <strong style={{ color: '#003087' }}>Send</strong>, and paste this address.</li>
+                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.82rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#334155', lineHeight: 1.6 }}>
+                  <li>Open your <strong style={{ color: isDark ? '#60a5fa' : '#003087' }}>PayPal App</strong> and navigate to <strong style={{ color: isDark ? '#60a5fa' : '#003087' }}>Crypto</strong>.</li>
+                  <li>Select <strong style={{ color: isDark ? '#60a5fa' : '#003087' }}>PYUSD</strong> (or Solana), tap <strong style={{ color: isDark ? '#60a5fa' : '#003087' }}>Send</strong>, and paste this address.</li>
                 </ul>
               </div>
 
@@ -1141,9 +1144,9 @@ export const CheckoutModal = () => {
                   style={{
                     width: '100%',
                     padding: '0.75rem',
-                    background: '#ffffff',
-                    color: '#0f172a',
-                    border: '1.5px solid #cbd5e1',
+                    background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
+                    color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                    border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                     borderRadius: '12px',
                     fontSize: '0.88rem',
                     fontWeight: 800,
@@ -1161,37 +1164,37 @@ export const CheckoutModal = () => {
                 </button>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.78rem', color: '#64748b' }}>
-                <Loader2 size={14} className="animate-spin" style={{ color: '#003087' }} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.78rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>
+                <Loader2 size={14} className="animate-spin" style={{ color: isDark ? '#60a5fa' : '#003087' }} />
                 Awaiting PayPal PYUSD transfer confirmation...
               </div>
             </div>
 
           ) : activeView === 'browser_waiting' ? (
             /* 4. APPLE PAY & GOOGLE PAY View */
-            <div style={{ padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center', justifyContent: 'center', textAlign: 'center', background: '#f8fafc' }}>
+            <div style={{ padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center', justifyContent: 'center', textAlign: 'center', background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc' }}>
               <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.35rem',
-                background: selectedMethod === 'apple_pay' ? '#f1f5f9' : '#eff6ff',
-                color: selectedMethod === 'apple_pay' ? '#0f172a' : '#2563eb',
+                background: selectedMethod === 'apple_pay' ? (isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9') : (isDark ? 'rgba(37, 99, 235, 0.2)' : '#eff6ff'),
+                color: selectedMethod === 'apple_pay' ? (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a') : (isDark ? '#60a5fa' : '#2563eb'),
                 fontSize: '0.75rem',
                 fontWeight: 800,
                 padding: '0.25rem 0.75rem',
                 borderRadius: '999px',
-                border: '1.5px solid #cbd5e1',
+                border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                 marginBottom: '0.85rem'
               }}>
                 {selectedMethod === 'apple_pay' ? '🍎 Apple Pay Ready' : '🌐 Google Pay Ready'}
               </div>
 
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', margin: '0 0 0.35rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', margin: '0 0 0.35rem' }}>
                 {selectedMethod === 'apple_pay' ? 'Pay with Apple Pay' : 'Pay with Google Pay'}
               </h3>
               
-              <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 1.5rem', maxWidth: '320px' }}>
-                Total: <strong style={{ color: '#047857', fontSize: '1.1rem' }}>{formattedSessionAmount}</strong>. Tap the button below to authorize payment.
+              <p style={{ fontSize: '0.85rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', margin: '0 0 1.5rem', maxWidth: '320px' }}>
+                Total: <strong style={{ color: isDark ? '#34d399' : '#047857', fontSize: '1.1rem' }}>{formattedSessionAmount}</strong>. Tap the button below to authorize payment.
               </p>
 
               <div style={{ width: '100%', maxWidth: '320px', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -1205,9 +1208,9 @@ export const CheckoutModal = () => {
                     fontSize: '1rem',
                     fontWeight: 900,
                     borderRadius: '12px',
-                    background: selectedMethod === 'apple_pay' ? '#000000' : '#ffffff',
-                    color: selectedMethod === 'apple_pay' ? '#ffffff' : '#0f172a',
-                    border: selectedMethod === 'apple_pay' ? 'none' : '2px solid #cbd5e1',
+                    background: selectedMethod === 'apple_pay' ? '#000000' : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
+                    color: selectedMethod === 'apple_pay' ? '#ffffff' : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'),
+                    border: selectedMethod === 'apple_pay' ? (isDark ? '1px solid #334155' : 'none') : (isDark ? '2px solid var(--color-border, #334155)' : '2px solid #cbd5e1'),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1229,9 +1232,9 @@ export const CheckoutModal = () => {
                   style={{
                     width: '100%',
                     padding: '0.75rem',
-                    background: '#ffffff',
-                    color: '#0f172a',
-                    border: '1.5px solid #cbd5e1',
+                    background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
+                    color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                    border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                     borderRadius: '12px',
                     fontSize: '0.88rem',
                     fontWeight: 800,
@@ -1249,7 +1252,7 @@ export const CheckoutModal = () => {
                 </button>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '1.25rem', fontSize: '0.78rem', color: '#64748b' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '1.25rem', fontSize: '0.78rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>
                 <Loader2 size={14} className="animate-spin" style={{ color: '#059669' }} />
                 Listening for payment confirmation...
               </div>
@@ -1257,30 +1260,30 @@ export const CheckoutModal = () => {
 
           ) : (
             /* 5. METHOD SELECTION VIEW */
-            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch', background: '#f8fafc' }}>
+            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch', background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc' }}>
               
               {/* Total Due Card */}
               <div style={{ 
-                background: '#ffffff', 
-                border: '1.5px solid #cbd5e1', 
+                background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff', 
+                border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1', 
                 borderRadius: '16px', 
                 padding: '1.25rem', 
                 textAlign: 'center', 
                 marginBottom: '1.25rem', 
                 boxShadow: '0 4px 14px rgba(0,0,0,0.04)' 
               }}>
-                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <div style={{ fontSize: '0.78rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   TOTAL AMOUNT DUE
                 </div>
-                <div style={{ color: '#047857', fontSize: '2.3rem', fontWeight: 900, fontFamily: 'var(--font-heading)', marginTop: '0.2rem' }}>
+                <div style={{ color: isDark ? '#34d399' : '#047857', fontSize: '2.3rem', fontWeight: 900, fontFamily: 'var(--font-heading)', marginTop: '0.2rem' }}>
                   {formattedSessionAmount}
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 700, marginTop: '0.15rem' }}>
+                <div style={{ fontSize: '0.75rem', color: isDark ? '#10b981' : '#059669', fontWeight: 700, marginTop: '0.15rem' }}>
                   ✓ Instant production dispatch upon confirmation
                 </div>
               </div>
               
-              <p style={{ color: '#0f172a', fontSize: '0.9rem', fontWeight: 900, marginBottom: '0.85rem', textAlign: 'center' }}>
+              <p style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', fontSize: '0.9rem', fontWeight: 900, marginBottom: '0.85rem', textAlign: 'center' }}>
                 Select your payment method:
               </p>
               
@@ -1295,8 +1298,8 @@ export const CheckoutModal = () => {
                       onClick={() => handleSelectMethod(method.id)}
                       disabled={isInitializing || isInsufficient}
                       style={{
-                        background: '#ffffff',
-                        border: isWallet ? '1.5px solid #86efac' : '1.5px solid #cbd5e1',
+                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
+                        border: isWallet ? (isDark ? '1.5px solid #059669' : '1.5px solid #86efac') : (isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1'),
                         borderRadius: '14px',
                         padding: '0.95rem 1.15rem',
                         display: 'flex',
@@ -1307,21 +1310,21 @@ export const CheckoutModal = () => {
                         opacity: isInitializing && selectedMethod !== method.id ? 0.5 : (isInsufficient ? 0.6 : 1),
                         boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
                         textAlign: 'left',
-                        color: '#0f172a'
+                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'
                       }}
                     >
                       {method.icon}
                       
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                          <span style={{ color: '#0f172a', fontWeight: 900, fontSize: '0.95rem' }}>
+                          <span style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', fontWeight: 900, fontSize: '0.95rem' }}>
                             {method.name}
                           </span>
                           {method.badge && (
                             <span style={{
-                              background: isWallet ? '#ecfdf5' : '#f1f5f9',
-                              color: isWallet ? '#047857' : '#334155',
-                              border: isWallet ? '1px solid #a7f3d0' : '1px solid #cbd5e1',
+                              background: isWallet ? (isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5') : (isDark ? 'var(--color-surface, #111827)' : '#f1f5f9'),
+                              color: isWallet ? (isDark ? '#6ee7b7' : '#047857') : (isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#334155'),
+                              border: isWallet ? (isDark ? '1px solid #059669' : '1px solid #a7f3d0') : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1'),
                               fontSize: '0.65rem',
                               fontWeight: 900,
                               padding: '0.15rem 0.45rem',
@@ -1332,7 +1335,7 @@ export const CheckoutModal = () => {
                             </span>
                           )}
                         </div>
-                        <div style={{ color: isInsufficient ? '#dc2626' : '#64748b', fontSize: '0.78rem', fontWeight: 600, marginTop: '0.18rem' }}>
+                        <div style={{ color: isInsufficient ? '#ef4444' : (isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b'), fontSize: '0.78rem', fontWeight: 600, marginTop: '0.18rem' }}>
                           {isInsufficient ? `Insufficient funds ($${(walletBalance || 0).toFixed(2)})` : method.subtext}
                         </div>
                       </div>
@@ -1340,7 +1343,7 @@ export const CheckoutModal = () => {
                       {isInitializing && selectedMethod === method.id ? (
                         <Loader2 size={20} className="animate-spin" style={{ color: '#059669', marginLeft: 'auto' }} />
                       ) : (
-                        <ChevronRight size={18} style={{ color: '#94a3b8', marginLeft: 'auto' }} />
+                        <ChevronRight size={18} style={{ color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', marginLeft: 'auto' }} />
                       )}
                     </button>
                   );

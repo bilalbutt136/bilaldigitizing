@@ -561,7 +561,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
 
   return (
     <div 
-      className="client-chat-inbox theme-light-enforced"
+      className="client-chat-inbox"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -569,7 +569,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
         minHeight: 0,
         maxHeight: '100%',
         flex: 1,
-        background: '#ffffff',
+        background: 'var(--color-surface, #ffffff)',
         fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
         overflow: 'hidden',
         boxSizing: 'border-box'
@@ -579,8 +579,8 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
       {/* 1. TOP CHANNEL SELECTOR HEADER */}
       <div style={{
         padding: '0.65rem 0.85rem',
-        background: '#ffffff',
-        borderBottom: '1.5px solid #e2e8f0',
+        background: 'var(--color-surface, #ffffff)',
+        borderBottom: '1.5px solid var(--color-border, #e2e8f0)',
         display: 'flex',
         alignItems: 'center',
         gap: '0.55rem',
@@ -593,8 +593,8 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
             type="button"
             onClick={onBack}
             style={{
-              background: '#f1f5f9',
-              border: '1.5px solid #cbd5e1',
+              background: 'var(--color-subtle, #f1f5f9)',
+              border: '1.5px solid var(--color-border, #cbd5e1)',
               borderRadius: '10px',
               width: '38px',
               height: '38px',
@@ -603,7 +603,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#0f172a',
+              color: 'var(--color-text-primary, #0f172a)',
               cursor: 'pointer',
               flexShrink: 0,
               transition: 'all 0.15s ease'
@@ -620,12 +620,12 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           flex: 1,
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          background: '#f1f5f9',
+          background: 'var(--color-subtle, #f1f5f9)',
           borderRadius: '12px',
           padding: '3px',
           gap: '3px',
           minWidth: 0,
-          border: '1px solid #e2e8f0'
+          border: '1px solid var(--color-border, #e2e8f0)'
         }}>
           <button
             type="button"
@@ -635,7 +635,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
               borderRadius: '9px',
               border: 'none',
               background: activeChannel === 'inbox' ? '#047857' : 'transparent',
-              color: activeChannel === 'inbox' ? '#ffffff' : '#475569',
+              color: activeChannel === 'inbox' ? '#ffffff' : 'var(--color-text-secondary, #475569)',
               fontWeight: 900,
               fontSize: '0.8rem',
               cursor: 'pointer',
@@ -661,7 +661,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
               borderRadius: '9px',
               border: 'none',
               background: activeChannel === 'support' ? '#047857' : 'transparent',
-              color: activeChannel === 'support' ? '#ffffff' : '#475569',
+              color: activeChannel === 'support' ? '#ffffff' : 'var(--color-text-secondary, #475569)',
               fontWeight: 900,
               fontSize: '0.8rem',
               cursor: 'pointer',
@@ -747,7 +747,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           flex: 1,
           overflowY: 'auto',
           padding: '0.85rem 1rem',
-          background: '#f8fafc',
+          background: 'var(--color-background, #f8fafc)',
           display: 'flex',
           flexDirection: 'column',
           gap: '0.65rem'
@@ -763,9 +763,9 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
             margin: 'auto',
             textAlign: 'center',
             padding: '2rem 1.25rem',
-            background: '#ffffff',
+            background: 'var(--color-surface, #ffffff)',
             borderRadius: '16px',
-            border: '1.5px solid #cbd5e1',
+            border: '1.5px solid var(--color-border, #cbd5e1)',
             maxWidth: '320px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
           }}>
@@ -782,10 +782,10 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
             }}>
               {activeChannel === 'inbox' ? <MessageSquare size={24} /> : <Headphones size={24} />}
             </div>
-            <h4 style={{ margin: '0 0 0.25rem', fontSize: '0.98rem', fontWeight: 900, color: '#0f172a' }}>
+            <h4 style={{ margin: '0 0 0.25rem', fontSize: '0.98rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
               {activeChannel === 'inbox' ? 'Studio Digitizer Chat' : 'Customer Support'}
             </h4>
-            <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', lineHeight: 1.4 }}>
+            <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--color-text-muted, #64748b)', lineHeight: 1.4 }}>
               {activeChannel === 'inbox' ? 'Send an artwork file, request a quote, or ask our digitizers a question.' : 'How can we help you today? Send a message below.'}
             </p>
           </div>
@@ -820,10 +820,10 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
             alignItems: 'center',
             gap: '0.5rem',
             padding: '0.45rem 0.85rem',
-            background: '#ffffff',
+            background: 'var(--color-surface, #ffffff)',
             borderRadius: '16px',
             width: 'fit-content',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--color-border, #e2e8f0)',
             boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
             margin: '0.25rem 0'
           }}>
@@ -875,8 +875,8 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
       {attachedFile && (
         <div style={{
           padding: '0.5rem 1rem',
-          background: '#ffffff',
-          borderTop: '1px solid #e2e8f0',
+          background: 'var(--color-surface, #ffffff)',
+          borderTop: '1px solid var(--color-border, #e2e8f0)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -884,7 +884,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <FileText size={16} style={{ color: '#059669' }} />
-            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
               {attachedFile.name}
             </span>
             <span style={{ fontSize: '0.68rem', background: '#ecfdf5', color: '#047857', fontWeight: 800, padding: '0.08rem 0.35rem', borderRadius: '4px' }}>
@@ -907,8 +907,8 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
         className="chat-input-bar-container"
         style={{
           padding: '0.65rem 0.85rem calc(0.65rem + env(safe-area-inset-bottom, 0px))',
-          background: '#ffffff',
-          borderTop: '1.5px solid #e2e8f0',
+          background: 'var(--color-surface, #ffffff)',
+          borderTop: '1.5px solid var(--color-border, #e2e8f0)',
           display: 'flex',
           alignItems: 'flex-end',
           gap: '0.45rem',
@@ -934,9 +934,9 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploadingAttachment}
           style={{
-            background: '#f8fafc',
-            border: '1.5px solid #cbd5e1',
-            color: '#475569',
+            background: 'var(--color-subtle, #f8fafc)',
+            border: '1.5px solid var(--color-border, #cbd5e1)',
+            color: 'var(--color-text-secondary, #475569)',
             width: '38px',
             height: '38px',
             borderRadius: '10px',
@@ -984,13 +984,13 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
             minHeight: '40px',
             maxHeight: '150px',
             borderRadius: '10px',
-            border: '1.5px solid #cbd5e1',
+            border: '1.5px solid var(--color-border, #cbd5e1)',
             padding: '0.55rem 0.85rem',
             fontSize: '16px',
             fontWeight: 500,
-            color: '#0f172a',
-            background: '#ffffff',
-            backgroundColor: '#ffffff',
+            color: 'var(--color-text-primary, #0f172a)',
+            background: 'var(--color-surface, #ffffff)',
+            backgroundColor: 'var(--color-surface, #ffffff)',
             outline: 'none',
             boxSizing: 'border-box',
             resize: 'none',
@@ -1037,17 +1037,17 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '0.25rem 1.25rem 0.5rem',
-          background: '#ffffff',
+          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
           borderTop: 'none',
           fontSize: '0.68rem',
-          color: '#64748b'
+          color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b'
         }}
       >
         <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          ⌨️ Press <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Enter</kbd> to send
+          ⌨️ Press <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1', color: isDark ? '#ffffff' : 'inherit', fontSize: '0.65rem', fontWeight: 700 }}>Enter</kbd> to send
         </span>
         <span>
-          <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Shift</kbd> + <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.65rem', fontWeight: 700 }}>Enter</kbd> for new line
+          <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1', color: isDark ? '#ffffff' : 'inherit', fontSize: '0.65rem', fontWeight: 700 }}>Shift</kbd> + <kbd style={{ padding: '0.05rem 0.35rem', borderRadius: '4px', background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1', color: isDark ? '#ffffff' : 'inherit', fontSize: '0.65rem', fontWeight: 700 }}>Enter</kbd> for new line
         </span>
       </div>
 

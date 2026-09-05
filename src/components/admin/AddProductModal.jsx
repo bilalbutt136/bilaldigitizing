@@ -14,7 +14,8 @@ import {
 const STANDARD_SIZES = ['S', 'M', 'L', 'XL', '2XL', '3XL', 'Adjustable', 'Custom Shape'];
 
 export const AddProductModal = ({ isOpen, onClose }) => {
-  const { storeProducts = [], updateStoreProducts, showToast } = useAppState();
+  const { storeProducts = [], updateStoreProducts, showToast, theme } = useAppState();
+  const isDark = theme === 'dark';
 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('tshirts');
@@ -131,7 +132,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
       <div 
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: '#ffffff',
+          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
           width: '100%',
           maxWidth: '680px',
           maxHeight: '92vh',
@@ -140,6 +141,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
+          border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1',
           animation: 'fadeIn 0.2s ease-out'
         }}
       >
@@ -186,13 +188,13 @@ export const AddProductModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Modal Body Form */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto', background: isDark ? 'var(--color-surface, #111827)' : '#ffffff' }}>
           <div style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             
             {/* Title & Category */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+                <label style={{ fontSize: '0.825rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)' }}>
                   Product Title *
                 </label>
                 <input 
@@ -207,7 +209,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
               </div>
 
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+                <label style={{ fontSize: '0.825rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)' }}>
                   Category *
                 </label>
                 <select
@@ -227,14 +229,14 @@ export const AddProductModal = ({ isOpen, onClose }) => {
             {/* Price, Unit, MOQ & Badge */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+                <label style={{ fontSize: '0.825rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)' }}>
                   Price Tag *
                 </label>
                 <input 
                   type="text"
                   required
                   className="form-control"
-                  style={{ marginTop: '0.35rem', fontWeight: 800, color: 'var(--orange-600)' }}
+                  style={{ marginTop: '0.35rem', fontWeight: 800, color: 'var(--orange-500)' }}
                   placeholder="$19.99"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
@@ -242,7 +244,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
               </div>
 
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+                <label style={{ fontSize: '0.825rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)' }}>
                   Unit Spec
                 </label>
                 <input 
@@ -256,7 +258,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
               </div>
 
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+                <label style={{ fontSize: '0.825rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)' }}>
                   MOQ (pcs) *
                 </label>
                 <input 
@@ -270,7 +272,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
               </div>
 
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+                <label style={{ fontSize: '0.825rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)' }}>
                   Badge Label
                 </label>
                 <input 
@@ -286,7 +288,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
 
             {/* Available Sizes Tag Selector */}
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)', display: 'block' }}>
+              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)', display: 'block' }}>
                 Select Available Sizes / Options:
               </label>
               <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
@@ -302,9 +304,9 @@ export const AddProductModal = ({ isOpen, onClose }) => {
                         borderRadius: 'var(--radius-sm)',
                         fontSize: '0.8rem',
                         fontWeight: 700,
-                        border: isSelected ? '2px solid var(--orange-500)' : '1px solid var(--border-color)',
-                        background: isSelected ? '#fff7ed' : '#ffffff',
-                        color: isSelected ? 'var(--orange-600)' : 'var(--navy-800)',
+                        border: isSelected ? '2px solid var(--orange-500)' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid var(--border-color)'),
+                        background: isSelected ? (isDark ? 'rgba(249, 115, 22, 0.2)' : '#fff7ed') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
+                        color: isSelected ? 'var(--orange-500)' : (isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-800)'),
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -320,7 +322,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
 
             {/* Colors / Backing Types */}
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)' }}>
                 Available Colors / Backings (Comma separated):
               </label>
               <input 
@@ -335,7 +337,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
 
             {/* Product Image Selector */}
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)' }}>
                 Product Photo / Mockup (File Upload or Image URL):
               </label>
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.35rem', alignItems: 'center' }}>
@@ -352,7 +354,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
                   onChange={(e) => setImage(e.target.value)}
                 />
                 <label style={{
-                  background: isUploading ? 'var(--navy-600)' : 'var(--navy-800)',
+                  background: isUploading ? 'var(--navy-600)' : (isDark ? 'var(--color-subtle, #1e293b)' : 'var(--navy-800)'),
                   color: '#ffffff',
                   padding: '0.55rem 0.85rem',
                   borderRadius: 'var(--radius-sm)',
@@ -363,6 +365,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
                   alignItems: 'center',
                   gap: '0.35rem',
                   whiteSpace: 'nowrap',
+                  border: isDark ? '1px solid var(--color-border, #334155)' : 'none',
                   opacity: isUploading ? 0.7 : 1
                 }}>
                   {isUploading ? 'Uploading...' : <><Upload size={14} /> Choose File</>}
@@ -378,7 +381,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
 
             {/* Description & Features */}
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)' }}>
                 Product Short Description:
               </label>
               <textarea 
@@ -391,7 +394,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+              <label style={{ fontSize: '0.825rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)' }}>
                 Feature Bullet Points (One per line):
               </label>
               <textarea 
@@ -408,8 +411,8 @@ export const AddProductModal = ({ isOpen, onClose }) => {
           {/* Modal Footer */}
           <div style={{
             padding: '1.25rem 1.75rem',
-            background: '#f8fafc',
-            borderTop: '1px solid var(--border-color)',
+            background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc',
+            borderTop: isDark ? '1px solid var(--color-border, #334155)' : '1px solid var(--border-color)',
             display: 'flex',
             justifyContent: 'flex-end',
             gap: '0.75rem'

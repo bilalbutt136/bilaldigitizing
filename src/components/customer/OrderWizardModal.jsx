@@ -294,8 +294,11 @@ export const OrderWizardModal = () => {
     loginWithApple,
     dynamicPricingTiers = [],
     siteSettings = {},
-    refreshOrders
+    refreshOrders,
+    theme
   } = useAppState();
+
+  const isDark = theme === 'dark';
 
   // Wizard Step State (1 to 5)
   const [step, setStep] = useState(1);
@@ -795,27 +798,28 @@ export const OrderWizardModal = () => {
         }}
       >
         <div 
-          className="theme-light-enforced"
+          className="order-wizard-dialog modal-content"
           onClick={(e) => e.stopPropagation()}
           style={{
-            background: '#ffffff',
+            background: 'var(--color-surface, #ffffff)',
+            color: 'var(--color-text-primary, #0f172a)',
             borderRadius: '20px',
             width: '100%',
             maxWidth: '1020px',
             maxHeight: '92vh',
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3)',
+            boxShadow: isDark ? '0 25px 60px rgba(0, 0, 0, 0.6)' : '0 20px 50px rgba(0, 0, 0, 0.3)',
             overflow: 'hidden',
-            border: '1.5px solid #cbd5e1',
+            border: '1.5px solid var(--color-border, #cbd5e1)',
             fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
           }}
         >
           {/* HEADER: Title & 5-Step Progress Stepper */}
           <div style={{
             padding: '1rem 1.5rem',
-            borderBottom: '1.5px solid #e2e8f0',
-            background: '#ffffff',
+            borderBottom: '1.5px solid var(--color-border, #e2e8f0)',
+            background: 'var(--color-surface, #ffffff)',
             display: 'flex',
             flexDirection: 'column',
             gap: '0.85rem'
@@ -834,7 +838,7 @@ export const OrderWizardModal = () => {
                   }}>
                     STEP {step} OF 5
                   </span>
-                  <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#0f172a' }}>
+                  <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
                     {step === 1 && 'Select Studio Service'}
                     {step === 2 && 'Choose Package & Quantity'}
                     {step === 3 && 'Upload Artwork & Instructions'}
@@ -842,7 +846,7 @@ export const OrderWizardModal = () => {
                     {step === 5 && 'Review & Confirm Order'}
                   </h2>
                 </div>
-                <p style={{ margin: '0.15rem 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                <p style={{ margin: '0.15rem 0 0', fontSize: '0.78rem', color: 'var(--color-text-muted, #64748b)' }}>
                   {step === 1 && 'Choose from our 3 specialized digitizing services.'}
                   {step === 2 && 'Select transparent packages and configure design quantities with volume savings.'}
                   {step === 3 && 'Attach multiple artwork files and specify any custom notes for our master digitizers.'}
@@ -855,7 +859,7 @@ export const OrderWizardModal = () => {
                 type="button"
                 onClick={() => setIsOrderWizardOpen(false)}
                 style={{
-                  background: '#f1f5f9',
+                  background: 'var(--color-subtle, #f1f5f9)',
                   border: 'none',
                   borderRadius: '50%',
                   width: '34px',
@@ -863,7 +867,7 @@ export const OrderWizardModal = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#0f172a',
+                  color: 'var(--color-text-primary, #0f172a)',
                   cursor: 'pointer',
                   transition: 'background 0.15s'
                 }}
@@ -878,10 +882,10 @@ export const OrderWizardModal = () => {
               style={{
                 display: 'flex',
                 gap: '0.35rem',
-                background: '#f8fafc',
+                background: 'var(--color-subtle, #f8fafc)',
                 padding: '0.3rem',
                 borderRadius: '10px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--color-border, #e2e8f0)',
                 overflowX: 'auto',
                 WebkitOverflowScrolling: 'touch'
               }}
@@ -909,9 +913,15 @@ export const OrderWizardModal = () => {
                     style={{
                       flex: '1 1 auto',
                       minWidth: '65px',
-                      background: isActive ? '#059669' : (isPassed ? '#ecfdf5' : 'transparent'),
-                      color: isActive ? '#ffffff' : (isPassed ? '#047857' : '#64748b'),
-                      border: isActive ? '1px solid #047857' : (isPassed ? '1px solid #a7f3d0' : '1px solid transparent'),
+                      background: isActive 
+                        ? '#059669' 
+                        : (isPassed ? (isDark ? 'rgba(5, 150, 105, 0.22)' : '#ecfdf5') : 'transparent'),
+                      color: isActive 
+                        ? '#ffffff' 
+                        : (isPassed ? (isDark ? '#34d399' : '#047857') : 'var(--color-text-muted, #64748b)'),
+                      border: isActive 
+                        ? '1px solid #047857' 
+                        : (isPassed ? (isDark ? '1px solid rgba(5, 150, 105, 0.45)' : '1px solid #a7f3d0') : '1px solid transparent'),
                       padding: '0.4rem 0.5rem',
                       minHeight: '36px',
                       borderRadius: '8px',
@@ -940,7 +950,7 @@ export const OrderWizardModal = () => {
             flex: 1,
             overflowY: 'auto',
             padding: '1.25rem 1.5rem',
-            background: '#ffffff',
+            background: 'var(--color-surface, #ffffff)',
             display: 'flex',
             flexDirection: 'column',
             gap: '1.15rem'
@@ -952,13 +962,23 @@ export const OrderWizardModal = () => {
             {step === 1 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
                 <div style={{ textAlign: 'center', marginBottom: '0.25rem' }}>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 900, color: '#047857', background: '#ecfdf5', padding: '0.2rem 0.65rem', borderRadius: '999px', border: '1px solid #a7f3d0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <span style={{ 
+                    fontSize: '0.72rem', 
+                    fontWeight: 900, 
+                    color: isDark ? '#34d399' : '#047857', 
+                    background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', 
+                    padding: '0.2rem 0.65rem', 
+                    borderRadius: '999px', 
+                    border: isDark ? '1px solid rgba(5, 150, 105, 0.4)' : '1px solid #a7f3d0', 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.05em' 
+                  }}>
                     Select Service Category
                   </span>
-                  <h3 style={{ margin: '0.45rem 0 0.2rem', fontSize: '1.45rem', fontWeight: 900, color: '#0f172a' }}>
+                  <h3 style={{ margin: '0.45rem 0 0.2rem', fontSize: '1.45rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
                     What would you like us to create for you?
                   </h3>
-                  <p style={{ margin: 0, fontSize: '0.84rem', color: '#64748b' }}>
+                  <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--color-text-muted, #64748b)' }}>
                     Select one of our 3 core services below to see related packages & options.
                   </p>
                 </div>
@@ -976,8 +996,10 @@ export const OrderWizardModal = () => {
                           setStep(2);
                         }}
                         style={{
-                          background: isSelected ? opt.bgColor : '#ffffff',
-                          border: isSelected ? `2.5px solid ${opt.color}` : '1.5px solid #cbd5e1',
+                          background: isSelected 
+                            ? (isDark ? 'rgba(5, 150, 105, 0.16)' : opt.bgColor) 
+                            : 'var(--color-subtle, #ffffff)',
+                          border: isSelected ? `2.5px solid ${opt.color}` : '1.5px solid var(--color-border, #cbd5e1)',
                           borderRadius: '16px',
                           padding: '1.4rem 1.15rem',
                           display: 'flex',
@@ -985,7 +1007,7 @@ export const OrderWizardModal = () => {
                           alignItems: 'center',
                           textAlign: 'center',
                           cursor: 'pointer',
-                          boxShadow: isSelected ? `0 8px 24px rgba(0,0,0,0.08)` : '0 2px 8px rgba(0,0,0,0.02)',
+                          boxShadow: isSelected ? `0 8px 24px rgba(0,0,0,0.18)` : '0 2px 8px rgba(0,0,0,0.04)',
                           transition: 'all 0.18s ease',
                           position: 'relative'
                         }}
@@ -994,31 +1016,47 @@ export const OrderWizardModal = () => {
                           width: '54px',
                           height: '54px',
                           borderRadius: '16px',
-                          background: isSelected ? opt.color : '#f1f5f9',
+                          background: isSelected ? opt.color : (isDark ? 'rgba(255, 255, 255, 0.08)' : '#f1f5f9'),
                           color: isSelected ? '#ffffff' : opt.color,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           marginBottom: '0.85rem',
-                          boxShadow: isSelected ? `0 4px 14px rgba(0,0,0,0.15)` : 'none'
+                          boxShadow: isSelected ? `0 4px 14px rgba(0,0,0,0.2)` : 'none'
                         }}>
                           <IconC size={28} strokeWidth={2.2} />
                         </div>
 
-                        <h4 style={{ margin: '0 0 0.35rem', fontSize: '1.12rem', fontWeight: 900, color: '#0f172a' }}>
+                        <h4 style={{ margin: '0 0 0.35rem', fontSize: '1.12rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
                           {opt.title}
                         </h4>
 
                         <div style={{ display: 'flex', gap: '0.35rem', marginBottom: '0.65rem' }}>
-                          <span style={{ fontSize: '0.72rem', fontWeight: 900, color: opt.color, background: opt.bgColor, border: `1px solid ${opt.borderColor}`, padding: '0.12rem 0.5rem', borderRadius: '5px' }}>
+                          <span style={{ 
+                            fontSize: '0.72rem', 
+                            fontWeight: 900, 
+                            color: opt.color, 
+                            background: isDark ? 'rgba(255, 255, 255, 0.08)' : opt.bgColor, 
+                            border: `1px solid ${opt.borderColor}`, 
+                            padding: '0.12rem 0.5rem', 
+                            borderRadius: '5px' 
+                          }}>
                             {opt.priceText}
                           </span>
-                          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#475569', background: '#f1f5f9', padding: '0.12rem 0.5rem', borderRadius: '5px' }}>
+                          <span style={{ 
+                            fontSize: '0.72rem', 
+                            fontWeight: 800, 
+                            color: 'var(--color-text-secondary, #475569)', 
+                            background: 'var(--color-subtle, #f1f5f9)', 
+                            padding: '0.12rem 0.5rem', 
+                            borderRadius: '5px',
+                            border: '1px solid var(--color-border, transparent)'
+                          }}>
                             {opt.badge}
                           </span>
                         </div>
 
-                        <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', lineHeight: 1.45, flex: 1 }}>
+                        <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--color-text-muted, #64748b)', lineHeight: 1.45, flex: 1 }}>
                           {opt.description}
                         </p>
 
@@ -1032,9 +1070,9 @@ export const OrderWizardModal = () => {
                           style={{
                             marginTop: '1rem',
                             width: '100%',
-                            background: isSelected ? opt.color : '#f8fafc',
-                            color: isSelected ? '#ffffff' : '#0f172a',
-                            border: isSelected ? 'none' : '1px solid #cbd5e1',
+                            background: isSelected ? opt.color : 'var(--color-surface, #f8fafc)',
+                            color: isSelected ? '#ffffff' : 'var(--color-text-primary, #0f172a)',
+                            border: isSelected ? 'none' : '1px solid var(--color-border, #cbd5e1)',
                             borderRadius: '10px',
                             padding: '0.55rem',
                             fontSize: '0.82rem',
@@ -1062,7 +1100,15 @@ export const OrderWizardModal = () => {
             {step === 2 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
                 {/* Service Tab Switcher */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', background: '#f8fafc', padding: '0.35rem', borderRadius: '12px', border: '1.5px solid #cbd5e1' }}>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(3, 1fr)', 
+                  gap: '0.5rem', 
+                  background: 'var(--color-subtle, #f8fafc)', 
+                  padding: '0.35rem', 
+                  borderRadius: '12px', 
+                  border: '1.5px solid var(--color-border, #cbd5e1)' 
+                }}>
                   {SERVICE_OPTIONS.map(tab => {
                     const isSelected = selectedService === tab.id;
                     const IconTab = tab.icon;
@@ -1076,8 +1122,8 @@ export const OrderWizardModal = () => {
                           padding: '0.55rem 0.5rem',
                           borderRadius: '8px',
                           border: isSelected ? `1.5px solid ${tab.color}` : '1px solid transparent',
-                          background: isSelected ? '#ffffff' : 'transparent',
-                          color: isSelected ? tab.color : '#475569',
+                          background: isSelected ? 'var(--color-surface, #ffffff)' : 'transparent',
+                          color: isSelected ? tab.color : 'var(--color-text-secondary, #475569)',
                           fontWeight: isSelected ? 900 : 700,
                           fontSize: '0.84rem',
                           display: 'flex',
@@ -1085,7 +1131,7 @@ export const OrderWizardModal = () => {
                           justifyContent: 'center',
                           gap: '0.45rem',
                           cursor: 'pointer',
-                          boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                          boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
                           transition: 'all 0.15s ease'
                         }}
                       >
@@ -1098,8 +1144,8 @@ export const OrderWizardModal = () => {
 
                 {/* QUANTITY SELECTOR & PRICING WIDGET */}
                 <div style={{
-                  background: '#f8fafc',
-                  border: '1.5px solid #cbd5e1',
+                  background: 'var(--color-subtle, #f8fafc)',
+                  border: '1.5px solid var(--color-border, #cbd5e1)',
                   borderRadius: '14px',
                   padding: '0.95rem 1.15rem',
                   display: 'flex',
@@ -1108,16 +1154,24 @@ export const OrderWizardModal = () => {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f172a' }}>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
                         {selectedService === 'patch' ? 'Patch Production Quantity (Pcs)' : 'Design Order Quantity'}
                       </span>
-                      <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #64748b)', display: 'block' }}>
                         {selectedService === 'patch' ? 'Minimum 50 pcs batch • Factory wholesale pricing' : 'Add multiple designs to qualify for volume discounts up to 25% off'}
                       </span>
                     </div>
 
                     {/* Quantity Stepper */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '10px', padding: '0.2rem' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.35rem', 
+                      background: 'var(--color-surface, #ffffff)', 
+                      border: '1.5px solid var(--color-border, #cbd5e1)', 
+                      borderRadius: '10px', 
+                      padding: '0.2rem' 
+                    }}>
                       <button
                         type="button"
                         disabled={selectedService === 'patch' && quantity <= 50}
@@ -1127,8 +1181,8 @@ export const OrderWizardModal = () => {
                           height: '32px',
                           borderRadius: '8px',
                           border: 'none',
-                          background: '#f1f5f9',
-                          color: (selectedService === 'patch' && quantity <= 50) ? '#94a3b8' : '#0f172a',
+                          background: 'var(--color-subtle, #f1f5f9)',
+                          color: (selectedService === 'patch' && quantity <= 50) ? 'var(--color-text-muted, #94a3b8)' : 'var(--color-text-primary, #0f172a)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -1149,7 +1203,7 @@ export const OrderWizardModal = () => {
                           textAlign: 'center',
                           fontWeight: 900,
                           fontSize: '0.95rem',
-                          color: (selectedService === 'patch' && quantity < 50) ? '#dc2626' : '#0f172a',
+                          color: (selectedService === 'patch' && quantity < 50) ? '#dc2626' : 'var(--color-text-primary, #0f172a)',
                           border: 'none',
                           background: 'transparent',
                           outline: 'none'
@@ -1164,8 +1218,8 @@ export const OrderWizardModal = () => {
                           height: '32px',
                           borderRadius: '8px',
                           border: 'none',
-                          background: '#ecfdf5',
-                          color: '#047857',
+                          background: isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5',
+                          color: isDark ? '#34d399' : '#047857',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -1181,11 +1235,11 @@ export const OrderWizardModal = () => {
                   {/* Warning notice if quantity is less than 50 for patches */}
                   {selectedService === 'patch' && (quantity < 50 || parseInt(quantityInput, 10) < 50) && (
                     <div style={{
-                      background: '#fef2f2',
-                      border: '1px solid #fecaca',
+                      background: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2',
+                      border: isDark ? '1px solid rgba(239, 68, 68, 0.35)' : '1px solid #fecaca',
                       borderRadius: '8px',
                       padding: '0.4rem 0.75rem',
-                      color: '#b91c1c',
+                      color: isDark ? '#f87171' : '#b91c1c',
                       fontSize: '0.76rem',
                       fontWeight: 800,
                       display: 'flex',
@@ -1209,9 +1263,15 @@ export const OrderWizardModal = () => {
                         style={{
                           padding: '0.25rem 0.75rem',
                           borderRadius: '6px',
-                          border: quantity === preset ? '1.5px solid #059669' : '1px solid #cbd5e1',
-                          background: quantity === preset ? '#ecfdf5' : '#ffffff',
-                          color: quantity === preset ? '#047857' : '#475569',
+                          border: quantity === preset 
+                            ? '1.5px solid #059669' 
+                            : '1px solid var(--color-border, #cbd5e1)',
+                          background: quantity === preset 
+                            ? (isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5') 
+                            : 'var(--color-surface, #ffffff)',
+                          color: quantity === preset 
+                            ? (isDark ? '#34d399' : '#047857') 
+                            : 'var(--color-text-secondary, #475569)',
                           fontWeight: 800,
                           fontSize: '0.75rem',
                           cursor: 'pointer'
@@ -1224,9 +1284,9 @@ export const OrderWizardModal = () => {
 
                   {/* Live Calculation Banner */}
                   <div style={{
-                    background: '#ffffff',
+                    background: 'var(--color-surface, #ffffff)',
                     borderRadius: '8px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid var(--color-border, #e2e8f0)',
                     padding: '0.55rem 0.85rem',
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -1234,15 +1294,22 @@ export const OrderWizardModal = () => {
                     fontSize: '0.82rem'
                   }}>
                     <div>
-                      <span style={{ color: '#64748b' }}>Rate: </span>
-                      <strong style={{ color: '#0f172a' }}>${unitPrice.toFixed(2)}</strong> × <strong style={{ color: '#0f172a' }}>{quantity} {selectedService === 'patch' ? 'pcs' : 'designs'}</strong>
+                      <span style={{ color: 'var(--color-text-muted, #64748b)' }}>Rate: </span>
+                      <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>${unitPrice.toFixed(2)}</strong> × <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{quantity} {selectedService === 'patch' ? 'pcs' : 'designs'}</strong>
                       {volumeDiscountPercent > 0 && (
-                        <span style={{ marginLeft: '0.45rem', color: '#059669', fontWeight: 900, background: '#ecfdf5', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                        <span style={{ 
+                          marginLeft: '0.45rem', 
+                          color: isDark ? '#34d399' : '#059669', 
+                          fontWeight: 900, 
+                          background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', 
+                          padding: '0.1rem 0.4rem', 
+                          borderRadius: '4px' 
+                        }}>
                           -{volumeDiscountPercent}% Volume Savings
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: '1.08rem', fontWeight: 900, color: '#047857' }}>
+                    <div style={{ fontSize: '1.08rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
                       Subtotal: ${totalPrice.toFixed(2)}
                     </div>
                   </div>
@@ -1258,12 +1325,14 @@ export const OrderWizardModal = () => {
                         key={pkg.id || idx}
                         onClick={() => handleSelectPackage(pkg)}
                         style={{
-                          border: isSelected ? '2.5px solid #059669' : '1.5px solid #cbd5e1',
-                          background: isSelected ? '#f0fdf4' : '#ffffff',
+                          border: isSelected ? '2.5px solid #059669' : '1.5px solid var(--color-border, #cbd5e1)',
+                          background: isSelected 
+                            ? (isDark ? 'rgba(5, 150, 105, 0.16)' : '#f0fdf4') 
+                            : 'var(--color-subtle, #ffffff)',
                           borderRadius: '16px',
                           padding: '1.15rem 1rem',
                           cursor: 'pointer',
-                          boxShadow: isSelected ? '0 4px 16px rgba(5, 150, 105, 0.14)' : '0 2px 6px rgba(0,0,0,0.02)',
+                          boxShadow: isSelected ? '0 4px 16px rgba(5, 150, 105, 0.2)' : '0 2px 6px rgba(0,0,0,0.04)',
                           display: 'flex',
                           flexDirection: 'column',
                           gap: '0.55rem',
@@ -1272,8 +1341,12 @@ export const OrderWizardModal = () => {
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                           <span style={{
-                            background: isSelected ? '#059669' : '#f1f5f9',
-                            color: isSelected ? '#ffffff' : '#475569',
+                            background: isSelected 
+                              ? '#059669' 
+                              : (isDark ? 'rgba(255, 255, 255, 0.08)' : '#f1f5f9'),
+                            color: isSelected 
+                              ? '#ffffff' 
+                              : 'var(--color-text-secondary, #475569)',
                             fontSize: '0.62rem',
                             fontWeight: 900,
                             padding: '0.15rem 0.5rem',
@@ -1284,27 +1357,33 @@ export const OrderWizardModal = () => {
                           </span>
 
                           <div style={{ textAlign: 'right' }}>
-                            <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#047857' }}>
+                            <span style={{ fontSize: '1.25rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
                               ${Number(pkg.price).toFixed(pkg.price % 1 === 0 ? 0 : 2)}
                             </span>
-                            <span style={{ fontSize: '0.65rem', color: '#64748b', display: 'block', fontWeight: 700 }}>
+                            <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted, #64748b)', display: 'block', fontWeight: 700 }}>
                               {selectedService === 'patch' ? '/ pc' : 'flat rate'}
                             </span>
                           </div>
                         </div>
 
-                        <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 900, color: '#0f172a' }}>
+                        <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
                           {pkg.title}
                         </h4>
 
-                        <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', lineHeight: 1.35, flex: 1 }}>
+                        <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted, #64748b)', lineHeight: 1.35, flex: 1 }}>
                           {pkg.subtitle}
                         </p>
 
                         {Array.isArray(pkg.features) && pkg.features.length > 0 && (
-                          <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                          <div style={{ 
+                            borderTop: '1px dashed var(--color-border, #cbd5e1)', 
+                            paddingTop: '0.5rem', 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            gap: '0.25rem' 
+                          }}>
                             {pkg.features.slice(0, 3).map((feat, fIdx) => (
-                              <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: '#334155' }}>
+                              <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: 'var(--color-text-secondary, #334155)' }}>
                                 <CheckCircle2 size={13} style={{ color: '#059669', flexShrink: 0 }} />
                                 <span>{feat}</span>
                               </div>
@@ -1325,16 +1404,24 @@ export const OrderWizardModal = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
                 
                 {/* Header info badge */}
-                <div style={{ background: '#f0fdf4', border: '1.5px solid #a7f3d0', borderRadius: '12px', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ 
+                  background: isDark ? 'rgba(5, 150, 105, 0.16)' : '#f0fdf4', 
+                  border: isDark ? '1.5px solid rgba(5, 150, 105, 0.4)' : '1.5px solid #a7f3d0', 
+                  borderRadius: '12px', 
+                  padding: '0.75rem 1rem', 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center' 
+                }}>
                   <div>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#047857', textTransform: 'uppercase' }}>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: isDark ? '#34d399' : '#047857', textTransform: 'uppercase' }}>
                       Configuring: {activePkg?.title}
                     </span>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 900, color: '#0f172a' }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
                       Quantity: {quantity} {selectedService === 'patch' ? 'pcs' : 'design(s)'}
                     </div>
                   </div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#047857' }}>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
                     ${totalPrice.toFixed(2)}
                   </div>
                 </div>
@@ -1342,10 +1429,10 @@ export const OrderWizardModal = () => {
                 {/* Upload Dropzone */}
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                    <label style={{ fontSize: '0.85rem', fontWeight: 900, color: '#0f172a' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
                       Attach Artwork & Reference Files <span style={{ color: '#ef4444' }}>*</span>
                     </label>
-                    <span style={{ fontSize: '0.72rem', color: '#047857', fontWeight: 800 }}>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? '#34d399' : '#047857', fontWeight: 800 }}>
                       Multiple files supported
                     </span>
                   </div>
@@ -1366,7 +1453,7 @@ export const OrderWizardModal = () => {
                       borderRadius: '16px',
                       padding: '1.75rem 1.25rem',
                       textAlign: 'center',
-                      background: '#f8fafc',
+                      background: 'var(--color-subtle, #f8fafc)',
                       cursor: 'pointer',
                       display: 'flex',
                       flexDirection: 'column',
@@ -1379,8 +1466,8 @@ export const OrderWizardModal = () => {
                       width: '50px',
                       height: '50px',
                       borderRadius: '50%',
-                      background: '#ecfdf5',
-                      color: '#059669',
+                      background: isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5',
+                      color: isDark ? '#34d399' : '#059669',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -1388,10 +1475,10 @@ export const OrderWizardModal = () => {
                       {isUploading ? <Loader2 size={24} className="animate-spin" /> : <Upload size={24} />}
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.98rem', fontWeight: 900, color: '#0f172a' }}>
+                      <div style={{ fontSize: '0.98rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
                         {isUploading ? 'Uploading and verifying files...' : 'Drag and Drop Artwork Files Here, or Click to Browse'}
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.15rem' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #64748b)', marginTop: '0.15rem' }}>
                         Supported formats: JPG, PNG, PDF, AI, EPS, SVG, DST, PES, EMB, PSD up to 50MB
                       </div>
                     </div>
@@ -1431,7 +1518,7 @@ export const OrderWizardModal = () => {
                   {uploadedFiles.length > 0 && (
                     <div style={{ marginTop: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0f172a' }}>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                           Attached Files ({uploadedFiles.length})
                         </span>
                         <button
@@ -1440,7 +1527,7 @@ export const OrderWizardModal = () => {
                           style={{
                             background: 'none',
                             border: 'none',
-                            color: '#047857',
+                            color: isDark ? '#34d399' : '#047857',
                             fontSize: '0.75rem',
                             fontWeight: 800,
                             cursor: 'pointer',
@@ -1458,8 +1545,8 @@ export const OrderWizardModal = () => {
                           <div
                             key={file.id || fIdx}
                             style={{
-                              border: '1.5px solid #cbd5e1',
-                              background: '#f8fafc',
+                              border: '1.5px solid var(--color-border, #cbd5e1)',
+                              background: 'var(--color-subtle, #f8fafc)',
                               borderRadius: '10px',
                               padding: '0.6rem 0.85rem',
                               display: 'flex',
@@ -1473,8 +1560,8 @@ export const OrderWizardModal = () => {
                                 width: '30px',
                                 height: '30px',
                                 borderRadius: '6px',
-                                background: '#ecfdf5',
-                                color: '#047857',
+                                background: isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5',
+                                color: isDark ? '#34d399' : '#047857',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -1483,11 +1570,11 @@ export const OrderWizardModal = () => {
                                 <FileCheck size={16} />
                               </div>
                               <div style={{ minWidth: 0 }}>
-                                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                                   {file.name}
                                 </div>
-                                <div style={{ fontSize: '0.68rem', color: '#64748b' }}>
-                                  {file.size} • <span style={{ color: '#059669', fontWeight: 700 }}>{file.format}</span>
+                                <div style={{ fontSize: '0.68rem', color: 'var(--color-text-muted, #64748b)' }}>
+                                  {file.size} • <span style={{ color: isDark ? '#34d399' : '#059669', fontWeight: 700 }}>{file.format}</span>
                                 </div>
                               </div>
                             </div>
@@ -1496,7 +1583,7 @@ export const OrderWizardModal = () => {
                               type="button"
                               onClick={() => handleRemoveFile(file.id)}
                               style={{
-                                background: '#fee2e2',
+                                background: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
                                 border: 'none',
                                 borderRadius: '50%',
                                 width: '24px',
@@ -1520,7 +1607,7 @@ export const OrderWizardModal = () => {
 
                 {/* Special Instructions */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.35rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                     Special Instructions / Notes
                   </label>
                   <textarea
@@ -1532,9 +1619,10 @@ export const OrderWizardModal = () => {
                       width: '100%',
                       padding: '0.65rem 0.95rem',
                       borderRadius: '10px',
-                      border: '1.5px solid #cbd5e1',
+                      border: '1.5px solid var(--color-border, #cbd5e1)',
                       fontSize: '0.85rem',
-                      color: '#0f172a',
+                      color: 'var(--color-text-primary, #0f172a)',
+                      background: 'var(--color-input, #ffffff)',
                       boxSizing: 'border-box',
                       resize: 'none'
                     }}
@@ -1552,12 +1640,12 @@ export const OrderWizardModal = () => {
                 
                 {/* Dimensions: Width & Height */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.35rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                     Target Dimensions (Inches)
                   </label>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                     <div>
-                      <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700 }}>Width</span>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>Width</span>
                       <input
                         type="text"
                         value={widthInches}
@@ -1567,16 +1655,17 @@ export const OrderWizardModal = () => {
                           width: '100%',
                           padding: '0.65rem 0.85rem',
                           borderRadius: '8px',
-                          border: '1.5px solid #cbd5e1',
+                          border: '1.5px solid var(--color-border, #cbd5e1)',
                           fontSize: '0.85rem',
                           fontWeight: 700,
-                          color: '#0f172a',
+                          color: 'var(--color-text-primary, #0f172a)',
+                          background: 'var(--color-input, #ffffff)',
                           boxSizing: 'border-box'
                         }}
                       />
                     </div>
                     <div>
-                      <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700 }}>Height</span>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>Height</span>
                       <input
                         type="text"
                         value={heightInches}
@@ -1586,10 +1675,11 @@ export const OrderWizardModal = () => {
                           width: '100%',
                           padding: '0.65rem 0.85rem',
                           borderRadius: '8px',
-                          border: '1.5px solid #cbd5e1',
+                          border: '1.5px solid var(--color-border, #cbd5e1)',
                           fontSize: '0.85rem',
                           fontWeight: 700,
-                          color: '#0f172a',
+                          color: 'var(--color-text-primary, #0f172a)',
+                          background: 'var(--color-input, #ffffff)',
                           boxSizing: 'border-box'
                         }}
                       />
@@ -1601,7 +1691,7 @@ export const OrderWizardModal = () => {
                 {selectedService === 'embroidery' && (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.35rem' }}>
+                      <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                         Placement
                       </label>
                       <select
@@ -1611,11 +1701,11 @@ export const OrderWizardModal = () => {
                           width: '100%',
                           padding: '0.65rem 0.85rem',
                           borderRadius: '8px',
-                          border: '1.5px solid #cbd5e1',
+                          border: '1.5px solid var(--color-border, #cbd5e1)',
                           fontSize: '0.85rem',
                           fontWeight: 700,
-                          color: '#0f172a',
-                          background: '#ffffff'
+                          color: 'var(--color-text-primary, #0f172a)',
+                          background: 'var(--color-input, #ffffff)'
                         }}
                       >
                         <option value='Left Chest / Polo (up to 4.0")'>Left Chest / Polo (up to 4.0")</option>
@@ -1627,7 +1717,7 @@ export const OrderWizardModal = () => {
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.35rem' }}>
+                      <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                         Fabric Type
                       </label>
                       <select
@@ -1637,11 +1727,11 @@ export const OrderWizardModal = () => {
                           width: '100%',
                           padding: '0.65rem 0.85rem',
                           borderRadius: '8px',
-                          border: '1.5px solid #cbd5e1',
+                          border: '1.5px solid var(--color-border, #cbd5e1)',
                           fontSize: '0.85rem',
                           fontWeight: 700,
-                          color: '#0f172a',
-                          background: '#ffffff'
+                          color: 'var(--color-text-primary, #0f172a)',
+                          background: 'var(--color-input, #ffffff)'
                         }}
                       >
                         <option value="Cotton / Pique Knit">Cotton / Pique Knit Polo</option>
@@ -1657,7 +1747,7 @@ export const OrderWizardModal = () => {
                 {selectedService === 'patch' && (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.35rem' }}>
+                      <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                         Patch Style
                       </label>
                       <select
@@ -1667,11 +1757,11 @@ export const OrderWizardModal = () => {
                           width: '100%',
                           padding: '0.65rem 0.85rem',
                           borderRadius: '8px',
-                          border: '1.5px solid #cbd5e1',
+                          border: '1.5px solid var(--color-border, #cbd5e1)',
                           fontSize: '0.85rem',
                           fontWeight: 700,
-                          color: '#0f172a',
-                          background: '#ffffff'
+                          color: 'var(--color-text-primary, #0f172a)',
+                          background: 'var(--color-input, #ffffff)'
                         }}
                       >
                         <option value="Embroidered">🧵 Embroidered Patch</option>
@@ -1682,7 +1772,7 @@ export const OrderWizardModal = () => {
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.35rem' }}>
+                      <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                         Backing Type
                       </label>
                       <select
@@ -1692,11 +1782,11 @@ export const OrderWizardModal = () => {
                           width: '100%',
                           padding: '0.65rem 0.85rem',
                           borderRadius: '8px',
-                          border: '1.5px solid #cbd5e1',
+                          border: '1.5px solid var(--color-border, #cbd5e1)',
                           fontSize: '0.85rem',
                           fontWeight: 700,
-                          color: '#0f172a',
-                          background: '#ffffff'
+                          color: 'var(--color-text-primary, #0f172a)',
+                          background: 'var(--color-input, #ffffff)'
                         }}
                       >
                         <option value="Iron-On">Heat Press / Iron-On (Standard)</option>
@@ -1710,7 +1800,7 @@ export const OrderWizardModal = () => {
 
                 {/* Formats checkboxes */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.35rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                     Required Output Formats
                   </label>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -1730,9 +1820,13 @@ export const OrderWizardModal = () => {
                           style={{
                             padding: '0.35rem 0.75rem',
                             borderRadius: '6px',
-                            border: isSel ? '1.5px solid #059669' : '1px solid #cbd5e1',
-                            background: isSel ? '#ecfdf5' : '#ffffff',
-                            color: isSel ? '#047857' : '#475569',
+                            border: isSel ? '1.5px solid #059669' : '1px solid var(--color-border, #cbd5e1)',
+                            background: isSel 
+                              ? (isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5') 
+                              : 'var(--color-subtle, #ffffff)',
+                            color: isSel 
+                              ? (isDark ? '#34d399' : '#047857') 
+                              : 'var(--color-text-secondary, #475569)',
                             fontWeight: 800,
                             fontSize: '0.78rem',
                             cursor: 'pointer',
@@ -1753,8 +1847,10 @@ export const OrderWizardModal = () => {
                 <div
                   onClick={() => setIsRush(!isRush)}
                   style={{
-                    border: isRush ? '2px solid #ea580c' : '1.5px solid #cbd5e1',
-                    background: isRush ? '#fff7ed' : '#ffffff',
+                    border: isRush ? '2px solid #ea580c' : '1.5px solid var(--color-border, #cbd5e1)',
+                    background: isRush 
+                      ? (isDark ? 'rgba(234, 88, 12, 0.16)' : '#fff7ed') 
+                      : 'var(--color-subtle, #ffffff)',
                     borderRadius: '12px',
                     padding: '0.85rem 1rem',
                     cursor: 'pointer',
@@ -1770,7 +1866,7 @@ export const OrderWizardModal = () => {
                       width: '36px',
                       height: '36px',
                       borderRadius: '8px',
-                      background: isRush ? '#ea580c' : '#f1f5f9',
+                      background: isRush ? '#ea580c' : (isDark ? 'rgba(255, 255, 255, 0.08)' : '#f1f5f9'),
                       color: isRush ? '#ffffff' : '#ea580c',
                       display: 'flex',
                       alignItems: 'center',
@@ -1779,11 +1875,11 @@ export const OrderWizardModal = () => {
                       <Zap size={18} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f172a' }}>
+                      <div style={{ fontSize: '0.88rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
                         ⚡ Express Rush Turnaround (2–4 Hours)
                       </div>
-                      <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                        Priority desk allocation & instant master digitizer queue (+$${selectedService === 'patch' ? '25.00' : '10.00'})
+                      <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #64748b)' }}>
+                        Priority desk allocation & instant master digitizer queue (+${selectedService === 'patch' ? '25.00' : '10.00'})
                       </div>
                     </div>
                   </div>
@@ -1792,8 +1888,8 @@ export const OrderWizardModal = () => {
                     width: '22px',
                     height: '22px',
                     borderRadius: '6px',
-                    border: isRush ? '2px solid #ea580c' : '2px solid #cbd5e1',
-                    background: isRush ? '#ea580c' : '#ffffff',
+                    border: isRush ? '2px solid #ea580c' : '2px solid var(--color-border, #cbd5e1)',
+                    background: isRush ? '#ea580c' : 'var(--color-surface, #ffffff)',
                     color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
@@ -1815,32 +1911,40 @@ export const OrderWizardModal = () => {
                 
                 {/* Summary Card */}
                 <div style={{
-                  background: '#f8fafc',
-                  border: '1.5px solid #cbd5e1',
+                  background: 'var(--color-subtle, #f8fafc)',
+                  border: '1.5px solid var(--color-border, #cbd5e1)',
                   borderRadius: '16px',
                   padding: '1.15rem',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '0.85rem'
                 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--color-border, #e2e8f0)', paddingBottom: '0.75rem' }}>
                     <div>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#059669', background: '#ecfdf5', padding: '0.15rem 0.5rem', borderRadius: '4px', textTransform: 'uppercase' }}>
+                      <span style={{ 
+                        fontSize: '0.68rem', 
+                        fontWeight: 900, 
+                        color: isDark ? '#34d399' : '#059669', 
+                        background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', 
+                        padding: '0.15rem 0.5rem', 
+                        borderRadius: '4px', 
+                        textTransform: 'uppercase' 
+                      }}>
                         {selectedService === 'patch' ? 'Custom Patches' : (selectedService === 'vector' ? 'Vector Art' : 'Embroidery Digitizing')}
                       </span>
-                      <h3 style={{ margin: '0.35rem 0 0.15rem', fontSize: '1.15rem', fontWeight: 900, color: '#0f172a' }}>
+                      <h3 style={{ margin: '0.35rem 0 0.15rem', fontSize: '1.15rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
                         {orderTitle || activePkg?.title}
                       </h3>
-                      <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                        Package Tier: <strong style={{ color: '#0f172a' }}>{activePkg?.title}</strong> • Quantity: <strong style={{ color: '#0f172a' }}>{quantity} {selectedService === 'patch' ? 'pcs' : 'designs'}</strong>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted, #64748b)' }}>
+                        Package Tier: <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{activePkg?.title}</strong> • Quantity: <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{quantity} {selectedService === 'patch' ? 'pcs' : 'designs'}</strong>
                       </div>
                     </div>
 
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#047857' }}>
+                      <div style={{ fontSize: '1.45rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
                         ${totalPrice.toFixed(2)}
                       </div>
-                      <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>
                         Live Verified Total
                       </span>
                     </div>
@@ -1848,19 +1952,19 @@ export const OrderWizardModal = () => {
 
                   {/* Specs row */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.65rem', fontSize: '0.78rem' }}>
-                    <div style={{ background: '#ffffff', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                      <span style={{ color: '#64748b', display: 'block', fontSize: '0.68rem' }}>Dimensions</span>
-                      <strong style={{ color: '#0f172a' }}>{widthInches}" × {heightInches}"</strong>
+                    <div style={{ background: 'var(--color-surface, #ffffff)', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border, #e2e8f0)' }}>
+                      <span style={{ color: 'var(--color-text-muted, #64748b)', display: 'block', fontSize: '0.68rem' }}>Dimensions</span>
+                      <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{widthInches}" × {heightInches}"</strong>
                     </div>
 
-                    <div style={{ background: '#ffffff', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                      <span style={{ color: '#64748b', display: 'block', fontSize: '0.68rem' }}>Formats</span>
-                      <strong style={{ color: '#0f172a' }}>{selectedFormats.join(', ')}</strong>
+                    <div style={{ background: 'var(--color-surface, #ffffff)', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border, #e2e8f0)' }}>
+                      <span style={{ color: 'var(--color-text-muted, #64748b)', display: 'block', fontSize: '0.68rem' }}>Formats</span>
+                      <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{selectedFormats.join(', ')}</strong>
                     </div>
 
-                    <div style={{ background: '#ffffff', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                      <span style={{ color: '#64748b', display: 'block', fontSize: '0.68rem' }}>Speed</span>
-                      <strong style={{ color: isRush ? '#ea580c' : '#059669' }}>
+                    <div style={{ background: 'var(--color-surface, #ffffff)', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border, #e2e8f0)' }}>
+                      <span style={{ color: 'var(--color-text-muted, #64748b)', display: 'block', fontSize: '0.68rem' }}>Speed</span>
+                      <strong style={{ color: isRush ? '#ea580c' : (isDark ? '#34d399' : '#059669') }}>
                         {isRush ? '⚡ 2–4H Express Rush' : activePkg?.turnaround}
                       </strong>
                     </div>
@@ -1868,9 +1972,9 @@ export const OrderWizardModal = () => {
 
                   {/* Attached files preview */}
                   {uploadedFiles.length > 0 && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', background: '#ffffff', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.78rem' }}>
-                      <FileCheck size={16} style={{ color: '#059669' }} />
-                      <span>{uploadedFiles.length} file(s) attached: <strong style={{ color: '#0f172a' }}>{uploadedFiles.map(f => f.name).join(', ')}</strong></span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', background: 'var(--color-surface, #ffffff)', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border, #e2e8f0)', fontSize: '0.78rem' }}>
+                      <FileCheck size={16} style={{ color: isDark ? '#34d399' : '#059669' }} />
+                      <span style={{ color: 'var(--color-text-secondary, #334155)' }}>{uploadedFiles.length} file(s) attached: <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{uploadedFiles.map(f => f.name).join(', ')}</strong></span>
                     </div>
                   )}
 
@@ -1885,9 +1989,10 @@ export const OrderWizardModal = () => {
                         flex: 1,
                         padding: '0.55rem 0.85rem',
                         borderRadius: '8px',
-                        border: '1.5px solid #cbd5e1',
+                        border: '1.5px solid var(--color-border, #cbd5e1)',
                         fontSize: '0.82rem',
-                        color: '#0f172a',
+                        color: 'var(--color-text-primary, #0f172a)',
+                        background: 'var(--color-surface, #ffffff)',
                         textTransform: 'uppercase'
                       }}
                     />
@@ -1895,7 +2000,7 @@ export const OrderWizardModal = () => {
                       type="button"
                       onClick={handleApplyPromo}
                       style={{
-                        background: '#0f172a',
+                        background: isDark ? 'var(--color-primary, #ea580c)' : '#0f172a',
                         color: '#ffffff',
                         border: 'none',
                         borderRadius: '8px',
@@ -1913,8 +2018,8 @@ export const OrderWizardModal = () => {
                 {/* Inline Auth for Guest Users */}
                 {!isAuthenticated && !authUser && (
                   <div style={{
-                    background: '#ffffff',
-                    border: '1.5px solid #cbd5e1',
+                    background: 'var(--color-subtle, #ffffff)',
+                    border: '1.5px solid var(--color-border, #cbd5e1)',
                     borderRadius: '16px',
                     padding: '1.15rem',
                     display: 'flex',
@@ -1922,7 +2027,7 @@ export const OrderWizardModal = () => {
                     gap: '0.75rem'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f172a' }}>
+                      <div style={{ fontSize: '0.88rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
                         Studio Account Setup / Sign In
                       </div>
                       <div style={{ display: 'flex', gap: '0.35rem' }}>
@@ -1930,8 +2035,8 @@ export const OrderWizardModal = () => {
                           type="button"
                           onClick={() => setGuestAuthMode('signup')}
                           style={{
-                            background: guestAuthMode === 'signup' ? '#059669' : '#f1f5f9',
-                            color: guestAuthMode === 'signup' ? '#ffffff' : '#475569',
+                            background: guestAuthMode === 'signup' ? '#059669' : 'var(--color-surface, #f1f5f9)',
+                            color: guestAuthMode === 'signup' ? '#ffffff' : 'var(--color-text-secondary, #475569)',
                             border: 'none',
                             borderRadius: '6px',
                             padding: '0.25rem 0.65rem',
@@ -1946,8 +2051,8 @@ export const OrderWizardModal = () => {
                           type="button"
                           onClick={() => setGuestAuthMode('login')}
                           style={{
-                            background: guestAuthMode === 'login' ? '#059669' : '#f1f5f9',
-                            color: guestAuthMode === 'login' ? '#ffffff' : '#475569',
+                            background: guestAuthMode === 'login' ? '#059669' : 'var(--color-surface, #f1f5f9)',
+                            color: guestAuthMode === 'login' ? '#ffffff' : 'var(--color-text-secondary, #475569)',
                             border: 'none',
                             borderRadius: '6px',
                             padding: '0.25rem 0.65rem',
@@ -1980,8 +2085,8 @@ export const OrderWizardModal = () => {
                           height: '42px',
                           padding: '0 1rem',
                           borderRadius: '10px',
-                          border: '1.5px solid #000000',
-                          background: '#000000',
+                          border: '1.5px solid var(--color-border, #000000)',
+                          background: isDark ? '#1e293b' : '#000000',
                           color: '#ffffff',
                           fontSize: '0.84rem',
                           fontWeight: 700,
@@ -2002,11 +2107,11 @@ export const OrderWizardModal = () => {
 
                     {/* Divider */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', margin: '0.1rem 0' }}>
-                      <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
-                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>
+                      <div style={{ flex: 1, height: '1px', background: 'var(--color-border, #e2e8f0)' }} />
+                      <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted, #94a3b8)', fontWeight: 800, textTransform: 'uppercase' }}>
                         or {guestAuthMode === 'signup' ? 'create with email' : 'sign in with email'}
                       </span>
-                      <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+                      <div style={{ flex: 1, height: '1px', background: 'var(--color-border, #e2e8f0)' }} />
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: guestAuthMode === 'signup' ? '1fr 1fr' : '1fr 1fr', gap: '0.65rem' }}>
@@ -2019,8 +2124,10 @@ export const OrderWizardModal = () => {
                           style={{
                             padding: '0.55rem 0.85rem',
                             borderRadius: '8px',
-                            border: '1.5px solid #cbd5e1',
-                            fontSize: '0.82rem'
+                            border: '1.5px solid var(--color-border, #cbd5e1)',
+                            fontSize: '0.82rem',
+                            color: 'var(--color-text-primary, #0f172a)',
+                            background: 'var(--color-input, #ffffff)'
                           }}
                         />
                       )}
@@ -2032,8 +2139,10 @@ export const OrderWizardModal = () => {
                         style={{
                           padding: '0.55rem 0.85rem',
                           borderRadius: '8px',
-                          border: '1.5px solid #cbd5e1',
-                          fontSize: '0.82rem'
+                          border: '1.5px solid var(--color-border, #cbd5e1)',
+                          fontSize: '0.82rem',
+                          color: 'var(--color-text-primary, #0f172a)',
+                          background: 'var(--color-input, #ffffff)'
                         }}
                       />
                       <input
@@ -2044,8 +2153,10 @@ export const OrderWizardModal = () => {
                         style={{
                           padding: '0.55rem 0.85rem',
                           borderRadius: '8px',
-                          border: '1.5px solid #cbd5e1',
-                          fontSize: '0.82rem'
+                          border: '1.5px solid var(--color-border, #cbd5e1)',
+                          fontSize: '0.82rem',
+                          color: 'var(--color-text-primary, #0f172a)',
+                          background: 'var(--color-input, #ffffff)'
                         }}
                       />
                       {guestAuthMode === 'signup' && (
@@ -2057,8 +2168,10 @@ export const OrderWizardModal = () => {
                           style={{
                             padding: '0.55rem 0.85rem',
                             borderRadius: '8px',
-                            border: '1.5px solid #cbd5e1',
-                            fontSize: '0.82rem'
+                            border: '1.5px solid var(--color-border, #cbd5e1)',
+                            fontSize: '0.82rem',
+                            color: 'var(--color-text-primary, #0f172a)',
+                            background: 'var(--color-input, #ffffff)'
                           }}
                         />
                       )}
@@ -2074,8 +2187,8 @@ export const OrderWizardModal = () => {
           {/* FOOTER NAVIGATION CONTROLS */}
           <div style={{
             padding: '1rem 1.5rem',
-            borderTop: '1.5px solid #e2e8f0',
-            background: '#ffffff',
+            borderTop: '1.5px solid var(--color-border, #e2e8f0)',
+            background: 'var(--color-surface, #ffffff)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -2086,13 +2199,13 @@ export const OrderWizardModal = () => {
                 type="button"
                 onClick={() => setStep(step - 1)}
                 style={{
-                  background: '#f8fafc',
-                  border: '1.5px solid #cbd5e1',
+                  background: 'var(--color-subtle, #f8fafc)',
+                  border: '1.5px solid var(--color-border, #cbd5e1)',
                   borderRadius: '10px',
                   padding: '0.65rem 1.15rem',
                   fontSize: '0.85rem',
                   fontWeight: 800,
-                  color: '#0f172a',
+                  color: 'var(--color-text-primary, #0f172a)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.4rem',
@@ -2105,8 +2218,8 @@ export const OrderWizardModal = () => {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, display: 'block' }}>Total</span>
-                <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#047857' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700, display: 'block' }}>Total</span>
+                <span style={{ fontSize: '1.25rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
                   ${totalPrice.toFixed(2)}
                 </span>
               </div>

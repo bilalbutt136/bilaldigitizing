@@ -496,7 +496,7 @@ export const OrderTrackerDrawer = () => {
       onClick={handleCloseDrawer}
       style={{ 
         zIndex: 99990, 
-        background: isMobileLayout ? '#ffffff' : 'rgba(11, 19, 41, 0.85)', 
+        background: isMobileLayout ? (isDark ? 'var(--color-background, #090d16)' : '#ffffff') : 'rgba(11, 19, 41, 0.85)', 
         backdropFilter: 'blur(10px)', 
         padding: isMobileLayout ? '0' : 'clamp(0.5rem, 2vw, 1.5rem)',
         position: 'fixed',
@@ -509,7 +509,7 @@ export const OrderTrackerDrawer = () => {
       }}
     >
       <div 
-        className="modal-content theme-light-enforced" 
+        className="modal-content order-tracker-drawer" 
         onClick={(e) => e.stopPropagation()}
         style={{ 
           maxWidth: isMobileLayout ? '100vw' : '960px', 
@@ -522,7 +522,7 @@ export const OrderTrackerDrawer = () => {
           border: isMobileLayout ? 'none' : '1px solid rgba(255, 255, 255, 0.12)',
           boxShadow: isMobileLayout ? 'none' : '0 25px 60px -15px rgba(0, 0, 0, 0.5)',
           overflow: 'hidden',
-          background: '#ffffff',
+          background: 'var(--color-surface, #ffffff)',
           margin: 0
         }}
       >
@@ -1004,11 +1004,11 @@ export const OrderTrackerDrawer = () => {
 
                         {/* Delivery Note */}
                         {(delivery.deliveryMessage || delivery.deliveryNotes) && (
-                          <div style={{ background: isLatest ? '#ffffff' : '#f1f5f9', border: isLatest ? '1px solid #bbf7d0' : '1px solid #e2e8f0', padding: '0.75rem 1rem', borderRadius: '10px', marginBottom: '0.85rem' }}>
-                            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: isLatest ? '#065f46' : 'var(--navy-800)', textTransform: 'uppercase', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <div style={{ background: isLatest ? (isDark ? 'rgba(16, 185, 129, 0.12)' : '#ffffff') : (isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9'), border: isLatest ? (isDark ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid #bbf7d0') : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0'), padding: '0.75rem 1rem', borderRadius: '10px', marginBottom: '0.85rem' }}>
+                            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: isLatest ? (isDark ? '#34d399' : '#065f46') : 'var(--navy-800)', textTransform: 'uppercase', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                               <Sparkles size={12} /> Digitizer Note:
                             </div>
-                            <div style={{ fontSize: '0.84rem', color: isLatest ? '#047857' : 'var(--text-main)', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>
+                            <div style={{ fontSize: '0.84rem', color: isLatest ? (isDark ? '#6ee7b7' : '#047857') : 'var(--text-main)', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>
                               {delivery.deliveryMessage || delivery.deliveryNotes}
                             </div>
                           </div>
@@ -1022,7 +1022,7 @@ export const OrderTrackerDrawer = () => {
                             const fileIcon = isPdf ? '📄' : (['AI', 'EPS', 'SVG', 'CDR'].includes(ext) ? '🎨' : (['ZIP', 'RAR', '7Z'].includes(ext) ? '📦' : '🧵'));
 
                             return (
-                              <div key={fIdx} style={{ background: '#ffffff', border: isPdf ? '1.5px solid #fed7aa' : '1px solid #e2e8f0', borderRadius: '10px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                              <div key={fIdx} style={{ background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', border: isPdf ? '1.5px solid #fed7aa' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0'), borderRadius: '10px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                   <span style={{ fontSize: '1.2rem' }}>{fileIcon}</span>
                                   <div style={{ minWidth: 0, flex: 1 }}>
@@ -1598,8 +1598,8 @@ export const OrderTrackerDrawer = () => {
            ================================================================== */}
         <div style={{
           padding: isMobileLayout ? '0.75rem 1rem max(0.75rem, env(safe-area-inset-bottom, 0.75rem))' : '0.85rem 1.6rem',
-          background: '#ffffff',
-          borderTop: '1.5px solid var(--border-color)',
+          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+          borderTop: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid var(--border-color)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',

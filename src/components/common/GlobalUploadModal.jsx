@@ -66,9 +66,10 @@ export default function GlobalUploadModal() {
       right: '2rem',
       zIndex: 9999,
       width: '350px',
-      background: 'rgba(255, 255, 255, 0.95)',
+      background: 'var(--color-surface, #ffffff)',
+      border: '1px solid var(--color-border, rgba(0,0,0,0.1))',
       backdropFilter: 'blur(10px)',
-      boxShadow: '0 10px 40px -10px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.05)',
+      boxShadow: '0 10px 40px -10px rgba(0,0,0,0.3)',
       borderRadius: '16px',
       padding: '1.5rem',
       display: 'flex',
@@ -77,11 +78,11 @@ export default function GlobalUploadModal() {
       fontFamily: 'var(--font-primary, sans-serif)'
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--navy-900, #0f172a)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--color-text-primary, #0f172a)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <UploadCloud size={18} color="var(--primary-orange, #f97316)" />
           File Uploads
         </h4>
-        <button onClick={() => setIsVisible(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+        <button onClick={() => setIsVisible(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted, #64748b)' }}>
           <X size={16} />
         </button>
       </div>
@@ -90,14 +91,14 @@ export default function GlobalUploadModal() {
         {Object.entries(uploads).map(([fileName, data]) => (
           <div key={fileName} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-              <span style={{ color: '#334155', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '80%' }} title={fileName}>
+              <span style={{ color: 'var(--color-text-secondary, #334155)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '80%' }} title={fileName}>
                 {fileName}
               </span>
               {data.status === 'success' && <CheckCircle size={14} color="#10b981" />}
               {data.status === 'error' && <AlertCircle size={14} color="#ef4444" />}
               {data.status === 'uploading' && <span style={{ color: 'var(--primary-orange, #f97316)', fontWeight: 600 }}>{data.progress}%</span>}
             </div>
-            <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+            <div style={{ width: '100%', height: '6px', background: 'var(--color-border, #e2e8f0)', borderRadius: '4px', overflow: 'hidden' }}>
               <div style={{ 
                 width: `${data.progress}%`, 
                 height: '100%', 

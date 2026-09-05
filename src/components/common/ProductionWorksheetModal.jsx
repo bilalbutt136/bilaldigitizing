@@ -141,7 +141,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
-            borderBottom: '3px solid var(--navy-900)',
+            borderBottom: '3px solid var(--color-border, #334155)',
             paddingBottom: '1.25rem',
             marginBottom: '1.75rem'
           }}>
@@ -149,10 +149,10 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
               <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--orange-600)', letterSpacing: '0.1em' }}>
                 BILAL DIGITIZING STUDIO OPERATIONS
               </div>
-              <h1 style={{ fontSize: '1.85rem', color: 'var(--navy-900)', fontWeight: 800, margin: '0.2rem 0' }}>
+              <h1 style={{ fontSize: '1.85rem', color: 'var(--color-text-primary, #0f172a)', fontWeight: 800, margin: '0.2rem 0' }}>
                 EMBROIDERY PRODUCTION WORKSHEET
               </h1>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted, #64748b)' }}>
                 Commercial Machine Pathing & Thread Run Sequence Specification
               </div>
             </div>
@@ -161,7 +161,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
               <div style={{ background: '#0f172a', color: '#ffffff', padding: '0.4rem 0.85rem', borderRadius: 'var(--radius-sm)', fontWeight: 800, fontSize: '1.1rem', display: 'inline-block' }}>
                 JOB ID: {formatOrderId(order.id)}
               </div>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
+              <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted, #64748b)', marginTop: '0.4rem' }}>
                 Date Released: {new Date(order.createdAt || Date.now()).toLocaleDateString()}
               </div>
             </div>
@@ -172,50 +172,50 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
             gap: '1rem',
-            background: 'var(--navy-100)',
+            background: 'var(--color-subtle, #f1f5f9)',
             padding: '1.25rem',
             borderRadius: 'var(--radius-md)',
             marginBottom: '1.75rem',
             fontSize: '0.875rem'
           }}>
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>DESIGN TITLE</span>
-              <strong style={{ color: 'var(--navy-900)', fontSize: '0.95rem' }}>{order.title}</strong>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #64748b)', display: 'block' }}>DESIGN TITLE</span>
+              <strong style={{ color: 'var(--color-text-primary, #0f172a)', fontSize: '0.95rem' }}>{order.title}</strong>
             </div>
 
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>CLIENT SHOP</span>
-              <strong style={{ color: 'var(--navy-900)' }}>{order.clientName}</strong>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #64748b)', display: 'block' }}>CLIENT SHOP</span>
+              <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{order.clientName}</strong>
             </div>
 
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>GARMENT / FABRIC</span>
-              <strong style={{ color: 'var(--orange-700)' }}>{order.fabricType}</strong>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #64748b)', display: 'block' }}>GARMENT / FABRIC</span>
+              <strong style={{ color: 'var(--orange-500)' }}>{order.fabricType}</strong>
             </div>
 
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>PLACEMENT TARGET</span>
-              <strong style={{ color: 'var(--navy-900)' }}>{order.placementType || order.serviceCategory}</strong>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #64748b)', display: 'block' }}>PLACEMENT TARGET</span>
+              <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{order.placementType || order.serviceCategory}</strong>
             </div>
 
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>DIMENSIONS</span>
-              <strong style={{ color: 'var(--orange-600)' }}>{order.dimensions?.width || '3.5'}" W x {order.dimensions?.height || '3.0'}" H</strong>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #64748b)', display: 'block' }}>DIMENSIONS</span>
+              <strong style={{ color: 'var(--orange-500)' }}>{order.dimensions?.width || '3.5'}" W x {order.dimensions?.height || '3.0'}" H</strong>
             </div>
 
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>ESTIMATED STITCHES</span>
-              <strong style={{ color: 'var(--navy-900)' }}>{order.estimatedStitches ? order.estimatedStitches.toLocaleString() : '12,400'} Stitches</strong>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #64748b)', display: 'block' }}>ESTIMATED STITCHES</span>
+              <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{order.estimatedStitches ? order.estimatedStitches.toLocaleString() : '12,400'} Stitches</strong>
             </div>
 
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>TOTAL COLORS</span>
-              <strong style={{ color: 'var(--navy-900)' }}>{order.colorsCount || 4} Thread Stops</strong>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #64748b)', display: 'block' }}>TOTAL COLORS</span>
+              <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{order.colorsCount || 4} Thread Stops</strong>
             </div>
 
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>QA VERIFICATION</span>
-              <strong style={{ color: 'var(--green-700)' }}>100% Pass (0 Break)</strong>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #64748b)', display: 'block' }}>QA VERIFICATION</span>
+              <strong style={{ color: '#16a34a' }}>100% Pass (0 Break)</strong>
             </div>
           </div>
 
@@ -228,9 +228,9 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
               borderRadius: 'var(--radius-md)',
               padding: '1.25rem',
               textAlign: 'center',
-              background: '#fafafa'
+              background: 'var(--color-subtle, #fafafa)'
             }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.75rem', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.75rem', textTransform: 'uppercase' }}>
                 📷 Artwork Production Preview
               </div>
               <img 
@@ -242,49 +242,49 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
                   objectFit: 'contain',
                   borderRadius: 'var(--radius-sm)',
                   border: '1px solid var(--border-color)',
-                  background: '#ffffff'
+                  background: 'var(--color-surface, #ffffff)'
                 }}
               />
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #64748b)', marginTop: '0.5rem' }}>
                 Center Point Grid Aligned • Scale 1:1
               </div>
             </div>
 
             {/* Operator Machine Parameters */}
             <div style={{
-              background: '#ffffff',
+              background: 'var(--color-surface, #ffffff)',
               border: '1.5px solid var(--border-color)',
               borderRadius: 'var(--radius-md)',
               padding: '1.25rem',
               fontSize: '0.875rem'
             }}>
-              <h4 style={{ fontSize: '0.95rem', color: 'var(--navy-900)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <h4 style={{ fontSize: '0.95rem', color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 ⚙️ Commercial Machine Setup Specs
               </h4>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--navy-100)', paddingBottom: '0.35rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Recommended Needle:</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--color-border, #e2e8f0)', paddingBottom: '0.35rem' }}>
+                  <span style={{ color: 'var(--color-text-muted, #64748b)' }}>Recommended Needle:</span>
                   <strong>75/11 Sharp (Ballpoint for Polo)</strong>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--navy-100)', paddingBottom: '0.35rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Tension Rating:</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--color-border, #e2e8f0)', paddingBottom: '0.35rem' }}>
+                  <span style={{ color: 'var(--color-text-muted, #64748b)' }}>Tension Rating:</span>
                   <strong>Standard 110gf</strong>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--navy-100)', paddingBottom: '0.35rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Backing / Stabilizer:</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--color-border, #e2e8f0)', paddingBottom: '0.35rem' }}>
+                  <span style={{ color: 'var(--color-text-muted, #64748b)' }}>Backing / Stabilizer:</span>
                   <strong>2.5oz Cutaway + Solvy Topping</strong>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--navy-100)', paddingBottom: '0.35rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>3D Foam Compensation:</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--color-border, #e2e8f0)', paddingBottom: '0.35rem' }}>
+                  <span style={{ color: 'var(--color-text-muted, #64748b)' }}>3D Foam Compensation:</span>
                   <strong>{order.placementType?.includes('Cap') ? 'Applied (3mm EVA)' : 'N/A'}</strong>
                 </div>
 
                 {order.notes && (
-                  <div style={{ background: 'var(--navy-100)', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', marginTop: '0.2rem' }}>
+                  <div style={{ background: 'var(--color-subtle, #f1f5f9)', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', marginTop: '0.2rem' }}>
                     <strong>Client Note:</strong> {order.notes}
                   </div>
                 )}
@@ -295,7 +295,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
 
           {/* Color Stop Run Sequence Table */}
           <div style={{ marginBottom: '1.5rem' }}>
-            <h4 style={{ fontSize: '1rem', color: 'var(--navy-900)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <h4 style={{ fontSize: '1rem', color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               🎨 Color Stop & Thread Run Sequence
             </h4>
 
@@ -312,19 +312,19 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
               <tbody>
                 {colorStops.map((cs) => (
                   <tr key={cs.stop} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '0.75rem 0.85rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+                    <td style={{ padding: '0.75rem 0.85rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                       Color #{cs.stop}
                     </td>
                     <td style={{ padding: '0.75rem 0.85rem' }}>
                       <div style={{ width: '28px', height: '20px', background: cs.hex, borderRadius: '3px', border: '1px solid var(--border-color)' }} />
                     </td>
-                    <td style={{ padding: '0.75rem 0.85rem', fontWeight: 700, color: 'var(--orange-700)' }}>
+                    <td style={{ padding: '0.75rem 0.85rem', fontWeight: 700, color: 'var(--orange-500)' }}>
                       {cs.code}
                     </td>
-                    <td style={{ padding: '0.75rem 0.85rem', color: 'var(--navy-800)' }}>
+                    <td style={{ padding: '0.75rem 0.85rem', color: 'var(--color-text-secondary, #334155)' }}>
                       {cs.name}
                     </td>
-                    <td style={{ padding: '0.75rem 0.85rem', textAlign: 'right', fontWeight: 700, color: 'var(--navy-900)' }}>
+                    <td style={{ padding: '0.75rem 0.85rem', textAlign: 'right', fontWeight: 700, color: 'var(--color-text-primary, #0f172a)' }}>
                       {cs.stitches}
                     </td>
                   </tr>
