@@ -29,7 +29,6 @@ const CATEGORIES = [
 
 import { supabase } from '../../lib/supabase/client';
 import { fetchCatalogFromSupabase } from '../../services/supabaseService';
-import { PortfolioLightboxModal } from '../common/PortfolioLightboxModal';
 
 export const PortfolioPage = () => {
   const navigate = useNavigate();
@@ -38,7 +37,6 @@ export const PortfolioPage = () => {
   const [localPortfolio, setLocalPortfolio] = useState(contextSamples);
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeItemModal, setActiveItemModal] = useState(null);
-  const [lightboxItem, setLightboxItem] = useState(null);
   const [showOriginalInModal, setShowOriginalInModal] = useState(false);
 
   useEffect(() => {
@@ -347,47 +345,35 @@ export const PortfolioPage = () => {
                     }}
                   >
                     <div>
-                      {/* Image Box - Dynamic Auto-Fitting with Neutral Slate-50 Background & Crisp Rendering */}
-                      <div 
-                        className="portfolio-display-frame"
-                        style={{
-                          position: 'relative',
-                          width: '100%',
-                          aspectRatio: '4/3',
-                          backgroundColor: '#f8fafc',
-                          overflow: 'hidden',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '1rem',
-                          borderBottom: '1px solid var(--border-color, #e2e8f0)'
-                        }}
-                      >
+                      {/* Image Box */}
+                      <div style={{
+                        position: 'relative',
+                        width: '100%',
+                        height: '240px',
+                        background: 'var(--color-surface-elevated, #f1f5f9)',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
                         <img
                           src={item.afterImg}
                           alt={item.title}
-                          loading="lazy"
-                          decoding="async"
                           style={{
-                            maxWidth: '100%',
-                            maxHeight: '100%',
-                            width: 'auto',
-                            height: 'auto',
-                            objectFit: 'contain',
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
                             objectPosition: 'center',
-                            imageRendering: '-webkit-optimize-contrast',
-                            filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.08))',
-                            transition: 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)'
+                            transition: 'transform 0.4s ease'
                           }}
-                          className="sharp-portfolio-img"
                         />
 
                         {/* Top Category Badge */}
-                        <div style={{ position: 'absolute', top: '12px', left: '12px', zIndex: 2 }}>
+                        <div style={{ position: 'absolute', top: '12px', left: '12px' }}>
                           <span style={{
-                            background: badgeBg,
-                            color: badgeColor,
-                            border: `1px solid ${badgeColor}35`,
+                            background: 'rgba(249, 115, 22, 0.12)',
+                            color: '#ea580c',
+                            border: '1px solid #ea580c40',
                             fontSize: '0.725rem',
                             fontWeight: 800,
                             padding: '0.3rem 0.75rem',
@@ -400,45 +386,23 @@ export const PortfolioPage = () => {
                           </span>
                         </div>
 
-                        {/* Inspect Zoom Icon Button */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setLightboxItem(item);
-                          }}
-                          style={{
-                            position: 'absolute',
-                            top: '12px',
-                            right: '12px',
-                            background: 'rgba(15, 23, 42, 0.75)',
-                            color: '#ffffff',
-                            border: 'none',
-                            borderRadius: '50%',
-                            width: '34px',
-                            height: '34px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backdropFilter: 'blur(6px)',
-                            cursor: 'pointer',
-                            zIndex: 3,
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                            transition: 'all 0.2s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'scale(1.1)';
-                            e.currentTarget.style.background = 'var(--orange-500)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'scale(1)';
-                            e.currentTarget.style.background = 'rgba(15, 23, 42, 0.75)';
-                          }}
-                          title="Inspect in full resolution"
-                          aria-label="Inspect in full resolution"
-                        >
+                        {/* Inspect Zoom Icon */}
+                        <div style={{
+                          position: 'absolute',
+                          top: '12px',
+                          right: '12px',
+                          background: 'rgba(15, 23, 42, 0.75)',
+                          color: '#ffffff',
+                          borderRadius: '50%',
+                          width: '32px',
+                          height: '32px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backdropFilter: 'blur(6px)'
+                        }}>
                           <Maximize2 size={15} />
-                        </button>
+                        </div>
                       </div>
 
                       {/* Content Info */}
@@ -538,57 +502,26 @@ export const PortfolioPage = () => {
               border: '1px solid var(--border-color)'
             }}
           >
-            {/* Left Side: Big Image Display with Neutral Light Slate-50 Background & Crisp Rendering */}
-            <div 
-              style={{
-                background: '#f8fafc',
-                padding: '2rem',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
-                cursor: 'zoom-in'
-              }}
-              onClick={() => setLightboxItem(activeItemModal)}
-              title="Click to inspect in full-screen high-resolution lightbox"
-            >
+            {/* Left Side: Big Image Display */}
+            <div style={{
+              background: 'var(--color-surface-elevated, #f8fafc)',
+              padding: '2rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative'
+            }}>
               <img 
                 src={showOriginalInModal && activeItemModal.beforeImg ? activeItemModal.beforeImg : activeItemModal.afterImg} 
                 alt={activeItemModal.title}
                 style={{
                   maxWidth: '100%',
                   maxHeight: '400px',
-                  width: 'auto',
-                  height: 'auto',
                   objectFit: 'contain',
-                  objectPosition: 'center',
-                  imageRendering: '-webkit-optimize-contrast',
-                  filter: 'drop-shadow(0 10px 24px rgba(0,0,0,0.12))',
-                  transition: 'transform 0.3s ease'
+                  filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.4))'
                 }}
-                className="sharp-portfolio-img"
               />
-
-              {/* Fullscreen Zoom Hint */}
-              <div style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                background: 'rgba(15, 23, 42, 0.75)',
-                color: '#ffffff',
-                borderRadius: '8px',
-                padding: '0.35rem 0.65rem',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                backdropFilter: 'blur(6px)'
-              }}>
-                <Maximize2 size={13} />
-                <span>Full Screen Zoom</span>
-              </div>
 
               {/* Before/After Switcher (if exists) */}
               {activeItemModal.beforeImg && (
@@ -732,20 +665,6 @@ export const PortfolioPage = () => {
             </div>
           </div>
         </div>
-      )}
-
-      {/* 4. Full-Screen High-Resolution Lightbox Modal */}
-      {lightboxItem && (
-        <PortfolioLightboxModal
-          item={lightboxItem}
-          items={filteredItems}
-          currentIndex={filteredItems.findIndex(i => i.id === lightboxItem.id)}
-          onNavigate={(newIdx) => {
-            if (filteredItems[newIdx]) setLightboxItem(filteredItems[newIdx]);
-          }}
-          onClose={() => setLightboxItem(null)}
-          onOrder={handleStartOrder}
-        />
       )}
 
     </div>

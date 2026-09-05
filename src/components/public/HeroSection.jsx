@@ -20,10 +20,8 @@ import {
   Sparkles,
   Zap,
   ChevronLeft,
-  ChevronRight,
-  Maximize2
+  ChevronRight
 } from 'lucide-react';
-import { PortfolioLightboxModal } from '../common/PortfolioLightboxModal';
 
 const ICON_MAP = {
   Star,
@@ -148,24 +146,6 @@ export const HeroSection = () => {
   const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isFading, setIsFading] = useState(false);
-  const [lightboxItem, setLightboxItem] = useState(null);
-
-  const handleStartOrder = (item) => {
-    setLightboxItem(null);
-    const cat = (item?.category || '').toLowerCase();
-    const serviceType = cat.includes('patch') ? 'patch' : cat.includes('vector') ? 'vector' : 'embroidery';
-    if (openOrderWizard) {
-      openOrderWizard({
-        type: serviceType,
-        category: item?.category || 'Embroidery',
-        title: item?.title
-      });
-    } else if (protectedNavigate) {
-      protectedNavigate('customer', true, { type: serviceType });
-    } else {
-      navigate('/order');
-    }
-  };
 
   // Synchronize with state context
   useEffect(() => {
@@ -581,9 +561,9 @@ export const HeroSection = () => {
             max-width: 100% !important;
           }
           .hero-showcase-image-box {
-            min-height: 240px !important;
-            max-height: 380px !important;
-            aspect-ratio: 4/3 !important;
+            min-height: 180px !important;
+            max-height: 280px !important;
+            aspect-ratio: 16/10 !important;
           }
         }
       `}} />
@@ -881,29 +861,23 @@ export const HeroSection = () => {
 
               {/* Full, Clear Showcase Image Container (Auto-changes every 5s - Auto-Adjusted Full Image) */}
               <div 
-                className="hero-showcase-image-box portfolio-display-frame"
+                className="hero-showcase-image-box"
                 style={{
                   position: 'relative',
                   width: '100%',
-                  aspectRatio: '4/3',
-                  minHeight: '260px',
-                  maxHeight: '400px',
+                  aspectRatio: '16/10',
+                  minHeight: '220px',
+                  maxHeight: '360px',
                   borderRadius: '16px',
                   overflow: 'hidden',
-                  background: '#f8fafc',
+                  background: 'var(--color-surface-elevated, #f1f5f9)',
                   opacity: isFading ? 0.35 : 1,
                   transition: 'opacity 0.25s ease-in-out',
                   border: '1px solid var(--color-border, #e2e8f0)',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '1rem',
-                  cursor: 'pointer'
+                  justifyContent: 'center'
                 }}
-                onClick={() => {
-                  if (currentImage) setLightboxItem(currentImage);
-                }}
-                title="Click to inspect sample in full high-resolution lightbox"
               >
                 {/* Full, Auto-Adjusted Showcase Image or Empty State */}
                 {currentImage?.imageUrl ? (
@@ -911,46 +885,16 @@ export const HeroSection = () => {
                     <img 
                       src={currentImage.imageUrl} 
                       alt={currentImage?.title || "Studio Showcase"} 
-                      loading="lazy"
-                      decoding="async"
                       style={{ 
-                        maxWidth: '100%', 
-                        maxHeight: '100%', 
-                        width: 'auto', 
-                        height: 'auto', 
-                        objectFit: 'contain', 
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'cover', 
                         objectPosition: 'center', 
                         display: 'block',
-                        imageRendering: '-webkit-optimize-contrast',
-                        filter: 'drop-shadow(0 6px 16px rgba(0, 0, 0, 0.09))',
                         transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
                       }} 
-                      className="sharp-portfolio-img"
                       draggable="false" 
                     />
-
-                    {/* Top Right Inspect Button */}
-                    <div 
-                      style={{
-                        position: 'absolute',
-                        top: '12px',
-                        right: '12px',
-                        background: 'rgba(15, 23, 42, 0.75)',
-                        color: '#ffffff',
-                        borderRadius: '50%',
-                        width: '32px',
-                        height: '32px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backdropFilter: 'blur(6px)',
-                        zIndex: 12,
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-                      }}
-                      title="Inspect in full resolution"
-                    >
-                      <Maximize2 size={15} />
-                    </div>
 
                     {/* Live Specs / Stitch Count Badge Overlay */}
                     {Boolean(currentImage?.stitchCount || currentImage?.formats) && (
@@ -1116,27 +1060,6 @@ export const HeroSection = () => {
         </div>
 
       </div>
-
-      {/* Lightbox Modal for Hero Showcase */}
-      {lightboxItem && (
-        <PortfolioLightboxModal
-          item={{
-            ...lightboxItem,
-            afterImg: lightboxItem.imageUrl || lightboxItem.afterImg || lightboxItem.digitized_image,
-            title: lightboxItem.title || 'Studio Showcase'
-          }}
-          items={activeShowcaseImages.map(img => ({
-            ...img,
-            afterImg: img.imageUrl || img.afterImg || img.digitized_image
-          }))}
-          currentIndex={activeShowcaseImages.findIndex(i => i.id === lightboxItem.id)}
-          onNavigate={(newIdx) => {
-            if (activeShowcaseImages[newIdx]) setLightboxItem(activeShowcaseImages[newIdx]);
-          }}
-          onClose={() => setLightboxItem(null)}
-          onOrder={handleStartOrder}
-        />
-      )}
     </section>
   );
 };
