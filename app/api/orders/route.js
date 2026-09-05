@@ -130,6 +130,21 @@ export async function POST(request) {
       if (!clientEmail) {
         return NextResponse.json({ error: 'Client email is required to submit an order' }, { status: 400 });
       }
+
+      // Enforce minimum 50 pieces for custom patch orders
+      const orderType = String(primaryDbRow.type || primaryDbRow.serviceCategory || '').toLowerCase();
+      if (orderType.includes('patch')) {
+        const patchQty = parseInt(primaryDbRow.patchQuantity || primaryDbRow.quantity, 10);
+        const patchItems = Array.isArray(primaryDbRow.patchItems) ? primaryDbRow.patchItems : [];
+        if (patchItems.length > 0) {
+          const invalidItem = patchItems.find(p => !p.quantity || parseInt(p.quantity, 10) < 50);
+          if (invalidItem) {
+            return NextResponse.json({ error: 'Minimum order requirement for Custom Patches is 50 pieces per item.' }, { status: 400 });
+          }
+        } else if (!isNaN(patchQty) && patchQty < 50) {
+          return NextResponse.json({ error: 'Minimum order requirement for Custom Patches is 50 pieces.' }, { status: 400 });
+        }
+      }
       
       const primaryArtworkUrl = 
         primaryDbRow.artworkUrl || 

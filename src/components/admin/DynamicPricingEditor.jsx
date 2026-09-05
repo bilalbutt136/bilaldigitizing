@@ -183,7 +183,7 @@ const DEFAULT_ALL_PACKAGES = {
       display_order: 1,
       badge_text: 'SAMPLE RUN',
       is_popular: false,
-      title: 'Sample Batch (10–50 Pcs)',
+      title: 'Sample Batch (50–100 Pcs)',
       subtitle: 'Low-minimum run perfect for small brands, clubs, prototypes & event samples',
       price: 4.50,
       original_price: 6.00,
@@ -191,7 +191,7 @@ const DEFAULT_ALL_PACKAGES = {
       turnaround_time: '3–5 Days',
       button_text: 'Order Sample Run',
       features: [
-        'Ultra-Low 10 Pieces Minimum Order',
+        '50 Pieces Minimum Order',
         '12-Hour Free Digital Production Proof',
         'Velcro Hook & Loop or Iron-On Backings',
         'Custom Embroidered, Woven or 3D PVC',

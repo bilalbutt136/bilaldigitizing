@@ -104,7 +104,7 @@ export const ServicesSection = () => {
 
   const patchPackagesSummary = patchTiers.length > 0
     ? patchTiers.map(t => `${t.title.split(' ')[0]} ($${Number(t.price).toFixed(t.price % 1 === 0 ? 0 : 2)})`).join(', ')
-    : 'Sample Run ($4.50), Production Batch ($2.50), Wholesale Bulk ($1.50)';
+    : 'Sample Batch 50+ Pcs ($3.50), Production Batch ($2.50), Wholesale Bulk ($1.50)';
 
   // Structured Tiers for Luxury Overview Cards
   const embTiersList = embroideryTiers.length > 0
@@ -138,7 +138,7 @@ export const ServicesSection = () => {
         unit: '/ pc'
       }))
     : [
-        { name: 'Sample Run', price: '$3.50', unit: '/ pc' },
+        { name: 'Sample Run (Min 50)', price: '$3.50', unit: '/ pc' },
         { name: 'Production Batch', price: '$2.50', unit: '/ pc' },
         { name: 'Wholesale Bulk', price: '$1.50', unit: '/ pc' }
       ];
@@ -188,7 +188,7 @@ export const ServicesSection = () => {
     patches: [
       {
         q: 'What is the minimum order quantity (MOQ) for custom patches?',
-        a: 'Our minimum order is just 10 pieces for custom embroidered, woven, or PVC patches, making it accessible for startups, clubs, and large apparel brands alike.'
+        a: 'Our minimum order quantity is 50 pieces for custom embroidered, woven, or PVC patches, making it accessible for startups, clubs, and apparel brands alike with free digital proofs and sample approval.'
       },
       {
         q: 'Do I get to approve a digital proof before mass production?',
@@ -865,7 +865,7 @@ export const ServicesSection = () => {
                       textTransform: 'uppercase',
                       letterSpacing: '0.06em'
                     }}>
-                      📦 Physical Delivery
+                      📦 Physical Delivery • Min 50 Pcs
                     </span>
                     <span style={{
                       fontSize: '0.85rem',
@@ -964,7 +964,7 @@ export const ServicesSection = () => {
                     <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <CheckCircle2 size={13} />
                     </div>
-                    <span><strong>Low 10 Pcs MOQ:</strong> Free digital proof & physical sample sew-out photo</span>
+                    <span><strong>Min 50 Pcs MOQ:</strong> Free digital proof & physical sample sew-out photo</span>
                   </li>
                   <li style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
                     <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

@@ -182,7 +182,7 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
       note: 'Free unlimited revisions until approved'
     },
     {
-      label: 'Sample Run (10–50 Pcs)',
+      label: 'Sample Run (50–100 Pcs)',
       time: '3–5 Business Days',
       note: 'Fast prototype & club batches'
     },
@@ -365,7 +365,7 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
           </div>
 
           <div style={{ textAlign: 'center', marginTop: '3.5rem', color: '#64748b', fontSize: '0.925rem', fontWeight: 600 }}>
-            📌 <em>{dbSettings.patch_footer_text || 'Prices are flat rates per patch with zero hidden charges. Low minimum order from 10 pieces. Click any tier package above to launch your instant order form.'}</em>
+            📌 <em>{dbSettings.patch_footer_text || 'Prices are flat rates per patch with zero hidden charges. Low minimum order from 50 pieces. Click any tier package above to launch your instant order form.'}</em>
           </div>
 
         </div>

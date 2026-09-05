@@ -391,7 +391,7 @@ export const MerchandiseStore = () => {
                   Low MOQs & Bulk Tier Pricing
                 </h4>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
-                  Order from as low as 1 piece for digital bundles or 5-10 pcs for custom tees & patches. Automatic bulk discount applied.
+                  Order from as low as 1 piece for digital bundles, 5-10 pcs for custom tees, or 50 pcs for custom patches. Automatic bulk discount applied.
                 </p>
               </div>
             </div>

@@ -116,7 +116,7 @@ const DEFAULT_SERVICE_DATA = {
       'Free 12-Hour Digital Proof & Doorstep Worldwide Shipping'
     ],
     stats: [
-      { value: '10 Pcs', label: 'Low MOQ', icon: 'Star' },
+      { value: '50 Pcs', label: 'Min MOQ', icon: 'Star' },
       { value: '12-Hr', label: 'Free Proof', icon: 'Zap' },
       { value: '3-5 Day', label: 'Production', icon: 'Clock' },
       { value: 'Global', label: 'Doorstep Delivery', icon: 'Globe' }

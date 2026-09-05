@@ -1024,7 +1024,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         📦 3–7 Days Delivery
                       </span>
                       <span style={{ fontSize: '0.68rem', color: '#075985', fontWeight: 700 }}>
-                        10 Pcs Low Min
+                        50 Pcs Min Order
                       </span>
                       <span style={{ fontSize: '0.78rem', color: '#0284c7', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
                         {selectedService === 'patch' ? '✓ Selected' : 'Select'} <ArrowRight size={14} />
