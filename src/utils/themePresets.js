@@ -499,13 +499,20 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
   const root = document.documentElement;
   const theme = THEME_PRESETS.find(t => t.id === presetId) || THEME_PRESETS[0];
 
-  // 1. Set root HTML attributes
+  // 1. Set root HTML attributes and classes for unified theme activation
   root.setAttribute('data-theme-preset', theme.id);
   root.setAttribute('data-theme', mode);
+  document.body.setAttribute('data-theme', mode);
 
   if (mode === 'dark') {
+    root.classList.add('dark');
+    root.classList.add('dark-mode');
+    document.body.classList.add('dark');
     document.body.classList.add('dark-mode');
   } else {
+    root.classList.remove('dark');
+    root.classList.remove('dark-mode');
+    document.body.classList.remove('dark');
     document.body.classList.remove('dark-mode');
   }
 
@@ -523,13 +530,14 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
   root.style.setProperty('--orange-400', tokenSet['--color-secondary'] || (mode === 'dark' ? '#fdba74' : '#f97316'));
   root.style.setProperty('--orange-50', tokenSet['--color-primary-light'] || (mode === 'dark' ? 'rgba(251, 146, 60, 0.15)' : '#fff7ed'));
   root.style.setProperty('--orange-glow', tokenSet['--color-primary-glow'] || 'rgba(249, 115, 22, 0.35)');
-  root.style.setProperty('--bg-main', tokenSet['--color-background'] || (mode === 'dark' ? '#0a0e17' : '#f8fafc'));
+  root.style.setProperty('--bg-main', tokenSet['--color-background'] || (mode === 'dark' ? '#090d16' : '#f8fafc'));
   root.style.setProperty('--bg-card', tokenSet['--color-surface'] || (mode === 'dark' ? '#111827' : '#ffffff'));
-  root.style.setProperty('--bg-surface', tokenSet['--color-surface-elevated'] || (mode === 'dark' ? '#1a2234' : '#ffffff'));
-  root.style.setProperty('--bg-subtle', tokenSet['--color-subtle'] || (mode === 'dark' ? '#141d2f' : '#f1f5f9'));
+  root.style.setProperty('--bg-surface', tokenSet['--color-surface-elevated'] || (mode === 'dark' ? '#1e293b' : '#ffffff'));
+  root.style.setProperty('--bg-subtle', tokenSet['--color-subtle'] || (mode === 'dark' ? '#1e293b' : '#f1f5f9'));
   root.style.setProperty('--bg-input', tokenSet['--color-input'] || (mode === 'dark' ? '#162035' : '#f8f9fa'));
-  root.style.setProperty('--border-color', tokenSet['--color-border'] || (mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0'));
-  root.style.setProperty('--text-main', tokenSet['--color-text-primary'] || (mode === 'dark' ? '#f8fafc' : '#090d16'));
+  root.style.setProperty('--border-color', tokenSet['--color-border'] || (mode === 'dark' ? 'rgba(255, 255, 255, 0.16)' : '#e2e8f0'));
+  root.style.setProperty('--text-main', tokenSet['--color-text-primary'] || (mode === 'dark' ? '#ffffff' : '#090d16'));
+  root.style.setProperty('--text-secondary', tokenSet['--color-text-secondary'] || (mode === 'dark' ? '#e2e8f0' : '#334155'));
   root.style.setProperty('--text-muted', tokenSet['--color-text-muted'] || (mode === 'dark' ? '#94a3b8' : '#64748b'));
   root.style.setProperty('--text-light', tokenSet['--color-text-muted'] || (mode === 'dark' ? '#94a3b8' : '#94a3b8'));
   root.style.setProperty('--text-heading', tokenSet['--color-text-primary'] || (mode === 'dark' ? '#ffffff' : '#090d16'));

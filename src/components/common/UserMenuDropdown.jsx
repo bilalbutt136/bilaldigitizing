@@ -110,8 +110,8 @@ export const UserMenuDropdown = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: isOpen ? '#fff7ed' : '#ffffff',
-          border: isOpen ? '2px solid var(--orange-500)' : '1.5px solid var(--border-color)',
+          background: isOpen ? 'var(--color-subtle, #fff7ed)' : 'var(--color-surface, #ffffff)',
+          border: isOpen ? '2px solid var(--color-primary, #ea580c)' : '1.5px solid var(--color-border)',
           padding: '2px',
           borderRadius: '50%',
           cursor: 'pointer',
@@ -132,7 +132,7 @@ export const UserMenuDropdown = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          border: '1.5px solid #ffffff'
+          border: '1.5px solid var(--color-surface, #ffffff)'
         }}>
           {initials}
         </div>
@@ -141,7 +141,7 @@ export const UserMenuDropdown = () => {
       {/* Dropdown Floating Menu */}
       {isOpen && (
         <div 
-          className="theme-light-enforced"
+          className="user-menu-dropdown-menu"
           style={{
             position: 'absolute',
             top: 'calc(100% + 8px)',

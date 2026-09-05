@@ -607,23 +607,27 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ==========================================================================
-   DARK THEME MODE — PREMIUM DYNAMIC SURFACE SYSTEM
+   DARK THEME MODE — ACCESSIBLE WCAG 2.1 AA SEMANTIC SURFACE SYSTEM
    ========================================================================== */
-[data-theme="dark"], body.dark-mode {
+[data-theme="dark"], .dark, body.dark-mode {
   /* Dynamic tokens are injected by applyThemePresetToDOM into :root.
      Default obsidian fallback values below: */
   --color-background: #090d16;
   --color-surface: #111827;
   --color-surface-elevated: #1e293b;
+  --color-surface-hover: #1f293d;
   --color-subtle: #1e293b;
-  --color-input: #1e293b;
+  --color-input: #162032;
 
   --color-border: rgba(255, 255, 255, 0.16);
+  --color-border-subtle: rgba(255, 255, 255, 0.10);
   --color-border-hover: rgba(255, 255, 255, 0.32);
+  --color-border-focus: #f97316;
 
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #e2e8f0;
-  --color-text-muted: #94a3b8;
+  /* Typography: WCAG 2.1 AA Compliant Contrast Ratios */
+  --color-text-primary: #ffffff;     /* Contrast > 16:1 against #090d16 */
+  --color-text-secondary: #e2e8f0;   /* Contrast > 11:1 against #090d16 */
+  --color-text-muted: #94a3b8;       /* Contrast 5.5:1 against #111827 (WCAG AA Pass > 4.5:1) */
   --color-text-on-primary: #ffffff;
 
   /* Status colors adjusted for dark mode contrast */
@@ -658,6 +662,7 @@ h1, h2, h3, h4, h5, h6 {
   /* Text Aliases */
   --text-main: var(--color-text-primary);
   --text-heading: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
   --text-muted: var(--color-text-muted);
   --text-light: #94a3b8;
 
@@ -668,6 +673,7 @@ h1, h2, h3, h4, h5, h6 {
   --navy-800: #e2e8f0;
   --navy-700: #cbd5e1;
   --navy-600: #94a3b8;
+  --navy-500: #94a3b8;
   --navy-100: var(--color-subtle);
 
   --border-color: var(--color-border);
@@ -933,144 +939,292 @@ body.dark-mode th {
    HIGH-CONTRAST DARK MODE ENHANCEMENTS & UNIVERSAL CLARITY SYSTEM
    ========================================================================== */
 
-/* Universal Dark Mode Headings & Text Contrast Overrides */
+/* 1. Universal Dark Mode Headings & Typography Hierarchy */
 [data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3,
 [data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] h6,
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6,
 body.dark-mode h1, body.dark-mode h2, body.dark-mode h3,
 body.dark-mode h4, body.dark-mode h5, body.dark-mode h6 {
+  color: var(--color-text-primary, #ffffff) !important;
+}
+
+[data-theme="dark"] p, .dark p, body.dark-mode p,
+[data-theme="dark"] .body-text, .dark .body-text, body.dark-mode .body-text {
+  color: var(--color-text-secondary, #cbd5e1);
+}
+
+[data-theme="dark"] .text-muted, .dark .text-muted, body.dark-mode .text-muted,
+[data-theme="dark"] span.text-muted, .dark span.text-muted, body.dark-mode span.text-muted,
+[data-theme="dark"] small, .dark small, body.dark-mode small {
+  color: var(--color-text-muted, #94a3b8) !important;
+}
+
+/* 2. Universal Dark Mode Form Controls, Inputs & Placeholders */
+[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):not([type="color"]),
+[data-theme="dark"] textarea,
+[data-theme="dark"] select,
+[data-theme="dark"] .form-control,
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):not([type="color"]),
+.dark textarea,
+.dark select,
+.dark .form-control,
+body.dark-mode input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):not([type="color"]),
+body.dark-mode textarea,
+body.dark-mode select,
+body.dark-mode .form-control {
+  background: var(--color-input, #162032) !important;
+  background-color: var(--color-input, #162032) !important;
+  color: #ffffff !important;
+  border: 1.5px solid var(--color-border, rgba(255, 255, 255, 0.18)) !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus,
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus,
+body.dark-mode input:focus,
+body.dark-mode textarea:focus,
+body.dark-mode select:focus {
+  border-color: var(--color-primary, #f97316) !important;
+  box-shadow: 0 0 0 3px var(--color-primary-glow, rgba(249, 115, 22, 0.35)) !important;
+  outline: none !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder,
+[data-theme="dark"] select::placeholder,
+.dark input::placeholder,
+.dark textarea::placeholder,
+.dark select::placeholder,
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder,
+body.dark-mode select::placeholder {
+  color: var(--color-text-muted, #94a3b8) !important;
+  opacity: 1 !important;
+}
+
+[data-theme="dark"] select option,
+.dark select option,
+body.dark-mode select option {
+  background-color: #111827 !important;
   color: #ffffff !important;
 }
 
-[data-theme="dark"] p, body.dark-mode p {
-  color: #cbd5e1;
+/* 3. Universal Dark Mode Modals, Dialogs & Dropdowns */
+[data-theme="dark"] .modal-overlay, .dark .modal-overlay, body.dark-mode .modal-overlay {
+  background: rgba(2, 6, 23, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
 }
 
-[data-theme="dark"] .text-muted, body.dark-mode .text-muted,
-[data-theme="dark"] span.text-muted, body.dark-mode span.text-muted {
-  color: #94a3b8 !important;
+[data-theme="dark"] .modal-content, [data-theme="dark"] .modal-dialog,
+[data-theme="dark"] [role="dialog"], [data-theme="dark"] .order-wizard-dialog,
+.dark .modal-content, .dark .modal-dialog,
+.dark [role="dialog"], .dark .order-wizard-dialog,
+body.dark-mode .modal-content, body.dark-mode .modal-dialog,
+body.dark-mode [role="dialog"], body.dark-mode .order-wizard-dialog {
+  background: var(--color-surface, #111827) !important;
+  background-color: var(--color-surface, #111827) !important;
+  color: #ffffff !important;
+  border: 1.5px solid var(--color-border, rgba(255, 255, 255, 0.16)) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75) !important;
 }
 
-/* Intelligent overrides for components with hardcoded dark slate inline styles */
+[data-theme="dark"] .dropdown-menu, [data-theme="dark"] [role="menu"],
+.dark .dropdown-menu, .dark [role="menu"],
+body.dark-mode .dropdown-menu, body.dark-mode [role="menu"] {
+  background: var(--color-surface, #111827) !important;
+  background-color: var(--color-surface, #111827) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.16)) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* 4. Universal Dark Mode Tables & Data Displays */
+[data-theme="dark"] table, .dark table, body.dark-mode table {
+  color: var(--color-text-primary, #ffffff) !important;
+  background-color: transparent !important;
+}
+
+[data-theme="dark"] thead, [data-theme="dark"] th,
+.dark thead, .dark th,
+body.dark-mode thead, body.dark-mode th {
+  background: var(--color-surface-elevated, #1e293b) !important;
+  background-color: var(--color-surface-elevated, #1e293b) !important;
+  color: #ffffff !important;
+  border-bottom: 1.5px solid var(--color-border, rgba(255, 255, 255, 0.16)) !important;
+  font-weight: 700;
+}
+
+[data-theme="dark"] td, .dark td, body.dark-mode td {
+  border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.10)) !important;
+  color: var(--color-text-secondary, #e2e8f0) !important;
+}
+
+[data-theme="dark"] tbody tr:hover, .dark tbody tr:hover, body.dark-mode tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* 5. Defensive Overrides for Hardcoded Light/White Backgrounds */
+[data-theme="dark"] [style*="background: #ffffff"],
+[data-theme="dark"] [style*="background:#ffffff"],
+[data-theme="dark"] [style*="background: #fff"],
+[data-theme="dark"] [style*="background:#fff"],
+[data-theme="dark"] [style*="background: white"],
+[data-theme="dark"] [style*="background: rgb(255, 255, 255)"],
+[data-theme="dark"] [style*="background-color: #ffffff"],
+[data-theme="dark"] [style*="background-color:#ffffff"],
+[data-theme="dark"] [style*="background-color: white"],
+[data-theme="dark"] [style*="background-color: rgb(255, 255, 255)"],
+.dark [style*="background: #ffffff"],
+.dark [style*="background:#ffffff"],
+.dark [style*="background: white"],
+.dark [style*="background: rgb(255, 255, 255)"],
+.dark [style*="background-color: #ffffff"],
+.dark [style*="background-color:#ffffff"],
+body.dark-mode [style*="background: #ffffff"],
+body.dark-mode [style*="background:#ffffff"],
+body.dark-mode [style*="background: white"],
+body.dark-mode [style*="background: rgb(255, 255, 255)"],
+body.dark-mode [style*="background-color: #ffffff"],
+body.dark-mode [style*="background-color:#ffffff"] {
+  background: var(--color-surface, #111827) !important;
+  background-color: var(--color-surface, #111827) !important;
+}
+
+[data-theme="dark"] [style*="background: #f8fafc"],
+[data-theme="dark"] [style*="background:#f8fafc"],
+[data-theme="dark"] [style*="background: #f1f5f9"],
+[data-theme="dark"] [style*="background:#f1f5f9"],
+.dark [style*="background: #f8fafc"],
+.dark [style*="background:#f8fafc"],
+.dark [style*="background: #f1f5f9"],
+.dark [style*="background:#f1f5f9"],
+body.dark-mode [style*="background: #f8fafc"],
+body.dark-mode [style*="background:#f8fafc"],
+body.dark-mode [style*="background: #f1f5f9"],
+body.dark-mode [style*="background:#f1f5f9"] {
+  background: var(--color-surface-elevated, #1e293b) !important;
+  background-color: var(--color-surface-elevated, #1e293b) !important;
+}
+
+/* Hardcoded Light Accent Containers */
+[data-theme="dark"] [style*="background: #fff7ed"],
+[data-theme="dark"] [style*="background:#fff7ed"],
+.dark [style*="background: #fff7ed"],
+.dark [style*="background:#fff7ed"],
+body.dark-mode [style*="background: #fff7ed"],
+body.dark-mode [style*="background:#fff7ed"] {
+  background: rgba(249, 115, 22, 0.16) !important;
+  background-color: rgba(249, 115, 22, 0.16) !important;
+}
+
+[data-theme="dark"] [style*="background: #ecfdf5"],
+[data-theme="dark"] [style*="background:#ecfdf5"],
+[data-theme="dark"] [style*="background: #f0fdf4"],
+.dark [style*="background: #ecfdf5"],
+.dark [style*="background:#ecfdf5"],
+.dark [style*="background: #f0fdf4"],
+body.dark-mode [style*="background: #ecfdf5"],
+body.dark-mode [style*="background:#ecfdf5"],
+body.dark-mode [style*="background: #f0fdf4"] {
+  background: rgba(16, 185, 129, 0.16) !important;
+  background-color: rgba(16, 185, 129, 0.16) !important;
+}
+
+[data-theme="dark"] [style*="background: #eff6ff"],
+[data-theme="dark"] [style*="background:#eff6ff"],
+.dark [style*="background: #eff6ff"],
+.dark [style*="background:#eff6ff"],
+body.dark-mode [style*="background: #eff6ff"],
+body.dark-mode [style*="background:#eff6ff"] {
+  background: rgba(59, 130, 246, 0.16) !important;
+  background-color: rgba(59, 130, 246, 0.16) !important;
+}
+
+/* 6. Defensive Overrides for Hardcoded Dark Text on Dark Surfaces */
 [data-theme="dark"] [style*="color: #0f172a"],
 [data-theme="dark"] [style*="color:#0f172a"],
 [data-theme="dark"] [style*="color: #090d16"],
 [data-theme="dark"] [style*="color:#090d16"],
 [data-theme="dark"] [style*="color: rgb(15, 23, 42)"],
 [data-theme="dark"] [style*="color: rgb(9, 13, 22)"],
+.dark [style*="color: #0f172a"],
+.dark [style*="color:#0f172a"],
+.dark [style*="color: #090d16"],
+.dark [style*="color:#090d16"],
 body.dark-mode [style*="color: #0f172a"],
 body.dark-mode [style*="color:#0f172a"],
 body.dark-mode [style*="color: #090d16"],
 body.dark-mode [style*="color:#090d16"] {
-  color: #ffffff !important;
+  color: var(--color-text-primary, #ffffff) !important;
 }
 
 [data-theme="dark"] [style*="color: #1e293b"],
 [data-theme="dark"] [style*="color:#1e293b"],
 [data-theme="dark"] [style*="color: rgb(30, 41, 59)"],
+.dark [style*="color: #1e293b"],
+.dark [style*="color:#1e293b"],
 body.dark-mode [style*="color: #1e293b"],
 body.dark-mode [style*="color:#1e293b"] {
-  color: #f1f5f9 !important;
+  color: var(--color-text-secondary, #e2e8f0) !important;
 }
 
 [data-theme="dark"] [style*="color: #334155"],
 [data-theme="dark"] [style*="color:#334155"],
+[data-theme="dark"] [style*="color: rgb(51, 65, 85)"],
+.dark [style*="color: #334155"],
+.dark [style*="color:#334155"],
+body.dark-mode [style*="color: #334155"],
+body.dark-mode [style*="color:#334155"] {
+  color: var(--color-text-secondary, #e2e8f0) !important;
+}
+
 [data-theme="dark"] [style*="color: #475569"],
 [data-theme="dark"] [style*="color:#475569"],
-[data-theme="dark"] [style*="color: rgb(51, 65, 85)"],
 [data-theme="dark"] [style*="color: rgb(71, 85, 105)"],
-body.dark-mode [style*="color: #334155"],
-body.dark-mode [style*="color:#334155"],
+.dark [style*="color: #475569"],
+.dark [style*="color:#475569"],
 body.dark-mode [style*="color: #475569"],
 body.dark-mode [style*="color:#475569"] {
   color: #cbd5e1 !important;
 }
 
-/* Universal Dark Mode Surface Overrides for Hardcoded White Backgrounds */
-[data-theme="dark"] .theme-light-enforced,
-body.dark-mode .theme-light-enforced {
-  background: var(--color-surface, #111827) !important;
-  background-color: var(--color-surface, #111827) !important;
-  color: #f8fafc !important;
+[data-theme="dark"] [style*="color: #64748b"],
+[data-theme="dark"] [style*="color:#64748b"],
+[data-theme="dark"] [style*="color: #6b7280"],
+[data-theme="dark"] [style*="color:#6b7280"],
+[data-theme="dark"] [style*="color: rgb(100, 116, 139)"],
+[data-theme="dark"] [style*="color: rgb(107, 114, 128)"],
+.dark [style*="color: #64748b"],
+.dark [style*="color:#64748b"],
+.dark [style*="color: #6b7280"],
+.dark [style*="color:#6b7280"],
+body.dark-mode [style*="color: #64748b"],
+body.dark-mode [style*="color:#64748b"],
+body.dark-mode [style*="color: #6b7280"],
+body.dark-mode [style*="color:#6b7280"] {
+  color: var(--color-text-muted, #94a3b8) !important;
+}
+
+/* 7. Defensive Overrides for Hardcoded Light Borders */
+[data-theme="dark"] [style*="border: 1px solid #e2e8f0"],
+[data-theme="dark"] [style*="border: 1.5px solid #e2e8f0"],
+[data-theme="dark"] [style*="border: 1px solid #cbd5e1"],
+[data-theme="dark"] [style*="border: 1.5px solid #cbd5e1"],
+[data-theme="dark"] [style*="border-color: #e2e8f0"],
+[data-theme="dark"] [style*="border-color: #cbd5e1"],
+.dark [style*="border: 1px solid #e2e8f0"],
+.dark [style*="border: 1.5px solid #e2e8f0"],
+.dark [style*="border: 1px solid #cbd5e1"],
+.dark [style*="border: 1.5px solid #cbd5e1"],
+body.dark-mode [style*="border: 1px solid #e2e8f0"],
+body.dark-mode [style*="border: 1.5px solid #e2e8f0"],
+body.dark-mode [style*="border: 1px solid #cbd5e1"],
+body.dark-mode [style*="border: 1.5px solid #cbd5e1"] {
   border-color: var(--color-border, rgba(255, 255, 255, 0.16)) !important;
-}
-
-[data-theme="dark"] .theme-light-enforced h1,
-[data-theme="dark"] .theme-light-enforced h2,
-[data-theme="dark"] .theme-light-enforced h3,
-[data-theme="dark"] .theme-light-enforced h4,
-[data-theme="dark"] .theme-light-enforced h5,
-[data-theme="dark"] .theme-light-enforced h6,
-body.dark-mode .theme-light-enforced h1,
-body.dark-mode .theme-light-enforced h2,
-body.dark-mode .theme-light-enforced h3,
-body.dark-mode .theme-light-enforced h4,
-body.dark-mode .theme-light-enforced h5,
-body.dark-mode .theme-light-enforced h6 {
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] .theme-light-enforced p,
-body.dark-mode .theme-light-enforced p {
-  color: #cbd5e1 !important;
-}
-
-/* Form Controls & Inputs in Dark Mode */
-[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
-[data-theme="dark"] textarea,
-[data-theme="dark"] select,
-[data-theme="dark"] .form-control,
-[data-theme="dark"] .client-chat-inbox input,
-[data-theme="dark"] .client-chat-inbox textarea,
-[data-theme="dark"] .client-chat-inbox .form-control,
-[data-theme="dark"] .mobile-app-root input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
-[data-theme="dark"] .mobile-app-root textarea,
-[data-theme="dark"] .mobile-app-root .form-control,
-[data-theme="dark"] .chat-message-input,
-body.dark-mode input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
-body.dark-mode textarea,
-body.dark-mode select,
-body.dark-mode .form-control,
-body.dark-mode .client-chat-inbox input,
-body.dark-mode .client-chat-inbox textarea,
-body.dark-mode .client-chat-inbox .form-control,
-body.dark-mode .mobile-app-root input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
-body.dark-mode .mobile-app-root textarea,
-body.dark-mode .mobile-app-root .form-control,
-body.dark-mode .chat-message-input {
-  background: var(--color-input, #1e293b) !important;
-  background-color: var(--color-input, #1e293b) !important;
-  color: #ffffff !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.18) !important;
-}
-
-[data-theme="dark"] input:focus,
-[data-theme="dark"] textarea:focus,
-[data-theme="dark"] select:focus,
-body.dark-mode input:focus,
-body.dark-mode textarea:focus,
-body.dark-mode select:focus {
-  border-color: var(--color-primary, #f97316) !important;
-  box-shadow: 0 0 0 3px var(--color-primary-glow) !important;
-}
-
-[data-theme="dark"] input::placeholder,
-[data-theme="dark"] textarea::placeholder,
-[data-theme="dark"] select::placeholder,
-[data-theme="dark"] .client-chat-inbox input::placeholder,
-[data-theme="dark"] .client-chat-inbox textarea::placeholder,
-[data-theme="dark"] .mobile-app-root input::placeholder,
-[data-theme="dark"] .mobile-app-root textarea::placeholder,
-[data-theme="dark"] .chat-message-input::placeholder,
-body.dark-mode input::placeholder,
-body.dark-mode textarea::placeholder,
-body.dark-mode select::placeholder,
-body.dark-mode .client-chat-inbox input::placeholder,
-body.dark-mode .client-chat-inbox textarea::placeholder,
-body.dark-mode .mobile-app-root input::placeholder,
-body.dark-mode .mobile-app-root textarea::placeholder,
-body.dark-mode .chat-message-input::placeholder {
-  color: #94a3b8 !important;
-  opacity: 1 !important;
 }
 
 /* Mobile App Navigation & Headers in Dark Mode */

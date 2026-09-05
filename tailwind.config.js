@@ -35,7 +35,18 @@ module.exports = {
           royal: '#2563eb',
           'royal-hover': '#1d4ed8',
           'royal-dark': '#1e3a8a',
-        }
+        },
+        // Semantic Tokens (Mapped to dynamic CSS custom variables)
+        background: 'var(--color-background)',
+        surface: 'var(--color-surface)',
+        'surface-elevated': 'var(--color-surface-elevated)',
+        subtle: 'var(--color-subtle)',
+        'input-bg': 'var(--color-input)',
+        'border-theme': 'var(--color-border)',
+        'border-subtle': 'var(--color-border-subtle)',
+        'text-primary': 'var(--color-text-primary)',
+        'text-secondary': 'var(--color-text-secondary)',
+        'text-muted': 'var(--color-text-muted)',
       },
       borderRadius: {
         'xl': '0.75rem',

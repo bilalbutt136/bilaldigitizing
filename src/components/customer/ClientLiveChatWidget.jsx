@@ -793,7 +793,7 @@ export const ClientLiveChatWidget = () => {
             width: 'min(380px, calc(100vw - 20px))',
             maxWidth: 'calc(100vw - 20px)',
             height: isMinimized ? '60px' : 'min(520px, calc(100dvh - 100px))',
-            background: '#ffffff',
+            background: 'var(--color-surface, #ffffff)',
             borderRadius: 'var(--radius-lg)',
             boxShadow: '0 16px 45px rgba(0, 0, 0, 0.22)',
             border: '1.5px solid var(--border-color)',
@@ -882,7 +882,7 @@ export const ClientLiveChatWidget = () => {
                   padding: '1rem',
                   overflowY: 'auto',
                   overscrollBehavior: 'contain',
-                  background: '#f8fafc',
+                  background: 'var(--color-background, #f8fafc)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '0.75rem'
@@ -891,7 +891,7 @@ export const ClientLiveChatWidget = () => {
                 <div style={{ textAlign: 'center', margin: '0.25rem 0 0.5rem' }}>
                   <span style={{
                     fontSize: '0.7rem',
-                    background: '#ffffff',
+                    background: 'var(--color-surface, #ffffff)',
                     border: '1px solid var(--border-color)',
                     color: 'var(--text-muted)',
                     padding: '0.25rem 0.65rem',
@@ -903,10 +903,10 @@ export const ClientLiveChatWidget = () => {
 
                 {(clientThread.messages || []).length === 0 && (
                   <div style={{ textAlign: 'center', padding: '1.5rem 0.5rem', color: 'var(--text-muted)' }}>
-                    <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#fff7ed', color: 'var(--orange-500)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'var(--color-subtle, #fff7ed)', color: 'var(--color-primary, #ea580c)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
                       <MessageSquare size={20} />
                     </div>
-                    <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--navy-900)' }}>
+                    <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--color-text-primary, var(--navy-900))' }}>
                       Live Digitizer Support
                     </div>
                     <div style={{ fontSize: '0.78rem', marginTop: '0.25rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
@@ -927,26 +927,26 @@ export const ClientLiveChatWidget = () => {
                             setMessageInput(prompt);
                           }}
                           style={{
-                            background: '#ffffff',
+                            background: 'var(--color-surface, #ffffff)',
                             border: '1px solid var(--border-color)',
                             borderRadius: '8px',
                             padding: '0.55rem 0.75rem',
                             fontSize: '0.78rem',
-                            color: 'var(--navy-800)',
+                            color: 'var(--color-text-primary, var(--navy-800))',
                             fontWeight: 600,
                             cursor: 'pointer',
                             textAlign: 'left',
                             transition: 'all 0.15s ease'
                           }}
                           onMouseOver={(e) => {
-                            e.currentTarget.style.borderColor = 'var(--orange-500)';
-                            e.currentTarget.style.color = 'var(--orange-600)';
-                            e.currentTarget.style.background = '#fff7ed';
+                            e.currentTarget.style.borderColor = 'var(--color-primary, #ea580c)';
+                            e.currentTarget.style.color = 'var(--color-primary, #ea580c)';
+                            e.currentTarget.style.background = 'var(--color-subtle, #fff7ed)';
                           }}
                           onMouseOut={(e) => {
                             e.currentTarget.style.borderColor = 'var(--border-color)';
-                            e.currentTarget.style.color = 'var(--navy-800)';
-                            e.currentTarget.style.background = '#ffffff';
+                            e.currentTarget.style.color = 'var(--color-text-primary, var(--navy-800))';
+                            e.currentTarget.style.background = 'var(--color-surface, #ffffff)';
                           }}
                         >
                           {prompt}
@@ -983,7 +983,7 @@ export const ClientLiveChatWidget = () => {
                     alignItems: 'center',
                     gap: '0.45rem',
                     padding: '0.35rem 0.75rem',
-                    background: '#ffffff',
+                    background: 'var(--color-surface, #ffffff)',
                     borderRadius: '14px',
                     border: '1px solid var(--border-color)',
                     width: 'fit-content',
@@ -1009,8 +1009,8 @@ export const ClientLiveChatWidget = () => {
               {replyingTo && (
                 <div style={{
                   padding: '0.4rem 0.85rem',
-                  background: '#fff7ed',
-                  borderTop: '1px solid #fed7aa',
+                  background: 'var(--color-subtle, #fff7ed)',
+                  borderTop: '1px solid var(--color-border, #fed7aa)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -1040,8 +1040,8 @@ export const ClientLiveChatWidget = () => {
               {isUploadingAttachment && (
                 <div style={{
                   padding: '0.35rem 0.85rem',
-                  background: '#eff6ff',
-                  borderTop: '1px solid #bfdbfe',
+                  background: 'var(--color-subtle, #eff6ff)',
+                  borderTop: '1px solid var(--color-border, #bfdbfe)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.4rem',
@@ -1057,8 +1057,8 @@ export const ClientLiveChatWidget = () => {
               {attachedFile && !isUploadingAttachment && (
                 <div style={{
                   padding: '0.35rem 0.85rem',
-                  background: '#f0fdf4',
-                  borderTop: '1px solid #bbf7d0',
+                  background: 'var(--color-subtle, #f0fdf4)',
+                  borderTop: '1px solid var(--color-border, #bbf7d0)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -1077,7 +1077,7 @@ export const ClientLiveChatWidget = () => {
               )}
 
               {/* Input Form */}
-              <form onSubmit={handleSendMessage} style={{ padding: '0.65rem 0.85rem', borderTop: '1px solid var(--border-color)', background: '#ffffff' }}>
+              <form onSubmit={handleSendMessage} style={{ padding: '0.65rem 0.85rem', borderTop: '1px solid var(--border-color)', background: 'var(--color-surface, #ffffff)' }}>
                 <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'flex-end' }}>
                   <input
                     type="file"
@@ -1092,9 +1092,9 @@ export const ClientLiveChatWidget = () => {
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploadingAttachment}
                     style={{
-                      background: '#f1f5f9',
+                      background: 'var(--color-subtle, #f1f5f9)',
                       border: '1.5px solid var(--border-color)',
-                      color: 'var(--navy-700)',
+                      color: 'var(--color-text-primary, var(--navy-700))',
                       width: '36px',
                       height: '36px',
                       borderRadius: 'var(--radius-sm)',
@@ -1129,7 +1129,10 @@ export const ClientLiveChatWidget = () => {
                       lineHeight: 1.4,
                       overflowY: 'hidden',
                       fontFamily: 'inherit',
-                      boxSizing: 'border-box'
+                      boxSizing: 'border-box',
+                      background: 'var(--color-input, #ffffff)',
+                      color: 'var(--color-text-primary, inherit)',
+                      border: '1px solid var(--border-color)'
                     }}
                   />
 
@@ -1154,10 +1157,10 @@ export const ClientLiveChatWidget = () => {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.3rem', padding: '0 0.15rem' }}>
                   <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    Press <kbd style={{ padding: '0.05rem 0.3rem', borderRadius: '3px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.62rem', fontWeight: 700 }}>Enter</kbd> to send
+                    Press <kbd style={{ padding: '0.05rem 0.3rem', borderRadius: '3px', background: 'var(--color-subtle, #f1f5f9)', border: '1px solid var(--color-border, #cbd5e1)', color: 'var(--color-text-secondary, inherit)', fontSize: '0.62rem', fontWeight: 700 }}>Enter</kbd> to send
                   </span>
                   <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
-                    <kbd style={{ padding: '0.05rem 0.3rem', borderRadius: '3px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.62rem', fontWeight: 700 }}>Shift</kbd> + <kbd style={{ padding: '0.05rem 0.3rem', borderRadius: '3px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.62rem', fontWeight: 700 }}>Enter</kbd> for new line
+                    <kbd style={{ padding: '0.05rem 0.3rem', borderRadius: '3px', background: 'var(--color-subtle, #f1f5f9)', border: '1px solid var(--color-border, #cbd5e1)', color: 'var(--color-text-secondary, inherit)', fontSize: '0.62rem', fontWeight: 700 }}>Shift</kbd> + <kbd style={{ padding: '0.05rem 0.3rem', borderRadius: '3px', background: 'var(--color-subtle, #f1f5f9)', border: '1px solid var(--color-border, #cbd5e1)', color: 'var(--color-text-secondary, inherit)', fontSize: '0.62rem', fontWeight: 700 }}>Enter</kbd> for new line
                   </span>
                 </div>
               </form>

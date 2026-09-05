@@ -285,16 +285,16 @@ export default function WhatsAppChatMessage({
           borderRadius: resolvedIsMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
           background: resolvedIsMe 
             ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' 
-            : '#ffffff',
-          color: resolvedIsMe ? '#ffffff' : '#0f172a',
+            : 'var(--color-surface, #ffffff)',
+          color: resolvedIsMe ? '#ffffff' : 'var(--color-text-primary, #0f172a)',
           border: resolvedIsMe 
             ? 'none' 
             : (!isMessageRead 
                 ? '1.5px solid #86efac' 
-                : '1.5px solid #e2e8f0'),
+                : '1.5px solid var(--color-border, #e2e8f0)'),
           borderLeft: (!resolvedIsMe && !isMessageRead)
             ? '4.5px solid #059669'
-            : (resolvedIsMe ? 'none' : '1.5px solid #e2e8f0'),
+            : (resolvedIsMe ? 'none' : '1.5px solid var(--color-border, #e2e8f0)'),
           boxShadow: resolvedIsMe
             ? '0 3px 10px rgba(5, 150, 105, 0.25)'
             : '0 2px 8px rgba(0, 0, 0, 0.05)',
@@ -580,9 +580,9 @@ export default function WhatsAppChatMessage({
                   onClick={(e) => handleOpenPdf(e)}
                   title="View PDF"
                   style={{
-                    background: isMe ? 'rgba(255,255,255,0.2)' : '#f1f5f9',
-                    color: isMe ? '#ffffff' : '#0f172a',
-                    border: isMe ? '1px solid rgba(255,255,255,0.4)' : '1px solid #cbd5e1',
+                    background: isMe ? 'rgba(255,255,255,0.2)' : 'var(--color-subtle, #f1f5f9)',
+                    color: isMe ? '#ffffff' : 'var(--color-text-primary, #0f172a)',
+                    border: isMe ? '1px solid rgba(255,255,255,0.4)' : '1px solid var(--color-border, #cbd5e1)',
                     borderRadius: '6px',
                     padding: '0.35rem 0.55rem',
                     fontSize: '0.72rem',
