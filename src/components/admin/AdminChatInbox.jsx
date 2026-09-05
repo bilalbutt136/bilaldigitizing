@@ -336,8 +336,17 @@ export const AdminChatInbox = () => {
     if (processedAutoRepliesRef.current.has(msgKey)) return;
     processedAutoRepliesRef.current.add(msgKey);
 
+    // Check if server already replied with auto-pilot to avoid duplicate replies
+    const hasRecentAutoReply = (targetConv?.messages || []).some(m =>
+      (m.is_autopilot || m.auto_pilot || m.sender === 'admin') &&
+      Math.abs(parseMessageTime(m) - parseMessageTime(newMsg)) < 15000 &&
+      parseMessageTime(m) >= parseMessageTime(newMsg)
+    );
+    if (hasRecentAutoReply) return;
+
     const customerName = newMsg.senderName || targetConv?.clientName || 'Customer';
     const channelName = '24/7 Help Desk';
+    const attachImg = newMsg.attachment_url || (typeof newMsg.attachment === 'string' && newMsg.attachment.startsWith('http') ? newMsg.attachment : null);
 
     try {
       // 1. Broadcast typing indicator to simulate natural response
@@ -360,7 +369,7 @@ export const AdminChatInbox = () => {
           })),
           customerName: customerName,
           latestMessage: newMsg.text,
-          imageUrl: attachedImageUrl,
+          imageUrl: attachImg,
           channelType: 'helpdesk',
           isSupport: true
         })
@@ -380,8 +389,8 @@ export const AdminChatInbox = () => {
           thread_id: newMsg.conversation_id,
           client_email: targetConv?.clientEmail || newMsg.client_email || '',
           sender: 'admin',
-          senderName: isHelpDesk ? '24/7 Live Support' : 'Studio Digitizer',
-          sender_name: isHelpDesk ? '24/7 Live Support' : 'Studio Digitizer',
+          senderName: isHelpDeskThread ? '24/7 Live Support' : 'Studio Digitizer',
+          sender_name: isHelpDeskThread ? '24/7 Live Support' : 'Studio Digitizer',
           text: replyText,
           is_autopilot: true,
           auto_pilot: true,
@@ -1019,7 +1028,7 @@ export const AdminChatInbox = () => {
   const isHelpDeskActive = currentChannelType === 'helpdesk';
   const isHelpDeskAutoPilotOn = Boolean(channelAutoPilot.helpdesk);
 
-  const toggleHelpDeskAutoPilot = () => {
+  const toggleHelpDeskAutoPilot = async () => {
     const nextVal = !channelAutoPilot.helpdesk;
     setChannelAutoPilot(prev => ({
       ...prev,
@@ -1027,6 +1036,13 @@ export const AdminChatInbox = () => {
       digitizer: false
     }));
     showToast(`🤖 24/7 Help Desk Auto-Pilot ${nextVal ? 'enabled (Autonomous AI Mode)' : 'disabled (Manual Mode)'}`, nextVal ? 'success' : 'info');
+    try {
+      await fetch('/api/admin/homepage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings: [{ key: 'autopilot_helpdesk', value: nextVal }] })
+      });
+    } catch {}
   };
 
   const handleKeyDown = (e) => {

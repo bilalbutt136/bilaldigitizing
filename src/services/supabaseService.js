@@ -1557,11 +1557,18 @@ export async function addChatMessage(chatIdOrObj, messageObj = null) {
 
   try {
     const headers = await getAuthHeaders();
-    await fetch('/api/messages', {
+    const res = await fetch('/api/messages', {
       method: 'POST',
       headers,
       body: JSON.stringify({ action: 'insertMessage', payload: fullMsg })
     });
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.auto_reply) {
+        broadcastLiveMessage(data.auto_reply);
+      }
+      return data;
+    }
     return true;
   } catch { return false; }
 }

@@ -498,9 +498,28 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
     broadcastTypingStatus(canonicalChatId, clientName, 'client', false);
 
     try {
-      await addChatMessage(canonicalChatId, newMsg);
+      if (activeChannel === 'support') {
+        setIsSupportTyping(true);
+      }
+      const sendRes = await addChatMessage(canonicalChatId, newMsg);
+      if (sendRes?.auto_reply) {
+        const auto = sendRes.auto_reply;
+        setTimeout(() => {
+          setIsSupportTyping(false);
+          setMessages(prev => {
+            const map = new Map();
+            (prev || []).forEach(m => { if (m && m.id) map.set(m.id, m); });
+            map.set(auto.id, auto);
+            return Array.from(map.values()).sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+          });
+          scrollToBottom('smooth');
+        }, 700);
+      } else if (activeChannel === 'support') {
+        setTimeout(() => setIsSupportTyping(false), 3000);
+      }
     } catch (err) {
       console.error('Send message error:', err);
+      setIsSupportTyping(false);
       if (showToast) showToast('Failed to deliver message. Retrying...', 'error');
     }
   };

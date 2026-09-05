@@ -724,7 +724,26 @@ export const ClientLiveChatWidget = () => {
 
     if (isSupabaseConfigured) {
       try {
-        await addChatMessage(convId, newMsg);
+        const sendRes = await addChatMessage(convId, newMsg);
+        if (sendRes?.auto_reply) {
+          const auto = sendRes.auto_reply;
+          setTimeout(() => {
+            setChats(prev => {
+              const safePrev = Array.isArray(prev) ? prev : [];
+              return safePrev.map(c => {
+                if (c.id === convId) {
+                  const alreadyHas = (c.messages || []).some(m => m.id === auto.id);
+                  if (alreadyHas) return c;
+                  const updatedMsgs = [...(c.messages || []), auto];
+                  updatedMsgs.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+                  return { ...c, messages: updatedMsgs, updatedAt: new Date().toISOString() };
+                }
+                return c;
+              });
+            });
+            scrollToBottom('smooth');
+          }, 700);
+        }
       } catch (err) {
         console.warn('Persist widget message notice:', err);
       }
