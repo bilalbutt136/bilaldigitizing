@@ -561,9 +561,9 @@ export const HeroSection = () => {
             max-width: 100% !important;
           }
           .hero-showcase-image-box {
-            min-height: 180px !important;
-            max-height: 280px !important;
-            aspect-ratio: 16/10 !important;
+            min-height: 220px !important;
+            max-height: 380px !important;
+            aspect-ratio: 4/3 !important;
           }
         }
       `}} />
@@ -883,15 +883,15 @@ export const HeroSection = () => {
                 </div>
               </div>
 
-              {/* Full, Clear Showcase Image Container (Wide 16:10 Ratio - Fits wide graphics with minimal vertical padding) */}
+              {/* Full, Clear Showcase Image Container (Exact 4:3 / 1200x900 Ratio - Fills completely edge-to-edge) */}
               <div 
                 className="hero-showcase-image-box"
                 style={{
                   position: 'relative',
                   width: '100%',
-                  aspectRatio: '16/10',
-                  minHeight: '220px',
-                  maxHeight: '360px',
+                  aspectRatio: '4/3',
+                  minHeight: '260px',
+                  maxHeight: '440px',
                   borderRadius: '16px',
                   overflow: 'hidden',
                   background: 'var(--color-surface, #ffffff)',

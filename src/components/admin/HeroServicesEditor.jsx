@@ -545,7 +545,7 @@ export const HeroServicesEditor = () => {
                 Upload multiple high-quality showcase images for <strong>{selectedService.toUpperCase()}</strong>. The homepage hero will automatically cycle through all active images every {formState.slideshow_interval || 5} seconds.
               </p>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.74rem', fontWeight: 800, color: 'var(--orange-600)', background: 'rgba(249, 115, 22, 0.1)', padding: '0.2rem 0.55rem', borderRadius: '6px', border: '1px solid rgba(249, 115, 22, 0.2)' }}>
-                📐 Exact Showcase Dimensions: 1200 × 750 px (Wide 16:10 Ratio) or 1280 × 800 px • Format: PNG, JPG, WEBP (Max 5MB)
+                📐 Exact Showcase Dimensions: 1200 × 900 px (4:3 Aspect Ratio) • Format: PNG, JPG, WEBP (Max 5MB)
               </div>
             </div>
 
@@ -675,7 +675,7 @@ export const HeroServicesEditor = () => {
 
                     {/* Image Preview Thumbnail */}
                     {item.image_url ? (
-                      <div style={{ width: '100%', aspectRatio: '16/10', maxHeight: '180px', borderRadius: '10px', overflow: 'hidden', marginBottom: '0.85rem', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.35rem' }}>
+                      <div style={{ width: '100%', aspectRatio: '4/3', maxHeight: '200px', borderRadius: '10px', overflow: 'hidden', marginBottom: '0.85rem', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.35rem' }}>
                         <img src={item.image_url} alt="Showcase preview" style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain' }} />
                       </div>
                     ) : (
