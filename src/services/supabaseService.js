@@ -1296,18 +1296,36 @@ export async function fetchConversations(email, channel = '') {
   } catch { return []; }
 }
 
-export async function fetchChatMessages(chatId, email) {
+export async function fetchChatMessages(chatId, email, guestId = null) {
   try {
-    if (!chatId) return [];
+    if (!chatId && !email && !guestId) return [];
     const headers = await getAuthHeaders();
     const cleanEmail = email ? String(email).toLowerCase().trim() : '';
+    const queryParts = [];
+    if (chatId) queryParts.push(`conversation_id=${encodeURIComponent(chatId)}`);
+    if (cleanEmail) queryParts.push(`clientEmail=${encodeURIComponent(cleanEmail)}`);
+    if (guestId) queryParts.push(`guest_id=${encodeURIComponent(guestId)}`);
+    
+    // Primary: dedicated chat messages endpoint
+    try {
+      const res = await fetch(`/api/chat/messages?${queryParts.join('&')}`, {
+        headers,
+        cache: 'no-store'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.messages)) return data.messages;
+      }
+    } catch {}
+
+    // Fallback: legacy endpoint
     const query = cleanEmail ? `&clientEmail=${encodeURIComponent(cleanEmail)}` : '';
-    const res = await fetch(`/api/messages?action=fetchMessages&chatId=${encodeURIComponent(chatId)}${query}`, {
+    const fallbackRes = await fetch(`/api/messages?action=fetchMessages&chatId=${encodeURIComponent(chatId || '')}${query}`, {
       headers,
       cache: 'no-store'
     });
-    const data = await res.json();
-    return data.messages || [];
+    const fallbackData = await fallbackRes.json();
+    return fallbackData.messages || [];
   } catch { return []; }
 }
 
@@ -1557,6 +1575,24 @@ export async function addChatMessage(chatIdOrObj, messageObj = null) {
 
   try {
     const headers = await getAuthHeaders();
+    
+    // Primary: dedicated chat send endpoint
+    try {
+      const chatRes = await fetch('/api/chat/send', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(fullMsg)
+      });
+      if (chatRes.ok) {
+        const data = await chatRes.json();
+        if (data?.auto_reply) {
+          broadcastLiveMessage(data.auto_reply);
+        }
+        return data;
+      }
+    } catch {}
+
+    // Fallback: legacy endpoint
     const res = await fetch('/api/messages', {
       method: 'POST',
       headers,

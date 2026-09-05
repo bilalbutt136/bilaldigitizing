@@ -129,7 +129,8 @@ A customer (${customerName}) has messaged 24/7 Live Support.
 const normalizeEmail = (e) => {
   if (!e) return '';
   const str = String(e).toLowerCase().trim();
-  if (str === 'client@studio.com' || str.includes('guest@bdigitizing.pro')) return '';
+  if (str === 'client@studio.com' || str.includes('guest@bdigitizing.pro') || str.startsWith('guest_')) return '';
+  if (!str.includes('@')) return '';
   return str;
 };
 
@@ -970,6 +971,8 @@ export async function POST(request) {
         idempotency_key: payload.idempotency_key || null,
         conversation_id: canonicalConvId,
         thread_id: canonicalConvId,
+        guest_id: payload.guest_id || (canonicalConvId.includes('guest_') ? canonicalConvId.replace(/^support-/, '').replace(/^inbox-/, '') : null),
+        status: 'sent',
         type: payload.type || (payload.offer_id || payload.offer_data ? 'custom_offer' : 'text'),
         metadata: payload.metadata || {},
         client_email: targetEmail || null,

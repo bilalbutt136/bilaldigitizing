@@ -662,10 +662,25 @@ export default function WhatsAppChatMessage({
             <span>{displayTime}</span>
             {resolvedIsMe && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', marginLeft: '0.2rem' }}>
-                <span style={{ fontSize: '0.62rem', fontWeight: 800, color: isMessageRead ? '#7dd3fc' : 'rgba(255, 255, 255, 0.75)' }}>
-                  {isMessageRead ? 'Read' : 'Delivered'}
-                </span>
-                <CheckCheck size={13} style={{ color: isMessageRead ? '#38bdf8' : 'rgba(255,255,255,0.7)' }} />
+                {message.status === 'sending' ? (
+                  <>
+                    <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'rgba(255, 255, 255, 0.85)' }}>
+                      Sending...
+                    </span>
+                    <Clock size={11} style={{ color: 'rgba(255, 255, 255, 0.85)' }} />
+                  </>
+                ) : message.status === 'error' ? (
+                  <span style={{ fontSize: '0.62rem', fontWeight: 800, color: '#fca5a5' }} title="Failed to deliver message">
+                    Failed ⚠️
+                  </span>
+                ) : (
+                  <>
+                    <span style={{ fontSize: '0.62rem', fontWeight: 800, color: isMessageRead ? '#7dd3fc' : 'rgba(255, 255, 255, 0.75)' }}>
+                      {isMessageRead ? 'Read' : 'Delivered'}
+                    </span>
+                    <CheckCheck size={13} style={{ color: isMessageRead ? '#38bdf8' : 'rgba(255,255,255,0.7)' }} />
+                  </>
+                )}
               </span>
             )}
           </div>
