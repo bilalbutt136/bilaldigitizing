@@ -117,7 +117,7 @@ export default async function TermsAndConditionsPage() {
                 </p>
                 <ul style={{ paddingLeft: '1.5rem', listStyleType: 'none', marginLeft: '-1.5rem' }}>
                   <li style={{ marginBottom: '0.25rem' }}><strong>Email:</strong> orders@bdigitizing-pro.com</li>
-                  <li style={{ marginBottom: '0.25rem' }}><strong>Phone:</strong> +1 (347) 915-4498</li>
+                  <li style={{ marginBottom: '0.25rem' }}><strong>Direct Support:</strong> 24/7 Live Desk in Client Portal</li>
                 </ul>
               </section>
             </>

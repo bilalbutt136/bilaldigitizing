@@ -3019,7 +3019,7 @@ export const BDigitizingMobileApp = () => {
                       {isAuthenticated ? 'Commercial Partner Account' : 'Bilal Studio Production Guarantees'}
                     </div>
                     <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                      {isAuthenticated ? 'Verified Commercial Production Access' : '25+ Years Master Embroidery Craftsmanship'}
+                      {isAuthenticated ? 'Verified Commercial Production Access' : '11+ Years Master Embroidery Craftsmanship'}
                     </span>
                   </div>
                 </div>

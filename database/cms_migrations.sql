@@ -132,7 +132,7 @@ CREATE POLICY "Admin write access" ON public.vector_format_options FOR ALL USING
 INSERT INTO public.home_page_settings (key, value) VALUES
 ('hero_title', '"Premium Embroidery, Vector Art & Patches"'),
 ('hero_rotating_texts', '"Commercial Embroidery, Scalable Vector Art, Custom Physical Patches"'),
-('hero_badge_1', '"1,200+ Clients"'),
+('hero_badge_1', '"3,900+ Clients"'),
 ('hero_badge_2', '"45+ Countries"'),
 ('hero_badge_3', '"4-Hr Express"'),
 ('hero_badge_4', '"100% Guaranteed"'),
@@ -149,7 +149,7 @@ INSERT INTO public.home_page_settings (key, value) VALUES
 ('port_desc', '"Explore a curated selection of our finest..."'),
 ('port_btn', '"View Full Portfolio"'),
 ('test_pill', '"Client Verification"'),
-('test_title', '"Trusted by 1,200+ Apparel Decorators"'),
+('test_title', '"Trusted by 3,900+ Apparel Decorators"'),
 ('faq_title', '"Frequently Asked Questions"'),
 ('price_pill', '"Clear & Transparent Pricing"'),
 ('price_title', '"Choose Your Service/Package"'),

@@ -63,7 +63,7 @@ export const WhyChooseUs = () => {
   // Hardcoded fallback if DB is empty
   if (trustFeatures.length === 0) {
     trustFeatures = [
-      { icon: 'Award', title: '15+ Years Experience', description: 'Decades of expertise handling complex designs for global brands.' },
+      { icon: 'Award', title: '11+ Years Experience', description: 'Over a decade of master expertise handling complex designs for global brands.' },
       { icon: 'MousePointer2', title: '100% Manual Digitizing', description: 'No auto-tracing. Every stitch and node is manually plotted for perfection.' },
       { icon: 'RefreshCw', title: 'Free Unlimited Revisions', description: 'We tweak and refine until you are 100% satisfied with the result.' },
       { icon: 'Globe', title: 'Worldwide Delivery', description: 'Express shipping for patches, instant downloads for digital files globally.' },

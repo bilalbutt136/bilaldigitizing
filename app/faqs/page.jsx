@@ -15,7 +15,7 @@ const MASTER_DEFAULT_FAQS = [
       },
       {
         q: 'How do you guarantee zero thread breaks and machine-ready sew-outs?',
-        a: 'Backed by 25+ years of factory digitizing experience, every design is 100% manually digitized (zero auto-trace). We engineer fabric-specific push-and-pull compensation (piqué knit, performance fleece, twill, leather, canvas), apply structured dual-underlay pathing, and program gradual lead-in stitch angles to eliminate needle deflection and thread breaks at high speeds (1,000+ SPM).'
+        a: 'Backed by 11+ years of factory digitizing experience, every design is 100% manually digitized (zero auto-trace). We engineer fabric-specific push-and-pull compensation (piqué knit, performance fleece, twill, leather, canvas), apply structured dual-underlay pathing, and program gradual lead-in stitch angles to eliminate needle deflection and thread breaks at high speeds (1,000+ SPM).'
       },
       {
         q: 'How do you digitize 3D Puff / Foam embroidery for structured caps and hats?',
@@ -107,7 +107,7 @@ const MASTER_DEFAULT_FAQS = [
       },
       {
         q: 'What if the digitized file does not sew out cleanly on my machine?',
-        a: 'We stand behind our 25-year reputation with a 100% Satisfaction & Money-Back Guarantee. If an embroidery file experiences thread breaks, puckering, or registration issues, our master digitizers will re-engineer the file immediately. If we cannot make it sew out perfectly, you receive a 100% full refund.'
+        a: 'We stand behind our 11-year reputation with a 100% Satisfaction & Money-Back Guarantee. If an embroidery file experiences thread breaks, puckering, or registration issues, our master digitizers will re-engineer the file immediately. If we cannot make it sew out perfectly, you receive a 100% full refund.'
       }
     ]
   }
@@ -206,7 +206,7 @@ export default function FAQsPage() {
             marginBottom: '1.25rem'
           }}>
             <Sparkles size={16} />
-            25+ Years Industry Knowledge Base
+            11+ Years Industry Knowledge Base
           </div>
 
           <h1 style={{

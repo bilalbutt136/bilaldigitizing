@@ -160,7 +160,7 @@ export const Footer = () => {
               </span>
             </div>
             <p style={{ fontSize: '0.875rem', lineHeight: 1.7, marginBottom: '1.25rem', color: '#cbd5e1' }}>
-              Premier commercial embroidery digitizing studio and precision vector conversion lab backed by <strong>25+ years of master craftsmanship</strong>.
+              Premier commercial embroidery digitizing studio and precision vector conversion lab backed by <strong>11+ years of master craftsmanship</strong>.
             </p>
             <div style={{ 
               display: 'inline-flex', 
@@ -176,7 +176,7 @@ export const Footer = () => {
               marginBottom: socialLinks.length > 0 ? '1.25rem' : '0'
             }}>
               <ShieldCheck size={16} style={{ color: 'var(--orange-400)' }} /> 
-              25+ Years Experience • 4,500+ Clients
+              11+ Years Experience • 3,900+ Clients
             </div>
 
             {/* Dynamic Social Media Links (Only Renders Active Links With Clean Layout Adjustment) */}
@@ -495,7 +495,7 @@ export const Footer = () => {
           color: '#64748b'
         }}>
           <div>
-            © {currentYear} Bilal Digitizing. All rights reserved. 25+ Years Master Studio.
+            © {currentYear} Bilal Digitizing. All rights reserved. 11+ Years Master Studio.
           </div>
 
           <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>

@@ -30,7 +30,7 @@ export const CustomerSewOutsSection = () => {
   const showcaseSubtext = cmsShowcase.subtext || (
     currentKey === 'vector' ? 'Low-res raster JPEGs converted into resolution-independent Adobe Illustrator vector node paths.' :
     currentKey === 'patch' ? 'Custom embroidered, woven, PVC rubber, and genuine leather emblems delivered nationwide.' :
-    'Real stitch-outs delivered to 1,200+ commercial embroidery shops and apparel decorators. Clean pathing, crisp satin fills, and zero thread breaks.'
+    'Real stitch-outs delivered to 3,900+ commercial embroidery shops and apparel decorators. Clean pathing, crisp satin fills, and zero thread breaks.'
   );
 
   const serviceCategoryMap = {

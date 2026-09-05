@@ -9,11 +9,11 @@ const MASTER_DEFAULT_BLOGS = [
     id: '3d-puff-caps-master-guide',
     title: 'Mastering 3D Puff Embroidery on Caps: Density, Foam Capping & Pathing Secrets',
     category: 'Embroidery Digitizing',
-    author: 'Master Bilal (25+ Years Lead Digitizer)',
+    author: 'Master Bilal (11+ Years Lead Digitizer)',
     date: 'August 2026',
     readTime: '8 min read',
     imageGradient: 'linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%)',
-    content: `3D Puff embroidery on structured headwear and snapbacks is one of the most profitable yet technically demanding services for commercial apparel decorators. After 25+ years on the production floor digitizing over 250,000 files, our studio has codified the exact formula required to eliminate exposed foam, broken needles, and distorted cap seams.
+    content: `3D Puff embroidery on structured headwear and snapbacks is one of the most profitable yet technically demanding services for commercial apparel decorators. After 11+ years on the production floor digitizing thousands of production-grade files, our studio has codified the exact formula required to eliminate exposed foam, broken needles, and distorted cap seams.
 
 ### 1. EVA Foam Selection & Hardness
 Never use soft craft foam for commercial embroidery. Standard 2mm to 3mm high-density EVA embroidery foam (typically 40–45 Shore A hardness) is required. If the foam is too soft, it compresses under thread tension and loses definition; if it is too hard, needle perforation creates birdnesting and shredding.

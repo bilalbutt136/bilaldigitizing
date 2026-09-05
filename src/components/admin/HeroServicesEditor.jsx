@@ -39,7 +39,7 @@ const DEFAULT_SERVICES = {
       'Custom Physical Patches: Starts $1.50 / Piece · Velcro & Iron-On · Doorstep Delivery'
     ],
     stats: [
-      { value: '1,200+', label: 'Clients' },
+      { value: '3,900+', label: 'Clients' },
       { value: '45+', label: 'Countries' },
       { value: '4-Hr', label: 'Express' },
       { value: '100%', label: 'Guaranteed' }
@@ -58,7 +58,7 @@ const DEFAULT_SERVICES = {
     badge: 'Factory-Grade Machine Digitizing',
     title: 'Commercial Embroidery Digitizing Services',
     highlight: 'Zero Thread Breaks. Calculated Pull Compensation. Press Ready.',
-    description: 'Engineered by master digitizers with 15+ years factory experience. Hand-mapped stitch pathing for caps, left chest polos, 3D puff foam, and full jacket backs with free unlimited revisions.',
+    description: 'Engineered by master digitizers with 11+ years factory experience. Hand-mapped stitch pathing for caps, left chest polos, 3D puff foam, and full jacket backs with free unlimited revisions.',
     features: [
       '100% Manual Digitizing (Zero Auto-Trace Shortcuts)',
       'All Machine Formats: Tajima (.DST), Wilcom (.EMB), Brother (.PES)',
