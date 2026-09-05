@@ -106,6 +106,43 @@ export const ServicesSection = () => {
     ? patchTiers.map(t => `${t.title.split(' ')[0]} ($${Number(t.price).toFixed(t.price % 1 === 0 ? 0 : 2)})`).join(', ')
     : 'Sample Run ($4.50), Production Batch ($2.50), Wholesale Bulk ($1.50)';
 
+  // Structured Tiers for Luxury Overview Cards
+  const embTiersList = embroideryTiers.length > 0
+    ? embroideryTiers.slice(0, 3).map(t => ({
+        name: t.title.replace(/\(.*?\)/g, '').trim(),
+        price: `$${Number(t.price).toFixed(t.price % 1 === 0 ? 0 : 2)}`,
+        unit: t.price_unit || ''
+      }))
+    : [
+        { name: 'Left Chest / Cap', price: '$10' },
+        { name: 'Mid-Size Logo', price: '$20' },
+        { name: 'Full Back / 3D', price: '$35' }
+      ];
+
+  const vecTiersList = vectorTiers.length > 0
+    ? vectorTiers.slice(0, 3).map(t => ({
+        name: t.title.replace(/\(.*?\)/g, '').trim(),
+        price: `$${Number(t.price).toFixed(t.price % 1 === 0 ? 0 : 2)}`,
+        unit: t.price_unit || ''
+      }))
+    : [
+        { name: 'Simple Logo', price: '$15' },
+        { name: 'Medium Detail', price: '$25' },
+        { name: 'Complex Art', price: '$40' }
+      ];
+
+  const patchTiersList = patchTiers.length > 0
+    ? patchTiers.slice(0, 3).map(t => ({
+        name: t.title.replace(/\(.*?\)/g, '').trim(),
+        price: `$${Number(t.price).toFixed(t.price % 1 === 0 ? 0 : 2)}`,
+        unit: '/ pc'
+      }))
+    : [
+        { name: 'Sample Run', price: '$3.50', unit: '/ pc' },
+        { name: 'Production Batch', price: '$2.50', unit: '/ pc' },
+        { name: 'Wholesale Bulk', price: '$1.50', unit: '/ pc' }
+      ];
+
 
 
   // --------------------------------------------------------------------------
@@ -230,79 +267,265 @@ export const ServicesSection = () => {
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
-            gap: '1.5rem',
+            gap: '1.75rem',
             alignItems: 'stretch'
           }}>
-            {/* Service 1: Embroidery Digitizing */}
-            <div className="card" style={{
-              padding: 'clamp(1.25rem, 2.5vw, 1.75rem)',
-              background: 'var(--color-surface, var(--bg-card))',
-              borderRadius: '18px',
-              border: '1px solid var(--color-border)',
-              borderTop: '4px solid var(--orange-500)',
-              boxShadow: 'var(--shadow-sm)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              transition: 'all 0.3s ease'
-            }}>
+            {/* Service 1: Embroidery Digitizing (Flagship) */}
+            <div 
+              className="capability-card"
+              style={{
+                position: 'relative',
+                padding: 'clamp(1.5rem, 2.8vw, 2rem)',
+                background: 'linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)',
+                borderRadius: '24px',
+                border: '1.5px solid rgba(234, 88, 12, 0.28)',
+                boxShadow: '0 8px 30px -4px rgba(234, 88, 12, 0.08), 0 2px 10px rgba(0, 0, 0, 0.03)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                overflow: 'hidden'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-8px)';
+                e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(234, 88, 12, 0.2), 0 4px 16px rgba(0,0,0,0.05)';
+                e.currentTarget.style.borderColor = 'var(--orange-500, #ea580c)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 8px 30px -4px rgba(234, 88, 12, 0.08), 0 2px 10px rgba(0, 0, 0, 0.03)';
+                e.currentTarget.style.borderColor = 'rgba(234, 88, 12, 0.28)';
+              }}
+            >
+              {/* Top Accent Gradient Bar */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '5px',
+                background: 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #fb923c 100%)'
+              }} />
+
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <div style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.6rem', borderRadius: '12px', display: 'flex' }}>
-                    <Layers size={24} />
+                {/* Header Row: Icon, Service Badge & Starting Price */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', gap: '0.75rem' }}>
+                  <div style={{
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, rgba(234, 88, 12, 0.18) 0%, rgba(249, 115, 22, 0.06) 100%)',
+                    border: '1.5px solid rgba(234, 88, 12, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#ea580c',
+                    boxShadow: '0 4px 12px rgba(234, 88, 12, 0.12)'
+                  }}>
+                    <Layers size={26} />
                   </div>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 800, background: 'var(--color-primary-light)', color: 'var(--color-primary)', border: '1px solid var(--color-border)', padding: '0.25rem 0.75rem', borderRadius: '999px' }}>
-                    Starts ${embMinPrice.toFixed(2)} Flat
-                  </span>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.35rem' }}>
+                    <span style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 900,
+                      background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                      color: '#ffffff',
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '9999px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      boxShadow: '0 2px 8px rgba(234, 88, 12, 0.3)'
+                    }}>
+                      ★ Most Popular
+                    </span>
+                    <span style={{
+                      fontSize: '0.85rem',
+                      fontWeight: 800,
+                      color: '#ea580c',
+                      background: 'rgba(249, 115, 22, 0.1)',
+                      border: '1px solid rgba(249, 115, 22, 0.25)',
+                      padding: '0.2rem 0.65rem',
+                      borderRadius: '8px'
+                    }}>
+                      Starts <strong>${embMinPrice.toFixed(2)}</strong> Flat
+                    </span>
+                  </div>
                 </div>
 
-                <h3 style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--color-text-primary)', marginBottom: '0.45rem' }}>
+                {/* Title & Description */}
+                <h3 style={{
+                  fontSize: '1.38rem',
+                  fontWeight: 900,
+                  color: 'var(--navy-950, #0f172a)',
+                  margin: '0 0 0.45rem 0',
+                  lineHeight: 1.25,
+                  fontFamily: 'var(--font-heading)'
+                }}>
                   Embroidery Digitizing
                 </h3>
 
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.88rem', lineHeight: 1.5, marginBottom: '0.9rem' }}>
-                  Precision machine stitch files for caps, polos & 3D puff with 0 thread breaks.
+                <p style={{
+                  color: 'var(--text-muted, #64748b)',
+                  fontSize: '0.9rem',
+                  lineHeight: 1.55,
+                  margin: '0 0 1.2rem 0'
+                }}>
+                  Precision commercial stitch files (.DST, .PES, .EMB) with 100% hand pathing & 0 thread breaks guarantee.
                 </p>
 
-                <div style={{ background: 'var(--color-subtle, var(--bg-subtle))', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)', marginBottom: '1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-                  <strong style={{ color: 'var(--color-text-primary)' }}>Tiers:</strong>
-                  <span style={{ color: 'var(--color-text-secondary)' }}>{embPackagesSummary}</span>
+                {/* Production Packages & Tiers Box */}
+                <div style={{
+                  background: 'rgba(15, 23, 42, 0.03)',
+                  border: '1px solid rgba(15, 23, 42, 0.07)',
+                  borderRadius: '14px',
+                  padding: '0.8rem 0.9rem',
+                  marginBottom: '1.25rem'
+                }}>
+                  <div style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    color: 'var(--text-muted, #64748b)',
+                    marginBottom: '0.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}>
+                    <Sparkles size={12} style={{ color: '#ea580c' }} />
+                    <span>Popular Production Tiers</span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    {embTiersList.map((tier, tIdx) => (
+                      <span
+                        key={tIdx}
+                        style={{
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          background: '#ffffff',
+                          color: 'var(--navy-900, #0f172a)',
+                          border: '1px solid rgba(15, 23, 42, 0.1)',
+                          padding: '0.28rem 0.65rem',
+                          borderRadius: '8px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                        }}
+                      >
+                        <span>{tier.name}</span>
+                        <strong style={{ color: '#ea580c', fontWeight: 900 }}>{tier.price}{tier.unit ? ` ${tier.unit}` : ''}</strong>
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
-                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.25rem 0', display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.835rem', color: 'var(--color-text-secondary)' }}>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={15} style={{ color: '#10b981', flexShrink: 0 }} /> Tajima .DST, Brother .PES & Wilcom .EMB
+                {/* Quality Highlights Checklist */}
+                <ul style={{
+                  listStyle: 'none',
+                  padding: 0,
+                  margin: '0 0 1.4rem 0',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.6rem',
+                  fontSize: '0.86rem',
+                  color: 'var(--navy-800, #1e293b)'
+                }}>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                    <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <CheckCircle2 size={13} />
+                    </div>
+                    <span><strong>Machine Ready:</strong> Tajima .DST, Brother .PES & Wilcom .EMB</span>
                   </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={15} style={{ color: '#10b981', flexShrink: 0 }} /> 100% Hand Pathing & 0 Thread Breaks
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                    <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <CheckCircle2 size={13} />
+                    </div>
+                    <span><strong>0 Thread Breaks:</strong> Density & pull calibrated for caps/polos</span>
                   </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={15} style={{ color: '#10b981', flexShrink: 0 }} /> Free Unlimited Production Revisions
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                    <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <CheckCircle2 size={13} />
+                    </div>
+                    <span><strong>Free Revisions:</strong> Unlimited adjustments until clean sew-out</span>
                   </li>
                 </ul>
               </div>
 
+              {/* Card Footer: Turnaround & Action Buttons */}
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.85rem', borderTop: '1px solid var(--color-border)', fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}>
-                    <Clock size={14} style={{ color: 'var(--orange-500)' }} /> 4–12h Turnaround
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  paddingTop: '0.95rem',
+                  borderTop: '1px solid rgba(15, 23, 42, 0.08)',
+                  fontSize: '0.82rem',
+                  color: 'var(--navy-700, #334155)',
+                  marginBottom: '1.25rem'
+                }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
+                    <Clock size={15} style={{ color: '#ea580c' }} /> 4–12h Turnaround
                   </span>
-                  <span style={{ fontWeight: 700, color: 'var(--color-success, #10b981)' }}>Instant Download</span>
+                  <span style={{
+                    fontWeight: 800,
+                    color: '#059669',
+                    background: 'rgba(16, 185, 129, 0.1)',
+                    padding: '0.2rem 0.6rem',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+                    Instant Download
+                  </span>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.6rem' }}>
                   <button 
                     type="button"
-                    className="btn btn-primary-orange"
-                    style={{ flex: 1, justifyContent: 'center', fontWeight: 800, padding: '0.7rem 0.85rem', fontSize: '0.875rem' }}
+                    style={{
+                      flex: 1,
+                      background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '0.8rem 1rem',
+                      fontWeight: 800,
+                      fontSize: '0.9rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.45rem',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 14px rgba(234, 88, 12, 0.35)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.filter = 'brightness(1.08)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.filter = 'none'; }}
                     onClick={() => handleSelectTabAndScrollToPackages('embroidery')}
                   >
-                    <Upload size={15} /> Choose Package & Order →
+                    <span>Choose Package & Order</span>
+                    <ArrowRight size={15} />
                   </button>
                   <button 
                     type="button"
-                    className="btn btn-outline"
-                    style={{ fontWeight: 700, padding: '0.7rem 0.75rem', fontSize: '0.825rem' }}
+                    style={{
+                      background: '#ffffff',
+                      color: 'var(--navy-800, #1e293b)',
+                      border: '1.5px solid var(--border-color, #e2e8f0)',
+                      borderRadius: '12px',
+                      padding: '0.8rem 0.95rem',
+                      fontWeight: 800,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = 'var(--navy-400, #94a3b8)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.borderColor = 'var(--border-color, #e2e8f0)'; }}
                     onClick={() => handleSelectTabAndScrollToPackages('embroidery')}
                   >
                     Details
@@ -312,75 +535,261 @@ export const ServicesSection = () => {
             </div>
 
             {/* Service 2: Vector Art Conversion */}
-            <div className="card" style={{
-              padding: 'clamp(1.25rem, 2.5vw, 1.75rem)',
-              background: 'var(--color-surface, var(--bg-card))',
-              borderRadius: '18px',
-              border: '1px solid var(--color-border)',
-              borderTop: '4px solid #3b82f6',
-              boxShadow: 'var(--shadow-sm)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              transition: 'all 0.3s ease'
-            }}>
+            <div 
+              className="capability-card"
+              style={{
+                position: 'relative',
+                padding: 'clamp(1.5rem, 2.8vw, 2rem)',
+                background: 'linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)',
+                borderRadius: '24px',
+                border: '1.5px solid rgba(37, 99, 235, 0.24)',
+                boxShadow: '0 8px 30px -4px rgba(37, 99, 235, 0.08), 0 2px 10px rgba(0, 0, 0, 0.03)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                overflow: 'hidden'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-8px)';
+                e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(37, 99, 235, 0.18), 0 4px 16px rgba(0,0,0,0.05)';
+                e.currentTarget.style.borderColor = '#2563eb';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 8px 30px -4px rgba(37, 99, 235, 0.08), 0 2px 10px rgba(0, 0, 0, 0.03)';
+                e.currentTarget.style.borderColor = 'rgba(37, 99, 235, 0.24)';
+              }}
+            >
+              {/* Top Accent Gradient Bar */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '5px',
+                background: 'linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #60a5fa 100%)'
+              }} />
+
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <div style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#38bdf8', padding: '0.6rem', borderRadius: '12px', display: 'flex' }}>
-                    <PenTool size={24} />
+                {/* Header Row: Icon, Service Badge & Starting Price */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', gap: '0.75rem' }}>
+                  <div style={{
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.16) 0%, rgba(59, 130, 246, 0.06) 100%)',
+                    border: '1.5px solid rgba(37, 99, 235, 0.28)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#2563eb',
+                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.12)'
+                  }}>
+                    <PenTool size={26} />
                   </div>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 800, background: 'rgba(59, 130, 246, 0.15)', color: '#38bdf8', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '0.25rem 0.75rem', borderRadius: '999px' }}>
-                    Starts ${vecMinPrice.toFixed(2)} Flat
-                  </span>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.35rem' }}>
+                    <span style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      background: 'rgba(37, 99, 235, 0.1)',
+                      color: '#2563eb',
+                      border: '1px solid rgba(37, 99, 235, 0.25)',
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '9999px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em'
+                    }}>
+                      ⚡ Scalable Vector
+                    </span>
+                    <span style={{
+                      fontSize: '0.85rem',
+                      fontWeight: 800,
+                      color: '#2563eb',
+                      background: 'rgba(37, 99, 235, 0.08)',
+                      border: '1px solid rgba(37, 99, 235, 0.25)',
+                      padding: '0.2rem 0.65rem',
+                      borderRadius: '8px'
+                    }}>
+                      Starts <strong>${vecMinPrice.toFixed(2)}</strong> Flat
+                    </span>
+                  </div>
                 </div>
 
-                <h3 style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--color-text-primary)', marginBottom: '0.45rem' }}>
+                {/* Title & Description */}
+                <h3 style={{
+                  fontSize: '1.38rem',
+                  fontWeight: 900,
+                  color: 'var(--navy-950, #0f172a)',
+                  margin: '0 0 0.45rem 0',
+                  lineHeight: 1.25,
+                  fontFamily: 'var(--font-heading)'
+                }}>
                   Vector Art Conversion
                 </h3>
 
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.88rem', lineHeight: 1.5, marginBottom: '0.9rem' }}>
-                  Crisp scalable vectors (.AI, .EPS, .SVG) from low-res images & sketches.
+                <p style={{
+                  color: 'var(--text-muted, #64748b)',
+                  fontSize: '0.9rem',
+                  lineHeight: 1.55,
+                  margin: '0 0 1.2rem 0'
+                }}>
+                  Crisp scalable vector separations (.AI, .EPS, .SVG, .PDF) traced by hand for screen printing & signage.
                 </p>
 
-                <div style={{ background: 'var(--color-subtle, var(--bg-subtle))', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)', marginBottom: '1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-                  <strong style={{ color: 'var(--color-text-primary)' }}>Tiers:</strong>
-                  <span style={{ color: 'var(--color-text-secondary)' }}>{vecPackagesSummary}</span>
+                {/* Production Packages & Tiers Box */}
+                <div style={{
+                  background: 'rgba(15, 23, 42, 0.03)',
+                  border: '1px solid rgba(15, 23, 42, 0.07)',
+                  borderRadius: '14px',
+                  padding: '0.8rem 0.9rem',
+                  marginBottom: '1.25rem'
+                }}>
+                  <div style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    color: 'var(--text-muted, #64748b)',
+                    marginBottom: '0.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}>
+                    <Sparkles size={12} style={{ color: '#2563eb' }} />
+                    <span>Popular Production Tiers</span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    {vecTiersList.map((tier, tIdx) => (
+                      <span
+                        key={tIdx}
+                        style={{
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          background: '#ffffff',
+                          color: 'var(--navy-900, #0f172a)',
+                          border: '1px solid rgba(15, 23, 42, 0.1)',
+                          padding: '0.28rem 0.65rem',
+                          borderRadius: '8px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                        }}
+                      >
+                        <span>{tier.name}</span>
+                        <strong style={{ color: '#2563eb', fontWeight: 900 }}>{tier.price}{tier.unit ? ` ${tier.unit}` : ''}</strong>
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
-                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.25rem 0', display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.835rem', color: 'var(--color-text-secondary)' }}>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={15} style={{ color: '#10b981', flexShrink: 0 }} /> Master Suite: .AI, .EPS, .SVG & PDF
+                {/* Quality Highlights Checklist */}
+                <ul style={{
+                  listStyle: 'none',
+                  padding: 0,
+                  margin: '0 0 1.4rem 0',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.6rem',
+                  fontSize: '0.86rem',
+                  color: 'var(--navy-800, #1e293b)'
+                }}>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                    <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <CheckCircle2 size={13} />
+                    </div>
+                    <span><strong>Master Vector Suite:</strong> Fully editable .AI, .EPS, .SVG & Print PDF</span>
                   </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={15} style={{ color: '#10b981', flexShrink: 0 }} /> Pantone (PMS) Color Separation Included
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                    <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <CheckCircle2 size={13} />
+                    </div>
+                    <span><strong>Pantone Calibrated:</strong> Spot color separation & PMS swatches</span>
                   </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={15} style={{ color: '#10b981', flexShrink: 0 }} /> Vinyl Cut & Screen Print Ready Paths
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                    <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <CheckCircle2 size={13} />
+                    </div>
+                    <span><strong>Print & Cut Ready:</strong> Clean Bézier paths for vinyl & screen print</span>
                   </li>
                 </ul>
               </div>
 
+              {/* Card Footer: Turnaround & Action Buttons */}
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.85rem', borderTop: '1px solid var(--color-border)', fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}>
-                    <Clock size={14} style={{ color: '#3b82f6' }} /> 6–12h Turnaround
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  paddingTop: '0.95rem',
+                  borderTop: '1px solid rgba(15, 23, 42, 0.08)',
+                  fontSize: '0.82rem',
+                  color: 'var(--navy-700, #334155)',
+                  marginBottom: '1.25rem'
+                }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
+                    <Clock size={15} style={{ color: '#2563eb' }} /> 6–12h Turnaround
                   </span>
-                  <span style={{ fontWeight: 700, color: 'var(--color-success, #10b981)' }}>Instant Download</span>
+                  <span style={{
+                    fontWeight: 800,
+                    color: '#059669',
+                    background: 'rgba(16, 185, 129, 0.1)',
+                    padding: '0.2rem 0.6rem',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+                    Instant Download
+                  </span>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.6rem' }}>
                   <button 
                     type="button"
-                    className="btn btn-primary-orange"
-                    style={{ flex: 1, justifyContent: 'center', fontWeight: 800, padding: '0.7rem 0.85rem', fontSize: '0.875rem', background: '#2563eb', borderColor: '#2563eb' }}
+                    style={{
+                      flex: 1,
+                      background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '0.8rem 1rem',
+                      fontWeight: 800,
+                      fontSize: '0.9rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.45rem',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.filter = 'brightness(1.08)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.filter = 'none'; }}
                     onClick={() => handleSelectTabAndScrollToPackages('vector-art')}
                   >
-                    <Upload size={15} /> Choose Package & Order →
+                    <span>Choose Package & Order</span>
+                    <ArrowRight size={15} />
                   </button>
                   <button 
                     type="button"
-                    className="btn btn-outline"
-                    style={{ fontWeight: 700, padding: '0.7rem 0.75rem', fontSize: '0.825rem' }}
+                    style={{
+                      background: '#ffffff',
+                      color: 'var(--navy-800, #1e293b)',
+                      border: '1.5px solid var(--border-color, #e2e8f0)',
+                      borderRadius: '12px',
+                      padding: '0.8rem 0.95rem',
+                      fontWeight: 800,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = 'var(--navy-400, #94a3b8)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.borderColor = 'var(--border-color, #e2e8f0)'; }}
                     onClick={() => handleSelectTabAndScrollToPackages('vector-art')}
                   >
                     Details
@@ -390,75 +799,261 @@ export const ServicesSection = () => {
             </div>
 
             {/* Service 3: Custom Physical Patches */}
-            <div className="card" style={{
-              padding: 'clamp(1.25rem, 2.5vw, 1.75rem)',
-              background: 'var(--color-surface, var(--bg-card))',
-              borderRadius: '18px',
-              border: '1px solid var(--color-border)',
-              borderTop: '4px solid #10b981',
-              boxShadow: 'var(--shadow-sm)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              transition: 'all 0.3s ease'
-            }}>
+            <div 
+              className="capability-card"
+              style={{
+                position: 'relative',
+                padding: 'clamp(1.5rem, 2.8vw, 2rem)',
+                background: 'linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)',
+                borderRadius: '24px',
+                border: '1.5px solid rgba(5, 150, 105, 0.24)',
+                boxShadow: '0 8px 30px -4px rgba(5, 150, 105, 0.08), 0 2px 10px rgba(0, 0, 0, 0.03)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                overflow: 'hidden'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-8px)';
+                e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(5, 150, 105, 0.18), 0 4px 16px rgba(0,0,0,0.05)';
+                e.currentTarget.style.borderColor = '#059669';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 8px 30px -4px rgba(5, 150, 105, 0.08), 0 2px 10px rgba(0, 0, 0, 0.03)';
+                e.currentTarget.style.borderColor = 'rgba(5, 150, 105, 0.24)';
+              }}
+            >
+              {/* Top Accent Gradient Bar */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '5px',
+                background: 'linear-gradient(90deg, #059669 0%, #10b981 50%, #34d399 100%)'
+              }} />
+
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <div style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', padding: '0.6rem', borderRadius: '12px', display: 'flex' }}>
-                    <Tag size={24} />
+                {/* Header Row: Icon, Service Badge & Starting Price */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', gap: '0.75rem' }}>
+                  <div style={{
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.16) 0%, rgba(16, 185, 129, 0.06) 100%)',
+                    border: '1.5px solid rgba(5, 150, 105, 0.28)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#059669',
+                    boxShadow: '0 4px 12px rgba(5, 150, 105, 0.12)'
+                  }}>
+                    <Tag size={26} />
                   </div>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 800, background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '0.25rem 0.75rem', borderRadius: '999px' }}>
-                    Starts ${patchMinPrice.toFixed(2)} / Pc
-                  </span>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.35rem' }}>
+                    <span style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      background: 'rgba(5, 150, 105, 0.1)',
+                      color: '#059669',
+                      border: '1px solid rgba(5, 150, 105, 0.25)',
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '9999px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em'
+                    }}>
+                      📦 Physical Delivery
+                    </span>
+                    <span style={{
+                      fontSize: '0.85rem',
+                      fontWeight: 800,
+                      color: '#059669',
+                      background: 'rgba(5, 150, 105, 0.08)',
+                      border: '1px solid rgba(5, 150, 105, 0.25)',
+                      padding: '0.2rem 0.65rem',
+                      borderRadius: '8px'
+                    }}>
+                      Starts <strong>${patchMinPrice.toFixed(2)}</strong> / Pc
+                    </span>
+                  </div>
                 </div>
 
-                <h3 style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--color-text-primary)', marginBottom: '0.45rem' }}>
+                {/* Title & Description */}
+                <h3 style={{
+                  fontSize: '1.38rem',
+                  fontWeight: 900,
+                  color: 'var(--navy-950, #0f172a)',
+                  margin: '0 0 0.45rem 0',
+                  lineHeight: 1.25,
+                  fontFamily: 'var(--font-heading)'
+                }}>
                   Custom Physical Patches
                 </h3>
 
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.88rem', lineHeight: 1.5, marginBottom: '0.9rem' }}>
-                  Embroidered, woven & PVC patches with Velcro or Iron-On backings.
+                <p style={{
+                  color: 'var(--text-muted, #64748b)',
+                  fontSize: '0.9rem',
+                  lineHeight: 1.55,
+                  margin: '0 0 1.2rem 0'
+                }}>
+                  Custom embroidered, high-density woven, and 3D molded PVC emblems manufactured & shipped to your door.
                 </p>
 
-                <div style={{ background: 'var(--color-subtle, var(--bg-subtle))', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)', marginBottom: '1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-                  <strong style={{ color: 'var(--color-text-primary)' }}>Tiers:</strong>
-                  <span style={{ color: 'var(--color-text-secondary)' }}>{patchPackagesSummary}</span>
+                {/* Production Packages & Tiers Box */}
+                <div style={{
+                  background: 'rgba(15, 23, 42, 0.03)',
+                  border: '1px solid rgba(15, 23, 42, 0.07)',
+                  borderRadius: '14px',
+                  padding: '0.8rem 0.9rem',
+                  marginBottom: '1.25rem'
+                }}>
+                  <div style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    color: 'var(--text-muted, #64748b)',
+                    marginBottom: '0.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}>
+                    <Sparkles size={12} style={{ color: '#059669' }} />
+                    <span>Popular Production Tiers</span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    {patchTiersList.map((tier, tIdx) => (
+                      <span
+                        key={tIdx}
+                        style={{
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          background: '#ffffff',
+                          color: 'var(--navy-900, #0f172a)',
+                          border: '1px solid rgba(15, 23, 42, 0.1)',
+                          padding: '0.28rem 0.65rem',
+                          borderRadius: '8px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                        }}
+                      >
+                        <span>{tier.name}</span>
+                        <strong style={{ color: '#059669', fontWeight: 900 }}>{tier.price}{tier.unit ? ` ${tier.unit}` : ''}</strong>
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
-                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.25rem 0', display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.835rem', color: 'var(--color-text-secondary)' }}>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={15} style={{ color: '#10b981', flexShrink: 0 }} /> Low 10 Pcs MOQ & Free Digital Proof
+                {/* Quality Highlights Checklist */}
+                <ul style={{
+                  listStyle: 'none',
+                  padding: 0,
+                  margin: '0 0 1.4rem 0',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.6rem',
+                  fontSize: '0.86rem',
+                  color: 'var(--navy-800, #1e293b)'
+                }}>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                    <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <CheckCircle2 size={13} />
+                    </div>
+                    <span><strong>Low 10 Pcs MOQ:</strong> Free digital proof & physical sample sew-out photo</span>
                   </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={15} style={{ color: '#10b981', flexShrink: 0 }} /> Velcro, Iron-On & Peel Backings
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                    <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <CheckCircle2 size={13} />
+                    </div>
+                    <span><strong>Versatile Backings:</strong> Velcro (Hook & Loop), Iron-On & Peel/Stick</span>
                   </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={15} style={{ color: '#10b981', flexShrink: 0 }} /> Tracked Doorstep Worldwide Delivery
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                    <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <CheckCircle2 size={13} />
+                    </div>
+                    <span><strong>Doorstep Delivery:</strong> Express tracked worldwide courier shipping</span>
                   </li>
                 </ul>
               </div>
 
+              {/* Card Footer: Turnaround & Action Buttons */}
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.85rem', borderTop: '1px solid var(--color-border)', fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}>
-                    <Clock size={14} style={{ color: '#10b981' }} /> 3–5 Days Production
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  paddingTop: '0.95rem',
+                  borderTop: '1px solid rgba(15, 23, 42, 0.08)',
+                  fontSize: '0.82rem',
+                  color: 'var(--navy-700, #334155)',
+                  marginBottom: '1.25rem'
+                }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
+                    <Clock size={15} style={{ color: '#059669' }} /> 3–5 Days Production
                   </span>
-                  <span style={{ fontWeight: 700, color: 'var(--color-success, #10b981)' }}>Global Delivery</span>
+                  <span style={{
+                    fontWeight: 800,
+                    color: '#059669',
+                    background: 'rgba(16, 185, 129, 0.1)',
+                    padding: '0.2rem 0.6rem',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+                    Global Delivery
+                  </span>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.6rem' }}>
                   <button 
                     type="button"
-                    className="btn btn-primary-orange"
-                    style={{ flex: 1, justifyContent: 'center', fontWeight: 800, padding: '0.7rem 0.85rem', fontSize: '0.875rem', background: '#059669', borderColor: '#059669' }}
+                    style={{
+                      flex: 1,
+                      background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '0.8rem 1rem',
+                      fontWeight: 800,
+                      fontSize: '0.9rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.45rem',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 14px rgba(5, 150, 105, 0.35)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.filter = 'brightness(1.08)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.filter = 'none'; }}
                     onClick={() => handleSelectTabAndScrollToPackages('patches')}
                   >
-                    <Upload size={15} /> Choose Package & Order →
+                    <span>Choose Package & Order</span>
+                    <ArrowRight size={15} />
                   </button>
                   <button 
                     type="button"
-                    className="btn btn-outline"
-                    style={{ fontWeight: 700, padding: '0.7rem 0.75rem', fontSize: '0.825rem' }}
+                    style={{
+                      background: '#ffffff',
+                      color: 'var(--navy-800, #1e293b)',
+                      border: '1.5px solid var(--border-color, #e2e8f0)',
+                      borderRadius: '12px',
+                      padding: '0.8rem 0.95rem',
+                      fontWeight: 800,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = 'var(--navy-400, #94a3b8)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.borderColor = 'var(--border-color, #e2e8f0)'; }}
                     onClick={() => handleSelectTabAndScrollToPackages('patches')}
                   >
                     Details
