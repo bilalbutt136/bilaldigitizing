@@ -16,23 +16,52 @@ export default function WorkerPortalDashboardPage() {
 
     async function verifyWorkerSession() {
       try {
+        // 1. Try server-verified session via /api/worker/session (validates cookies securely)
+        try {
+          const sessionRes = await fetch('/api/worker/session');
+          if (sessionRes.ok) {
+            const sessionJson = await sessionRes.json();
+            if (sessionJson?.authenticated && sessionJson?.worker) {
+              if (isMounted) {
+                setAuthorizedWorker(sessionJson.worker);
+                setIsVerifying(false);
+              }
+              return;
+            } else if (sessionJson?.status === 'pending' || sessionJson?.status === 'suspended' || sessionJson?.status === 'rejected') {
+              if (isMounted) {
+                router.replace('/portal/login');
+              }
+              return;
+            }
+          }
+        } catch (apiErr) {
+          console.warn('[Server Worker Session Fetch Notice]:', apiErr?.message);
+        }
+
+        // 2. Client-side Supabase verification fallback
         if (!supabaseClient) {
           throw new Error('Database client unavailable');
         }
 
-        // 1. Get authenticated user
-        const { data: authData, error: authError } = await supabaseClient.auth.getUser();
-        if (authError || !authData?.user) {
+        let user = null;
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        if (sessionData?.session?.user) {
+          user = sessionData.session.user;
+        } else {
+          const { data: authData } = await supabaseClient.auth.getUser();
+          user = authData?.user;
+        }
+
+        if (!user) {
           if (isMounted) {
             router.replace('/portal/login');
           }
           return;
         }
 
-        const user = authData.user;
         const userEmail = (user.email || '').toLowerCase().trim();
 
-        // 2. Check Admin role (Admins can view and test the worker portal)
+        // 3. Admin user bypass
         const isAdmin = user.user_metadata?.role === 'admin' || user.app_metadata?.role === 'admin';
         if (isAdmin) {
           if (isMounted) {
@@ -41,14 +70,15 @@ export default function WorkerPortalDashboardPage() {
               name: user.user_metadata?.full_name || user.user_metadata?.name || 'Studio Administrator',
               email: userEmail,
               specialty: 'Studio Management',
-              role: 'admin'
+              role: 'admin',
+              status: 'Active'
             });
             setIsVerifying(false);
           }
           return;
         }
 
-        // 3. Fetch status from worker_profiles
+        // 4. Query status from worker_profiles & workers
         let workerProfile = null;
         try {
           const { data: profile } = await supabaseClient
@@ -57,14 +87,11 @@ export default function WorkerPortalDashboardPage() {
             .or(`id.eq.${user.id},email.eq.${userEmail}`)
             .maybeSingle();
 
-          if (profile) {
-            workerProfile = profile;
-          }
+          if (profile) workerProfile = profile;
         } catch (dbErr) {
           console.warn('Worker profile fetch notice:', dbErr?.message);
         }
 
-        // Fallback check to workers directory
         if (!workerProfile) {
           try {
             const { data: workerRow } = await supabaseClient
@@ -73,18 +100,15 @@ export default function WorkerPortalDashboardPage() {
               .or(`id.eq.${user.id},email.eq.${userEmail}`)
               .maybeSingle();
 
-            if (workerRow) {
-              workerProfile = workerRow;
-            }
+            if (workerRow) workerProfile = workerRow;
           } catch {}
         }
 
         const rawStatus = workerProfile?.status || user.user_metadata?.worker_status || user.user_metadata?.status || 'pending';
         const normalizedStatus = (rawStatus || '').toLowerCase();
 
-        // 4. Enforce Status Rules
-        if (normalizedStatus === 'pending') {
-          // Worker not yet approved
+        // 5. Enforce Status Rules
+        if (normalizedStatus === 'pending' || normalizedStatus === 'suspended' || normalizedStatus === 'rejected') {
           await supabaseClient.auth.signOut();
           try { localStorage.removeItem('bdigi_auth_user'); } catch {}
           if (isMounted) {
@@ -93,17 +117,7 @@ export default function WorkerPortalDashboardPage() {
           return;
         }
 
-        if (normalizedStatus === 'suspended' || normalizedStatus === 'rejected') {
-          // Account suspended or rejected
-          await supabaseClient.auth.signOut();
-          try { localStorage.removeItem('bdigi_auth_user'); } catch {}
-          if (isMounted) {
-            router.replace('/portal/login');
-          }
-          return;
-        }
-
-        // 5. Active Worker -> Grant Workstation Access
+        // 6. Active Worker -> Grant Workstation Access
         if (isMounted) {
           setAuthorizedWorker({
             id: workerProfile?.id || user.id,

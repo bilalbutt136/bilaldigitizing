@@ -2,13 +2,13 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
 // Protected paths that require authentication
-const PROTECTED_PREFIXES = ['/admin', '/admin-portal', '/client-portal', '/client', '/dashboard', '/worker', '/worker-portal'];
+const PROTECTED_PREFIXES = ['/admin', '/admin-portal', '/client-portal', '/client', '/dashboard', '/worker', '/worker-portal', '/portal'];
 
 // Admin paths that require admin authorization
 const ADMIN_PREFIXES = ['/admin', '/admin-portal'];
 
 // Worker paths that require worker authorization
-const WORKER_PREFIXES = ['/worker', '/worker-portal'];
+const WORKER_PREFIXES = ['/worker', '/worker-portal', '/portal'];
 
 // Public authentication routes that MUST NEVER be intercepted or redirected to login
 const PUBLIC_AUTH_PATHS = [
@@ -21,6 +21,10 @@ const PUBLIC_AUTH_PATHS = [
   '/worker-register', 
   '/worker/forgot-password', 
   '/worker/reset-password', 
+  '/portal/login',
+  '/portal/register',
+  '/portal/forgot-password',
+  '/portal/reset-password',
   '/auth', 
   '/auth/callback'
 ];
@@ -54,7 +58,13 @@ export async function middleware(request) {
 
   if (!hasAuthCookie) {
     const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = isWorkerRoute ? '/worker-login' : '/login';
+    if (pathname === '/portal' || pathname.startsWith('/portal/')) {
+      loginUrl.pathname = '/portal/login';
+    } else if (isWorkerRoute) {
+      loginUrl.pathname = '/worker-login';
+    } else {
+      loginUrl.pathname = '/login';
+    }
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
@@ -99,7 +109,13 @@ export async function middleware(request) {
 
     if (!user) {
       const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = isWorkerRoute ? '/worker-login' : '/login';
+      if (pathname === '/portal' || pathname.startsWith('/portal/')) {
+        loginUrl.pathname = '/portal/login';
+      } else if (isWorkerRoute) {
+        loginUrl.pathname = '/worker-login';
+      } else {
+        loginUrl.pathname = '/login';
+      }
       loginUrl.searchParams.set('redirect', pathname);
       const redirectResponse = NextResponse.redirect(loginUrl);
       supabaseResponse.cookies.getAll().forEach(cookie => {
@@ -130,24 +146,38 @@ export async function middleware(request) {
 
     // Check worker authorization if visiting worker portal
     if (isWorkerRoute && user) {
-      const isWorkerMeta = user.user_metadata?.role === 'worker' || user.app_metadata?.role === 'worker' || user.user_metadata?.role === 'admin';
+      const isWorkerMeta = 
+        user.user_metadata?.role === 'worker' || 
+        user.app_metadata?.role === 'worker' || 
+        user.user_metadata?.role === 'admin' ||
+        user.app_metadata?.role === 'admin' ||
+        (user.user_metadata?.worker_status || '').toLowerCase() === 'active';
+
       if (!isWorkerMeta) {
         const workerPromise = supabase.from('workers').select('id, status').eq('email', user.email).maybeSingle();
         const { data: workerData } = await Promise.race([workerPromise, timeoutPromise]).catch(() => ({ data: null }));
+        const workerStatus = (workerData?.status || '').toLowerCase();
 
-        if (!workerData || workerData.status !== 'active') {
-          // Check if admin
-          const adminPromise = supabase.from('admins').select('email').eq('email', user.email).maybeSingle();
-          const { data: adminData } = await Promise.race([adminPromise, timeoutPromise]).catch(() => ({ data: null }));
+        if (!workerData || workerStatus !== 'active') {
+          // Check worker_profiles
+          const profilePromise = supabase.from('worker_profiles').select('id, status').eq('email', user.email).maybeSingle();
+          const { data: profileData } = await Promise.race([profilePromise, timeoutPromise]).catch(() => ({ data: null }));
+          const profileStatus = (profileData?.status || '').toLowerCase();
 
-          if (!adminData) {
-            const clientUrl = request.nextUrl.clone();
-            clientUrl.pathname = '/client-portal';
-            const redirectResponse = NextResponse.redirect(clientUrl);
-            supabaseResponse.cookies.getAll().forEach(cookie => {
-              redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
-            });
-            return redirectResponse;
+          if (!profileData || profileStatus !== 'active') {
+            // Check if admin
+            const adminPromise = supabase.from('admins').select('email').eq('email', user.email).maybeSingle();
+            const { data: adminData } = await Promise.race([adminPromise, timeoutPromise]).catch(() => ({ data: null }));
+
+            if (!adminData) {
+              const redirectUrl = request.nextUrl.clone();
+              redirectUrl.pathname = pathname.startsWith('/portal') ? '/portal/login' : '/client-portal';
+              const redirectResponse = NextResponse.redirect(redirectUrl);
+              supabaseResponse.cookies.getAll().forEach(cookie => {
+                redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+              });
+              return redirectResponse;
+            }
           }
         }
       }

@@ -889,12 +889,14 @@ export const StateProvider = ({ children }) => {
       email: cleanEmail,
       company: sbUser?.user_metadata?.company || `${cleanEmail.split('@')[0] || 'Valued'} Apparel`,
       role,
+      status: sbUser?.user_metadata?.worker_status || sbUser?.user_metadata?.status || 'active',
+      specialty: sbUser?.user_metadata?.specialty || sbUser?.user_metadata?.primary_software || 'Embroidery Digitizer',
       provider: sbUser?.app_metadata?.provider || 'email'
     };
   };
 
-  // Resolve role (admin vs customer) server-side from the admins table with local fallback
-  const resolveRole = async (email) => {
+  // Resolve role (admin vs worker vs customer) server-side from admins/workers/metadata with local fallback
+  const resolveRole = async (email, sbUser = null) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     if (!cleanEmail) return 'customer';
     if (adminUsers.some(a => (a.email || '').toLowerCase().trim() === cleanEmail)) {
@@ -902,10 +904,53 @@ export const StateProvider = ({ children }) => {
     }
     try {
       const res = await verifyAdminSession(cleanEmail);
-      return res?.isAdmin ? 'admin' : 'customer';
-    } catch {
-      return 'customer';
+      if (res?.isAdmin) return 'admin';
+    } catch {}
+
+    // 1. Check user metadata
+    if (sbUser?.user_metadata?.role === 'worker' || sbUser?.app_metadata?.role === 'worker') {
+      return 'worker';
     }
+
+    // 2. Check cached localStorage
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('bdigi_auth_user');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed?.email?.toLowerCase() === cleanEmail && parsed?.role === 'worker') {
+            return 'worker';
+          }
+        }
+      }
+    } catch {}
+
+    // 3. Check worker directory in Supabase
+    if (supabase) {
+      try {
+        const { data: worker } = await supabase
+          .from('workers')
+          .select('id, status')
+          .eq('email', cleanEmail)
+          .maybeSingle();
+        if (worker && (worker.status || '').toLowerCase() === 'active') {
+          return 'worker';
+        }
+      } catch {}
+
+      try {
+        const { data: profile } = await supabase
+          .from('worker_profiles')
+          .select('id, status')
+          .eq('email', cleanEmail)
+          .maybeSingle();
+        if (profile && (profile.status || '').toLowerCase() === 'active') {
+          return 'worker';
+        }
+      } catch {}
+    }
+
+    return 'customer';
   };
 
   // Load catalog + admin whitelist + database clients + wallet on mount
@@ -923,7 +968,7 @@ export const StateProvider = ({ children }) => {
         const { data: sessionData } = await supabase.auth.getSession();
         const session = sessionData?.session;
         if (!cancelled && session?.user) {
-          const role = await resolveRole(session.user.email);
+          const role = await resolveRole(session.user.email, session.user);
           const uData = buildAuthUser(session.user, role);
           setAuthUser(uData);
           setIsAuthenticated(true);
@@ -944,6 +989,8 @@ export const StateProvider = ({ children }) => {
                 setOrders(dbOrders);
               }
             });
+          } else if (role === 'worker') {
+            setCurrentView('worker');
           } else {
             setCurrentView('customer');
           }
@@ -951,7 +998,7 @@ export const StateProvider = ({ children }) => {
           try {
             if (typeof window !== 'undefined') {
               localStorage.setItem('bdigi_auth_user', JSON.stringify(uData));
-              localStorage.setItem('bdigi_current_view', role === 'admin' ? 'admin' : 'customer');
+              localStorage.setItem('bdigi_current_view', role === 'admin' ? 'admin' : (role === 'worker' ? 'worker' : 'customer'));
             }
           } catch {}
 
@@ -1259,16 +1306,16 @@ export const StateProvider = ({ children }) => {
           }
 
           if (session?.user) {
-            const role = await resolveRole(session.user.email);
+            const role = await resolveRole(session.user.email, session.user);
             const uData = buildAuthUser(session.user, role);
             setAuthUser(uData);
             setIsAuthenticated(true);
             setIsAuthModalOpen(false);
-            setCurrentView(role === 'admin' ? 'admin' : 'customer');
+            setCurrentView(role === 'admin' ? 'admin' : (role === 'worker' ? 'worker' : 'customer'));
             try {
               if (typeof window !== 'undefined') {
                 localStorage.setItem('bdigi_auth_user', JSON.stringify(uData));
-                localStorage.setItem('bdigi_current_view', role === 'admin' ? 'admin' : 'customer');
+                localStorage.setItem('bdigi_current_view', role === 'admin' ? 'admin' : (role === 'worker' ? 'worker' : 'customer'));
               }
             } catch {}
 

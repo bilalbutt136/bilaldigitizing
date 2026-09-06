@@ -18,7 +18,11 @@ export default function WorkerPortalPage() {
       return;
     }
 
-    const isWorker = authUser?.role === 'worker' || authUser?.role === 'admin';
+    const isWorker = 
+      authUser?.role === 'worker' || 
+      authUser?.role === 'admin' || 
+      (authUser?.worker_status || '').toLowerCase() === 'active' ||
+      (authUser?.status || '').toLowerCase() === 'active';
     if (!isWorker) {
       router.replace('/client-portal');
     } else {

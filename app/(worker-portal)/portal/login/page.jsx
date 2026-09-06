@@ -33,124 +33,80 @@ export default function PortalLoginPage() {
     setErrorMessage('');
     setWorkerStatusState(null);
 
-    const cleanEmail = (email || '').toLowerCase().trim();
+    const cleanIdentifier = (email || '').trim();
     const cleanPass = (password || '').trim();
 
-    if (!cleanEmail || !cleanPass) {
-      setErrorMessage('Please enter both your email address and password.');
+    if (!cleanIdentifier || !cleanPass) {
+      setErrorMessage('Please enter both your username or email address and password.');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      if (!supabaseClient) {
-        throw new Error('Database connection unavailable.');
-      }
-
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: cleanEmail,
-        password: cleanPass
+      // 1. Call dedicated worker login API (supports username or email, sets server cookies)
+      const res = await fetch('/api/worker/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          identifier: cleanIdentifier,
+          password: cleanPass
+        })
       });
 
-      if (error || !data?.user) {
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
         setIsLoading(false);
-        setErrorMessage(error?.message || 'Invalid email or password combination.');
-        return;
-      }
-
-      const user = data.user;
-
-      // 1. Check if user is Admin
-      const isAdmin = user.user_metadata?.role === 'admin' || user.app_metadata?.role === 'admin';
-      if (isAdmin) {
-        setIsLoading(false);
-        router.replace('/portal');
-        return;
-      }
-
-      // 2. Query worker_profiles to verify approval status
-      let profileStatus = null;
-      let displayName = user.user_metadata?.full_name || user.user_metadata?.name || cleanEmail.split('@')[0];
-
-      try {
-        const { data: profile } = await supabaseClient
-          .from('worker_profiles')
-          .select('id, name, status, rejection_reason')
-          .eq('email', cleanEmail)
-          .maybeSingle();
-
-        if (profile) {
-          profileStatus = profile.status;
-          if (profile.name) displayName = profile.name;
-        } else {
-          // Fallback to workers table
-          const { data: workerRow } = await supabaseClient
-            .from('workers')
-            .select('id, name, status')
-            .eq('email', cleanEmail)
-            .maybeSingle();
-
-          if (workerRow) {
-            profileStatus = workerRow.status;
-            if (workerRow.name) displayName = workerRow.name;
-          }
+        if (data.status === 'pending') {
+          setApplicantName(data.name || cleanIdentifier);
+          setWorkerStatusState('pending');
+          setErrorMessage(data.error || 'Your application is currently under review. You will be notified once approved.');
+          return;
         }
-      } catch (checkErr) {
-        console.warn('Profile status check warning:', checkErr?.message);
-      }
+        if (data.status === 'suspended') {
+          setApplicantName(data.name || cleanIdentifier);
+          setWorkerStatusState('suspended');
+          setErrorMessage(data.error || 'Your workstation account is currently suspended. Please contact portal administration.');
+          return;
+        }
+        if (data.status === 'rejected') {
+          setApplicantName(data.name || cleanIdentifier);
+          setWorkerStatusState('rejected');
+          setErrorMessage(data.error || 'Your application has been reviewed and was not approved at this time.');
+          return;
+        }
 
-      // Fallback to user metadata if DB record is not accessible via client RLS
-      if (!profileStatus) {
-        profileStatus = user.user_metadata?.worker_status || user.user_metadata?.status || 'pending';
-      }
-
-      const normalizedStatus = (profileStatus || '').toLowerCase();
-      setApplicantName(displayName);
-
-      // 3. Status === 'pending'
-      if (normalizedStatus === 'pending') {
-        await supabaseClient.auth.signOut();
-        try { localStorage.removeItem('bdigi_auth_user'); } catch {}
-        setIsLoading(false);
-        setWorkerStatusState('pending');
-        setErrorMessage('Your application is currently under review. You will be notified once approved.');
+        setErrorMessage(data.error || 'Invalid username/email or password combination.');
         return;
       }
 
-      // 4. Status === 'suspended'
-      if (normalizedStatus === 'suspended') {
-        await supabaseClient.auth.signOut();
-        try { localStorage.removeItem('bdigi_auth_user'); } catch {}
-        setIsLoading(false);
-        setWorkerStatusState('suspended');
-        setErrorMessage('Your workstation account is currently suspended. Please contact portal administration.');
-        return;
+      // 2. Synchronize session with client-side Supabase if session returned
+      if (data.session && supabaseClient) {
+        try {
+          await supabaseClient.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token
+          });
+        } catch (setErr) {
+          console.warn('[Client Auth SetSession Notice]:', setErr?.message);
+        }
       }
 
-      // 5. Status === 'rejected'
-      if (normalizedStatus === 'rejected') {
-        await supabaseClient.auth.signOut();
-        try { localStorage.removeItem('bdigi_auth_user'); } catch {}
-        setIsLoading(false);
-        setWorkerStatusState('rejected');
-        setErrorMessage('Your application has been reviewed and was not approved at this time.');
-        return;
-      }
-
-      // 6. Active Worker -> Grant Access
+      // 3. Store local worker cache
       try {
         const authPayload = {
-          id: user.id,
-          email: user.email,
-          name: displayName,
-          role: 'worker'
+          id: data.workerProfile?.id || data.user?.id,
+          email: data.workerProfile?.email || data.user?.email,
+          name: data.workerProfile?.name || cleanIdentifier,
+          role: data.isAdmin ? 'admin' : 'worker',
+          status: data.workerProfile?.status || 'Active'
         };
         localStorage.setItem('bdigi_auth_user', JSON.stringify(authPayload));
       } catch {}
 
-      setIsLoading(false);
-      router.replace('/portal');
+      // 4. Navigate to /portal workstation with clean session state
+      window.location.href = '/portal';
     } catch (err) {
       setIsLoading(false);
       setErrorMessage(err.message || 'An unexpected authentication error occurred.');
@@ -432,16 +388,16 @@ export default function PortalLoginPage() {
         <form onSubmit={handleLogin}>
           <div style={{ marginBottom: '1.25rem' }}>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>
-              Worker Email Address
+              Username or Email Address
             </label>
             <div style={{ position: 'relative' }}>
               <Mail size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
               <input
-                type="email"
+                type="text"
                 required
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setErrorMessage(''); }}
-                placeholder="digitizer@example.com"
+                placeholder="e.g. Bilal or digitizer@example.com"
                 style={{
                   width: '100%',
                   padding: '0.75rem 1rem 0.75rem 2.6rem',

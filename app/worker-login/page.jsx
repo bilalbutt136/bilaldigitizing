@@ -36,121 +36,74 @@ export default function WorkerLoginPage() {
     setErrorMessage('');
     setWorkerStatusState(null);
 
-    const cleanEmail = (email || '').toLowerCase().trim();
+    const cleanIdentifier = (email || '').trim();
     const cleanPass = (password || '').trim();
 
-    if (!cleanEmail || !cleanPass) {
-      setErrorMessage('Please enter both your digitizer email and account password.');
+    if (!cleanIdentifier || !cleanPass) {
+      setErrorMessage('Please enter both your digitizer username/email and account password.');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      if (!supabaseClient) {
-        throw new Error('Database connection unavailable.');
-      }
-
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: cleanEmail,
-        password: cleanPass
+      const res = await fetch('/api/worker/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          identifier: cleanIdentifier,
+          password: cleanPass
+        })
       });
 
-      if (error || !data?.user) {
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
         setIsLoading(false);
-        setErrorMessage(error?.message || 'Invalid email or password combination.');
-        return;
-      }
-
-      const user = data.user;
-
-      // 1. Check if user is Admin
-      const isAdmin = user.user_metadata?.role === 'admin' || user.app_metadata?.role === 'admin';
-      if (isAdmin) {
-        setIsLoading(false);
-        showToast('Admin authorized on Worker Station.', 'success');
-        router.replace('/worker');
-        return;
-      }
-
-      // 2. Query worker_profiles and workers to verify approval status
-      let profileStatus = null;
-      let displayName = user.user_metadata?.full_name || cleanEmail.split('@')[0];
-
-      try {
-        const { data: profile } = await supabaseClient
-          .from('worker_profiles')
-          .select('id, name, status, rejection_reason')
-          .eq('email', cleanEmail)
-          .maybeSingle();
-
-        if (profile) {
-          profileStatus = profile.status;
-          if (profile.name) displayName = profile.name;
-        } else {
-          const { data: workerRow } = await supabaseClient
-            .from('workers')
-            .select('id, name, status')
-            .eq('email', cleanEmail)
-            .maybeSingle();
-
-          if (workerRow) {
-            profileStatus = workerRow.status;
-            if (workerRow.name) displayName = workerRow.name;
-          }
+        if (data.status === 'pending') {
+          setApplicantName(data.name || cleanIdentifier);
+          setWorkerStatusState('pending');
+          return;
         }
-      } catch (checkErr) {
-        console.warn('Profile status check warning:', checkErr?.message);
-      }
+        if (data.status === 'suspended') {
+          setApplicantName(data.name || cleanIdentifier);
+          setWorkerStatusState('suspended');
+          return;
+        }
+        if (data.status === 'rejected') {
+          setApplicantName(data.name || cleanIdentifier);
+          setWorkerStatusState('rejected');
+          return;
+        }
 
-      // Fallback to metadata if DB table check is unavailable
-      if (!profileStatus) {
-        profileStatus = user.user_metadata?.status || user.user_metadata?.worker_status || 'pending';
-      }
-
-      setApplicantName(displayName);
-
-      // 3. Handle Pending Approval
-      if (profileStatus === 'pending') {
-        await supabaseClient.auth.signOut();
-        try { localStorage.removeItem('bdigi_auth_user'); } catch {}
-        setIsLoading(false);
-        setWorkerStatusState('pending');
+        setErrorMessage(data.error || 'Invalid username/email or password combination.');
         return;
       }
 
-      // 4. Handle Suspended Account
-      if (profileStatus === 'suspended') {
-        await supabaseClient.auth.signOut();
-        try { localStorage.removeItem('bdigi_auth_user'); } catch {}
-        setIsLoading(false);
-        setWorkerStatusState('suspended');
-        return;
+      if (data.session && supabaseClient) {
+        try {
+          await supabaseClient.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token
+          });
+        } catch (setErr) {
+          console.warn('[Client Auth SetSession Notice]:', setErr?.message);
+        }
       }
 
-      // 5. Handle Rejected Account
-      if (profileStatus === 'rejected') {
-        await supabaseClient.auth.signOut();
-        try { localStorage.removeItem('bdigi_auth_user'); } catch {}
-        setIsLoading(false);
-        setWorkerStatusState('rejected');
-        return;
-      }
-
-      // 6. Active Worker -> Grant Access
       try {
         const authPayload = {
-          id: user.id,
-          email: user.email,
-          name: displayName,
-          role: 'worker'
+          id: data.workerProfile?.id || data.user?.id,
+          email: data.workerProfile?.email || data.user?.email,
+          name: data.workerProfile?.name || cleanIdentifier,
+          role: data.isAdmin ? 'admin' : 'worker',
+          status: data.workerProfile?.status || 'Active'
         };
         localStorage.setItem('bdigi_auth_user', JSON.stringify(authPayload));
       } catch {}
 
-      setIsLoading(false);
-      showToast('Digitizer Station Verified. Welcome!', 'success');
-      router.replace('/worker');
+      showToast(`Welcome to your workstation, ${data.workerProfile?.name || cleanIdentifier}!`, 'success');
+      window.location.href = '/portal';
     } catch (err) {
       setIsLoading(false);
       setErrorMessage(err.message || 'An unexpected authentication error occurred.');
@@ -374,16 +327,16 @@ export default function WorkerLoginPage() {
         <form onSubmit={handleLogin}>
           <div style={{ marginBottom: '1.25rem' }}>
             <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>
-              Worker Email Address
+              Digitizer Username or Email
             </label>
             <div style={{ position: 'relative' }}>
               <Mail size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
               <input
-                type="email"
+                type="text"
                 required
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setErrorMessage(''); }}
-                placeholder="digitizer@bdigitizing.pro"
+                placeholder="e.g. Bilal or digitizer@example.com"
                 style={{
                   width: '100%',
                   padding: '0.75rem 1rem 0.75rem 2.6rem',
