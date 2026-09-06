@@ -538,7 +538,6 @@ export const OrderManagementTable = () => {
               <th style={{ padding: '0.45rem 0.75rem' }}>PRICE</th>
               <th style={{ padding: '0.45rem 0.75rem' }}>PAYMENT</th>
               <th style={{ padding: '0.45rem 0.75rem' }}>STATUS</th>
-              <th style={{ padding: '0.45rem 0.75rem' }}>DIGITIZER</th>
               <th style={{ padding: '0.45rem 0.75rem', textAlign: 'center' }}>ARTWORK</th>
               <th style={{ padding: '0.45rem 0.75rem', textAlign: 'right' }}>ACTIONS</th>
             </tr>
@@ -546,7 +545,7 @@ export const OrderManagementTable = () => {
           <tbody>
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={9} style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <td colSpan={8} style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                   <PackageOpen size={36} style={{ color: 'var(--text-light)', marginBottom: '0.5rem' }} />
                   <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-900)' }}>
                     No Orders Match Your Filters
@@ -646,92 +645,7 @@ export const OrderManagementTable = () => {
                       </div>
                     </td>
 
-                    {/* 7. DIGITIZER WORKER */}
-                    <td style={{ padding: '0.5rem 0.75rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        {(ord.worker_status === 'Review Pending' || ord.workerStatus === 'Review Pending') ? (
-                          <button
-                            type="button"
-                            onClick={() => setReviewOrder(ord)}
-                            style={{
-                              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                              color: '#ffffff',
-                              border: 'none',
-                              borderRadius: '6px',
-                              padding: '0.25rem 0.5rem',
-                              fontSize: '0.72rem',
-                              fontWeight: 800,
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.25rem',
-                              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.35)',
-                              whiteSpace: 'nowrap'
-                            }}
-                            title="Inspect worker files and review"
-                          >
-                            <FileCheck size={12} /> Review Upload
-                          </button>
-                        ) : (ord.worker_id || ord.workerId) ? (
-                          <div>
-                            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--navy-900)' }}>
-                              {getWorkerName(ord.worker_id || ord.workerId)}
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '2px' }}>
-                              <span style={{
-                                fontSize: '0.65rem',
-                                fontWeight: 700,
-                                padding: '0.05rem 0.35rem',
-                                borderRadius: '4px',
-                                background: (ord.worker_status || ord.workerStatus) === 'Revisions Needed' ? '#fef2f2' : (ord.worker_status || ord.workerStatus) === 'Completed' ? '#ecfdf5' : '#fff7ed',
-                                color: (ord.worker_status || ord.workerStatus) === 'Revisions Needed' ? '#dc2626' : (ord.worker_status || ord.workerStatus) === 'Completed' ? '#059669' : '#ea580c',
-                                border: `1px solid ${(ord.worker_status || ord.workerStatus) === 'Revisions Needed' ? '#fecaca' : (ord.worker_status || ord.workerStatus) === 'Completed' ? '#a7f3d0' : '#fed7aa'}`
-                              }}>
-                                {ord.worker_status || ord.workerStatus || 'Assigned'}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => setAssigningOrder(ord)}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: 'var(--text-muted)',
-                                  fontSize: '0.68rem',
-                                  cursor: 'pointer',
-                                  textDecoration: 'underline',
-                                  padding: 0
-                                }}
-                              >
-                                Edit
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => setAssigningOrder(ord)}
-                            style={{
-                              background: 'transparent',
-                              border: '1px dashed var(--orange-400, #fb923c)',
-                              color: 'var(--orange-600, #ea580c)',
-                              borderRadius: '6px',
-                              padding: '0.2rem 0.5rem',
-                              fontSize: '0.72rem',
-                              fontWeight: 800,
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.25rem',
-                              whiteSpace: 'nowrap'
-                            }}
-                          >
-                            <Scissors size={11} /> + Assign
-                          </button>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* 8. ARTWORK */}
+                    {/* 7. ARTWORK */}
                     <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
                       <div 
                         style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}

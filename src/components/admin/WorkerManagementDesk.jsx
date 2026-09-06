@@ -5,33 +5,38 @@ import {
   Scissors, 
   UserCheck, 
   Clock, 
-  DollarSign, 
-  FileText, 
   CheckCircle2, 
   XCircle, 
-  Mail, 
   KeyRound, 
   ShieldAlert, 
   Download, 
-  ExternalLink, 
   Search, 
   RefreshCw, 
   UserPlus, 
-  Check, 
-  AlertTriangle,
-  FileCode,
-  Layers,
-  ChevronRight
+  ArrowLeft, 
+  Receipt, 
+  Wallet 
 } from 'lucide-react';
+import { generateWorkerPayoutInvoicePdf } from '../../utils/workerInvoicePdfGenerator';
 
 export const WorkerManagementDesk = ({ showToast }) => {
   const [activeSubTab, setActiveSubTab] = useState('applications'); // 'applications' | 'workers' | 'earnings'
   const [workers, setWorkers] = useState([]);
   const [applications, setApplications] = useState([]);
-  const [earningsLedger, setEarningsLedger] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Payouts & PKR Billing states
+  const [payoutsOverview, setPayoutsOverview] = useState({ workers: [], recentPayouts: [] });
+  const [selectedWorkerForLedger, setSelectedWorkerForLedger] = useState(null);
+  const [workerStatementData, setWorkerStatementData] = useState(null);
+  const [isStatementLoading, setIsStatementLoading] = useState(false);
+  const [selectedOrdersForPayment, setSelectedOrdersForPayment] = useState([]);
+  const [payoutMethod, setPayoutMethod] = useState('Bank Transfer (Meezan Bank)');
+  const [payoutReference, setPayoutReference] = useState('');
+  const [isProcessingPayout, setIsProcessingPayout] = useState(false);
+  const [invoiceDownloadingId, setInvoiceDownloadingId] = useState(null);
 
   // Processing state per worker
   const [actionLoadingId, setActionLoadingId] = useState(null);
@@ -63,27 +68,169 @@ export const WorkerManagementDesk = ({ showToast }) => {
     }
   };
 
-  const fetchEarningsData = async () => {
+  const fetchPayoutsOverview = async () => {
     try {
-      const res = await fetch('/api/worker/earnings?all=true');
+      const res = await fetch('/api/admin/payouts');
       const data = await res.json();
-      if (res.ok && data.ledger) {
-        setEarningsLedger(data.ledger);
+      if (res.ok) {
+        setPayoutsOverview({
+          workers: data.workers || [],
+          recentPayouts: data.recentPayouts || []
+        });
       }
     } catch (err) {
-      console.warn('Fetch earnings error:', err);
+      console.warn('Fetch payouts overview notice:', err);
     }
   };
 
   useEffect(() => {
     fetchWorkersData();
-    fetchEarningsData();
+    fetchPayoutsOverview();
   }, []);
 
   const handleManualRefresh = () => {
     setIsRefreshing(true);
     fetchWorkersData();
-    fetchEarningsData();
+    fetchPayoutsOverview();
+    if (selectedWorkerForLedger) {
+      handleOpenWorkerLedger(selectedWorkerForLedger);
+    }
+  };
+
+  const handleOpenWorkerLedger = async (worker) => {
+    setSelectedWorkerForLedger(worker);
+    setIsStatementLoading(true);
+    setSelectedOrdersForPayment([]);
+    try {
+      const res = await fetch(`/api/admin/payouts?workerId=${worker.id}`);
+      const data = await res.json();
+      if (res.ok) {
+        setWorkerStatementData(data);
+        // Default select all unpaid completed orders
+        if (data.unpaidOrders && data.unpaidOrders.length > 0) {
+          setSelectedOrdersForPayment(data.unpaidOrders.map(o => o.id));
+        }
+      }
+    } catch (err) {
+      console.warn('Fetch worker statement error:', err);
+      if (showToast) showToast('Failed to load worker statement.', 'error');
+    } finally {
+      setIsStatementLoading(false);
+    }
+  };
+
+  const handleToggleOrderSelection = (orderId) => {
+    setSelectedOrdersForPayment(prev => 
+      prev.includes(orderId) ? prev.filter(id => id !== orderId) : [...prev, orderId]
+    );
+  };
+
+  const handleSelectAllOrders = (unpaidOrders = []) => {
+    if (selectedOrdersForPayment.length === unpaidOrders.length) {
+      setSelectedOrdersForPayment([]);
+    } else {
+      setSelectedOrdersForPayment(unpaidOrders.map(o => o.id));
+    }
+  };
+
+  const handleExecutePayout = async () => {
+    if (!selectedWorkerForLedger || selectedOrdersForPayment.length === 0) {
+      if (showToast) showToast('Please select at least one unpaid order to settle.', 'warning');
+      return;
+    }
+
+    const unpaidList = workerStatementData?.unpaidOrders || [];
+    const selectedOrderObjects = unpaidList.filter(o => selectedOrdersForPayment.includes(o.id));
+    const totalAmountPkr = selectedOrderObjects.reduce((sum, o) => sum + (o.costPkr || 0), 0);
+
+    setIsProcessingPayout(true);
+    try {
+      const res = await fetch('/api/admin/payouts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'markAsPaid',
+          payload: {
+            workerId: selectedWorkerForLedger.id,
+            workerName: selectedWorkerForLedger.name,
+            workerEmail: selectedWorkerForLedger.email,
+            orderIds: selectedOrdersForPayment,
+            paymentMethod: payoutMethod,
+            referenceNote: payoutReference,
+            totalAmount: totalAmountPkr
+          }
+        })
+      });
+
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error || 'Failed to mark as paid');
+      }
+
+      if (showToast) {
+        showToast(`Settled Rs. ${totalAmountPkr.toLocaleString()} PKR for ${selectedOrdersForPayment.length} orders!`, 'success');
+      }
+
+      // Automatically generate & trigger instant PDF invoice download
+      try {
+        const { downloadPdf } = await generateWorkerPayoutInvoicePdf({
+          payout: result.payout,
+          worker: selectedWorkerForLedger,
+          orders: selectedOrderObjects
+        });
+        downloadPdf();
+      } catch (pdfErr) {
+        console.warn('PDF auto-download notice:', pdfErr);
+      }
+
+      // Reset reference and reload
+      setPayoutReference('');
+      await handleOpenWorkerLedger(selectedWorkerForLedger);
+      fetchPayoutsOverview();
+      fetchWorkersData();
+    } catch (err) {
+      if (showToast) showToast(err.message || 'Payment recording failed.', 'error');
+    } finally {
+      setIsProcessingPayout(false);
+    }
+  };
+
+  const handleDownloadInvoice = async (payout, worker) => {
+    setInvoiceDownloadingId(payout.id || payout.payout_number);
+    try {
+      const workerId = payout.worker_id || worker?.id;
+      let orderItems = [];
+
+      try {
+        const res = await fetch(`/api/admin/payouts?workerId=${workerId}`);
+        const data = await res.json();
+        if (data.paidOrders) {
+          orderItems = data.paidOrders.filter(o => (payout.order_ids || []).includes(o.id));
+        }
+      } catch {}
+
+      if (orderItems.length === 0) {
+        orderItems = (payout.order_ids || []).map((id) => ({
+          id,
+          title: `Order #${id.slice(0, 8)}`,
+          costPkr: (payout.total_amount || 0) / (payout.order_count || 1)
+        }));
+      }
+
+      const { downloadPdf } = await generateWorkerPayoutInvoicePdf({
+        payout,
+        worker: worker || { name: payout.worker_name, email: payout.worker_email },
+        orders: orderItems
+      });
+
+      downloadPdf();
+      if (showToast) showToast(`Downloaded invoice ${payout.payout_number}`, 'success');
+    } catch (err) {
+      console.warn('Invoice download notice:', err);
+      if (showToast) showToast('Could not generate PDF receipt.', 'error');
+    } finally {
+      setInvoiceDownloadingId(null);
+    }
   };
 
   // 1. Approve Worker Application
@@ -200,32 +347,6 @@ export const WorkerManagementDesk = ({ showToast }) => {
     }
   };
 
-  // 5. Mark Earnings Item as Paid
-  const handleMarkPaid = async (item) => {
-    setActionLoadingId(`paid-${item.id}`);
-    try {
-      const res = await fetch('/api/admin/workers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'markEarningsPaid',
-          payload: { earningId: item.id, orderId: item.order_id }
-        })
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Mark as paid failed');
-
-      if (showToast) showToast(`Payout of $${parseFloat(item.amount).toFixed(2)} marked as Paid!`, 'success');
-      fetchEarningsData();
-      fetchWorkersData();
-    } catch (err) {
-      if (showToast) showToast(err.message || 'Could not update payout status.', 'error');
-    } finally {
-      setActionLoadingId(null);
-    }
-  };
-
   // 6. Manual Add Worker
   const handleCreateWorker = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -270,12 +391,6 @@ export const WorkerManagementDesk = ({ showToast }) => {
   const pendingCount = applications.filter(a => a.status === 'pending').length;
   const activeCount = workers.filter(w => w.status === 'active').length;
   const totalCompletedOrders = workers.reduce((acc, w) => acc + (w.completed_orders_count || 0), 0);
-  const totalPaidEarnings = earningsLedger
-    .filter(e => e.status === 'paid')
-    .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
-  const totalPendingPayouts = earningsLedger
-    .filter(e => e.status === 'pending')
-    .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
 
   // Filtered workers
   const filteredWorkers = workers.filter(w => {
@@ -354,21 +469,23 @@ export const WorkerManagementDesk = ({ showToast }) => {
 
         <div style={{
           background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
+          border: totalUnpaidPkrAll > 0 ? '1.5px solid #d97706' : '1px solid var(--border-color)',
           borderRadius: '12px',
           padding: '1.15rem 1.25rem',
           boxShadow: 'var(--shadow-sm)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Pending Payouts</span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Unpaid Ledger (PKR)</span>
             <span style={{ background: '#fef3c7', color: '#d97706', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <DollarSign size={15} />
+              <Wallet size={15} />
             </span>
           </div>
-          <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#d97706' }}>
-            ${totalPendingPayouts.toFixed(2)}
+          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: totalUnpaidPkrAll > 0 ? '#d97706' : '#059669' }}>
+            Rs. {totalUnpaidPkrAll.toLocaleString()} PKR
           </div>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total paid: ${totalPaidEarnings.toFixed(2)}</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Paid to date: Rs. {(totalPaidPkrAll > 0 ? totalPaidPkrAll : 0).toLocaleString()} PKR
+          </span>
         </div>
       </div>
 
@@ -431,7 +548,10 @@ export const WorkerManagementDesk = ({ showToast }) => {
           </button>
 
           <button
-            onClick={() => setActiveSubTab('earnings')}
+            onClick={() => {
+              setActiveSubTab('earnings');
+              setSelectedWorkerForLedger(null);
+            }}
             style={{
               padding: '0.45rem 0.9rem',
               borderRadius: '8px',
@@ -446,7 +566,12 @@ export const WorkerManagementDesk = ({ showToast }) => {
               gap: '0.4rem'
             }}
           >
-            <DollarSign size={14} /> Earnings & Payouts Ledger
+            <Wallet size={14} /> Worker Billing & PKR Ledger
+            {totalUnpaidPkrAll > 0 && (
+              <span style={{ background: '#f59e0b', color: '#ffffff', fontSize: '0.68rem', fontWeight: 900, padding: '0.1rem 0.45rem', borderRadius: '9999px' }}>
+                Rs. {totalUnpaidPkrAll.toLocaleString()}
+              </span>
+            )}
           </button>
         </div>
 
@@ -475,7 +600,12 @@ export const WorkerManagementDesk = ({ showToast }) => {
       {/* TAB 1: WORKER APPLICATIONS */}
       {activeSubTab === 'applications' && (
         <div>
-          {applications.length === 0 ? (
+          {isLoading ? (
+            <div style={{ padding: '3.5rem', textAlign: 'center', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+              <RefreshCw size={24} className="spin-icon" style={{ color: '#ea580c', margin: '0 auto 0.75rem' }} />
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Loading worker applications...</p>
+            </div>
+          ) : applications.length === 0 ? (
             <div style={{
               background: 'var(--bg-card)',
               border: '1px solid var(--border-color)',
@@ -706,10 +836,20 @@ export const WorkerManagementDesk = ({ showToast }) => {
                       <span style={{ color: '#ea580c' }}>{w.assigned_orders_count || 0} active</span> / <span style={{ color: '#059669' }}>{w.completed_orders_count || 0} completed</span>
                     </td>
                     <td style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#059669' }}>
-                      ${(w.total_earned || 0).toFixed(2)}
+                      Rs. {(() => {
+                        const pw = payoutsOverview.workers?.find(x => x.id === w.id);
+                        return ((pw ? pw.totalEarnedPkr : w.total_earned) || 0).toLocaleString();
+                      })()} PKR
                     </td>
-                    <td style={{ padding: '0.85rem 1rem', fontWeight: 800, color: (w.pending_payout || 0) > 0 ? '#d97706' : 'var(--text-muted)' }}>
-                      ${(w.pending_payout || 0).toFixed(2)}
+                    <td style={{ padding: '0.85rem 1rem', fontWeight: 800, color: (() => {
+                      const pw = payoutsOverview.workers?.find(x => x.id === w.id);
+                      const unpaid = (pw ? pw.unpaidBalancePkr : w.pending_payout) || 0;
+                      return unpaid > 0 ? '#d97706' : 'var(--text-muted)';
+                    })() }}>
+                      Rs. {(() => {
+                        const pw = payoutsOverview.workers?.find(x => x.id === w.id);
+                        return ((pw ? pw.unpaidBalancePkr : w.pending_payout) || 0).toLocaleString();
+                      })()} PKR
                     </td>
                     <td style={{ padding: '0.85rem 1rem' }}>
                       <span style={{
@@ -726,6 +866,30 @@ export const WorkerManagementDesk = ({ showToast }) => {
                     </td>
                     <td style={{ padding: '0.85rem 1.25rem', textAlign: 'right' }}>
                       <div style={{ display: 'inline-flex', gap: '0.4rem' }}>
+                        {/* Open Ledger Button */}
+                        <button
+                          onClick={() => {
+                            setActiveSubTab('earnings');
+                            handleOpenWorkerLedger(w);
+                          }}
+                          title="Open Worker Ledger & Statement"
+                          style={{
+                            background: '#eff6ff',
+                            border: '1px solid #bfdbfe',
+                            color: '#2563eb',
+                            borderRadius: '6px',
+                            padding: '0.35rem 0.6rem',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 700
+                          }}
+                        >
+                          <Receipt size={13} /> Ledger
+                        </button>
+
                         {/* Password Reset Email Button */}
                         <button
                           onClick={() => handleSendPasswordReset(w)}
@@ -781,100 +945,674 @@ export const WorkerManagementDesk = ({ showToast }) => {
         </div>
       )}
 
-      {/* TAB 3: EARNINGS & PAYOUTS LEDGER */}
+      {/* TAB 3: WORKER BILLING & PKR LEDGER */}
       {activeSubTab === 'earnings' && (
-        <div style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '12px',
-          overflow: 'hidden',
-          boxShadow: 'var(--shadow-sm)'
-        }}>
-          <div style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
-              Worker Job Payouts & Ledger
-            </h3>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              Total Ledger Entries: {earningsLedger.length}
-            </span>
-          </div>
+        <div>
+          {/* VIEW B: SINGLE WORKER STATEMENT & SETTLEMENT DESK */}
+          {selectedWorkerForLedger ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Back Button & Header */}
+              <div style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '12px',
+                padding: '1rem 1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '1rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <button
+                    onClick={() => setSelectedWorkerForLedger(null)}
+                    style={{
+                      background: 'var(--bg-surface)',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--text-main)',
+                      borderRadius: '8px',
+                      padding: '0.45rem 0.85rem',
+                      fontSize: '0.825rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem'
+                    }}
+                  >
+                    <ArrowLeft size={14} /> Back to All Workers
+                  </button>
 
-          {earningsLedger.length === 0 ? (
-            <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-              No worker job payouts logged yet. When an Admin assigns an order with a payout price, the ledger entry appears here.
-            </div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
-                <thead>
-                  <tr style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-color)' }}>
-                    <th style={{ padding: '0.75rem 1.25rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Order #</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Worker Identifier</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Payout Amount</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Assigned Date</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Status</th>
-                    <th style={{ padding: '0.75rem 1.25rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem', textAlign: 'right' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {earningsLedger.map((item) => (
-                    <tr key={item.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '0.85rem 1.25rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                        {item.order_number || item.order_id || 'N/A'}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                        {item.worker_id}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', fontWeight: 800, color: item.status === 'paid' ? '#059669' : '#d97706' }}>
-                        ${parseFloat(item.amount).toFixed(2)}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-                        {new Date(item.created_at).toLocaleDateString()}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <span style={{
-                          background: item.status === 'paid' ? '#ecfdf5' : '#fff7ed',
-                          color: item.status === 'paid' ? '#059669' : '#ea580c',
-                          padding: '0.15rem 0.5rem',
-                          borderRadius: '4px',
-                          fontSize: '0.75rem',
-                          fontWeight: 800,
-                          textTransform: 'uppercase'
-                        }}>
-                          {item.status}
+                  <div>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 900, margin: 0, color: 'var(--text-main)' }}>
+                      {selectedWorkerForLedger.name} — Billing Ledger & Statement
+                    </h3>
+                    <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      {selectedWorkerForLedger.email} • {selectedWorkerForLedger.specialty || selectedWorkerForLedger.primary_software || 'Embroidery Digitizer'} • Primary Currency: <strong>Pakistani Rupee (PKR)</strong>
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  {/* Total Unpaid Balance Badge */}
+                  <div style={{
+                    background: '#fff7ed',
+                    border: '1.5px solid #fed7aa',
+                    borderRadius: '10px',
+                    padding: '0.5rem 1rem',
+                    textAlign: 'right'
+                  }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', display: 'block' }}>
+                      Total Unpaid Balance
+                    </span>
+                    <strong style={{ fontSize: '1.25rem', fontWeight: 900, color: '#c2410c' }}>
+                      Rs. {(workerStatementData?.totalUnpaidPkr || 0).toLocaleString()} PKR
+                    </strong>
+                  </div>
+
+                  {/* Total Paid Badge */}
+                  <div style={{
+                    background: '#ecfdf5',
+                    border: '1px solid #a7f3d0',
+                    borderRadius: '10px',
+                    padding: '0.5rem 1rem',
+                    textAlign: 'right'
+                  }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase', display: 'block' }}>
+                      Total Paid to Date
+                    </span>
+                    <strong style={{ fontSize: '1.25rem', fontWeight: 900, color: '#047857' }}>
+                      Rs. {(workerStatementData?.totalPaidPkr || 0).toLocaleString()} PKR
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              {isStatementLoading ? (
+                <div style={{ padding: '3.5rem', textAlign: 'center', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                  <RefreshCw size={24} className="spin-icon" style={{ color: '#ea580c', margin: '0 auto 0.75rem' }} />
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Loading worker financial statement...</p>
+                </div>
+              ) : (
+                <>
+                  {/* SETTLEMENT SECTION: UNPAID COMPLETED ORDERS */}
+                  <div style={{
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    boxShadow: 'var(--shadow-sm)'
+                  }}>
+                    <div style={{
+                      padding: '1rem 1.25rem',
+                      borderBottom: '1px solid var(--border-color)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '0.75rem',
+                      background: 'var(--bg-surface)'
+                    }}>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Clock size={16} style={{ color: '#ea580c' }} /> Completed Orders Awaiting Settlement
+                        </h4>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                          Select verified completed orders below to mark as Paid and automatically generate an official PDF Payout Invoice.
                         </span>
-                      </td>
-                      <td style={{ padding: '0.85rem 1.25rem', textAlign: 'right' }}>
-                        {item.status === 'pending' ? (
+                      </div>
+
+                      {workerStatementData?.unpaidOrders && workerStatementData.unpaidOrders.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => handleSelectAllOrders(workerStatementData.unpaidOrders)}
+                          style={{
+                            background: 'transparent',
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--text-main)',
+                            borderRadius: '6px',
+                            padding: '0.35rem 0.75rem',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {selectedOrdersForPayment.length === workerStatementData.unpaidOrders.length ? 'Deselect All' : 'Select All Unpaid'}
+                        </button>
+                      )}
+                    </div>
+
+                    {!workerStatementData?.unpaidOrders || workerStatementData.unpaidOrders.length === 0 ? (
+                      <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                        <CheckCircle2 size={36} style={{ color: '#10b981', margin: '0 auto 0.6rem' }} />
+                        <h4 style={{ color: 'var(--text-main)', fontSize: '0.95rem', fontWeight: 800, margin: '0 0 0.25rem 0' }}>All Orders Settled</h4>
+                        <p style={{ margin: 0, fontSize: '0.825rem' }}>
+                          This worker has no pending completed orders awaiting payment. All work has been fully paid.
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ overflowX: 'auto' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                            <thead>
+                              <tr style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-color)' }}>
+                                <th style={{ padding: '0.75rem 1rem', width: '40px', textAlign: 'center' }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedOrdersForPayment.length === workerStatementData.unpaidOrders.length && workerStatementData.unpaidOrders.length > 0}
+                                    onChange={() => handleSelectAllOrders(workerStatementData.unpaidOrders)}
+                                    style={{ cursor: 'pointer' }}
+                                  />
+                                </th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Order #</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Job Title / Details</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Completed Date</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Agreed Quote (PKR)</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem', textAlign: 'right' }}>Payment Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {workerStatementData.unpaidOrders.map((ord) => {
+                                const isChecked = selectedOrdersForPayment.includes(ord.id);
+                                return (
+                                  <tr 
+                                    key={ord.id} 
+                                    style={{ 
+                                      borderBottom: '1px solid var(--border-color)',
+                                      background: isChecked ? 'rgba(234, 88, 12, 0.04)' : 'transparent'
+                                    }}
+                                  >
+                                    <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
+                                      <input
+                                        type="checkbox"
+                                        checked={isChecked}
+                                        onChange={() => handleToggleOrderSelection(ord.id)}
+                                        style={{ cursor: 'pointer' }}
+                                      />
+                                    </td>
+                                    <td style={{ padding: '0.85rem 1rem', fontWeight: 800, color: 'var(--color-primary)' }}>
+                                      {ord.id?.slice(0, 8)}...
+                                    </td>
+                                    <td style={{ padding: '0.85rem 1rem', color: 'var(--text-main)' }}>
+                                      <div style={{ fontWeight: 700 }}>{ord.title || 'Embroidery Digitizing Design'}</div>
+                                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Client: {ord.client_name || 'Direct Order'}</span>
+                                    </td>
+                                    <td style={{ padding: '0.85rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                                      {new Date(ord.updated_at || ord.created_at).toLocaleDateString()}
+                                    </td>
+                                    <td style={{ padding: '0.85rem 1rem', fontWeight: 900, color: '#ea580c', fontSize: '0.95rem' }}>
+                                      Rs. {(ord.costPkr || 0).toLocaleString()} PKR
+                                    </td>
+                                    <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
+                                      <span style={{
+                                        background: '#fff7ed',
+                                        color: '#ea580c',
+                                        border: '1px solid #fed7aa',
+                                        padding: '0.15rem 0.55rem',
+                                        borderRadius: '4px',
+                                        fontSize: '0.72rem',
+                                        fontWeight: 800,
+                                        textTransform: 'uppercase'
+                                      }}>
+                                        Unpaid
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Settlement Payment Form Action Bar */}
+                        <div style={{
+                          padding: '1.25rem 1.5rem',
+                          background: 'var(--bg-surface)',
+                          borderTop: '1px solid var(--border-color)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          flexWrap: 'wrap',
+                          gap: '1.25rem'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+                            <div>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Selected for Payment:</span>
+                              <strong style={{ fontSize: '1.1rem', color: 'var(--text-main)', fontWeight: 800 }}>
+                                {selectedOrdersForPayment.length} order{selectedOrdersForPayment.length !== 1 ? 's' : ''}
+                              </strong>
+                            </div>
+
+                            <div style={{ borderLeft: '1px solid var(--border-color)', paddingLeft: '1.25rem' }}>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Total Payout Amount:</span>
+                              <strong style={{ fontSize: '1.35rem', color: '#ea580c', fontWeight: 900 }}>
+                                Rs. {(() => {
+                                  const unpaidList = workerStatementData?.unpaidOrders || [];
+                                  const sum = unpaidList
+                                    .filter(o => selectedOrdersForPayment.includes(o.id))
+                                    .reduce((acc, o) => acc + (o.costPkr || 0), 0);
+                                  return sum.toLocaleString();
+                                })()} PKR
+                              </strong>
+                            </div>
+
+                            {/* Payment Method Selector */}
+                            <div style={{ minWidth: '220px' }}>
+                              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '0.25rem', textTransform: 'uppercase' }}>
+                                Settlement Channel
+                              </label>
+                              <select
+                                value={payoutMethod}
+                                onChange={(e) => setPayoutMethod(e.target.value)}
+                                style={{
+                                  width: '100%',
+                                  padding: '0.45rem 0.65rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid var(--border-color)',
+                                  background: 'var(--bg-card)',
+                                  color: 'var(--text-main)',
+                                  fontSize: '0.825rem',
+                                  fontWeight: 600
+                                }}
+                              >
+                                <option value="Bank Transfer (Meezan Bank)">Bank Transfer (Meezan Bank)</option>
+                                <option value="Bank Transfer (HBL / Allied / UBL / Alfalah)">Bank Transfer (HBL / Allied / UBL)</option>
+                                <option value="JazzCash Mobile Account">JazzCash Mobile Account</option>
+                                <option value="Easypaisa Mobile Account">Easypaisa Mobile Account</option>
+                                <option value="SadaPay / NayaPay">SadaPay / NayaPay</option>
+                                <option value="Internal Cash Voucher">Internal Cash Voucher</option>
+                              </select>
+                            </div>
+
+                            {/* Reference / Transaction ID */}
+                            <div style={{ minWidth: '200px' }}>
+                              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '0.25rem', textTransform: 'uppercase' }}>
+                                Transaction Reference / Note
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Meezan Ref #10924 or TID"
+                                value={payoutReference}
+                                onChange={(e) => setPayoutReference(e.target.value)}
+                                style={{
+                                  width: '100%',
+                                  padding: '0.45rem 0.65rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid var(--border-color)',
+                                  background: 'var(--bg-card)',
+                                  color: 'var(--text-main)',
+                                  fontSize: '0.825rem'
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Submit & Generate Invoice Button */}
                           <button
-                            onClick={() => handleMarkPaid(item)}
-                            disabled={actionLoadingId === `paid-${item.id}`}
+                            type="button"
+                            onClick={handleExecutePayout}
+                            disabled={isProcessingPayout || selectedOrdersForPayment.length === 0}
                             style={{
-                              background: '#22c55e',
+                              background: selectedOrdersForPayment.length > 0 ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#94a3b8',
                               color: '#ffffff',
                               border: 'none',
-                              borderRadius: '6px',
-                              padding: '0.35rem 0.75rem',
+                              borderRadius: '8px',
+                              padding: '0.65rem 1.4rem',
+                              fontSize: '0.875rem',
                               fontWeight: 800,
-                              fontSize: '0.75rem',
-                              cursor: 'pointer',
+                              cursor: selectedOrdersForPayment.length > 0 ? 'pointer' : 'not-allowed',
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '0.3rem'
+                              gap: '0.5rem',
+                              boxShadow: selectedOrdersForPayment.length > 0 ? '0 4px 14px rgba(16, 185, 129, 0.35)' : 'none'
                             }}
                           >
-                            <Check size={12} /> Mark as Paid
+                            <Receipt size={16} />
+                            {isProcessingPayout ? 'Settling & Generating PDF...' : 'Mark as Paid & Download PDF Invoice'}
                           </button>
-                        ) : (
-                          <span style={{ color: '#059669', fontSize: '0.78rem', fontWeight: 700 }}>
-                            Paid on {new Date(item.paid_at || item.updated_at).toLocaleDateString()}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* PAST PAYOUT INVOICES & RECEIPTS FOR THIS WORKER */}
+                  <div style={{
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    boxShadow: 'var(--shadow-sm)'
+                  }}>
+                    <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Receipt size={16} style={{ color: '#10b981' }} /> Payout Invoices & Receipts History ({workerStatementData?.payouts?.length || 0})
+                      </h4>
+                    </div>
+
+                    {!workerStatementData?.payouts || workerStatementData.payouts.length === 0 ? (
+                      <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                        No past payout receipts recorded for this worker yet.
+                      </div>
+                    ) : (
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                          <thead>
+                            <tr style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-color)' }}>
+                              <th style={{ padding: '0.75rem 1.25rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Payout / Invoice #</th>
+                              <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Date Settled</th>
+                              <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Payment Method</th>
+                              <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Reference / TID</th>
+                              <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Orders Settled</th>
+                              <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Total Paid (PKR)</th>
+                              <th style={{ padding: '0.75rem 1.25rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem', textAlign: 'right' }}>Receipt PDF</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {workerStatementData.payouts.map((payout) => (
+                              <tr key={payout.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                <td style={{ padding: '0.85rem 1.25rem', fontWeight: 800, color: '#2563eb' }}>
+                                  {payout.payout_number}
+                                </td>
+                                <td style={{ padding: '0.85rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                                  {new Date(payout.created_at).toLocaleDateString()}
+                                </td>
+                                <td style={{ padding: '0.85rem 1rem', color: 'var(--text-main)', fontWeight: 600 }}>
+                                  {payout.payment_method}
+                                </td>
+                                <td style={{ padding: '0.85rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                                  {payout.reference_note || '—'}
+                                </td>
+                                <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                                  {payout.order_count || (payout.order_ids || []).length} orders
+                                </td>
+                                <td style={{ padding: '0.85rem 1rem', fontWeight: 900, color: '#059669', fontSize: '0.95rem' }}>
+                                  Rs. {parseFloat(payout.total_amount || 0).toLocaleString()} PKR
+                                </td>
+                                <td style={{ padding: '0.85rem 1.25rem', textAlign: 'right' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDownloadInvoice(payout, selectedWorkerForLedger)}
+                                    disabled={invoiceDownloadingId === (payout.id || payout.payout_number)}
+                                    style={{
+                                      background: '#eff6ff',
+                                      color: '#2563eb',
+                                      border: '1px solid #bfdbfe',
+                                      borderRadius: '6px',
+                                      padding: '0.35rem 0.75rem',
+                                      fontWeight: 800,
+                                      fontSize: '0.75rem',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.35rem'
+                                    }}
+                                  >
+                                    <Download size={13} />
+                                    {invoiceDownloadingId === (payout.id || payout.payout_number) ? 'Generating...' : 'Download Invoice'}
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            /* VIEW A: ALL WORKERS BILLING & PKR LEDGER OVERVIEW */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Studio Financial Snapshot */}
+              <div style={{
+                background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                color: '#ffffff',
+                borderRadius: '14px',
+                padding: '1.25rem 1.75rem',
+                border: '1px solid #334155',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '1rem'
+              }}>
+                <div>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f97316', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Pakistan Digitizer & Artist Production Ledger
+                  </span>
+                  <h3 style={{ margin: '0.2rem 0 0 0', fontSize: '1.25rem', fontWeight: 900 }}>
+                    Internal Billing & Off-Platform Payouts (PKR)
+                  </h3>
+                  <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#94a3b8' }}>
+                    Settle completed work via Pakistani Bank Transfer, JazzCash, or Easypaisa with 1-click PDF tax invoice generation.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block' }}>Total Studio Unpaid:</span>
+                    <strong style={{ fontSize: '1.4rem', color: '#f59e0b', fontWeight: 900 }}>
+                      Rs. {totalUnpaidPkrAll.toLocaleString()} PKR
+                    </strong>
+                  </div>
+
+                  <div style={{ textAlign: 'right', borderLeft: '1px solid #334155', paddingLeft: '1.5rem' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block' }}>Total Paid to Date:</span>
+                    <strong style={{ fontSize: '1.4rem', color: '#10b981', fontWeight: 900 }}>
+                      Rs. {(totalPaidPkrAll > 0 ? totalPaidPkrAll : 0).toLocaleString()} PKR
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Workers Overview Table */}
+              <div style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                boxShadow: 'var(--shadow-sm)'
+              }}>
+                <div style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Wallet size={16} style={{ color: '#ea580c' }} /> Active Workers Balance & Payout Status
+                  </h4>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    {workers.length} active digitizer{workers.length !== 1 ? 's' : ''} / artists
+                  </span>
+                </div>
+
+                {workers.length === 0 ? (
+                  <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    No active digitizers found. Once applications are approved, staff accounts will appear here.
+                  </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                      <thead>
+                        <tr style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-color)' }}>
+                          <th style={{ padding: '0.75rem 1.25rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Worker Name</th>
+                          <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Specialty</th>
+                          <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Completed Tasks</th>
+                          <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Unpaid Tasks</th>
+                          <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Unpaid Balance (PKR)</th>
+                          <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Total Earned (PKR)</th>
+                          <th style={{ padding: '0.75rem 1.25rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem', textAlign: 'right' }}>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {workers.map((w) => {
+                          const pw = payoutsOverview.workers?.find(x => x.id === w.id);
+                          const unpaidBalance = (pw ? pw.unpaidBalancePkr : w.pending_payout) || 0;
+                          const totalEarned = (pw ? pw.totalEarnedPkr : w.total_earned) || 0;
+                          const unpaidCount = pw ? pw.unpaidCount : 0;
+                          const completedCount = pw ? pw.completedCount : (w.completed_orders_count || 0);
+
+                          return (
+                            <tr key={w.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                              <td style={{ padding: '0.85rem 1.25rem' }}>
+                                <strong style={{ color: 'var(--text-main)', display: 'block' }}>{w.name}</strong>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{w.email}</span>
+                              </td>
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                <span style={{
+                                  background: (w.specialty || '').toLowerCase().includes('vector') ? '#fdf4ff' : '#eff6ff',
+                                  color: (w.specialty || '').toLowerCase().includes('vector') ? '#c026d3' : '#2563eb',
+                                  border: `1px solid ${(w.specialty || '').toLowerCase().includes('vector') ? '#f5d0fe' : '#bfdbfe'}`,
+                                  padding: '0.15rem 0.5rem',
+                                  borderRadius: '4px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700
+                                }}>
+                                  {w.specialty || w.primary_software || 'Embroidery Digitizer'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                                {completedCount} completed
+                              </td>
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                <span style={{
+                                  background: unpaidCount > 0 ? '#fff7ed' : '#ecfdf5',
+                                  color: unpaidCount > 0 ? '#ea580c' : '#059669',
+                                  padding: '0.15rem 0.5rem',
+                                  borderRadius: '4px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 800
+                                }}>
+                                  {unpaidCount} unpaid
+                                </span>
+                              </td>
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                <span style={{
+                                  fontWeight: 900,
+                                  fontSize: '0.95rem',
+                                  color: unpaidBalance > 0 ? '#d97706' : '#059669'
+                                }}>
+                                  Rs. {unpaidBalance.toLocaleString()} PKR
+                                </span>
+                              </td>
+                              <td style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#059669' }}>
+                                Rs. {totalEarned.toLocaleString()} PKR
+                              </td>
+                              <td style={{ padding: '0.85rem 1.25rem', textAlign: 'right' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenWorkerLedger(w)}
+                                  style={{
+                                    background: unpaidBalance > 0 ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' : '#eff6ff',
+                                    color: unpaidBalance > 0 ? '#ffffff' : '#2563eb',
+                                    border: unpaidBalance > 0 ? 'none' : '1px solid #bfdbfe',
+                                    borderRadius: '6px',
+                                    padding: '0.4rem 0.85rem',
+                                    fontWeight: 800,
+                                    fontSize: '0.78rem',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.35rem',
+                                    boxShadow: unpaidBalance > 0 ? '0 2px 8px rgba(234, 88, 12, 0.25)' : 'none'
+                                  }}
+                                >
+                                  <Receipt size={13} /> {unpaidBalance > 0 ? 'Settle & Ledger' : 'View Ledger'}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Recent Studio-wide Payout Invoices & Receipts */}
+              <div style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                boxShadow: 'var(--shadow-sm)'
+              }}>
+                <div style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Receipt size={15} style={{ color: '#10b981' }} /> Recent Payout Settlements & Invoices ({payoutsOverview.recentPayouts?.length || 0})
+                  </h4>
+                </div>
+
+                {!payoutsOverview.recentPayouts || payoutsOverview.recentPayouts.length === 0 ? (
+                  <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    No worker payouts recorded yet. When you settle completed orders with digitizers, the payout receipts will appear here.
+                  </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                      <thead>
+                        <tr style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-color)' }}>
+                          <th style={{ padding: '0.75rem 1.25rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Payout #</th>
+                          <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Worker</th>
+                          <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Date Settled</th>
+                          <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Channel</th>
+                          <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Ref / TID</th>
+                          <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Orders Count</th>
+                          <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem' }}>Settled (PKR)</th>
+                          <th style={{ padding: '0.75rem 1.25rem', fontWeight: 800, color: 'var(--text-muted)', fontSize: '0.75rem', textAlign: 'right' }}>PDF Invoice</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {payoutsOverview.recentPayouts.map((payout) => (
+                          <tr key={payout.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                            <td style={{ padding: '0.85rem 1.25rem', fontWeight: 800, color: '#2563eb' }}>
+                              {payout.payout_number}
+                            </td>
+                            <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                              {payout.worker_name || 'Worker'}
+                            </td>
+                            <td style={{ padding: '0.85rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                              {new Date(payout.created_at).toLocaleDateString()}
+                            </td>
+                            <td style={{ padding: '0.85rem 1rem', color: 'var(--text-main)', fontSize: '0.825rem' }}>
+                              {payout.payment_method}
+                            </td>
+                            <td style={{ padding: '0.85rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                              {payout.reference_note || '—'}
+                            </td>
+                            <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                              {payout.order_count || (payout.order_ids || []).length} orders
+                            </td>
+                            <td style={{ padding: '0.85rem 1rem', fontWeight: 900, color: '#059669', fontSize: '0.95rem' }}>
+                              Rs. {parseFloat(payout.total_amount || 0).toLocaleString()} PKR
+                            </td>
+                            <td style={{ padding: '0.85rem 1.25rem', textAlign: 'right' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadInvoice(payout, workers.find(w => w.id === payout.worker_id))}
+                                disabled={invoiceDownloadingId === (payout.id || payout.payout_number)}
+                                style={{
+                                  background: '#eff6ff',
+                                  color: '#2563eb',
+                                  border: '1px solid #bfdbfe',
+                                  borderRadius: '6px',
+                                  padding: '0.35rem 0.75rem',
+                                  fontWeight: 800,
+                                  fontSize: '0.75rem',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.35rem'
+                                }}
+                              >
+                                <Download size={13} />
+                                {invoiceDownloadingId === (payout.id || payout.payout_number) ? 'Generating...' : 'Download'}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

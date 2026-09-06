@@ -31,9 +31,16 @@ import {
   HelpCircle,
   FileCode,
   ShieldCheck,
-  ArrowLeft
+  ArrowLeft,
+  Palette,
+  Scissors,
+  UserCheck,
+  AlertCircle,
+  AlertTriangle
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
+import { AssignWorkerModal } from '../admin/AssignWorkerModal';
+import { ReviewWorkerUploadModal } from '../admin/ReviewWorkerUploadModal';
 
 // Supported machine formats mapping
 const MACHINE_FORMAT_EXTENSIONS = {
@@ -65,8 +72,11 @@ export const OrderTrackerDrawer = () => {
     digitizers,
     setIsCheckoutModalOpen,
     setCheckoutSession,
-    mobileMode
+    mobileMode,
+    theme
   } = useAppState();
+
+  const isDark = theme === 'dark';
 
   const [isMobileScreen, setIsMobileScreen] = useState(false);
   React.useEffect(() => {
@@ -97,9 +107,12 @@ export const OrderTrackerDrawer = () => {
   // Admin Multiple File Upload Array State
   const [adminFilesList, setAdminFilesList] = useState([]);
   const [adminDragOver, setAdminDragOver] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   // Section Refs for smooth scrolling on the single page
   const requirementsRef = useRef(null);
+  const workerDeskRef = useRef(null);
   const deliveryRef = useRef(null);
   const modificationRef = useRef(null);
   const messagesRef = useRef(null);
@@ -180,6 +193,14 @@ export const OrderTrackerDrawer = () => {
 
   const isCurrentlyOnAdminPortal = currentView === 'admin' || (typeof window !== 'undefined' && (window.location.pathname.includes('admin') || window.location.pathname.includes('admin-portal')));
   const isAdmin = (authUser?.role === 'admin' && isCurrentlyOnAdminPortal) || currentView === 'admin';
+
+  const isVectorOrder = Boolean(
+    (ord.serviceCategory && ord.serviceCategory.toLowerCase().includes('vector')) ||
+    (ord.type && ord.type.toLowerCase().includes('vector')) ||
+    (ord.service && ord.service.toLowerCase().includes('vector')) ||
+    (ord.title && ord.title.toLowerCase().includes('vector'))
+  );
+  const requiredSpecialty = isVectorOrder ? 'Vector Artist' : 'Embroidery Digitizer';
 
   // Collect all uploaded artwork / logo files across all placements and attachments
   let notesFiles = [];
@@ -658,6 +679,17 @@ export const OrderTrackerDrawer = () => {
           >
             <FileText size={14} /> Order Requirements
           </button>
+
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => scrollToSection(workerDeskRef, 'worker')}
+              className={`btn btn-sm ${activeSection === 'worker' ? 'btn-primary-orange' : 'btn-outline'}`}
+              style={{ fontWeight: 800, fontSize: '0.8rem', gap: '0.35rem', borderColor: ord.worker_id ? '#38bdf8' : '#f59e0b' }}
+            >
+              <UserCheck size={14} /> Worker & QA Desk
+            </button>
+          )}
 
           <button
             type="button"
@@ -1443,6 +1475,144 @@ export const OrderTrackerDrawer = () => {
           </div>
 
           {/* ================================================================
+              SECTION B.2: ADMIN WORKER ASSIGNMENT & QA REVIEW DESK
+             ================================================================ */}
+          {isAdmin && (
+            <div 
+              ref={workerDeskRef}
+              style={{
+                background: 'var(--bg-card)',
+                borderRadius: isMobileLayout ? '12px' : '16px',
+                border: '1.5px solid var(--border-color)',
+                padding: isMobileLayout ? '1rem' : '1.5rem',
+                boxShadow: 'var(--shadow-sm)'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: isVectorOrder ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {isVectorOrder ? <Palette size={22} /> : <Scissors size={22} />}
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: isMobileLayout ? '0.98rem' : '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                      Worker Assignment & QA Review Desk
+                    </h4>
+                    <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                      Specialization: <strong style={{ color: isVectorOrder ? '#0284c7' : '#ea580c' }}>{requiredSpecialty}</strong> • Internal Billing: <strong>PKR (Rs.)</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsAssignModalOpen(true)}
+                    className="btn btn-primary-orange btn-sm"
+                    style={{ fontWeight: 800, gap: '0.35rem' }}
+                  >
+                    {ord.worker_id ? '🔄 Change Worker' : `+ Assign ${requiredSpecialty}`}
+                  </button>
+                </div>
+              </div>
+
+              {/* Status Display */}
+              {!ord.worker_id ? (
+                <div style={{ background: '#fffbeb', border: '1.5px dashed #f59e0b', borderRadius: '12px', padding: '1.5rem', textAlign: 'center' }}>
+                  <AlertTriangle size={28} style={{ color: '#d97706', margin: '0 auto 0.5rem' }} />
+                  <div style={{ fontWeight: 800, color: '#92400e', fontSize: '1rem' }}>
+                    Order Unassigned
+                  </div>
+                  <p style={{ margin: '0.35rem 0 1rem', fontSize: '0.825rem', color: '#b45309', maxWidth: '520px', marginLeft: 'auto', marginRight: 'auto' }}>
+                    You have inspected the requirements and source artwork above. Assign this {isVectorOrder ? 'vector conversion' : 'embroidery digitizing'} task to an active worker. The worker will review specifications and submit their PKR quote upon acceptance.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setIsAssignModalOpen(true)}
+                    className="btn btn-primary-orange btn-sm"
+                    style={{ fontWeight: 800, gap: '0.35rem' }}
+                  >
+                    <UserCheck size={15} /> Assign {requiredSpecialty} Now
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {/* Worker Card */}
+                  <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '1.15rem 1.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--navy-900)' }}>
+                          {ord.worker_name || ord.worker_email || 'Assigned Worker'}
+                        </span>
+                        <span style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '6px',
+                          background: isVectorOrder ? '#e0f2fe' : '#fff7ed',
+                          color: isVectorOrder ? '#0369a1' : '#ea580c',
+                          border: `1px solid ${isVectorOrder ? '#bae6fd' : '#fed7aa'}`
+                        }}>
+                          {isVectorOrder ? '🎨 Vector Artist' : '🧵 Embroidery Digitizer'}
+                        </span>
+                        <span style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '6px',
+                          background: ord.worker_status === 'Pending_Worker_Acceptance' ? '#fef3c7' : ord.worker_status === 'Completed' ? '#ecfdf5' : '#eff6ff',
+                          color: ord.worker_status === 'Pending_Worker_Acceptance' ? '#b45309' : ord.worker_status === 'Completed' ? '#059669' : '#2563eb',
+                          border: `1px solid ${ord.worker_status === 'Pending_Worker_Acceptance' ? '#fde68a' : ord.worker_status === 'Completed' ? '#a7f3d0' : '#bfdbfe'}`
+                        }}>
+                          {ord.worker_status === 'Pending_Worker_Acceptance' ? '⏳ Pending Worker Acceptance & Quote' : (ord.worker_status || 'In Progress')}
+                        </span>
+                      </div>
+
+                      <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)', marginTop: '0.45rem', display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+                        <span>Agreed Quote: <strong style={{ color: 'var(--navy-900)' }}>{ord.quoted_price_pkr || ord.quoted_price ? `Rs. ${parseFloat(ord.quoted_price_pkr || ord.quoted_price).toLocaleString()} PKR` : 'Pending Quote'}</strong></span>
+                        <span>•</span>
+                        <span>Billing Status: <strong style={{ color: ord.worker_payment_status === 'Paid' ? '#059669' : '#ea580c' }}>{ord.worker_payment_status || 'Unpaid'}</strong></span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      {(ord.worker_status === 'Review Pending' || ord.worker_file_url) && (
+                        <button
+                          type="button"
+                          onClick={() => setIsReviewModalOpen(true)}
+                          style={{
+                            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '0.55rem 1.15rem',
+                            fontSize: '0.825rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)'
+                          }}
+                        >
+                          <FileCheck size={15} /> Review Worker Upload
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Worker Notes / Feedback */}
+                  {ord.admin_worker_feedback && (
+                    <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.8rem' }}>
+                      <strong style={{ color: 'var(--navy-900)' }}>Instructions dispatched to worker:</strong>
+                      <div style={{ color: '#475569', marginTop: '0.15rem' }}>{ord.admin_worker_feedback}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ================================================================
               SECTION C: MODIFICATION / REVISIONS REQUEST
              ================================================================ */}
           {(normalizedStatus === 'delivered' || isInRevision || (isCompleted && Array.isArray(ord.revisions) && ord.revisions.length > 0)) && (
@@ -1785,6 +1955,38 @@ export const OrderTrackerDrawer = () => {
           fileUrl={activePdfPreview.url}
           fileName={activePdfPreview.name}
           onClose={() => setActivePdfPreview(null)}
+        />
+      )}
+
+      {/* Assign Worker Modal */}
+      {isAssignModalOpen && (
+        <AssignWorkerModal
+          order={ord}
+          isOpen={isAssignModalOpen}
+          onClose={() => setIsAssignModalOpen(false)}
+          onAssigned={(updated) => {
+            if (setSelectedOrderForDrawer) {
+              setSelectedOrderForDrawer(prev => prev ? { ...prev, ...updated } : prev);
+            }
+            setIsAssignModalOpen(false);
+          }}
+          showToast={showToast}
+        />
+      )}
+
+      {/* Review Worker Upload Modal */}
+      {isReviewModalOpen && (
+        <ReviewWorkerUploadModal
+          order={ord}
+          isOpen={isReviewModalOpen}
+          onClose={() => setIsReviewModalOpen(false)}
+          onReviewed={(updated) => {
+            if (setSelectedOrderForDrawer) {
+              setSelectedOrderForDrawer(prev => prev ? { ...prev, ...updated } : prev);
+            }
+            setIsReviewModalOpen(false);
+          }}
+          showToast={showToast}
         />
       )}
     </div>

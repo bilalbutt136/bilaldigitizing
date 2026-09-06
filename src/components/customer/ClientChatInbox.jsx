@@ -74,8 +74,11 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
     showToast,
     setIsAuthModalOpen,
     setAuthModalMode,
-    formatOrderId = (id) => `#${String(id || '').substring(0, 6).toUpperCase()}`
+    formatOrderId = (id) => `#${String(id || '').substring(0, 6).toUpperCase()}`,
+    theme
   } = useAppState();
+
+  const isDark = theme === 'dark';
 
   const clientEmail = (authUser?.email || currentUser?.email || '').toLowerCase().trim();
   const clientName = authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || (clientEmail ? clientEmail.split('@')[0] : 'Guest Visitor');

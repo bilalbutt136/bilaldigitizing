@@ -740,7 +740,7 @@ export async function POST(request) {
       
       const { data: targetOrder, error: orderFetchErr } = await supabase
         .from('orders')
-        .select('id, title, status, client_name, client_email, notes, worker_payout')
+        .select('id, title, status, client_name, client_email, notes, worker_payout, quoted_price, quoted_price_pkr')
         .eq('id', orderId)
         .maybeSingle();
 
@@ -753,15 +753,17 @@ export async function POST(request) {
 
       const updatePayload = {
         worker_id: workerId,
-        worker_status: 'In Progress',
+        worker_status: 'Pending_Worker_Acceptance',
+        status: 'assigned',
         worker_assigned_at: nowIso,
-        worker_payout: payoutVal,
-        worker_payout_status: payoutVal > 0 ? 'pending' : 'unpaid',
+        worker_payment_status: 'Unpaid',
         updated_at: nowIso
       };
 
-      if (targetOrder.status === 'submitted') {
-        updatePayload.status = 'digitizing';
+      if (payoutVal > 0) {
+        updatePayload.worker_payout = payoutVal;
+        updatePayload.quoted_price_pkr = payoutVal;
+        updatePayload.quoted_price = payoutVal;
       }
 
       if (instructions) {
@@ -775,25 +777,7 @@ export async function POST(request) {
 
       if (updateErr) throw updateErr;
 
-      // Insert or update worker_earnings ledger entry if payout > 0
-      if (payoutVal > 0 && workerId) {
-        try {
-          await supabase.from('worker_earnings').insert([{
-            worker_id: workerId,
-            order_id: orderId,
-            order_number: String(targetOrder.id),
-            amount: payoutVal,
-            status: 'pending',
-            notes: `Assigned task payout for Order ${targetOrder.id}`,
-            created_at: nowIso,
-            updated_at: nowIso
-          }]);
-        } catch (earnErr) {
-          console.warn('Worker earnings ledger insert notice:', earnErr?.message);
-        }
-      }
-
-      // Dispatch notification to Worker
+      // Dispatch notification to Worker to review and enter quote in PKR
       try {
         await supabase.from('notifications').insert([{
           id: `notif-assign-${orderId}-${Date.now()}`,
@@ -801,7 +785,7 @@ export async function POST(request) {
           recipient_role: 'worker',
           recipient_email: workerEmail || null,
           title: `🎯 New Task Assigned: ${targetOrder.title || orderId}`,
-          message: instructions ? `Admin instructions: "${instructions.slice(0, 100)}"` : `You have been assigned an embroidery digitizing order.${payoutVal > 0 ? ` Payout: $${payoutVal.toFixed(2)}` : ''}`,
+          message: instructions ? `Admin note: "${instructions.slice(0, 80)}" — Please review requirements and enter your PKR quote to accept.` : 'Please inspect the order specifications and input your quote (PKR) to accept the job.',
           type: 'info',
           link: `/worker?trackOrder=${orderId}`,
           order_id: orderId,
@@ -813,7 +797,98 @@ export async function POST(request) {
         console.warn('Worker assignment notification notice:', notifErr.message);
       }
 
-      return NextResponse.json({ success: true, worker_status: 'In Progress', worker_payout: payoutVal });
+      return NextResponse.json({ success: true, worker_status: 'Pending_Worker_Acceptance', worker_payout: payoutVal });
+    }
+
+    if (action === 'workerBidAndAccept') {
+      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      const { orderId, quotedPrice, notes } = payload;
+
+      const { data: targetOrder, error: orderFetchErr } = await supabase
+        .from('orders')
+        .select('id, title, status, worker_id, client_name, client_email')
+        .eq('id', orderId)
+        .maybeSingle();
+
+      if (orderFetchErr || !targetOrder) {
+        return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
+      }
+
+      if (!isAdmin) {
+        const { isWorker, workerData } = await getServerAuthUser(request);
+        const currentWorkerId = workerData?.id || user.id;
+        if (targetOrder.worker_id && targetOrder.worker_id !== currentWorkerId && targetOrder.worker_id !== user.id) {
+          return NextResponse.json({ error: 'Forbidden: You are not the assigned worker for this order.' }, { status: 403 });
+        }
+      }
+
+      const pkrAmount = parseFloat(quotedPrice);
+      if (isNaN(pkrAmount) || pkrAmount <= 0) {
+        return NextResponse.json({ error: 'A valid quote in PKR (greater than 0) is required to accept this job.' }, { status: 400 });
+      }
+
+      const nowIso = new Date().toISOString();
+      const updatePayload = {
+        quoted_price: pkrAmount,
+        quoted_price_pkr: pkrAmount,
+        worker_payout: pkrAmount,
+        worker_status: 'In_Progress',
+        status: 'in_progress',
+        worker_payment_status: 'Unpaid',
+        worker_accepted_at: nowIso,
+        updated_at: nowIso
+      };
+
+      if (notes) {
+        updatePayload.worker_bid_notes = notes;
+      }
+
+      const { error: updateErr } = await supabase
+        .from('orders')
+        .update(updatePayload)
+        .eq('id', orderId);
+
+      if (updateErr) throw updateErr;
+
+      // Also record or update worker_earnings in pending state
+      try {
+        await supabase.from('worker_earnings').upsert([{
+          worker_id: targetOrder.worker_id,
+          order_id: orderId,
+          order_number: String(targetOrder.id),
+          amount: pkrAmount,
+          status: 'pending',
+          notes: `Accepted quote: Rs. ${pkrAmount.toLocaleString()} PKR`,
+          created_at: nowIso,
+          updated_at: nowIso
+        }], { onConflict: 'order_id' });
+      } catch (earnErr) {
+        console.warn('Worker earnings upsert notice:', earnErr?.message);
+      }
+
+      // Notify Admin that worker has submitted PKR quote and accepted
+      try {
+        await supabase.from('notifications').insert([{
+          id: `notif-bid-${orderId}-${Date.now()}`,
+          recipient_role: 'admin',
+          title: `⚡ Job Accepted: ${targetOrder.title || orderId}`,
+          message: `Worker accepted the job with a quote of Rs. ${pkrAmount.toLocaleString()} PKR. Order is now In Progress.`,
+          type: 'info',
+          link: `/admin-portal?tab=orders&trackOrder=${orderId}`,
+          order_id: orderId,
+          read: false,
+          created_at: nowIso,
+          updated_at: nowIso
+        }]);
+      } catch (notifErr) {
+        console.warn('Admin notification notice:', notifErr?.message);
+      }
+
+      return NextResponse.json({ 
+        success: true, 
+        worker_status: 'In_Progress', 
+        quoted_price_pkr: pkrAmount 
+      });
     }
 
     if (action === 'workerSubmitUpload') {
@@ -919,6 +994,8 @@ export async function POST(request) {
           worker_status: 'Completed',
           worker_reviewed_at: nowIso,
           status: 'delivered',
+          worker_payment_status: 'Unpaid',
+          worker_payout_status: 'pending',
           updated_at: nowIso
         };
 
