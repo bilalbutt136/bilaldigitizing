@@ -1,6 +1,8 @@
 import React from 'react';
 import { createAdminClient } from '../../src/lib/supabase/admin';
 
+export const dynamic = 'force-dynamic'; // Fetch live DB content on every request, never pre-render statically
+
 export const metadata = {
   title: 'Terms and Conditions | Bilal Digitizing',
   description: 'Terms and Conditions for embroidery digitizing, vector art conversion, and custom patch manufacturing services.',

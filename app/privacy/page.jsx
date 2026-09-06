@@ -1,6 +1,8 @@
 import React from 'react';
 import { createAdminClient } from '../../src/lib/supabase/admin';
 
+export const dynamic = 'force-dynamic'; // Fetch live DB content on every request, never pre-render statically
+
 export const metadata = {
   title: 'Privacy Policy | Bilal Digitizing',
   description: 'Privacy Policy for Bilal Digitizing regarding data collection, payment processing, and user information.',

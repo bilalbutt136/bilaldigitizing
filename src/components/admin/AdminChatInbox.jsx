@@ -627,9 +627,47 @@ export const AdminChatInbox = () => {
           timestamp: record.timestamp || record.created_at || new Date().toISOString()
         };
 
-        if (newMsg.sender === 'client' || newMsg.sender === 'customer') {
-          playNotificationSound('receive');
-          triggerAutoPilotReply(newMsg);
+        // ─────────────────────────────────────────────────────────────
+        // STRICT NOTIFICATION GUARDS — all 3 must pass before any toast/sound fires
+        //
+        // GUARD 1: INSERT events only.
+        //   UPDATE events fire when messages are marked read, edited etc.
+        //   We never want those to trigger a notification sound/toast.
+        const isInsertEvent = (msgPayload.eventType === 'INSERT') ||
+                              (!msgPayload.eventType && !!msgPayload.new);
+        if (!isInsertEvent) {
+          // Just silently update state if needed, no sound/toast
+        } else {
+          // GUARD 2: Recency — must be a genuinely new message (≤ 30 seconds old).
+          //   Prevents old messages that arrive late from background sync from triggering toasts.
+          const msgTs = new Date(record.created_at || record.timestamp || 0).getTime();
+          const nowMs = Date.now();
+          const isRecentEnough = !isNaN(msgTs) && (nowMs - msgTs) < 30_000;
+
+          // GUARD 3: Sender role — NEVER notify for admin/self outgoing messages.
+          //   Only customer (client/customer role) messages should produce toasts.
+          const isIncomingFromCustomer =
+            newMsg.sender === 'client' ||
+            newMsg.sender === 'customer';
+
+          if (isRecentEnough && isIncomingFromCustomer) {
+            const isCurrentlyOpen = activeChatIdRef.current === newMsg.conversation_id;
+
+            if (isCurrentlyOpen) {
+              // Conversation is in focus — silent scroll only, no toast or loud sound
+              playNotificationSound('receive');
+            } else {
+              // Background conversation — play loud chime + show toast
+              playNotificationSound('notification');
+              showToast(
+                `New message from ${newMsg.senderName || 'Customer'}`,
+                'info'
+              );
+            }
+
+            // Always try to trigger auto-pilot if enabled for this channel
+            triggerAutoPilotReply(newMsg);
+          }
         }
 
         setConversations(prev => {

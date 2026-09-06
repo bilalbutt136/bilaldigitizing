@@ -1733,7 +1733,7 @@ export function getSharedChatChannel() {
   if (!globalChatChannel) {
     globalChatChannel = supabase.channel('bdigitizing-live-hub-v2', {
       config: {
-        broadcast: { self: true }
+        broadcast: { self: false }   // ← CRITICAL: never echo our own outgoing broadcasts back to us
       }
     });
 
@@ -1770,10 +1770,10 @@ export function getSharedChatChannel() {
       }
     });
 
-    // 2. Postgres replication listeners
+    // 2. Postgres replication listeners — INSERT only, so UPDATE/read-status changes never fire notification handlers
     globalChatChannel.on(
       'postgres_changes',
-      { event: '*', schema: 'public', table: 'messages' },
+      { event: 'INSERT', schema: 'public', table: 'messages' },
       (payload) => {
         messageListeners.forEach(listener => {
           try { listener(payload); } catch (err) {}
@@ -1876,12 +1876,10 @@ export function getSharedChatChannel() {
 export function broadcastLiveMessage(messagePayload) {
   if (!messagePayload) return;
 
-  // 1. Instantly trigger all active listeners in the current tab/window
-  messageListeners.forEach(listener => {
-    try { listener({ eventType: 'INSERT', new: messagePayload, record: messagePayload }); } catch (err) {}
-  });
-
-  // 2. Broadcast across WebSocket channel to all other tabs/devices
+  // Broadcast ONLY to other tabs/devices via WebSocket.
+  // The sending tab performs its own optimistic UI update in handleSendMessage —
+  // re-firing messageListeners here would cause the admin's own outgoing message
+  // to re-enter the notification handler and show a false "New message" toast.
   try {
     const channel = getSharedChatChannel();
     if (channel) {
