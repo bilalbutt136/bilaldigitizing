@@ -150,6 +150,40 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
     }
   };
 
+  const handleDownloadUnpaidInvoice = async () => {
+    if (!billingStatement.unpaidOrders || billingStatement.unpaidOrders.length === 0) {
+      if (showToast) showToast('No completed unpaid orders to bill.', 'info');
+      return;
+    }
+    setIsDownloadingPdf('unpaid-draft');
+    try {
+      const draftPayout = {
+        payout_number: `INV-UNPAID-${Date.now().toString().slice(-6)}`,
+        worker_name: worker?.name || 'Digitizer Worker',
+        worker_email: worker?.email || '',
+        total_amount: billingStatement.totalUnpaidPkr || 0,
+        currency: 'PKR',
+        status: 'unpaid',
+        payment_method: 'Pending Settlement',
+        reference_note: 'Pending admin verification and payment authorization',
+        created_at: new Date().toISOString()
+      };
+      const { downloadPdf } = await generateWorkerPayoutInvoicePdf({
+        payout: draftPayout,
+        worker: worker || { name: draftPayout.worker_name, email: draftPayout.worker_email },
+        orders: billingStatement.unpaidOrders,
+        stealthMode: true
+      });
+      downloadPdf();
+      if (showToast) showToast('Downloaded Unpaid Invoice (PDF)', 'success');
+    } catch (err) {
+      console.warn('PDF download error:', err);
+      if (showToast) showToast('Could not generate invoice PDF.', 'error');
+    } finally {
+      setIsDownloadingPdf(null);
+    }
+  };
+
   const getWorkerStatusBadge = (ws) => {
     const status = ws || 'In Progress';
     switch (status) {
@@ -571,13 +605,40 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
               borderRadius: '14px',
               overflow: 'hidden'
             }}>
-              <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <Clock size={16} style={{ color: '#f59e0b' }} /> Completed Orders Awaiting Payout ({billingStatement.unpaidOrders?.length || 0})
-                </h4>
-                <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
-                  Sum: Rs. {(billingStatement.totalUnpaidPkr || 0).toLocaleString()} PKR
-                </span>
+              <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Clock size={16} style={{ color: '#f59e0b' }} /> Completed Orders Awaiting Payout ({billingStatement.unpaidOrders?.length || 0})
+                  </h4>
+                  <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                    Sum: Rs. {(billingStatement.totalUnpaidPkr || 0).toLocaleString()} PKR
+                  </span>
+                </div>
+
+                {billingStatement.unpaidOrders && billingStatement.unpaidOrders.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleDownloadUnpaidInvoice}
+                    disabled={isDownloadingPdf === 'unpaid-draft'}
+                    style={{
+                      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.45rem 0.9rem',
+                      fontWeight: 800,
+                      fontSize: '0.78rem',
+                      cursor: isDownloadingPdf === 'unpaid-draft' ? 'not-allowed' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      boxShadow: '0 2px 6px rgba(245, 158, 11, 0.3)'
+                    }}
+                  >
+                    <Download size={13} />
+                    {isDownloadingPdf === 'unpaid-draft' ? 'Generating Invoice...' : 'Download Unpaid Bill (PDF)'}
+                  </button>
+                )}
               </div>
 
               {!billingStatement.unpaidOrders || billingStatement.unpaidOrders.length === 0 ? (
@@ -628,7 +689,7 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
                               fontWeight: 800,
                               textTransform: 'uppercase'
                             }}>
-                              ⏳ Awaiting Settlement
+                              ⏳ UNPAID
                             </span>
                           </td>
                         </tr>
@@ -667,58 +728,72 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
                         <th style={{ padding: '0.75rem 1.25rem', color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase' }}>Payout #</th>
                         <th style={{ padding: '0.75rem 1rem', color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase' }}>Date Settled</th>
                         <th style={{ padding: '0.75rem 1rem', color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase' }}>Payment Channel</th>
-                        <th style={{ padding: '0.75rem 1rem', color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase' }}>Ref / TID</th>
+                        <th style={{ padding: '0.75rem 1rem', color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase' }}>Status</th>
                         <th style={{ padding: '0.75rem 1rem', color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase' }}>Tasks Count</th>
                         <th style={{ padding: '0.75rem 1rem', color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase' }}>Total Settled (PKR)</th>
                         <th style={{ padding: '0.75rem 1.25rem', color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase', textAlign: 'right' }}>Official Receipt</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {billingStatement.payouts.map((payout) => (
-                        <tr key={payout.id} style={{ borderBottom: '1px solid #334155' }}>
-                          <td style={{ padding: '0.85rem 1.25rem', fontWeight: 800, color: '#60a5fa' }}>
-                            {payout.payout_number}
-                          </td>
-                          <td style={{ padding: '0.85rem 1rem', color: '#94a3b8', fontSize: '0.8rem' }}>
-                            {new Date(payout.created_at).toLocaleDateString()}
-                          </td>
-                          <td style={{ padding: '0.85rem 1rem', color: '#cbd5e1', fontWeight: 600 }}>
-                            {payout.payment_method}
-                          </td>
-                          <td style={{ padding: '0.85rem 1rem', color: '#94a3b8', fontSize: '0.8rem' }}>
-                            {payout.reference_note || '—'}
-                          </td>
-                          <td style={{ padding: '0.85rem 1rem', color: '#cbd5e1' }}>
-                            {payout.order_count || (payout.order_ids || []).length} orders
-                          </td>
-                          <td style={{ padding: '0.85rem 1rem', fontWeight: 900, color: '#34d399', fontSize: '0.95rem' }}>
-                            Rs. {parseFloat(payout.total_amount || 0).toLocaleString()} PKR
-                          </td>
-                          <td style={{ padding: '0.85rem 1.25rem', textAlign: 'right' }}>
-                            <button
-                              type="button"
-                              onClick={() => handleDownloadWorkerInvoice(payout)}
-                              disabled={isDownloadingPdf === (payout.id || payout.payout_number)}
-                              style={{
-                                background: 'rgba(59, 130, 246, 0.15)',
-                                color: '#60a5fa',
-                                border: '1px solid rgba(59, 130, 246, 0.3)',
-                                borderRadius: '6px',
-                                padding: '0.35rem 0.75rem',
+                      {billingStatement.payouts.map((payout) => {
+                        const isPayoutPaid = String(payout.status || 'paid').toLowerCase() === 'paid';
+                        return (
+                          <tr key={payout.id} style={{ borderBottom: '1px solid #334155' }}>
+                            <td style={{ padding: '0.85rem 1.25rem', fontWeight: 800, color: '#60a5fa' }}>
+                              {payout.payout_number}
+                            </td>
+                            <td style={{ padding: '0.85rem 1rem', color: '#94a3b8', fontSize: '0.8rem' }}>
+                              {new Date(payout.created_at).toLocaleDateString()}
+                            </td>
+                            <td style={{ padding: '0.85rem 1rem', color: '#cbd5e1', fontWeight: 600 }}>
+                              {payout.payment_method}
+                            </td>
+                            <td style={{ padding: '0.85rem 1rem' }}>
+                              <span style={{
+                                background: isPayoutPaid ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                color: isPayoutPaid ? '#34d399' : '#fbbf24',
+                                border: `1px solid ${isPayoutPaid ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
+                                padding: '0.15rem 0.5rem',
+                                borderRadius: '4px',
+                                fontSize: '0.72rem',
                                 fontWeight: 800,
-                                fontSize: '0.75rem',
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.35rem'
-                              }}
-                            >
-                              <Download size={13} />
-                              {isDownloadingPdf === (payout.id || payout.payout_number) ? 'Downloading...' : 'PDF Receipt'}
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                                textTransform: 'uppercase'
+                              }}>
+                                {isPayoutPaid ? 'PAID' : 'UNPAID'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '0.85rem 1rem', color: '#cbd5e1' }}>
+                              {payout.order_count || (payout.order_ids || []).length} orders
+                            </td>
+                            <td style={{ padding: '0.85rem 1rem', fontWeight: 900, color: '#34d399', fontSize: '0.95rem' }}>
+                              Rs. {parseFloat(payout.total_amount || 0).toLocaleString()} PKR
+                            </td>
+                            <td style={{ padding: '0.85rem 1.25rem', textAlign: 'right' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadWorkerInvoice(payout)}
+                                disabled={isDownloadingPdf === (payout.id || payout.payout_number)}
+                                style={{
+                                  background: 'rgba(59, 130, 246, 0.15)',
+                                  color: '#60a5fa',
+                                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                                  borderRadius: '6px',
+                                  padding: '0.35rem 0.75rem',
+                                  fontWeight: 800,
+                                  fontSize: '0.75rem',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.35rem'
+                                }}
+                              >
+                                <Download size={13} />
+                                {isDownloadingPdf === (payout.id || payout.payout_number) ? 'Downloading...' : isPayoutPaid ? 'PDF Receipt (Paid)' : 'PDF Invoice (Unpaid)'}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

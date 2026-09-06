@@ -72,16 +72,18 @@ export async function generateWorkerPayoutInvoicePdf({
 
   const primaryColor = [15, 23, 42];     // Dark navy #0f172a
   const orangeColor = [234, 88, 12];     // Primary orange #ea580c
+  const amberColor = [217, 119, 6];      // Amber warning #d97706
   const greenColor = [16, 185, 129];     // Emerald green #10b981
   const grayText = [100, 116, 139];      // Slate gray #64748b
   const lightBg = [248, 250, 252];       // Light surface #f8fafc
 
+  const isPaid = String(payout?.status || '').toLowerCase() === 'paid' || String(payout?.status || '').toLowerCase() === 'settled';
   const payoutNumber = payout?.payout_number || `PAY-PKR-${Date.now().toString().slice(-6)}`;
   const workerName = worker?.name || payout?.worker_name || 'Digitizer Worker';
   const workerEmail = worker?.email || payout?.worker_email || (stealthMode ? 'digitizer@internal.station' : 'worker@bilaldigitizing.com');
   const workerRole = worker?.specialty || worker?.worker_role || 'Embroidery Digitizer';
   const paymentMethod = payout?.payment_method || 'Bank Transfer / Mobile Wallet';
-  const referenceNote = payout?.reference_note || 'Direct off-platform settlement';
+  const referenceNote = payout?.reference_note || (isPaid ? 'Direct off-platform settlement' : 'Awaiting settlement authorization');
   const payoutDate = payout?.created_at ? new Date(payout.created_at).toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
@@ -95,7 +97,7 @@ export async function generateWorkerPayoutInvoicePdf({
   const totalAmountPkr = parseFloat(payout?.total_amount || 0);
 
   // 1. Top Decorative Bar
-  doc.setFillColor(...orangeColor);
+  doc.setFillColor(...(isPaid ? greenColor : orangeColor));
   doc.rect(0, 0, 210, 6, 'F');
 
   // 2. Header Section
@@ -112,14 +114,14 @@ export async function generateWorkerPayoutInvoicePdf({
 
   // Top Right: Invoice Title & Badge
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(15);
-  doc.setTextColor(...orangeColor);
-  doc.text('WORKER PAYOUT RECEIPT', 210 - 14, 22, { align: 'right' });
+  doc.setFontSize(14);
+  doc.setTextColor(...(isPaid ? greenColor : orangeColor));
+  doc.text(isPaid ? 'WORKER PAYOUT RECEIPT (PAID)' : 'WORKER INVOICE (UNPAID)', 210 - 14, 22, { align: 'right' });
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(...primaryColor);
-  doc.text(`RECEIPT #: ${payoutNumber}`, 210 - 14, 29, { align: 'right' });
+  doc.text(`INVOICE #: ${payoutNumber}`, 210 - 14, 29, { align: 'right' });
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
@@ -141,7 +143,7 @@ export async function generateWorkerPayoutInvoicePdf({
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
   doc.setTextColor(...orangeColor);
-  doc.text('PAID TO (WORKER):', 18, 51);
+  doc.text('PAYABLE TO (WORKER):', 18, 51);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
@@ -191,8 +193,8 @@ export async function generateWorkerPayoutInvoicePdf({
   doc.text(referenceNote.slice(0, 32), 146, 70);
 
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...greenColor);
-  doc.text('STATUS: PAID & SETTLED', 112, 77);
+  doc.setTextColor(...(isPaid ? greenColor : amberColor));
+  doc.text(isPaid ? 'STATUS: PAID & SETTLED' : 'STATUS: UNPAID (PENDING APPROVAL)', 112, 77);
 
   // 4. Orders Breakdown Table
   const tableRows = orders.map((ord, idx) => {
@@ -207,7 +209,7 @@ export async function generateWorkerPayoutInvoicePdf({
       String(ord.id).slice(0, 10),
       ord.title || 'Embroidery Digitizing Design',
       dateStr,
-      'Paid',
+      isPaid ? 'Paid' : 'Unpaid',
       `Rs. ${cost.toLocaleString()} PKR`
     ];
   });
@@ -281,11 +283,11 @@ export async function generateWorkerPayoutInvoicePdf({
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(...primaryColor);
-  doc.text('TOTAL PAID (PKR):', 125, finalY + 14);
+  doc.text(isPaid ? 'TOTAL PAID (PKR):' : 'TOTAL DUE (PKR):', 125, finalY + 14);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
-  doc.setTextColor(...orangeColor);
+  doc.setTextColor(...(isPaid ? greenColor : orangeColor));
   doc.text(`Rs. ${totalAmountPkr.toLocaleString()} PKR`, 125, finalY + 20);
 
   // 6. Signature & Verification Stamp
@@ -296,8 +298,8 @@ export async function generateWorkerPayoutInvoicePdf({
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
-  doc.text('1. This electronic receipt verifies full settlement of digitizing services rendered.', 14, finalY + 12);
-  doc.text('2. All listed orders have been verified and permanently marked as Paid.', 14, finalY + 16);
+  doc.text(isPaid ? '1. This electronic receipt verifies full settlement of digitizing services rendered.' : '1. This electronic invoice details pending settlement for completed digitizing tasks.', 14, finalY + 12);
+  doc.text(isPaid ? '2. All listed orders have been verified and permanently marked as Paid.' : '2. Listed orders are awaiting admin verification and final payment authorization.', 14, finalY + 16);
   doc.text(stealthMode ? '3. Authorized by Production Operations Desk.' : '3. Authorized by Bilal Digitizing Studio Management Desk.', 14, finalY + 20);
 
   // Footer

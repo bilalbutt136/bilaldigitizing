@@ -23,9 +23,23 @@ export const ReviewWorkerUploadModal = ({ order, isOpen, onClose, onReviewed, sh
 
   if (!isOpen || !order) return null;
 
-  const workerFile = order.worker_file_url || order.workerFileUrl;
-  const fileName = order.worker_file_name || order.workerFileName || (typeof workerFile === 'string' ? workerFile.split('/').pop() : 'digitized_production_file.dst');
-  const fileExt = (fileName.split('.').pop() || 'dst').toUpperCase();
+  // Resolve all uploaded files (multi-file JSONB array or single URL fallback)
+  let workerFilesList = [];
+  if (Array.isArray(order.worker_files) && order.worker_files.length > 0) {
+    workerFilesList = order.worker_files;
+  } else if (typeof order.worker_files === 'string') {
+    try {
+      const parsed = JSON.parse(order.worker_files);
+      if (Array.isArray(parsed)) workerFilesList = parsed;
+    } catch {}
+  }
+  
+  if (workerFilesList.length === 0 && (order.worker_file_url || order.workerFileUrl)) {
+    const singleUrl = order.worker_file_url || order.workerFileUrl;
+    const singleName = order.worker_file_name || order.workerFileName || (typeof singleUrl === 'string' ? singleUrl.split('/').pop() : 'digitized_file.dst');
+    workerFilesList = [{ url: singleUrl, name: singleName }];
+  }
+
   const workerRemarks = order.worker_notes || order.workerNotes || 'No notes provided by digitizer.';
 
   const handleReviewAction = async (decision) => {
@@ -168,73 +182,89 @@ export const ReviewWorkerUploadModal = ({ order, isOpen, onClose, onReviewed, sh
 
         {/* Content Body */}
         <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Worker Upload File Card */}
-          <div style={{
-            background: '#f8fafc',
-            border: '1.5px solid #cbd5e1',
-            borderRadius: '12px',
-            padding: '1.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '1rem'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-              <div style={{
-                background: '#eff6ff',
-                color: '#2563eb',
-                width: '48px',
-                height: '48px',
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 900,
-                fontSize: '0.85rem',
-                border: '1px solid #bfdbfe'
-              }}>
-                .{fileExt}
-              </div>
+          {/* Worker Uploaded Files Section */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted, #64748b)' }}>
+              DIGITIZER DELIVERABLE FILES ({workerFilesList.length})
+            </span>
 
-              <div>
-                <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-900, #0f172a)', wordBreak: 'break-all' }}>
-                  {fileName}
-                </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <Clock size={12} />
-                  <span>Uploaded by digitizer</span>
-                  {order.worker_submitted_at && <span>• {new Date(order.worker_submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
-                </div>
+            {workerFilesList.length === 0 ? (
+              <div style={{ padding: '1.25rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', color: '#ef4444', fontSize: '0.85rem', fontWeight: 700 }}>
+                ⚠️ No deliverable files attached to this order.
               </div>
-            </div>
-
-            {workerFile ? (
-              <a
-                href={workerFile}
-                target="_blank"
-                rel="noreferrer"
-                download={fileName}
-                style={{
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                  color: '#ffffff',
-                  padding: '0.6rem 1.15rem',
-                  borderRadius: '8px',
-                  fontWeight: 800,
-                  fontSize: '0.825rem',
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)'
-                }}
-              >
-                <Download size={15} /> Download {fileExt} File
-              </a>
             ) : (
-              <span style={{ fontSize: '0.8rem', color: '#ef4444', fontWeight: 700 }}>
-                No file URL attached
-              </span>
+              workerFilesList.map((fileObj, idx) => {
+                const fUrl = fileObj.url || fileObj;
+                const fName = fileObj.name || (typeof fUrl === 'string' ? fUrl.split('/').pop() : `deliverable_${idx + 1}.dst`);
+                const fExt = (fName.split('.').pop() || 'dst').toUpperCase();
+
+                return (
+                  <div key={idx} style={{
+                    background: '#f8fafc',
+                    border: '1.5px solid #cbd5e1',
+                    borderRadius: '12px',
+                    padding: '1rem 1.25rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '0.75rem'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div style={{
+                        background: '#eff6ff',
+                        color: '#2563eb',
+                        width: '42px',
+                        height: '42px',
+                        borderRadius: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 900,
+                        fontSize: '0.8rem',
+                        border: '1px solid #bfdbfe'
+                      }}>
+                        .{fExt}
+                      </div>
+
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--navy-900, #0f172a)', wordBreak: 'break-all' }}>
+                          {fName}
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #64748b)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <Clock size={11} />
+                          <span>File {idx + 1} of {workerFilesList.length}</span>
+                          {order.worker_submitted_at && <span>• {new Date(order.worker_submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
+                        </div>
+                      </div>
+                    </div>
+
+                    {fUrl && (
+                      <a
+                        href={fUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        download={fName}
+                        style={{
+                          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                          color: '#ffffff',
+                          padding: '0.5rem 1rem',
+                          borderRadius: '8px',
+                          fontWeight: 800,
+                          fontSize: '0.8rem',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)'
+                        }}
+                      >
+                        <Download size={14} /> Download {fExt}
+                      </a>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
 

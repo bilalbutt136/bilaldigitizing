@@ -43,56 +43,71 @@ const ACCEPTED_EXTENSIONS = [
 export function parseOrderInstructions(order) {
   if (!order) return { adminFeedback: '', customerNotes: '', placementNotes: [], patchSpecs: null, hasAny: false };
   
-  let adminFeedback = (order.admin_worker_feedback || order.adminWorkerFeedback || '').trim();
+  // Safely unescape text that may have literal \\n from JSON transport
+  const safeText = (raw) => {
+    if (!raw) return '';
+    if (typeof raw !== 'string') return '';
+    return raw
+      .replace(/\\n/g, '\n')
+      .replace(/\\t/g, '\t')
+      .replace(/\\r/g, '')
+      .trim();
+  };
+
+  let adminFeedback = safeText(order.admin_worker_feedback || order.adminWorkerFeedback || '');
   let customerNotes = '';
   let placementNotes = [];
   let patchSpecs = null;
 
-  // 1. Parse order.notes (which is often a JSON string)
+  // 1. Parse order.notes (which is often a JSON string, or already an object)
   if (order.notes) {
+    let parsed = null;
+
     if (typeof order.notes === 'string') {
-      try {
-        const parsed = JSON.parse(order.notes);
-        if (typeof parsed === 'object' && parsed !== null) {
-          if (parsed.notes && typeof parsed.notes === 'string') {
-            customerNotes = parsed.notes.trim();
-          }
-          if (parsed.specialInstructions && typeof parsed.specialInstructions === 'string') {
-            customerNotes = customerNotes ? `${customerNotes}\n${parsed.specialInstructions.trim()}` : parsed.specialInstructions.trim();
-          }
-          if (parsed.instructions && typeof parsed.instructions === 'string') {
-            customerNotes = customerNotes ? `${customerNotes}\n${parsed.instructions.trim()}` : parsed.instructions.trim();
-          }
-          if (Array.isArray(parsed.placementItems) && parsed.placementItems.length > 0) {
-            placementNotes = parsed.placementItems;
-          }
-          if (parsed.patchStyle || parsed.patchBacking || parsed.patchBorderStyle) {
-            patchSpecs = {
-              style: parsed.patchStyle,
-              backing: parsed.patchBacking,
-              border: parsed.patchBorderStyle,
-              width: parsed.patchWidth,
-              height: parsed.patchHeight,
-              quantity: parsed.patchQuantity
-            };
-          }
-        } else {
-          customerNotes = String(order.notes).trim();
+      // Skip if it looks like [object Object] garbage
+      if (order.notes.trim() === '[object Object]') {
+        parsed = null;
+      } else {
+        try {
+          parsed = JSON.parse(order.notes);
+        } catch {
+          // Plain string notes
+          customerNotes = safeText(order.notes);
         }
-      } catch {
-        // Plain string notes
-        customerNotes = String(order.notes).trim();
       }
-    } else if (typeof order.notes === 'object') {
-      if (order.notes.notes) customerNotes = String(order.notes.notes).trim();
-      if (order.notes.specialInstructions) customerNotes = String(order.notes.specialInstructions).trim();
-      if (Array.isArray(order.notes.placementItems)) placementNotes = order.notes.placementItems;
+    } else if (typeof order.notes === 'object' && order.notes !== null) {
+      parsed = order.notes;
+    }
+
+    if (parsed && typeof parsed === 'object') {
+      if (parsed.notes && typeof parsed.notes === 'string') {
+        customerNotes = safeText(parsed.notes);
+      }
+      if (parsed.specialInstructions && typeof parsed.specialInstructions === 'string') {
+        customerNotes = customerNotes ? `${customerNotes}\n${safeText(parsed.specialInstructions)}` : safeText(parsed.specialInstructions);
+      }
+      if (parsed.instructions && typeof parsed.instructions === 'string') {
+        customerNotes = customerNotes ? `${customerNotes}\n${safeText(parsed.instructions)}` : safeText(parsed.instructions);
+      }
+      if (Array.isArray(parsed.placementItems) && parsed.placementItems.length > 0) {
+        placementNotes = parsed.placementItems;
+      }
+      if (parsed.patchStyle || parsed.patchBacking || parsed.patchBorderStyle) {
+        patchSpecs = {
+          style: parsed.patchStyle,
+          backing: parsed.patchBacking,
+          border: parsed.patchBorderStyle,
+          width: parsed.patchWidth,
+          height: parsed.patchHeight,
+          quantity: parsed.patchQuantity
+        };
+      }
     }
   }
 
   // 2. Direct order fallback fields
   if (!customerNotes) {
-    customerNotes = (order.special_instructions || order.instructions || order.customer_notes || order.description || '').trim();
+    customerNotes = safeText(order.special_instructions || order.instructions || order.customer_notes || order.description || '');
   }
 
   const hasAny = Boolean(adminFeedback || customerNotes || placementNotes.length > 0 || patchSpecs);
@@ -149,7 +164,7 @@ export function getRelativeTimeString(dt) {
 
 export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdated, showToast }) => {
   const [activeTab, setActiveTab] = useState('specs'); // 'specs' | 'discussion'
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]); // multi-file array
   const [workerNotes, setWorkerNotes] = useState(order?.worker_notes || '');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -269,27 +284,36 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
   const handleFileDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
-    if (e.dataTransfer?.files?.[0]) {
-      validateAndSetFile(e.dataTransfer.files[0]);
+    const files = Array.from(e.dataTransfer?.files || []);
+    if (files.length > 0) validateAndAddFiles(files);
+  };
+
+  const validateAndAddFiles = (files) => {
+    const valid = [];
+    for (const file of files) {
+      const ext = `.${(file.name.split('.').pop() || '').toLowerCase()}`;
+      if (!ACCEPTED_EXTENSIONS.includes(ext)) {
+        if (showToast) showToast(`Skipped "${file.name}" — unsupported format. Use ${ACCEPTED_EXTENSIONS.join(', ')}`, 'warning');
+        continue;
+      }
+      if (file.size > 50 * 1024 * 1024) {
+        if (showToast) showToast(`Skipped "${file.name}" — exceeds 50MB limit.`, 'warning');
+        continue;
+      }
+      valid.push(file);
+    }
+    if (valid.length > 0) {
+      setSelectedFiles(prev => {
+        // Avoid duplicates by name
+        const existingNames = new Set(prev.map(f => f.name));
+        const unique = valid.filter(f => !existingNames.has(f.name));
+        return [...prev, ...unique];
+      });
     }
   };
 
-  const validateAndSetFile = (file) => {
-    if (!file) return;
-    const ext = `.${(file.name.split('.').pop() || '').toLowerCase()}`;
-    if (!ACCEPTED_EXTENSIONS.includes(ext)) {
-      if (showToast) {
-        showToast(`Invalid format. Please upload standard machine or vector files (${ACCEPTED_EXTENSIONS.join(', ')})`, 'error');
-      }
-      return;
-    }
-    if (file.size > 50 * 1024 * 1024) {
-      if (showToast) {
-        showToast('File exceeds 50MB maximum size limit.', 'error');
-      }
-      return;
-    }
-    setSelectedFile(file);
+  const removeSelectedFile = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   // 1. Worker Bid & Accept Job in PKR
@@ -344,43 +368,49 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
     }
   };
 
-  // 2. Worker Upload Completed Deliverables
+  // 2. Worker Upload Completed Deliverables (multi-file)
   const handleUploadAndSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    if (!selectedFile && !order.worker_file_url) {
-      if (showToast) showToast('Please select your completed production file to upload.', 'error');
+    if (selectedFiles.length === 0 && !order.worker_file_url) {
+      if (showToast) showToast('Please select your completed production file(s) to upload.', 'error');
       return;
     }
 
     setIsUploading(true);
-    setUploadProgress(20);
+    setUploadProgress(10);
 
     try {
-      let finalFileUrl = order.worker_file_url || null;
-      let finalFileName = order.worker_file_name || null;
+      const uploadedFiles = [];
 
-      // Upload file if new
-      if (selectedFile) {
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-        formData.append('bucket', 'worker-uploads');
-        formData.append('folder', 'worker-uploads');
+      // Upload each new file to Cloudinary
+      if (selectedFiles.length > 0) {
+        const progressPerFile = 70 / selectedFiles.length;
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('bucket', 'worker-uploads');
+          formData.append('folder', 'worker-uploads');
 
-        setUploadProgress(50);
-        const uploadRes = await fetch('/api/cloudinary/upload', {
-          method: 'POST',
-          body: formData
-        });
+          const uploadRes = await fetch('/api/cloudinary/upload', {
+            method: 'POST',
+            body: formData
+          });
 
-        const uploadData = await uploadRes.json();
-        if (!uploadRes.ok || !uploadData.url) {
-          throw new Error(uploadData.error || 'File upload to storage failed.');
+          const uploadData = await uploadRes.json();
+          if (!uploadRes.ok || !uploadData.url) {
+            throw new Error(uploadData.error || `Failed to upload "${file.name}".`);
+          }
+
+          uploadedFiles.push({ url: uploadData.url, name: file.name });
+          setUploadProgress(10 + Math.round((i + 1) * progressPerFile));
         }
-
-        finalFileUrl = uploadData.url;
-        finalFileName = selectedFile.name;
-        setUploadProgress(80);
+      } else if (order.worker_file_url) {
+        // Re-submit existing file (no new upload)
+        uploadedFiles.push({ url: order.worker_file_url, name: order.worker_file_name || 'production_file' });
       }
+
+      setUploadProgress(85);
 
       // Submit deliverables to API
       const res = await fetch('/api/orders', {
@@ -390,8 +420,9 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
           action: 'workerSubmitUpload',
           payload: {
             orderId: order.id,
-            workerFileUrl: finalFileUrl,
-            workerFileName: finalFileName,
+            workerFileUrl: uploadedFiles[0]?.url,
+            workerFileName: uploadedFiles[0]?.name,
+            workerFiles: uploadedFiles,
             notes: workerNotes.trim()
           }
         })
@@ -404,19 +435,21 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
 
       setUploadProgress(100);
       if (showToast) {
-        showToast('Production file submitted! Admin has been notified for QC inspection.', 'success');
+        showToast(`${uploadedFiles.length} production file(s) submitted! Admin has been notified for QC inspection.`, 'success');
       }
 
       if (onOrderUpdated) {
         onOrderUpdated({
           ...order,
           worker_status: 'Review Pending',
-          worker_file_url: finalFileUrl,
-          worker_file_name: finalFileName,
+          worker_file_url: uploadedFiles[0]?.url,
+          worker_file_name: uploadedFiles[0]?.name,
+          worker_files: uploadedFiles,
           worker_notes: workerNotes.trim()
         });
       }
 
+      setSelectedFiles([]);
       onClose();
     } catch (err) {
       if (showToast) showToast(err.message || 'File submission failed.', 'error');
@@ -1107,52 +1140,78 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
                     border: `2px dashed ${isDragging ? '#f97316' : '#334155'}`,
                     background: isDragging ? 'rgba(249, 115, 22, 0.08)' : '#1e293b',
                     borderRadius: '10px',
-                    padding: '2rem 1.5rem',
+                    padding: '1.5rem',
                     textAlign: 'center',
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
-                    marginBottom: '1.25rem'
+                    marginBottom: selectedFiles.length > 0 ? '0.75rem' : '1.25rem'
                   }}
                 >
                   <input
                     ref={fileInputRef}
                     type="file"
                     accept=".dst,.pes,.emb,.exp,.jef,.zip,.rar,.ai,.eps,.cdr,.svg,.pdf"
+                    multiple
                     style={{ display: 'none' }}
-                    onChange={(e) => e.target.files?.[0] && validateAndSetFile(e.target.files[0])}
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      if (files.length > 0) validateAndAddFiles(files);
+                      e.target.value = '';
+                    }}
                   />
 
                   <UploadCloud size={36} style={{ color: isDragging ? '#f97316' : '#64748b', margin: '0 auto 0.75rem' }} />
                   
-                  {selectedFile ? (
-                    <div>
-                      <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#10b981', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <FileCheck size={18} /> {selectedFile.name}
-                      </span>
-                      <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '0.25rem 0 0 0' }}>
-                        {(selectedFile.size / 1024).toFixed(1)} KB • Ready for transmission
-                      </p>
-                    </div>
-                  ) : order.worker_file_url ? (
-                    <div>
-                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#38bdf8' }}>
-                        Current File: {order.worker_file_name || 'production_deliverable_file'}
-                      </span>
-                      <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '0.25rem 0 0 0' }}>
-                        Click or drag to replace with updated file
-                      </p>
-                    </div>
-                  ) : (
-                    <div>
-                      <p style={{ margin: '0 0 0.25rem 0', fontWeight: 700, color: '#e2e8f0', fontSize: '0.9rem' }}>
-                        Drag & Drop your production files here, or <span style={{ color: '#f97316' }}>Browse Files</span>
-                      </p>
-                      <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                        Supported: DST, PES, EMB, AI, EPS, CDR, SVG, or ZIP (Max 50MB)
-                      </span>
-                    </div>
-                  )}
+                  <div>
+                    <p style={{ margin: '0 0 0.25rem 0', fontWeight: 700, color: '#e2e8f0', fontSize: '0.9rem' }}>
+                      Drag & Drop files here, or <span style={{ color: '#f97316' }}>Browse Files</span>
+                    </p>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                      DST, PES, EMB, AI, EPS, CDR, SVG, ZIP — Max 50MB each • Multiple files supported
+                    </span>
+                  </div>
                 </div>
+
+                {/* Selected Files List */}
+                {selectedFiles.length > 0 && (
+                  <div style={{ marginBottom: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', marginBottom: '0.25rem' }}>
+                      FILES QUEUED FOR UPLOAD ({selectedFiles.length})
+                    </span>
+                    {selectedFiles.map((file, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '0.45rem 0.75rem' }}>
+                        <span style={{ fontSize: '0.825rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.4rem', overflow: 'hidden' }}>
+                          <FileCheck size={14} style={{ flexShrink: 0 }} />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</span>
+                          <span style={{ color: '#64748b', fontSize: '0.72rem', flexShrink: 0 }}>({(file.size / 1024).toFixed(1)} KB)</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); removeSelectedFile(idx); }}
+                          style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '0.1rem', lineHeight: 1, flexShrink: 0 }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    {order.worker_file_url && (
+                      <span style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.2rem' }}>
+                        Previously submitted file will be replaced by new uploads.
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* If no new files selected but has previous submission */}
+                {selectedFiles.length === 0 && order.worker_file_url && (
+                  <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '0.6rem 0.85rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <FileCheck size={16} style={{ color: '#38bdf8', flexShrink: 0 }} />
+                    <span style={{ fontSize: '0.85rem', color: '#38bdf8', fontWeight: 700 }}>
+                      Current: {order.worker_file_name || 'production_deliverable_file'}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginLeft: 'auto' }}>Add new files above to replace</span>
+                  </div>
+                )}
 
                 {/* Worker Remarks Textarea */}
                 <div style={{ marginBottom: '1.25rem' }}>
@@ -1212,7 +1271,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
                   <button
                     type="button"
                     onClick={handleUploadAndSubmit}
-                    disabled={isUploading || (!selectedFile && !order.worker_file_url)}
+                    disabled={isUploading || (selectedFiles.length === 0 && !order.worker_file_url)}
                     style={{
                       padding: '0.65rem 1.5rem',
                       borderRadius: '8px',
@@ -1221,11 +1280,11 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
                       fontWeight: 800,
                       fontSize: '0.875rem',
                       border: 'none',
-                      cursor: isUploading || (!selectedFile && !order.worker_file_url) ? 'not-allowed' : 'pointer',
+                      cursor: isUploading || (selectedFiles.length === 0 && !order.worker_file_url) ? 'not-allowed' : 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.5rem',
-                      opacity: isUploading || (!selectedFile && !order.worker_file_url) ? 0.6 : 1,
+                      opacity: isUploading || (selectedFiles.length === 0 && !order.worker_file_url) ? 0.6 : 1,
                       boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
                     }}
                   >

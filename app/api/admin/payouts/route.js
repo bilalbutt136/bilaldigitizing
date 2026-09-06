@@ -244,7 +244,7 @@ export async function POST(request) {
         throw updateOrdersErr;
       }
 
-      // 2. Insert record into public.payouts
+      // 2. Insert record into public.payouts with status: 'paid'
       let createdPayout = null;
       try {
         const { data: payoutData, error: payoutErr } = await adminClient
@@ -256,6 +256,9 @@ export async function POST(request) {
             worker_email: workerEmail || '',
             total_amount: totalVal,
             currency: 'PKR',
+            status: 'paid',
+            paid_at: nowIso,
+            paid_by: user.id,
             payment_method: paymentMethod || 'Bank Transfer',
             reference_note: referenceNote || null,
             order_ids: orderIds,
@@ -320,11 +323,56 @@ export async function POST(request) {
           worker_id: workerId,
           total_amount: totalVal,
           currency: 'PKR',
+          status: 'paid',
           payment_method: paymentMethod || 'Bank Transfer',
           order_ids: orderIds,
           created_at: nowIso
         }
       });
+    }
+
+    if (action === 'updatePayoutStatus') {
+      const { payoutId, newStatus, paymentMethod, referenceNote } = payload;
+      if (!payoutId) {
+        return NextResponse.json({ error: 'Payout ID is required.' }, { status: 400 });
+      }
+
+      const nowIso = new Date().toISOString();
+      const resolvedStatus = String(newStatus || 'paid').toLowerCase();
+
+      const updateData = {
+        status: resolvedStatus,
+        updated_at: nowIso
+      };
+      if (resolvedStatus === 'paid') {
+        updateData.paid_at = nowIso;
+        updateData.paid_by = user.id;
+        if (paymentMethod) updateData.payment_method = paymentMethod;
+        if (referenceNote) updateData.reference_note = referenceNote;
+      }
+
+      const { data: updatedPayout, error: updateErr } = await adminClient
+        .from('payouts')
+        .update(updateData)
+        .eq('id', payoutId)
+        .select()
+        .single();
+
+      if (updateErr) throw updateErr;
+
+      // Also update linked orders if payout is marked paid
+      if (resolvedStatus === 'paid' && Array.isArray(updatedPayout?.order_ids) && updatedPayout.order_ids.length > 0) {
+        await adminClient
+          .from('orders')
+          .update({
+            worker_payment_status: 'Paid',
+            worker_payout_status: 'paid',
+            updated_at: nowIso
+          })
+          .in('id', updatedPayout.order_ids);
+      }
+
+      return NextResponse.json({ success: true, payout: updatedPayout });
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });

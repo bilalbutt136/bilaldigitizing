@@ -976,7 +976,11 @@ export async function POST(request) {
 
     if (action === 'workerSubmitUpload') {
       if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      const { orderId, fileUrl, fileName, format, notes } = payload;
+      const { orderId, workerFileUrl, workerFileName, fileUrl: legacyFileUrl, fileName: legacyFileName, format, notes, workerFiles } = payload;
+
+      // Support both new (workerFileUrl/workerFiles) and legacy (fileUrl/fileName) param names
+      const primaryFileUrl = workerFileUrl || legacyFileUrl;
+      const primaryFileName = workerFileName || legacyFileName;
 
       const { data: targetOrder, error: orderFetchErr } = await supabase
         .from('orders')
@@ -997,13 +1001,23 @@ export async function POST(request) {
       }
 
       const nowIso = new Date().toISOString();
-      const resolvedName = fileName || (typeof fileUrl === 'string' ? fileUrl.split('/').pop() : 'digitized_stitch_file');
+
+      // Build the full files array (new multi-file support + legacy single-file fallback)
+      let allFiles = [];
+      if (Array.isArray(workerFiles) && workerFiles.length > 0) {
+        allFiles = workerFiles;
+      } else if (primaryFileUrl) {
+        allFiles = [{ url: primaryFileUrl, name: primaryFileName || (typeof primaryFileUrl === 'string' ? primaryFileUrl.split('/').pop() : 'file') }];
+      }
+
+      const resolvedName = (allFiles[0]?.name) || primaryFileName || (typeof primaryFileUrl === 'string' ? primaryFileUrl.split('/').pop() : 'digitized_stitch_file');
       const resolvedFormat = format || (resolvedName.includes('.') ? resolvedName.split('.').pop() : 'dst');
 
       const updatePayload = {
         worker_status: 'Review Pending',
-        worker_file_url: fileUrl,
+        worker_file_url: allFiles[0]?.url || primaryFileUrl,
         worker_file_name: resolvedName,
+        worker_files: allFiles,
         worker_notes: notes || '',
         worker_submitted_at: nowIso,
         updated_at: nowIso
@@ -1016,21 +1030,54 @@ export async function POST(request) {
 
       if (updateErr) throw updateErr;
 
-      // Insert into order_files
+      // Insert ALL uploaded files into order_files
       try {
-        await supabase.from('order_files').insert([{
+        const fileInserts = allFiles.map(f => ({
           order_id: orderId,
-          file_name: resolvedName,
-          file_format: resolvedFormat,
+          file_name: f.name || f.url?.split('/').pop() || 'digitized_file',
+          file_format: (f.name || '').split('.').pop() || resolvedFormat,
           file_type: 'worker_upload',
           bucket_name: 'worker-uploads',
-          file_path: fileUrl,
-          public_url: fileUrl,
-          file_url: fileUrl,
+          file_path: f.url,
+          public_url: f.url,
+          file_url: f.url,
           uploaded_by: 'worker'
-        }]);
+        }));
+        if (fileInserts.length > 0) {
+          await supabase.from('order_files').insert(fileInserts);
+        }
       } catch (fileErr) {
         console.warn('order_files worker upload insert notice:', fileErr.message);
+      }
+
+      // Post a message to order_messages so Admin sees submission in Discussion tab
+      try {
+        const fileListText = allFiles.length > 1
+          ? `${allFiles.length} files submitted: ${allFiles.map(f => f.name).join(', ')}`
+          : `File submitted: ${resolvedName}`;
+        const submitMsgText = `✅ Production files delivered for review. ${fileListText}${notes ? `\n\nProduction notes: ${notes}` : ''}`;
+        await supabase.from('order_messages').insert([{
+          order_id: orderId,
+          sender: 'worker',
+          sender_name: 'Assigned Artist',
+          sender_role: 'worker',
+          is_staff: false,
+          message: submitMsgText,
+          is_read: false,
+          created_at: nowIso
+        }]);
+        // Mirror to conversations unread count
+        const convId = `order-${orderId}`;
+        await supabase.from('conversations').upsert({
+          id: convId,
+          order_id: orderId,
+          last_message: submitMsgText,
+          last_message_time: nowIso,
+          admin_unread_count: 1,
+          updated_at: nowIso
+        }, { onConflict: 'id' });
+      } catch (msgErr) {
+        console.warn('Worker submit order_messages notice:', msgErr.message);
       }
 
       // Dispatch notification to Admin
@@ -1040,7 +1087,7 @@ export async function POST(request) {
           recipient_role: 'admin',
           recipient_email: null,
           title: `🔍 Digitizer Files Ready for Review: ${targetOrder.title || orderId}`,
-          message: `Worker uploaded files (${resolvedName}) on Order #${orderId}. Ready for studio inspection.`,
+          message: `Worker uploaded ${allFiles.length} file(s) on Order #${orderId}. Ready for studio inspection.`,
           type: 'info',
           link: `/admin-portal?tab=orders&trackOrder=${orderId}`,
           order_id: orderId,
@@ -1142,6 +1189,22 @@ export async function POST(request) {
           console.warn('Approval notifications notice:', notifErr.message);
         }
 
+        // Post approval message to order Discussion thread
+        try {
+          await supabase.from('order_messages').insert([{
+            order_id: orderId,
+            sender: 'admin',
+            sender_name: 'Production Manager',
+            sender_role: 'admin',
+            is_staff: true,
+            message: '✅ Quality inspection passed. Your production files have been approved and delivered to the client. Great work!',
+            is_read: false,
+            created_at: nowIso
+          }]);
+        } catch (msgErr) {
+          console.warn('Approval order_messages notice:', msgErr.message);
+        }
+
         return NextResponse.json({ success: true, worker_status: 'Completed', status: 'delivered' });
       } else if (decision === 'revision') {
         // Send back for revision
@@ -1158,6 +1221,32 @@ export async function POST(request) {
           .eq('id', orderId);
 
         if (updateErr) throw updateErr;
+
+        // Post revision feedback to order_messages so worker sees it in Discussion tab
+        try {
+          const revMsgText = `🔄 **Revision Required**\n\n${feedbackNotes || 'Admin has requested modifications. Please review the requirements and submit updated files.'}`;
+          await supabase.from('order_messages').insert([{
+            order_id: orderId,
+            sender: 'admin',
+            sender_name: 'Production Manager',
+            sender_role: 'admin',
+            is_staff: true,
+            message: revMsgText,
+            is_read: false,
+            created_at: nowIso
+          }]);
+          // Mirror to conversations so worker gets notification
+          const convId = `order-${orderId}`;
+          await supabase.from('conversations').upsert({
+            id: convId,
+            order_id: orderId,
+            last_message: revMsgText,
+            last_message_time: nowIso,
+            updated_at: nowIso
+          }, { onConflict: 'id' });
+        } catch (msgErr) {
+          console.warn('Revision order_messages notice:', msgErr.message);
+        }
 
         // Notify worker
         try {

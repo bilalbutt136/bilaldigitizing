@@ -59,7 +59,8 @@ export const OrderManagementTable = () => {
     setSelectedOrderForDrawer,
     ORDER_STATUSES,
     updateOrderStatus,
-    refreshOrders
+    refreshOrders,
+    showToast
   } = useAppState();
 
   const [filterStatus, setFilterStatus] = useState('all');
@@ -579,11 +580,18 @@ export const OrderManagementTable = () => {
                   ? artworkImg.replace(/\.pdf(\?.*)?$/i, '.jpg$1')
                   : artworkImg;
                 
+                const isReviewPending = ord.worker_status === 'Review Pending' || ord.workerStatus === 'Review Pending';
+                
                 return (
                   <tr 
                     key={ord.id}
-                    style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s ease' }}
-                    className="order-table-row"
+                    style={{ 
+                      borderBottom: '1px solid var(--border-color)', 
+                      transition: 'all 0.15s ease',
+                      backgroundColor: isReviewPending ? 'rgba(37, 99, 235, 0.05)' : undefined,
+                      borderLeft: isReviewPending ? '4px solid #2563eb' : '4px solid transparent'
+                    }}
+                    className={`order-table-row ${isReviewPending ? 'review-pending-row' : ''}`}
                   >
                     {/* 1. ORDER */}
                     <td style={{ padding: '0.5rem 0.75rem' }}>
@@ -644,6 +652,22 @@ export const OrderManagementTable = () => {
                         <div>
                           {getStatusBadge(ord.status)}
                         </div>
+                        {isReviewPending && (
+                          <div style={{ 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            gap: '0.25rem',
+                            background: '#eff6ff', 
+                            color: '#1d4ed8', 
+                            border: '1px solid #bfdbfe',
+                            borderRadius: '4px',
+                            padding: '0.15rem 0.35rem',
+                            fontSize: '0.68rem',
+                            fontWeight: 800
+                          }}>
+                            🔔 REVIEW NEEDED
+                          </div>
+                        )}
                       </div>
                     </td>
 
@@ -892,7 +916,7 @@ export const OrderManagementTable = () => {
             if (refreshOrders) refreshOrders();
             setAssigningOrder(null);
           }}
-          showToast={useAppState().showToast}
+          showToast={showToast}
         />
       )}
 
@@ -906,7 +930,7 @@ export const OrderManagementTable = () => {
             if (refreshOrders) refreshOrders();
             setReviewOrder(null);
           }}
-          showToast={useAppState().showToast}
+          showToast={showToast}
         />
       )}
 
@@ -918,7 +942,7 @@ export const OrderManagementTable = () => {
           onClose={() => setChatOrder(null)}
           currentUserRole="admin"
           currentUserName="Production Manager"
-          showToast={useAppState().showToast}
+          showToast={showToast}
         />
       )}
 

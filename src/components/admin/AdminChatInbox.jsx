@@ -5,6 +5,7 @@ import { useAppState } from '../../context/StateContext';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
 import { 
   fetchConversations, 
+  fetchChatMessages,
   addChatMessage, 
   markConversationAsRead, 
   subscribeToLiveMessages,
@@ -261,6 +262,12 @@ export const AdminChatInbox = () => {
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
+  const activeChatIdRef = useRef(activeChatId);
+
+  useEffect(() => {
+    activeChatIdRef.current = activeChatId;
+  }, [activeChatId]);
 
   // Independent Auto-Pilot settings per channel/department
   // Channel 1: 'helpdesk' (24/7 Help Desk) -> Autonomous AI Auto-Pilot (Defaults to ON)
@@ -640,7 +647,7 @@ export const AdminChatInbox = () => {
                 nextMsgs = [...currentMsgs, newMsg];
               }
               
-              const isCurrentlyOpen = activeChatId === conv.id;
+              const isCurrentlyOpen = activeChatIdRef.current === conv.id;
               if (isCurrentlyOpen && (newMsg.sender === 'client' || newMsg.sender === 'customer')) {
                 markConversationAsRead(conv.id, 'admin', conv.clientEmail);
                 nextMsgs = nextMsgs.map(m => (m.id === newMsg.id ? { ...m, is_read: true } : m));
@@ -679,10 +686,11 @@ export const AdminChatInbox = () => {
           const safePrev = Array.isArray(prev) ? prev : [];
           const updated = safePrev.map(c => {
             if (c.id === fresh.id) {
+              const isCurrentlyOpen = activeChatIdRef.current === fresh.id;
               return {
                 ...c,
-                unreadCount: activeChatId === fresh.id ? 0 : (fresh.admin_unread_count ?? fresh.unread_count ?? c.unreadCount),
-                adminUnreadCount: activeChatId === fresh.id ? 0 : (fresh.admin_unread_count ?? fresh.unread_count ?? c.adminUnreadCount),
+                unreadCount: isCurrentlyOpen ? 0 : (fresh.admin_unread_count ?? fresh.unread_count ?? c.unreadCount),
+                adminUnreadCount: isCurrentlyOpen ? 0 : (fresh.admin_unread_count ?? fresh.unread_count ?? c.adminUnreadCount),
                 clientName: fresh.client_name || c.clientName,
                 clientEmail: fresh.client_email || c.clientEmail,
                 status: fresh.status || c.status,
@@ -700,7 +708,7 @@ export const AdminChatInbox = () => {
       isMounted = false;
       if (typeof unsubscribe === 'function') unsubscribe();
     };
-  }, [activeChatId]);
+  }, []);
 
   // Listen for real-time offer status changes across tabs and backend events
   useEffect(() => {
