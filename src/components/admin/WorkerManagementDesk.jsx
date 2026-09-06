@@ -391,6 +391,14 @@ export const WorkerManagementDesk = ({ showToast }) => {
   const pendingCount = applications.filter(a => (a.status || '').toLowerCase() === 'pending').length;
   const activeCount = workers.filter(w => (w.status || '').toLowerCase() === 'active').length;
   const totalCompletedOrders = workers.reduce((acc, w) => acc + (w.completed_orders_count || 0), 0);
+  const totalUnpaidPkrAll = (payoutsOverview?.workers || []).reduce(
+    (sum, w) => sum + (parseFloat(w.unpaidBalancePkr || w.pending_payout) || 0),
+    0
+  );
+  const totalPaidPkrAll = (payoutsOverview?.recentPayouts || []).reduce(
+    (sum, p) => sum + (parseFloat(p.total_amount) || 0),
+    0
+  );
 
   // Filtered workers
   const filteredWorkers = workers.filter(w => {
