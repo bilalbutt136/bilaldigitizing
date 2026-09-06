@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { generateWorkerPayoutInvoicePdf } from '../../utils/workerInvoicePdfGenerator';
 
-export const WorkerDashboard = ({ worker }) => {
+export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
   const router = useRouter();
   const { showToast, logout } = useAppState();
 
@@ -88,10 +88,10 @@ export const WorkerDashboard = ({ worker }) => {
       try {
         localStorage.removeItem('bdigi_auth_user');
       } catch {}
-      router.replace('/worker-login');
+      router.replace(logoutRoute || '/portal/login');
       if (showToast) showToast('Logged out of digitizer station.', 'info');
     } catch {
-      router.replace('/worker-login');
+      router.replace(logoutRoute || '/portal/login');
     }
   };
 
@@ -135,7 +135,8 @@ export const WorkerDashboard = ({ worker }) => {
           id,
           title: `Order #${id.slice(0, 8)}`,
           costPkr: (payout.total_amount || 0) / (payout.order_count || 1)
-        }))
+        })),
+        stealthMode: true
       });
       downloadPdf();
       if (showToast) showToast(`Downloaded invoice ${payout.payout_number}`, 'success');

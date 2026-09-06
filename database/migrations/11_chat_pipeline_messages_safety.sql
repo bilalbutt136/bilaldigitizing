@@ -1,9 +1,9 @@
-﻿-- Phase 1: Database Safety & Column Fix
+-- Phase 1: Database Safety & Column Fix
 ALTER TABLE IF EXISTS public.messages 
-ADD COLUMN IF NOT EXISTS type TEXT DEFAULT ''text'',
-ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT ''{}''::jsonb,
-ADD COLUMN IF NOT EXISTS sender TEXT DEFAULT ''customer'',
-ADD COLUMN IF NOT EXISTS text TEXT DEFAULT '''',
+ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'text',
+ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb,
+ADD COLUMN IF NOT EXISTS sender TEXT DEFAULT 'customer',
+ADD COLUMN IF NOT EXISTS text TEXT DEFAULT '',
 ADD COLUMN IF NOT EXISTS thread_id TEXT,
 ADD COLUMN IF NOT EXISTS conversation_id TEXT,
 ADD COLUMN IF NOT EXISTS client_email TEXT,
@@ -34,11 +34,11 @@ CREATE TABLE IF NOT EXISTS public.conversations (
   client_name TEXT,
   client_email TEXT,
   client_company TEXT,
-  channel TEXT DEFAULT ''inbox'',
+  channel TEXT DEFAULT 'inbox',
   order_id TEXT,
   order_title TEXT,
   avatar TEXT,
-  status TEXT DEFAULT ''online'',
+  status TEXT DEFAULT 'online',
   unread_count INTEGER DEFAULT 0,
   admin_unread_count INTEGER DEFAULT 0,
   client_unread_count INTEGER DEFAULT 0,
@@ -47,6 +47,22 @@ CREATE TABLE IF NOT EXISTS public.conversations (
   updated_at TIMESTAMPTZ DEFAULT now(),
   created_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Ensure columns exist if conversations table already existed
+ALTER TABLE IF EXISTS public.conversations
+  ADD COLUMN IF NOT EXISTS client_name TEXT,
+  ADD COLUMN IF NOT EXISTS client_email TEXT,
+  ADD COLUMN IF NOT EXISTS client_company TEXT,
+  ADD COLUMN IF NOT EXISTS channel TEXT DEFAULT 'inbox',
+  ADD COLUMN IF NOT EXISTS order_id TEXT,
+  ADD COLUMN IF NOT EXISTS order_title TEXT,
+  ADD COLUMN IF NOT EXISTS avatar TEXT,
+  ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'online',
+  ADD COLUMN IF NOT EXISTS unread_count INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS admin_unread_count INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS client_unread_count INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS last_message TEXT,
+  ADD COLUMN IF NOT EXISTS last_message_time TIMESTAMPTZ;
 
 CREATE INDEX IF NOT EXISTS idx_conversations_channel ON public.conversations(channel);
 CREATE INDEX IF NOT EXISTS idx_conversations_client_email ON public.conversations(client_email);

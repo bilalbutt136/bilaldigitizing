@@ -388,8 +388,8 @@ export const WorkerManagementDesk = ({ showToast }) => {
   };
 
   // KPI Calculations
-  const pendingCount = applications.filter(a => a.status === 'pending').length;
-  const activeCount = workers.filter(w => w.status === 'active').length;
+  const pendingCount = applications.filter(a => (a.status || '').toLowerCase() === 'pending').length;
+  const activeCount = workers.filter(w => (w.status || '').toLowerCase() === 'active').length;
   const totalCompletedOrders = workers.reduce((acc, w) => acc + (w.completed_orders_count || 0), 0);
 
   // Filtered workers
@@ -623,12 +623,14 @@ export const WorkerManagementDesk = ({ showToast }) => {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {applications.map((app) => (
+              {applications.map((app) => {
+                const isPending = (app.status || '').toLowerCase() === 'pending';
+                return (
                 <div
                   key={app.id || app.email}
                   style={{
                     background: 'var(--bg-card)',
-                    border: app.status === 'pending' ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
+                    border: isPending ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
                     borderRadius: '12px',
                     padding: '1.25rem 1.5rem',
                     boxShadow: 'var(--shadow-sm)',
@@ -644,16 +646,16 @@ export const WorkerManagementDesk = ({ showToast }) => {
                           {app.name}
                         </h3>
                         <span style={{
-                          background: app.status === 'pending' ? '#fff7ed' : '#fef2f2',
-                          color: app.status === 'pending' ? '#ea580c' : '#dc2626',
-                          border: `1px solid ${app.status === 'pending' ? '#fed7aa' : '#fecaca'}`,
+                          background: isPending ? '#fff7ed' : '#fef2f2',
+                          color: isPending ? '#ea580c' : '#dc2626',
+                          border: `1px solid ${isPending ? '#fed7aa' : '#fecaca'}`,
                           fontSize: '0.7rem',
                           fontWeight: 800,
                           padding: '0.15rem 0.5rem',
                           borderRadius: '6px',
                           textTransform: 'uppercase'
                         }}>
-                          {app.status === 'pending' ? 'Pending Review' : 'Rejected'}
+                          {isPending ? 'Pending Review' : 'Rejected'}
                         </span>
                       </div>
 
@@ -665,7 +667,7 @@ export const WorkerManagementDesk = ({ showToast }) => {
                     </div>
 
                     {/* Action Buttons */}
-                    {app.status === 'pending' && (
+                    {isPending && (
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button
                           onClick={() => setRejectingWorker(app)}
@@ -767,7 +769,8 @@ export const WorkerManagementDesk = ({ showToast }) => {
                     </p>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

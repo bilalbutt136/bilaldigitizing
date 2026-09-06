@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
+import { sendWorkerApplicationReceivedEmail } from '../../../../src/lib/workerPortalEmails';
 
 export async function POST(request) {
   try {
@@ -46,12 +47,13 @@ export async function POST(request) {
       .maybeSingle();
 
     if (existingProfile) {
-      if (existingProfile.status === 'pending') {
+      const existingStatus = (existingProfile.status || '').toLowerCase();
+      if (existingStatus === 'pending') {
         return NextResponse.json({ 
-          error: 'An application with this email is already under review. You will be notified upon approval.' 
+          error: 'Your application is currently under review. You will be notified once approved.' 
         }, { status: 409 });
       }
-      if (existingProfile.status === 'active') {
+      if (existingStatus === 'active') {
         return NextResponse.json({ 
           error: 'An active digitizer account with this email already exists. Please log in directly.' 
         }, { status: 409 });
@@ -72,7 +74,7 @@ export async function POST(request) {
           full_name: cleanName,
           name: cleanName,
           role: 'worker',
-          worker_status: 'pending'
+          worker_status: 'Pending'
         }
       });
 
@@ -91,7 +93,7 @@ export async function POST(request) {
                 full_name: cleanName,
                 name: cleanName,
                 role: 'worker',
-                worker_status: 'pending'
+                worker_status: 'Pending'
               }
             });
           } else {
@@ -125,7 +127,7 @@ export async function POST(request) {
       portfolio_sample_url: portfolio_sample_url || null,
       portfolio_file_name: portfolio_file_name || null,
       bio: bio || null,
-      status: 'pending',
+      status: 'Pending',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -135,7 +137,8 @@ export async function POST(request) {
       .upsert([profileRecord], { onConflict: 'id' });
 
     if (profileErr) {
-      console.warn('[Worker Profile Insert Notice]:', profileErr.message);
+      console.error('[Worker Profile Insert Error]:', profileErr.message);
+      // Don't fail silently; ensure we retry or log clearly
     }
 
     // Also insert or update workers directory for immediate compatibility
@@ -156,9 +159,19 @@ export async function POST(request) {
       console.warn('[Workers Directory Upsert Notice]:', wErr.message);
     }
 
+    // Trigger EMAIL 1: Application Received Notification via Resend
+    try {
+      await sendWorkerApplicationReceivedEmail({
+        to: cleanEmail,
+        name: cleanName
+      });
+    } catch (emailErr) {
+      console.warn('[Worker Register Email 1 Notice]:', emailErr?.message);
+    }
+
     return NextResponse.json({
       success: true,
-      message: 'Your digitizer application has been submitted successfully! Our lead digitizer will review your portfolio and activate your workstation access.',
+      message: 'Your application has been received and is under review.',
       workerId: authUserId
     });
   } catch (error) {

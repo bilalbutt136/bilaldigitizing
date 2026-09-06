@@ -49,39 +49,78 @@ export async function GET(request) {
       console.warn('workers directory query notice:', err?.message);
     }
 
-    // Merge profiles and directory workers into unified worker objects
+    // 3. Check auth.users for any users with worker role to auto-sync
+    let authWorkers = [];
+    try {
+      const { data: authData } = await adminClient.auth.admin.listUsers({ perPage: 100 });
+      if (authData?.users) {
+        authWorkers = authData.users.filter(u => 
+          u.user_metadata?.role === 'worker' || 
+          u.user_metadata?.worker_status || 
+          u.app_metadata?.role === 'worker'
+        );
+      }
+    } catch (authErr) {
+      console.warn('auth workers query notice:', authErr?.message);
+    }
+
+    // Merge profiles, directory workers, and auth users into unified worker objects
     const map = new Map();
 
+    // From Auth users first
+    authWorkers.forEach(u => {
+      const uEmail = (u.email || '').toLowerCase().trim();
+      const meta = u.user_metadata || {};
+      map.set(u.id || uEmail, {
+        id: u.id,
+        name: meta.full_name || meta.name || uEmail.split('@')[0],
+        email: uEmail,
+        phone: meta.phone || null,
+        specialty: meta.primary_software || 'Embroidery Digitizer',
+        experience_years: meta.experience_years || 1,
+        primary_software: meta.primary_software || 'Wilcom',
+        status: meta.worker_status || meta.status || 'Pending',
+        assigned_orders_count: 0,
+        completed_orders_count: 0,
+        created_at: u.created_at,
+        updated_at: u.updated_at || u.created_at
+      });
+    });
+
     directoryWorkers.forEach(w => {
-      map.set(w.id || w.email, {
-        id: w.id,
-        name: w.name,
-        email: w.email,
-        phone: w.phone,
-        specialty: w.specialty || 'Embroidery Digitizer',
-        status: w.status || 'active',
+      const key = w.id || (w.email || '').toLowerCase().trim();
+      const existing = map.get(key) || {};
+      map.set(key, {
+        ...existing,
+        id: w.id || existing.id,
+        name: w.name || existing.name,
+        email: w.email || existing.email,
+        phone: w.phone || existing.phone,
+        specialty: w.specialty || existing.specialty || 'Embroidery Digitizer',
+        status: w.status || existing.status || 'Active',
         assigned_orders_count: w.assigned_orders_count || 0,
         completed_orders_count: w.completed_orders_count || 0,
-        created_at: w.created_at,
-        updated_at: w.updated_at
+        created_at: w.created_at || existing.created_at,
+        updated_at: w.updated_at || existing.updated_at
       });
     });
 
     profiles.forEach(p => {
-      const existing = map.get(p.id || p.email) || {};
-      map.set(p.id || p.email, {
+      const key = p.id || (p.email || '').toLowerCase().trim();
+      const existing = map.get(key) || {};
+      map.set(key, {
         ...existing,
         id: p.id || existing.id,
         name: p.name || existing.name,
         email: p.email || existing.email,
         phone: p.phone || existing.phone,
         specialty: p.primary_software || existing.specialty || 'Embroidery Digitizer',
-        experience_years: p.experience_years || 1,
-        primary_software: p.primary_software || 'Wilcom',
+        experience_years: p.experience_years || existing.experience_years || 1,
+        primary_software: p.primary_software || existing.primary_software || 'Wilcom',
         portfolio_sample_url: p.portfolio_sample_url,
         portfolio_file_name: p.portfolio_file_name,
         bio: p.bio,
-        status: p.status || existing.status || 'pending',
+        status: p.status || existing.status || 'Pending',
         rejection_reason: p.rejection_reason,
         total_earned: p.total_earned || 0,
         pending_payout: p.pending_payout || 0,
@@ -91,6 +130,25 @@ export async function GET(request) {
     });
 
     const allWorkers = Array.from(map.values());
+
+    // Auto-heal: Ensure any auth workers not in worker_profiles get saved to worker_profiles
+    try {
+      for (const w of allWorkers) {
+        const hasProfile = profiles.some(p => p.id === w.id || p.email?.toLowerCase() === w.email?.toLowerCase());
+        if (!hasProfile && w.id && w.email) {
+          adminClient.from('worker_profiles').upsert([{
+            id: w.id,
+            name: w.name,
+            email: w.email,
+            phone: w.phone,
+            experience_years: w.experience_years || 1,
+            primary_software: w.primary_software || 'Wilcom',
+            status: w.status || 'Pending',
+            created_at: w.created_at || new Date().toISOString()
+          }], { onConflict: 'id' }).then(() => {});
+        }
+      }
+    } catch {}
 
     // Compute live order counts and earnings per worker if admin
     if (isAdmin) {
@@ -108,17 +166,17 @@ export async function GET(request) {
             const workerOrders = allOrders.filter(o => o.worker_id === w.id);
             w.assigned_orders_count = workerOrders.length;
             w.completed_orders_count = workerOrders.filter(
-              o => o.worker_status === 'Completed' || o.status === 'completed'
+              o => o.worker_status === 'Completed' || (o.status || '').toLowerCase() === 'completed'
             ).length;
 
             // Compute earnings
             if (allEarnings) {
               const we = allEarnings.filter(e => e.worker_id === w.id);
               w.total_earned = we
-                .filter(e => e.status === 'paid')
+                .filter(e => (e.status || '').toLowerCase() === 'paid')
                 .reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
               w.pending_payout = we
-                .filter(e => e.status === 'pending')
+                .filter(e => (e.status || '').toLowerCase() === 'pending')
                 .reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
             }
           });
@@ -128,13 +186,19 @@ export async function GET(request) {
       }
     }
 
-    // Separate active workers from pending applications
-    const activeWorkers = allWorkers.filter(w => w.status === 'active' || w.status === 'busy' || w.status === 'suspended');
-    const applications = allWorkers.filter(w => w.status === 'pending' || w.status === 'rejected');
+    // Separate active workers from pending applications (case-insensitive)
+    const activeWorkers = allWorkers.filter(w => {
+      const s = (w.status || '').toLowerCase();
+      return s === 'active' || s === 'busy' || s === 'suspended';
+    });
+    const applications = allWorkers.filter(w => {
+      const s = (w.status || '').toLowerCase();
+      return s === 'pending' || s === 'rejected';
+    });
 
     return NextResponse.json({
       success: true,
-      workers: isAdmin ? allWorkers : allWorkers.filter(w => w.status === 'active'),
+      workers: isAdmin ? allWorkers : allWorkers.filter(w => (w.status || '').toLowerCase() === 'active'),
       activeWorkers,
       applications
     });
@@ -166,10 +230,25 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Worker ID or email is required.' }, { status: 400 });
       }
 
+      // Fetch worker details for Email 2
+      let workerName = 'Digitizer';
+      let workerEmail = email;
+
+      try {
+        let pQuery = adminClient.from('worker_profiles').select('name, email');
+        if (workerId) pQuery = pQuery.eq('id', workerId);
+        else pQuery = pQuery.eq('email', email);
+        const { data: pData } = await pQuery.maybeSingle();
+        if (pData) {
+          if (pData.name) workerName = pData.name;
+          if (pData.email) workerEmail = pData.email;
+        }
+      } catch {}
+
       // Update worker_profiles
       let query = adminClient
         .from('worker_profiles')
-        .update({ status: 'active', updated_at: new Date().toISOString() });
+        .update({ status: 'Active', updated_at: new Date().toISOString() });
       if (workerId) query = query.eq('id', workerId);
       else query = query.eq('email', email);
       await query;
@@ -186,16 +265,31 @@ export async function POST(request) {
       if (workerId) {
         try {
           await adminClient.auth.admin.updateUserById(workerId, {
-            user_metadata: { role: 'worker', status: 'active', worker_status: 'active' }
+            user_metadata: { role: 'worker', status: 'Active', worker_status: 'Active' }
           });
         } catch (authErr) {
           console.warn('[Approve Auth Metadata Warning]:', authErr.message);
         }
       }
 
+      // Dispatch EMAIL 2: Account Approved Notification via Resend
+      if (workerEmail) {
+        try {
+          const { sendWorkerAccountApprovedEmail } = await import('../../../../src/lib/workerPortalEmails');
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
+          await sendWorkerAccountApprovedEmail({
+            to: workerEmail,
+            name: workerName,
+            loginUrl: `${siteUrl}/portal/login`
+          });
+        } catch (emailErr) {
+          console.warn('[Admin Approve Email 2 Notice]:', emailErr?.message);
+        }
+      }
+
       return NextResponse.json({ 
         success: true, 
-        message: 'Worker application approved! Account is now active.' 
+        message: 'Worker application approved! Account is now active and activation email dispatched.' 
       });
     }
 

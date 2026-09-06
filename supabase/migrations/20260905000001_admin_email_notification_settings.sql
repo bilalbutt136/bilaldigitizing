@@ -1,4 +1,4 @@
-﻿-- Migration: Seed Admin Email Notification Settings into site_config
+-- Migration: Seed Admin Email Notification Settings into site_config
 -- Created: 2026-09-05
 
 CREATE TABLE IF NOT EXISTS public.site_config (
@@ -22,7 +22,7 @@ END $$;
 INSERT INTO public.site_config (key, value, updated_at)
 VALUES (
     'admin_notification_email',
-    'shahidbutt59191@gmail.com',
+    '"shahidbutt59191@gmail.com"',
     timezone('utc'::text, now())
 )
 ON CONFLICT (key) DO NOTHING;

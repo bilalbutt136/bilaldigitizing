@@ -74,6 +74,9 @@ ALTER FUNCTION public.deduct_wallet_balance(p_client_email text, p_amount numeri
 GRANT ALL ON FUNCTION public.deduct_wallet_balance(p_client_email text, p_amount numeric, p_order_id text) TO service_role;
 GRANT ALL ON FUNCTION public.deduct_wallet_balance(p_client_email text, p_amount numeric, p_order_id text) TO authenticated;
 
+-- Ensure paid_at column exists on orders
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ;
+
 -- Auto-heal any existing orders (like #6019) that had wallet deductions but remained pending
 UPDATE public.orders o
 SET payment_status = 'paid', 

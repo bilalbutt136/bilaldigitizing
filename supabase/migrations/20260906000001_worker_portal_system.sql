@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS public.workers (
     email TEXT UNIQUE NOT NULL,
     phone TEXT,
     specialty TEXT DEFAULT 'Embroidery Digitizer',
-    status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'busy', 'paused')),
+    status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'busy', 'paused', 'pending', 'rejected', 'suspended', 'Active', 'Pending', 'Rejected', 'Suspended')),
     assigned_orders_count INT DEFAULT 0,
     completed_orders_count INT DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -32,7 +32,7 @@ CREATE POLICY "workers_admin_all" ON public.workers
 DROP POLICY IF EXISTS "workers_view_self_or_active" ON public.workers;
 CREATE POLICY "workers_view_self_or_active" ON public.workers
     FOR SELECT TO authenticated
-    USING (id = auth.uid() OR status = 'active' OR public.is_admin());
+    USING (id = auth.uid() OR status IN ('active', 'Active') OR public.is_admin());
 
 -- 2. Update public.orders table with worker tracking columns
 ALTER TABLE public.orders 
@@ -49,13 +49,10 @@ ALTER TABLE public.orders
 -- Ensure constraint on worker_status
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'orders_worker_status_check'
-    ) THEN
-        ALTER TABLE public.orders 
-            ADD CONSTRAINT orders_worker_status_check 
-            CHECK (worker_status IN ('Unassigned', 'In Progress', 'Review Pending', 'Revisions Needed', 'Completed'));
-    END IF;
+    ALTER TABLE public.orders DROP CONSTRAINT IF EXISTS orders_worker_status_check;
+    ALTER TABLE public.orders 
+        ADD CONSTRAINT orders_worker_status_check 
+        CHECK (worker_status IN ('Unassigned', 'Pending_Worker_Acceptance', 'In Progress', 'Review Pending', 'Revisions Needed', 'Completed'));
 EXCEPTION
     WHEN OTHERS THEN NULL;
 END $$;
@@ -71,9 +68,7 @@ LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
   SELECT EXISTS (
-    SELECT 1 FROM public.workers WHERE id = auth.uid() AND status = 'active'
-  ) OR EXISTS (
-    SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'worker'
+    SELECT 1 FROM public.workers WHERE id = auth.uid() AND lower(status) = 'active'
   ) OR EXISTS (
     SELECT 1 FROM public.clients WHERE user_id = auth.uid() AND role = 'worker'
   );

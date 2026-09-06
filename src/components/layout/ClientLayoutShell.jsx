@@ -24,6 +24,26 @@ export const ClientLayoutShell = ({ children }) => {
   const pathname = usePathname() || '';
   const isAppMode = mobileMode === 'app';
   const isDedicatedAuthRoute = ['/login', '/signup', '/reset-password', '/secure-admin-login'].includes(pathname);
+  const isWorkerPortal = pathname.startsWith('/portal') || pathname.startsWith('/worker');
+
+  // Complete stealth mode isolation for Worker Portal
+  if (isWorkerPortal) {
+    return (
+      <div className="stealth-worker-portal min-h-screen bg-slate-950 text-slate-100 font-sans antialiased">
+        <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+          <Suspense fallback={
+            <div style={{ padding: '3rem 1.5rem', maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+              <div style={{ height: '36px', width: '50%', background: '#1e293b', borderRadius: '8px' }} />
+              <div style={{ height: '20px', width: '75%', background: '#334155', borderRadius: '6px' }} />
+            </div>
+          }>
+            {children}
+          </Suspense>
+        </main>
+        <ToastContainer />
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>

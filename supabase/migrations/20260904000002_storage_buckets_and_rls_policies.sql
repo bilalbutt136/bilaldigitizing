@@ -37,7 +37,12 @@ BEGIN
 END $$;
 
 -- 2. Ensure RLS is enabled on storage.objects
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+    ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END $$;
 
 -- 3. Public Read Access: Allow anyone (authenticated or anonymous) to view and download files from active application buckets
 DROP POLICY IF EXISTS "Public Read Access for Application Buckets" ON storage.objects;

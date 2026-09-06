@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.worker_profiles (
     portfolio_sample_url TEXT,
     portfolio_file_name TEXT,
     bio TEXT,
-    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'rejected', 'suspended')),
+    status TEXT DEFAULT 'Pending' CHECK (status IN ('pending', 'active', 'rejected', 'suspended', 'Pending', 'Active', 'Rejected', 'Suspended')),
     rejection_reason TEXT,
     notes TEXT,
     total_earned NUMERIC(10,2) DEFAULT 0.00,
@@ -35,6 +35,11 @@ CREATE POLICY "worker_profiles_admin_all" ON public.worker_profiles
     USING (public.is_admin())
     WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS "worker_profiles_insert_all" ON public.worker_profiles;
+CREATE POLICY "worker_profiles_insert_all" ON public.worker_profiles
+    FOR INSERT TO anon, authenticated
+    WITH CHECK (true);
+
 DROP POLICY IF EXISTS "worker_profiles_select_own" ON public.worker_profiles;
 CREATE POLICY "worker_profiles_select_own" ON public.worker_profiles
     FOR SELECT TO authenticated
@@ -45,6 +50,8 @@ CREATE POLICY "worker_profiles_update_own" ON public.worker_profiles
     FOR UPDATE TO authenticated
     USING (id = auth.uid() OR public.is_admin())
     WITH CHECK (id = auth.uid() OR public.is_admin());
+
+GRANT ALL ON TABLE public.worker_profiles TO anon, authenticated, service_role;
 
 -- 2. Ensure public.workers table has compatibility columns and sync trigger
 CREATE TABLE IF NOT EXISTS public.workers (
@@ -126,7 +133,7 @@ END $$;
 CREATE TABLE IF NOT EXISTS public.worker_earnings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     worker_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-    order_id UUID REFERENCES public.orders(id) ON DELETE SET NULL,
+    order_id TEXT REFERENCES public.orders(id) ON DELETE SET NULL,
     order_number TEXT,
     amount NUMERIC(10,2) NOT NULL DEFAULT 0.00 CHECK (amount >= 0),
     status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'cancelled')),
@@ -160,11 +167,9 @@ LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
   SELECT EXISTS (
-    SELECT 1 FROM public.worker_profiles WHERE id = auth.uid() AND status = 'active'
+    SELECT 1 FROM public.worker_profiles WHERE id = auth.uid() AND lower(status) = 'active'
   ) OR EXISTS (
-    SELECT 1 FROM public.workers WHERE id = auth.uid() AND status = 'active'
-  ) OR EXISTS (
-    SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'worker'
+    SELECT 1 FROM public.workers WHERE id = auth.uid() AND lower(status) = 'active'
   ) OR EXISTS (
     SELECT 1 FROM public.clients WHERE user_id = auth.uid() AND role = 'worker'
   );
