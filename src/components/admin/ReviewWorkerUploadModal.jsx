@@ -14,6 +14,7 @@ import {
   Scissors
 } from 'lucide-react';
 import { formatOrderId } from '../../context/StateContext';
+import { formatPlacementTiming } from '../worker/WorkerOrderWorkspaceModal';
 
 export const ReviewWorkerUploadModal = ({ order, isOpen, onClose, onReviewed, showToast }) => {
   const [feedbackNotes, setFeedbackNotes] = useState('');
@@ -144,6 +145,9 @@ export const ReviewWorkerUploadModal = ({ order, isOpen, onClose, onReviewed, sh
             </div>
             <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted, #64748b)' }}>
               {order.title} • Client: {order.clientName || order.clientEmail}
+              <span style={{ display: 'block', marginTop: '0.2rem', color: '#64748b', fontSize: '0.74rem' }}>
+                🕒 Placed: <strong style={{ color: 'var(--navy-900, #0f172a)' }}>{formatPlacementTiming(order.created_at || order.date)}</strong>
+              </span>
             </p>
           </div>
 

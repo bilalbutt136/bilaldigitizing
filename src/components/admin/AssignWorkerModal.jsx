@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Scissors, UserCheck, AlertCircle, CheckCircle, Send, Sparkles, Palette, Layers } from 'lucide-react';
+import { X, Scissors, UserCheck, AlertCircle, CheckCircle, Send, Sparkles, Palette, Layers, Clock, FileText } from 'lucide-react';
 import { formatOrderId } from '../../context/StateContext';
+import { formatPlacementTiming, parseOrderInstructions } from '../worker/WorkerOrderWorkspaceModal';
 
 export const AssignWorkerModal = ({ order, isOpen, onClose, onAssigned, showToast }) => {
   const [workers, setWorkers] = useState([]);
@@ -183,6 +184,9 @@ export const AssignWorkerModal = ({ order, isOpen, onClose, onAssigned, showToas
               </h3>
               <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted, #64748b)' }}>
                 Order: <strong style={{ color: 'var(--orange-600, #ea580c)' }}>{formatOrderId(order.id)}</strong> — {order.title || 'Production Job'}
+                <span style={{ display: 'block', marginTop: '0.2rem', color: '#64748b', fontSize: '0.74rem' }}>
+                  🕒 Placed: <strong style={{ color: 'var(--navy-900, #0f172a)' }}>{formatPlacementTiming(order?.created_at || order?.date)}</strong>
+                </span>
               </p>
             </div>
           </div>
@@ -228,6 +232,29 @@ export const AssignWorkerModal = ({ order, isOpen, onClose, onAssigned, showToas
             Requires: {targetSpecialty}
           </span>
         </div>
+
+        {/* Customer Requirements Snippet if present */}
+        {(() => {
+          const parsed = parseOrderInstructions(order);
+          if (!parsed.customerNotes) return null;
+          return (
+            <div style={{
+              margin: '0.75rem 1.5rem 0 1.5rem',
+              padding: '0.65rem 0.85rem',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              fontSize: '0.78rem'
+            }}>
+              <span style={{ color: '#ea580c', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem' }}>
+                <FileText size={12} /> Client Requirements:
+              </span>
+              <p style={{ margin: 0, color: '#334155', lineHeight: 1.4, fontWeight: 600 }}>
+                "{parsed.customerNotes}"
+              </p>
+            </div>
+          );
+        })()}
 
         {/* Body Form */}
         <form onSubmit={handleAssign} style={{ padding: '1.25rem 1.5rem' }}>

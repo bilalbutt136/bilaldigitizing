@@ -545,42 +545,77 @@ export async function POST(request) {
       
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
-        .select('client_email, client_name, title, type, service_category')
+        .select('client_email, client_name, title, type, service_category, worker_id, user_id')
         .eq('id', payload.order_id)
         .maybeSingle();
 
-      if (!isAdmin) {
-        if (orderError || !orderData || orderData?.client_email?.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
-          return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      const isAssignedWorker = Boolean(
+        isWorker && (
+          (orderData?.worker_id && orderData.worker_id === user.id) ||
+          (orderData?.worker_id && workerData?.id && orderData.worker_id === workerData.id)
+        )
+      );
+
+      const isOrderClient = Boolean(
+        user.email && (
+          (orderData?.client_email && orderData.client_email.toLowerCase().trim() === user.email.toLowerCase().trim()) ||
+          (orderData?.user_id && orderData.user_id === user.id)
+        )
+      );
+
+      if (!isAdmin && !isAssignedWorker && !isOrderClient) {
+        if (orderError || !orderData) {
+          return NextResponse.json({ error: 'Order not found' }, { status: 404 });
         }
+        return NextResponse.json({ error: 'Unauthorized: You are not assigned or owner of this order.' }, { status: 403 });
       }
 
       const nowIso = new Date().toISOString();
-      const clientEmail = (orderData?.client_email || user.email).toLowerCase().trim();
+      const clientEmail = (orderData?.client_email || user.email || '').toLowerCase().trim();
       const clientName = orderData?.client_name || user.user_metadata?.full_name || 'Client';
       const orderTitle = orderData?.title || payload.order_title || `Order #${payload.order_id}`;
 
+      const senderRole = isAdmin ? 'admin' : (isAssignedWorker ? 'worker' : 'client');
+      const senderName = isAdmin 
+        ? (payload.sender_name || 'Production Admin')
+        : (isAssignedWorker 
+            ? (payload.sender_name || workerData?.name || user.user_metadata?.full_name || 'Assigned Digitizer')
+            : (payload.sender_name || user.user_metadata?.full_name || clientName)
+          );
+
       const safeMessagePayload = {
         order_id: payload.order_id,
-        sender_name: isAdmin ? (payload.sender_name || 'Support') : (user.user_metadata?.full_name || payload.sender_name || clientName),
-        sender_role: isAdmin ? 'admin' : 'client',
+        sender: senderRole,
+        sender_name: senderName,
+        sender_role: senderRole,
         is_staff: isAdmin,
-        message: payload.message || '',
-        attachment: payload.attachment || null,
+        message: payload.message || payload.text || '',
+        attachment: payload.attachment || payload.attachment_name || null,
+        attachment_url: payload.attachment_url || payload.attachmentUrl || null,
+        attachment_name: payload.attachment_name || payload.attachmentName || null,
+        attachment_size: payload.attachment_size || payload.attachmentSize || null,
         is_read: false,
         created_at: nowIso
       };
 
-      const { error } = await supabase.from('order_messages').insert([safeMessagePayload]);
-      if (error) throw error;
+      const { data: insertedMsg, error: insertErr } = await supabase
+        .from('order_messages')
+        .insert([safeMessagePayload])
+        .select()
+        .single();
+      if (insertErr) throw insertErr;
 
       // Mirror to messages & conversations for unified real-time chat sync
       try {
         const convId = `order-${payload.order_id}`;
-        const { data: existingConv } = await supabase.from('conversations').select('admin_unread_count, client_unread_count, unread_count').eq('id', convId).maybeSingle();
+        const { data: existingConv } = await supabase
+          .from('conversations')
+          .select('admin_unread_count, client_unread_count, unread_count')
+          .eq('id', convId)
+          .maybeSingle();
 
-        const newAdminUnread = isAdmin ? 0 : (existingConv?.admin_unread_count || existingConv?.unread_count || 0) + 1;
-        const newClientUnread = isAdmin ? (existingConv?.client_unread_count || 0) + 1 : 0;
+        const newAdminUnread = isAdmin ? 0 : ((existingConv?.admin_unread_count || 0) + 1);
+        const newClientUnread = isAdmin ? ((existingConv?.client_unread_count || 0) + 1) : 0;
 
         await supabase.from('conversations').upsert({
           id: convId,
@@ -592,16 +627,21 @@ export async function POST(request) {
           unread_count: newAdminUnread,
           admin_unread_count: newAdminUnread,
           client_unread_count: newClientUnread,
+          last_message: safeMessagePayload.message,
+          last_message_time: nowIso,
           updated_at: nowIso
         }, { onConflict: 'id' });
 
         await supabase.from('messages').insert({
           id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           conversation_id: convId,
-          sender: isAdmin ? 'admin' : 'client',
-          sender_name: safeMessagePayload.sender_name,
+          thread_id: convId,
+          sender: senderRole,
+          sender_name: senderName,
           text: safeMessagePayload.message,
           attachment: safeMessagePayload.attachment,
+          attachment_url: safeMessagePayload.attachment_url,
+          attachment_name: safeMessagePayload.attachment_name,
           is_read: false,
           timestamp: nowIso,
           created_at: nowIso
@@ -610,7 +650,50 @@ export async function POST(request) {
         console.warn('Mirror order message to chat notice:', convErr);
       }
 
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, message: insertedMsg || safeMessagePayload });
+    }
+
+    if (action === 'fetchOrderMessages') {
+      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      const orderId = payload.orderId || payload.order_id;
+      if (!orderId) return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
+
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select('client_email, user_id, worker_id')
+        .eq('id', orderId)
+        .maybeSingle();
+
+      if (orderError || !orderData) {
+        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      }
+
+      const isAssignedWorker = Boolean(
+        isWorker && (
+          (orderData.worker_id && orderData.worker_id === user.id) ||
+          (orderData.worker_id && workerData?.id && orderData.worker_id === workerData.id)
+        )
+      );
+
+      const isOrderClient = Boolean(
+        user.email && (
+          (orderData.client_email && orderData.client_email.toLowerCase().trim() === user.email.toLowerCase().trim()) ||
+          (orderData.user_id && orderData.user_id === user.id)
+        )
+      );
+
+      if (!isAdmin && !isAssignedWorker && !isOrderClient) {
+        return NextResponse.json({ error: 'Unauthorized to view messages for this order' }, { status: 403 });
+      }
+
+      const { data: msgs, error: msgsErr } = await supabase
+        .from('order_messages')
+        .select('*')
+        .eq('order_id', orderId)
+        .order('created_at', { ascending: true });
+
+      if (msgsErr) throw msgsErr;
+      return NextResponse.json({ success: true, messages: msgs || [] });
     }
     
     if (action === 'requestRevision') {

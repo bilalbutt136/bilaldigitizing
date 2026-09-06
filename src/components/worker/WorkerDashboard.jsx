@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppState, formatOrderId } from '../../context/StateContext';
 import { supabaseClient } from '../../lib/supabaseClient';
-import { WorkerOrderWorkspaceModal } from './WorkerOrderWorkspaceModal';
+import { WorkerOrderWorkspaceModal, parseOrderInstructions, formatPlacementTiming, getRelativeTimeString } from './WorkerOrderWorkspaceModal';
 import { 
   Scissors, 
   Clock, 
@@ -18,7 +18,9 @@ import {
   DollarSign,
   Download,
   Wallet,
-  FileText
+  FileText,
+  MessageSquare,
+  Info
 } from 'lucide-react';
 import { generateWorkerPayoutInvoicePdf } from '../../utils/workerInvoicePdfGenerator';
 
@@ -824,23 +826,62 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
                         <span>📐 {typeof dimensions === 'object' ? `${dimensions.width}×${dimensions.height} ${dimensions.unit || 'in'}` : String(dimensions)}</span>
                         <span>•</span>
                         <span>🧵 {ord.fabricType || 'Pique Cotton'}</span>
+                        <span>•</span>
+                        <span style={{ color: '#f97316', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <Clock size={12} /> Placed: <span style={{ color: '#ffffff' }}>{formatPlacementTiming(ord.created_at || ord.date)}</span> {getRelativeTimeString(ord.created_at || ord.date) && <span style={{ color: '#94a3b8' }}>({getRelativeTimeString(ord.created_at || ord.date)})</span>}
+                        </span>
                       </div>
 
-                      {/* If revision, show preview note */}
-                      {isRevision && ord.admin_worker_feedback && (
-                        <div style={{ marginTop: '0.35rem', fontSize: '0.775rem', color: '#fca5a5', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                          <AlertTriangle size={13} style={{ color: '#ef4444' }} />
-                          <span>Admin note: "{ord.admin_worker_feedback.slice(0, 75)}{ord.admin_worker_feedback.length > 75 ? '...' : ''}"</span>
-                        </div>
-                      )}
+                      {/* Instructions Preview */}
+                      {(() => {
+                        const parsed = parseOrderInstructions(ord);
+                        if (!parsed.adminFeedback && !parsed.customerNotes) return null;
+                        return (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.45rem' }}>
+                            {parsed.adminFeedback && (
+                              <div style={{ fontSize: '0.775rem', color: isRevision ? '#fca5a5' : '#93c5fd', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                {isRevision ? <AlertTriangle size={13} style={{ color: '#ef4444', flexShrink: 0 }} /> : <Info size={13} style={{ color: '#38bdf8', flexShrink: 0 }} />}
+                                <span>{isRevision ? 'Revision note:' : 'Admin note:'} "{parsed.adminFeedback.slice(0, 90)}{parsed.adminFeedback.length > 90 ? '...' : ''}"</span>
+                              </div>
+                            )}
+                            {parsed.customerNotes && (
+                              <div style={{ fontSize: '0.775rem', color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <FileText size={13} style={{ color: '#f97316', flexShrink: 0 }} />
+                                <span>Client: "{parsed.customerNotes.slice(0, 90)}{parsed.customerNotes.length > 90 ? '...' : ''}"</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
 
-                  {/* Right Side: Status Badge & Open Button */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  {/* Right Side: Status Badge, Chat, & Open Button */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                     <div>
                       {getWorkerStatusBadge(ord.worker_status)}
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedOrder(ord)}
+                      style={{
+                        background: 'rgba(59, 130, 246, 0.15)',
+                        color: '#60a5fa',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        borderRadius: '8px',
+                        padding: '0.55rem 0.85rem',
+                        fontSize: '0.8rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem'
+                      }}
+                      title="Open Order Discussion Chat"
+                    >
+                      <MessageSquare size={13} /> Chat
+                    </button>
 
                     <button
                       type="button"
