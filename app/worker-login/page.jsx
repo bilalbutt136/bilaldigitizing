@@ -1,23 +1,40 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAppState } from '../../src/context/StateContext';
 import { supabaseClient } from '../../src/lib/supabaseClient';
-import { Scissors, Lock, Mail, ArrowRight, Home, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { 
+  Scissors, 
+  Lock, 
+  Mail, 
+  ArrowRight, 
+  Home, 
+  AlertCircle, 
+  Clock, 
+  CheckCircle2, 
+  UserPlus, 
+  ShieldAlert 
+} from 'lucide-react';
 
 export default function WorkerLoginPage() {
   const router = useRouter();
-  const { login, showToast } = useAppState();
+  const { showToast } = useAppState();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  
+  // Pending review & account status screens
+  const [workerStatusState, setWorkerStatusState] = useState(null); // 'pending' | 'suspended' | 'rejected'
+  const [applicantName, setApplicantName] = useState('');
 
   const handleLogin = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     setErrorMessage('');
+    setWorkerStatusState(null);
 
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanPass = (password || '').trim();
@@ -31,7 +48,7 @@ export default function WorkerLoginPage() {
 
     try {
       if (!supabaseClient) {
-        throw new Error('Supabase client connection unavailable.');
+        throw new Error('Database connection unavailable.');
       }
 
       const { data, error } = await supabaseClient.auth.signInWithPassword({
@@ -45,29 +62,88 @@ export default function WorkerLoginPage() {
         return;
       }
 
-      // Verify worker role or admin authorization
       const user = data.user;
-      let isWorker = user.user_metadata?.role === 'worker' || user.user_metadata?.role === 'admin';
 
-      if (!isWorker) {
-        const { data: workerData } = await supabase
-          .from('workers')
-          .select('id, status')
+      // 1. Check if user is Admin
+      const isAdmin = user.user_metadata?.role === 'admin' || user.app_metadata?.role === 'admin';
+      if (isAdmin) {
+        setIsLoading(false);
+        showToast('Admin authorized on Worker Station.', 'success');
+        router.replace('/worker');
+        return;
+      }
+
+      // 2. Query worker_profiles and workers to verify approval status
+      let profileStatus = null;
+      let displayName = user.user_metadata?.full_name || cleanEmail.split('@')[0];
+
+      try {
+        const { data: profile } = await supabaseClient
+          .from('worker_profiles')
+          .select('id, name, status, rejection_reason')
           .eq('email', cleanEmail)
           .maybeSingle();
 
-        if (workerData && workerData.status === 'active') {
-          isWorker = true;
+        if (profile) {
+          profileStatus = profile.status;
+          if (profile.name) displayName = profile.name;
+        } else {
+          const { data: workerRow } = await supabaseClient
+            .from('workers')
+            .select('id, name, status')
+            .eq('email', cleanEmail)
+            .maybeSingle();
+
+          if (workerRow) {
+            profileStatus = workerRow.status;
+            if (workerRow.name) displayName = workerRow.name;
+          }
         }
+      } catch (checkErr) {
+        console.warn('Profile status check warning:', checkErr?.message);
       }
 
-      // Store auth in local storage for fast client sync
+      // Fallback to metadata if DB table check is unavailable
+      if (!profileStatus) {
+        profileStatus = user.user_metadata?.status || user.user_metadata?.worker_status || 'pending';
+      }
+
+      setApplicantName(displayName);
+
+      // 3. Handle Pending Approval
+      if (profileStatus === 'pending') {
+        await supabaseClient.auth.signOut();
+        try { localStorage.removeItem('bdigi_auth_user'); } catch {}
+        setIsLoading(false);
+        setWorkerStatusState('pending');
+        return;
+      }
+
+      // 4. Handle Suspended Account
+      if (profileStatus === 'suspended') {
+        await supabaseClient.auth.signOut();
+        try { localStorage.removeItem('bdigi_auth_user'); } catch {}
+        setIsLoading(false);
+        setWorkerStatusState('suspended');
+        return;
+      }
+
+      // 5. Handle Rejected Account
+      if (profileStatus === 'rejected') {
+        await supabaseClient.auth.signOut();
+        try { localStorage.removeItem('bdigi_auth_user'); } catch {}
+        setIsLoading(false);
+        setWorkerStatusState('rejected');
+        return;
+      }
+
+      // 6. Active Worker -> Grant Access
       try {
         const authPayload = {
           id: user.id,
           email: user.email,
-          name: user.user_metadata?.full_name || user.user_metadata?.name || cleanEmail.split('@')[0],
-          role: isWorker ? 'worker' : 'customer'
+          name: displayName,
+          role: 'worker'
         };
         localStorage.setItem('bdigi_auth_user', JSON.stringify(authPayload));
       } catch {}
@@ -80,6 +156,157 @@ export default function WorkerLoginPage() {
       setErrorMessage(err.message || 'An unexpected authentication error occurred.');
     }
   };
+
+  // Render "Application Under Review" Status Screen
+  if (workerStatusState === 'pending') {
+    return (
+      <div style={{
+        minHeight: 'calc(100vh - 120px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '3rem 1.5rem',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+        color: '#f8fafc'
+      }}>
+        <div style={{
+          maxWidth: '480px',
+          width: '100%',
+          padding: '2.5rem',
+          background: '#1e293b',
+          border: '1px solid #334155',
+          borderRadius: '18px',
+          textAlign: 'center',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            color: '#ffffff',
+            width: '68px',
+            height: '68px',
+            borderRadius: '50%',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '1.25rem',
+            boxShadow: '0 8px 24px rgba(245, 158, 11, 0.3)'
+          }}>
+            <Clock size={36} />
+          </div>
+
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.5rem' }}>
+            Application Under Review
+          </h2>
+
+          <p style={{ fontSize: '0.9rem', color: '#cbd5e1', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+            Hello <strong>{applicantName || 'Digitizer'}</strong>! Your account has been created, but your application is currently <strong>Pending Admin Approval</strong>.
+          </p>
+
+          <div style={{
+            background: '#0f172a',
+            border: '1px solid #334155',
+            borderRadius: '10px',
+            padding: '1rem',
+            marginBottom: '1.75rem',
+            fontSize: '0.825rem',
+            color: '#94a3b8',
+            textAlign: 'left',
+            lineHeight: 1.6
+          }}>
+            Our head digitizer inspects sample stitch files for underlay quality, pull compensation, and tie-offs. Once verified, access to the production queue will be activated immediately.
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            <button
+              onClick={() => setWorkerStatusState(null)}
+              style={{
+                width: '100%',
+                padding: '0.8rem',
+                borderRadius: '8px',
+                background: '#334155',
+                color: '#ffffff',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                cursor: 'pointer'
+              }}
+            >
+              Back to Login
+            </button>
+
+            <Link
+              href="/"
+              style={{ color: '#94a3b8', fontSize: '0.825rem', textDecoration: 'none', padding: '0.4rem' }}
+            >
+              Return to Website
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render "Account Suspended" Status Screen
+  if (workerStatusState === 'suspended') {
+    return (
+      <div style={{
+        minHeight: 'calc(100vh - 120px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '3rem 1.5rem',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+        color: '#f8fafc'
+      }}>
+        <div style={{
+          maxWidth: '460px',
+          width: '100%',
+          padding: '2.5rem',
+          background: '#1e293b',
+          border: '1px solid #dc2626',
+          borderRadius: '18px',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            background: 'rgba(220, 38, 38, 0.15)',
+            color: '#ef4444',
+            width: '64px',
+            height: '64px',
+            borderRadius: '50%',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '1rem'
+          }}>
+            <ShieldAlert size={34} />
+          </div>
+
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fca5a5', marginBottom: '0.5rem' }}>
+            Account Suspended
+          </h2>
+
+          <p style={{ fontSize: '0.875rem', color: '#cbd5e1', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+            Your digitizer workstation access has been temporarily suspended by an administrator. Please contact the studio management for assistance.
+          </p>
+
+          <button
+            onClick={() => setWorkerStatusState(null)}
+            style={{
+              padding: '0.75rem 1.5rem',
+              borderRadius: '8px',
+              background: '#334155',
+              color: '#ffffff',
+              border: 'none',
+              fontWeight: 700,
+              cursor: 'pointer'
+            }}
+          >
+            Back to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -100,6 +327,7 @@ export default function WorkerLoginPage() {
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
         borderRadius: '16px'
       }}>
+        {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{
             background: 'linear-gradient(135deg, #f97316, #ea580c)',
@@ -155,7 +383,7 @@ export default function WorkerLoginPage() {
                 required
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setErrorMessage(''); }}
-                placeholder="worker@bdigitizing.pro"
+                placeholder="digitizer@bdigitizing.pro"
                 style={{
                   width: '100%',
                   padding: '0.75rem 1rem 0.75rem 2.6rem',
@@ -164,16 +392,25 @@ export default function WorkerLoginPage() {
                   border: '1px solid #334155',
                   color: '#ffffff',
                   fontSize: '0.9rem',
-                  outline: 'none'
+                  outline: 'none',
+                  boxSizing: 'border-box'
                 }}
               />
             </div>
           </div>
 
-          <div style={{ marginBottom: '1.75rem' }}>
-            <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>
-              Security Password
-            </label>
+          <div style={{ marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+              <label style={{ fontSize: '0.825rem', fontWeight: 700, color: '#cbd5e1' }}>
+                Security Password
+              </label>
+              <Link
+                href="/worker/forgot-password"
+                style={{ fontSize: '0.78rem', color: '#f97316', textDecoration: 'none', fontWeight: 600 }}
+              >
+                Forgot Password?
+              </Link>
+            </div>
             <div style={{ position: 'relative' }}>
               <Lock size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
               <input
@@ -190,7 +427,8 @@ export default function WorkerLoginPage() {
                   border: '1px solid #334155',
                   color: '#ffffff',
                   fontSize: '0.9rem',
-                  outline: 'none'
+                  outline: 'none',
+                  boxSizing: 'border-box'
                 }}
               />
             </div>
@@ -221,7 +459,35 @@ export default function WorkerLoginPage() {
           </button>
         </form>
 
-        <div style={{ marginTop: '1.75rem', paddingTop: '1.25rem', borderTop: '1px solid #334155', textAlign: 'center' }}>
+        {/* Onboarding Register Link */}
+        <div style={{
+          marginTop: '1.5rem',
+          padding: '1rem',
+          background: 'rgba(15, 23, 42, 0.6)',
+          border: '1px solid #334155',
+          borderRadius: '10px',
+          textAlign: 'center'
+        }}>
+          <span style={{ fontSize: '0.825rem', color: '#94a3b8', display: 'block', marginBottom: '0.4rem' }}>
+            New Embroidery Digitizer?
+          </span>
+          <Link
+            href="/worker/register"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              color: '#f97316',
+              fontWeight: 800,
+              fontSize: '0.875rem',
+              textDecoration: 'none'
+            }}
+          >
+            <UserPlus size={15} /> Apply to Join Our Production Team
+          </Link>
+        </div>
+
+        <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid #334155', textAlign: 'center' }}>
           <button
             type="button"
             onClick={() => router.push('/')}

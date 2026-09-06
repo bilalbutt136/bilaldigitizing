@@ -8,6 +8,7 @@ export const AssignWorkerModal = ({ order, isOpen, onClose, onAssigned, showToas
   const [workers, setWorkers] = useState([]);
   const [selectedWorkerId, setSelectedWorkerId] = useState('');
   const [instructions, setInstructions] = useState('');
+  const [payoutAmount, setPayoutAmount] = useState(order?.worker_payout || order?.workerPayout || '');
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingWorkers, setIsFetchingWorkers] = useState(true);
 
@@ -53,7 +54,8 @@ export const AssignWorkerModal = ({ order, isOpen, onClose, onAssigned, showToas
             workerId: selectedWorkerId,
             workerName: chosenWorker?.name || chosenWorker?.email,
             workerEmail: chosenWorker?.email,
-            instructions: instructions.trim()
+            instructions: instructions.trim(),
+            payoutAmount: parseFloat(payoutAmount) || 0
           }
         })
       });
@@ -206,6 +208,36 @@ export const AssignWorkerModal = ({ order, isOpen, onClose, onAssigned, showToas
               </select>
             </div>
           )}
+
+          {/* Worker Payout Compensation */}
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 800, color: 'var(--navy-900, #0f172a)', marginBottom: '0.4rem' }}>
+              Worker Payout / Job Price ($ USD)
+            </label>
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: 800, color: '#64748b' }}>$</span>
+              <input
+                type="number"
+                step="0.50"
+                min="0"
+                value={payoutAmount}
+                onChange={(e) => setPayoutAmount(e.target.value)}
+                placeholder="10.00"
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 0.85rem 0.65rem 1.8rem',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color, #cbd5e1)',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+            <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginTop: '0.25rem' }}>
+              Credited to worker's ledger upon admin QA approval and delivery.
+            </span>
+          </div>
 
           {/* Custom Instructions Textarea */}
           <div style={{ marginBottom: '1.5rem' }}>

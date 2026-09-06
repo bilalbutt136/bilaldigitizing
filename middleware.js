@@ -11,7 +11,19 @@ const ADMIN_PREFIXES = ['/admin', '/admin-portal'];
 const WORKER_PREFIXES = ['/worker', '/worker-portal'];
 
 // Public authentication routes that MUST NEVER be intercepted or redirected to login
-const PUBLIC_AUTH_PATHS = ['/login', '/signup', '/reset-password', '/secure-admin-login', '/worker-login', '/auth', '/auth/callback'];
+const PUBLIC_AUTH_PATHS = [
+  '/login', 
+  '/signup', 
+  '/reset-password', 
+  '/secure-admin-login', 
+  '/worker-login', 
+  '/worker/register', 
+  '/worker-register', 
+  '/worker/forgot-password', 
+  '/worker/reset-password', 
+  '/auth', 
+  '/auth/callback'
+];
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;

@@ -6,6 +6,7 @@ import { OrderManagementTable } from './OrderManagementTable';
 import { ClientDirectory } from './ClientDirectory';
 import { StudioServicesManager } from './StudioServicesManager';
 import { SystemSettingsManager } from './SystemSettingsManager';
+import { WorkerManagementDesk } from './WorkerManagementDesk';
 
 import { AdminChatInbox } from './AdminChatInbox';
 import { AdminExecutiveDashboard } from './AdminExecutiveDashboard';
@@ -37,7 +38,8 @@ import {
   Megaphone,
   ShieldCheck,
   Building2,
-  Mail
+  Mail,
+  Scissors
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -63,6 +65,19 @@ export const AdminDashboard = () => {
 
   const [activeTabState, setActiveTabState] = useState(activeAdminTab || 'dashboard');
   const [adminUnreadCount, setAdminUnreadCount] = useState(0);
+  const [pendingWorkersCount, setPendingWorkersCount] = useState(0);
+
+  React.useEffect(() => {
+    fetch('/api/admin/workers')
+      .then(res => res.json())
+      .then(data => {
+        if (data.applications) {
+          const p = data.applications.filter(a => a.status === 'pending').length;
+          setPendingWorkersCount(p);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   React.useEffect(() => {
     if (activeAdminTab) {
@@ -255,6 +270,13 @@ export const AdminDashboard = () => {
         { id: 'dashboard', label: 'Executive Dashboard', icon: LayoutDashboard },
         { id: 'orders', label: 'Orders & Production', icon: ClipboardList, badge: activeJobsCount },
         { id: 'clients', label: 'Accounts & Wallets', icon: Users, badge: safeClients.length },
+        { 
+          id: 'workers', 
+          label: 'Digitizers & Staff', 
+          icon: Scissors, 
+          badge: pendingWorkersCount > 0 ? pendingWorkersCount : null,
+          isUnread: pendingWorkersCount > 0
+        },
         { 
           id: 'chat', 
           label: 'Messages', 
@@ -801,6 +823,10 @@ export const AdminDashboard = () => {
         {/* DEDICATED SEPARATE ORDERS & PRODUCTION MANAGEMENT PAGE */}
         {activeTab === 'orders' && (
           <OrderManagementTable />
+        )}
+
+        {activeTab === 'workers' && (
+          <WorkerManagementDesk showToast={showToast} />
         )}
 
         {activeTab === 'services' && <StudioServicesManager />}

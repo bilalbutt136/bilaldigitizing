@@ -128,6 +128,17 @@ export async function getServerAuthUser(request) {
           return { user, isAdmin: false, isWorker: true, workerData: user.user_metadata, error: null };
         }
 
+        // Check worker_profiles table first
+        const { data: profileRecord } = await dbClient
+          .from('worker_profiles')
+          .select('*')
+          .ilike('email', email)
+          .maybeSingle();
+
+        if (profileRecord && profileRecord.status === 'active') {
+          return { user, isAdmin: false, isWorker: true, workerData: profileRecord, error: null };
+        }
+
         const { data: workerRecord } = await dbClient
           .from('workers')
           .select('*')

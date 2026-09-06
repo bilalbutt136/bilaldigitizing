@@ -33,14 +33,24 @@ export async function GET(request) {
     } else {
       // Check if user is a worker
       try {
-        const { data: workerData } = await supabase
-          .from('workers')
-          .select('id, name, email, specialty, status')
+        const { data: profileData } = await supabase
+          .from('worker_profiles')
+          .select('id, name, email, primary_software, status')
           .eq('email', requestedEmail)
           .maybeSingle();
 
-        if (workerData && workerData.status === 'active') {
+        if (profileData && profileData.status === 'active') {
           role = 'worker';
+        } else {
+          const { data: workerData } = await supabase
+            .from('workers')
+            .select('id, name, email, specialty, status')
+            .eq('email', requestedEmail)
+            .maybeSingle();
+
+          if (workerData && workerData.status === 'active') {
+            role = 'worker';
+          }
         }
       } catch (wErr) {
         console.warn('Worker profile check notice:', wErr?.message);

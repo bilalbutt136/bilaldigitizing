@@ -736,11 +736,11 @@ export async function POST(request) {
 
     if (action === 'assignWorker') {
       if (!isAdmin) return NextResponse.json({ error: 'Unauthorized: Admin privileges required.' }, { status: 403 });
-      const { orderId, workerId, workerName, workerEmail, instructions } = payload;
+      const { orderId, workerId, workerName, workerEmail, instructions, payoutAmount } = payload;
       
       const { data: targetOrder, error: orderFetchErr } = await supabase
         .from('orders')
-        .select('id, title, status, client_name, client_email, notes')
+        .select('id, title, status, client_name, client_email, notes, worker_payout')
         .eq('id', orderId)
         .maybeSingle();
 
@@ -749,10 +749,14 @@ export async function POST(request) {
       }
 
       const nowIso = new Date().toISOString();
+      const payoutVal = payoutAmount !== undefined ? (parseFloat(payoutAmount) || 0) : (targetOrder.worker_payout || 0);
+
       const updatePayload = {
         worker_id: workerId,
         worker_status: 'In Progress',
         worker_assigned_at: nowIso,
+        worker_payout: payoutVal,
+        worker_payout_status: payoutVal > 0 ? 'pending' : 'unpaid',
         updated_at: nowIso
       };
 
@@ -771,6 +775,24 @@ export async function POST(request) {
 
       if (updateErr) throw updateErr;
 
+      // Insert or update worker_earnings ledger entry if payout > 0
+      if (payoutVal > 0 && workerId) {
+        try {
+          await supabase.from('worker_earnings').insert([{
+            worker_id: workerId,
+            order_id: orderId,
+            order_number: String(targetOrder.id),
+            amount: payoutVal,
+            status: 'pending',
+            notes: `Assigned task payout for Order ${targetOrder.id}`,
+            created_at: nowIso,
+            updated_at: nowIso
+          }]);
+        } catch (earnErr) {
+          console.warn('Worker earnings ledger insert notice:', earnErr?.message);
+        }
+      }
+
       // Dispatch notification to Worker
       try {
         await supabase.from('notifications').insert([{
@@ -779,7 +801,7 @@ export async function POST(request) {
           recipient_role: 'worker',
           recipient_email: workerEmail || null,
           title: `🎯 New Task Assigned: ${targetOrder.title || orderId}`,
-          message: instructions ? `Admin instructions: "${instructions.slice(0, 100)}"` : 'You have been assigned a new embroidery digitizing order.',
+          message: instructions ? `Admin instructions: "${instructions.slice(0, 100)}"` : `You have been assigned an embroidery digitizing order.${payoutVal > 0 ? ` Payout: $${payoutVal.toFixed(2)}` : ''}`,
           type: 'info',
           link: `/worker?trackOrder=${orderId}`,
           order_id: orderId,
@@ -791,7 +813,7 @@ export async function POST(request) {
         console.warn('Worker assignment notification notice:', notifErr.message);
       }
 
-      return NextResponse.json({ success: true, worker_status: 'In Progress' });
+      return NextResponse.json({ success: true, worker_status: 'In Progress', worker_payout: payoutVal });
     }
 
     if (action === 'workerSubmitUpload') {
