@@ -280,6 +280,16 @@ export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds
         uploadedAt: f.created_at
       }));
 
+      const workerFiles = allFiles.filter(f => f.file_type === 'worker_upload').map(f => ({
+        id: f.id,
+        name: f.file_name,
+        format: f.file_format || f.file_name?.split('.').pop() || 'dst',
+        url: f.public_url || f.file_url,
+        public_url: f.public_url || f.file_url,
+        public_id: f.file_path,
+        uploadedAt: f.created_at
+      }));
+
       const rawOrderMessages = order.order_messages || [];
       const mappedOrderMessages = rawOrderMessages.map(m => ({
         id: m.id,
@@ -335,6 +345,22 @@ export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds
         logo: primaryArtworkUrl,
         uploadedFiles: clientFiles.length > 0 ? clientFiles : (notesData.uploadedFiles || []),
         uploadedMachineFiles: machineFiles,
+        workerFiles: workerFiles,
+        workerId: order.worker_id,
+        worker_id: order.worker_id,
+        workerStatus: order.worker_status || 'Unassigned',
+        worker_status: order.worker_status || 'Unassigned',
+        workerFileUrl: order.worker_file_url || workerFiles[0]?.url || null,
+        worker_file_url: order.worker_file_url || workerFiles[0]?.url || null,
+        workerFileName: order.worker_file_name || workerFiles[0]?.name || null,
+        worker_file_name: order.worker_file_name || workerFiles[0]?.name || null,
+        workerNotes: order.worker_notes || '',
+        worker_notes: order.worker_notes || '',
+        adminWorkerFeedback: order.admin_worker_feedback || '',
+        admin_worker_feedback: order.admin_worker_feedback || '',
+        workerAssignedAt: order.worker_assigned_at,
+        workerSubmittedAt: order.worker_submitted_at,
+        workerReviewedAt: order.worker_reviewed_at,
         messages: mappedOrderMessages,
         type: order.service_type || order.service_category,
         fabricType: order.fabric_type,

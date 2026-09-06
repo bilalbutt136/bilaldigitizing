@@ -53,12 +53,12 @@ const BLOCKED_EXTENSIONS = new Set([
 
 const ALLOWED_BUCKETS = new Set([
   'portfolio-images', 'order-files', 'chat-attachments', 'media-library', 'media-gallery',
-  'customer-assets', 'admin-deliveries', 'deliveries', 'client-uploads', 'orders'
+  'customer-assets', 'admin-deliveries', 'deliveries', 'client-uploads', 'orders', 'worker-uploads'
 ]);
 
 const PUBLIC_UPLOAD_BUCKETS = new Set([
   'client-uploads', 'chat-attachments', 'order-files', 'customer-assets', 'orders',
-  'admin-deliveries', 'finished-packages', 'portfolio-images', 'deliveries'
+  'admin-deliveries', 'finished-packages', 'portfolio-images', 'deliveries', 'worker-uploads'
 ]);
 
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB

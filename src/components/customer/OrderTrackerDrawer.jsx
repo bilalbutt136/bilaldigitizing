@@ -900,6 +900,54 @@ export const OrderTrackerDrawer = () => {
               )}
             </div>
 
+            {/* WORKER UPLOAD REVIEW BANNER (ADMIN VIEW) */}
+            {isAdmin && (ord.worker_file_url || ord.workerFileUrl) && (
+              <div style={{
+                background: '#eff6ff',
+                border: '1.5px solid #93c5fd',
+                borderRadius: '12px',
+                padding: '1rem 1.25rem',
+                marginBottom: '1.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.75rem'
+              }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ background: '#2563eb', color: '#ffffff', fontSize: '0.7rem', fontWeight: 800, padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
+                      WORKER UPLOAD
+                    </span>
+                    <strong style={{ fontSize: '0.88rem', color: '#1e3a8a' }}>
+                      {ord.worker_file_name || ord.workerFileName || 'digitized_stitch_file.dst'}
+                    </strong>
+                    <span style={{ fontSize: '0.75rem', color: '#3b82f6', fontWeight: 700 }}>
+                      ({ord.worker_status || ord.workerStatus || 'Submitted'})
+                    </span>
+                  </div>
+                  {(ord.worker_notes || ord.workerNotes) && (
+                    <div style={{ fontSize: '0.78rem', color: '#1e40af', marginTop: '0.25rem' }}>
+                      Digitizer Notes: {ord.worker_notes || ord.workerNotes}
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <a
+                    href={ord.worker_file_url || ord.workerFileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    download
+                    className="btn btn-sm"
+                    style={{ background: '#2563eb', color: '#ffffff', fontWeight: 700, fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', textDecoration: 'none', borderRadius: '6px' }}
+                  >
+                    <Download size={13} /> Download Worker File
+                  </a>
+                </div>
+              </div>
+            )}
+
             {/* ADMIN DELIVERY COMPOSER */}
             {isAdmin && (
               <form onSubmit={handleAdminDeliverOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-surface)', padding: '1.25rem', borderRadius: '14px', border: '1.5px dashed var(--orange-500)', marginBottom: '1.25rem' }}>

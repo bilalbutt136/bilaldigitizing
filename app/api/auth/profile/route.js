@@ -30,6 +30,21 @@ export async function GET(request) {
 
     if (adminData) {
       role = 'admin';
+    } else {
+      // Check if user is a worker
+      try {
+        const { data: workerData } = await supabase
+          .from('workers')
+          .select('id, name, email, specialty, status')
+          .eq('email', requestedEmail)
+          .maybeSingle();
+
+        if (workerData && workerData.status === 'active') {
+          role = 'worker';
+        }
+      } catch (wErr) {
+        console.warn('Worker profile check notice:', wErr?.message);
+      }
     }
 
     // Check client profile for wallet balance and details
@@ -40,10 +55,12 @@ export async function GET(request) {
       .maybeSingle();
 
     if (data) {
-      if (role !== 'admin') {
+      if (role !== 'admin' && role !== 'worker') {
         role = data.role || 'customer';
       }
       balance = parseFloat(data.wallet_balance || 0);
+    } else if (user.user_metadata?.role === 'worker') {
+      role = 'worker';
     }
 
     return NextResponse.json({ role, balance });

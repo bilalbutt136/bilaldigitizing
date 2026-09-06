@@ -9,12 +9,13 @@ export async function GET(request) {
     const orderId = searchParams.get('orderId');
     const supabase = createAdminClient();
     
-    const { user, isAdmin } = await getServerAuthUser(request);
+    const { user, isAdmin, isWorker, workerData } = await getServerAuthUser(request);
 
     if (action === 'fetchAll') {
       const emailParam = searchParams.get('email');
       const clientEmailFilter = searchParams.get('clientEmail');
       const orderIdsParam = searchParams.get('orderIds');
+      const workerIdParam = searchParams.get('workerId');
       
       const configuredAdmins = [
         process.env.MASTER_ADMIN_EMAIL,
@@ -23,9 +24,11 @@ export async function GET(request) {
       ].filter(Boolean).map(e => e.toLowerCase().trim());
 
       let targetEmail = null;
+      let targetWorkerId = null;
+
       if (isAdmin) {
         // Admin sees all orders across the studio by default.
-        // Only filter by targetEmail if an explicit client filter was provided (and not the admin's own email).
+        // Optional filter by client or worker
         const requestedFilter = (clientEmailFilter || emailParam || '').toLowerCase().trim();
         const isSelfAdmin = requestedFilter && (
           (user?.email && requestedFilter === user.email.toLowerCase().trim()) ||
@@ -34,6 +37,12 @@ export async function GET(request) {
         if (requestedFilter && !isSelfAdmin) {
           targetEmail = requestedFilter;
         }
+        if (workerIdParam) {
+          targetWorkerId = workerIdParam;
+        }
+      } else if (isWorker) {
+        // Worker only sees orders assigned to their worker_id
+        targetWorkerId = workerData?.id || user.id;
       } else if (user?.email) {
         targetEmail = user.email.toLowerCase().trim();
       }
@@ -48,14 +57,16 @@ export async function GET(request) {
           .slice(0, 10);
       }
 
-      if (!isAdmin && !targetEmail && parsedOrderIds.length === 0) {
+      if (!isAdmin && !isWorker && !targetEmail && parsedOrderIds.length === 0) {
         return NextResponse.json({ orders: [] });
       }
       
       let data = null;
       try {
         let query = supabase.from('orders').select('*, order_files(*), order_messages(*)').order('created_at', { ascending: false });
-        if (targetEmail) {
+        if (targetWorkerId) {
+          query = query.eq('worker_id', targetWorkerId);
+        } else if (targetEmail) {
           query = query.ilike('client_email', targetEmail);
         } else if (!isAdmin && parsedOrderIds.length > 0) {
           query = query.in('id', parsedOrderIds);
@@ -66,7 +77,9 @@ export async function GET(request) {
       } catch (nestedErr) {
         console.warn('Nested orders query fallback notice:', nestedErr);
         let fallbackQuery = supabase.from('orders').select('*').order('created_at', { ascending: false });
-        if (targetEmail) {
+        if (targetWorkerId) {
+          fallbackQuery = fallbackQuery.eq('worker_id', targetWorkerId);
+        } else if (targetEmail) {
           fallbackQuery = fallbackQuery.ilike('client_email', targetEmail);
         } else if (!isAdmin && parsedOrderIds.length > 0) {
           fallbackQuery = fallbackQuery.in('id', parsedOrderIds);
@@ -90,8 +103,11 @@ export async function GET(request) {
       if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       
       if (!isAdmin) {
-        const { data: orderData, error: orderError } = await supabase.from('orders').select('client_email').eq('id', orderId).single();
-        if (orderError || orderData?.client_email?.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
+        const { data: orderData, error: orderError } = await supabase.from('orders').select('client_email, worker_id').eq('id', orderId).single();
+        const isClientOwner = orderData?.client_email?.toLowerCase().trim() === user.email.toLowerCase().trim();
+        const isAssignedWorker = isWorker && (orderData?.worker_id === user.id || orderData?.worker_id === workerData?.id);
+
+        if (orderError || (!isClientOwner && !isAssignedWorker)) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
       }
@@ -716,6 +732,274 @@ export async function POST(request) {
       const { error } = await supabase.from('orders').delete().eq('id', orderId);
       if (error) throw error;
       return NextResponse.json({ success: true });
+    }
+
+    if (action === 'assignWorker') {
+      if (!isAdmin) return NextResponse.json({ error: 'Unauthorized: Admin privileges required.' }, { status: 403 });
+      const { orderId, workerId, workerName, workerEmail, instructions } = payload;
+      
+      const { data: targetOrder, error: orderFetchErr } = await supabase
+        .from('orders')
+        .select('id, title, status, client_name, client_email, notes')
+        .eq('id', orderId)
+        .maybeSingle();
+
+      if (orderFetchErr || !targetOrder) {
+        return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
+      }
+
+      const nowIso = new Date().toISOString();
+      const updatePayload = {
+        worker_id: workerId,
+        worker_status: 'In Progress',
+        worker_assigned_at: nowIso,
+        updated_at: nowIso
+      };
+
+      if (targetOrder.status === 'submitted') {
+        updatePayload.status = 'digitizing';
+      }
+
+      if (instructions) {
+        updatePayload.admin_worker_feedback = instructions;
+      }
+
+      const { error: updateErr } = await supabase
+        .from('orders')
+        .update(updatePayload)
+        .eq('id', orderId);
+
+      if (updateErr) throw updateErr;
+
+      // Dispatch notification to Worker
+      try {
+        await supabase.from('notifications').insert([{
+          id: `notif-assign-${orderId}-${Date.now()}`,
+          user_id: workerId,
+          recipient_role: 'worker',
+          recipient_email: workerEmail || null,
+          title: `🎯 New Task Assigned: ${targetOrder.title || orderId}`,
+          message: instructions ? `Admin instructions: "${instructions.slice(0, 100)}"` : 'You have been assigned a new embroidery digitizing order.',
+          type: 'info',
+          link: `/worker?trackOrder=${orderId}`,
+          order_id: orderId,
+          read: false,
+          created_at: nowIso,
+          updated_at: nowIso
+        }]);
+      } catch (notifErr) {
+        console.warn('Worker assignment notification notice:', notifErr.message);
+      }
+
+      return NextResponse.json({ success: true, worker_status: 'In Progress' });
+    }
+
+    if (action === 'workerSubmitUpload') {
+      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      const { orderId, fileUrl, fileName, format, notes } = payload;
+
+      const { data: targetOrder, error: orderFetchErr } = await supabase
+        .from('orders')
+        .select('id, title, status, worker_id, client_name, client_email')
+        .eq('id', orderId)
+        .maybeSingle();
+
+      if (orderFetchErr || !targetOrder) {
+        return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
+      }
+
+      if (!isAdmin) {
+        const { isWorker, workerData } = await getServerAuthUser(request);
+        const currentWorkerId = workerData?.id || user.id;
+        if (targetOrder.worker_id && targetOrder.worker_id !== currentWorkerId && targetOrder.worker_id !== user.id) {
+          return NextResponse.json({ error: 'Forbidden: You are not assigned to this order.' }, { status: 403 });
+        }
+      }
+
+      const nowIso = new Date().toISOString();
+      const resolvedName = fileName || (typeof fileUrl === 'string' ? fileUrl.split('/').pop() : 'digitized_stitch_file');
+      const resolvedFormat = format || (resolvedName.includes('.') ? resolvedName.split('.').pop() : 'dst');
+
+      const updatePayload = {
+        worker_status: 'Review Pending',
+        worker_file_url: fileUrl,
+        worker_file_name: resolvedName,
+        worker_notes: notes || '',
+        worker_submitted_at: nowIso,
+        updated_at: nowIso
+      };
+
+      const { error: updateErr } = await supabase
+        .from('orders')
+        .update(updatePayload)
+        .eq('id', orderId);
+
+      if (updateErr) throw updateErr;
+
+      // Insert into order_files
+      try {
+        await supabase.from('order_files').insert([{
+          order_id: orderId,
+          file_name: resolvedName,
+          file_format: resolvedFormat,
+          file_type: 'worker_upload',
+          bucket_name: 'worker-uploads',
+          file_path: fileUrl,
+          public_url: fileUrl,
+          file_url: fileUrl,
+          uploaded_by: 'worker'
+        }]);
+      } catch (fileErr) {
+        console.warn('order_files worker upload insert notice:', fileErr.message);
+      }
+
+      // Dispatch notification to Admin
+      try {
+        await supabase.from('notifications').insert([{
+          id: `notif-worker-sub-${orderId}-${Date.now()}`,
+          recipient_role: 'admin',
+          recipient_email: null,
+          title: `🔍 Digitizer Files Ready for Review: ${targetOrder.title || orderId}`,
+          message: `Worker uploaded files (${resolvedName}) on Order #${orderId}. Ready for studio inspection.`,
+          type: 'info',
+          link: `/admin-portal?tab=orders&trackOrder=${orderId}`,
+          order_id: orderId,
+          read: false,
+          created_at: nowIso,
+          updated_at: nowIso
+        }]);
+      } catch (notifErr) {
+        console.warn('Worker upload admin notification notice:', notifErr.message);
+      }
+
+      return NextResponse.json({ success: true, worker_status: 'Review Pending' });
+    }
+
+    if (action === 'adminReviewWorker') {
+      if (!isAdmin) return NextResponse.json({ error: 'Unauthorized: Admin privileges required.' }, { status: 403 });
+      const { orderId, decision, feedbackNotes } = payload;
+
+      const { data: targetOrder, error: orderFetchErr } = await supabase
+        .from('orders')
+        .select('id, title, status, worker_id, worker_file_url, worker_file_name, client_name, client_email')
+        .eq('id', orderId)
+        .maybeSingle();
+
+      if (orderFetchErr || !targetOrder) {
+        return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
+      }
+
+      const nowIso = new Date().toISOString();
+
+      if (decision === 'approve') {
+        // Approve & Deliver to Client
+        const updatePayload = {
+          worker_status: 'Completed',
+          worker_reviewed_at: nowIso,
+          status: 'delivered',
+          updated_at: nowIso
+        };
+
+        const { error: updateErr } = await supabase
+          .from('orders')
+          .update(updatePayload)
+          .eq('id', orderId);
+
+        if (updateErr) throw updateErr;
+
+        // Auto-insert file into order_files as machine_file for client access if not already present
+        if (targetOrder.worker_file_url) {
+          try {
+            await supabase.from('order_files').insert([{
+              order_id: orderId,
+              file_name: targetOrder.worker_file_name || 'production_machine_file',
+              file_format: targetOrder.worker_file_name?.split('.').pop() || 'dst',
+              file_type: 'machine_file',
+              bucket_name: 'worker-uploads',
+              file_path: targetOrder.worker_file_url,
+              public_url: targetOrder.worker_file_url,
+              file_url: targetOrder.worker_file_url,
+              uploaded_by: 'admin'
+            }]);
+          } catch (fileErr) {
+            console.warn('Auto machine_file promotion notice:', fileErr.message);
+          }
+        }
+
+        // Notify client that files are ready & worker that upload is approved
+        try {
+          await supabase.from('notifications').insert([
+            {
+              id: `notif-deliv-${orderId}-client-${Date.now()}`,
+              recipient_role: 'client',
+              recipient_email: targetOrder.client_email,
+              title: `📦 Files Ready: ${targetOrder.title || orderId}`,
+              message: `Your production files are ready! Review and download your digitized files.`,
+              type: 'success',
+              link: `/client-portal?tab=orders&trackOrder=${orderId}`,
+              order_id: orderId,
+              read: false,
+              created_at: nowIso,
+              updated_at: nowIso
+            },
+            {
+              id: `notif-appr-${orderId}-worker-${Date.now()}`,
+              user_id: targetOrder.worker_id,
+              recipient_role: 'worker',
+              title: `✅ Work Approved: ${targetOrder.title || orderId}`,
+              message: `Admin approved your digitizing upload. Order delivered to client!`,
+              type: 'success',
+              link: `/worker?trackOrder=${orderId}`,
+              order_id: orderId,
+              read: false,
+              created_at: nowIso,
+              updated_at: nowIso
+            }
+          ]);
+        } catch (notifErr) {
+          console.warn('Approval notifications notice:', notifErr.message);
+        }
+
+        return NextResponse.json({ success: true, worker_status: 'Completed', status: 'delivered' });
+      } else if (decision === 'revision') {
+        // Send back for revision
+        const updatePayload = {
+          worker_status: 'Revisions Needed',
+          admin_worker_feedback: feedbackNotes || 'Modifications requested by Admin.',
+          worker_reviewed_at: nowIso,
+          updated_at: nowIso
+        };
+
+        const { error: updateErr } = await supabase
+          .from('orders')
+          .update(updatePayload)
+          .eq('id', orderId);
+
+        if (updateErr) throw updateErr;
+
+        // Notify worker
+        try {
+          await supabase.from('notifications').insert([{
+            id: `notif-worker-rev-${orderId}-${Date.now()}`,
+            user_id: targetOrder.worker_id,
+            recipient_role: 'worker',
+            title: `🔄 Revisions Needed: ${targetOrder.title || orderId}`,
+            message: feedbackNotes ? `Admin notes: "${feedbackNotes}"` : 'Please review admin modifications and submit updated files.',
+            type: 'warning',
+            link: `/worker?trackOrder=${orderId}`,
+            order_id: orderId,
+            read: false,
+            created_at: nowIso,
+            updated_at: nowIso
+          }]);
+        } catch (notifErr) {
+          console.warn('Worker revision notification notice:', notifErr.message);
+        }
+
+        return NextResponse.json({ success: true, worker_status: 'Revisions Needed' });
+      } else {
+        return NextResponse.json({ error: 'Invalid decision' }, { status: 400 });
+      }
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });

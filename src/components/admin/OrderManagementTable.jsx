@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState, formatOrderId } from '../../context/StateContext';
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
+import { AssignWorkerModal } from './AssignWorkerModal';
+import { ReviewWorkerUploadModal } from './ReviewWorkerUploadModal';
 import { 
   CheckCircle, 
   Search, 
@@ -15,7 +17,10 @@ import {
   PackageOpen,
   Package,
   FileText,
-  RefreshCw
+  RefreshCw,
+  Scissors,
+  FileCheck,
+  UserCheck
 } from 'lucide-react';
 
 const getNextStatuses = (currentStatus) => {
@@ -62,6 +67,23 @@ export const OrderManagementTable = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [lightboxOrder, setLightboxOrder] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [assigningOrder, setAssigningOrder] = useState(null);
+  const [reviewOrder, setReviewOrder] = useState(null);
+  const [workersList, setWorkersList] = useState([]);
+
+  // Fetch workers directory
+  useEffect(() => {
+    fetch('/api/admin/workers')
+      .then(res => res.json())
+      .then(data => { if (data.workers) setWorkersList(data.workers); })
+      .catch(() => {});
+  }, []);
+
+  const getWorkerName = (workerId) => {
+    if (!workerId) return null;
+    const found = workersList.find(w => w.id === workerId);
+    return found ? (found.name || found.email) : 'Assigned Worker';
+  };
 
   // Auto-refresh orders from Supabase on mount
   React.useEffect(() => {
@@ -129,6 +151,7 @@ export const OrderManagementTable = () => {
     if (filterPayment === 'pending' && getIsOrderPaid(ord)) return false;
 
     if (filterStatus === 'submitted') return matchesSearch && (ord?.status === 'submitted' || !ord?.status);
+    if (filterStatus === 'worker_review') return matchesSearch && (ord?.worker_status === 'Review Pending' || ord?.workerStatus === 'Review Pending');
     if (filterStatus === 'in_progress') return matchesSearch && (ord?.status === 'in_progress' || ord?.status === 'digitizing' || ord?.status === 'assigned');
     if (filterStatus === 'awaiting_payment') return matchesSearch && (ord?.status === 'awaiting_payment');
     if (filterStatus === 'digitizing') return matchesSearch && (ord?.status === 'digitizing' || ord?.status === 'assigned' || ord?.status === 'in_progress');
@@ -330,6 +353,22 @@ export const OrderManagementTable = () => {
           </button>
 
           <button 
+            className={`btn btn-sm ${filterStatus === 'worker_review' ? 'btn-primary-orange' : 'btn-outline'}`}
+            onClick={() => setFilterStatus('worker_review')}
+            style={{ 
+              fontWeight: 800, 
+              fontSize: '0.76rem', 
+              padding: '0.3rem 0.6rem', 
+              borderRadius: '6px',
+              background: filterStatus === 'worker_review' ? '#2563eb' : orders.some(o => o.worker_status === 'Review Pending' || o.workerStatus === 'Review Pending') ? '#eff6ff' : undefined,
+              color: filterStatus === 'worker_review' ? '#ffffff' : orders.some(o => o.worker_status === 'Review Pending' || o.workerStatus === 'Review Pending') ? '#2563eb' : undefined,
+              borderColor: orders.some(o => o.worker_status === 'Review Pending' || o.workerStatus === 'Review Pending') ? '#93c5fd' : undefined
+            }}
+          >
+            👷 Worker Reviews ({orders.filter(o => o.worker_status === 'Review Pending' || o.workerStatus === 'Review Pending').length})
+          </button>
+
+          <button 
             className={`btn btn-sm ${filterStatus === 'digitizing' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('digitizing')}
             style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
@@ -499,6 +538,7 @@ export const OrderManagementTable = () => {
               <th style={{ padding: '0.45rem 0.75rem' }}>PRICE</th>
               <th style={{ padding: '0.45rem 0.75rem' }}>PAYMENT</th>
               <th style={{ padding: '0.45rem 0.75rem' }}>STATUS</th>
+              <th style={{ padding: '0.45rem 0.75rem' }}>DIGITIZER</th>
               <th style={{ padding: '0.45rem 0.75rem', textAlign: 'center' }}>ARTWORK</th>
               <th style={{ padding: '0.45rem 0.75rem', textAlign: 'right' }}>ACTIONS</th>
             </tr>
@@ -506,7 +546,7 @@ export const OrderManagementTable = () => {
           <tbody>
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <td colSpan={9} style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                   <PackageOpen size={36} style={{ color: 'var(--text-light)', marginBottom: '0.5rem' }} />
                   <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-900)' }}>
                     No Orders Match Your Filters
@@ -606,7 +646,92 @@ export const OrderManagementTable = () => {
                       </div>
                     </td>
 
-                    {/* 7. ARTWORK */}
+                    {/* 7. DIGITIZER WORKER */}
+                    <td style={{ padding: '0.5rem 0.75rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        {(ord.worker_status === 'Review Pending' || ord.workerStatus === 'Review Pending') ? (
+                          <button
+                            type="button"
+                            onClick={() => setReviewOrder(ord)}
+                            style={{
+                              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: '6px',
+                              padding: '0.25rem 0.5rem',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.35)',
+                              whiteSpace: 'nowrap'
+                            }}
+                            title="Inspect worker files and review"
+                          >
+                            <FileCheck size={12} /> Review Upload
+                          </button>
+                        ) : (ord.worker_id || ord.workerId) ? (
+                          <div>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--navy-900)' }}>
+                              {getWorkerName(ord.worker_id || ord.workerId)}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '2px' }}>
+                              <span style={{
+                                fontSize: '0.65rem',
+                                fontWeight: 700,
+                                padding: '0.05rem 0.35rem',
+                                borderRadius: '4px',
+                                background: (ord.worker_status || ord.workerStatus) === 'Revisions Needed' ? '#fef2f2' : (ord.worker_status || ord.workerStatus) === 'Completed' ? '#ecfdf5' : '#fff7ed',
+                                color: (ord.worker_status || ord.workerStatus) === 'Revisions Needed' ? '#dc2626' : (ord.worker_status || ord.workerStatus) === 'Completed' ? '#059669' : '#ea580c',
+                                border: `1px solid ${(ord.worker_status || ord.workerStatus) === 'Revisions Needed' ? '#fecaca' : (ord.worker_status || ord.workerStatus) === 'Completed' ? '#a7f3d0' : '#fed7aa'}`
+                              }}>
+                                {ord.worker_status || ord.workerStatus || 'Assigned'}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setAssigningOrder(ord)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: 'var(--text-muted)',
+                                  fontSize: '0.68rem',
+                                  cursor: 'pointer',
+                                  textDecoration: 'underline',
+                                  padding: 0
+                                }}
+                              >
+                                Edit
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setAssigningOrder(ord)}
+                            style={{
+                              background: 'transparent',
+                              border: '1px dashed var(--orange-400, #fb923c)',
+                              color: 'var(--orange-600, #ea580c)',
+                              borderRadius: '6px',
+                              padding: '0.2rem 0.5rem',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            <Scissors size={11} /> + Assign
+                          </button>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* 8. ARTWORK */}
                     <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
                       <div 
                         style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}
@@ -654,6 +779,31 @@ export const OrderManagementTable = () => {
                     {/* 8. ACTIONS */}
                     <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+                        {(ord.worker_status === 'Review Pending' || ord.workerStatus === 'Review Pending') && (
+                          <button 
+                            type="button"
+                            onClick={() => setReviewOrder(ord)}
+                            style={{ 
+                              fontWeight: 800, 
+                              fontSize: '0.74rem', 
+                              whiteSpace: 'nowrap', 
+                              gap: '0.25rem', 
+                              padding: '0.28rem 0.6rem',
+                              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: '6px',
+                              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.35)',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center'
+                            }}
+                            title="Inspect worker files and approve or request revision"
+                          >
+                            <FileCheck size={12} /> Review Worker
+                          </button>
+                        )}
+
                         {ord.status !== 'completed' && ord.status !== 'cancelled' && (
                           <button 
                             type="button"
@@ -789,6 +939,34 @@ export const OrderManagementTable = () => {
         <ArtworkLightboxModal 
           order={lightboxOrder} 
           onClose={() => setLightboxOrder(null)} 
+        />
+      )}
+
+      {/* Assign Worker Modal */}
+      {assigningOrder && (
+        <AssignWorkerModal
+          order={assigningOrder}
+          isOpen={Boolean(assigningOrder)}
+          onClose={() => setAssigningOrder(null)}
+          onAssigned={() => {
+            if (refreshOrders) refreshOrders();
+            setAssigningOrder(null);
+          }}
+          showToast={useAppState().showToast}
+        />
+      )}
+
+      {/* Review Worker Upload Modal */}
+      {reviewOrder && (
+        <ReviewWorkerUploadModal
+          order={reviewOrder}
+          isOpen={Boolean(reviewOrder)}
+          onClose={() => setReviewOrder(null)}
+          onReviewed={() => {
+            if (refreshOrders) refreshOrders();
+            setReviewOrder(null);
+          }}
+          showToast={useAppState().showToast}
         />
       )}
 

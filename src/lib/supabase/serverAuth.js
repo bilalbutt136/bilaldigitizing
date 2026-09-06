@@ -120,16 +120,36 @@ export async function getServerAuthUser(request) {
           .maybeSingle();
 
         if (clientRecord && (clientRecord.role === 'admin' || clientRecord.role === 'staff')) {
-          return { user, isAdmin: true, error: null };
+          return { user, isAdmin: true, isWorker: false, error: null };
+        }
+
+        // 6. Check Worker status
+        if (user.user_metadata?.role === 'worker' || user.app_metadata?.role === 'worker') {
+          return { user, isAdmin: false, isWorker: true, workerData: user.user_metadata, error: null };
+        }
+
+        const { data: workerRecord } = await dbClient
+          .from('workers')
+          .select('*')
+          .ilike('email', email)
+          .maybeSingle();
+
+        if (workerRecord && workerRecord.status === 'active') {
+          return { user, isAdmin: false, isWorker: true, workerData: workerRecord, error: null };
+        }
+
+        if (clientRecord && clientRecord.role === 'worker') {
+          return { user, isAdmin: false, isWorker: true, workerData: clientRecord, error: null };
         }
       } catch (dbErr) {
         console.warn('[getServerAuthUser DB Check Warning]:', dbErr?.message);
       }
     }
 
-    return { user, isAdmin: false, error: null };
+    const isWorkerMeta = user.user_metadata?.role === 'worker' || user.app_metadata?.role === 'worker';
+    return { user, isAdmin: false, isWorker: isWorkerMeta, error: null };
   } catch (err) {
     console.error('[getServerAuthUser Exception]:', err);
-    return { user: null, isAdmin: false, error: err.message };
+    return { user: null, isAdmin: false, isWorker: false, error: err.message };
   }
 }
