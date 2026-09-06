@@ -101,9 +101,9 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
 
   // Metrics computation
   const pendingAcceptanceCount = orders.filter(o => o.worker_status === 'Pending_Worker_Acceptance').length;
-  const inProgressCount = orders.filter(o => o.worker_status === 'In Progress' || (!o.worker_status && o.status !== 'completed' && o.worker_status !== 'Pending_Worker_Acceptance')).length;
-  const reviewPendingCount = orders.filter(o => o.worker_status === 'Review Pending').length;
-  const revisionsCount = orders.filter(o => o.worker_status === 'Revisions Needed').length;
+  const inProgressCount = orders.filter(o => o.worker_status === 'In Progress' || o.worker_status === 'In_Progress' || (!o.worker_status && o.status !== 'completed' && o.worker_status !== 'Pending_Worker_Acceptance')).length;
+  const reviewPendingCount = orders.filter(o => o.worker_status === 'Review Pending' || o.worker_status === 'Review_Pending').length;
+  const revisionsCount = orders.filter(o => o.worker_status === 'Revisions Needed' || o.worker_status === 'Revisions_Needed').length;
   const completedCount = orders.filter(o => o.worker_status === 'Completed' || o.status === 'completed').length;
 
   // Filtered orders
@@ -117,9 +117,9 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
 
     const ws = ord.worker_status || 'In Progress';
     if (activeTab === 'pending_acceptance') return ws === 'Pending_Worker_Acceptance';
-    if (activeTab === 'in_progress') return ws === 'In Progress' || (!ord.worker_status && ord.status !== 'completed' && ws !== 'Pending_Worker_Acceptance');
-    if (activeTab === 'review_pending') return ws === 'Review Pending';
-    if (activeTab === 'revisions') return ws === 'Revisions Needed';
+    if (activeTab === 'in_progress') return ws === 'In Progress' || ws === 'In_Progress' || (!ord.worker_status && ord.status !== 'completed' && ws !== 'Pending_Worker_Acceptance');
+    if (activeTab === 'review_pending') return ws === 'Review Pending' || ws === 'Review_Pending';
+    if (activeTab === 'revisions') return ws === 'Revisions Needed' || ws === 'Revisions_Needed';
     if (activeTab === 'completed') return ws === 'Completed' || ord.status === 'completed';
     return true;
   });
@@ -158,23 +158,29 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
           </span>
         );
       case 'Revisions Needed':
+      case 'Revisions_Needed':
         return (
           <span style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', padding: '0.2rem 0.55rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
             <AlertTriangle size={12} /> Revisions Needed
           </span>
         );
       case 'Review Pending':
+      case 'Review_Pending':
         return (
           <span style={{ background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', padding: '0.2rem 0.55rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
             <Clock size={12} /> Review Pending
           </span>
         );
       case 'Completed':
+      case 'completed':
         return (
           <span style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', padding: '0.2rem 0.55rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
             <CheckCircle2 size={12} /> Completed
           </span>
         );
+      case 'In Progress':
+      case 'In_Progress':
+      case 'in_progress':
       default:
         return (
           <span style={{ background: '#fff7ed', color: '#ea580c', border: '1px solid #fed7aa', padding: '0.2rem 0.55rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
