@@ -1,6 +1,7 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
+import { extractGuestId } from '../../../../src/utils/sessionHelper';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -14,176 +15,157 @@ const NO_CACHE_HEADERS = {
   'Expires': '0'
 };
 
-export async function GET(request) {
+const isSupportConversation = (id) => {
+  if (!id) return false;
+  const lower = String(id).toLowerCase().trim();
+  return lower === 'general-support' || lower === 'support-guest' || lower === 'help-support' || lower.startsWith('support-');
+};
+
+const isValidEmail = (e) => {
+  if (!e) return false;
+  const str = String(e).toLowerCase().trim();
+  if (str === 'client@studio.com' || str.includes('guest@bdigitizing.pro')) return false;
+  return str.includes('@') && str.includes('.');
+};
+
+export async function GET(req) {
   try {
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action') || 'inbox';
-    const emailParam = (searchParams.get('email') || '').toLowerCase().trim();
-    const userIdParam = searchParams.get('userId') || '';
-    const conversationId = searchParams.get('conversationId') || '';
-    const limit = Math.min(parseInt(searchParams.get('limit') || '100', 10), 500);
-
-    const { user, isAdmin, isWorker } = await getServerAuthUser(request);
     const supabase = createAdminClient();
+    const { user, isAdmin } = await getServerAuthUser(req);
+    const { searchParams } = new URL(req.url);
 
-    const cleanUserEmail = isAdmin 
-      ? emailParam || (user?.email ? user.email.toLowerCase().trim() : '')
-      : (user?.email ? user.email.toLowerCase().trim() : emailParam);
+    const convId = searchParams.get('conversation_id') || searchParams.get('chatId') || '';
+    const guestIdParam = searchParams.get('guest_id') || extractGuestId(convId);
+    const emailParam = searchParams.get('clientEmail') || searchParams.get('email') || '';
 
-    // ─────────────────────────────────────────────────────────────
-    // 1. INBOX LIST ACTION
-    // ─────────────────────────────────────────────────────────────
-    if (action === 'inbox') {
-      let conversations = [];
+    const cleanEmail = isValidEmail(emailParam) ? emailParam.toLowerCase().trim() : (user?.email && isValidEmail(user.email) ? user.email.toLowerCase().trim() : null);
 
-      if (isAdmin) {
-        // Admin sees all studio conversations sorted by latest activity
-        const { data: convs, error: convErr } = await supabase
-          .from('conversations')
-          .select('id, title, type, order_id, metadata, last_message_preview, last_message_at, created_at, updated_at')
-          .order('last_message_at', { ascending: false })
-          .limit(100);
-
-        if (convErr) throw convErr;
-
-        // Fetch participants for unread badges and customer metadata
-        const convIds = (convs || []).map(c => c.id);
-        let participantsByConv = new Map();
-
-        if (convIds.length > 0) {
-          const { data: participants } = await supabase
-            .from('conversation_participants')
-            .select('conversation_id, user_id, user_email, user_name, role, unread_count, last_read_at')
-            .in('conversation_id', convIds);
-
-          (participants || []).forEach(p => {
-            if (!participantsByConv.has(p.conversation_id)) {
-              participantsByConv.set(p.conversation_id, []);
-            }
-            participantsByConv.get(p.conversation_id).push(p);
-          });
-        }
-
-        conversations = (convs || []).map(c => {
-          const parts = participantsByConv.get(c.id) || [];
-          const clientPart = parts.find(p => p.role === 'client' || p.role === 'guest') || parts[0];
-          const adminPart = parts.find(p => p.role === 'admin' || p.role === 'staff');
-          
-          return {
-            ...c,
-            client_name: clientPart?.user_name || c.metadata?.client_name || 'Customer',
-            client_email: clientPart?.user_email || c.metadata?.client_email || '',
-            unread_count: adminPart?.unread_count || 0,
-            participants: parts
-          };
-        });
-      } else {
-        // Client only sees conversations they participate in
-        if (!cleanUserEmail && !userIdParam) {
-          return NextResponse.json({ conversations: [] }, { headers: NO_CACHE_HEADERS });
-        }
-
-        const { data: userParts, error: partErr } = await supabase
-          .from('conversation_participants')
-          .select('conversation_id, unread_count, last_read_at, user_email')
-          .or(`user_email.ilike.${cleanUserEmail},user_id.eq.${userIdParam || 'none'}`);
-
-        if (partErr) throw partErr;
-
-        const convIds = (userParts || []).map(p => p.conversation_id);
-        if (convIds.length === 0) {
-          return NextResponse.json({ conversations: [] }, { headers: NO_CACHE_HEADERS });
-        }
-
-        const { data: convs, error: convErr } = await supabase
-          .from('conversations')
-          .select('id, title, type, order_id, metadata, last_message_preview, last_message_at, created_at, updated_at')
-          .in('id', convIds)
-          .order('last_message_at', { ascending: false });
-
-        if (convErr) throw convErr;
-
-        const unreadMap = new Map((userParts || []).map(p => [p.conversation_id, p.unread_count]));
-
-        conversations = (convs || []).map(c => ({
-          ...c,
-          unread_count: unreadMap.get(c.id) || 0
-        }));
-      }
-
-      return NextResponse.json({ conversations }, { headers: NO_CACHE_HEADERS });
+    if (!convId && !guestIdParam && !cleanEmail) {
+      return NextResponse.json({ success: true, messages: [] });
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // 2. MESSAGES HISTORY ACTION
-    // ─────────────────────────────────────────────────────────────
-    if (action === 'messages') {
-      if (!conversationId) {
-        return NextResponse.json({ error: 'conversationId is required' }, { status: 400 });
-      }
-
-      // Security Check: Verify caller has access to this conversation unless Admin
-      if (!isAdmin) {
-        const { data: isParticipant } = await supabase
-          .from('conversation_participants')
-          .select('id')
-          .eq('conversation_id', conversationId)
-          .or(`user_email.ilike.${cleanUserEmail},user_id.eq.${userIdParam || 'none'}`)
-          .maybeSingle();
-
-        // If no participant record found and not admin, block unauthorized access
-        if (!isParticipant && cleanUserEmail) {
-          return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-        }
-      }
-
-      const { data: messages, error: msgErr } = await supabase
-        .from('messages')
-        .select('id, conversation_id, sender_id, sender_email, sender_name, sender_role, content, attachments, reply_to, metadata, is_read, created_at')
-        .eq('conversation_id', conversationId)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: true })
-        .limit(limit);
-
-      if (msgErr) throw msgErr;
-
-      return NextResponse.json({ messages: messages || [] }, { headers: NO_CACHE_HEADERS });
+    // Security check: non-admins cannot query someone else's email thread
+    if (!isAdmin && cleanEmail && user?.email && user.email.toLowerCase().trim() !== cleanEmail) {
+      return NextResponse.json({ success: false, error: 'Unauthorized to view this thread.' }, { status: 403 });
     }
 
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+    const targetConvIds = new Set();
+    if (convId) {
+      targetConvIds.add(convId);
+      targetConvIds.add(convId.toLowerCase());
+    }
+
+    if (guestIdParam) {
+      targetConvIds.add(`support-${guestIdParam}`);
+      targetConvIds.add(`inbox-${guestIdParam}`);
+      targetConvIds.add(guestIdParam);
+    }
+
+    if (cleanEmail) {
+      targetConvIds.add(`support-${cleanEmail}`);
+      targetConvIds.add(`inbox-${cleanEmail}`);
+      targetConvIds.add(`direct-${cleanEmail}`);
+      targetConvIds.add(`chat-${cleanEmail}`);
+    }
+
+    // Build database query
+    let query = supabase.from('messages').select('*').order('created_at', { ascending: true });
+
+    const orConditions = [];
+    if (targetConvIds.size > 0) {
+      const idList = Array.from(targetConvIds).map(id => `conversation_id.eq.${id}`).join(',');
+      orConditions.push(idList);
+    }
+    if (guestIdParam) {
+      orConditions.push(`guest_id.eq.${guestIdParam}`);
+    }
+    if (cleanEmail) {
+      orConditions.push(`client_email.ilike.${cleanEmail}`);
+    }
+
+    if (orConditions.length > 0) {
+      query = query.or(orConditions.join(','));
+    }
+
+    const { data: rawMessages, error } = await query;
+    if (error) {
+      console.warn('[Chat Messages GET error]:', error.message);
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+
+    // Fetch custom offers for authoritative hydration
+    let customOffersMap = new Map();
+    try {
+      const { data: offers } = await supabase.from('custom_offers').select('*');
+      if (Array.isArray(offers)) {
+        offers.forEach(o => { if (o?.id) customOffersMap.set(o.id, o); });
+      }
+    } catch {}
+
+    const formattedMessages = (rawMessages || [])
+      .filter(m => !m.deleted_at)
+      .map(m => {
+        let offerData = m.offer_data || m.offerData || null;
+        if (typeof offerData === 'string') {
+          try { offerData = JSON.parse(offerData); } catch { offerData = null; }
+        }
+        let offerId = m.offer_id || m.offerId || offerData?.id || null;
+        if (offerId && customOffersMap.has(offerId)) {
+          offerData = { ...(offerData || {}), ...customOffersMap.get(offerId) };
+        }
+
+        let attachUrl = m.attachment_url || null;
+        let attachName = m.attachment_name || null;
+        let attachSize = m.attachment_size || null;
+        let attachType = m.attachment_type || null;
+
+        if (m.attachment && typeof m.attachment === 'string' && !offerData) {
+          const trimmed = m.attachment.trim();
+          if (trimmed.startsWith('{')) {
+            try {
+              const p = JSON.parse(trimmed);
+              attachUrl = p.url || p.file_url || attachUrl;
+              attachName = p.name || p.file_name || attachName;
+              attachSize = p.size || p.file_size || attachSize;
+              attachType = p.type || p.mime_type || attachType;
+            } catch {}
+          } else if (trimmed.startsWith('http')) {
+            attachUrl = trimmed;
+            if (!attachName) attachName = decodeURIComponent(trimmed.split('/').pop()?.split('?')[0] || 'file');
+          } else if (!attachName) {
+            attachName = trimmed;
+          }
+        }
+
+        return {
+          id: m.id,
+          conversation_id: m.conversation_id,
+          thread_id: m.thread_id || m.conversation_id,
+          guest_id: m.guest_id || null,
+          type: m.type || (offerId || offerData ? 'custom_offer' : 'text'),
+          metadata: m.metadata || {},
+          client_email: m.client_email || null,
+          sender: m.sender,
+          senderName: m.sender === 'admin' ? 'Support' : (m.sender_name || 'Client'),
+          sender_name: m.sender_name,
+          text: offerData ? `📋 Custom Offer: ${offerData.title} ($${parseFloat(offerData.final_price || offerData.price || 0).toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(offerData)}]` : (m.text || ''),
+          attachment: offerData ? JSON.stringify(offerData) : m.attachment,
+          attachment_url: attachUrl,
+          attachment_name: attachName,
+          attachment_size: attachSize,
+          attachment_type: offerData ? 'custom_offer' : attachType,
+          reply_to: m.reply_to || null,
+          offer_id: offerId,
+          offer_data: offerData,
+          status: m.status || 'sent',
+          is_read: m.is_read === true || m.is_read === 'true',
+          timestamp: m.timestamp || m.created_at
+        };
+      });
+
+    return NextResponse.json({ success: true, messages: formattedMessages }, { headers: NO_CACHE_HEADERS });
   } catch (err) {
-    console.error('[API /api/chat/messages GET Error]:', err);
-    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
-  }
-}
-
-export async function POST(request) {
-  try {
-    const body = await request.json().catch(() => ({}));
-    const { action, conversationId, userId, role = 'client' } = body;
-    const supabase = createAdminClient();
-
-    if (action === 'markRead') {
-      if (!conversationId || !userId) {
-        return NextResponse.json({ error: 'Missing conversationId or userId' }, { status: 400 });
-      }
-
-      // Reset unread count for this participant & update last_read_at
-      await supabase
-        .from('conversation_participants')
-        .update({
-          unread_count: 0,
-          last_read_at: new Date().toISOString()
-        })
-        .eq('conversation_id', conversationId)
-        .or(`user_id.eq.${userId},user_email.ilike.${userId}`);
-
-      return NextResponse.json({ success: true }, { headers: NO_CACHE_HEADERS });
-    }
-
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-  } catch (err) {
-    console.error('[API /api/chat/messages POST Error]:', err);
-    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+    console.error('[GET /api/chat/messages]', err);
+    return NextResponse.json({ success: false, error: err.message }, { status: 500, headers: NO_CACHE_HEADERS });
   }
 }
