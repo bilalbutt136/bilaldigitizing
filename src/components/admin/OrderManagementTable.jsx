@@ -153,6 +153,17 @@ export const OrderManagementTable = () => {
     if (filterPayment === 'paid' && !getIsOrderPaid(ord)) return false;
     if (filterPayment === 'pending' && getIsOrderPaid(ord)) return false;
 
+    if (filterStatus === 'rush') {
+      const isRush = Boolean(
+        ord?.is_rush || 
+        ord?.isRush || 
+        ord?.turnaround === 'rush' || 
+        ord?.turnaround === '2-4 hours' || 
+        String(ord?.notes || '').toLowerCase().includes('rush') ||
+        String(ord?.title || '').toLowerCase().includes('rush')
+      );
+      return matchesSearch && isRush;
+    }
     if (filterStatus === 'submitted') return matchesSearch && (ord?.status === 'submitted' || !ord?.status);
     if (filterStatus === 'worker_review') return matchesSearch && (ord?.worker_status === 'Review Pending' || ord?.workerStatus === 'Review Pending');
     if (filterStatus === 'in_progress') return matchesSearch && (ord?.status === 'in_progress' || ord?.status === 'digitizing' || ord?.status === 'assigned');
@@ -345,6 +356,22 @@ export const OrderManagementTable = () => {
             style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
           >
             All Orders ({orders.length})
+          </button>
+
+          <button 
+            className={`btn btn-sm ${filterStatus === 'rush' ? 'btn-primary-orange' : 'btn-outline'}`}
+            onClick={() => setFilterStatus(filterStatus === 'rush' ? 'all' : 'rush')}
+            style={{ 
+              fontWeight: 800, 
+              fontSize: '0.76rem', 
+              padding: '0.3rem 0.6rem', 
+              borderRadius: '6px',
+              background: filterStatus === 'rush' ? '#dc2626' : (orders.some(o => o.is_rush || o.isRush || o.turnaround === 'rush' || o.turnaround === '2-4 hours' || String(o.notes || '').toLowerCase().includes('rush') || String(o.title || '').toLowerCase().includes('rush')) ? '#fef2f2' : undefined),
+              color: filterStatus === 'rush' ? '#ffffff' : (orders.some(o => o.is_rush || o.isRush || o.turnaround === 'rush' || o.turnaround === '2-4 hours' || String(o.notes || '').toLowerCase().includes('rush') || String(o.title || '').toLowerCase().includes('rush')) ? '#991b1b' : undefined),
+              borderColor: filterStatus === 'rush' ? '#dc2626' : (orders.some(o => o.is_rush || o.isRush || o.turnaround === 'rush' || o.turnaround === '2-4 hours' || String(o.notes || '').toLowerCase().includes('rush') || String(o.title || '').toLowerCase().includes('rush')) ? '#fecaca' : undefined)
+            }}
+          >
+            🔥 Rush ({orders.filter(o => o.is_rush || o.isRush || o.turnaround === 'rush' || o.turnaround === '2-4 hours' || String(o.notes || '').toLowerCase().includes('rush') || String(o.title || '').toLowerCase().includes('rush')).length})
           </button>
 
           <button 

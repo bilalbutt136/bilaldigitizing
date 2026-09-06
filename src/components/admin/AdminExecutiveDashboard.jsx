@@ -135,11 +135,23 @@ export const AdminExecutiveDashboard = ({
 
       // Status filter
       if (selectedStatus !== 'all') {
-        const st = String(o?.status || 'pending').toLowerCase();
-        if (selectedStatus === 'pending' && st !== 'pending' && st !== 'submitted' && st !== 'quote_requested') return false;
-        if (selectedStatus === 'in_progress' && st !== 'in_progress' && st !== 'digitizing' && st !== 'vectoring' && st !== 'production') return false;
-        if (selectedStatus === 'revision' && st !== 'revision' && st !== 'changes_requested') return false;
-        if (selectedStatus === 'completed' && st !== 'completed' && st !== 'delivered') return false;
+        if (selectedStatus === 'rush') {
+          const isRush = Boolean(
+            o?.is_rush || 
+            o?.isRush || 
+            o?.turnaround === 'rush' || 
+            o?.turnaround === '2-4 hours' || 
+            String(o?.notes || '').toLowerCase().includes('rush') ||
+            String(o?.title || '').toLowerCase().includes('rush')
+          );
+          if (!isRush) return false;
+        } else {
+          const st = String(o?.status || 'pending').toLowerCase();
+          if (selectedStatus === 'pending' && st !== 'pending' && st !== 'submitted' && st !== 'quote_requested') return false;
+          if (selectedStatus === 'in_progress' && st !== 'in_progress' && st !== 'digitizing' && st !== 'vectoring' && st !== 'production') return false;
+          if (selectedStatus === 'revision' && st !== 'revision' && st !== 'changes_requested') return false;
+          if (selectedStatus === 'completed' && st !== 'completed' && st !== 'delivered') return false;
+        }
       }
 
       // Search query filter
@@ -643,13 +655,95 @@ export const AdminExecutiveDashboard = ({
           
           {/* Header & Filter Controls */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <div>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main, #0f172a)', margin: 0 }}>
-                Live Production Queue
-              </h3>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted, #64748b)' }}>
-                Showing {filteredQueue.length} of {safeOrders.length} total orders
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+              <div>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main, #0f172a)', margin: 0 }}>
+                  Live Production Queue
+                </h3>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted, #64748b)' }}>
+                  Showing {filteredQueue.length} of {safeOrders.length} total orders
+                </span>
+              </div>
+
+              {selectedStatus === 'rush' && (
+                <span style={{
+                  background: '#fee2e2',
+                  border: '1.5px solid #fecaca',
+                  color: '#991b1b',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  padding: '0.15rem 0.55rem',
+                  borderRadius: '9999px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
+                }}>
+                  🔥 Rush Orders Only ({filteredQueue.length})
+                  <button
+                    type="button"
+                    onClick={() => setSelectedStatus('all')}
+                    style={{
+                      background: '#dc2626',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '14px',
+                      height: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      fontSize: '9px',
+                      fontWeight: 900,
+                      padding: 0,
+                      lineHeight: 1
+                    }}
+                    title="Clear Rush Filter"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
+
+              {selectedStatus === 'pending' && (
+                <span style={{
+                  background: '#ffedd5',
+                  border: '1.5px solid #fed7aa',
+                  color: '#c2410c',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  padding: '0.15rem 0.55rem',
+                  borderRadius: '9999px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
+                }}>
+                  ⏳ Pending Review Only ({filteredQueue.length})
+                  <button
+                    type="button"
+                    onClick={() => setSelectedStatus('all')}
+                    style={{
+                      background: '#ea580c',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '14px',
+                      height: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      fontSize: '9px',
+                      fontWeight: 900,
+                      padding: 0,
+                      lineHeight: 1
+                    }}
+                    title="Clear Pending Filter"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
             </div>
 
             <button
@@ -694,24 +788,46 @@ export const AdminExecutiveDashboard = ({
               />
             </div>
 
-            {/* Category Tabs */}
+            {/* Category & Status Tabs */}
             <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
               <button
                 type="button"
-                onClick={() => setSelectedCategory('all')}
+                onClick={() => { setSelectedCategory('all'); if (selectedStatus === 'rush') setSelectedStatus('all'); }}
                 style={{
                   padding: '0.4rem 0.7rem',
                   borderRadius: '8px',
                   fontSize: '0.72rem',
                   fontWeight: 700,
-                  border: selectedCategory === 'all' ? '1.5px solid #ea580c' : '1px solid #e2e8f0',
-                  background: selectedCategory === 'all' ? '#ea580c' : 'var(--bg-subtle, #f8fafc)',
-                  color: selectedCategory === 'all' ? '#ffffff' : 'var(--text-main, #334155)',
+                  border: (selectedCategory === 'all' && selectedStatus !== 'rush') ? '1.5px solid #ea580c' : '1px solid #e2e8f0',
+                  background: (selectedCategory === 'all' && selectedStatus !== 'rush') ? '#ea580c' : 'var(--bg-subtle, #f8fafc)',
+                  color: (selectedCategory === 'all' && selectedStatus !== 'rush') ? '#ffffff' : 'var(--text-main, #334155)',
                   cursor: 'pointer'
                 }}
               >
                 All ({safeOrders.length})
               </button>
+
+              {rushJobs.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedStatus(selectedStatus === 'rush' ? 'all' : 'rush')}
+                  style={{
+                    padding: '0.4rem 0.7rem',
+                    borderRadius: '8px',
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    border: selectedStatus === 'rush' ? '1.5px solid #dc2626' : '1px solid #fca5a5',
+                    background: selectedStatus === 'rush' ? '#dc2626' : '#fef2f2',
+                    color: selectedStatus === 'rush' ? '#ffffff' : '#b91c1c',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem'
+                  }}
+                >
+                  🔥 Rush ({rushJobs.length})
+                </button>
+              )}
 
               <button
                 type="button"
@@ -1093,7 +1209,7 @@ export const AdminExecutiveDashboard = ({
 
               {/* Pending Specs Verification */}
               <div 
-                onClick={() => { setSelectedStatus('pending'); }}
+                onClick={() => { setSelectedStatus(selectedStatus === 'pending' ? 'all' : 'pending'); }}
                 role="button"
                 tabIndex={0}
                 style={{
@@ -1102,9 +1218,11 @@ export const AdminExecutiveDashboard = ({
                   justifyContent: 'space-between',
                   padding: '0.65rem 0.8rem',
                   borderRadius: '10px',
-                  background: pendingJobs.length > 0 ? '#fff7ed' : 'var(--bg-subtle, #f8fafc)',
-                  border: pendingJobs.length > 0 ? '1.5px solid #fed7aa' : '1px solid #e2e8f0',
-                  cursor: 'pointer'
+                  background: selectedStatus === 'pending' ? '#ffedd5' : (pendingJobs.length > 0 ? '#fff7ed' : 'var(--bg-subtle, #f8fafc)'),
+                  border: selectedStatus === 'pending' ? '2px solid #ea580c' : (pendingJobs.length > 0 ? '1.5px solid #fed7aa' : '1px solid #e2e8f0'),
+                  cursor: 'pointer',
+                  boxShadow: selectedStatus === 'pending' ? '0 0 0 2px rgba(234, 88, 12, 0.2)' : 'none',
+                  transition: 'all 0.15s ease'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1114,7 +1232,7 @@ export const AdminExecutiveDashboard = ({
                       Pending Order Review
                     </div>
                     <div style={{ fontSize: '0.68rem', color: 'var(--text-muted, #64748b)' }}>
-                      {pendingJobs.length} orders awaiting specs check
+                      {pendingJobs.length} orders awaiting specs check {selectedStatus === 'pending' ? '• (Active Filter)' : ''}
                     </div>
                   </div>
                 </div>
@@ -1126,7 +1244,7 @@ export const AdminExecutiveDashboard = ({
               {/* Rush Orders */}
               {rushJobs.length > 0 && (
                 <div 
-                  onClick={() => setActiveTab('orders')}
+                  onClick={() => { setSelectedStatus(selectedStatus === 'rush' ? 'all' : 'rush'); }}
                   role="button"
                   tabIndex={0}
                   style={{
@@ -1135,9 +1253,11 @@ export const AdminExecutiveDashboard = ({
                     justifyContent: 'space-between',
                     padding: '0.65rem 0.8rem',
                     borderRadius: '10px',
-                    background: '#fef2f2',
-                    border: '1.5px solid #fecaca',
-                    cursor: 'pointer'
+                    background: selectedStatus === 'rush' ? '#fee2e2' : '#fef2f2',
+                    border: selectedStatus === 'rush' ? '2px solid #dc2626' : '1.5px solid #fecaca',
+                    cursor: 'pointer',
+                    boxShadow: selectedStatus === 'rush' ? '0 0 0 2px rgba(220, 38, 38, 0.2)' : 'none',
+                    transition: 'all 0.15s ease'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1147,7 +1267,7 @@ export const AdminExecutiveDashboard = ({
                         🔥 Rush Production Queue
                       </div>
                       <div style={{ fontSize: '0.68rem', color: '#b91c1c' }}>
-                        {rushJobs.length} urgent priority orders
+                        {rushJobs.length} urgent priority orders {selectedStatus === 'rush' ? '• (Active Filter)' : ''}
                       </div>
                     </div>
                   </div>
