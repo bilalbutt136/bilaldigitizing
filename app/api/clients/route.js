@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -14,7 +17,10 @@ export async function GET(request) {
         return NextResponse.json({ clients: [] });
       }
       
-      const { data, error } = await supabase.from('clients').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, name, full_name, email, phone, company, company_name, avatar_url, role, wallet_balance, orders_count, created_at, updated_at')
+        .order('created_at', { ascending: false });
       if (error) {
         console.error('[Clients API GET fetchAll error]', error.message);
         return NextResponse.json({ clients: [] });
@@ -30,7 +36,7 @@ export async function GET(request) {
 
     const { data, error } = await supabase
       .from('clients')
-      .select('*')
+      .select('id, name, full_name, email, phone, company, company_name, avatar_url, role, wallet_balance, orders_count, created_at, updated_at')
       .eq('email', user.email.toLowerCase().trim())
       .maybeSingle();
 

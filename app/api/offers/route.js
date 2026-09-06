@@ -195,7 +195,7 @@ export async function GET(request) {
     }
 
     if (action === 'fetchOffers') {
-      let query = supabase.from('custom_offers').select('*').order('created_at', { ascending: false });
+      let query = supabase.from('custom_offers').select('id, conversation_id, thread_id, client_name, client_email, title, description, service_type, price, discount_amount, final_price, delivery_time_text, delivery_days, revisions_allowed, expires_in_hours, expires_at, status, payment_status, order_id, created_by, created_at, updated_at').order('created_at', { ascending: false });
 
       if (conversationId) {
         query = query.eq('conversation_id', conversationId);

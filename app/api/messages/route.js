@@ -250,11 +250,12 @@ export async function GET(request) {
         ? normalizeEmail(emailParam || user?.email || '')
         : (user?.email ? normalizeEmail(user.email) : '');
 
-      // 1. Fetch all messages
+      // 1. Fetch all messages with projected columns
       const { data: allMessages } = await supabase
         .from('messages')
-        .select('*')
-        .order('created_at', { ascending: true });
+        .select('id, conversation_id, client_email, sender, sender_name, text, attachment, attachment_url, attachment_name, attachment_size, attachment_type, file_id, offer_id, offer_data, reply_to, is_read, is_autopilot, auto_pilot, metadata, deleted_at, created_at, timestamp')
+        .order('created_at', { ascending: true })
+        .limit(2000);
       const rawMessages = allMessages || [];
 
       // 2. Fetch all orders (for mapping client details & order discussions)
@@ -272,13 +273,13 @@ export async function GET(request) {
       // 4. Fetch existing conversations table records
       const { data: allConvs } = await supabase
         .from('conversations')
-        .select('*');
+        .select('id, client_email, client_name, client_company, order_id, order_title, unread_count, admin_unread_count, status, updated_at, created_at');
       const rawConvs = allConvs || [];
 
       // 5. Fetch custom offers to ensure authoritative status (accepted, declined, etc.) is never overwritten
       const { data: allCustomOffers } = await supabase
         .from('custom_offers')
-        .select('*');
+        .select('id, conversation_id, client_email, client_name, title, description, price, final_price, status, payment_status, order_id, expires_at, delivery_days, created_at, updated_at');
       const rawCustomOffers = allCustomOffers || [];
       const offersMap = new Map();
       rawCustomOffers.forEach(off => {
@@ -624,7 +625,7 @@ export async function GET(request) {
         if (targetEmail) {
           const { data: convMsgs } = await supabase
             .from('messages')
-            .select('*')
+            .select('id, conversation_id, client_email, sender, sender_name, text, attachment, attachment_url, attachment_name, attachment_size, attachment_type, file_id, offer_id, offer_data, reply_to, is_read, is_autopilot, auto_pilot, metadata, deleted_at, created_at, timestamp')
             .in('conversation_id', targetIds)
             .order('created_at', { ascending: true });
 
@@ -632,7 +633,7 @@ export async function GET(request) {
           try {
             const { data: em } = await supabase
               .from('messages')
-              .select('*')
+              .select('id, conversation_id, client_email, sender, sender_name, text, attachment, attachment_url, attachment_name, attachment_size, attachment_type, file_id, offer_id, offer_data, reply_to, is_read, is_autopilot, auto_pilot, metadata, deleted_at, created_at, timestamp')
               .ilike('client_email', targetEmail)
               .order('created_at', { ascending: true });
             emailMsgs = em || [];
@@ -650,7 +651,7 @@ export async function GET(request) {
               const offerIds = clientOffers.map(o => o.id);
               const { data: offMsgs } = await supabase
                 .from('messages')
-                .select('*')
+                .select('id, conversation_id, client_email, sender, sender_name, text, attachment, attachment_url, attachment_name, attachment_size, attachment_type, file_id, offer_id, offer_data, reply_to, is_read, is_autopilot, auto_pilot, metadata, deleted_at, created_at, timestamp')
                 .in('offer_id', offerIds);
               offerMsgList = offMsgs || [];
             }
@@ -665,7 +666,7 @@ export async function GET(request) {
         } else {
           const { data } = await supabase
             .from('messages')
-            .select('*')
+            .select('id, conversation_id, client_email, sender, sender_name, text, attachment, attachment_url, attachment_name, attachment_size, attachment_type, file_id, offer_id, offer_data, reply_to, is_read, is_autopilot, auto_pilot, metadata, deleted_at, created_at, timestamp')
             .in('conversation_id', targetIds)
             .order('created_at', { ascending: true });
           rawMessages = (data || []).filter(m => !m.deleted_at);
@@ -679,7 +680,7 @@ export async function GET(request) {
       try {
         const { data: cco } = await supabase
           .from('custom_offers')
-          .select('*');
+          .select('id, conversation_id, client_email, client_name, title, description, price, final_price, status, payment_status, order_id, expires_at, delivery_days, created_at, updated_at');
         convCustomOffers = cco || [];
       } catch {}
       const convOffersMap = new Map();
@@ -789,7 +790,7 @@ export async function GET(request) {
 
     if (action === 'fetchNotifications') {
       const cleanUserEmail = normalizeEmail(user?.email || emailParam || '');
-      let notifQuery = supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(60);
+      let notifQuery = supabase.from('notifications').select('id, title, message, type, recipient_email, recipient_role, is_read, read_at, action_url, metadata, created_at').order('created_at', { ascending: false }).limit(60);
 
       if (!isAdmin) {
         if (cleanUserEmail) {
@@ -952,7 +953,7 @@ export async function POST(request) {
         try {
           const { data: existingMsg } = await supabase
             .from('messages')
-            .select('*')
+            .select('id, conversation_id, text, created_at')
             .eq('idempotency_key', payload.idempotency_key)
             .maybeSingle();
           if (existingMsg) {
@@ -966,7 +967,7 @@ export async function POST(request) {
         try {
           const { data: existingMsg } = await supabase
             .from('messages')
-            .select('*')
+            .select('id, conversation_id, text, created_at')
             .eq('id', payload.id)
             .maybeSingle();
           if (existingMsg) {

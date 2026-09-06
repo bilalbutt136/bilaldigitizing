@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -63,7 +66,7 @@ export async function GET(request) {
       
       let data = null;
       try {
-        let query = supabase.from('orders').select('*, order_files(*), order_messages(*)').order('created_at', { ascending: false });
+        let query = supabase.from('orders').select('id, title, client_name, client_email, service_category, service_type, fabric_type, requested_formats, is_rush, price, cost, status, payment_status, artwork_url, image_url, logo, user_id, worker_id, worker_status, worker_file_url, worker_file_name, worker_notes, worker_payout, worker_payout_status, admin_worker_feedback, worker_assigned_at, worker_submitted_at, worker_reviewed_at, paid_at, delivery_notes, notes, created_at, updated_at, order_files(id, file_name, file_format, file_type, public_url, file_url, uploaded_by, created_at), order_messages(id, message, sender_name, sender_role, is_staff, attachment_url, created_at)').order('created_at', { ascending: false });
         if (targetWorkerId) {
           query = query.eq('worker_id', targetWorkerId);
         } else if (targetEmail) {
@@ -76,7 +79,7 @@ export async function GET(request) {
         data = res.data;
       } catch (nestedErr) {
         console.warn('Nested orders query fallback notice:', nestedErr);
-        let fallbackQuery = supabase.from('orders').select('*').order('created_at', { ascending: false });
+        let fallbackQuery = supabase.from('orders').select('id, title, client_name, client_email, service_category, service_type, is_rush, price, status, payment_status, artwork_url, image_url, worker_id, worker_status, worker_payout, worker_payout_status, notes, created_at, updated_at').order('created_at', { ascending: false });
         if (targetWorkerId) {
           fallbackQuery = fallbackQuery.eq('worker_id', targetWorkerId);
         } else if (targetEmail) {
@@ -94,7 +97,7 @@ export async function GET(request) {
     
     if (action === 'fetchPending') {
       if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      const { data, error } = await supabase.from('orders').select('*').eq('status', 'pending').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('orders').select('id, title, client_name, client_email, service_category, price, status, payment_status, is_rush, artwork_url, image_url, notes, created_at').eq('status', 'pending').order('created_at', { ascending: false });
       if (error) throw error;
       return NextResponse.json({ orders: data });
     }
@@ -117,9 +120,9 @@ export async function GET(request) {
         { data: revisions },
         { data: messages }
       ] = await Promise.all([
-        supabase.from('order_files').select('*').eq('order_id', orderId),
-        supabase.from('revisions').select('*').eq('order_id', orderId),
-        supabase.from('order_messages').select('*').eq('order_id', orderId)
+        supabase.from('order_files').select('id, file_name, file_format, file_type, public_url, file_url, file_path, uploaded_by, created_at').eq('order_id', orderId),
+        supabase.from('revisions').select('id, order_id, instructions, requested_by, status, created_at').eq('order_id', orderId),
+        supabase.from('order_messages').select('id, order_id, message, text, sender_name, sender_role, is_staff, attachment_url, attachments, created_at').eq('order_id', orderId)
       ]);
       return NextResponse.json({ orderFiles, revisions, messages });
     }
