@@ -46,11 +46,22 @@ const formatChatTime = (timestamp) => {
   try {
     const d = new Date(timestamp);
     if (isNaN(d.getTime())) return String(timestamp);
-    const isToday = new Date().toDateString() === d.toDateString();
+    const now = new Date();
+    const isToday = now.toDateString() === d.toDateString();
+
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const isYesterday = yesterday.toDateString() === d.toDateString();
+
+    const timeStr = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+
     if (isToday) {
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return timeStr;
     }
-    return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    if (isYesterday) {
+      return `Yesterday, ${timeStr}`;
+    }
+    return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${timeStr}`;
   } catch {
     return 'Just now';
   }
@@ -124,7 +135,7 @@ export const resolveThreadInfo = (conv, orders = []) => {
 
 const parseMessageTime = (msg) => {
   if (!msg) return 0;
-  const raw = msg.timestamp || msg.created_at || msg.createdAt || msg.time;
+  const raw = msg.created_at || msg.timestamp || msg.createdAt || msg.time;
   if (!raw) return 0;
   if (typeof raw === 'number') return raw;
   const parsed = new Date(raw).getTime();
@@ -240,6 +251,8 @@ export const AdminChatInbox = () => {
   const { showToast, setSelectedOrderForDrawer, orders = [] } = useAppState();
 
   const [conversations, setConversations] = useState([]);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+  const [isSending, setIsSending] = useState(false);
   const cacheKey = 'bdigi_admin_inbox_cache';
 
   const [activeChatId, setActiveChatId] = useState(null);
@@ -495,35 +508,53 @@ export const AdminChatInbox = () => {
 
   useEffect(() => {
     let isMounted = true;
-    const loadChats = async () => {
+    const loadChats = async (isInitial = true) => {
       if (!isMounted) return;
-      const data = await fetchConversations();
-      if (isMounted) {
-        if (data && data.length > 0) {
-          const fresh = deduplicateThreads(data);
-          setConversations(fresh);
-          if (typeof window !== 'undefined') {
-            try {
-              localStorage.setItem(cacheKey, JSON.stringify(fresh));
-            } catch {}
+      if (isInitial && (!conversations || conversations.length === 0)) {
+        setIsLoadingConversations(true);
+      }
+      try {
+        const data = await fetchConversations();
+        if (isMounted) {
+          if (data && data.length > 0) {
+            const fresh = deduplicateThreads(data);
+            setConversations(fresh);
+            if (typeof window !== 'undefined') {
+              try {
+                localStorage.setItem(cacheKey, JSON.stringify(fresh));
+              } catch {}
+            }
+            if (!activeChatIdRef.current && fresh[0]?.id) {
+              setActiveChatId(fresh[0].id);
+            }
+          } else if (isInitial) {
+            setConversations([]);
+            setActiveChatId(null);
+            if (typeof window !== 'undefined') {
+              try {
+                localStorage.removeItem(cacheKey);
+              } catch {}
+            }
           }
-          if (!activeChatId && fresh[0]?.id) {
-            setActiveChatId(fresh[0].id);
-          }
-        } else {
-          setConversations([]);
-          setActiveChatId(null);
-          if (typeof window !== 'undefined') {
-            try {
-              localStorage.removeItem(cacheKey);
-            } catch {}
-          }
+        }
+      } catch (err) {
+        console.warn('Load chats error:', err);
+      } finally {
+        if (isMounted && isInitial) {
+          setIsLoadingConversations(false);
         }
       }
     };
     
-    // Initial fetch once
-    loadChats();
+    // Initial fetch
+    loadChats(true);
+
+    // 15-second silent background poll to ensure absolute 100% data consistency
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        loadChats(false);
+      }
+    }, 15000);
     
     // Realtime PostgreSQL subscription for instant message delivery
     const unsubscribe = subscribeToLiveMessages(
@@ -676,6 +707,10 @@ export const AdminChatInbox = () => {
           }
           return deduplicated;
         });
+
+        if (newMsg.conversation_id === activeChatIdRef.current) {
+          setTimeout(() => scrollToBottom('smooth'), 50);
+        }
       },
       (convPayload) => {
         if (!isMounted) return;
@@ -706,6 +741,7 @@ export const AdminChatInbox = () => {
 
     return () => {
       isMounted = false;
+      clearInterval(pollInterval);
       if (typeof unsubscribe === 'function') unsubscribe();
     };
   }, []);
@@ -824,20 +860,26 @@ export const AdminChatInbox = () => {
     }
   };
 
-  const scrollToBottom = () => {
+  const scrollToBottom = (behavior = 'smooth') => {
     if (chatFeedRef.current) {
-      chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
+      chatFeedRef.current.scrollTo({
+        top: chatFeedRef.current.scrollHeight,
+        behavior: behavior === 'smooth' ? 'smooth' : 'auto'
+      });
+    }
+    if (messagesEndRef.current) {
+      try {
+        messagesEndRef.current.scrollIntoView({
+          behavior: behavior === 'smooth' ? 'smooth' : 'auto',
+          block: 'end'
+        });
+      } catch {}
     }
     requestAnimationFrame(() => {
       if (chatFeedRef.current) {
         chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
       }
     });
-    setTimeout(() => {
-      if (chatFeedRef.current) {
-        chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
-      }
-    }, 50);
   };
 
   // Auto-expanding textarea height adjustment logic (min 40px, max 150px)
@@ -1075,8 +1117,15 @@ export const AdminChatInbox = () => {
 
   const handleSendMessage = async (e) => {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    if (isSending) return;
     if (!replyInput.trim() && !attachedFile) return;
     if (!currentActiveChatId) return;
+
+    const draftText = replyInput;
+    const draftFile = attachedFile;
+    const draftReplyTo = replyingTo;
+
+    setIsSending(true);
 
     const targetCustomerEmail = (activeInfo?.customerEmail || activeChat?.clientEmail || (currentActiveChatId ? currentActiveChatId.replace('support-', '').replace('inbox-', '').replace('direct-', '').replace('chat-', '') : '')).toLowerCase().trim();
 
@@ -1151,15 +1200,33 @@ export const AdminChatInbox = () => {
     setReplyingTo(null);
     setUndoDraft(null);
     broadcastTypingStatus(currentActiveChatId, 'Studio Support', 'admin', false);
+    playNotificationSound('send');
     showToast(`Reply sent to ${activeInfo.customerName || 'Customer'}!`, 'success');
     scrollToBottom('smooth');
 
-    if (isSupabaseConfigured) {
-      try {
+    try {
+      if (isSupabaseConfigured) {
         await addChatMessage(currentActiveChatId, newMsg);
-      } catch (err) {
-        console.warn('Admin persist message notice:', err);
       }
+    } catch (err) {
+      console.error('Admin persist message error:', err);
+      // Restore user draft inputs so message is not lost
+      setReplyInput(draftText);
+      setAttachedFile(draftFile);
+      setReplyingTo(draftReplyTo);
+      // Rollback optimistic state
+      setConversations(prev => prev.map(c => {
+        if (c.id === currentActiveChatId) {
+          return {
+            ...c,
+            messages: (c.messages || []).filter(m => m.id !== newMsg.id)
+          };
+        }
+        return c;
+      }));
+      showToast('Failed to deliver message: ' + (err?.message || 'Server connection error'), 'error');
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -1576,7 +1643,31 @@ export const AdminChatInbox = () => {
 
           {/* Conversations Thread Feed */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
-            {filteredConversations.length === 0 ? (
+            {isLoadingConversations && filteredConversations.length === 0 ? (
+              <div style={{ padding: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: '0.85rem',
+                      borderRadius: '10px',
+                      background: 'var(--color-bg-secondary, rgba(255,255,255,0.04))',
+                      border: '1px solid var(--color-border, rgba(255,255,255,0.06))',
+                      display: 'flex',
+                      gap: '0.75rem',
+                      alignItems: 'center',
+                      opacity: 0.7
+                    }}
+                  >
+                    <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'var(--color-border, #e2e8f0)', flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <div style={{ width: '55%', height: '12px', borderRadius: '4px', background: 'var(--color-border, #e2e8f0)' }} />
+                      <div style={{ width: '85%', height: '10px', borderRadius: '4px', background: 'var(--color-border, #cbd5e1)' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredConversations.length === 0 ? (
               <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                 <MessageSquare size={28} style={{ margin: '0 auto 0.75rem', opacity: 0.3 }} />
                 <p style={{ margin: 0, fontWeight: 700 }}>
@@ -2223,7 +2314,7 @@ export const AdminChatInbox = () => {
 
                 <button
                   type="submit"
-                  disabled={(!replyInput.trim() && !attachedFile) || isUploadingAttachment}
+                  disabled={(!replyInput.trim() && !attachedFile) || isUploadingAttachment || isSending}
                   style={{
                     height: '40px',
                     padding: '0 1rem',
@@ -2236,16 +2327,25 @@ export const AdminChatInbox = () => {
                     gap: '0.4rem',
                     fontWeight: 800,
                     fontSize: '0.85rem',
-                    cursor: (replyInput.trim() || attachedFile) ? 'pointer' : 'not-allowed',
+                    cursor: ((replyInput.trim() || attachedFile) && !isSending) ? 'pointer' : 'not-allowed',
                     flexShrink: 0,
                     boxShadow: (replyInput.trim() || attachedFile) ? '0 3px 12px rgba(234, 88, 12, 0.3)' : 'none',
                     transition: 'all 0.2s ease',
-                    opacity: ((!replyInput.trim() && !attachedFile) || isUploadingAttachment) ? 0.6 : 1
+                    opacity: ((!replyInput.trim() && !attachedFile) || isUploadingAttachment || isSending) ? 0.6 : 1
                   }}
                   title="Send message (Enter)"
                 >
-                  <span>Send</span>
-                  <Send size={14} />
+                  {isSending ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Sending...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Send</span>
+                      <Send size={14} />
+                    </>
+                  )}
                 </button>
               </div>
 

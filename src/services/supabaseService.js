@@ -1314,12 +1314,16 @@ export async function createConversation(dbConv) {
 export async function fetchConversations(email, channel = '') {
   try {
     const headers = await getAuthHeaders();
+    headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+    headers['Pragma'] = 'no-cache';
+    headers['Expires'] = '0';
     const cleanEmail = email ? String(email).toLowerCase().trim() : '';
     let query = cleanEmail ? `&clientEmail=${encodeURIComponent(cleanEmail)}` : '';
     if (channel) query += `&channel=${encodeURIComponent(channel)}`;
-    const res = await fetch(`/api/messages?action=fetchConversations${query}`, {
+    const res = await fetch(`/api/messages?action=fetchConversations${query}&_t=${Date.now()}`, {
       headers,
-      cache: 'no-store'
+      cache: 'no-store',
+      next: { revalidate: 0 }
     });
     const data = await res.json();
     return data.conversations || [];
@@ -1330,17 +1334,22 @@ export async function fetchChatMessages(chatId, email, guestId = null) {
   try {
     if (!chatId && !email && !guestId) return [];
     const headers = await getAuthHeaders();
+    headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+    headers['Pragma'] = 'no-cache';
+    headers['Expires'] = '0';
     const cleanEmail = email ? String(email).toLowerCase().trim() : '';
     const queryParts = [];
     if (chatId) queryParts.push(`conversation_id=${encodeURIComponent(chatId)}`);
     if (cleanEmail) queryParts.push(`clientEmail=${encodeURIComponent(cleanEmail)}`);
     if (guestId) queryParts.push(`guest_id=${encodeURIComponent(guestId)}`);
+    queryParts.push(`_t=${Date.now()}`);
     
     // Primary: dedicated chat messages endpoint
     try {
       const res = await fetch(`/api/chat/messages?${queryParts.join('&')}`, {
         headers,
-        cache: 'no-store'
+        cache: 'no-store',
+        next: { revalidate: 0 }
       });
       if (res.ok) {
         const data = await res.json();
@@ -1350,9 +1359,10 @@ export async function fetchChatMessages(chatId, email, guestId = null) {
 
     // Fallback: legacy endpoint
     const query = cleanEmail ? `&clientEmail=${encodeURIComponent(cleanEmail)}` : '';
-    const fallbackRes = await fetch(`/api/messages?action=fetchMessages&chatId=${encodeURIComponent(chatId || '')}${query}`, {
+    const fallbackRes = await fetch(`/api/messages?action=fetchMessages&chatId=${encodeURIComponent(chatId || '')}${query}&_t=${Date.now()}`, {
       headers,
-      cache: 'no-store'
+      cache: 'no-store',
+      next: { revalidate: 0 }
     });
     const fallbackData = await fallbackRes.json();
     return fallbackData.messages || [];
@@ -1829,11 +1839,36 @@ export function getSharedChatChannel() {
       }
     });
 
-    globalChatChannel.subscribe((status) => {
+    globalChatChannel.subscribe((status, err) => {
       if (status === 'SUBSCRIBED') {
         // Channel connected
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        console.warn(`[Supabase Realtime] Channel status: ${status}`, err?.message || '');
+        if (globalChatChannel && supabase) {
+          try { supabase.removeChannel(globalChatChannel); } catch {}
+          globalChatChannel = null;
+        }
+        // Auto reconnect after brief delay
+        setTimeout(() => {
+          getSharedChatChannel();
+        }, 2000);
       }
     });
+
+    if (typeof window !== 'undefined' && !window.__bdigi_realtime_setup) {
+      window.__bdigi_realtime_setup = true;
+      const handleWakeup = () => {
+        if (!globalChatChannel || globalChatChannel.state === 'closed' || globalChatChannel.state === 'errored') {
+          if (globalChatChannel && supabase) {
+            try { supabase.removeChannel(globalChatChannel); } catch {}
+            globalChatChannel = null;
+          }
+          getSharedChatChannel();
+        }
+      };
+      window.addEventListener('focus', handleWakeup);
+      window.addEventListener('online', handleWakeup);
+    }
   }
   return globalChatChannel;
 }

@@ -4,6 +4,16 @@ import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
+const NO_CACHE_HEADERS = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0',
+  'CDN-Cache-Control': 'no-store',
+  'Vercel-CDN-Cache-Control': 'no-store',
+  'Pragma': 'no-cache',
+  'Expires': '0'
+};
 
 async function fetchImageAsBase64(url) {
   if (!url || typeof url !== 'string' || !url.startsWith('http')) return null;
@@ -510,11 +520,11 @@ export async function GET(request) {
           const userSupport = supportConversations.find(c => c.clientEmail === cleanUserEmail) || getOrCreateThread('', cleanUserEmail, true);
           
           if (channelParam === 'support') {
-            return NextResponse.json({ conversations: [userSupport], inboxConversations: [userInbox], supportConversations: [userSupport] });
+            return NextResponse.json({ conversations: [userSupport], inboxConversations: [userInbox], supportConversations: [userSupport] }, { headers: NO_CACHE_HEADERS });
           } else if (channelParam === 'inbox') {
-            return NextResponse.json({ conversations: [userInbox], inboxConversations: [userInbox], supportConversations: [userSupport] });
+            return NextResponse.json({ conversations: [userInbox], inboxConversations: [userInbox], supportConversations: [userSupport] }, { headers: NO_CACHE_HEADERS });
           }
-          return NextResponse.json({ conversations: [userInbox, userSupport], inboxConversations: [userInbox], supportConversations: [userSupport] });
+          return NextResponse.json({ conversations: [userInbox, userSupport], inboxConversations: [userInbox], supportConversations: [userSupport] }, { headers: NO_CACHE_HEADERS });
         } else {
           const guestSessionParam = searchParams.get('sessionId') || searchParams.get('chatId') || '';
           let guestSupport = null;
@@ -524,7 +534,7 @@ export async function GET(request) {
           if (!guestSupport) {
             guestSupport = supportConversations.find(c => c.id === 'general-support') || getOrCreateThread('', '', true);
           }
-          return NextResponse.json({ conversations: [guestSupport], inboxConversations: [], supportConversations: [guestSupport] });
+          return NextResponse.json({ conversations: [guestSupport], inboxConversations: [], supportConversations: [guestSupport] }, { headers: NO_CACHE_HEADERS });
         }
       }
 
@@ -537,7 +547,7 @@ export async function GET(request) {
         conversations: combinedList,
         inboxConversations,
         supportConversations
-      });
+      }, { headers: NO_CACHE_HEADERS });
     }
 
     if (action === 'fetchMessages') {
