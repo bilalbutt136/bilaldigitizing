@@ -512,9 +512,10 @@ export const OrderTrackerDrawer = () => {
   };
 
   return (
-    <div 
-      className={isMobileLayout ? "mobile-fullscreen-modal" : "modal-overlay"}
-      onClick={handleCloseDrawer}
+    <>
+      <div 
+        className={isMobileLayout ? "mobile-fullscreen-modal" : "modal-overlay"}
+        onClick={handleCloseDrawer}
       style={{ 
         zIndex: 99990, 
         background: isMobileLayout ? (isDark ? 'var(--color-background, #090d16)' : '#ffffff') : 'rgba(11, 19, 41, 0.85)', 
@@ -1925,6 +1926,7 @@ export const OrderTrackerDrawer = () => {
         </div>
 
       </div>
+      </div>
 
       {/* Lightbox Modal */}
       {lightboxArtwork && (
@@ -1989,6 +1991,6 @@ export const OrderTrackerDrawer = () => {
           showToast={showToast}
         />
       )}
-    </div>
+    </>
   );
 };

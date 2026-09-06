@@ -125,27 +125,36 @@ export const AssignWorkerModal = ({ order, isOpen, onClose, onAssigned, showToas
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 9999,
-      background: 'rgba(15, 23, 42, 0.75)',
-      backdropFilter: 'blur(6px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1.25rem'
-    }}>
-      <div style={{
-        background: 'var(--bg-card, #ffffff)',
-        border: '1px solid var(--border-color, #e2e8f0)',
-        borderRadius: '16px',
-        width: '100%',
-        maxWidth: '560px',
-        color: 'var(--text-main, #0f172a)',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        overflow: 'hidden'
-      }}>
+    <div 
+      onClick={(e) => {
+        e.stopPropagation();
+        onClose();
+      }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 100000,
+        background: 'rgba(15, 23, 42, 0.75)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1.25rem'
+      }}
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'var(--bg-card, #ffffff)',
+          border: '1px solid var(--border-color, #e2e8f0)',
+          borderRadius: '16px',
+          width: '100%',
+          maxWidth: '560px',
+          color: 'var(--text-main, #0f172a)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          overflow: 'hidden'
+        }}
+      >
         {/* Header */}
         <div style={{
           padding: '1.25rem 1.5rem',
