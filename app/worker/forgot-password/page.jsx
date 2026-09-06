@@ -29,7 +29,7 @@ export default function WorkerForgotPasswordPage() {
       }
 
       const origin = typeof window !== 'undefined' ? window.location.origin : 'https://bilaldigitizing.vercel.app';
-      const redirectToUrl = `${origin}/worker/reset-password`;
+      const redirectToUrl = `${origin}/auth/callback?next=/worker/reset-password`;
 
       const { error } = await supabaseClient.auth.resetPasswordForEmail(cleanEmail, {
         redirectTo: redirectToUrl

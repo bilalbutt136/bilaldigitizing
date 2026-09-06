@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabaseClient } from '../../../../src/lib/supabaseClient';
-import { Scissors, Lock, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
+import { Scissors, Lock, CheckCircle2, AlertCircle, ArrowRight, Clock, RefreshCw } from 'lucide-react';
 
 export default function PortalResetPasswordPage() {
   const router = useRouter();
@@ -15,17 +15,167 @@ export default function PortalResetPasswordPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  useEffect(() => {
-    if (!supabaseClient) return;
+  // Session verification states
+  const [isVerifyingSession, setIsVerifyingSession] = useState(true);
+  const [hasValidSession, setHasValidSession] = useState(false);
+  const [sessionExpiredError, setSessionExpiredError] = useState('');
 
-    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        // Ready for password entry
+  // Captured auth tokens from URL
+  const authCredentialsRef = useRef({
+    code: null,
+    tokenHash: null,
+    accessToken: null
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    let timeoutId = null;
+
+    async function initializeRecoverySession() {
+      try {
+        if (typeof window === 'undefined') return;
+
+        const url = new URL(window.location.href);
+        const searchParams = url.searchParams;
+
+        // Check if Supabase sent an error query param (e.g. otp_expired)
+        const errorDesc = searchParams.get('error_description') || searchParams.get('error');
+        if (errorDesc) {
+          if (isMounted) {
+            setSessionExpiredError(errorDesc);
+            setIsVerifyingSession(false);
+          }
+          return;
+        }
+
+        const code = searchParams.get('code');
+        const tokenHash = searchParams.get('token_hash');
+        const hash = window.location.hash || '';
+
+        let accessToken = null;
+        let refreshToken = null;
+
+        if (hash && hash.includes('access_token=')) {
+          const hashParams = new URLSearchParams(hash.replace(/^#/, ''));
+          accessToken = hashParams.get('access_token');
+          refreshToken = hashParams.get('refresh_token');
+        }
+
+        authCredentialsRef.current = { code, tokenHash, accessToken };
+
+        if (!supabaseClient) {
+          if (isMounted) {
+            setSessionExpiredError('Database connection unavailable.');
+            setIsVerifyingSession(false);
+          }
+          return;
+        }
+
+        // 1. If PKCE code exists in search params, exchange it immediately
+        if (code) {
+          try {
+            const { data, error } = await supabaseClient.auth.exchangeCodeForSession(code);
+            if (!error && data?.session) {
+              if (isMounted) {
+                setHasValidSession(true);
+                setIsVerifyingSession(false);
+              }
+              return;
+            }
+          } catch (codeErr) {
+            console.warn('PKCE exchange error notice:', codeErr?.message);
+          }
+        }
+
+        // 2. If token_hash exists (OTP flow)
+        if (tokenHash) {
+          try {
+            const { data, error } = await supabaseClient.auth.verifyOtp({
+              token_hash: tokenHash,
+              type: 'recovery'
+            });
+            if (!error && data?.session) {
+              if (isMounted) {
+                setHasValidSession(true);
+                setIsVerifyingSession(false);
+              }
+              return;
+            }
+          } catch (otpErr) {
+            console.warn('OTP verification error notice:', otpErr?.message);
+          }
+        }
+
+        // 3. If hash parameters contained bearer tokens
+        if (accessToken && refreshToken) {
+          try {
+            const { data, error } = await supabaseClient.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken
+            });
+            if (!error && data?.session) {
+              if (isMounted) {
+                setHasValidSession(true);
+                setIsVerifyingSession(false);
+              }
+              return;
+            }
+          } catch (hashErr) {
+            console.warn('Hash session set error notice:', hashErr?.message);
+          }
+        }
+
+        // 4. Check existing session in storage/cookies
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+          if (isMounted) {
+            setHasValidSession(true);
+            setIsVerifyingSession(false);
+          }
+          return;
+        }
+
+        // 5. Allow up to 1.5 seconds for background Supabase auth state change event
+        const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((event, s) => {
+          if ((event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN' || s) && isMounted) {
+            setHasValidSession(true);
+            setIsVerifyingSession(false);
+            if (timeoutId) clearTimeout(timeoutId);
+          }
+        });
+
+        timeoutId = setTimeout(() => {
+          if (isMounted) {
+            // Check session one last time before declaring link expired
+            supabaseClient.auth.getSession().then(({ data: { session: finalSession } }) => {
+              if (finalSession) {
+                setHasValidSession(true);
+                setIsVerifyingSession(false);
+              } else {
+                setHasValidSession(false);
+                setIsVerifyingSession(false);
+              }
+            });
+          }
+        }, 1500);
+
+        return () => {
+          subscription?.unsubscribe();
+          if (timeoutId) clearTimeout(timeoutId);
+        };
+      } catch (initErr) {
+        console.warn('Session init error notice:', initErr?.message);
+        if (isMounted) {
+          setIsVerifyingSession(false);
+        }
       }
-    });
+    }
+
+    initializeRecoverySession();
 
     return () => {
-      subscription?.unsubscribe();
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, []);
 
@@ -46,29 +196,196 @@ export default function PortalResetPasswordPage() {
     setIsLoading(true);
 
     try {
-      if (!supabaseClient) {
-        throw new Error('Database connection unavailable.');
+      let updateSucceeded = false;
+
+      // Strategy 1: Client-side Supabase updateUser
+      if (supabaseClient) {
+        try {
+          const { error } = await supabaseClient.auth.updateUser({
+            password: password
+          });
+
+          if (!error) {
+            updateSucceeded = true;
+          }
+        } catch (clientErr) {
+          console.warn('Client updateUser attempt notice:', clientErr?.message);
+        }
       }
 
-      const { error } = await supabaseClient.auth.updateUser({
-        password: password
-      });
+      // Strategy 2: Server API route fallback (handles session tokens, server cookies, and code exchange)
+      if (!updateSucceeded) {
+        const { code, tokenHash, accessToken } = authCredentialsRef.current;
+        const res = await fetch('/api/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            password,
+            code,
+            tokenHash,
+            accessToken
+          })
+        });
 
-      if (error) {
-        throw error;
+        const data = await res.json();
+        if (res.ok && data.success) {
+          updateSucceeded = true;
+        } else {
+          throw new Error(data.error || 'Password update failed.');
+        }
       }
 
-      setIsSuccess(true);
-      setTimeout(() => {
-        router.replace('/portal/login');
-      }, 2500);
+      if (updateSucceeded) {
+        setIsSuccess(true);
+        setTimeout(() => {
+          router.replace('/portal/login');
+        }, 2200);
+      }
     } catch (err) {
-      setErrorMessage(err.message || 'Failed to update workstation password.');
+      const msg = err.message || '';
+      if (msg.toLowerCase().includes('session missing') || msg.toLowerCase().includes('auth session')) {
+        setErrorMessage('Your password reset session expired. Please request a fresh reset link below.');
+        setHasValidSession(false);
+      } else {
+        setErrorMessage(msg || 'Failed to update workstation password.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
+  // State 1: Verifying recovery session
+  if (isVerifyingSession) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '3rem 1.5rem',
+        background: 'linear-gradient(135deg, #090d16 0%, #111827 100%)',
+        color: '#f8fafc'
+      }}>
+        <div style={{
+          maxWidth: '440px',
+          width: '100%',
+          padding: '2.5rem',
+          background: '#131c2e',
+          border: '1px solid #1f293d',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
+          borderRadius: '16px',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            margin: '0 auto 1.25rem',
+            width: '40px',
+            height: '40px',
+            border: '3px solid rgba(249, 115, 22, 0.2)',
+            borderTopColor: '#f97316',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite'
+          }} />
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.4rem' }}>
+            Verifying Reset Link
+          </h3>
+          <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0 }}>
+            Establishing secure workstation credentials...
+          </p>
+          <style jsx>{`
+            @keyframes spin {
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      </div>
+    );
+  }
+
+  // State 2: Expired or missing session link
+  if (!hasValidSession && !isSuccess) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '3rem 1.5rem',
+        background: 'linear-gradient(135deg, #090d16 0%, #111827 100%)',
+        color: '#f8fafc'
+      }}>
+        <div style={{
+          maxWidth: '460px',
+          width: '100%',
+          padding: '2.5rem',
+          background: '#131c2e',
+          border: '1px solid #1f293d',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
+          borderRadius: '16px',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.12)',
+            color: '#f87171',
+            width: '64px',
+            height: '64px',
+            borderRadius: '50%',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '1.25rem',
+            boxShadow: '0 8px 24px rgba(239, 68, 68, 0.2)'
+          }}>
+            <Clock size={32} />
+          </div>
+
+          <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.5rem' }}>
+            Reset Link Expired or Used
+          </h2>
+
+          <p style={{ fontSize: '0.875rem', color: '#cbd5e1', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+            {sessionExpiredError || 'This password reset link has already been used or has expired for your security. Please request a fresh reset link.'}
+          </p>
+
+          <Link
+            href="/portal/forgot-password"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              width: '100%',
+              padding: '0.85rem',
+              borderRadius: '8px',
+              background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+              color: '#ffffff',
+              fontWeight: 800,
+              fontSize: '0.95rem',
+              textDecoration: 'none',
+              boxShadow: '0 4px 14px rgba(249, 115, 22, 0.35)',
+              boxSizing: 'border-box',
+              marginBottom: '1rem'
+            }}
+          >
+            <RefreshCw size={17} /> Request New Reset Link
+          </Link>
+
+          <Link
+            href="/portal/login"
+            style={{
+              fontSize: '0.85rem',
+              color: '#94a3b8',
+              textDecoration: 'none',
+              fontWeight: 600
+            }}
+          >
+            Return to Workstation Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // State 3: Active session ready -> Password Form
   return (
     <div style={{
       minHeight: '100vh',
