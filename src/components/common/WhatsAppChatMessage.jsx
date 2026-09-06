@@ -275,6 +275,26 @@ export default function WhatsAppChatMessage({
         </span>
         <span>•</span>
         <span>{displayTime}</span>
+        {!resolvedIsMe && !isMessageRead && (
+          <span
+            style={{
+              background: '#eff6ff',
+              color: '#2563eb',
+              border: '1px solid #bfdbfe',
+              borderRadius: '4px',
+              padding: '1px 6px',
+              fontSize: '0.62rem',
+              fontWeight: 800,
+              letterSpacing: '0.02em',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '3px'
+            }}
+          >
+            <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#2563eb' }} />
+            UNREAD
+          </span>
+        )}
       </div>
 
       {/* Main Message Bubble */}
@@ -285,19 +305,21 @@ export default function WhatsAppChatMessage({
           borderRadius: resolvedIsMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
           background: resolvedIsMe 
             ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' 
-            : 'var(--color-surface, #ffffff)',
+            : (!isMessageRead 
+                ? 'linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%)' 
+                : 'var(--color-surface, #ffffff)'),
           color: resolvedIsMe ? '#ffffff' : 'var(--color-text-primary, #0f172a)',
           border: resolvedIsMe 
             ? 'none' 
             : (!isMessageRead 
-                ? '1.5px solid #86efac' 
+                ? '1.5px solid #93c5fd' 
                 : '1.5px solid var(--color-border, #e2e8f0)'),
           borderLeft: (!resolvedIsMe && !isMessageRead)
-            ? '4.5px solid #059669'
+            ? '5px solid #2563eb'
             : (resolvedIsMe ? 'none' : '1.5px solid var(--color-border, #e2e8f0)'),
           boxShadow: resolvedIsMe
             ? '0 3px 10px rgba(5, 150, 105, 0.25)'
-            : '0 2px 8px rgba(0, 0, 0, 0.05)',
+            : (!isMessageRead ? '0 4px 14px rgba(37, 99, 235, 0.12)' : '0 2px 8px rgba(0, 0, 0, 0.05)'),
           fontSize: '0.88rem',
           lineHeight: 1.5,
           wordBreak: 'break-word',

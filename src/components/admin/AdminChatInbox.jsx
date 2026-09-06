@@ -142,6 +142,64 @@ const parseMessageTime = (msg) => {
   return isNaN(parsed) ? 0 : parsed;
 };
 
+const normalizeEmail = (e) => {
+  if (!e) return '';
+  const s = String(e).toLowerCase().trim();
+  if (s === 'client@studio.com' || s.includes('guest@bdigitizing.pro')) return '';
+  return s;
+};
+
+const isSupportConversation = (id) => {
+  if (!id) return false;
+  const lower = String(id).toLowerCase().trim();
+  return lower === 'general-support' || lower === 'support-guest' || lower === 'help-support' || lower.startsWith('support-');
+};
+
+// Robust matcher to link messages or thread IDs to their parent conversation
+export const matchesConversation = (conv, targetIdOrMsg) => {
+  if (!conv || !targetIdOrMsg) return false;
+  const cId = String(conv.id || '').toLowerCase().trim();
+
+  if (typeof targetIdOrMsg === 'string') {
+    const tId = targetIdOrMsg.toLowerCase().trim();
+    if (cId === tId) return true;
+    const cClean = cId.replace(/^(inbox-|support-|order-|direct-|chat-)/, '');
+    const tClean = tId.replace(/^(inbox-|support-|order-|direct-|chat-)/, '');
+    if (cClean && tClean && cClean === tClean) return true;
+    const cEmail = normalizeEmail(conv.clientEmail);
+    if (cEmail && (tId.includes(cEmail) || tClean === cEmail)) return true;
+    return false;
+  }
+
+  const msg = targetIdOrMsg;
+  const mConvId = String(msg.conversation_id || msg.thread_id || '').toLowerCase().trim();
+  if (cId === mConvId) return true;
+
+  const cEmail = normalizeEmail(conv.clientEmail || conv.client_email);
+  const mEmail = normalizeEmail(msg.client_email || (mConvId.includes('@') ? mConvId.replace(/^(inbox-|support-|direct-|chat-|user_)/, '') : ''));
+
+  const isMsgSupport = isSupportConversation(mConvId) || msg.isSupport === true;
+  const isConvSupport = isSupportConversation(cId) || conv.isSupport === true;
+
+  if (cEmail && mEmail && cEmail === mEmail && isMsgSupport === isConvSupport) {
+    return true;
+  }
+
+  // Order threads match
+  const cOrd = cId.replace('order-', '').replace('#', '');
+  const mOrd = mConvId.replace('order-', '').replace('#', '');
+  if (cOrd && mOrd && cOrd === mOrd) return true;
+
+  // Guest thread match
+  if (cId.includes('guest_') && mConvId.includes('guest_')) {
+    const cG = cId.replace(/^(support-|inbox-)/, '');
+    const mG = mConvId.replace(/^(support-|inbox-)/, '');
+    if (cG === mG) return true;
+  }
+
+  return false;
+};
+
 // Helper to clean, deduplicate, and sort conversation threads by latest message time
 const deduplicateThreads = (rawList) => {
   if (!Array.isArray(rawList)) return [];
@@ -163,25 +221,25 @@ const deduplicateThreads = (rawList) => {
       key = `order_${rawOrdId.toLowerCase()}`;
       unifiedId = `order-${rawOrdId}`;
     } else if (isDirectInbox) {
-      let clientEmail = (conv.clientEmail || conv.client_email || '').toLowerCase().trim();
-      if (!clientEmail || clientEmail === 'client@studio.com' || clientEmail.includes('guest@bdigitizing.pro')) {
-        const emailMsg = cleanMessages.find(m => m.client_email && m.client_email !== 'client@studio.com' && !m.client_email.includes('guest@bdigitizing.pro'));
-        if (emailMsg?.client_email) clientEmail = emailMsg.client_email.toLowerCase().trim();
+      let clientEmail = normalizeEmail(conv.clientEmail || conv.client_email);
+      if (!clientEmail) {
+        const emailMsg = cleanMessages.find(m => normalizeEmail(m.client_email));
+        if (emailMsg?.client_email) clientEmail = normalizeEmail(emailMsg.client_email);
       }
       if (!clientEmail && conv.id) {
-        clientEmail = conv.id.replace('inbox-', '').replace('direct-', '').toLowerCase().trim();
+        clientEmail = normalizeEmail(conv.id.replace('inbox-', '').replace('direct-', ''));
       }
       key = `inbox_${clientEmail || 'client'}`;
       unifiedId = `inbox-${clientEmail || 'client'}`;
     } else {
       // Support thread
-      let clientEmail = (conv.clientEmail || conv.client_email || '').toLowerCase().trim();
-      if (!clientEmail || clientEmail === 'client@studio.com' || clientEmail.includes('guest@bdigitizing.pro')) {
-        const emailMsg = cleanMessages.find(m => m.client_email && m.client_email !== 'client@studio.com' && !m.client_email.includes('guest@bdigitizing.pro'));
-        if (emailMsg?.client_email) clientEmail = emailMsg.client_email.toLowerCase().trim();
+      let clientEmail = normalizeEmail(conv.clientEmail || conv.client_email);
+      if (!clientEmail) {
+        const emailMsg = cleanMessages.find(m => normalizeEmail(m.client_email));
+        if (emailMsg?.client_email) clientEmail = normalizeEmail(emailMsg.client_email);
       }
 
-      if (clientEmail && clientEmail !== 'client@studio.com' && !clientEmail.includes('guest@bdigitizing.pro')) {
+      if (clientEmail) {
         key = `support_${clientEmail}`;
         unifiedId = `support-${clientEmail}`;
       } else if (conv.id && (conv.id.startsWith('support-guest_') || conv.id.startsWith('support-guest-'))) {
@@ -510,7 +568,7 @@ export const AdminChatInbox = () => {
     let isMounted = true;
     const loadChats = async (isInitial = true) => {
       if (!isMounted) return;
-      if (isInitial && (!conversations || conversations.length === 0)) {
+      if (isInitial && (!conversationsRef.current || conversationsRef.current.length === 0)) {
         setIsLoadingConversations(true);
       }
       try {
@@ -518,22 +576,74 @@ export const AdminChatInbox = () => {
         if (isMounted) {
           if (data && data.length > 0) {
             const fresh = deduplicateThreads(data);
-            setConversations(fresh);
-            if (typeof window !== 'undefined') {
-              try {
-                localStorage.setItem(cacheKey, JSON.stringify(fresh));
-              } catch {}
-            }
-            if (!activeChatIdRef.current && fresh[0]?.id) {
-              setActiveChatId(fresh[0].id);
-            }
-          } else if (isInitial) {
+
+            setConversations(prevList => {
+              const currentList = Array.isArray(prevList) && prevList.length > 0 ? prevList : (conversationsRef.current || []);
+
+              // Non-destructive merge: preserve any recent in-flight or live messages
+              const mergedList = fresh.map(freshConv => {
+                const existing = currentList.find(c => matchesConversation(c, freshConv.id) || (freshConv.clientEmail && c.clientEmail === freshConv.clientEmail));
+                if (!existing) return freshConv;
+
+                const msgMap = new Map();
+                (freshConv.messages || []).forEach(m => { if (m?.id) msgMap.set(m.id, m); });
+
+                (existing.messages || []).forEach(m => {
+                  if (!m?.id) return;
+                  if (!msgMap.has(m.id)) {
+                    const mTime = parseMessageTime(m);
+                    // Keep recent messages from the last 60 seconds that might still be syncing
+                    if (Date.now() - mTime < 60000) {
+                      msgMap.set(m.id, m);
+                    }
+                  }
+                });
+
+                const mergedMessages = Array.from(msgMap.values()).sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+                const lastMsg = mergedMessages[mergedMessages.length - 1];
+
+                return {
+                  ...freshConv,
+                  clientName: (freshConv.clientName && !['Customer', 'Client', 'Support', 'Guest Client'].includes(freshConv.clientName)) ? freshConv.clientName : (existing.clientName || freshConv.clientName),
+                  clientEmail: freshConv.clientEmail || existing.clientEmail || '',
+                  messages: mergedMessages,
+                  lastMessageTime: Math.max(freshConv.lastMessageTime || 0, existing.lastMessageTime || 0, lastMsg ? parseMessageTime(lastMsg) : 0)
+                };
+              });
+
+              // Also include any local-only threads that aren't in fresh yet
+              currentList.forEach(existing => {
+                const inFresh = mergedList.some(f => matchesConversation(f, existing.id));
+                if (!inFresh && (existing.messages || []).length > 0) {
+                  const lastMsg = existing.messages[existing.messages.length - 1];
+                  if (Date.now() - parseMessageTime(lastMsg) < 60000) {
+                    mergedList.push(existing);
+                  }
+                }
+              });
+
+              const finalized = deduplicateThreads(mergedList);
+
+              // Preserve active chat selection seamlessly
+              if (activeChatIdRef.current) {
+                const stillMatches = finalized.find(c => matchesConversation(c, activeChatIdRef.current));
+                if (stillMatches && stillMatches.id !== activeChatIdRef.current) {
+                  setActiveChatId(stillMatches.id);
+                }
+              } else if (!activeChatIdRef.current && finalized[0]?.id) {
+                setActiveChatId(finalized[0].id);
+              }
+
+              if (typeof window !== 'undefined') {
+                try { localStorage.setItem(cacheKey, JSON.stringify(finalized)); } catch {}
+              }
+              return finalized;
+            });
+          } else if (isInitial && (!conversationsRef.current || conversationsRef.current.length === 0)) {
             setConversations([]);
             setActiveChatId(null);
             if (typeof window !== 'undefined') {
-              try {
-                localStorage.removeItem(cacheKey);
-              } catch {}
+              try { localStorage.removeItem(cacheKey); } catch {}
             }
           }
         }
@@ -605,11 +715,14 @@ export const AdminChatInbox = () => {
         const attachType = extractedOffer ? 'custom_offer' : (record.attachment_type || attachObj?.mime_type || attachObj?.type || attachObj?.format || null);
 
         const newMsg = {
-          id: record.id,
+          id: record.id || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           conversation_id: record.conversation_id,
+          thread_id: record.conversation_id,
+          client_email: normalizeEmail(record.client_email),
           type: extractedOffer ? 'custom_offer' : (record.type || 'text'),
           sender: record.sender,
           senderName: record.sender_name,
+          sender_name: record.sender_name,
           text: record.text,
           attachment: record.attachment,
           attachment_url: attachUrl,
@@ -629,35 +742,25 @@ export const AdminChatInbox = () => {
 
         // ─────────────────────────────────────────────────────────────
         // STRICT NOTIFICATION GUARDS — all 3 must pass before any toast/sound fires
-        //
-        // GUARD 1: INSERT events only.
-        //   UPDATE events fire when messages are marked read, edited etc.
-        //   We never want those to trigger a notification sound/toast.
-        const isInsertEvent = (msgPayload.eventType === 'INSERT') ||
-                              (!msgPayload.eventType && !!msgPayload.new);
-        if (!isInsertEvent) {
-          // Just silently update state if needed, no sound/toast
-        } else {
-          // GUARD 2: Recency — must be a genuinely new message (≤ 30 seconds old).
-          //   Prevents old messages that arrive late from background sync from triggering toasts.
+        const isInsertEvent = (msgPayload.eventType === 'INSERT') || (!msgPayload.eventType && !!msgPayload.new);
+        
+        if (isInsertEvent) {
           const msgTs = new Date(record.created_at || record.timestamp || 0).getTime();
           const nowMs = Date.now();
           const isRecentEnough = !isNaN(msgTs) && (nowMs - msgTs) < 30_000;
-
-          // GUARD 3: Sender role — NEVER notify for admin/self outgoing messages.
-          //   Only customer (client/customer role) messages should produce toasts.
-          const isIncomingFromCustomer =
-            newMsg.sender === 'client' ||
-            newMsg.sender === 'customer';
+          const isIncomingFromCustomer = newMsg.sender === 'client' || newMsg.sender === 'customer' || (newMsg.sender && newMsg.sender !== 'admin');
 
           if (isRecentEnough && isIncomingFromCustomer) {
-            const isCurrentlyOpen = activeChatIdRef.current === newMsg.conversation_id;
+            const isCurrentlyOpen = activeChatIdRef.current && (
+              activeChatIdRef.current === newMsg.conversation_id ||
+              matchesConversation({ id: activeChatIdRef.current, clientEmail: newMsg.client_email }, newMsg)
+            );
 
             if (isCurrentlyOpen) {
-              // Conversation is in focus — silent scroll only, no toast or loud sound
+              // Conversation is open in view — soft chime & smooth scroll
               playNotificationSound('receive');
             } else {
-              // Background conversation — play loud chime + show toast
+              // Background conversation — notification sound & toast
               playNotificationSound('notification');
               showToast(
                 `New message from ${newMsg.senderName || 'Customer'}`,
@@ -665,88 +768,109 @@ export const AdminChatInbox = () => {
               );
             }
 
-            // Always try to trigger auto-pilot if enabled for this channel
+            // Trigger auto-pilot if enabled for this channel
             triggerAutoPilotReply(newMsg);
           }
         }
 
         setConversations(prev => {
           const safePrev = Array.isArray(prev) ? prev : [];
-          const exists = safePrev.some(c => c.id === newMsg.conversation_id);
-          if (!exists) {
-            // New conversation thread initiated - prepend locally
+          const existingIdx = safePrev.findIndex(c => matchesConversation(c, newMsg));
+
+          const isCurrentlyOpen = (activeChatIdRef.current && existingIdx >= 0 && matchesConversation(safePrev[existingIdx], activeChatIdRef.current)) ||
+                                  (activeChatIdRef.current === newMsg.conversation_id);
+
+          if (existingIdx >= 0) {
+            const targetConv = safePrev[existingIdx];
+            const currentMsgs = targetConv.messages || [];
+            const incomingOfferId = newMsg.offer_id || newMsg.offer_data?.id;
+            
+            const msgExistsIndex = currentMsgs.findIndex(m => 
+              (m.id && newMsg.id && m.id === newMsg.id) || 
+              (incomingOfferId && (m.offer_id === incomingOfferId || m.offer_data?.id === incomingOfferId)) ||
+              (m.id && String(m.id).startsWith('msg-') && m.text === newMsg.text && m.sender === newMsg.sender && Math.abs(parseMessageTime(m) - parseMessageTime(newMsg)) < 15000) ||
+              (m.text && newMsg.text && m.text === newMsg.text && m.sender === newMsg.sender && Math.abs(parseMessageTime(m) - parseMessageTime(newMsg)) < 10000)
+            );
+            
+            let nextMsgs;
+            if (msgExistsIndex >= 0) {
+              nextMsgs = [...currentMsgs];
+              nextMsgs[msgExistsIndex] = { ...nextMsgs[msgExistsIndex], ...newMsg };
+            } else {
+              nextMsgs = [...currentMsgs, newMsg];
+            }
+            
+            if (isCurrentlyOpen && (newMsg.sender === 'client' || newMsg.sender === 'customer' || newMsg.sender !== 'admin')) {
+              markConversationAsRead(targetConv.id, 'admin', targetConv.clientEmail);
+              nextMsgs = nextMsgs.map(m => (m.id === newMsg.id ? { ...m, is_read: true } : m));
+            }
+            nextMsgs.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+
+            const isCustomerMsg = newMsg.sender === 'client' || newMsg.sender === 'customer' || newMsg.sender !== 'admin';
+            const resolvedClientName = targetConv.clientName && !['Customer', 'Client', 'Support', 'Guest Client'].includes(targetConv.clientName) 
+              ? targetConv.clientName 
+              : (newMsg.senderName || targetConv.clientName);
+
+            const updatedConv = {
+              ...targetConv,
+              clientName: resolvedClientName,
+              clientEmail: targetConv.clientEmail || newMsg.client_email || '',
+              unreadCount: isCurrentlyOpen ? 0 : (targetConv.unreadCount || 0) + (isCustomerMsg ? 1 : 0),
+              adminUnreadCount: isCurrentlyOpen ? 0 : (targetConv.adminUnreadCount || 0) + (isCustomerMsg ? 1 : 0),
+              admin_unread_count: isCurrentlyOpen ? 0 : (targetConv.admin_unread_count || 0) + (isCustomerMsg ? 1 : 0),
+              messages: nextMsgs,
+              lastMessageTime: Math.max(targetConv.lastMessageTime || 0, parseMessageTime(newMsg) || Date.now()),
+              updatedAt: newMsg.timestamp || new Date().toISOString()
+            };
+
+            const nextList = [...safePrev];
+            nextList[existingIdx] = updatedConv;
+            const deduplicated = deduplicateThreads(nextList);
+            if (typeof window !== 'undefined') {
+              try { localStorage.setItem(cacheKey, JSON.stringify(deduplicated)); } catch {}
+            }
+            return deduplicated;
+          } else {
+            // New conversation thread initiated
             const newConvId = String(newMsg.conversation_id || '').toLowerCase();
-            const isNewSupport = newConvId === 'general-support' || newConvId === 'support-guest' || newConvId.startsWith('support-');
-            const newClientName = newMsg.senderName || 'Customer';
+            const isNewSupport = isSupportConversation(newConvId) || newMsg.isSupport === true;
+            const newClientEmail = normalizeEmail(newMsg.client_email);
+            const newClientName = newMsg.senderName || (newClientEmail ? newClientEmail.split('@')[0] : (isNewSupport ? 'Guest Client' : 'Customer'));
+
+            let canonicalNewId = newMsg.conversation_id;
+            if (isNewSupport) {
+              canonicalNewId = newClientEmail ? `support-${newClientEmail}` : (newConvId.startsWith('support-') ? newConvId : `support-${newConvId}`);
+            } else {
+              canonicalNewId = newClientEmail ? `inbox-${newClientEmail}` : (newConvId.startsWith('inbox-') ? newConvId : `inbox-${newConvId}`);
+            }
+
             const newThread = {
-              id: newMsg.conversation_id,
+              id: canonicalNewId,
               clientName: newClientName,
-              clientEmail: '',
+              clientEmail: newClientEmail,
               clientCompany: isNewSupport ? 'Live Support' : 'Studio Client',
               orderId: isNewSupport ? 'Support' : 'Direct Chat',
               orderTitle: isNewSupport ? 'Live Support' : 'Direct Inbox',
               isSupport: isNewSupport,
               avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(newClientName)}&background=0f172a&color=fff&bold=true`,
               status: 'online',
-              unreadCount: newMsg.sender === 'client' ? 1 : 0,
-              adminUnreadCount: newMsg.sender === 'client' ? 1 : 0,
+              unreadCount: newMsg.sender === 'client' || newMsg.sender !== 'admin' ? 1 : 0,
+              adminUnreadCount: newMsg.sender === 'client' || newMsg.sender !== 'admin' ? 1 : 0,
+              admin_unread_count: newMsg.sender === 'client' || newMsg.sender !== 'admin' ? 1 : 0,
               messages: [newMsg],
-              lastMessageTime: Date.now(),
-              updatedAt: new Date().toISOString()
+              lastMessageTime: parseMessageTime(newMsg) || Date.now(),
+              updatedAt: newMsg.timestamp || new Date().toISOString()
             };
-            return [newThread, ...safePrev];
-          }
 
-          const updated = safePrev.map(conv => {
-            if (conv.id === newMsg.conversation_id) {
-              const currentMsgs = conv.messages || [];
-              const incomingOfferId = newMsg.offer_id || newMsg.offer_data?.id;
-              const existsIndex = currentMsgs.findIndex(m => 
-                (m.id && newMsg.id && m.id === newMsg.id) || 
-                (incomingOfferId && (m.offer_id === incomingOfferId || m.offer_data?.id === incomingOfferId)) ||
-                (m.id && String(m.id).startsWith('msg-') && m.text === newMsg.text && m.sender === newMsg.sender && Math.abs(parseMessageTime(m) - parseMessageTime(newMsg)) < 15000) ||
-                (m.text && newMsg.text && m.text === newMsg.text && m.sender === newMsg.sender && Math.abs(parseMessageTime(m) - parseMessageTime(newMsg)) < 10000)
-              );
-              
-              let nextMsgs;
-              if (existsIndex >= 0) {
-                nextMsgs = [...currentMsgs];
-                nextMsgs[existsIndex] = { ...nextMsgs[existsIndex], ...newMsg };
-              } else {
-                nextMsgs = [...currentMsgs, newMsg];
-              }
-              
-              const isCurrentlyOpen = activeChatIdRef.current === conv.id;
-              if (isCurrentlyOpen && (newMsg.sender === 'client' || newMsg.sender === 'customer')) {
-                markConversationAsRead(conv.id, 'admin', conv.clientEmail);
-                nextMsgs = nextMsgs.map(m => (m.id === newMsg.id ? { ...m, is_read: true } : m));
-              }
-              nextMsgs.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
-
-              return {
-                ...conv,
-                clientName: conv.clientName || newMsg.senderName,
-                unreadCount: isCurrentlyOpen ? 0 : (conv.unreadCount || 0) + (newMsg.sender === 'client' ? 1 : 0),
-                adminUnreadCount: isCurrentlyOpen ? 0 : (conv.adminUnreadCount || 0) + (newMsg.sender === 'client' ? 1 : 0),
-                admin_unread_count: isCurrentlyOpen ? 0 : (conv.admin_unread_count || 0) + (newMsg.sender === 'client' ? 1 : 0),
-                messages: nextMsgs,
-                lastMessageTime: Date.now(),
-                updatedAt: new Date().toISOString()
-              };
+            const deduplicated = deduplicateThreads([newThread, ...safePrev]);
+            if (typeof window !== 'undefined') {
+              try { localStorage.setItem(cacheKey, JSON.stringify(deduplicated)); } catch {}
             }
-            return conv;
-          });
-
-          const deduplicated = deduplicateThreads(updated);
-          if (typeof window !== 'undefined') {
-            try {
-              localStorage.setItem(cacheKey, JSON.stringify(deduplicated));
-            } catch {}
+            return deduplicated;
           }
-          return deduplicated;
         });
 
-        if (newMsg.conversation_id === activeChatIdRef.current) {
+        if (activeChatIdRef.current && (newMsg.conversation_id === activeChatIdRef.current || matchesConversation({ id: activeChatIdRef.current }, newMsg))) {
           setTimeout(() => scrollToBottom('smooth'), 50);
         }
       },
@@ -758,8 +882,8 @@ export const AdminChatInbox = () => {
         setConversations(prev => {
           const safePrev = Array.isArray(prev) ? prev : [];
           const updated = safePrev.map(c => {
-            if (c.id === fresh.id) {
-              const isCurrentlyOpen = activeChatIdRef.current === fresh.id;
+            if (matchesConversation(c, fresh.id)) {
+              const isCurrentlyOpen = activeChatIdRef.current && matchesConversation(c, activeChatIdRef.current);
               return {
                 ...c,
                 unreadCount: isCurrentlyOpen ? 0 : (fresh.admin_unread_count ?? fresh.unread_count ?? c.unreadCount),
@@ -1971,26 +2095,72 @@ export const AdminChatInbox = () => {
               ) : null}
 
               {/* Message Bubbles */}
-              {activeChat.messages.map((msg, index) => {
-                const isAdmin = msg.sender === 'admin';
-
-                return (
-                  <WhatsAppChatMessage
-                    key={msg.id || index}
-                    message={msg}
-                    isMe={isAdmin}
-                    senderDisplayName={isAdmin ? 'Support' : (activeInfo.customerName || msg.senderName || msg.sender_name || 'Customer')}
-                    onReply={(m) => setReplyingTo(m)}
-                    formatTime={formatChatTime}
-                    themePreset="admin"
-                    onOrderClick={(ordId) => {
-                      if (activeInfo.matchOrd) {
-                        setSelectedOrderForDrawer(activeInfo.matchOrd);
-                      }
-                    }}
-                  />
+              {(() => {
+                const msgs = activeChat.messages || [];
+                const firstUnreadIndex = msgs.findIndex(m => 
+                  (m.sender === 'client' || m.sender === 'customer' || (m.sender && m.sender !== 'admin')) && 
+                  m.is_read !== true && 
+                  m.is_read !== 'true'
                 );
-              })}
+
+                return msgs.map((msg, index) => {
+                  const isAdmin = msg.sender === 'admin';
+                  const isFirstUnread = index === firstUnreadIndex;
+
+                  return (
+                    <React.Fragment key={msg.id || index}>
+                      {isFirstUnread && (
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.75rem',
+                            margin: '0.85rem 0 0.6rem 0',
+                            position: 'relative'
+                          }}
+                        >
+                          <div style={{ flex: 1, height: '1.5px', background: 'linear-gradient(to right, transparent, #3b82f6, transparent)' }} />
+                          <span
+                            style={{
+                              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                              color: '#ffffff',
+                              fontSize: '0.68rem',
+                              fontWeight: 900,
+                              padding: '0.22rem 0.8rem',
+                              borderRadius: '9999px',
+                              boxShadow: '0 2px 10px rgba(37, 99, 235, 0.35)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              letterSpacing: '0.04em',
+                              textTransform: 'uppercase'
+                            }}
+                          >
+                            <span>⚡</span>
+                            <span>New Unread Messages</span>
+                          </span>
+                          <div style={{ flex: 1, height: '1.5px', background: 'linear-gradient(to right, transparent, #3b82f6, transparent)' }} />
+                        </div>
+                      )}
+
+                      <WhatsAppChatMessage
+                        message={msg}
+                        isMe={isAdmin}
+                        senderDisplayName={isAdmin ? 'Support' : (activeInfo.customerName || msg.senderName || msg.sender_name || 'Customer')}
+                        onReply={(m) => setReplyingTo(m)}
+                        formatTime={formatChatTime}
+                        themePreset="admin"
+                        onOrderClick={(ordId) => {
+                          if (activeInfo.matchOrd) {
+                            setSelectedOrderForDrawer(activeInfo.matchOrd);
+                          }
+                        }}
+                      />
+                    </React.Fragment>
+                  );
+                });
+              })()}
 
               {/* CLIENT LIVE TYPING INDICATOR */}
               {isClientTyping && (
