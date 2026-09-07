@@ -96,11 +96,28 @@ npm run lint
 - **Health Check**: `GET /api/health` — Returns application status, uptime, Supabase connection ping, and configured services.
 - **Orders**: `GET /api/orders?action=fetchAll` & `POST /api/orders` — Authenticated order CRUD and tracking.
 - **Messages & Chat**: `GET /api/messages` & `POST /api/messages` — Real-time live support and customer inbox.
+- **Email & Order Notifications**: `POST /api/send-notification` — Automated webhook endpoint triggered by PostgreSQL triggers / Supabase webhooks for instant email alerts on new chat messages and orders.
+- **Transactional Email Dispatch**: `POST /api/email` — Client and admin email routing with Resend fallback.
 - **Custom Offers**: `POST /api/offers` — Admin offer dispatch & customer checkout acceptance.
 - **Stripe Webhook**: `POST /api/checkout/webhook` — Secure Stripe event verification.
 - **BoltPayouts Webhook**: `POST /api/boltpayouts/webhook` — Payout confirmation and wallet deposit.
 - **AI Automation**: `POST /api/ai/generate-reply` & `POST /api/ai/refine-message`.
 - **Download Proxy**: `GET /api/download?url=...` — SSRF-protected media file proxy.
+
+---
+
+## 📧 Automated Email Notification Pipeline
+
+1. **Triggers (`trg_notify_new_message` & `trg_notify_new_order`)**:
+   - PostgreSQL triggers automatically fire on `INSERT` events in `public.messages` and `public.orders`.
+   - Dispatches an asynchronous non-blocking HTTP POST via `pg_net` to `/api/send-notification`.
+2. **Security & Rate Limiting**:
+   - Requests are verified using `x-webhook-secret` (`NOTIFICATION_WEBHOOK_SECRET`).
+   - Anti-spam sliding window limiter and 2-minute chat message debounce prevent spam flooding.
+3. **Responsive HTML Templates**:
+   - Modern branded templates for Chat Message alerts (with direct link to in-app chat) and Order Notifications (dual: admin production ticket + client order receipt).
+4. **Audit & Queue (`email_notification_logs`)**:
+   - Every delivery attempt, resend ID, and transient error is logged to `public.email_notification_logs` and synced with `public.notifications`.
 
 ---
 

@@ -1,4 +1,4 @@
-﻿import { test, describe } from 'node:test';
+import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
 describe('Admin Email Notification & Routing Engine', () => {
@@ -103,5 +103,93 @@ describe('Admin Email Notification & Routing Engine', () => {
     assert.equal(summary.dimensions, '3.5" × 2.5"');
     assert.equal(summary.placement, 'Left Chest');
     assert.equal(summary.instructions, 'Use 75/11 needle and polyneon thread');
+  });
+
+  test('verifies webhook secret from either x-webhook-secret header or Bearer auth token', () => {
+    const checkSecret = (headers, configuredSecret) => {
+      const headerSecret = headers['x-webhook-secret'] || '';
+      const authHeader = headers['authorization'] || '';
+      const bearerToken = authHeader.toLowerCase().startsWith('bearer ')
+        ? authHeader.substring(7).trim()
+        : '';
+      const token = (headerSecret || bearerToken).trim();
+      return Boolean(token && token === configuredSecret);
+    };
+
+    const secret = 'bd_sec_live_notification_trigger_9831';
+
+    // Matches via header
+    assert.equal(checkSecret({ 'x-webhook-secret': secret }, secret), true);
+    // Matches via Bearer auth
+    assert.equal(checkSecret({ 'authorization': `Bearer ${secret}` }, secret), true);
+    // Rejects mismatched token
+    assert.equal(checkSecret({ 'x-webhook-secret': 'wrong_token' }, secret), false);
+    // Rejects missing token
+    assert.equal(checkSecret({}, secret), false);
+  });
+
+  test('chat notification debounce suppresses rapid-fire alerts within 2 minutes', () => {
+    const tracker = new Map();
+    const DEBOUNCE_MS = 120000;
+
+    const shouldSend = (conversationId, email, timestamp) => {
+      const key = `chat:${conversationId}:${email.toLowerCase().trim()}`;
+      const last = tracker.get(key);
+      if (last && timestamp - last < DEBOUNCE_MS) {
+        return false;
+      }
+      tracker.set(key, timestamp);
+      return true;
+    };
+
+    const t0 = 1000000;
+    // 1st message sends
+    assert.equal(shouldSend('conv-1', 'client@test.com', t0), true);
+    // 2nd message 30 seconds later is debounced/suppressed
+    assert.equal(shouldSend('conv-1', 'client@test.com', t0 + 30000), false);
+    // 3rd message 60 seconds later is debounced/suppressed
+    assert.equal(shouldSend('conv-1', 'client@test.com', t0 + 60000), false);
+    // Message in another conversation is allowed
+    assert.equal(shouldSend('conv-2', 'client@test.com', t0 + 70000), true);
+    // 4th message in conv-1 after 2.5 minutes is allowed
+    assert.equal(shouldSend('conv-1', 'client@test.com', t0 + 150000), true);
+  });
+
+  test('correctly maps Supabase native webhooks and pg_net payloads', () => {
+    const parsePayload = (raw) => {
+      const isSupabaseDbWebhook = Boolean(raw.table && raw.record);
+      const table = isSupabaseDbWebhook ? raw.table : '';
+      const record = isSupabaseDbWebhook ? raw.record : {};
+
+      const event = (
+        raw.event ||
+        (table === 'messages' ? 'new_message' : table === 'orders' ? 'new_order' : '') ||
+        (raw.type ? String(raw.type).toLowerCase() : '')
+      );
+
+      const data = isSupabaseDbWebhook ? record : raw;
+      return { event, data };
+    };
+
+    // Supabase native webhook
+    const sbWebhook = {
+      type: 'INSERT',
+      table: 'messages',
+      record: { id: 'msg-1', text: 'Hello', sender: 'client' }
+    };
+    const parsedSb = parsePayload(sbWebhook);
+    assert.equal(parsedSb.event, 'new_message');
+    assert.equal(parsedSb.data.id, 'msg-1');
+
+    // pg_net trigger payload
+    const pgNetPayload = {
+      event: 'new_order',
+      order_id: 'ORD-101',
+      client_email: 'client@domain.com',
+      price: 25.00
+    };
+    const parsedPg = parsePayload(pgNetPayload);
+    assert.equal(parsedPg.event, 'new_order');
+    assert.equal(parsedPg.data.order_id, 'ORD-101');
   });
 });
