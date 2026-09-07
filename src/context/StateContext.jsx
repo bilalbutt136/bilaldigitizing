@@ -763,10 +763,10 @@ export const StateProvider = ({ children }) => {
           }
         } catch {}
         
-        if (msg.sender === 'client' && currentRole === 'admin') {
+        if ((msg.sender === 'client' || msg.sender === 'worker') && currentRole === 'admin') {
           playNotificationSound('chat');
-          showToast(`💬 New message from ${msg.sender_name || 'Client'}`, 'info');
-        } else if ((msg.sender === 'admin' || msg.sender === 'digitizer') && currentRole !== 'admin') {
+          showToast(`💬 New message from ${msg.sender_name || (msg.sender === 'worker' ? 'Assigned Digitizer' : 'Client')}`, 'info');
+        } else if ((msg.sender === 'admin' || msg.sender === 'digitizer' || msg.sender === 'worker' || msg.sender === 'staff') && currentRole !== 'admin') {
           // Strictly verify that this message belongs to this specific customer
           const msgEmail = (msg.client_email || msg.clientEmail || '').toLowerCase().trim();
           const msgConvId = String(msg.conversation_id || '').toLowerCase().trim();
@@ -774,7 +774,8 @@ export const StateProvider = ({ children }) => {
             msgEmail === myEmail ||
             msgConvId === `inbox-${myEmail}` ||
             msgConvId === `support-${myEmail}` ||
-            msgConvId.includes(myEmail)
+            msgConvId.includes(myEmail) ||
+            (Array.isArray(orders) && orders.some(o => msgConvId === `order-${o.id}` || String(msg.order_id) === String(o.id)))
           );
 
           if (isAddressedToMe) {

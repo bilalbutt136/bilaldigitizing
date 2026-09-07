@@ -281,7 +281,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           conversation_id: canonicalChatId,
           type: extractedOffer ? 'custom_offer' : (record.type || 'text'),
           sender: record.sender,
-          senderName: record.sender_name || (record.sender === 'admin' ? 'Support' : clientName),
+          senderName: record.sender_name || (record.sender === 'admin' ? 'Support' : (record.sender === 'worker' ? 'Assigned Digitizer' : clientName)),
           sender_name: record.sender_name,
           text: record.text,
           attachment: record.attachment,
@@ -327,7 +327,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           return Array.from(map.values()).sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
         });
 
-        if (record.sender === 'admin') {
+        if (record.sender === 'admin' || record.sender === 'worker' || record.sender === 'support') {
           playNotificationSound('chat');
         }
         scrollToBottom('smooth');

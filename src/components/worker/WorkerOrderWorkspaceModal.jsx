@@ -28,9 +28,8 @@ import {
   Loader2,
   FileCode
 } from 'lucide-react';
-import { formatOrderId } from '../../context/StateContext';
 import { supabaseClient } from '../../lib/supabaseClient';
-import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
+import { uploadFileToCloudinaryFull, broadcastLiveMessage, subscribeToLiveMessages } from '../../services/supabaseService';
 
 const ACCEPTED_EXTENSIONS = [
   '.dst', '.pes', '.emb', '.exp', '.jef', '.zip', '.rar',
@@ -277,6 +276,32 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
       console.warn('Realtime channel error:', err);
     }
 
+    // Also listen to the global shared live hub for instant broadcast updates
+    const unsubGlobal = subscribeToLiveMessages((msgPayload) => {
+      const p = msgPayload?.new || msgPayload?.record;
+      if (p && (String(p.order_id) === String(orderId) || String(p.conversation_id) === `order-${orderId}`)) {
+        setMessages(prev => {
+          if (prev.some(m => m.id === p.id)) return prev;
+          return [...prev, {
+            id: p.id,
+            order_id: orderId,
+            message: p.text || p.message || '',
+            sender_name: p.sender_name || p.senderName || 'Staff',
+            sender_role: p.sender_role || p.sender || 'admin',
+            is_staff: p.is_staff ?? (p.sender === 'admin' || p.sender === 'worker'),
+            attachment: p.attachment,
+            attachment_url: p.attachment_url,
+            attachment_name: p.attachment_name,
+            attachment_size: p.attachment_size,
+            created_at: p.created_at || p.timestamp || new Date().toISOString()
+          }];
+        });
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 80);
+      }
+    });
+
     const interval = setInterval(() => {
       fetchOrderMessages(true);
     }, 6000);
@@ -285,6 +310,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
       if (channel && supabaseClient) {
         supabaseClient.removeChannel(channel);
       }
+      if (unsubGlobal) unsubGlobal();
       clearInterval(interval);
     };
   }, [isOpen, orderId]);
@@ -560,6 +586,21 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
 
       if (data.message) {
         setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? data.message : m));
+        broadcastLiveMessage({
+          id: data.message.id || optimisticMsg.id,
+          order_id: orderId,
+          conversation_id: `order-${orderId}`,
+          sender: 'worker',
+          sender_name: optimisticMsg.sender_name,
+          sender_role: 'worker',
+          is_staff: true,
+          text: cleanText,
+          message: cleanText,
+          attachment_url: attachmentUrl,
+          attachment_name: attachmentName,
+          attachment_size: attachmentSize,
+          created_at: data.message.created_at || new Date().toISOString()
+        });
       }
     } catch (err) {
       if (showToast) showToast(err.message || 'Could not send message.', 'error');

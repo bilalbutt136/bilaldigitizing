@@ -18,9 +18,8 @@ import {
   ShieldCheck, 
   Scissors 
 } from 'lucide-react';
-import { formatOrderId } from '../../context/StateContext';
 import { supabaseClient } from '../../lib/supabaseClient';
-import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
+import { uploadFileToCloudinaryFull, broadcastLiveMessage, subscribeToLiveMessages } from '../../services/supabaseService';
 
 export const OrderChatModal = ({ 
   order, 
@@ -104,7 +103,30 @@ export const OrderChatModal = ({
       console.warn('Realtime subscription notice:', realtimeErr);
     }
 
-    // 2. Periodic background poll (every 6 seconds)
+    // 2. Realtime WebSocket Broadcast subscription via shared live hub
+    const unsubBroadcast = subscribeToLiveMessages((msgPayload) => {
+      const p = msgPayload?.new || msgPayload?.record;
+      if (p && (String(p.order_id) === String(orderId) || String(p.conversation_id) === `order-${orderId}`)) {
+        setMessages(prev => {
+          if (prev.some(m => m.id === p.id)) return prev;
+          return [...prev, {
+            id: p.id,
+            order_id: orderId,
+            message: p.text || p.message || '',
+            sender_name: p.sender_name || p.senderName || 'Staff',
+            sender_role: p.sender_role || p.sender || 'admin',
+            is_staff: p.is_staff ?? (p.sender === 'admin' || p.sender === 'worker'),
+            attachment_url: p.attachment_url,
+            attachment_name: p.attachment_name,
+            attachment_size: p.attachment_size,
+            created_at: p.created_at || p.timestamp || new Date().toISOString()
+          }];
+        });
+        setTimeout(scrollToBottom, 100);
+      }
+    });
+
+    // 3. Periodic background poll (every 6 seconds)
     const interval = setInterval(() => {
       fetchMessages(true);
     }, 6000);
@@ -113,6 +135,7 @@ export const OrderChatModal = ({
       if (channel && supabaseClient) {
         supabaseClient.removeChannel(channel);
       }
+      if (unsubBroadcast) unsubBroadcast();
       clearInterval(interval);
     };
   }, [isOpen, orderId]);
@@ -196,6 +219,21 @@ export const OrderChatModal = ({
       // Replace optimistic message with actual DB row
       if (data.message) {
         setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? data.message : m));
+        broadcastLiveMessage({
+          id: data.message.id || optimisticMsg.id,
+          order_id: orderId,
+          conversation_id: `order-${orderId}`,
+          sender: currentUserRole,
+          sender_role: currentUserRole,
+          sender_name: optimisticMsg.sender_name,
+          is_staff: currentUserRole === 'admin' || currentUserRole === 'worker',
+          text: cleanText,
+          message: cleanText,
+          attachment_url: attachmentUrl,
+          attachment_name: attachmentName,
+          attachment_size: attachmentSize,
+          created_at: data.message.created_at || new Date().toISOString()
+        });
       }
     } catch (err) {
       if (showToast) showToast(err.message || 'Could not send message.', 'error');
