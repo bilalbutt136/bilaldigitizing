@@ -93,55 +93,9 @@ export const ServicesSection = () => {
   const vecMinPrice = vectorTiers.length > 0 ? Math.min(...vectorTiers.map(t => Number(t.price) || 15)) : 15;
   const patchMinPrice = patchTiers.length > 0 ? Math.min(...patchTiers.map(t => Number(t.price) || 1.5)) : 1.5;
 
-  // Dynamic Packages Text for All Services summary
-  const embPackagesSummary = embroideryTiers.length > 0
-    ? embroideryTiers.map(t => `${t.title.split(' ')[0]} ($${Number(t.price).toFixed(t.price % 1 === 0 ? 0 : 2)})`).join(', ')
-    : 'Left Chest ($10), Mid-Size ($20), Full Back & 3D Puff ($35)';
 
-  const vecPackagesSummary = vectorTiers.length > 0
-    ? vectorTiers.map(t => `${t.title.split(' ')[0]} ($${Number(t.price).toFixed(t.price % 1 === 0 ? 0 : 2)})`).join(', ')
-    : 'Simple Logo ($15), Medium Detail ($25), Complex Art ($45)';
 
-  const patchPackagesSummary = patchTiers.length > 0
-    ? patchTiers.map(t => `${t.title.split(' ')[0]} ($${Number(t.price).toFixed(t.price % 1 === 0 ? 0 : 2)})`).join(', ')
-    : 'Sample Batch 50+ Pcs ($3.50), Production Batch ($2.50), Wholesale Bulk ($1.50)';
 
-  // Structured Tiers for Luxury Overview Cards
-  const embTiersList = embroideryTiers.length > 0
-    ? embroideryTiers.slice(0, 3).map(t => ({
-        name: t.title.replace(/\(.*?\)/g, '').trim(),
-        price: `$${Number(t.price).toFixed(t.price % 1 === 0 ? 0 : 2)}`,
-        unit: t.price_unit || ''
-      }))
-    : [
-        { name: 'Left Chest / Cap', price: '$10' },
-        { name: 'Mid-Size Logo', price: '$20' },
-        { name: 'Full Back / 3D', price: '$35' }
-      ];
-
-  const vecTiersList = vectorTiers.length > 0
-    ? vectorTiers.slice(0, 3).map(t => ({
-        name: t.title.replace(/\(.*?\)/g, '').trim(),
-        price: `$${Number(t.price).toFixed(t.price % 1 === 0 ? 0 : 2)}`,
-        unit: t.price_unit || ''
-      }))
-    : [
-        { name: 'Simple Logo', price: '$15' },
-        { name: 'Medium Detail', price: '$25' },
-        { name: 'Complex Art', price: '$40' }
-      ];
-
-  const patchTiersList = patchTiers.length > 0
-    ? patchTiers.slice(0, 3).map(t => ({
-        name: t.title.replace(/\(.*?\)/g, '').trim(),
-        price: `$${Number(t.price).toFixed(t.price % 1 === 0 ? 0 : 2)}`,
-        unit: '/ pc'
-      }))
-    : [
-        { name: 'Sample Run (Min 50)', price: '$3.50', unit: '/ pc' },
-        { name: 'Production Batch', price: '$2.50', unit: '/ pc' },
-        { name: 'Wholesale Bulk', price: '$1.50', unit: '/ pc' }
-      ];
 
 
 
@@ -374,53 +328,6 @@ export const ServicesSection = () => {
                   Precision commercial stitch files (.DST, .PES, .EMB) with 100% hand pathing & 0 thread breaks guarantee.
                 </p>
 
-                {/* Production Packages & Tiers Box */}
-                <div style={{
-                  background: 'var(--color-subtle, rgba(15, 23, 42, 0.03))',
-                  border: '1px solid var(--color-border, rgba(15, 23, 42, 0.07))',
-                  borderRadius: '14px',
-                  padding: '0.8rem 0.9rem',
-                  marginBottom: '1.25rem'
-                }}>
-                  <div style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    color: 'var(--color-text-muted, #64748b)',
-                    marginBottom: '0.5rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem'
-                  }}>
-                    <Sparkles size={12} style={{ color: '#ea580c' }} />
-                    <span>Popular Production Tiers</span>
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                    {embTiersList.map((tier, tIdx) => (
-                      <span
-                        key={tIdx}
-                        style={{
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          background: 'var(--color-surface, #ffffff)',
-                          color: 'var(--color-text-primary, var(--navy-900, #0f172a))',
-                          border: '1px solid var(--color-border, rgba(15, 23, 42, 0.1))',
-                          padding: '0.28rem 0.65rem',
-                          borderRadius: '8px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.04))'
-                        }}
-                      >
-                        <span>{tier.name}</span>
-                        <strong style={{ color: '#ea580c', fontWeight: 900 }}>{tier.price}{tier.unit ? ` ${tier.unit}` : ''}</strong>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Quality Highlights Checklist */}
                 <ul style={{
                   listStyle: 'none',
@@ -506,9 +413,9 @@ export const ServicesSection = () => {
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.filter = 'brightness(1.08)'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.filter = 'none'; }}
-                    onClick={() => handleSelectTabAndScrollToPackages('embroidery')}
+                    onClick={() => handleLaunchOrder('embroidery')}
                   >
-                    <span>Choose Package & Order</span>
+                    <span>Order Now</span>
                     <ArrowRight size={15} />
                   </button>
                   <button 
@@ -638,53 +545,6 @@ export const ServicesSection = () => {
                   Crisp scalable vector separations (.AI, .EPS, .SVG, .PDF) traced by hand for screen printing & signage.
                 </p>
 
-                {/* Production Packages & Tiers Box */}
-                <div style={{
-                  background: 'var(--color-subtle, rgba(15, 23, 42, 0.03))',
-                  border: '1px solid var(--color-border, rgba(15, 23, 42, 0.07))',
-                  borderRadius: '14px',
-                  padding: '0.8rem 0.9rem',
-                  marginBottom: '1.25rem'
-                }}>
-                  <div style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    color: 'var(--color-text-muted, #64748b)',
-                    marginBottom: '0.5rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem'
-                  }}>
-                    <Sparkles size={12} style={{ color: '#2563eb' }} />
-                    <span>Popular Production Tiers</span>
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                    {vecTiersList.map((tier, tIdx) => (
-                      <span
-                        key={tIdx}
-                        style={{
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          background: 'var(--color-surface, #ffffff)',
-                          color: 'var(--color-text-primary, var(--navy-900, #0f172a))',
-                          border: '1px solid var(--color-border, rgba(15, 23, 42, 0.1))',
-                          padding: '0.28rem 0.65rem',
-                          borderRadius: '8px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.04))'
-                        }}
-                      >
-                        <span>{tier.name}</span>
-                        <strong style={{ color: '#2563eb', fontWeight: 900 }}>{tier.price}{tier.unit ? ` ${tier.unit}` : ''}</strong>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Quality Highlights Checklist */}
                 <ul style={{
                   listStyle: 'none',
@@ -770,9 +630,9 @@ export const ServicesSection = () => {
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.filter = 'brightness(1.08)'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.filter = 'none'; }}
-                    onClick={() => handleSelectTabAndScrollToPackages('vector-art')}
+                    onClick={() => handleLaunchOrder('vector')}
                   >
-                    <span>Choose Package & Order</span>
+                    <span>Order Now</span>
                     <ArrowRight size={15} />
                   </button>
                   <button 
@@ -902,53 +762,6 @@ export const ServicesSection = () => {
                   Custom embroidered, high-density woven, and 3D molded PVC emblems manufactured & shipped to your door.
                 </p>
 
-                {/* Production Packages & Tiers Box */}
-                <div style={{
-                  background: 'var(--color-subtle, rgba(15, 23, 42, 0.03))',
-                  border: '1px solid var(--color-border, rgba(15, 23, 42, 0.07))',
-                  borderRadius: '14px',
-                  padding: '0.8rem 0.9rem',
-                  marginBottom: '1.25rem'
-                }}>
-                  <div style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    color: 'var(--color-text-muted, #64748b)',
-                    marginBottom: '0.5rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem'
-                  }}>
-                    <Sparkles size={12} style={{ color: '#059669' }} />
-                    <span>Popular Production Tiers</span>
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                    {patchTiersList.map((tier, tIdx) => (
-                      <span
-                        key={tIdx}
-                        style={{
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          background: 'var(--color-surface, #ffffff)',
-                          color: 'var(--color-text-primary, var(--navy-900, #0f172a))',
-                          border: '1px solid var(--color-border, rgba(15, 23, 42, 0.1))',
-                          padding: '0.28rem 0.65rem',
-                          borderRadius: '8px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.04))'
-                        }}
-                      >
-                        <span>{tier.name}</span>
-                        <strong style={{ color: '#059669', fontWeight: 900 }}>{tier.price}{tier.unit ? ` ${tier.unit}` : ''}</strong>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Quality Highlights Checklist */}
                 <ul style={{
                   listStyle: 'none',
@@ -1034,9 +847,9 @@ export const ServicesSection = () => {
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.filter = 'brightness(1.08)'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.filter = 'none'; }}
-                    onClick={() => handleSelectTabAndScrollToPackages('patches')}
+                    onClick={() => handleLaunchOrder('patch')}
                   >
-                    <span>Choose Package & Order</span>
+                    <span>Order Now</span>
                     <ArrowRight size={15} />
                   </button>
                   <button 

@@ -39,6 +39,9 @@ export function ClientPortalClient() {
       navigate('/');
     } else {
       if (currentView !== 'customer') setCurrentView('customer');
+      if (typeof document !== 'undefined') {
+        document.cookie = 'bdigi_auth=true; path=/; max-age=31536000; SameSite=Lax';
+      }
     }
   }, [isAuthInitialized, isAuthenticated, authUser, currentView, setCurrentView, setIsAuthModalOpen, setAuthModalMode, navigate]);
 

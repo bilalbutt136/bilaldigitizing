@@ -999,6 +999,11 @@ export const StateProvider = ({ children }) => {
             if (typeof window !== 'undefined') {
               localStorage.setItem('bdigi_auth_user', JSON.stringify(uData));
               localStorage.setItem('bdigi_current_view', role === 'admin' ? 'admin' : (role === 'worker' ? 'worker' : 'customer'));
+              if (typeof document !== 'undefined') {
+                document.cookie = 'bdigi_auth=true; path=/; max-age=31536000; SameSite=Lax';
+                document.cookie = `bdigi_user_email=${encodeURIComponent(uData.email || '')}; path=/; max-age=31536000; SameSite=Lax`;
+                document.cookie = `bdigi_user_role=${encodeURIComponent(role)}; path=/; max-age=31536000; SameSite=Lax`;
+              }
             }
           } catch {}
 
@@ -1022,6 +1027,9 @@ export const StateProvider = ({ children }) => {
                   const parsed = JSON.parse(saved);
                   if (parsed && parsed.email) {
                     hasValidLocalUser = true;
+                    if (typeof document !== 'undefined') {
+                      document.cookie = 'bdigi_auth=true; path=/; max-age=31536000; SameSite=Lax';
+                    }
                   }
                 }
               }
@@ -1036,6 +1044,11 @@ export const StateProvider = ({ children }) => {
                 if (typeof window !== 'undefined') {
                   localStorage.removeItem('bdigi_auth_user');
                   localStorage.removeItem('bdigi_current_view');
+                  if (typeof document !== 'undefined') {
+                    document.cookie = 'bdigi_auth=; path=/; max-age=0; SameSite=Lax';
+                    document.cookie = 'bdigi_user_email=; path=/; max-age=0; SameSite=Lax';
+                    document.cookie = 'bdigi_user_role=; path=/; max-age=0; SameSite=Lax';
+                  }
                 }
               } catch {}
             }
@@ -1398,6 +1411,15 @@ export const StateProvider = ({ children }) => {
       if (typeof window !== 'undefined') {
         localStorage.setItem('bdigi_auth_user', JSON.stringify(uData));
         localStorage.setItem('bdigi_current_view', view);
+        if (typeof document !== 'undefined') {
+          document.cookie = 'bdigi_auth=true; path=/; max-age=31536000; SameSite=Lax';
+          if (uData?.email) {
+            document.cookie = `bdigi_user_email=${encodeURIComponent(uData.email)}; path=/; max-age=31536000; SameSite=Lax`;
+          }
+          if (view || uData?.role) {
+            document.cookie = `bdigi_user_role=${encodeURIComponent(uData?.role || view)}; path=/; max-age=31536000; SameSite=Lax`;
+          }
+        }
       }
     } catch {}
   };
@@ -1524,6 +1546,11 @@ export const StateProvider = ({ children }) => {
       sessionStorage.clear();
       localStorage.removeItem('bdigi_auth_user');
       localStorage.removeItem('bdigi_current_view');
+      if (typeof document !== 'undefined') {
+        document.cookie = 'bdigi_auth=; path=/; max-age=0; SameSite=Lax';
+        document.cookie = 'bdigi_user_email=; path=/; max-age=0; SameSite=Lax';
+        document.cookie = 'bdigi_user_role=; path=/; max-age=0; SameSite=Lax';
+      }
     } catch (e) {
       console.warn('Storage clearance notice:', e);
     }

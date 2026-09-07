@@ -57,8 +57,18 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     if (isUserLoggedIn && authModalMode !== 'update_password') {
       setIsAuthModalOpen(false);
       if (isStandalonePage) {
-        const targetRoute = (authUser?.role === 'admin') ? '/admin-portal' : '/client-portal';
-        navigate(targetRoute);
+        const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+        const redirectParam = urlParams?.get('redirect');
+        const defaultRoute = (authUser?.role === 'admin') ? '/admin-portal' : '/client-portal';
+        const targetRoute = (redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('/login')) 
+          ? redirectParam 
+          : defaultRoute;
+
+        if (typeof window !== 'undefined') {
+          window.location.replace(targetRoute);
+        } else {
+          navigate(targetRoute);
+        }
       }
     }
   }, [isUserLoggedIn, isStandalonePage, authModalMode, authUser?.role, setIsAuthModalOpen, navigate]);
@@ -147,7 +157,57 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
   }, [isAuthModalOpen, isStandalonePage, legalModalType, errorModalText]);
 
   if (!isStandalonePage && (!isAuthModalOpen || (isUserLoggedIn && authModalMode !== 'update_password'))) return null;
-  if (isStandalonePage && isUserLoggedIn && authModalMode !== 'update_password') return null;
+
+  if (isStandalonePage && isUserLoggedIn && authModalMode !== 'update_password') {
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const redirectParam = urlParams?.get('redirect');
+    const target = (redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('/login'))
+      ? redirectParam
+      : (authUser?.role === 'admin' ? '/admin-portal' : '/client-portal');
+
+    return (
+      <div style={{
+        minHeight: 'calc(100vh - 120px)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '3rem 1rem',
+        background: 'var(--bg-main, #f8fafc)',
+        color: 'var(--text-main, #0f172a)',
+        textAlign: 'center'
+      }}>
+        <Loader2 className="animate-spin" size={38} style={{ color: 'var(--color-primary, #ea580c)', marginBottom: '1rem' }} />
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 0.5rem 0' }}>Opening Dashboard...</h2>
+        <p style={{ color: 'var(--text-muted, #64748b)', fontSize: '0.875rem', margin: '0 0 1.25rem 0' }}>
+          Redirecting to your account dashboard...
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              window.location.replace(target);
+            } else {
+              navigate(target);
+            }
+          }}
+          style={{
+            background: 'var(--color-primary, #ea580c)',
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '0.55rem 1.35rem',
+            fontSize: '0.85rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(234, 88, 12, 0.25)'
+          }}
+        >
+          Click here to enter dashboard
+        </button>
+      </div>
+    );
+  }
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();

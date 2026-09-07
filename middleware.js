@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
-// Protected paths that require authentication
-const PROTECTED_PREFIXES = ['/admin', '/admin-portal', '/client-portal', '/client', '/dashboard', '/worker', '/worker-portal', '/portal'];
+// Protected paths that require authentication strictly at the edge level
+const PROTECTED_PREFIXES = ['/admin', '/admin-portal', '/worker', '/worker-portal', '/portal'];
 
 // Admin paths that require admin authorization
 const ADMIN_PREFIXES = ['/admin', '/admin-portal'];
@@ -49,7 +49,7 @@ export async function middleware(request) {
   // 2. Fast Cookie Check: If requesting a protected route but has no auth cookies at all, redirect immediately
   const allCookies = request.cookies.getAll();
   const hasAuthCookie = allCookies.some(
-    c => c.name.includes('sb-') || c.name.includes('auth-token') || c.name.includes('supabase')
+    c => c.name.includes('sb-') || c.name.includes('auth-token') || c.name.includes('supabase') || c.name.includes('bdigi_auth')
   );
 
   const isWorkerRoute = WORKER_PREFIXES.some(
