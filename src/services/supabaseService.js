@@ -1823,10 +1823,20 @@ export function getSharedChatChannel() {
       }
     });
 
-    // 2. Postgres replication listeners — INSERT only, so UPDATE/read-status changes never fire notification handlers
+    // 2. Postgres replication listeners — INSERT and UPDATE for messages
     globalChatChannel.on(
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'messages' },
+      (payload) => {
+        messageListeners.forEach(listener => {
+          try { listener(payload); } catch (err) {}
+        });
+      }
+    );
+
+    globalChatChannel.on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'messages' },
       (payload) => {
         messageListeners.forEach(listener => {
           try { listener(payload); } catch (err) {}

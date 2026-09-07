@@ -24,7 +24,8 @@ import {
   Minimize2,
   Maximize2,
   Loader2,
-  Reply
+  Reply,
+  CheckCheck
 } from 'lucide-react';
 
 // Format timestamp safely to human-readable string
@@ -425,7 +426,7 @@ export const ClientLiveChatWidget = () => {
     return () => window.removeEventListener('bdigi_offer_status_change', handleOfferStatusEvent);
   }, [mounted, isExcluded, cacheKey]);
 
-  // Real-time Event Listener for opening chat programmatically
+  // Real-time Event Listener for opening/toggling chat programmatically
   useEffect(() => {
     if (!mounted || isExcluded) return;
 
@@ -434,9 +435,16 @@ export const ClientLiveChatWidget = () => {
       setIsMinimized(false);
     };
 
+    const handleToggleChat = () => {
+      setIsOpen(prev => !prev);
+      setIsMinimized(false);
+    };
+
     window.addEventListener('bdigi_open_chat', handleOpenChat);
+    window.addEventListener('bdigi_toggle_chat', handleToggleChat);
     return () => {
       window.removeEventListener('bdigi_open_chat', handleOpenChat);
+      window.removeEventListener('bdigi_toggle_chat', handleToggleChat);
     };
   }, [mounted, isExcluded]);
 
@@ -451,15 +459,48 @@ export const ClientLiveChatWidget = () => {
     messages: messages
   }), [targetConvId, cleanName, clientEmail, clientCompany, messages]);
 
-  const unreadCount = !isOpen
-    ? messages.filter(m => {
-        const isAdmin = m.sender === 'admin' || m.sender === 'support';
-        if (!isAdmin) return false;
-        const lastRead = typeof window !== 'undefined' ? parseInt(localStorage.getItem('bdigi_read_client_' + targetConvId) || '0', 10) : 0;
-        const msgTime = parseMessageTime(m);
-        return msgTime > lastRead;
-      }).length
-    : 0;
+  const [lastReadTimestamp, setLastReadTimestamp] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return parseInt(localStorage.getItem('bdigi_read_client_' + targetConvId) || '0', 10);
+    }
+    return 0;
+  });
+
+  useEffect(() => {
+    const handleReadUpdate = (e) => {
+      if (!e?.detail || e.detail.conversation_id === targetConvId) {
+        if (typeof window !== 'undefined') {
+          const lr = parseInt(localStorage.getItem('bdigi_read_client_' + targetConvId) || '0', 10);
+          setLastReadTimestamp(lr);
+        }
+      }
+    };
+    window.addEventListener('bdigi_read_update', handleReadUpdate);
+    return () => window.removeEventListener('bdigi_read_update', handleReadUpdate);
+  }, [targetConvId]);
+
+  const handleExplicitMarkAsRead = async () => {
+    const now = Date.now();
+    setLastReadTimestamp(now);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bdigi_read_client_' + targetConvId, String(now));
+      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: targetConvId } }));
+    }
+    try {
+      await markConversationAsRead(targetConvId, 'client', clientEmail);
+    } catch (err) {
+      console.warn('Failed to mark conversation as read:', err);
+    }
+  };
+
+  const unreadCount = useMemo(() => {
+    return messages.filter(m => {
+      const isAdmin = m.sender === 'admin' || m.sender === 'support';
+      if (!isAdmin) return false;
+      const msgTime = parseMessageTime(m);
+      return msgTime > lastReadTimestamp;
+    }).length;
+  }, [messages, lastReadTimestamp]);
 
   const chatFeedRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -496,7 +537,7 @@ export const ClientLiveChatWidget = () => {
     });
   };
 
-  // Open Chat effect: mark read, scroll to bottom, and fetch once without loop
+  // Open Chat effect: scroll to bottom and fetch once without loop (strict manual read status preserved)
   useEffect(() => {
     if (!isOpen) {
       hasFetchedRef.current = false;
@@ -504,12 +545,6 @@ export const ClientLiveChatWidget = () => {
     }
 
     scrollToBottom('smooth');
-
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('bdigi_read_client_' + targetConvId, String(Date.now()));
-      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: targetConvId } }));
-    }
-    markConversationAsRead(targetConvId);
 
     if (isSupabaseConfigured && !hasFetchedRef.current) {
       hasFetchedRef.current = true;
@@ -855,6 +890,33 @@ export const ClientLiveChatWidget = () => {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleExplicitMarkAsRead();
+                  }}
+                  title="Mark messages as read"
+                  style={{
+                    background: 'rgba(34, 197, 94, 0.18)',
+                    border: '1px solid rgba(34, 197, 94, 0.45)',
+                    color: '#4ade80',
+                    cursor: 'pointer',
+                    padding: '0.2rem 0.55rem',
+                    borderRadius: '6px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    marginRight: '0.2rem'
+                  }}
+                >
+                  <CheckCheck size={14} />
+                  <span>Mark Read</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setIsMinimized(!isMinimized)}

@@ -150,18 +150,27 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
     }
   };
 
+  const handleExplicitMarkAsRead = async () => {
+    if (!canonicalChatId) return;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bdigi_read_client_' + canonicalChatId, String(Date.now()));
+      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: canonicalChatId } }));
+    }
+    try {
+      await markConversationAsRead(canonicalChatId, 'client', clientEmail);
+      if (showToast) showToast('Messages marked as read', 'success');
+    } catch (err) {
+      console.warn('Failed to mark read:', err);
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
     if (typeof document !== 'undefined') {
       document.body.classList.add('chat-inbox-open');
     }
     loadChatHistory();
-    if (canonicalChatId) {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('bdigi_read_client_' + canonicalChatId, String(Date.now()));
-      }
-      markConversationAsRead(canonicalChatId, 'client', clientEmail);
-    }
+    // Preserved strict manual read status: opening the chat does not auto-mark as read
     return () => {
       if (typeof document !== 'undefined') {
         document.body.classList.remove('chat-inbox-open');
@@ -318,10 +327,6 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
 
         if (record.sender === 'admin') {
           playNotificationSound('chat');
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('bdigi_read_client_' + canonicalChatId, String(Date.now()));
-          }
-          markConversationAsRead(canonicalChatId, 'client', clientEmail);
         }
         scrollToBottom('smooth');
       }
@@ -682,6 +687,33 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>24/7 Help Desk</span>
           </button>
         </div>
+
+        {/* Explicit Manual Mark as Read Action */}
+        <button
+          type="button"
+          onClick={handleExplicitMarkAsRead}
+          title="Mark messages as read"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.3rem',
+            background: 'rgba(4, 120, 87, 0.08)',
+            border: '1px solid rgba(4, 120, 87, 0.3)',
+            borderRadius: '10px',
+            padding: '0.4rem 0.65rem',
+            fontSize: '0.74rem',
+            fontWeight: 800,
+            color: '#047857',
+            cursor: 'pointer',
+            flexShrink: 0,
+            transition: 'all 0.15s ease'
+          }}
+          onMouseOver={(e) => e.currentTarget.style.background = 'rgba(4, 120, 87, 0.15)'}
+          onMouseOut={(e) => e.currentTarget.style.background = 'rgba(4, 120, 87, 0.08)'}
+        >
+          <CheckCheck size={14} />
+          <span>Mark Read</span>
+        </button>
 
         {/* Live Online Status Badge */}
         <div style={{

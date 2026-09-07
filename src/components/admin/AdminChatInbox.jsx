@@ -262,13 +262,16 @@ const deduplicateThreads = (rawList) => {
     }
 
     const lastMsg = cleanMessages[cleanMessages.length - 1];
-    const lastTime = lastMsg ? parseMessageTime(lastMsg) : (conv.updatedAt ? new Date(conv.updatedAt).getTime() : 0);
+    const lastTime = Math.max(conv.lastMessageTime || 0, lastMsg ? parseMessageTime(lastMsg) : (conv.updatedAt ? new Date(conv.updatedAt).getTime() : 0));
     const convUnread = conv.adminUnreadCount ?? conv.unreadCount ?? 0;
+    const initialSnippet = conv.lastMessage || conv.last_message || (lastMsg ? (lastMsg.text || (lastMsg.attachment_name ? `📎 ${lastMsg.attachment_name}` : (lastMsg.offer_data || lastMsg.offer_id ? '📋 Custom Design Offer' : 'New Message'))) : '');
 
     if (!map.has(key)) {
       map.set(key, { 
         ...conv, 
         id: unifiedId,
+        lastMessage: initialSnippet,
+        last_message: initialSnippet,
         unreadCount: convUnread, 
         adminUnreadCount: convUnread,
         messages: cleanMessages,
@@ -283,7 +286,11 @@ const deduplicateThreads = (rawList) => {
       
       const combinedMessages = Array.from(msgMap.values()).sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
       const updatedLastMsg = combinedMessages[combinedMessages.length - 1];
-      const updatedLastTime = updatedLastMsg ? parseMessageTime(updatedLastMsg) : (existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0);
+      const updatedLastTime = Math.max(
+        existing.lastMessageTime || 0,
+        conv.lastMessageTime || 0,
+        updatedLastMsg ? parseMessageTime(updatedLastMsg) : (existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0)
+      );
 
       const combinedUnread = Math.max(existing.adminUnreadCount || 0, convUnread);
 
@@ -294,16 +301,20 @@ const deduplicateThreads = (rawList) => {
         ? existing.clientEmail 
         : (conv.clientEmail || existing.clientEmail);
 
+      const updatedSnippet = conv.lastMessage || conv.last_message || (updatedLastMsg ? (updatedLastMsg.text || (updatedLastMsg.attachment_name ? `📎 ${updatedLastMsg.attachment_name}` : (updatedLastMsg.offer_data || updatedLastMsg.offer_id ? '📋 Custom Design Offer' : 'New Message'))) : existing.lastMessage);
+
       map.set(key, {
         ...existing,
         id: unifiedId,
         clientName: resolvedName,
         clientEmail: resolvedEmail,
+        lastMessage: updatedSnippet,
+        last_message: updatedSnippet,
         unreadCount: combinedUnread,
         adminUnreadCount: combinedUnread,
         messages: combinedMessages,
-        lastMessageTime: Math.max(existing.lastMessageTime || 0, updatedLastTime),
-        updatedAt: updatedLastMsg?.timestamp || existing.updatedAt
+        lastMessageTime: updatedLastTime,
+        updatedAt: updatedLastMsg?.timestamp || updatedLastMsg?.created_at || existing.updatedAt
       });
     }
   });
@@ -815,6 +826,20 @@ export const AdminChatInbox = () => {
               ? targetConv.clientName 
               : (newMsg.senderName || targetConv.clientName);
 
+            const msgTime = parseMessageTime(newMsg) || Date.now();
+            let snippet = newMsg.text || '';
+            if (!snippet) {
+              if (newMsg.attachment_name || newMsg.attachment) {
+                snippet = `📎 ${newMsg.attachment_name || newMsg.attachment}`;
+              } else if (newMsg.offer_data || newMsg.offer_id) {
+                snippet = '📋 Custom Design Offer';
+              } else {
+                snippet = 'New Message';
+              }
+            } else if (snippet.includes('[OFFER_DATA:')) {
+              snippet = '📋 Custom Design Offer';
+            }
+
             const updatedConv = {
               ...targetConv,
               clientName: resolvedClientName,
@@ -823,12 +848,16 @@ export const AdminChatInbox = () => {
               adminUnreadCount: (targetConv.adminUnreadCount || 0) + (isCustomerMsg ? 1 : 0),
               admin_unread_count: (targetConv.admin_unread_count || 0) + (isCustomerMsg ? 1 : 0),
               messages: nextMsgs,
-              lastMessageTime: Math.max(targetConv.lastMessageTime || 0, parseMessageTime(newMsg) || Date.now()),
-              updatedAt: newMsg.timestamp || new Date().toISOString()
+              lastMessage: snippet,
+              last_message: snippet,
+              lastMessageTime: Math.max(targetConv.lastMessageTime || 0, msgTime),
+              last_message_time: Math.max(targetConv.lastMessageTime || 0, msgTime),
+              updatedAt: newMsg.created_at || newMsg.timestamp || new Date().toISOString()
             };
 
             const nextList = [...safePrev];
-            nextList[existingIdx] = updatedConv;
+            nextList.splice(existingIdx, 1);
+            nextList.unshift(updatedConv);
             const deduplicated = deduplicateThreads(nextList);
             if (typeof window !== 'undefined') {
               try { localStorage.setItem(cacheKey, JSON.stringify(deduplicated)); } catch {}
@@ -848,6 +877,20 @@ export const AdminChatInbox = () => {
               canonicalNewId = newClientEmail ? `inbox-${newClientEmail}` : (newConvId.startsWith('inbox-') ? newConvId : `inbox-${newConvId}`);
             }
 
+            let snippet = newMsg.text || '';
+            if (!snippet) {
+              if (newMsg.attachment_name || newMsg.attachment) {
+                snippet = `📎 ${newMsg.attachment_name || newMsg.attachment}`;
+              } else if (newMsg.offer_data || newMsg.offer_id) {
+                snippet = '📋 Custom Design Offer';
+              } else {
+                snippet = 'New Message';
+              }
+            } else if (snippet.includes('[OFFER_DATA:')) {
+              snippet = '📋 Custom Design Offer';
+            }
+
+            const msgTime = parseMessageTime(newMsg) || Date.now();
             const newThread = {
               id: canonicalNewId,
               clientName: newClientName,
@@ -862,8 +905,11 @@ export const AdminChatInbox = () => {
               adminUnreadCount: newMsg.sender === 'client' || newMsg.sender !== 'admin' ? 1 : 0,
               admin_unread_count: newMsg.sender === 'client' || newMsg.sender !== 'admin' ? 1 : 0,
               messages: [newMsg],
-              lastMessageTime: parseMessageTime(newMsg) || Date.now(),
-              updatedAt: newMsg.timestamp || new Date().toISOString()
+              lastMessage: snippet,
+              last_message: snippet,
+              lastMessageTime: msgTime,
+              last_message_time: msgTime,
+              updatedAt: newMsg.created_at || newMsg.timestamp || new Date().toISOString()
             };
 
             const deduplicated = deduplicateThreads([newThread, ...safePrev]);
@@ -1273,9 +1319,9 @@ export const AdminChatInbox = () => {
     }
   };
 
-  // Filter conversations list based on activeSection, subFilter, and search
+  // Filter and sort conversations list (always newest at the very top)
   const filteredConversations = useMemo(() => {
-    return conversations.filter(conv => {
+    const list = conversations.filter(conv => {
       const isSupport = isSupportThread(conv);
 
       // Strict Channel Separation
@@ -1296,6 +1342,12 @@ export const AdminChatInbox = () => {
         (info.customerEmail || '').toLowerCase().includes(term) ||
         (conv.messages || []).some(m => (m.text || '').toLowerCase().includes(term))
       );
+    });
+
+    return list.sort((a, b) => {
+      const timeA = a.lastMessageTime || (a.updatedAt ? new Date(a.updatedAt).getTime() : 0);
+      const timeB = b.lastMessageTime || (b.updatedAt ? new Date(b.updatedAt).getTime() : 0);
+      return timeB - timeA;
     });
   }, [conversations, activeSection, subFilter, searchTerm, orders]);
 
@@ -1394,6 +1446,15 @@ export const AdminChatInbox = () => {
       created_at: nowIso
     };
 
+    let outgoingSnippet = newMsg.text || '';
+    if (!outgoingSnippet) {
+      if (newMsg.attachment_name || newMsg.attachment) {
+        outgoingSnippet = `📎 ${newMsg.attachment_name || newMsg.attachment}`;
+      } else {
+        outgoingSnippet = 'Attachment';
+      }
+    }
+
     // Optimistic UI update
     setConversations(prev => {
       const updated = prev.map(conv => {
@@ -1405,8 +1466,11 @@ export const AdminChatInbox = () => {
             unreadCount: 0,
             adminUnreadCount: 0,
             messages: nextMsgs,
+            lastMessage: outgoingSnippet,
+            last_message: outgoingSnippet,
             updatedAt: nowIso,
-            lastMessageTime: Date.now()
+            lastMessageTime: Date.now(),
+            last_message_time: Date.now()
           };
         }
         return conv;

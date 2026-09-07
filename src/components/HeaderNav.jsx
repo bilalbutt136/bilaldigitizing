@@ -137,28 +137,52 @@ export const HeaderNav = () => {
   }, []);
 
   const handleOpenInbox = () => {
-    // 1. If Admin Portal or Admin user, navigate directly to Admin Chat & Inbox tab
-    if (safeIsAuthenticated && authUser?.role === 'admin') {
+    const isCurrentlyOnAdmin = typeof window !== 'undefined' && (
+      window.location.pathname.startsWith('/admin') ||
+      window.location.pathname.startsWith('/secure-admin-login')
+    );
+    const isCurrentlyOnClientPortal = typeof window !== 'undefined' && (
+      window.location.pathname.startsWith('/client-portal') ||
+      window.location.pathname.startsWith('/client')
+    );
+
+    // 1. If Admin Portal or Admin user
+    if (safeIsAuthenticated && (authUser?.role === 'admin' || isCurrentlyOnAdmin)) {
       if (setActiveAdminTab) setActiveAdminTab('chat');
-      protectedNavigate('admin');
-      navigate('/admin-portal?tab=chat');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('bdigi_switch_admin_tab', { detail: { tab: 'chat', orderId: 'inbox' } }));
+        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'chat', orderId: 'inbox' } }));
+      }
+      if (!isCurrentlyOnAdmin) {
+        protectedNavigate('admin');
+        navigate('/admin-portal?tab=chat');
+      }
       return;
     }
 
-    // 2. If authenticated Client in Portal, open Customer Inbox
-    if (safeIsAuthenticated) {
+    // 2. If inside Client Portal
+    if (isCurrentlyOnClientPortal && safeIsAuthenticated) {
       if (setActiveCustomerTab) setActiveCustomerTab('inbox');
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'inbox', orderId: 'inbox' } }));
       }
-      protectedNavigate('customer', false);
       navigate('/client-portal?tab=inbox');
       return;
     }
 
-    // 3. If unauthenticated, open public live support chat widget
+    // 3. On Public Website (Homepage, Pricing, Services, etc.)
+    // Toggle the Live Support & Order Inquiry chat drawer directly on the screen
     if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bdigi_toggle_chat'));
       window.dispatchEvent(new CustomEvent('bdigi_open_chat'));
+
+      setTimeout(() => {
+        const chatWidget = document.querySelector('.live-chat-drawer-container') || document.querySelector('.live-chat-widget-root');
+        const chatBtn = document.querySelector('.live-chat-floating-button') || document.querySelector('[data-chat-trigger="true"]');
+        if (!chatWidget && chatBtn) {
+          chatBtn.click();
+        }
+      }, 50);
     }
   };
 

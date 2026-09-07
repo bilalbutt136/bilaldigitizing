@@ -490,23 +490,39 @@ export async function GET(request) {
         }
       });
 
-      // Finalize and sort lists
+      // Finalize and sort lists (always newest at the very top)
       const finalizeThreads = (threadsMap) => {
         return Array.from(threadsMap.values()).map(thread => {
           thread.messages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
           const lastMsg = thread.messages[thread.messages.length - 1];
-          const lastTime = lastMsg ? parseMessageTime(lastMsg) : new Date(thread.updatedAt).getTime();
+          const lastTime = lastMsg ? parseMessageTime(lastMsg) : (thread.updatedAt ? new Date(thread.updatedAt).getTime() : 0);
           
-          const unreadForAdmin = thread.messages.filter(m => m.sender === 'client' && !m.is_read).length;
-          const unreadForClient = thread.messages.filter(m => m.sender === 'admin' && !m.is_read).length;
+          const unreadForAdmin = thread.messages.filter(m => (m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin') && !m.is_read).length;
+          const unreadForClient = thread.messages.filter(m => (m.sender === 'admin' || m.sender === 'support') && !m.is_read).length;
+
+          let lastMessageSnippet = '';
+          if (lastMsg) {
+            if (lastMsg.text) {
+              lastMessageSnippet = lastMsg.text.includes('[OFFER_DATA:') ? '📋 Custom Design Offer' : lastMsg.text;
+            } else if (lastMsg.attachment_name || lastMsg.attachment) {
+              lastMessageSnippet = `📎 ${lastMsg.attachment_name || lastMsg.attachment}`;
+            } else if (lastMsg.offer_data || lastMsg.offer_id) {
+              lastMessageSnippet = '📋 Custom Design Offer';
+            } else {
+              lastMessageSnippet = 'New Message';
+            }
+          }
 
           return {
             ...thread,
+            lastMessage: lastMessageSnippet,
+            last_message: lastMessageSnippet,
             unreadCount: isAdmin ? unreadForAdmin : unreadForClient,
             adminUnreadCount: unreadForAdmin,
             clientUnreadCount: unreadForClient,
             lastMessageTime: lastTime,
-            updatedAt: lastMsg?.timestamp || thread.updatedAt
+            last_message_time: lastTime,
+            updatedAt: lastMsg?.created_at || lastMsg?.timestamp || thread.updatedAt
           };
         }).sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
       };

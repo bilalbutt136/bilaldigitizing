@@ -104,13 +104,10 @@ export function useChatMessages({
     }
   }, [threadId, userEmail, deduplicateAndSort]);
 
-  // Initial load and reload when threadId changes
+  // Initial load and reload when threadId changes (strict manual read status preserved)
   useEffect(() => {
     loadMessages(threadId);
-    if (threadId) {
-      markConversationAsRead(threadId, userRole, userEmail);
-    }
-  }, [threadId, userRole, userEmail, loadMessages]);
+  }, [threadId, loadMessages]);
 
   // Subscribe to real-time incoming messages via Supabase Realtime / WebSockets
   useEffect(() => {
@@ -162,7 +159,6 @@ export function useChatMessages({
         if (typeof onNewIncomingMessage === 'function') {
           onNewIncomingMessage(newMsg);
         }
-        markConversationAsRead(activeThreadIdRef.current, userRole, userEmail);
       }
     });
 
@@ -262,12 +258,23 @@ export function useChatMessages({
     broadcastTypingStatus(threadId, userName || 'User', userRole, isTyping);
   }, [threadId, userName, userRole]);
 
+  const markRead = useCallback(async () => {
+    const activeId = activeThreadIdRef.current;
+    if (!activeId) return;
+    try {
+      await markConversationAsRead(activeId, userRole, userEmail);
+    } catch (err) {
+      console.warn('[useChatMessages] manual markRead error:', err);
+    }
+  }, [userRole, userEmail]);
+
   return {
     messages,
     loading,
     isOtherTyping,
     sendMessage,
     sendTypingStatus,
+    markRead,
     reloadMessages: loadMessages
   };
 }

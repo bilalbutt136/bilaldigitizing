@@ -18,7 +18,8 @@ export const AdminConversationCard = ({
 
   const isUnread = unreadCount > 0;
   const lastMsg = (conversation.messages || [])[(conversation.messages || []).length - 1] || {};
-  const lastTimeFormatted = formatTime ? formatTime(lastMsg.timestamp || lastMsg.created_at) : 'Just now';
+  const rawTimestamp = conversation.lastMessageTime || conversation.last_message_time || lastMsg.timestamp || lastMsg.created_at || conversation.updatedAt || conversation.updated_at;
+  const lastTimeFormatted = formatTime ? formatTime(rawTimestamp) : 'Just now';
 
   // Customer display details
   let customerName = threadInfo?.customerName || conversation.clientName;
@@ -38,13 +39,21 @@ export const AdminConversationCard = ({
   const orderNum = threadInfo?.orderNum || '';
   const orderCount = conversation.orders?.length || (isOrder ? 1 : 0);
 
-  // Message preview logic
-  let previewText = 'No messages yet';
-  if (lastMsg.text) {
-    previewText = lastMsg.text;
-  } else if (lastMsg.attachment || lastMsg.attachment_name || lastMsg.attachment_url) {
-    previewText = `📎 ${lastMsg.attachment_name || lastMsg.attachment || 'Attachment'}`;
-  } else if (lastMsg.offer_data || lastMsg.offer_id) {
+  // Message preview logic (instant snippet from conversation object or latest message)
+  let previewText = conversation.lastMessage || conversation.last_message || '';
+  if (!previewText) {
+    if (lastMsg.text) {
+      previewText = lastMsg.text;
+    } else if (lastMsg.attachment || lastMsg.attachment_name || lastMsg.attachment_url) {
+      previewText = `📎 ${lastMsg.attachment_name || lastMsg.attachment || 'Attachment'}`;
+    } else if (lastMsg.offer_data || lastMsg.offer_id) {
+      previewText = '📋 Custom Design Offer';
+    } else {
+      previewText = 'No messages yet';
+    }
+  }
+
+  if (typeof previewText === 'string' && previewText.includes('[OFFER_DATA:')) {
     previewText = '📋 Custom Design Offer';
   }
 
