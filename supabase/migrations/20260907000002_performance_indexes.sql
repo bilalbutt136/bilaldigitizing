@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- PERFORMANCE INDEXES: Frequently filtered & sorted columns
 -- Run once against live Supabase production database.
 -- Dramatically reduces sequential scans on hot queries.
@@ -45,6 +45,14 @@ CREATE INDEX IF NOT EXISTS idx_conversations_updated_at
   ON conversations (updated_at DESC);
 
 -- notifications table (notification bell & unread counts)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'notifications') THEN
+    ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS is_read boolean DEFAULT false;
+    ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS recipient_email text;
+  END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_notifications_recipient_email 
   ON notifications (recipient_email);
 

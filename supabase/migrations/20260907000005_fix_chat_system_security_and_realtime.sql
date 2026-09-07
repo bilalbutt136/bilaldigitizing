@@ -39,12 +39,20 @@ CREATE POLICY messages_secure_select ON public.messages
             )
         )
         OR
-        -- Staff, Admin, or Digitizer access
+        -- Staff, Admin, or Worker access
         EXISTS (
-            SELECT 1 FROM public.users u 
-            WHERE lower(u.email) = lower(auth.jwt() ->> 'email') 
-            AND u.role IN ('admin', 'staff', 'super_admin', 'worker', 'digitizer')
+            SELECT 1 FROM public.admins a 
+            WHERE lower(a.email) = lower(auth.jwt() ->> 'email')
         )
+        OR
+        EXISTS (
+            SELECT 1 FROM public.workers w 
+            WHERE lower(w.email) = lower(auth.jwt() ->> 'email')
+        )
+        OR
+        (auth.jwt() ->> 'role' = 'admin')
+        OR
+        (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin')
     );
 
 -- 5. Secure INSERT policy for messages
@@ -60,10 +68,18 @@ CREATE POLICY messages_secure_insert ON public.messages
         )
         OR
         EXISTS (
-            SELECT 1 FROM public.users u 
-            WHERE lower(u.email) = lower(auth.jwt() ->> 'email') 
-            AND u.role IN ('admin', 'staff', 'super_admin', 'worker', 'digitizer')
+            SELECT 1 FROM public.admins a 
+            WHERE lower(a.email) = lower(auth.jwt() ->> 'email')
         )
+        OR
+        EXISTS (
+            SELECT 1 FROM public.workers w 
+            WHERE lower(w.email) = lower(auth.jwt() ->> 'email')
+        )
+        OR
+        (auth.jwt() ->> 'role' = 'admin')
+        OR
+        (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin')
     );
 
 -- 6. Secure UPDATE policy for messages (e.g. marking as read)
@@ -79,10 +95,18 @@ CREATE POLICY messages_secure_update ON public.messages
         )
         OR
         EXISTS (
-            SELECT 1 FROM public.users u 
-            WHERE lower(u.email) = lower(auth.jwt() ->> 'email') 
-            AND u.role IN ('admin', 'staff', 'super_admin', 'worker', 'digitizer')
+            SELECT 1 FROM public.admins a 
+            WHERE lower(a.email) = lower(auth.jwt() ->> 'email')
         )
+        OR
+        EXISTS (
+            SELECT 1 FROM public.workers w 
+            WHERE lower(w.email) = lower(auth.jwt() ->> 'email')
+        )
+        OR
+        (auth.jwt() ->> 'role' = 'admin')
+        OR
+        (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin')
     );
 
 -- 7. Secure policies for conversations
@@ -98,10 +122,18 @@ CREATE POLICY conversations_secure_select ON public.conversations
         )
         OR
         EXISTS (
-            SELECT 1 FROM public.users u 
-            WHERE lower(u.email) = lower(auth.jwt() ->> 'email') 
-            AND u.role IN ('admin', 'staff', 'super_admin', 'worker', 'digitizer')
+            SELECT 1 FROM public.admins a 
+            WHERE lower(a.email) = lower(auth.jwt() ->> 'email')
         )
+        OR
+        EXISTS (
+            SELECT 1 FROM public.workers w 
+            WHERE lower(w.email) = lower(auth.jwt() ->> 'email')
+        )
+        OR
+        (auth.jwt() ->> 'role' = 'admin')
+        OR
+        (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin')
     );
 
 DROP POLICY IF EXISTS conversations_secure_all ON public.conversations;
@@ -116,10 +148,18 @@ CREATE POLICY conversations_secure_all ON public.conversations
         )
         OR
         EXISTS (
-            SELECT 1 FROM public.users u 
-            WHERE lower(u.email) = lower(auth.jwt() ->> 'email') 
-            AND u.role IN ('admin', 'staff', 'super_admin', 'worker', 'digitizer')
+            SELECT 1 FROM public.admins a 
+            WHERE lower(a.email) = lower(auth.jwt() ->> 'email')
         )
+        OR
+        EXISTS (
+            SELECT 1 FROM public.workers w 
+            WHERE lower(w.email) = lower(auth.jwt() ->> 'email')
+        )
+        OR
+        (auth.jwt() ->> 'role' = 'admin')
+        OR
+        (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin')
     )
     WITH CHECK (
         auth.role() = 'service_role'
@@ -130,8 +170,16 @@ CREATE POLICY conversations_secure_all ON public.conversations
         )
         OR
         EXISTS (
-            SELECT 1 FROM public.users u 
-            WHERE lower(u.email) = lower(auth.jwt() ->> 'email') 
-            AND u.role IN ('admin', 'staff', 'super_admin', 'worker', 'digitizer')
+            SELECT 1 FROM public.admins a 
+            WHERE lower(a.email) = lower(auth.jwt() ->> 'email')
         )
+        OR
+        EXISTS (
+            SELECT 1 FROM public.workers w 
+            WHERE lower(w.email) = lower(auth.jwt() ->> 'email')
+        )
+        OR
+        (auth.jwt() ->> 'role' = 'admin')
+        OR
+        (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin')
     );
